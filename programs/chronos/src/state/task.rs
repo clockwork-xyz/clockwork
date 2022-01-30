@@ -5,9 +5,10 @@ pub const SEED_TASK: &[u8] = b"task";
 
 #[account]
 pub struct Task {
+    pub daemon: Pubkey,
     pub instruction_data: InstructionData,
-    pub is_processed: bool,
-    pub agent: Pubkey,
+    pub is_executed: bool,
+    pub execute_at: u64,
     pub bump: u8,
 }
 

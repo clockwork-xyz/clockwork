@@ -9,19 +9,28 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod chronos {
     use super::*;
 
-    pub fn agent_create(ctx: Context<AgentCreate>, bump: u8) -> ProgramResult {
-        agent_create::handler(ctx, bump)
+    pub fn daemon_create(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
+        daemon_create::handler(ctx, bump)
     }
 
     pub fn task_create(
         ctx: Context<TaskCreate>,
         instruction_data: InstructionData,
+        execute_at: u64,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(ctx, instruction_data, bump)
+        task_create::handler(ctx, instruction_data, execute_at, bump)
     }
 
-    pub fn task_process(ctx: Context<TaskProcess>) -> ProgramResult {
-        task_process::handler(ctx)
+    pub fn task_create_and_execute(
+        ctx: Context<TaskCreateAndExecute>,
+        instruction_data: InstructionData,
+        bump: u8,
+    ) -> ProgramResult {
+        task_create_and_execute::handler(ctx, instruction_data, bump)
+    }
+
+    pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
+        task_execute::handler(ctx)
     }
 }

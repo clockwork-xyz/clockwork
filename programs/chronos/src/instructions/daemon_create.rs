@@ -6,15 +6,15 @@ use {
 
 #[derive(Accounts)]
 #[instruction(bump: u8)]
-pub struct AgentCreate<'info> {
+pub struct DaemonCreate<'info> {
     #[account(
         init,
-        seeds = [SEED_AGENT, signer.key().as_ref()],
+        seeds = [SEED_DAEMON, signer.key().as_ref()],
         bump = bump,
         payer = signer,
-        space = 8 + size_of::<Agent>(),
+        space = 8 + size_of::<Daemon>(),
     )]
-    pub agent: Account<'info, Agent>,
+    pub daemon: Account<'info, Daemon>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -23,14 +23,14 @@ pub struct AgentCreate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<AgentCreate>, bump: u8) -> ProgramResult {
+pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
     // Get accounts.
-    let agent = &mut ctx.accounts.agent;
+    let daemon = &mut ctx.accounts.daemon;
     let signer = &ctx.accounts.signer;
 
-    // Initialize agent account.
-    agent.owner = signer.key();
-    agent.bump = bump;
+    // Initialize daemon account.
+    daemon.owner = signer.key();
+    daemon.bump = bump;
 
     return Ok(());
 }

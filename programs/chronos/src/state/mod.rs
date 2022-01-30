@@ -1,5 +1,5 @@
-pub mod agent;
+pub mod daemon;
 pub mod task;
 
-pub use agent::*;
+pub use daemon::*;
 pub use task::*;

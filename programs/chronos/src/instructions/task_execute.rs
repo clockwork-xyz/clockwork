@@ -7,18 +7,21 @@ use {
 #[derive(Accounts)]
 #[instruction()]
 pub struct TaskProcess<'info> {
+    pub clock: Sysvar<'info, Clock>,
+
     #[account(
-        seeds = [SEED_AGENT, agent.owner.key().as_ref()],
-        bump = agent.bump,
+        seeds = [SEED_DAEMON, daemon.owner.key().as_ref()],
+        bump = daemon.bump,
         owner = crate::ID
     )]
-    pub agent: Account<'info, Agent>,
+    pub daemon: Account<'info, Daemon>,
 
     #[account(
         mut,
-        seeds = [SEED_TASK, agent.key().as_ref()],
+        seeds = [SEED_TASK, daemon.key().as_ref()],
         bump = task.bump,
-        constraint = task.is_processed == false,
+        constraint = task.is_executed == false,
+        constraint = task.execute_at <= clock.unix_timestamp as u64,
         owner = crate::ID
     )]
     pub task: Account<'info, Task>,
@@ -29,16 +32,16 @@ pub struct TaskProcess<'info> {
 
 pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
     // Get accounts.
-    let agent = &ctx.accounts.agent;
+    let daemon = &ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
     invoke_signed(
         &Instruction::from(&task.instruction_data),
         &mut ctx.remaining_accounts.iter().as_slice(),
-        &[&[SEED_AGENT, agent.owner.key().as_ref(), &[agent.bump]]],
+        &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
     )?;
 
-    task.is_processed = true;
+    task.is_executed = true;
 
     return Ok(());
 }
