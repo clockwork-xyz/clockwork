@@ -24,7 +24,7 @@ pub struct TaskCreateAndExecute<'info> {
         seeds = [SEED_TASK, daemon.key().as_ref()],
         bump = bump,
         payer = signer,
-        space = size_of::<Task>() + std::mem::size_of_val(&instruction_data),
+        space = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data),
     )]
     pub task: Account<'info, Task>,
 
@@ -52,7 +52,7 @@ pub fn handler(
     task.execute_at = clock.unix_timestamp as u64;
     task.bump = bump;
 
-    // Process the task.
+    // Process the task's instruction data.
     invoke_signed(
         &Instruction::from(&task.instruction_data),
         &mut ctx.remaining_accounts.iter().as_slice(),

@@ -6,6 +6,7 @@ import {
   newSigner,
   PDA,
   signAndSubmit,
+  sleep,
 } from "@faktorfi/utils";
 import * as anchor from "@project-serum/anchor";
 import { web3, Program } from "@project-serum/anchor";
@@ -126,6 +127,10 @@ describe("Chronos", () => {
     assert(taskData.isExecuted === false);
     assert(taskData.executeAt.eq(executeAt));
     assert(taskData.bump === taskPDA.bump);
+  });
+
+  before(async () => {
+    await sleep(1000);
   });
 
   it("Executes a task", async () => {

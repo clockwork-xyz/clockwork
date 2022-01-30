@@ -1,3 +1,5 @@
+use crate::errors::ErrorCode;
+
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::system_program},
@@ -24,7 +26,7 @@ pub struct TaskCreate<'info> {
         seeds = [SEED_TASK, daemon.key().as_ref()],
         bump = bump,
         payer = signer,
-        space = size_of::<Task>() + std::mem::size_of_val(&instruction_data),
+        space = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data),
     )]
     pub task: Account<'info, Task>,
 
@@ -44,6 +46,16 @@ pub fn handler(
     // Get accounts.
     let daemon = &ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
+
+
+    // Validate the daemon is the only required signer on the instruction.
+    // If the instruction has other required signers, we should just fail now.
+    for acc in task.instruction_data.keys.as_slice() {
+        require!(
+            !acc.is_signer || acc.pubkey == daemon.key(), 
+            ErrorCode::InvalidSignatory
+        );
+    }
 
     // Initialize task account.
     task.daemon = daemon.key();
