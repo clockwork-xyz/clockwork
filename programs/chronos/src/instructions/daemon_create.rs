@@ -24,11 +24,9 @@ pub struct DaemonCreate<'info> {
 }
 
 pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
-    // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
     let owner = &ctx.accounts.owner;
 
-    // Initialize daemon account.
     daemon.owner = owner.key();
     daemon.bump = bump;
 

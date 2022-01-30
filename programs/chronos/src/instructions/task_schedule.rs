@@ -41,10 +41,8 @@ pub fn handler(
     execute_at: u64,
     bump: u8,
 ) -> ProgramResult {
-    // Get accounts.
     let daemon = &ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
-
 
     // Validate the daemon is the only required signer on the instruction.
     // If the instruction has other required signers, we should just fail now.
@@ -55,7 +53,6 @@ pub fn handler(
         );
     }
 
-    // Initialize task account.
     task.daemon = daemon.key();
     task.instruction_data = instruction_data;
     task.is_executed = false;
