@@ -23,6 +23,7 @@ pub struct TaskSchedule<'info> {
     pub authority: Account<'info, Authority>,
 
     #[account(
+        mut,
         seeds = [
             SEED_DAEMON, 
             daemon.owner.as_ref()
@@ -51,7 +52,8 @@ pub struct TaskSchedule<'info> {
         init,
         seeds = [
             SEED_TASK, 
-            daemon.key().as_ref()
+            daemon.key().as_ref(),
+            daemon.total_task_count.to_be_bytes().as_ref(),
         ],
         bump = task_bump,
         payer = owner,
@@ -87,7 +89,7 @@ pub fn handler(
 ) -> ProgramResult {
     // Get accounts.
     let authority = &ctx.accounts.authority;
-    let daemon = &ctx.accounts.daemon;
+    let daemon = &mut ctx.accounts.daemon;
     let list_program = &ctx.accounts.list_program;
     let owner = &ctx.accounts.owner;
     let system_program = &ctx.accounts.system_program;
@@ -106,12 +108,16 @@ pub fn handler(
 
     // Initialize task account.
     task.daemon = daemon.key();
+    task.id = daemon.total_task_count;
     task.instruction_data = instruction_data;
     task.status = TaskStatus::Pending;
     task.execute_at = execute_at;
     task.repeat_every = repeat_every;
     task.repeat_until = repeat_until;
     task.bump = task_bump;
+
+    // Increment daemon task counter.
+    daemon.total_task_count = daemon.total_task_count.checked_add(1).unwrap();
 
     // Add task to list for execution in the given timeframe.
     list_program::cpi::push_element(

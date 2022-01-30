@@ -4,8 +4,10 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Your daemon cannot provide all required signatures for this instruction")]
     InvalidSignatory,
-    #[msg("This task is no longer pending and may not be executed again")]
+    #[msg("Task is not pending and may not executed")]
     TaskNotPending,
+    #[msg("This task is not marked for repeat")]
+    TaskNotRepeatable,
     #[msg("This task is not due and may not be executed yet")]
     TaskNotDue,
     #[msg("Unknown error")]

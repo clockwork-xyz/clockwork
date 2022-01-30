@@ -51,6 +51,16 @@
     "@solana/web3.js" "^1.31.0"
     bs58 "^4.0.1"
 
+"@faktorfi/utils@^1.0.7":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@faktorfi/utils/-/utils-1.0.7.tgz#cf5274549c6eedc802548bb7756ba77f9d554ffb"
+  integrity sha512-ZS3yZppPO9U1i8D2yRfG5rY2es/Ycw8yOsH01OpjF6Sn9hbHGiha/+bZGp7n9gBzoW3kna8MEJc7YKChkdwmKg==
+  dependencies:
+    "@project-serum/anchor" "^0.20.1"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.31.0"
+    bs58 "^4.0.1"
+
 "@project-serum/anchor@^0.20.1":
   version "0.20.1"
   resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.20.1.tgz#0937807e807e8332aa708cfef4bcb6cbb88b4129"

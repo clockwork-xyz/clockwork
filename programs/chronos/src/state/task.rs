@@ -16,6 +16,7 @@ pub struct TaskRecurrenceSchedule {}
 #[account]
 pub struct Task {
     pub daemon: Pubkey,
+    pub id: u128,
     pub instruction_data: InstructionData,
     pub status: TaskStatus,
     pub execute_at: u64,

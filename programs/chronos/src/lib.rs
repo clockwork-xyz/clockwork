@@ -3,6 +3,7 @@ mod instructions;
 pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
+
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
@@ -35,6 +36,14 @@ pub mod chronos {
 
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
         task_execute::handler(ctx)
+    }
+
+    pub fn task_repeat(
+        ctx: Context<TaskRepeat>,
+        next_task_bump: u8,
+        next_task_element_bump: u8,
+    ) -> ProgramResult {
+        task_repeat::handler(ctx, next_task_bump, next_task_element_bump)
     }
 
     pub fn task_schedule(

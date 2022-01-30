@@ -28,6 +28,8 @@ pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
     let owner = &ctx.accounts.owner;
 
     daemon.owner = owner.key();
+    daemon.total_task_count = 0;
+    daemon.executed_task_count = 0;
     daemon.bump = bump;
 
     Ok(())
