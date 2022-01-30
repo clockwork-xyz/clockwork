@@ -20,16 +20,16 @@ pub mod chronos {
         daemon_invoke::handler(ctx, instruction_data)
     }
 
-    pub fn task_create(
-        ctx: Context<TaskCreate>,
+    pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
+        task_execute::handler(ctx)
+    }
+
+    pub fn task_schedule(
+        ctx: Context<TaskSchedule>,
         instruction_data: InstructionData,
         execute_at: u64,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(ctx, instruction_data, execute_at, bump)
-    }
-
-    pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
-        task_execute::handler(ctx)
+        task_schedule::handler(ctx, instruction_data, execute_at, bump)
     }
 }

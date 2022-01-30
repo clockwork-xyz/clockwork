@@ -9,15 +9,15 @@ use {
 pub struct DaemonCreate<'info> {
     #[account(
         init,
-        seeds = [SEED_DAEMON, signer.key().as_ref()],
+        seeds = [SEED_DAEMON, owner.key().as_ref()],
         bump = bump,
-        payer = signer,
+        payer = owner,
         space = 8 + size_of::<Daemon>(),
     )]
     pub daemon: Account<'info, Daemon>,
 
     #[account(mut)]
-    pub signer: Signer<'info>,
+    pub owner: Signer<'info>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -26,11 +26,11 @@ pub struct DaemonCreate<'info> {
 pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
     // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
-    let signer = &ctx.accounts.signer;
+    let owner = &ctx.accounts.owner;
 
     // Initialize daemon account.
-    daemon.owner = signer.key();
+    daemon.owner = owner.key();
     daemon.bump = bump;
 
-    return Ok(());
+    Ok(())
 }

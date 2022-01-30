@@ -57,11 +57,11 @@ describe("Chronos", () => {
 
   const program = anchor.workspace.Chronos as Program<Chronos>;
 
-  it("Creates an daemon", async () => {
+  it("Creates a daemon", async () => {
     let ix = program.instruction.daemonCreate(daemonPDA.bump, {
       accounts: {
         daemon: daemonPDA.address,
-        signer: signer.publicKey,
+        owner: signer.publicKey,
         systemProgram: SystemProgram.programId,
       },
     });
@@ -89,7 +89,54 @@ describe("Chronos", () => {
     );
   });
 
-  it("Creates a task", async () => {
+  it("Invokes a daemon", async () => {
+    // Measure balances before
+    let daemonTokenAccountInfoBefore = await tokenProgram.getAccountInfo(
+      daemonTokens
+    );
+    let signerTokenAccountInfoBefore = await tokenProgram.getAccountInfo(
+      signerTokens
+    );
+
+    // Invoke a task
+    let taskIx = Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      daemonTokens,
+      signerTokens,
+      daemonPDA.address,
+      [],
+      TRANSFER_AMOUNT.toNumber()
+    );
+    const taskIxData = buildInstructionData(taskIx);
+    let ix = program.instruction.daemonInvoke(taskIxData, {
+      accounts: {
+        daemon: daemonPDA.address,
+        owner: signer.publicKey,
+      },
+      remainingAccounts: buildRemainingAccounts(taskIxData, daemonPDA.address),
+    });
+    await signAndSubmit(provider.connection, [ix], signer);
+
+    // Validate token balances after
+    let daemonTokenAccountInfoAfter = await tokenProgram.getAccountInfo(
+      daemonTokens
+    );
+    let signerTokenAccountInfoAfter = await tokenProgram.getAccountInfo(
+      signerTokens
+    );
+    assert(
+      daemonTokenAccountInfoAfter.amount.eq(
+        daemonTokenAccountInfoBefore.amount.sub(TRANSFER_AMOUNT)
+      )
+    );
+    assert(
+      signerTokenAccountInfoAfter.amount.eq(
+        signerTokenAccountInfoBefore.amount.add(TRANSFER_AMOUNT)
+      )
+    );
+  });
+
+  it("Schedules a task", async () => {
     taskPDA = await findPDA(
       [SEED_TASK, daemonPDA.address.toBuffer()],
       program.programId
@@ -107,15 +154,15 @@ describe("Chronos", () => {
       [],
       TRANSFER_AMOUNT.toNumber()
     );
-    let ix = program.instruction.taskCreate(
-      taskIx,
+    let ix = program.instruction.taskSchedule(
+      buildInstructionData(taskIx),
       new anchor.BN(executeAt),
       taskPDA.bump,
       {
         accounts: {
           daemon: daemonPDA.address,
           task: taskPDA.address,
-          signer: signer.publicKey,
+          owner: signer.publicKey,
           systemProgram: SystemProgram.programId,
         },
       }
@@ -129,12 +176,9 @@ describe("Chronos", () => {
     assert(taskData.bump === taskPDA.bump);
   });
 
-  before(async () => {
-    await sleep(1000);
-  });
-
   it("Executes a task", async () => {
     // Measure balances before
+    await sleep(500);
     let daemonTokenAccountInfoBefore = await tokenProgram.getAccountInfo(
       daemonTokens
     );
@@ -144,18 +188,6 @@ describe("Chronos", () => {
 
     // Process task
     let taskData = await program.account.task.fetch(taskPDA.address);
-    let remainingAccounts = (
-      taskData.instructionData.keys as Array<AccountMetaData>
-    ).map((acc) => {
-      if (acc.pubkey.toString() === daemonPDA.address.toString())
-        acc.isSigner = false;
-      return acc;
-    });
-    remainingAccounts.push({
-      pubkey: taskData.instructionData.programId,
-      isSigner: false,
-      isWritable: false,
-    });
     let ix = program.instruction.taskExecute({
       accounts: {
         clock: SYSVAR_CLOCK_PUBKEY,
@@ -163,7 +195,10 @@ describe("Chronos", () => {
         task: taskPDA.address,
         worker: worker.publicKey,
       },
-      remainingAccounts: remainingAccounts,
+      remainingAccounts: buildRemainingAccounts(
+        taskData.instructionData,
+        daemonPDA.address
+      ),
     });
     await signAndSubmit(provider.connection, [ix], worker);
 
@@ -190,3 +225,33 @@ describe("Chronos", () => {
     assert(taskData.isExecuted === true);
   });
 });
+
+function buildInstructionData(
+  ix: web3.TransactionInstruction
+): InstructionData {
+  return {
+    programId: ix.programId,
+    keys: ix.keys as Array<AccountMetaData>,
+    data: ix.data,
+  };
+}
+
+function buildRemainingAccounts(
+  ixData: InstructionData,
+  daemon: PublicKey
+): Array<AccountMetaData> {
+  return (ixData.keys as Array<AccountMetaData>)
+    .map((acc) => ({
+      pubkey: acc.pubkey,
+      isSigner:
+        acc.pubkey.toString() === daemon.toString() ? false : acc.isSigner,
+      isWritable: acc.isWritable,
+    }))
+    .concat([
+      {
+        pubkey: ixData.programId,
+        isSigner: false,
+        isWritable: false,
+      },
+    ]);
+}

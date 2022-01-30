@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::{errors::*, state::*},
     anchor_lang::prelude::*,
     solana_program::{instruction::Instruction, program::invoke_signed},
 };
@@ -20,8 +20,8 @@ pub struct TaskProcess<'info> {
         mut,
         seeds = [SEED_TASK, daemon.key().as_ref()],
         bump = task.bump,
-        constraint = task.is_executed == false,
-        constraint = task.execute_at <= clock.unix_timestamp as u64,
+        constraint = task.is_executed == false @ ErrorCode::TaskAlreadyExecuted,
+        constraint = task.execute_at <= clock.unix_timestamp as u64 @ ErrorCode::TaskNotDue,
         owner = crate::ID
     )]
     pub task: Account<'info, Task>,
@@ -31,13 +31,12 @@ pub struct TaskProcess<'info> {
 }
 
 pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
-    // Get accounts.
     let daemon = &ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
     invoke_signed(
         &Instruction::from(&task.instruction_data),
-        &mut ctx.remaining_accounts.iter().as_slice(),
+        &ctx.remaining_accounts.iter().as_slice(),
         &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
     )?;
 
