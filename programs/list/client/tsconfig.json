@@ -1,0 +1,21 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "target": "esnext",
+        "module": "esnext",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "baseUrl": ".",
+        "paths": {}
+    },
+    "exclude": [
+        "dist",
+        "node_modules",
+        ".yarn"
+    ]
+}

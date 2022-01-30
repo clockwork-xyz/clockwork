@@ -30,35 +30,26 @@
     "@ethersproject/logger" "^5.5.0"
     hash.js "1.1.7"
 
-"@faktorfi/utils@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@faktorfi/utils/-/utils-1.0.5.tgz#9c63fdbcc166335a72d769d36989eb7cbb4d7fbf"
-  integrity sha512-Oeo/QhuYzoVVFZ7cnwkS8ze0OOHdpVd0PcEbxFC/fL/uX0KZNl5CqmTpGKoZuDVtENZEvwbPEdQ6TkL2sUhO/Q==
+"@faktorfi/list-program@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@faktorfi/list-program/-/list-program-0.0.4.tgz#ea888e0ff698dc0cdd44ef633ccf1ea35ad9ea7b"
+  integrity sha512-XZ9vgpLxZaI+6Zf6vN/qmcKApsOZbzGiH3w6YOUFuIQKzOLZLKCNXXZ+5uisqjCsIex1wBz0UYptqE0JyL3pKw==
   dependencies:
-    "@project-serum/anchor" "^0.19.0"
+    "@faktorfi/utils" "^1.0.6"
+    "@project-serum/anchor" "^0.20.1"
     "@solana/spl-token" "^0.1.8"
     "@solana/web3.js" "^1.31.0"
     bs58 "^4.0.1"
 
-"@project-serum/anchor@^0.19.0":
-  version "0.19.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.19.0.tgz#79f1fbe7c3134860ccbfe458a0e09daf79644885"
-  integrity sha512-cs0LBmJOrL9eJ8MRNqitnzbpCT5QEzVdJmiIjfNV5YaGn1K9vISR7DtISj3Bdl3KBdLqii4CTw1mpHdi8iXUCg==
+"@faktorfi/utils@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@faktorfi/utils/-/utils-1.0.6.tgz#2869c4e52c99b83e078d40e7c72958a96a811517"
+  integrity sha512-58grwBNOfgm9VLTRESFwRtFI/t1mMYosd5aFvuZie94ere0JVufMsgyFJShlHmuWWIaVCkMjvd5zb1Ue+oOkrg==
   dependencies:
-    "@project-serum/borsh" "^0.2.2"
-    "@solana/web3.js" "^1.17.0"
-    base64-js "^1.5.1"
-    bn.js "^5.1.2"
+    "@project-serum/anchor" "^0.20.1"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.31.0"
     bs58 "^4.0.1"
-    buffer-layout "^1.2.2"
-    camelcase "^5.3.1"
-    crypto-hash "^1.3.0"
-    eventemitter3 "^4.0.7"
-    find "^0.3.0"
-    js-sha256 "^0.9.0"
-    pako "^2.0.3"
-    snake-case "^3.0.4"
-    toml "^3.0.0"
 
 "@project-serum/anchor@^0.20.1":
   version "0.20.1"

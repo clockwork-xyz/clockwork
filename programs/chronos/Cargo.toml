@@ -17,4 +17,5 @@ default = []
 
 [dependencies]
 anchor-lang = "0.20.1"
+list-program = { version = "0.0.3", features = ["cpi"] }
 solana-program = "1.7.12"

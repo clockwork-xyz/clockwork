@@ -1,0 +1,21 @@
+[package]
+name = "list-program"
+version = "0.0.4"
+description = "Create an on-chain list of accounts"
+edition = "2018"
+license = "ISC"
+homepage = "https://github.com/faktorfi/programs/tree/main/programs/list"
+repository = "https://github.com/faktorfi/programs"
+documentation = "https://faktor.finance"
+readme = "./README.md"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "list_program"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+anchor-lang = "0.20.1"

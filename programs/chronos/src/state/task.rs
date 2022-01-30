@@ -3,12 +3,24 @@ use solana_program::instruction::Instruction;
 
 pub const SEED_TASK: &[u8] = b"task";
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq)]
+pub enum TaskStatus {
+    Done,
+    Pending,
+    Repeat,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
+pub struct TaskRecurrenceSchedule {}
+
 #[account]
 pub struct Task {
     pub daemon: Pubkey,
     pub instruction_data: InstructionData,
-    pub is_executed: bool,
+    pub status: TaskStatus,
     pub execute_at: u64,
+    pub repeat_every: u64,
+    pub repeat_until: u64,
     pub bump: u8,
 }
 

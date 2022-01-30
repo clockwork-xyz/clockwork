@@ -1,7 +1,8 @@
 {
   "license": "MIT",
   "dependencies": {
-    "@faktorfi/utils": "^1.0.5",
+    "@faktorfi/list-program": "^0.0.4",
+    "@faktorfi/utils": "^1.0.6",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8"
   },

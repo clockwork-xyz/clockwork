@@ -7,6 +7,7 @@ import {
   PDA,
   signAndSubmit,
   sleep,
+  sleepUntil,
 } from "@faktorfi/utils";
 import * as anchor from "@project-serum/anchor";
 import { web3, Program } from "@project-serum/anchor";
@@ -19,25 +20,39 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
+import { ListProgram } from "@faktorfi/list-program";
 
-type InstructionData = TypeDef<Chronos["types"][0], Chronos>;
-type AccountMetaData = TypeDef<Chronos["types"][1], Chronos>;
+type TaskRecurrenceSchedule = TypeDef<Chronos["types"][0], Chronos>;
+type InstructionData = TypeDef<Chronos["types"][1], Chronos>;
+type AccountMetaData = TypeDef<Chronos["types"][2], Chronos>;
+type TaskStatus = TypeDef<Chronos["types"][3], Chronos>;
 
 const SEED_AGENT = Buffer.from("daemon");
+const SEED_AUTHORITY = Buffer.from("authority");
+const SEED_FRAME = Buffer.from("frame");
 const SEED_TASK = Buffer.from("task");
+
+const ONE_MINUTE = new anchor.BN(60);
 
 describe("Chronos", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.Provider.env();
   anchor.setProvider(provider);
 
+  let listProgram = new ListProgram(provider);
+
   let signer: web3.Keypair;
   let worker: web3.Keypair;
+  let authorityPDA: PDA;
   let daemonPDA: PDA;
+  let framePDA: PDA;
+  let listPDA: PDA;
   let taskPDA: PDA;
+  let taskElementPDA: PDA;
   let signerTokens: PublicKey;
   let daemonTokens: PublicKey;
   let tokenProgram: Token;
+  let timestamp: anchor.BN;
   let TRANSFER_AMOUNT = new anchor.BN(0.05 * LAMPORTS_PER_SOL);
 
   before(async () => {
@@ -56,6 +71,23 @@ describe("Chronos", () => {
   });
 
   const program = anchor.workspace.Chronos as Program<Chronos>;
+
+  it("Initializes", async () => {
+    authorityPDA = await findPDA([SEED_AUTHORITY], program.programId);
+    let ix = program.instruction.initialize(authorityPDA.bump, {
+      accounts: {
+        authority: authorityPDA.address,
+        signer: signer.publicKey,
+        systemProgram: SystemProgram.programId,
+      },
+    });
+    await signAndSubmit(provider.connection, [ix], signer);
+
+    const authorityData = await program.account.authority.fetch(
+      authorityPDA.address
+    );
+    assert(authorityData.bump == authorityPDA.bump);
+  });
 
   it("Creates a daemon", async () => {
     let ix = program.instruction.daemonCreate(daemonPDA.bump, {
@@ -136,14 +168,51 @@ describe("Chronos", () => {
     );
   });
 
-  it("Schedules a task", async () => {
+  it("Creates a frame", async () => {
+    timestamp = nextFrameTimestamp();
+    framePDA = await findPDA(
+      [SEED_FRAME, timestamp.toArrayLike(Buffer, "be", 8)],
+      program.programId
+    );
+    listPDA = await listProgram.account.list.pda(
+      authorityPDA.address,
+      framePDA.address
+    );
+    let ix = program.instruction.frameCreate(
+      timestamp,
+      framePDA.bump,
+      listPDA.bump,
+      {
+        accounts: {
+          authority: authorityPDA.address,
+          clock: SYSVAR_CLOCK_PUBKEY,
+          frame: framePDA.address,
+          list: listPDA.address,
+          listProgram: ListProgram.programId,
+          payer: signer.publicKey,
+          systemProgram: SystemProgram.programId,
+        },
+      }
+    );
+
+    await signAndSubmit(provider.connection, [ix], signer);
+
+    const frameData = await program.account.frame.fetch(framePDA.address);
+    assert(frameData.timestamp.eq(timestamp));
+    assert(frameData.bump == framePDA.bump);
+  });
+
+  it("Schedules a one-time task", async () => {
     taskPDA = await findPDA(
       [SEED_TASK, daemonPDA.address.toBuffer()],
       program.programId
     );
 
-    let now = new Date();
-    let executeAt = new anchor.BN(dateToSeconds(now));
+    let listData = await listProgram.account.list.data(listPDA.address);
+    taskElementPDA = await listProgram.account.element.pda(
+      listPDA.address,
+      listData.count
+    );
 
     // Create SPL token transfer instruction
     let taskIx = Token.createTransferInstruction(
@@ -154,14 +223,24 @@ describe("Chronos", () => {
       [],
       TRANSFER_AMOUNT.toNumber()
     );
+
+    // Schedule a one-time task
     let ix = program.instruction.taskSchedule(
       buildInstructionData(taskIx),
-      new anchor.BN(executeAt),
+      timestamp,
+      new anchor.BN(0),
+      timestamp,
       taskPDA.bump,
+      taskElementPDA.bump,
       {
         accounts: {
+          authority: authorityPDA.address,
           daemon: daemonPDA.address,
+          frame: framePDA.address,
+          listProgram: ListProgram.programId,
           task: taskPDA.address,
+          taskElement: taskElementPDA.address,
+          taskList: listPDA.address,
           owner: signer.publicKey,
           systemProgram: SystemProgram.programId,
         },
@@ -171,14 +250,16 @@ describe("Chronos", () => {
 
     let taskData = await program.account.task.fetch(taskPDA.address);
     assert(taskData.daemon.toString() === daemonPDA.address.toString());
-    assert(taskData.isExecuted === false);
-    assert(taskData.executeAt.eq(executeAt));
+    assert(Object.keys(taskData.status)[0] === "pending");
+    assert(taskData.executeAt.eq(timestamp));
+    assert(taskData.repeatEvery.eq(new anchor.BN(0)));
+    assert(taskData.repeatUntil.eq(timestamp));
     assert(taskData.bump === taskPDA.bump);
   });
 
-  it("Executes a task", async () => {
+  it("Executes a one-time task", async () => {
     // Measure balances before
-    await sleep(500);
+    await sleepUntil(new Date(timestamp.toNumber() * 1000 + 1000));
     let daemonTokenAccountInfoBefore = await tokenProgram.getAccountInfo(
       daemonTokens
     );
@@ -191,13 +272,13 @@ describe("Chronos", () => {
     let ix = program.instruction.taskExecute({
       accounts: {
         clock: SYSVAR_CLOCK_PUBKEY,
-        daemon: daemonPDA.address,
+        daemon: taskData.daemon,
         task: taskPDA.address,
         worker: worker.publicKey,
       },
       remainingAccounts: buildRemainingAccounts(
         taskData.instructionData,
-        daemonPDA.address
+        taskData.daemon
       ),
     });
     await signAndSubmit(provider.connection, [ix], worker);
@@ -222,9 +303,18 @@ describe("Chronos", () => {
 
     // Validate task data
     taskData = await program.account.task.fetch(taskPDA.address);
-    assert(taskData.isExecuted === true);
+    assert(Object.keys(taskData.status)[0] === "done");
   });
 });
+
+function nextFrameTimestamp(): anchor.BN {
+  const now = new Date();
+  const thisFrame = new Date(now.setSeconds(0, 0));
+  const nextFrame = new Date(
+    thisFrame.getTime() + ONE_MINUTE.toNumber() * 1000
+  );
+  return new anchor.BN(dateToSeconds(nextFrame));
+}
 
 function buildInstructionData(
   ix: web3.TransactionInstruction

@@ -1,5 +1,6 @@
 [programs.localnet]
 chronos = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+list_program = "DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi"
 
 [registry]
 url = "https://anchor.projectserum.com"
