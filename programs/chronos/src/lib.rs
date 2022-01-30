@@ -13,6 +13,13 @@ pub mod chronos {
         daemon_create::handler(ctx, bump)
     }
 
+    pub fn daemon_invoke(
+        ctx: Context<DaemonInvoke>,
+        instruction_data: InstructionData,
+    ) -> ProgramResult {
+        daemon_invoke::handler(ctx, instruction_data)
+    }
+
     pub fn task_create(
         ctx: Context<TaskCreate>,
         instruction_data: InstructionData,
@@ -20,14 +27,6 @@ pub mod chronos {
         bump: u8,
     ) -> ProgramResult {
         task_create::handler(ctx, instruction_data, execute_at, bump)
-    }
-
-    pub fn task_create_and_execute(
-        ctx: Context<TaskCreateAndExecute>,
-        instruction_data: InstructionData,
-        bump: u8,
-    ) -> ProgramResult {
-        task_create_and_execute::handler(ctx, instruction_data, bump)
     }
 
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
