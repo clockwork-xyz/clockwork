@@ -1,6 +1,23 @@
-
+# Anchor
 .anchor
 .DS_Store
 target
 **/*.rs.bk
-node_modules
+
+# Node
+**/dist
+**/node_modules
+**/tsconfig.tsbuildinfo
+
+# Solana
+**/test-ledger
+
+# Yarn
+**/.yarn
+**/.yarn/.cache/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*

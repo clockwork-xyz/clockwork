@@ -1,13 +1,13 @@
 {
-  "name": "@chronos-so/list",
-  "description": "Chronos list client",
+  "name": "@chronos-so/scheduler",
+  "description": "Chronos scheduler",
   "version": "0.0.1",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/chronos-so/chronos",
   "bugs": "https://github.com/chronos-so/chronos/issues",
-  "main": "dist/chronos-so-list.cjs",
-  "module": "dist/chronos-so-list.esm.js",
+  "main": "dist/chronos-so-scheduler.cjs",
+  "module": "dist/chronos-so-scheduler.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -23,6 +23,7 @@
     "publish": "yarn npm publish"
   },
   "dependencies": {
+    "@chronos-so/list": "workspace:^",
     "@chronos-so/utils": "workspace:^",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8",

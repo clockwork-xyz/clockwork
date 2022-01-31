@@ -1,4 +1,4 @@
-import { Gateway, findPDA } from "@faktorfi/utils";
+import { Gateway, findPDA } from "@chronos-so/utils";
 import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { ListProgram } from "../idl";

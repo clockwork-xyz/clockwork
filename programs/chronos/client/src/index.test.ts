@@ -8,19 +8,19 @@ import {
   signAndSubmit,
   sleep,
   sleepUntil,
-} from "@faktorfi/utils";
+} from "@chronos-so/utils";
 import * as anchor from "@project-serum/anchor";
 import { web3, Program } from "@project-serum/anchor";
 import { TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { Token, TOKEN_PROGRAM_ID, NATIVE_MINT } from "@solana/spl-token";
-import { Chronos } from "../target/types/chronos";
+import { Chronos } from "./idl";
 import {
   SystemProgram,
   LAMPORTS_PER_SOL,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { ListProgram } from "@faktorfi/list-program";
+import { ListProgram } from "@chronos-so/list";
 
 type TaskRecurrenceSchedule = TypeDef<Chronos["types"][0], Chronos>;
 type InstructionData = TypeDef<Chronos["types"][1], Chronos>;

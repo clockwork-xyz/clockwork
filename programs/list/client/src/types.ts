@@ -1,4 +1,4 @@
-import { AccountData } from "@faktorfi/utils";
+import { AccountData } from "@chronos-so/utils";
 import { ListProgram } from "./idl";
 
 export type ElementAccountData = AccountData<

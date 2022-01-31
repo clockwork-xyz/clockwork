@@ -1,8 +1,8 @@
 import assert from "assert";
 import { BN, Provider, setProvider } from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
-import { airdrop, PDA, signAndSubmit } from "@faktorfi/utils";
-import { ListProgram } from ".";
+import { airdrop, PDA, signAndSubmit } from "@chronos-so/utils";
+import { ListProgram } from "../src";
 
 describe("List program", () => {
   // Configure the listProgram to use the local cluster.
