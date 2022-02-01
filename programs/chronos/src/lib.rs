@@ -10,6 +10,34 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod chronos {
     use super::*;
 
+    pub fn config_update_admin_authority(
+        ctx: Context<ConfigUpdateAdminAuthority>,
+        new_admin_authority: Pubkey,
+    ) -> ProgramResult {
+        config_update_admin_authority::handler(ctx, new_admin_authority)
+    }
+
+    pub fn config_update_frame_interval(
+        ctx: Context<ConfigUpdateFrameInterval>,
+        new_frame_interval: u64,
+    ) -> ProgramResult {
+        config_update_frame_interval::handler(ctx, new_frame_interval)
+    }
+
+    pub fn config_update_program_fee(
+        ctx: Context<ConfigUpdateProgramFee>,
+        new_program_fee: u64,
+    ) -> ProgramResult {
+        config_update_program_fee::handler(ctx, new_program_fee)
+    }
+
+    pub fn config_update_worker_fee(
+        ctx: Context<ConfigUpdateWorkerFee>,
+        new_worker_fee: u64,
+    ) -> ProgramResult {
+        config_update_worker_fee::handler(ctx, new_worker_fee)
+    }
+
     pub fn daemon_create(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
         daemon_create::handler(ctx, bump)
     }
@@ -30,8 +58,21 @@ pub mod chronos {
         frame_create::handler(ctx, timestamp, frame_bump, list_bump)
     }
 
-    pub fn initialize(ctx: Context<Initialize>, authority_bump: u8) -> ProgramResult {
-        initialize::handler(ctx, authority_bump)
+    pub fn initialize(
+        ctx: Context<Initialize>,
+        authority_bump: u8,
+        config_bump: u8,
+        treasury_bump: u8,
+    ) -> ProgramResult {
+        initialize::handler(ctx, authority_bump, config_bump, treasury_bump)
+    }
+
+    pub fn revenue_collect(ctx: Context<RevenueCollect>) -> ProgramResult {
+        revenue_collect::handler(ctx)
+    }
+
+    pub fn revenue_create(ctx: Context<RevenueCreate>, bump: u8) -> ProgramResult {
+        revenue_create::handler(ctx, bump)
     }
 
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {

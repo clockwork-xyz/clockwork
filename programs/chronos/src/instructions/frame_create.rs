@@ -1,5 +1,5 @@
 use {
-    crate::{errors::*, instructions::utils::ONE_MINUTE,  state::*},
+    crate::{errors::*, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
@@ -20,10 +20,17 @@ pub struct WindowCreate<'info> {
     pub authority: Account<'info, Authority>,
 
     #[account(
-        constraint = timestamp % ONE_MINUTE == 0 @ ErrorCode::Unknown,
+        constraint = timestamp % config.frame_interval == 0 @ ErrorCode::Unknown,
         constraint = timestamp > clock.unix_timestamp as u64 @ ErrorCode::Unknown
     )]
     pub clock: Sysvar<'info, Clock>,
+
+    #[account(
+        seeds = [SEED_CONFIG],
+        bump = config.bump,
+        owner = crate::ID
+    )]
+    pub config: Account<'info, Config>,
 
     #[account(
         init,

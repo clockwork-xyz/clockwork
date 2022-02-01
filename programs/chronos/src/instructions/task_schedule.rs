@@ -131,7 +131,7 @@ pub fn handler(
                 system_program: system_program.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority.bump]]]
-        ), 
+        ),
         task.key(),
         task_element_bump, 
     )?;
