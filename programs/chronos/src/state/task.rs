@@ -10,9 +10,6 @@ pub enum TaskStatus {
     Repeat,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
-pub struct TaskRecurrenceSchedule {}
-
 #[account]
 pub struct Task {
     pub daemon: Pubkey,
