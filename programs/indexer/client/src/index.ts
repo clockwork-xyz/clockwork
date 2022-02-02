@@ -3,7 +3,7 @@ import { Account } from "./account";
 import { Instruction } from "./instruction";
 import { IDL, Indexer as _Indexer } from "./idl";
 
-export const PROGRAM_ID = "DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi";
+export const PROGRAM_ID = "4jnuXU4zsBavciDpTNmJ8dtwMBSkhKn2EBCiE9Rrv8uQ";
 
 export class Indexer {
   static programId = PROGRAM_ID;

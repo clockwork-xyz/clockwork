@@ -4,7 +4,7 @@ import { Account } from "./account";
 import { Instruction } from "./instruction";
 import { IDL, Chronos as _Chronos } from "./idl";
 
-export const PROGRAM_ID = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS";
+export const PROGRAM_ID = "9cEqpQLV3VGN6mBtFKwheJoreg6BXvyCf6pWWDA1FhRf";
 
 export class Chronos {
   static programId = PROGRAM_ID;

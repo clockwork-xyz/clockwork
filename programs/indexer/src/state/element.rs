@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 /// Root seed for deriving Element account PDAs.
-pub const SEED_ELEMENT: &[u8] = b"elm";
+pub const SEED_ELEMENT: &[u8] = b"element";
 
 /// Element accounts track an address's position in a list.
 #[account]

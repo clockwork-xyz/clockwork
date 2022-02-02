@@ -3,7 +3,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*};
 
-declare_id!("DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi");
+declare_id!("4jnuXU4zsBavciDpTNmJ8dtwMBSkhKn2EBCiE9Rrv8uQ");
 
 #[program]
 pub mod indexer {

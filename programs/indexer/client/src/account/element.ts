@@ -3,7 +3,7 @@ import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { Indexer } from "../idl";
 
-const SEED_ELEMENT = Buffer.from("elm");
+const SEED_ELEMENT = Buffer.from("element");
 
 export class ElementGateway extends Gateway<Indexer, Indexer["accounts"][0]> {
   public async pda(index: PublicKey, position: BN) {

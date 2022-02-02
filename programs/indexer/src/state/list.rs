@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 /// Root seed for deriving List account PDAs.
-pub const SEED_LIST: &[u8] = b"lst";
+pub const SEED_LIST: &[u8] = b"list";
 
 /// List accounts store a list's metadata.
 #[account]
