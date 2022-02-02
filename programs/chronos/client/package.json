@@ -1,13 +1,13 @@
 {
-  "name": "@chronos-so/scheduler",
+  "name": "@chronos-so/chronos",
   "description": "Chronos scheduler",
   "version": "0.0.1",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/chronos-so/chronos",
   "bugs": "https://github.com/chronos-so/chronos/issues",
-  "main": "dist/chronos-so-scheduler.cjs",
-  "module": "dist/chronos-so-scheduler.esm.js",
+  "main": "dist/chronos-so-chronos.cjs",
+  "module": "dist/chronos-so-chronos.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",

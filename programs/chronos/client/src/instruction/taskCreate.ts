@@ -66,7 +66,7 @@ export class TaskCreate {
           authority: authorityPDA.address,
           daemon: daemon,
           frame: framePDA.address,
-          listProgram: Indexer.programId,
+          indexerProgram: Indexer.programId,
           task: taskPDA.address,
           taskElement: taskElementPDA.address,
           taskList: taskListPDA.address,

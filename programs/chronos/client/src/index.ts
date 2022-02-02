@@ -1,4 +1,4 @@
-import { ListProgram } from "@chronos-so/indexer";
+import { Indexer } from "@chronos-so/indexer";
 import { Program, Provider } from "@project-serum/anchor";
 import { Account } from "./account";
 import { Instruction } from "./instruction";
@@ -14,7 +14,7 @@ export class Chronos {
 
   constructor(provider: Provider) {
     const chronos = new Program(IDL, PROGRAM_ID, provider);
-    const indexer = new ListProgram(provider);
+    const indexer = new Indexer(provider);
     const account = new Account(chronos);
     const instruction = new Instruction(account, chronos, indexer);
     this.account = account;

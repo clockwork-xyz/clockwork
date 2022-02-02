@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import { Chronos } from "../idl";
 import { Account } from "../account";
-import { ListProgram } from "@chronos-so/indexer";
+import { Indexer } from "@chronos-so/indexer";
 
 export type TaskRepeatArgs = {
   task: PublicKey;
@@ -16,13 +16,9 @@ export type TaskRepeatArgs = {
 export class TaskRepeat {
   private account: Account;
   private chronos: Program<Chronos>;
-  private indexer: ListProgram;
+  private indexer: Indexer;
 
-  constructor(
-    account: Account,
-    chronos: Program<Chronos>,
-    indexer: ListProgram
-  ) {
+  constructor(account: Account, chronos: Program<Chronos>, indexer: Indexer) {
     this.account = account;
     this.chronos = chronos;
     this.indexer = indexer;
@@ -61,7 +57,7 @@ export class TaskRepeat {
           authority: authorityPDA.address,
           config: configPDA.address,
           daemon: taskData.daemon,
-          listProgram: ListProgram.programId,
+          indexerProgram: Indexer.programId,
           nextFrame: nextFramePDA.address,
           nextTask: nextTaskPDA.address,
           nextTaskElement: nextTaskElementPDA.address,

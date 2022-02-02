@@ -8,7 +8,8 @@
     "copy-idl": "./scripts/copy-idl.sh"
   },
   "workspaces": [
-    "programs/list/client",
+    "programs/chronos/client",
+    "programs/indexer/client",
     "utils"
   ]
 }
