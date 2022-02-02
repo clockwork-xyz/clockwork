@@ -1,7 +1,6 @@
 use {
-    crate::{errors::*, state::*},
+    crate::state::*,
     anchor_lang::prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
 };
 
 #[derive(Accounts)]
