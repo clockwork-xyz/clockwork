@@ -1,6 +1,6 @@
-export type ListProgram = {
-  "version": "0.0.4",
-  "name": "list_program",
+export type Indexer = {
+  "version": "0.0.1",
+  "name": "indexer",
   "instructions": [
     {
       "name": "createList",
@@ -164,9 +164,9 @@ export type ListProgram = {
   ]
 };
 
-export const IDL: ListProgram = {
-  "version": "0.0.4",
-  "name": "list_program",
+export const IDL: Indexer = {
+  "version": "0.0.1",
+  "name": "indexer",
   "instructions": [
     {
       "name": "createList",

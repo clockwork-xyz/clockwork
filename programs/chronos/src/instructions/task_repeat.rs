@@ -20,6 +20,13 @@ pub struct TaskRepeat<'info> {
     pub authority: Account<'info, Authority>,
 
     #[account(
+        seeds = [SEED_CONFIG],
+        bump = config.bump,
+        owner = crate::ID
+    )]
+    pub config: Account<'info, Config>,
+
+    #[account(
         mut,
         seeds = [
             SEED_DAEMON, 
@@ -30,8 +37,8 @@ pub struct TaskRepeat<'info> {
     )]
     pub daemon: Account<'info, Daemon>,
 
-    #[account(address = list_program::ID)]
-    pub list_program: Program<'info, list_program::program::ListProgram>,
+    #[account(address = chronos_indexer::ID)]
+    pub indexer_program: Program<'info, chronos_indexer::program::ListProgram>,
 
     #[account(
         seeds = [
@@ -63,9 +70,9 @@ pub struct TaskRepeat<'info> {
     #[account(
         mut,
         constraint = next_task_list.namespace == next_frame.key(),
-        owner = list_program::ID
+        owner = chronos_indexer::ID
     )]
-    pub next_task_list: Account<'info, list_program::state::List>,
+    pub next_task_list: Account<'info, chronos_indexer::state::List>,
 
     #[account(
         mut,
@@ -95,8 +102,9 @@ pub fn handler(
 ) -> ProgramResult {
     // Get accounts.
     let authority = &ctx.accounts.authority;
+    let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
-    let list_program = &ctx.accounts.list_program;
+    let indexer_program = &ctx.accounts.indexer_program;
     let next_task = &mut ctx.accounts.next_task;
     let next_task_element = &ctx.accounts.next_task_element;
     let next_task_list = &ctx.accounts.next_task_list;
@@ -121,10 +129,10 @@ pub fn handler(
     daemon.total_task_count = daemon.total_task_count.checked_add(1).unwrap();
     
     // Push next task into frame for execution.
-    list_program::cpi::push_element(
+    chronos_indexer::cpi::push_element(
         CpiContext::new_with_signer(
-            list_program.to_account_info(), 
-            list_program::cpi::accounts::PushElement {
+            indexer_program.to_account_info(), 
+            chronos_indexer::cpi::accounts::PushElement {
                 list: next_task_list.to_account_info(),
                 element: next_task_element.to_account_info(),
                 owner: authority.to_account_info(),
@@ -137,7 +145,9 @@ pub fn handler(
         next_task_element_bump, 
     )?;
 
-    // TODO pay out bounty to worker
+    // Transfer lamports from daemon to worker.
+    **daemon.to_account_info().try_borrow_mut_lamports()? -= config.worker_fee;
+    **worker.to_account_info().try_borrow_mut_lamports()? += config.worker_fee;
 
     Ok(())
 }

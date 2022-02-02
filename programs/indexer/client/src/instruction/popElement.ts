@@ -1,6 +1,6 @@
 import { BN, Program } from "@project-serum/anchor";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { ListProgram } from "../idl";
+import { Indexer } from "../idl";
 import { Account } from "../account";
 
 export type PopElementArgs = {
@@ -9,9 +9,9 @@ export type PopElementArgs = {
 
 export class PopElement {
   private account: Account;
-  private program: Program<ListProgram>;
+  private program: Program<Indexer>;
 
-  constructor(account: Account, program: Program<ListProgram>) {
+  constructor(account: Account, program: Program<Indexer>) {
     this.account = account;
     this.program = program;
   }

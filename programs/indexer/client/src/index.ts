@@ -1,11 +1,11 @@
 import { Program, Provider } from "@project-serum/anchor";
 import { Account } from "./account";
 import { Instruction } from "./instruction";
-import { IDL, ListProgram as _ListProgram } from "./idl";
+import { IDL, Indexer as _Indexer } from "./idl";
 
 export const PROGRAM_ID = "DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi";
 
-export class ListProgram {
+export class Indexer {
   static programId = PROGRAM_ID;
 
   public account: Account;

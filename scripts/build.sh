@@ -9,7 +9,8 @@ yarn_build () {
 }
 
 build_clients () {
-    yarn_build programs/list/client ../../..
+    yarn_build programs/indexer/client ../../..
+    yarn_build programs/chronos/client ../../..
 }
 
 build_utils () {

@@ -1,999 +1,1453 @@
 export type Chronos = {
-  version: "0.1.0";
-  name: "chronos";
-  instructions: [
+  "version": "0.0.1",
+  "name": "chronos",
+  "instructions": [
     {
-      name: "daemonCreate";
-      accounts: [
+      "name": "configUpdateAdminAuthority",
+      "accounts": [
         {
-          name: "daemon";
-          isMut: true;
-          isSigner: false;
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "bump";
-          type: "u8";
+          "name": "newAdminAuthority",
+          "type": "publicKey"
         }
-      ];
+      ]
     },
     {
-      name: "daemonInvoke";
-      accounts: [
+      "name": "configUpdateFrameInterval",
+      "accounts": [
         {
-          name: "daemon";
-          isMut: false;
-          isSigner: false;
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner";
-          isMut: true;
-          isSigner: true;
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "instructionData";
-          type: {
-            defined: "InstructionData";
-          };
+          "name": "newFrameInterval",
+          "type": "u64"
         }
-      ];
+      ]
     },
     {
-      name: "frameCreate";
-      accounts: [
+      "name": "configUpdateProgramFee",
+      "accounts": [
         {
-          name: "authority";
-          isMut: true;
-          isSigner: false;
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "clock";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "frame";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "list";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "listProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "payer";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "timestamp";
-          type: "u64";
-        },
-        {
-          name: "frameBump";
-          type: "u8";
-        },
-        {
-          name: "listBump";
-          type: "u8";
+          "name": "newProgramFee",
+          "type": "u64"
         }
-      ];
+      ]
     },
     {
-      name: "initialize";
-      accounts: [
+      "name": "configUpdateWorkerFee",
+      "accounts": [
         {
-          name: "signer";
-          isMut: true;
-          isSigner: true;
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "authority";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "authorityBump";
-          type: "u8";
+          "name": "newWorkerFee",
+          "type": "u64"
         }
-      ];
+      ]
     },
     {
-      name: "taskExecute";
-      accounts: [
+      "name": "daemonCreate",
+      "accounts": [
         {
-          name: "clock";
-          isMut: false;
-          isSigner: false;
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "daemon";
-          isMut: true;
-          isSigner: false;
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "task";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "worker";
-          isMut: false;
-          isSigner: true;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
-      ];
-      args: [];
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
     },
     {
-      name: "taskRepeat";
-      accounts: [
+      "name": "daemonInvoke",
+      "accounts": [
         {
-          name: "authority";
-          isMut: true;
-          isSigner: false;
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "daemon";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "listProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "nextFrame";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "nextTask";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "nextTaskElement";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "nextTaskList";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "prevTask";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "worker";
-          isMut: false;
-          isSigner: true;
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "nextTaskBump";
-          type: "u8";
-        },
-        {
-          name: "nextTaskElementBump";
-          type: "u8";
+          "name": "instructionData",
+          "type": {
+            "defined": "InstructionData"
+          }
         }
-      ];
+      ]
     },
     {
-      name: "taskSchedule";
-      accounts: [
+      "name": "frameCreate",
+      "accounts": [
         {
-          name: "authority";
-          isMut: true;
-          isSigner: false;
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "daemon";
-          isMut: true;
-          isSigner: false;
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "frame";
-          isMut: false;
-          isSigner: false;
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "listProgram";
-          isMut: false;
-          isSigner: false;
+          "name": "frame",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "task";
-          isMut: true;
-          isSigner: false;
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "taskElement";
-          isMut: true;
-          isSigner: false;
+          "name": "list",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "taskList";
-          isMut: true;
-          isSigner: false;
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "instructionData";
-          type: {
-            defined: "InstructionData";
-          };
+          "name": "timestamp",
+          "type": "u64"
         },
         {
-          name: "executeAt";
-          type: "u64";
+          "name": "frameBump",
+          "type": "u8"
         },
         {
-          name: "repeatEvery";
-          type: "u64";
-        },
-        {
-          name: "repeatUntil";
-          type: "u64";
-        },
-        {
-          name: "taskBump";
-          type: "u8";
-        },
-        {
-          name: "taskElementBump";
-          type: "u8";
+          "name": "listBump",
+          "type": "u8"
         }
-      ];
+      ]
+    },
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "authorityBump",
+          "type": "u8"
+        },
+        {
+          "name": "configBump",
+          "type": "u8"
+        },
+        {
+          "name": "treasuryBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "revenueCollect",
+      "accounts": [
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revenueCreate",
+      "accounts": [
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "taskCreate",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "frame",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taskElement",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taskList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "instructionData",
+          "type": {
+            "defined": "InstructionData"
+          }
+        },
+        {
+          "name": "executeAt",
+          "type": "u64"
+        },
+        {
+          "name": "repeatEvery",
+          "type": "u64"
+        },
+        {
+          "name": "repeatUntil",
+          "type": "u64"
+        },
+        {
+          "name": "taskBump",
+          "type": "u8"
+        },
+        {
+          "name": "taskElementBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "taskExecute",
+      "accounts": [
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "worker",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "taskRepeat",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nextFrame",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nextTask",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nextTaskElement",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nextTaskList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prevTask",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "worker",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nextTaskBump",
+          "type": "u8"
+        },
+        {
+          "name": "nextTaskElementBump",
+          "type": "u8"
+        }
+      ]
     }
-  ];
-  accounts: [
+  ],
+  "accounts": [
     {
-      name: "authority";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "bump";
-            type: "u8";
+            "name": "bump",
+            "type": "u8"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "daemon";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "config",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "owner";
-            type: "publicKey";
+            "name": "adminAuthority",
+            "type": "publicKey"
           },
           {
-            name: "totalTaskCount";
-            type: "u128";
+            "name": "frameInterval",
+            "type": "u64"
           },
           {
-            name: "executedTaskCount";
-            type: "u128";
+            "name": "programFee",
+            "type": "u64"
           },
           {
-            name: "bump";
-            type: "u8";
+            "name": "workerFee",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "frame";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "daemon",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "timestamp";
-            type: "u64";
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            name: "bump";
-            type: "u8";
+            "name": "totalTaskCount",
+            "type": "u128"
+          },
+          {
+            "name": "executedTaskCount",
+            "type": "u128"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "task";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "frame",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "daemon";
-            type: "publicKey";
+            "name": "timestamp",
+            "type": "u64"
           },
           {
-            name: "id";
-            type: "u128";
-          },
-          {
-            name: "instructionData";
-            type: {
-              defined: "InstructionData";
-            };
-          },
-          {
-            name: "status";
-            type: {
-              defined: "TaskStatus";
-            };
-          },
-          {
-            name: "executeAt";
-            type: "u64";
-          },
-          {
-            name: "repeatEvery";
-            type: "u64";
-          },
-          {
-            name: "repeatUntil";
-            type: "u64";
-          },
-          {
-            name: "bump";
-            type: "u8";
+            "name": "bump",
+            "type": "u8"
           }
-        ];
-      };
+        ]
+      }
+    },
+    {
+      "name": "revenue",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "daemon",
+            "type": "publicKey"
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "task",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "daemon",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u128"
+          },
+          {
+            "name": "instructionData",
+            "type": {
+              "defined": "InstructionData"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "TaskStatus"
+            }
+          },
+          {
+            "name": "executeAt",
+            "type": "u64"
+          },
+          {
+            "name": "repeatEvery",
+            "type": "u64"
+          },
+          {
+            "name": "repeatUntil",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "treasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     }
-  ];
-  types: [
+  ],
+  "types": [
     {
-      name: "TaskRecurrenceSchedule";
-      type: {
-        kind: "struct";
-        fields: [];
-      };
+      "name": "InstructionData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "programId",
+            "type": "publicKey"
+          },
+          {
+            "name": "keys",
+            "type": {
+              "vec": {
+                "defined": "AccountMetaData"
+              }
+            }
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          }
+        ]
+      }
     },
     {
-      name: "InstructionData";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "AccountMetaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "programId";
-            type: "publicKey";
+            "name": "pubkey",
+            "type": "publicKey"
           },
           {
-            name: "keys";
-            type: {
-              vec: {
-                defined: "AccountMetaData";
-              };
-            };
+            "name": "isSigner",
+            "type": "bool"
           },
           {
-            name: "data";
-            type: "bytes";
+            "name": "isWritable",
+            "type": "bool"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "AccountMetaData";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "TaskStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
-            name: "pubkey";
-            type: "publicKey";
+            "name": "Done"
           },
           {
-            name: "isSigner";
-            type: "bool";
+            "name": "Pending"
           },
           {
-            name: "isWritable";
-            type: "bool";
+            "name": "Repeat"
           }
-        ];
-      };
-    },
-    {
-      name: "TaskStatus";
-      type: {
-        kind: "enum";
-        variants: [
-          {
-            name: "Done";
-          },
-          {
-            name: "Pending";
-          },
-          {
-            name: "Repeat";
-          }
-        ];
-      };
+        ]
+      }
     }
-  ];
-  errors: [
+  ],
+  "errors": [
     {
-      code: 6000;
-      name: "InvalidSignatory";
-      msg: "Your daemon cannot provide all required signatures for this instruction";
+      "code": 6000,
+      "name": "InvalidSignatory",
+      "msg": "Your daemon cannot provide all required signatures for this instruction"
     },
     {
-      code: 6001;
-      name: "TaskNotPending";
-      msg: "Task is not pending and may not executed";
+      "code": 6001,
+      "name": "TaskNotPending",
+      "msg": "Task is not pending and may not executed"
     },
     {
-      code: 6002;
-      name: "TaskNotRepeatable";
-      msg: "This task is not marked for repeat";
+      "code": 6002,
+      "name": "TaskNotRepeatable",
+      "msg": "This task is not marked for repeat"
     },
     {
-      code: 6003;
-      name: "TaskNotDue";
-      msg: "This task is not due and may not be executed yet";
+      "code": 6003,
+      "name": "TaskNotDue",
+      "msg": "This task is not due and may not be executed yet"
     },
     {
-      code: 6004;
-      name: "Unknown";
-      msg: "Unknown error";
+      "code": 6004,
+      "name": "Unknown",
+      "msg": "Unknown error"
     }
-  ];
+  ]
 };
 
 export const IDL: Chronos = {
-  version: "0.1.0",
-  name: "chronos",
-  instructions: [
+  "version": "0.0.1",
+  "name": "chronos",
+  "instructions": [
     {
-      name: "daemonCreate",
-      accounts: [
+      "name": "configUpdateAdminAuthority",
+      "accounts": [
         {
-          name: "daemon",
-          isMut: true,
-          isSigner: false,
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "bump",
-          type: "u8",
-        },
-      ],
+          "name": "newAdminAuthority",
+          "type": "publicKey"
+        }
+      ]
     },
     {
-      name: "daemonInvoke",
-      accounts: [
+      "name": "configUpdateFrameInterval",
+      "accounts": [
         {
-          name: "daemon",
-          isMut: false,
-          isSigner: false,
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner",
-          isMut: true,
-          isSigner: true,
-        },
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "instructionData",
-          type: {
-            defined: "InstructionData",
-          },
-        },
-      ],
+          "name": "newFrameInterval",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: "frameCreate",
-      accounts: [
+      "name": "configUpdateProgramFee",
+      "accounts": [
         {
-          name: "authority",
-          isMut: true,
-          isSigner: false,
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "clock",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "frame",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "list",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "listProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "payer",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "timestamp",
-          type: "u64",
-        },
-        {
-          name: "frameBump",
-          type: "u8",
-        },
-        {
-          name: "listBump",
-          type: "u8",
-        },
-      ],
+          "name": "newProgramFee",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: "initialize",
-      accounts: [
+      "name": "configUpdateWorkerFee",
+      "accounts": [
         {
-          name: "signer",
-          isMut: true,
-          isSigner: true,
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "authority",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "authorityBump",
-          type: "u8",
-        },
-      ],
+          "name": "newWorkerFee",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: "taskExecute",
-      accounts: [
+      "name": "daemonCreate",
+      "accounts": [
         {
-          name: "clock",
-          isMut: false,
-          isSigner: false,
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "daemon",
-          isMut: true,
-          isSigner: false,
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "task",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "worker",
-          isMut: false,
-          isSigner: true,
-        },
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
     },
     {
-      name: "taskRepeat",
-      accounts: [
+      "name": "daemonInvoke",
+      "accounts": [
         {
-          name: "authority",
-          isMut: true,
-          isSigner: false,
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "daemon",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "listProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "nextFrame",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "nextTask",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "nextTaskElement",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "nextTaskList",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "prevTask",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "worker",
-          isMut: false,
-          isSigner: true,
-        },
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "nextTaskBump",
-          type: "u8",
-        },
-        {
-          name: "nextTaskElementBump",
-          type: "u8",
-        },
-      ],
+          "name": "instructionData",
+          "type": {
+            "defined": "InstructionData"
+          }
+        }
+      ]
     },
     {
-      name: "taskSchedule",
-      accounts: [
+      "name": "frameCreate",
+      "accounts": [
         {
-          name: "authority",
-          isMut: true,
-          isSigner: false,
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "daemon",
-          isMut: true,
-          isSigner: false,
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "frame",
-          isMut: false,
-          isSigner: false,
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "listProgram",
-          isMut: false,
-          isSigner: false,
+          "name": "frame",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "task",
-          isMut: true,
-          isSigner: false,
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "taskElement",
-          isMut: true,
-          isSigner: false,
+          "name": "list",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "taskList",
-          isMut: true,
-          isSigner: false,
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: "owner",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: "instructionData",
-          type: {
-            defined: "InstructionData",
-          },
+          "name": "timestamp",
+          "type": "u64"
         },
         {
-          name: "executeAt",
-          type: "u64",
+          "name": "frameBump",
+          "type": "u8"
         },
         {
-          name: "repeatEvery",
-          type: "u64",
-        },
-        {
-          name: "repeatUntil",
-          type: "u64",
-        },
-        {
-          name: "taskBump",
-          type: "u8",
-        },
-        {
-          name: "taskElementBump",
-          type: "u8",
-        },
-      ],
+          "name": "listBump",
+          "type": "u8"
+        }
+      ]
     },
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "authorityBump",
+          "type": "u8"
+        },
+        {
+          "name": "configBump",
+          "type": "u8"
+        },
+        {
+          "name": "treasuryBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "revenueCollect",
+      "accounts": [
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revenueCreate",
+      "accounts": [
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "taskCreate",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "frame",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taskElement",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "taskList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "instructionData",
+          "type": {
+            "defined": "InstructionData"
+          }
+        },
+        {
+          "name": "executeAt",
+          "type": "u64"
+        },
+        {
+          "name": "repeatEvery",
+          "type": "u64"
+        },
+        {
+          "name": "repeatUntil",
+          "type": "u64"
+        },
+        {
+          "name": "taskBump",
+          "type": "u8"
+        },
+        {
+          "name": "taskElementBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "taskExecute",
+      "accounts": [
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "revenue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "worker",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "taskRepeat",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "indexerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nextFrame",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nextTask",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nextTaskElement",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nextTaskList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prevTask",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "worker",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "nextTaskBump",
+          "type": "u8"
+        },
+        {
+          "name": "nextTaskElementBump",
+          "type": "u8"
+        }
+      ]
+    }
   ],
-  accounts: [
+  "accounts": [
     {
-      name: "authority",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "bump",
-            type: "u8",
-          },
-        ],
-      },
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     },
     {
-      name: "daemon",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "config",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "owner",
-            type: "publicKey",
+            "name": "adminAuthority",
+            "type": "publicKey"
           },
           {
-            name: "totalTaskCount",
-            type: "u128",
+            "name": "frameInterval",
+            "type": "u64"
           },
           {
-            name: "executedTaskCount",
-            type: "u128",
+            "name": "programFee",
+            "type": "u64"
           },
           {
-            name: "bump",
-            type: "u8",
+            "name": "workerFee",
+            "type": "u64"
           },
-        ],
-      },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     },
     {
-      name: "frame",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "daemon",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "timestamp",
-            type: "u64",
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            name: "bump",
-            type: "u8",
+            "name": "totalTaskCount",
+            "type": "u128"
           },
-        ],
-      },
+          {
+            "name": "executedTaskCount",
+            "type": "u128"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     },
     {
-      name: "task",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "frame",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "daemon",
-            type: "publicKey",
+            "name": "timestamp",
+            "type": "u64"
           },
           {
-            name: "id",
-            type: "u128",
-          },
-          {
-            name: "instructionData",
-            type: {
-              defined: "InstructionData",
-            },
-          },
-          {
-            name: "status",
-            type: {
-              defined: "TaskStatus",
-            },
-          },
-          {
-            name: "executeAt",
-            type: "u64",
-          },
-          {
-            name: "repeatEvery",
-            type: "u64",
-          },
-          {
-            name: "repeatUntil",
-            type: "u64",
-          },
-          {
-            name: "bump",
-            type: "u8",
-          },
-        ],
-      },
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     },
+    {
+      "name": "revenue",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "daemon",
+            "type": "publicKey"
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "task",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "daemon",
+            "type": "publicKey"
+          },
+          {
+            "name": "id",
+            "type": "u128"
+          },
+          {
+            "name": "instructionData",
+            "type": {
+              "defined": "InstructionData"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "TaskStatus"
+            }
+          },
+          {
+            "name": "executeAt",
+            "type": "u64"
+          },
+          {
+            "name": "repeatEvery",
+            "type": "u64"
+          },
+          {
+            "name": "repeatUntil",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "treasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
   ],
-  types: [
+  "types": [
     {
-      name: "TaskRecurrenceSchedule",
-      type: {
-        kind: "struct",
-        fields: [],
-      },
+      "name": "InstructionData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "programId",
+            "type": "publicKey"
+          },
+          {
+            "name": "keys",
+            "type": {
+              "vec": {
+                "defined": "AccountMetaData"
+              }
+            }
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          }
+        ]
+      }
     },
     {
-      name: "InstructionData",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "AccountMetaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "programId",
-            type: "publicKey",
+            "name": "pubkey",
+            "type": "publicKey"
           },
           {
-            name: "keys",
-            type: {
-              vec: {
-                defined: "AccountMetaData",
-              },
-            },
+            "name": "isSigner",
+            "type": "bool"
           },
           {
-            name: "data",
-            type: "bytes",
-          },
-        ],
-      },
+            "name": "isWritable",
+            "type": "bool"
+          }
+        ]
+      }
     },
     {
-      name: "AccountMetaData",
-      type: {
-        kind: "struct",
-        fields: [
+      "name": "TaskStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
-            name: "pubkey",
-            type: "publicKey",
+            "name": "Done"
           },
           {
-            name: "isSigner",
-            type: "bool",
+            "name": "Pending"
           },
           {
-            name: "isWritable",
-            type: "bool",
-          },
-        ],
-      },
-    },
-    {
-      name: "TaskStatus",
-      type: {
-        kind: "enum",
-        variants: [
-          {
-            name: "Done",
-          },
-          {
-            name: "Pending",
-          },
-          {
-            name: "Repeat",
-          },
-        ],
-      },
-    },
+            "name": "Repeat"
+          }
+        ]
+      }
+    }
   ],
-  errors: [
+  "errors": [
     {
-      code: 6000,
-      name: "InvalidSignatory",
-      msg: "Your daemon cannot provide all required signatures for this instruction",
+      "code": 6000,
+      "name": "InvalidSignatory",
+      "msg": "Your daemon cannot provide all required signatures for this instruction"
     },
     {
-      code: 6001,
-      name: "TaskNotPending",
-      msg: "Task is not pending and may not executed",
+      "code": 6001,
+      "name": "TaskNotPending",
+      "msg": "Task is not pending and may not executed"
     },
     {
-      code: 6002,
-      name: "TaskNotRepeatable",
-      msg: "This task is not marked for repeat",
+      "code": 6002,
+      "name": "TaskNotRepeatable",
+      "msg": "This task is not marked for repeat"
     },
     {
-      code: 6003,
-      name: "TaskNotDue",
-      msg: "This task is not due and may not be executed yet",
+      "code": 6003,
+      "name": "TaskNotDue",
+      "msg": "This task is not due and may not be executed yet"
     },
     {
-      code: 6004,
-      name: "Unknown",
-      msg: "Unknown error",
-    },
-  ],
+      "code": 6004,
+      "name": "Unknown",
+      "msg": "Unknown error"
+    }
+  ]
 };

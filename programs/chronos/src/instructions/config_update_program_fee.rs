@@ -7,17 +7,17 @@ use {crate::state::*, anchor_lang::prelude::*};
 pub struct ConfigUpdateProgramFee<'info> {
     #[account(
         mut,
+        address = config.admin_authority,
+    )]
+    pub admin: Signer<'info>,
+
+    #[account(
+        mut,
         seeds = [SEED_CONFIG],
         bump = config.bump,
         owner = crate::ID,
     )]
     pub config: Account<'info, Config>,
-
-    #[account(
-        mut,
-        address = config.admin_authority,
-    )]
-    pub signer: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<ConfigUpdateProgramFee>, new_program_fee: u64) -> ProgramResult {

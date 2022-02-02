@@ -6,7 +6,6 @@ import {
   newSigner,
   PDA,
   signAndSubmit,
-  sleep,
   sleepUntil,
 } from "@chronos-so/utils";
 import * as anchor from "@project-serum/anchor";
@@ -20,7 +19,7 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { ListProgram } from "@chronos-so/list";
+import { ListProgram } from "@chronos-so/indexer";
 
 type TaskRecurrenceSchedule = TypeDef<Chronos["types"][0], Chronos>;
 type InstructionData = TypeDef<Chronos["types"][1], Chronos>;
@@ -236,7 +235,7 @@ describe("Chronos", () => {
     );
 
     // Schedule a one-time task
-    let ix = program.instruction.taskSchedule(
+    let ix = program.instruction.taskCreate(
       buildInstructionData(taskIx),
       timestamp,
       new anchor.BN(0),

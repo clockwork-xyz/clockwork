@@ -1,10 +1,10 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
+    anchor_lang::prelude::*,
 };
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction()]
 pub struct RevenueCollect<'info> {
     #[account(
         mut,
@@ -18,9 +18,6 @@ pub struct RevenueCollect<'info> {
 
     #[account(mut)]
     pub signer: Signer<'info>,
-
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
 
     #[account(
         mut,

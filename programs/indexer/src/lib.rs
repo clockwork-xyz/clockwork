@@ -6,7 +6,7 @@ use {anchor_lang::prelude::*, instructions::*};
 declare_id!("DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi");
 
 #[program]
-pub mod list_program {
+pub mod indexer {
     use super::*;
 
     pub fn create_list(ctx: Context<CreateList>, bump: u8) -> ProgramResult {

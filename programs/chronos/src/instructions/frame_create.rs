@@ -44,11 +44,11 @@ pub struct WindowCreate<'info> {
     )]
     pub frame: Account<'info, Frame>,
 
+    #[account(address = chronos_indexer::ID)]
+    pub indexer_program: Program<'info, chronos_indexer::program::ListProgram>,
+
     #[account(mut)]
     pub list: AccountInfo<'info>,
-
-    #[account(address = list_program::ID)]
-    pub list_program: Program<'info, list_program::program::ListProgram>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -66,9 +66,9 @@ pub fn handler(
     // Get accounts.
     let authority = &ctx.accounts.authority;
     let frame = &mut ctx.accounts.frame;
+    let indexer_program = &ctx.accounts.indexer_program;
     let list = &ctx.accounts.list;
     let payer = &ctx.accounts.payer;
-    let list_program = &ctx.accounts.list_program;
     let system_program = &ctx.accounts.system_program;
 
     // Initialize frame account.
@@ -76,10 +76,10 @@ pub fn handler(
     frame.bump = frame_bump;
 
     // Create an list to lookup tasks by the time frame when they should be processed.
-    list_program::cpi::create_list(
+    chronos_indexer::cpi::create_list(
         CpiContext::new_with_signer(
-            list_program.to_account_info(),
-            list_program::cpi::accounts::CreateList {
+            indexer_program.to_account_info(),
+            chronos_indexer::cpi::accounts::CreateList {
                 list: list.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: payer.to_account_info(),

@@ -6,8 +6,8 @@
   "license": "ISC",
   "homepage": "https://github.com/chronos-so/chronos",
   "bugs": "https://github.com/chronos-so/chronos/issues",
-  "main": "dist/chronos-so-list.cjs",
-  "module": "dist/chronos-so-list.esm.js",
+  "main": "dist/chronos-so-indexer.cjs",
+  "module": "dist/chronos-so-indexer.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",

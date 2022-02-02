@@ -2,13 +2,13 @@ import assert from "assert";
 import { BN, Provider, setProvider } from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
 import { airdrop, PDA, signAndSubmit } from "@chronos-so/utils";
-import { ListProgram } from "../src";
+import { Indexer } from "../src";
 
-describe("List program", () => {
+describe("Indexer", () => {
   // Configure the listProgram to use the local cluster.
   const provider = Provider.env();
   setProvider(provider);
-  const listProgram = new ListProgram(provider);
+  const listProgram = new Indexer(provider);
 
   // Shared test data.
   const addressA = Keypair.generate().publicKey;

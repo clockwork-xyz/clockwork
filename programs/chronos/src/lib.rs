@@ -75,6 +75,26 @@ pub mod chronos {
         revenue_create::handler(ctx, bump)
     }
 
+    pub fn task_create(
+        ctx: Context<TaskCreate>,
+        instruction_data: InstructionData,
+        execute_at: u64,
+        repeat_every: u64,
+        repeat_until: u64,
+        task_bump: u8,
+        task_element_bump: u8,
+    ) -> ProgramResult {
+        task_create::handler(
+            ctx,
+            instruction_data,
+            execute_at,
+            repeat_every,
+            repeat_until,
+            task_bump,
+            task_element_bump,
+        )
+    }
+
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
         task_execute::handler(ctx)
     }
@@ -85,25 +105,5 @@ pub mod chronos {
         next_task_element_bump: u8,
     ) -> ProgramResult {
         task_repeat::handler(ctx, next_task_bump, next_task_element_bump)
-    }
-
-    pub fn task_schedule(
-        ctx: Context<TaskSchedule>,
-        instruction_data: InstructionData,
-        execute_at: u64,
-        repeat_every: u64,
-        repeat_until: u64,
-        task_bump: u8,
-        task_element_bump: u8,
-    ) -> ProgramResult {
-        task_schedule::handler(
-            ctx,
-            instruction_data,
-            execute_at,
-            repeat_every,
-            repeat_until,
-            task_bump,
-            task_element_bump,
-        )
     }
 }
