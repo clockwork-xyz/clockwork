@@ -1,6 +1,6 @@
 [package]
 name = "chronos-indexer"
-version = "0.0.1"
+version = "0.0.2"
 description = "Create an on-chain list of accounts"
 edition = "2018"
 license = "ISC"

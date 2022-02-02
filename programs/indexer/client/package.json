@@ -1,7 +1,7 @@
 {
   "name": "@chronos-so/indexer",
   "description": "Chronos list client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/chronos-so/chronos",
