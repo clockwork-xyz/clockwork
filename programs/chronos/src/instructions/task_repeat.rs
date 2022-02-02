@@ -56,7 +56,7 @@ pub struct TaskRepeat<'info> {
         seeds = [
             SEED_TASK,
             daemon.key().as_ref(),
-            daemon.total_task_count.to_be_bytes().as_ref(),
+            daemon.task_count.to_be_bytes().as_ref(),
         ],
         bump = next_task_bump,
         payer = worker,
@@ -83,7 +83,7 @@ pub struct TaskRepeat<'info> {
         ],
         bump = prev_task.bump,
         has_one = daemon,
-        constraint = prev_task.status == TaskStatus::Repeat @ ErrorCode::TaskNotRepeatable,
+        constraint = prev_task.status == TaskStatus::Repeatable @ ErrorCode::TaskNotRepeatable,
         owner = crate::ID
     )]
     pub prev_task: Account<'info, Task>,
@@ -114,7 +114,7 @@ pub fn handler(
 
     // Initialize next_task account
     next_task.daemon = prev_task.daemon;
-    next_task.id = daemon.total_task_count;
+    next_task.id = daemon.task_count;
     next_task.instruction_data = prev_task.instruction_data.clone();
     next_task.status = TaskStatus::Pending;
     next_task.execute_at = prev_task.execute_at.checked_add(prev_task.repeat_every).unwrap();
@@ -122,11 +122,11 @@ pub fn handler(
     next_task.repeat_until = prev_task.repeat_until;
     next_task.bump = next_task_bump;
     
-    // Mark previous task as done.
-    prev_task.status = TaskStatus::Done;
+    // Mark previous task as executed.
+    prev_task.status = TaskStatus::Executed;
 
     // Increment daemon total task count.
-    daemon.total_task_count = daemon.total_task_count.checked_add(1).unwrap();
+    daemon.task_count = daemon.task_count.checked_add(1).unwrap();
     
     // Push next task into frame for execution.
     chronos_indexer::cpi::push_element(

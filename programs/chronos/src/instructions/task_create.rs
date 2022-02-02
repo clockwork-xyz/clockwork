@@ -53,7 +53,7 @@ pub struct TaskCreate<'info> {
         seeds = [
             SEED_TASK, 
             daemon.key().as_ref(),
-            daemon.total_task_count.to_be_bytes().as_ref(),
+            daemon.task_count.to_be_bytes().as_ref(),
         ],
         bump = task_bump,
         payer = owner,
@@ -108,7 +108,7 @@ pub fn handler(
 
     // Initialize task account.
     task.daemon = daemon.key();
-    task.id = daemon.total_task_count;
+    task.id = daemon.task_count;
     task.instruction_data = instruction_data;
     task.status = TaskStatus::Pending;
     task.execute_at = execute_at;
@@ -117,7 +117,7 @@ pub fn handler(
     task.bump = task_bump;
 
     // Increment daemon task counter.
-    daemon.total_task_count = daemon.total_task_count.checked_add(1).unwrap();
+    daemon.task_count = daemon.task_count.checked_add(1).unwrap();
 
     // Add task to list for execution in the given timeframe.
     chronos_indexer::cpi::push_element(

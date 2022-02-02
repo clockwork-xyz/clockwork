@@ -5,9 +5,10 @@ pub const SEED_TASK: &[u8] = b"task";
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq)]
 pub enum TaskStatus {
-    Done,
+    Cancelled,
+    Executed,
     Pending,
-    Repeat,
+    Repeatable,
 }
 
 #[account]

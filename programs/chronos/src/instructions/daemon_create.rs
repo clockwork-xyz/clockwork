@@ -33,8 +33,7 @@ pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
 
     // Initialize daemon account.
     daemon.owner = owner.key();
-    daemon.total_task_count = 0;
-    daemon.executed_task_count = 0;
+    daemon.task_count = 0;
     daemon.bump = bump;
 
     Ok(())

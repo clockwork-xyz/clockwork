@@ -75,6 +75,10 @@ pub mod chronos {
         revenue_create::handler(ctx, bump)
     }
 
+    pub fn task_cancel(ctx: Context<TaskCancel>) -> ProgramResult {
+        task_cancel::handler(ctx)
+    }
+
     pub fn task_create(
         ctx: Context<TaskCreate>,
         instruction_data: InstructionData,

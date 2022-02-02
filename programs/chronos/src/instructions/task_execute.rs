@@ -66,15 +66,12 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
     let revenue = &mut ctx.accounts.revenue;
     let worker = &mut ctx.accounts.worker;
 
-    // Increment daemon's executed task count.
-    daemon.executed_task_count = daemon.executed_task_count.checked_add(1).unwrap();
-
     // Update task state.
     let next_execution_frame: u64 = task.execute_at.checked_add(task.repeat_every).unwrap();
     if task.repeat_every > 0 && next_execution_frame <= task.repeat_until {
-        task.status = TaskStatus::Repeat;
+        task.status = TaskStatus::Repeatable;
     } else {
-        task.status = TaskStatus::Done;
+        task.status = TaskStatus::Executed;
     }
 
     // Increment collectable revenue balance. 
