@@ -23,6 +23,7 @@ import {
 import { DaemonCreate, DaemonCreateArgs } from "./daemonCreate";
 import { DaemonInvoke, DaemonInvokeArgs } from "./daemonInvoke";
 import { Initialize, InitializeArgs } from "./initialize";
+import { FrameCreate, FrameCreateArgs } from "./frameCreate";
 import { RevenueCollect, RevenueCollectArgs } from "./revenueCollect";
 import { RevenueCreate, RevenueCreateArgs } from "./revenueCreate";
 import { TaskCreate, TaskCreateArgs } from "./taskCreate";
@@ -56,6 +57,10 @@ export class Instruction {
 
   public daemonInvoke: (
     args: DaemonInvokeArgs
+  ) => Promise<TransactionInstruction>;
+
+  public frameCreate: (
+    args: FrameCreateArgs
   ) => Promise<TransactionInstruction>;
 
   public revenueCollect: (
@@ -110,6 +115,12 @@ export class Instruction {
       this.account,
       this.chronos
     ).daemonInvoke;
+
+    this.frameCreate = new FrameCreate(
+      this.account,
+      this.chronos,
+      this.indexer
+    ).frameCreate;
 
     this.initialize = new Initialize(this.account, this.chronos).initialize;
 

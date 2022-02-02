@@ -1,6 +1,6 @@
 [programs.localnet]
-chronos = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
-indexer = "DBMi4GBjiX15vCMVj93uB7JYM9LU6rCaZJraVKM6XgZi"
+chronos = "9cEqpQLV3VGN6mBtFKwheJoreg6BXvyCf6pWWDA1FhRf"
+indexer = "4jnuXU4zsBavciDpTNmJ8dtwMBSkhKn2EBCiE9Rrv8uQ"
 
 [registry]
 url = "https://anchor.projectserum.com"
