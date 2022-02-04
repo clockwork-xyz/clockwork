@@ -1,7 +1,7 @@
 {
   "name": "@cronos-so/indexer",
   "description": "Cronos indexer client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/cronos-so/cronos",
@@ -23,7 +23,7 @@
     "publish": "yarn npm publish"
   },
   "dependencies": {
-    "@cronos-so/utils": "^0.0.1",
+    "@cronos-so/utils": "^0.0.2",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",

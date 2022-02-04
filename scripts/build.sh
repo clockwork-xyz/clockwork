@@ -1,6 +1,6 @@
 #!/bin/sh
 
-build_package () {
+build () {
     echo "\n\n\n🧱 Building $1\n"
     cd $1
     yarn
