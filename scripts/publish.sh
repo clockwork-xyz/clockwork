@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "\n\n\n⬆️  Bumping @cronos-so/$1\n"
+echo "\n\n\n⬆️  Publishing @cronos-so/$1\n"
 cd programs/$1/client
 yarn
 yarn build
