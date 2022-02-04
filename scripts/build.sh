@@ -1,6 +1,6 @@
 #!/bin/sh
 
-yarn_build () {
+build_package () {
     echo "\n\n\n🧱 Building $1\n"
     cd $1
     yarn
@@ -8,16 +8,7 @@ yarn_build () {
     cd $2
 }
 
-build_clients () {
-    yarn_build programs/indexer/client ../../..
-    yarn_build programs/cronos/client ../../..
-}
-
-build_utils () {
-    yarn_build utils ..
-}
-
-build_utils
-build_clients
+build programs/indexer/client ../../..
+build programs/cronos/client ../../..
 
 exit

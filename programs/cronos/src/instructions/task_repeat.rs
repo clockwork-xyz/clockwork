@@ -38,7 +38,7 @@ pub struct TaskRepeat<'info> {
     pub daemon: Account<'info, Daemon>,
 
     #[account(address = cronos_indexer::ID)]
-    pub indexer_program: Program<'info, cronos_indexer::program::ListProgram>,
+    pub indexer_program: Program<'info, cronos_indexer::program::Indexer>,
 
     #[account(
         seeds = [

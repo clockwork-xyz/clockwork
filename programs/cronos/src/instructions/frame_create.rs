@@ -45,7 +45,7 @@ pub struct WindowCreate<'info> {
     pub frame: Account<'info, Frame>,
 
     #[account(address = cronos_indexer::ID)]
-    pub indexer_program: Program<'info, cronos_indexer::program::ListProgram>,
+    pub indexer_program: Program<'info, cronos_indexer::program::Indexer>,
 
     #[account(mut)]
     pub list: AccountInfo<'info>,
