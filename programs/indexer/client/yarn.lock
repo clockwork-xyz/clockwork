@@ -979,9 +979,9 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
-"@chronos-so/utils@workspace:^":
+"@cronos-so/utils@workspace:^":
   version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@chronos-so/utils/-/utils-0.0.1.tgz#221be978876e05584851fde47a52626c36685f6c"
+  resolved "https://registry.yarnpkg.com/@cronos-so/utils/-/utils-0.0.1.tgz#221be978876e05584851fde47a52626c36685f6c"
   integrity sha512-uKrtndRShDwZpK29Qod12tgKqtVU3P50Vot7FGSyXUjPCHtPC4kMxEeMzt2Hnm9WO6odGEilyWqnNQFbxIUMRQ==
   dependencies:
     "@project-serum/anchor" "^0.20.1"

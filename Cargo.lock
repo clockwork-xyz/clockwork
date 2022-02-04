@@ -396,7 +396,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "chronos-indexer"
+name = "cronos-indexer"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4486ee6500366926a8688442a706cc5752289066613680427c2a925af8d212f1"
@@ -405,18 +405,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "chronos-indexer"
+name = "cronos-indexer"
 version = "0.0.2"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
-name = "chronos-program"
+name = "cronos-program"
 version = "0.0.1"
 dependencies = [
  "anchor-lang",
- "chronos-indexer 0.0.1",
+ "cronos-indexer 0.0.1",
  "solana-program",
 ]
 

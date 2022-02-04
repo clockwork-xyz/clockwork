@@ -10,7 +10,7 @@ yarn_build () {
 
 build_clients () {
     yarn_build programs/indexer/client ../../..
-    yarn_build programs/chronos/client ../../..
+    yarn_build programs/cronos/client ../../..
 }
 
 build_utils () {

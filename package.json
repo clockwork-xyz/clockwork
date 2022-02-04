@@ -1,5 +1,5 @@
 {
-  "name": "chronos",
+  "name": "cronos",
   "license": "ISC",
   "private": true,
   "packageManager": "yarn@3.1.1",
@@ -8,8 +8,7 @@
     "copy-idl": "./scripts/copy-idl.sh"
   },
   "workspaces": [
-    "programs/chronos/client",
-    "programs/indexer/client",
-    "utils"
+    "programs/cronos/client",
+    "programs/indexer/client"
   ]
 }

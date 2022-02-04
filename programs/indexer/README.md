@@ -8,43 +8,43 @@ The indexer program can be used to index Solana addresses into serial lists for 
 # Cargo.toml
 
 [dependencies]
-chronos-indexer = { version = "0.0.1" }
+cronos-indexer = { version = "0.0.1" }
 ```
 
 ## Instructions
 
-#### [`create_list`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/instructions/create_list.rs)
+#### [`create_list`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/instructions/create_list.rs)
 
-- Initializes a new [`List`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/list.rs) account.
+- Initializes a new [`List`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/list.rs) account.
 - Errors if:
   - The list already exists for the given owner and namespace.
 
-#### [`delete_list`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/instructions/delete_list.rs)
+#### [`delete_list`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/instructions/delete_list.rs)
 
-- Closes an [`List`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/list.rs) account.
+- Closes an [`List`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/list.rs) account.
 - Returns rent to owner.
 
-#### [`push_element`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/instructions/push_element.rs)
+#### [`push_element`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/instructions/push_element.rs)
 
-- Initializes a new [`Element`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/element.rs) account.
+- Initializes a new [`Element`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/element.rs) account.
 - Appends the element to the index's data structure.
 - Errors if:
   - The list is already at max capacity.
 
-#### [`pop_element`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/instructions/pop_element.rs)
+#### [`pop_element`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/instructions/pop_element.rs)
 
-- Closes an [`Element`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/element.rs) account.
+- Closes an [`Element`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/element.rs) account.
 - Removes the element from the index's data structure.
 - Returns rent to owner.
 
 ## State
 
-#### [`List`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/list.rs)
+#### [`List`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/list.rs)
 
 - Metadata for managing a list of addresses.
 - PDA is a hash of the owner's address and a custom namespace address.
 
-#### [`Element`](https://github.com/chronos-so/chronos/blob/main/programs/indexer/src/state/element.rs)
+#### [`Element`](https://github.com/cronos-so/cronos/blob/main/programs/indexer/src/state/element.rs)
 
 - An address value with a position in a list.
 - PDA is a hash of the list's address and the pointer's position.

@@ -1,7 +1,7 @@
 import assert from "assert";
 import { BN, Provider, setProvider } from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
-import { airdrop, PDA, signAndSubmit } from "@chronos-so/utils";
+import { airdrop, PDA, signAndSubmit } from "@cronos-so/utils";
 import { Indexer } from "../src";
 
 describe("Indexer", () => {

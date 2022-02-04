@@ -1,4 +1,4 @@
-import { Gateway, findPDA } from "@chronos-so/utils";
+import { Gateway, findPDA } from "@cronos-so/utils";
 import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { Indexer } from "../idl";

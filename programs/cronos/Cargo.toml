@@ -1,0 +1,26 @@
+[package]
+name = "cronos-program"
+version = "0.0.1"
+description = "Created with Anchor"
+edition = "2018"
+license = "ISC"
+homepage = "https://github.com/cronos-so/cronos/tree/main/programs/cronos"
+repository = "https://github.com/cronos-so/cronos"
+documentation = "https://cronos.so"
+readme = "./README.md"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cronos_program"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.20.1"
+cronos-indexer = { version = "0.0.1", features = ["cpi"] }
+solana-program = "1.7.12"

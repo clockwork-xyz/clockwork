@@ -1,17 +1,17 @@
 [package]
-name = "chronos-indexer"
+name = "cronos-indexer"
 version = "0.0.2"
 description = "Create an on-chain list of accounts"
 edition = "2018"
 license = "ISC"
-homepage = "https://github.com/chronos-so/chronos/tree/main/programs/indexer"
-repository = "https://github.com/chronos-so/chronos"
-documentation = "https://chronos.so"
+homepage = "https://github.com/cronos-so/cronos/tree/main/programs/indexer"
+repository = "https://github.com/cronos-so/cronos"
+documentation = "https://cronos.so"
 readme = "./README.md"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "chronos_indexer"
+name = "cronos_indexer"
 
 [features]
 no-entrypoint = []

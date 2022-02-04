@@ -1,13 +1,13 @@
 {
-  "name": "@cronos-so/indexer",
-  "description": "Cronos indexer client",
-  "version": "0.0.2",
+  "name": "@cronos-so/cronos",
+  "description": "Cronos program",
+  "version": "0.0.1",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/cronos-so/cronos",
   "bugs": "https://github.com/cronos-so/cronos/issues",
-  "main": "dist/cronos-so-indexer.cjs",
-  "module": "dist/cronos-so-indexer.esm.js",
+  "main": "dist/cronos-so-cronos.cjs",
+  "module": "dist/cronos-so-cronos.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -23,6 +23,7 @@
     "publish": "yarn npm publish"
   },
   "dependencies": {
+    "@cronos-so/indexer": "workspace:^",
     "@cronos-so/utils": "^0.0.1",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8",

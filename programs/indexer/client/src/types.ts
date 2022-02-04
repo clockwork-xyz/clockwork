@@ -1,4 +1,4 @@
-import { AccountData } from "@chronos-so/utils";
+import { AccountData } from "@cronos-so/utils";
 import { Indexer } from "./idl";
 
 export type ElementAccountData = AccountData<Indexer["accounts"][0], Indexer>;
