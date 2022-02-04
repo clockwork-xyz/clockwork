@@ -36,7 +36,7 @@ export class TaskRepeat {
     const daemonData = await this.account.daemon.data(taskData.daemon);
     const nextTaskPDA = await this.account.task.pda(
       taskData.daemon,
-      daemonData.totalTaskCount
+      daemonData.taskCount
     );
     const nextTaskListPDA = await this.indexer.account.list.pda(
       authorityPDA.address,

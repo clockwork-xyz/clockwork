@@ -42,10 +42,7 @@ export class TaskCreate {
       framePDA.address
     );
     const daemonData = await this.account.daemon.data(daemon);
-    const taskPDA = await this.account.task.pda(
-      daemon,
-      daemonData.totalTaskCount
-    );
+    const taskPDA = await this.account.task.pda(daemon, daemonData.taskCount);
     const taskListData = await this.indexer.account.list.data(
       taskListPDA.address
     );
