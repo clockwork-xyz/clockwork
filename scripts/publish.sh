@@ -7,7 +7,9 @@ yarn build
 yarn publish
 cd ../../../
 
+
+
 git add .
-git commit -m 'Bumping @cronos-so/$1'
+git commit -m 'Bumping @cronos-so/`$1`'
 
 exit
