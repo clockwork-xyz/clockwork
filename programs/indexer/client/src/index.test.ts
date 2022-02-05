@@ -8,7 +8,7 @@ describe("Indexer", () => {
   // Configure the listProgram to use the local cluster.
   const provider = Provider.env();
   setProvider(provider);
-  const listProgram = new Indexer(provider);
+  const listProgram = new Indexer(provider, Indexer.DEVNET_PROGRAM_ID);
 
   // Shared test data.
   const addressA = Keypair.generate().publicKey;

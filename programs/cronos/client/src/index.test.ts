@@ -18,7 +18,7 @@ describe("Cronos", () => {
   const provider = Provider.env();
   setProvider(provider);
 
-  let cronos = new Cronos(provider);
+  let cronos = new Cronos(provider, Cronos.DEVNET_PROGRAM_ID);
 
   let signer: Keypair;
   let worker: Keypair;
