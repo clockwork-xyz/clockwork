@@ -57,7 +57,7 @@ export class TaskRepeat {
           authority: authorityPDA.address,
           config: configPDA.address,
           daemon: taskData.daemon,
-          indexerProgram: Indexer.programId,
+          indexerProgram: this.indexer.programId,
           nextFrame: nextFramePDA.address,
           nextTask: nextTaskPDA.address,
           nextTaskElement: nextTaskElementPDA.address,

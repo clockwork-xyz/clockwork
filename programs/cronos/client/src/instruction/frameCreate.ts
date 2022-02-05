@@ -47,7 +47,7 @@ export class FrameCreate {
           config: configPDA.address,
           frame: framePDA.address,
           list: listPDA.address,
-          indexerProgram: Indexer.programId,
+          indexerProgram: this.indexer.programId,
           payer: signer,
           systemProgram: SystemProgram.programId,
         },
