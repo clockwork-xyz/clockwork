@@ -8,7 +8,7 @@ build () {
     cd $2
 }
 
-build programs/indexer/client ../../..
 build programs/cronos/client ../../..
+build programs/indexer/client ../../..
 
 exit

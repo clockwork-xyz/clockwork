@@ -2,13 +2,8 @@
   "name": "cronos",
   "license": "ISC",
   "private": true,
-  "packageManager": "yarn@3.1.1",
   "scripts": {
     "build": "./scripts/build.sh",
     "copy-idl": "./scripts/copy-idl.sh"
-  },
-  "workspaces": [
-    "programs/cronos/client",
-    "programs/indexer/client"
-  ]
+  }
 }

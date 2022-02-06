@@ -23,7 +23,7 @@
     "publish": "yarn npm publish"
   },
   "dependencies": {
-    "@cronos-so/indexer": "workspace:^",
+    "@cronos-so/indexer": "^0.0.3",
     "@cronos-so/utils": "^0.0.3",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8",
