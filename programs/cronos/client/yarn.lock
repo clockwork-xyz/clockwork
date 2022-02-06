@@ -986,10 +986,10 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
-"@cronos-so/indexer@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@cronos-so/indexer/-/indexer-0.0.3.tgz#4ce1ed2ee86a1b32d9e16776953d762c4968d1bf"
-  integrity sha512-vWDG6zVH9DhYtunGi8xaJDMbywLZT2nTHIwvIsdXpIcysgfT97HtxFeAca9suTafDvnvYh4ChBlG9uU0Hg+JvA==
+"@cronos-so/indexer@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@cronos-so/indexer/-/indexer-0.0.4.tgz#cd163ffe78fd4e3a56e5500c2e8123bb598c8be5"
+  integrity sha512-jYkFJ6E91oPXDoytAryvZU1kQF6CbdFaChZdPXpUrO1FRKuqdrI5gjXuqZV7HW8qcgoIe2OavUH+W64audY6xA==
   dependencies:
     "@cronos-so/utils" "^0.0.3"
     "@project-serum/anchor" "^0.20.1"

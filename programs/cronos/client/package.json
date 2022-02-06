@@ -1,7 +1,7 @@
 {
   "name": "@cronos-so/cronos",
   "description": "Cronos program",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/cronos-so/programs",
@@ -23,7 +23,7 @@
     "publish": "yarn npm publish"
   },
   "dependencies": {
-    "@cronos-so/indexer": "^0.0.3",
+    "@cronos-so/indexer": "^0.0.4",
     "@cronos-so/utils": "^0.0.3",
     "@project-serum/anchor": "^0.20.1",
     "@solana/spl-token": "^0.1.8",
