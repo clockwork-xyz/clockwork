@@ -24,10 +24,10 @@ describe("Cronos", () => {
   let worker: Keypair;
   let authorityPDA: PDA;
   let daemonPDA: PDA;
+  let revenuePDA: PDA;
   let frame0PDA: PDA;
-  let taskA0PDA: PDA;
-  let taskB0PDA: PDA;
-  let taskB1PDA: PDA;
+  let task1PDA: PDA;
+  let task2PDA: PDA;
   let signerTokens: PublicKey;
   let daemonTokens: PublicKey;
   let tokenProgram: Token;
@@ -75,6 +75,22 @@ describe("Cronos", () => {
     let daemonData = await cronos.account.daemon.data(daemonPDA.address);
     assert(daemonData.owner.toString() === signer.publicKey.toString());
     assert(daemonData.bump === daemonPDA.bump);
+  });
+
+  it("Creates a revenue account", async () => {
+    // Submit instruction.
+    let ix = await cronos.instruction.revenueCreate({
+      daemon: daemonPDA.address,
+      signer: signer.publicKey,
+    });
+    await signAndSubmit(provider.connection, [ix], signer);
+
+    // Validate revenue account.
+    revenuePDA = await cronos.account.revenue.pda(daemonPDA.address);
+    let revenueData = await cronos.account.revenue.data(revenuePDA.address);
+    assert(revenueData.balance.eq(new BN(0)));
+    assert(revenueData.daemon.toString() === daemonPDA.address.toString());
+    assert(revenueData.bump === revenuePDA.bump);
   });
 
   before(async () => {
@@ -173,14 +189,14 @@ describe("Cronos", () => {
     await signAndSubmit(provider.connection, [ix], signer);
 
     // Validate task data.
-    taskA0PDA = await cronos.account.task.pda(daemonPDA.address, new BN(0));
-    let taskData = await cronos.account.task.data(taskA0PDA.address);
+    task1PDA = await cronos.account.task.pda(daemonPDA.address, new BN(0));
+    let taskData = await cronos.account.task.data(task1PDA.address);
     assert(taskData.daemon.toString() === daemonPDA.address.toString());
     assert(Object.keys(taskData.status)[0] === "pending");
     assert(taskData.executeAt.eq(timestamp));
     assert(taskData.repeatEvery.eq(new BN(0)));
     assert(taskData.repeatUntil.eq(timestamp));
-    assert(taskData.bump === taskA0PDA.bump);
+    assert(taskData.bump === task1PDA.bump);
   });
 
   it("Schedules a recurring task", async () => {
@@ -203,14 +219,14 @@ describe("Cronos", () => {
     await signAndSubmit(provider.connection, [ix], signer);
 
     // Validate task data.
-    taskB0PDA = await cronos.account.task.pda(daemonPDA.address, new BN(1));
-    let taskData = await cronos.account.task.data(taskB0PDA.address);
+    task2PDA = await cronos.account.task.pda(daemonPDA.address, new BN(1));
+    let taskData = await cronos.account.task.data(task2PDA.address);
     assert(taskData.daemon.toString() === daemonPDA.address.toString());
     assert(Object.keys(taskData.status)[0] === "pending");
     assert(taskData.executeAt.eq(timestamp));
     assert(taskData.repeatEvery.eq(ONE_MINUTE));
     assert(taskData.repeatUntil.eq(timestamp.add(ONE_MINUTE)));
-    assert(taskData.bump === taskB0PDA.bump);
+    assert(taskData.bump === task2PDA.bump);
   });
 
   it("Executes a one-time task", async () => {
@@ -225,7 +241,7 @@ describe("Cronos", () => {
 
     // Sumbit instruction.
     const ix = await cronos.instruction.taskExecute({
-      task: taskA0PDA.address,
+      task: task1PDA.address,
       worker: worker.publicKey,
     });
     await signAndSubmit(provider.connection, [ix], worker);
@@ -249,8 +265,8 @@ describe("Cronos", () => {
     );
 
     // Validate task data
-    const taskData = await cronos.account.task.data(taskA0PDA.address);
-    assert(Object.keys(taskData.status)[0] === "done");
+    const taskData = await cronos.account.task.data(task1PDA.address);
+    assert(Object.keys(taskData.status)[0] === "executed");
   });
 
   it("Executes a recurring task", async () => {
@@ -265,7 +281,7 @@ describe("Cronos", () => {
 
     // Process task
     const ix = await cronos.instruction.taskExecute({
-      task: taskB0PDA.address,
+      task: task2PDA.address,
       worker: worker.publicKey,
     });
     await signAndSubmit(provider.connection, [ix], worker);
@@ -289,24 +305,36 @@ describe("Cronos", () => {
     );
 
     // Validate task data
-    const taskData = await cronos.account.task.data(taskB0PDA.address);
-    assert(Object.keys(taskData.status)[0] === "repeat");
+    const taskData = await cronos.account.task.data(task2PDA.address);
+    assert(Object.keys(taskData.status)[0] === "repeatable");
   });
 
   it("Repeats a recurring task", async () => {
     // Submit instructions
-    const next_timestamp = timestamp.add(ONE_MINUTE);
+    const taskData = await cronos.account.task.data(task2PDA.address);
+    const nextTimestamp = taskData.executeAt.add(taskData.repeatEvery);
     const ixA = await cronos.instruction.frameCreate({
       signer: worker.publicKey,
-      timestamp: next_timestamp,
+      timestamp: nextTimestamp,
     });
     const ixB = await cronos.instruction.taskRepeat({
-      task: taskB0PDA.address,
+      task: task2PDA.address,
       worker: worker.publicKey,
     });
     await signAndSubmit(provider.connection, [ixA, ixB], worker);
 
-    // TODO validate task data.
+    // Validate next task data.
+    const nextTaskPDA = await cronos.account.task.pda(
+      daemonPDA.address,
+      new BN(2)
+    );
+    const nextTaskData = await cronos.account.task.data(nextTaskPDA.address);
+    assert(nextTaskData.daemon.toString() === daemonPDA.address.toString());
+    assert(Object.keys(nextTaskData.status)[0] === "pending");
+    assert(nextTaskData.executeAt.eq(nextTimestamp));
+    assert(nextTaskData.repeatEvery.eq(taskData.repeatEvery));
+    assert(nextTaskData.repeatUntil.eq(taskData.repeatUntil));
+    assert(nextTaskData.bump === nextTaskPDA.bump);
   });
 });
 

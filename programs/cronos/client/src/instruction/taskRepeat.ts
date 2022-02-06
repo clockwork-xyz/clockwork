@@ -1,4 +1,4 @@
-import { Program } from "@project-serum/anchor";
+import { BN, Program } from "@project-serum/anchor";
 import {
   PublicKey,
   SystemProgram,
@@ -7,6 +7,7 @@ import {
 import { Cronos } from "../idl";
 import { Account } from "../account";
 import { Indexer } from "@cronos-so/indexer";
+import { PDA } from "@cronos-so/utils";
 
 export type TaskRepeatArgs = {
   task: PublicKey;
@@ -42,13 +43,22 @@ export class TaskRepeat {
       authorityPDA.address,
       nextFramePDA.address
     );
-    const nextTaskListData = await this.indexer.account.list.data(
-      nextTaskListPDA.address
-    );
-    const nextTaskElementPDA = await this.indexer.account.element.pda(
-      nextTaskListPDA.address,
-      nextTaskListData.count
-    );
+
+    let nextTaskElementPDA: PDA;
+    try {
+      const nextTaskListData = await this.indexer.account.list.data(
+        nextTaskListPDA.address
+      );
+      nextTaskElementPDA = await this.indexer.account.element.pda(
+        nextTaskListPDA.address,
+        nextTaskListData.count
+      );
+    } catch (e) {
+      nextTaskElementPDA = await this.indexer.account.element.pda(
+        nextTaskListPDA.address,
+        new BN(0)
+      );
+    }
     return this.cronos.instruction.taskRepeat(
       nextTaskPDA.bump,
       nextTaskElementPDA.bump,
