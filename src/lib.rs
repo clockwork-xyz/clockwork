@@ -6,10 +6,10 @@ mod plugin;
 mod publisher;
 
 pub use {
-    config::Config,
+    config::{Config, Producer},
     event::*,
     plugin::KafkaPlugin,
-    publisher::{Publisher, PublisherHandle},
+    publisher::Publisher,
 };
 
 #[no_mangle]
