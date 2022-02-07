@@ -1,7 +1,7 @@
 {
   "name": "@cronos-so/cronos",
   "description": "Cronos program",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "license": "ISC",
   "homepage": "https://github.com/cronos-so/programs",
