@@ -3,7 +3,7 @@ use solana_program::instruction::Instruction;
 
 pub const SEED_TASK: &[u8] = b"task";
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
 pub enum TaskStatus {
     Cancelled,
     Executed,
@@ -12,6 +12,7 @@ pub enum TaskStatus {
 }
 
 #[account]
+#[derive(Debug)]
 pub struct Task {
     pub daemon: Pubkey,
     pub id: u128,

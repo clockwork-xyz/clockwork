@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 pub const SEED_CONFIG: &[u8] = b"config";
 
 #[account]
+#[derive(Debug)]
 pub struct Config {
     pub admin_authority: Pubkey,
     pub frame_interval: u64,
