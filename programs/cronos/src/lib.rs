@@ -49,15 +49,6 @@ pub mod cronos {
         daemon_invoke::handler(ctx, instruction_data)
     }
 
-    pub fn frame_create(
-        ctx: Context<WindowCreate>,
-        timestamp: u64,
-        frame_bump: u8,
-        list_bump: u8,
-    ) -> ProgramResult {
-        frame_create::handler(ctx, timestamp, frame_bump, list_bump)
-    }
-
     pub fn initialize(
         ctx: Context<Initialize>,
         authority_bump: u8,
@@ -85,8 +76,7 @@ pub mod cronos {
         execute_at: u64,
         repeat_every: u64,
         repeat_until: u64,
-        task_bump: u8,
-        task_element_bump: u8,
+        bump: u8,
     ) -> ProgramResult {
         task_create::handler(
             ctx,
@@ -94,8 +84,7 @@ pub mod cronos {
             execute_at,
             repeat_every,
             repeat_until,
-            task_bump,
-            task_element_bump,
+            bump,
         )
     }
 
@@ -103,11 +92,7 @@ pub mod cronos {
         task_execute::handler(ctx)
     }
 
-    pub fn task_repeat(
-        ctx: Context<TaskRepeat>,
-        next_task_bump: u8,
-        next_task_element_bump: u8,
-    ) -> ProgramResult {
-        task_repeat::handler(ctx, next_task_bump, next_task_element_bump)
+    pub fn task_repeat(ctx: Context<TaskRepeat>, bump: u8) -> ProgramResult {
+        task_repeat::handler(ctx, bump)
     }
 }

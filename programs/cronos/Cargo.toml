@@ -22,5 +22,4 @@ default = []
 
 [dependencies]
 anchor-lang = "0.20.1"
-cronos-indexer = { version = "0.0.1", features = ["cpi"] }
 solana-program = "1.7.12"
