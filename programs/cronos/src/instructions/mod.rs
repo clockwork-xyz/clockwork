@@ -1,5 +1,4 @@
 pub mod config_update_admin_authority;
-pub mod config_update_frame_interval;
 pub mod config_update_program_fee;
 pub mod config_update_worker_fee;
 pub mod daemon_create;
@@ -13,7 +12,6 @@ pub mod task_execute;
 pub mod task_repeat;
 
 pub use config_update_admin_authority::*;
-pub use config_update_frame_interval::*;
 pub use config_update_program_fee::*;
 pub use config_update_worker_fee::*;
 pub use daemon_create::*;

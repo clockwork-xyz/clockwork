@@ -17,13 +17,6 @@ pub mod cronos {
         config_update_admin_authority::handler(ctx, new_admin_authority)
     }
 
-    pub fn config_update_frame_interval(
-        ctx: Context<ConfigUpdateFrameInterval>,
-        new_frame_interval: u64,
-    ) -> ProgramResult {
-        config_update_frame_interval::handler(ctx, new_frame_interval)
-    }
-
     pub fn config_update_program_fee(
         ctx: Context<ConfigUpdateProgramFee>,
         new_program_fee: u64,

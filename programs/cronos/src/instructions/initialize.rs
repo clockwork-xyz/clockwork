@@ -62,7 +62,6 @@ pub fn handler(
 
     // Initialize config account.
     config.admin_authority = signer.key();
-    config.frame_interval = 60;
     config.program_fee = 0;
     config.worker_fee = 0;
     config.bump = config_bump;
