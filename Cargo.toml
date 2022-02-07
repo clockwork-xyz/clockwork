@@ -1,0 +1,11 @@
+[package]
+name = "worker"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-client = "1.9.5"
+solana-client-helpers = "1.1.0"
+solana-sdk = "1.9.5"
