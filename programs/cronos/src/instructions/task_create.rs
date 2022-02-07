@@ -35,6 +35,7 @@ pub struct TaskCreate<'info> {
         bump = bump,
         payer = owner,
         space = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data),
+        // TODO dont let tasks be scheduled in the past.
     )]
     pub task: Account<'info, Task>,
 

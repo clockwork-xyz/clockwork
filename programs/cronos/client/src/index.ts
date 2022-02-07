@@ -4,7 +4,7 @@ import { Instruction } from "./instruction";
 import { IDL, Cronos as _Cronos } from "./idl";
 
 export class Cronos {
-  static DEVNET_PROGRAM_ID = "9cEqpQLV3VGN6mBtFKwheJoreg6BXvyCf6pWWDA1FhRf";
+  static DEVNET_PROGRAM_ID = "EikDpw2iRwqMrDwGBxAdbdfVAURkvDajZLWrFoYc2dc5";
   static MAINNET_PROGRAM_ID = "";
 
   public account: Account;

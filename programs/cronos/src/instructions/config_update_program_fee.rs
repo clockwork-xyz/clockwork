@@ -7,7 +7,7 @@ use {crate::state::*, anchor_lang::prelude::*};
 pub struct ConfigUpdateProgramFee<'info> {
     #[account(
         mut,
-        address = config.admin_authority,
+        address = config.admin,
     )]
     pub admin: Signer<'info>,
 

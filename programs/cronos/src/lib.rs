@@ -4,17 +4,32 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("9cEqpQLV3VGN6mBtFKwheJoreg6BXvyCf6pWWDA1FhRf");
+declare_id!("EikDpw2iRwqMrDwGBxAdbdfVAURkvDajZLWrFoYc2dc5");
 
 #[program]
 pub mod cronos {
     use super::*;
 
-    pub fn config_update_admin_authority(
-        ctx: Context<ConfigUpdateAdminAuthority>,
-        new_admin_authority: Pubkey,
+    pub fn admin_create_daemon(ctx: Context<AdminCreateDaemon>, bump: u8) -> ProgramResult {
+        admin_create_daemon::handler(ctx, bump)
+    }
+
+    pub fn admin_create_revenue(ctx: Context<AdminCreateRevenue>, bump: u8) -> ProgramResult {
+        admin_create_revenue::handler(ctx, bump)
+    }
+
+    pub fn admin_schedule_health_check(
+        ctx: Context<AdminScheduleHealthCheck>,
+        bump: u8,
     ) -> ProgramResult {
-        config_update_admin_authority::handler(ctx, new_admin_authority)
+        admin_schedule_health_check::handler(ctx, bump)
+    }
+
+    pub fn config_update_admin(
+        ctx: Context<ConfigUpdateAdmin>,
+        new_admin: Pubkey,
+    ) -> ProgramResult {
+        config_update_admin::handler(ctx, new_admin)
     }
 
     pub fn config_update_program_fee(
@@ -46,9 +61,14 @@ pub mod cronos {
         ctx: Context<Initialize>,
         authority_bump: u8,
         config_bump: u8,
+        health_bump: u8,
         treasury_bump: u8,
     ) -> ProgramResult {
-        initialize::handler(ctx, authority_bump, config_bump, treasury_bump)
+        initialize::handler(ctx, authority_bump, config_bump, health_bump, treasury_bump)
+    }
+
+    pub fn health_check(ctx: Context<HealthCheck>) -> ProgramResult {
+        health_check::handler(ctx)
     }
 
     pub fn revenue_collect(ctx: Context<RevenueCollect>) -> ProgramResult {
