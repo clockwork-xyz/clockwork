@@ -35,7 +35,7 @@ impl Default for Config {
         Self {
             kafka: HashMap::new(),
             shutdown_timeout_ms: 30_000,
-            update_account_topic: "solana.account_updates".to_owned(),
+            update_account_topic: "".to_owned(),
         }
     }
 }

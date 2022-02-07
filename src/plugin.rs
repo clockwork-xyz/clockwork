@@ -92,6 +92,14 @@ impl AccountsDbPlugin for KafkaPlugin {
 
         Ok(())
     }
+
+    fn account_data_notifications_enabled(&self) -> bool {
+        !self.unwrap_publisher().update_account_topic.is_empty()
+    }
+
+    fn transaction_notifications_enabled(&self) -> bool {
+        false
+    }
 }
 
 impl KafkaPlugin {
