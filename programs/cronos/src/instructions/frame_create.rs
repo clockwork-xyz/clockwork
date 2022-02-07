@@ -20,8 +20,7 @@ pub struct WindowCreate<'info> {
     pub authority: Account<'info, Authority>,
 
     #[account(
-        constraint = timestamp % config.frame_interval == 0 @ ErrorCode::Unknown,
-        constraint = timestamp > clock.unix_timestamp as u64 @ ErrorCode::Unknown
+        constraint = timestamp % config.frame_interval == 0 @ ErrorCode::InvalidTimestamp,
     )]
     pub clock: Sysvar<'info, Clock>,
 
