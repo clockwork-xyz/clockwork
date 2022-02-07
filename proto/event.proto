@@ -3,31 +3,31 @@ syntax = "proto3";
 package blockdaemon.solana.accountsdb_plugin_kafka.types;
 
 message UpdateAccountEvent {
-   // The slot number when this update was emitted.
-   uint64 slot = 1;
+  // The slot number when this update was emitted.
+  uint64 slot = 1;
 
-   // The Pubkey for the account.
-   bytes pubkey = 2;
+  // The Pubkey for the account.
+  bytes pubkey = 2;
 
-   // The lamports held by the account.
-   uint64 lamports = 3;
+  // The lamports held by the account.
+  uint64 lamports = 3;
 
-   // The Pubkey of the owner program account.
-   bytes owner = 4;
+  // The Pubkey of the owner program account.
+  bytes owner = 4;
 
-   // This account's data contains a loaded program.
-   bool executable = 5;
+  // This account's data contains a loaded program.
+  bool executable = 5;
 
-   // The epoch at which this account will next owe rent.
-   uint64 rent_epoch = 6;
+  // The epoch at which this account will next owe rent.
+  uint64 rent_epoch = 6;
 
-   // The data held in this account.
-   bytes data = 7;
+  // The data held in this account.
+  bytes data = 7;
 
   // A global monotonically increasing atomic number, which can be used
   // to tell the order of the account update. For example, when an
   // account is updated in the same slot multiple times, the update
   // with higher write_version should supersede the one with lower
   // write_version.
-   uint64 write_version = 8;
+  uint64 write_version = 8;
 }
