@@ -6,9 +6,10 @@ Kafka publisher for use with Solana's [plugin framework](https://docs.solana.com
 
 TODO
 
-**Important:** Solana's plugin interface requires the build environment of the Solana validator and this plugin to be **identical**
+**Important:** Solana's plugin interface requires the build environment of the Solana validator and this plugin to be **identical**.
+
 This includes the Solana version and Rust compiler version.
-You will experience memory corruption and crashes if you try to load a plugin compiled for a different version of Solana.
+Loading a plugin targeting wrong versions will result in memory corruption and crashes.
 
 ## Config
 
