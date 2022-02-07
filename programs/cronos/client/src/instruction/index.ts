@@ -18,7 +18,6 @@ import {
 import { DaemonCreate, DaemonCreateArgs } from "./daemonCreate";
 import { DaemonInvoke, DaemonInvokeArgs } from "./daemonInvoke";
 import { Initialize, InitializeArgs } from "./initialize";
-import { FrameCreate, FrameCreateArgs } from "./frameCreate";
 import { RevenueCollect, RevenueCollectArgs } from "./revenueCollect";
 import { RevenueCreate, RevenueCreateArgs } from "./revenueCreate";
 import { TaskCreate, TaskCreateArgs } from "./taskCreate";
