@@ -448,7 +448,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anchor-lang",
  "cronos-indexer 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
