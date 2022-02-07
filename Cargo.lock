@@ -431,27 +431,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-indexer"
-version = "0.0.1"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
-name = "cronos-indexer"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afb56af4748ac21ec69fce4f2afdd6b3d73b1ccb3336410f10a2133f40f2ce3d"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
 name = "cronos-program"
 version = "0.0.2"
 dependencies = [
  "anchor-lang",
- "cronos-indexer 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-program",
 ]
 
