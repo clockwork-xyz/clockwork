@@ -11,7 +11,7 @@ use {
 pub struct Publisher {
     producer: Producer,
     shutdown_timeout: Duration,
-    update_account_topic: String,
+    pub(crate) update_account_topic: String,
 }
 
 impl Publisher {
