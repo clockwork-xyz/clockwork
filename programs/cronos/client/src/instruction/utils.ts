@@ -1,16 +1,5 @@
-import { dateToSeconds } from "@cronos-so/utils";
-import { BN } from "@project-serum/anchor";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { AccountMetaData, ConfigAccountData, InstructionData } from "src";
-
-function nextFrameTimestamp(config: ConfigAccountData): BN {
-  const now = new Date();
-  const thisFrame = new Date(now.setSeconds(0, 0));
-  const nextFrame = new Date(
-    thisFrame.getTime() + config.frameInterval.toNumber() * 1000
-  );
-  return new BN(dateToSeconds(nextFrame));
-}
+import { AccountMetaData, InstructionData } from "src";
 
 export function buildInstructionData(
   ix: TransactionInstruction

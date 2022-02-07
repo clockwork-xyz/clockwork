@@ -9,6 +9,5 @@ build () {
 }
 
 build programs/cronos/client ../../..
-build programs/indexer/client ../../..
 
 exit

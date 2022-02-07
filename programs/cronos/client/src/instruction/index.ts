@@ -1,4 +1,3 @@
-import { Indexer } from "@cronos-so/indexer";
 import { Program } from "@project-serum/anchor";
 import { TransactionInstruction } from "@solana/web3.js";
 import { Cronos } from "../idl";
@@ -8,10 +7,6 @@ import {
   ConfigUpdateAdminAuthority,
   ConfigUpdateAdminAuthorityArgs,
 } from "./configUpdateAdminAuthority";
-import {
-  ConfigUpdateFrameInterval,
-  ConfigUpdateFrameIntervalArgs,
-} from "./configUpdateFrameInterval";
 import {
   ConfigUpdateProgramFee,
   ConfigUpdateProgramFeeArgs,
@@ -33,14 +28,9 @@ import { TaskRepeat, TaskRepeatArgs } from "./taskRepeat";
 export class Instruction {
   private account: Account;
   private cronos: Program<Cronos>;
-  private indexer: Indexer;
 
   public configUpdateAdminAuthority: (
     args: ConfigUpdateAdminAuthorityArgs
-  ) => Promise<TransactionInstruction>;
-
-  public configUpdateFrameInterval: (
-    args: ConfigUpdateFrameIntervalArgs
   ) => Promise<TransactionInstruction>;
 
   public configUpdateProgramFee: (
@@ -57,10 +47,6 @@ export class Instruction {
 
   public daemonInvoke: (
     args: DaemonInvokeArgs
-  ) => Promise<TransactionInstruction>;
-
-  public frameCreate: (
-    args: FrameCreateArgs
   ) => Promise<TransactionInstruction>;
 
   public revenueCollect: (
@@ -81,20 +67,14 @@ export class Instruction {
 
   public initialize: (args: InitializeArgs) => Promise<TransactionInstruction>;
 
-  constructor(account: Account, cronos: Program<Cronos>, indexer: Indexer) {
+  constructor(account: Account, cronos: Program<Cronos>) {
     this.account = account;
     this.cronos = cronos;
-    this.indexer = indexer;
 
     this.configUpdateAdminAuthority = new ConfigUpdateAdminAuthority(
       this.account,
       this.cronos
     ).configUpdateAdminAuthority;
-
-    this.configUpdateFrameInterval = new ConfigUpdateFrameInterval(
-      this.account,
-      this.cronos
-    ).configUpdateFrameInterval;
 
     this.configUpdateProgramFee = new ConfigUpdateProgramFee(
       this.account,
@@ -116,12 +96,6 @@ export class Instruction {
       this.cronos
     ).daemonInvoke;
 
-    this.frameCreate = new FrameCreate(
-      this.account,
-      this.cronos,
-      this.indexer
-    ).frameCreate;
-
     this.initialize = new Initialize(this.account, this.cronos).initialize;
 
     this.revenueCollect = new RevenueCollect(
@@ -134,18 +108,10 @@ export class Instruction {
       this.cronos
     ).revenueCreate;
 
-    this.taskCreate = new TaskCreate(
-      this.account,
-      this.cronos,
-      this.indexer
-    ).taskCreate;
+    this.taskCreate = new TaskCreate(this.account, this.cronos).taskCreate;
 
     this.taskExecute = new TaskExecute(this.account, this.cronos).taskExecute;
 
-    this.taskRepeat = new TaskRepeat(
-      this.account,
-      this.cronos,
-      this.indexer
-    ).taskRepeat;
+    this.taskRepeat = new TaskRepeat(this.account, this.cronos).taskRepeat;
   }
 }

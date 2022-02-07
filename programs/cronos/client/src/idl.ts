@@ -1,5 +1,5 @@
 export type Cronos = {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "name": "cronos",
   "instructions": [
     {
@@ -20,27 +20,6 @@ export type Cronos = {
         {
           "name": "newAdminAuthority",
           "type": "publicKey"
-        }
-      ]
-    },
-    {
-      "name": "configUpdateFrameInterval",
-      "accounts": [
-        {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "newFrameInterval",
-          "type": "u64"
         }
       ]
     },
@@ -132,65 +111,6 @@ export type Cronos = {
           "type": {
             "defined": "InstructionData"
           }
-        }
-      ]
-    },
-    {
-      "name": "frameCreate",
-      "accounts": [
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "frame",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "list",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "timestamp",
-          "type": "u64"
-        },
-        {
-          "name": "frameBump",
-          "type": "u8"
-        },
-        {
-          "name": "listBump",
-          "type": "u8"
         }
       ]
     },
@@ -315,37 +235,12 @@ export type Cronos = {
       "name": "taskCreate",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "daemon",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "frame",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "taskElement",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "taskList",
           "isMut": true,
           "isSigner": false
         },
@@ -380,11 +275,7 @@ export type Cronos = {
           "type": "u64"
         },
         {
-          "name": "taskBump",
-          "type": "u8"
-        },
-        {
-          "name": "taskElementBump",
+          "name": "bump",
           "type": "u8"
         }
       ]
@@ -429,11 +320,6 @@ export type Cronos = {
       "name": "taskRepeat",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "config",
           "isMut": false,
           "isSigner": false
@@ -444,27 +330,7 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "nextFrame",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "nextTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTaskElement",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTaskList",
           "isMut": true,
           "isSigner": false
         },
@@ -486,11 +352,7 @@ export type Cronos = {
       ],
       "args": [
         {
-          "name": "nextTaskBump",
-          "type": "u8"
-        },
-        {
-          "name": "nextTaskElementBump",
+          "name": "bump",
           "type": "u8"
         }
       ]
@@ -519,10 +381,6 @@ export type Cronos = {
             "type": "publicKey"
           },
           {
-            "name": "frameInterval",
-            "type": "u64"
-          },
-          {
             "name": "programFee",
             "type": "u64"
           },
@@ -549,22 +407,6 @@ export type Cronos = {
           {
             "name": "taskCount",
             "type": "u128"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "frame",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "timestamp",
-            "type": "u64"
           },
           {
             "name": "bump",
@@ -724,21 +566,26 @@ export type Cronos = {
     },
     {
       "code": 6001,
+      "name": "InvalidTimestamp",
+      "msg": "The provided timestamp is not a valid frame"
+    },
+    {
+      "code": 6002,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "TaskNotRepeatable",
       "msg": "This task is not marked for repeat"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "Unknown",
       "msg": "Unknown error"
     }
@@ -746,7 +593,7 @@ export type Cronos = {
 };
 
 export const IDL: Cronos = {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "name": "cronos",
   "instructions": [
     {
@@ -767,27 +614,6 @@ export const IDL: Cronos = {
         {
           "name": "newAdminAuthority",
           "type": "publicKey"
-        }
-      ]
-    },
-    {
-      "name": "configUpdateFrameInterval",
-      "accounts": [
-        {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "newFrameInterval",
-          "type": "u64"
         }
       ]
     },
@@ -879,65 +705,6 @@ export const IDL: Cronos = {
           "type": {
             "defined": "InstructionData"
           }
-        }
-      ]
-    },
-    {
-      "name": "frameCreate",
-      "accounts": [
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "frame",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "list",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "timestamp",
-          "type": "u64"
-        },
-        {
-          "name": "frameBump",
-          "type": "u8"
-        },
-        {
-          "name": "listBump",
-          "type": "u8"
         }
       ]
     },
@@ -1062,37 +829,12 @@ export const IDL: Cronos = {
       "name": "taskCreate",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "daemon",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "frame",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "taskElement",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "taskList",
           "isMut": true,
           "isSigner": false
         },
@@ -1127,11 +869,7 @@ export const IDL: Cronos = {
           "type": "u64"
         },
         {
-          "name": "taskBump",
-          "type": "u8"
-        },
-        {
-          "name": "taskElementBump",
+          "name": "bump",
           "type": "u8"
         }
       ]
@@ -1176,11 +914,6 @@ export const IDL: Cronos = {
       "name": "taskRepeat",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "config",
           "isMut": false,
           "isSigner": false
@@ -1191,27 +924,7 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "indexerProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "nextFrame",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "nextTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTaskElement",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTaskList",
           "isMut": true,
           "isSigner": false
         },
@@ -1233,11 +946,7 @@ export const IDL: Cronos = {
       ],
       "args": [
         {
-          "name": "nextTaskBump",
-          "type": "u8"
-        },
-        {
-          "name": "nextTaskElementBump",
+          "name": "bump",
           "type": "u8"
         }
       ]
@@ -1266,10 +975,6 @@ export const IDL: Cronos = {
             "type": "publicKey"
           },
           {
-            "name": "frameInterval",
-            "type": "u64"
-          },
-          {
             "name": "programFee",
             "type": "u64"
           },
@@ -1296,22 +1001,6 @@ export const IDL: Cronos = {
           {
             "name": "taskCount",
             "type": "u128"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "frame",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "timestamp",
-            "type": "u64"
           },
           {
             "name": "bump",
@@ -1471,21 +1160,26 @@ export const IDL: Cronos = {
     },
     {
       "code": 6001,
+      "name": "InvalidTimestamp",
+      "msg": "The provided timestamp is not a valid frame"
+    },
+    {
+      "code": 6002,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "TaskNotRepeatable",
       "msg": "This task is not marked for repeat"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "Unknown",
       "msg": "Unknown error"
     }

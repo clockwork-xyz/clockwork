@@ -1,4 +1,4 @@
-import { BN, Program } from "@project-serum/anchor";
+import { Program } from "@project-serum/anchor";
 import {
   PublicKey,
   SystemProgram,
@@ -6,8 +6,6 @@ import {
 } from "@solana/web3.js";
 import { Cronos } from "../idl";
 import { Account } from "../account";
-import { Indexer } from "@cronos-so/indexer";
-import { PDA } from "@cronos-so/utils";
 
 export type TaskRepeatArgs = {
   task: PublicKey;
@@ -17,66 +15,32 @@ export type TaskRepeatArgs = {
 export class TaskRepeat {
   private account: Account;
   private cronos: Program<Cronos>;
-  private indexer: Indexer;
 
-  constructor(account: Account, cronos: Program<Cronos>, indexer: Indexer) {
+  constructor(account: Account, cronos: Program<Cronos>) {
     this.account = account;
     this.cronos = cronos;
-    this.indexer = indexer;
   }
 
   public async taskRepeat({
     task,
     worker,
   }: TaskRepeatArgs): Promise<TransactionInstruction> {
-    const authorityPDA = await this.account.authority.pda();
     const configPDA = await this.account.config.pda();
     const taskData = await this.account.task.data(task);
-    const nextTimestamp = taskData.executeAt.add(taskData.repeatEvery);
-    const nextFramePDA = await this.account.frame.pda(nextTimestamp);
     const daemonData = await this.account.daemon.data(taskData.daemon);
     const nextTaskPDA = await this.account.task.pda(
       taskData.daemon,
       daemonData.taskCount
     );
-    const nextTaskListPDA = await this.indexer.account.list.pda(
-      authorityPDA.address,
-      nextFramePDA.address
-    );
-
-    let nextTaskElementPDA: PDA;
-    try {
-      const nextTaskListData = await this.indexer.account.list.data(
-        nextTaskListPDA.address
-      );
-      nextTaskElementPDA = await this.indexer.account.element.pda(
-        nextTaskListPDA.address,
-        nextTaskListData.count
-      );
-    } catch (e) {
-      nextTaskElementPDA = await this.indexer.account.element.pda(
-        nextTaskListPDA.address,
-        new BN(0)
-      );
-    }
-    return this.cronos.instruction.taskRepeat(
-      nextTaskPDA.bump,
-      nextTaskElementPDA.bump,
-      {
-        accounts: {
-          authority: authorityPDA.address,
-          config: configPDA.address,
-          daemon: taskData.daemon,
-          indexerProgram: this.indexer.programId,
-          nextFrame: nextFramePDA.address,
-          nextTask: nextTaskPDA.address,
-          nextTaskElement: nextTaskElementPDA.address,
-          nextTaskList: nextTaskListPDA.address,
-          prevTask: task,
-          systemProgram: SystemProgram.programId,
-          worker: worker,
-        },
-      }
-    );
+    return this.cronos.instruction.taskRepeat(nextTaskPDA.bump, {
+      accounts: {
+        config: configPDA.address,
+        daemon: taskData.daemon,
+        nextTask: nextTaskPDA.address,
+        prevTask: task,
+        systemProgram: SystemProgram.programId,
+        worker: worker,
+      },
+    });
   }
 }

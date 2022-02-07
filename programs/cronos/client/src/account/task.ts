@@ -5,7 +5,7 @@ import { Cronos } from "../idl";
 
 const SEED_TASK = Buffer.from("task");
 
-export class TaskGateway extends Gateway<Cronos, Cronos["accounts"][5]> {
+export class TaskGateway extends Gateway<Cronos, Cronos["accounts"][4]> {
   public async pda(daemon: PublicKey, id: BN) {
     return await findPDA(
       [SEED_TASK, daemon.toBuffer(), id.toArrayLike(Buffer, "be", 16)],
