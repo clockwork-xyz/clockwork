@@ -1,0 +1,25 @@
+[package]
+name = "solana-accountsdb-plugin-kafka"
+authors = ["Blockdaemon"]
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+prost = "0.9"
+rdkafka = "0.28"
+solana-logger = { version = "=1.9.5" }
+solana-accountsdb-plugin-interface = { version = "=1.9.5" }
+tokio = { version = "1.16", features = ["sync"] }
+log = "0.4"
+serde_json = "1.0.78"
+serde = { version = "1.0.136", features = ["derive"] }
+simple-error = "0.2.3"
+
+[build-dependencies]
+prost-build = "0.9"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
