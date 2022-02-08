@@ -23,8 +23,8 @@ pub fn task_create(
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(daemon, false),
-            AccountMeta::new(task_pda.0, false),
             AccountMeta::new(owner, true),
+            AccountMeta::new(task_pda.0, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
         data: cronos_program::instruction::TaskCreate {
