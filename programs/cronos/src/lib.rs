@@ -88,17 +88,17 @@ pub mod cronos {
     pub fn task_create(
         ctx: Context<TaskCreate>,
         instruction_data: InstructionData,
-        execute_at: i64,
-        repeat_every: i64,
-        repeat_until: i64,
+        exec_at: i64,
+        stop_at: i64,
+        recurr: i64,
         bump: u8,
     ) -> ProgramResult {
         task_create::handler(
             ctx,
             instruction_data,
-            execute_at,
-            repeat_every,
-            repeat_until,
+            exec_at,
+            stop_at,
+            recurr,
             bump,
         )
     }
