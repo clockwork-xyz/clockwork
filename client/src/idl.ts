@@ -1,5 +1,5 @@
 export type Cronos = {
-  "version": "0.0.7",
+  "version": "0.0.10",
   "name": "cronos",
   "instructions": [
     {
@@ -27,7 +27,7 @@ export type Cronos = {
         },
         {
           "name": "daemon",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -351,15 +351,15 @@ export type Cronos = {
         },
         {
           "name": "executeAt",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "repeatEvery",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "repeatUntil",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "bump",
@@ -488,11 +488,11 @@ export type Cronos = {
         "fields": [
           {
             "name": "realTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "targetTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -528,15 +528,15 @@ export type Cronos = {
           },
           {
             "name": "executeAt",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "repeatEvery",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "repeatUntil",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -651,7 +651,7 @@ export type Cronos = {
 };
 
 export const IDL: Cronos = {
-  "version": "0.0.7",
+  "version": "0.0.10",
   "name": "cronos",
   "instructions": [
     {
@@ -679,7 +679,7 @@ export const IDL: Cronos = {
         },
         {
           "name": "daemon",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1003,15 +1003,15 @@ export const IDL: Cronos = {
         },
         {
           "name": "executeAt",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "repeatEvery",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "repeatUntil",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "bump",
@@ -1140,11 +1140,11 @@ export const IDL: Cronos = {
         "fields": [
           {
             "name": "realTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "targetTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -1180,15 +1180,15 @@ export const IDL: Cronos = {
           },
           {
             "name": "executeAt",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "repeatEvery",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "repeatUntil",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "bump",
