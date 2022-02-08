@@ -8,15 +8,15 @@ use {
 #[derive(Accounts)]
 #[instruction(
     instruction_data: InstructionData,
-    execute_at: i64, 
-    repeat_every: i64,
-    repeat_until: i64,
+    exec_at: i64, 
+    stop_at: i64,
+    recurr: i64,
     bump: u8,
 )]
 pub struct TaskCreate<'info> {
     #[account(
         address = sysvar::clock::ID,
-        constraint = execute_at >= clock.unix_timestamp @ ErrorCode::InvalidExecuteAt
+        constraint = exec_at >= clock.unix_timestamp @ ErrorCode::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -56,14 +56,20 @@ pub struct TaskCreate<'info> {
 pub fn handler(
     ctx: Context<TaskCreate>,
     instruction_data: InstructionData,
-    execute_at: i64, 
-    repeat_every: i64,
-    repeat_until: i64,
+    exec_at: i64, 
+    stop_at: i64,
+    recurr: i64,
     bump: u8,
 ) -> ProgramResult {
     // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
+
+    // Validate recurrence interval is not negative.
+    require!(recurr >= 0, ErrorCode::InvalidRecIntNegative);
+
+    // Validate the scheduling chronology.
+    require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
 
     // Validate the daemon is the only required signer on the instruction.
     // If the instruction has other required signers, we should just fail now.
@@ -79,9 +85,9 @@ pub fn handler(
     task.id = daemon.task_count;
     task.instruction_data = instruction_data;
     task.status = TaskStatus::Pending;
-    task.execute_at = execute_at;
-    task.repeat_every = repeat_every;
-    task.repeat_until = repeat_until;
+    task.exec_at = exec_at;
+    task.stop_at = stop_at;
+    task.recurr = recurr;
     task.bump = bump;
 
     // Increment daemon task counter.

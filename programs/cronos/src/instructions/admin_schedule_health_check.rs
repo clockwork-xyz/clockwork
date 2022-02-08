@@ -75,9 +75,9 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
 
     // Setup the health account.
     let now = clock.unix_timestamp;
-    let execute_at = now.checked_add(1).unwrap();
+    let exec_at = now.checked_add(1).unwrap();
     health.real_time = now;
-    health.target_time = execute_at;
+    health.target_time = exec_at;
 
     // Create health check instruction
     let health_check_ix = InstructionData::from(
@@ -98,9 +98,9 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
     task.id = daemon.task_count;
     task.instruction_data = health_check_ix;
     task.status = TaskStatus::Pending;
-    task.execute_at = execute_at;
-    task.repeat_every = 1;
-    task.repeat_until = i64::MAX;
+    task.exec_at = exec_at;
+    task.stop_at = i64::MAX;
+    task.recurr = 1;
     task.bump = bump;
 
     // Increment daemon task counter.
