@@ -1,13 +1,14 @@
 [package]
 name = "cronos-program"
 version = "0.0.11"
-description = "Created with Anchor"
+description = "Instruction scheduler for Solana"
 edition = "2018"
-license = "ISC"
+license = "Apache-2.0"
 homepage = "https://cronos.so"
 repository = "https://github.com/cronos-so/cronos"
 documentation = "https://docs.cronos.so"
 readme = "./README.md"
+keywords = ["solana", "cronos", "program"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
