@@ -1,0 +1,15 @@
+[package]
+name = "cronos-sdk"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anchor-client = { version = "0.20.1", features = ["debug"] }
+cronos-program = { version = "0.0.7", features = ["no-entrypoint"] }
+solana-account-decoder = "1.9.5"
+solana-client = "1.9.5"
+solana-client-helpers = "1.1.0"
+solana-program = "1.9.5"
+solana-sdk = "1.9.5"
