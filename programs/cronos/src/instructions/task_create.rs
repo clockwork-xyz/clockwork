@@ -1,6 +1,7 @@
 use {
     crate::{state::*, errors::*},
-    anchor_lang::{prelude::*, solana_program::system_program},
+    anchor_lang::prelude::*,
+    solana_program::{system_program, sysvar},
     std::mem::size_of,
 };
 
@@ -13,6 +14,12 @@ use {
     bump: u8,
 )]
 pub struct TaskCreate<'info> {
+    #[account(
+        address = sysvar::clock::ID,
+        constraint = execute_at >= clock.unix_timestamp as u64 @ ErrorCode::InvalidExecuteAt
+    )]
+    pub clock: Sysvar<'info, Clock>,
+
     #[account(
         mut,
         seeds = [

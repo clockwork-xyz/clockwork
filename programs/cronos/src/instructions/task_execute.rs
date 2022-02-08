@@ -1,12 +1,13 @@
 use {
     crate::{errors::*, state::*},
     anchor_lang::prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
+    solana_program::{instruction::Instruction, program::invoke_signed, sysvar},
 };
 
 #[derive(Accounts)]
 #[instruction()]
 pub struct TaskProcess<'info> {
+    #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(

@@ -1,6 +1,6 @@
 use std::mem::size_of_val;
 
-use solana_program::{log::sol_log};
+use solana_program::{log::sol_log, sysvar};
 
 use {
     crate::state::*,
@@ -22,6 +22,7 @@ pub struct AdminScheduleHealthCheck<'info> {
     )]
     pub authority: Account<'info, Authority>,
     
+    #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
@@ -61,7 +62,7 @@ pub struct AdminScheduleHealthCheck<'info> {
         ],
         bump = bump,
         payer = admin,
-        space = 8 + size_of::<Task>() + 100, // TODO optimize this
+        space = 8 + size_of::<Task>() + 80, 
     )]
     pub task: Account<'info, Task>,
 }
@@ -84,7 +85,6 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
     let execute_at = now.checked_add(1).unwrap();
     health.real_time = now;
     health.target_time = execute_at;
-
 
     // Create health check instruction
     let health_check_ix = InstructionData::from(
