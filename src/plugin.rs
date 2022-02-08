@@ -4,12 +4,8 @@ use {
     rdkafka::util::get_rdkafka_version,
     simple_error::simple_error,
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
-        AccountsDbPlugin,
-        AccountsDbPluginError as PluginError,
-        Result as PluginResult,
-        ReplicaAccountInfo,
-        ReplicaAccountInfoVersions,
-        SlotStatus as PluginSlotStatus,
+        AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
+        ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus as PluginSlotStatus,
     },
     std::fmt::{Debug, Formatter},
 };
@@ -32,7 +28,8 @@ impl AccountsDbPlugin for KafkaPlugin {
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         if self.publisher.is_some() {
-            return Err(PluginError::Custom(Box::new(simple_error!("plugin already loaded"))));
+            let err = simple_error!("plugin already loaded");
+            return Err(PluginError::Custom(Box::new(err)));
         }
 
         solana_logger::setup_with_default("info");
@@ -46,7 +43,8 @@ impl AccountsDbPlugin for KafkaPlugin {
         let (version_n, version_s) = get_rdkafka_version();
         info!("rd_kafka_version: {:#08x}, {}", version_n, version_s);
 
-        let producer = config.producer()
+        let producer = config
+            .producer()
             .map_err(|e| PluginError::Custom(Box::new(e)))?;
         info!("Created rdkafka::FutureProducer");
 
@@ -70,7 +68,7 @@ impl AccountsDbPlugin for KafkaPlugin {
         is_startup: bool,
     ) -> PluginResult<()> {
         if is_startup {
-            return Ok(())
+            return Ok(());
         }
 
         let info = Self::unwrap_update_account(account);
@@ -86,7 +84,8 @@ impl AccountsDbPlugin for KafkaPlugin {
         };
 
         let publisher = self.unwrap_publisher();
-        publisher.update_account(event)
+        publisher
+            .update_account(event)
             .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
     }
 
@@ -107,7 +106,8 @@ impl AccountsDbPlugin for KafkaPlugin {
             status: SlotStatus::from(status).into(),
         };
 
-        publisher.update_slot_status(event)
+        publisher
+            .update_slot_status(event)
             .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
     }
 

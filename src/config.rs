@@ -7,14 +7,9 @@ use {
     },
     serde::Deserialize,
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
-        AccountsDbPluginError,
-        Result as PluginResult,
+        AccountsDbPluginError, Result as PluginResult,
     },
-    std::{
-        collections::HashMap,
-        fs::File,
-        path::Path,
-    },
+    std::{collections::HashMap, fs::File, path::Path},
 };
 
 /// Plugin config.
