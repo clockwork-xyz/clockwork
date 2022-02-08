@@ -1,6 +1,6 @@
 [package]
 name = "cronos-sdk"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 description = "Cronos program Rust client"
 license = "Apache-2.0"
