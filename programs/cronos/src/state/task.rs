@@ -1,3 +1,5 @@
+use crate::pda::PDA;
+
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use solana_program::instruction::Instruction;
@@ -23,6 +25,15 @@ pub struct Task {
     pub stop_at: i64, // Stop executing at
     pub recurr: i64,  // Recurrence interval
     pub bump: u8,
+}
+
+impl Task {
+    pub fn find_pda(daemon: Pubkey, id: u128) -> PDA {
+        Pubkey::find_program_address(
+            &[SEED_TASK, daemon.as_ref(), id.to_be_bytes().as_ref()],
+            &crate::ID,
+        )
+    }
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]

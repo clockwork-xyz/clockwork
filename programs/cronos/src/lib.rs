@@ -1,5 +1,6 @@
 pub mod errors;
 mod instructions;
+pub mod pda;
 pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
@@ -93,14 +94,7 @@ pub mod cronos {
         recurr: i64,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(
-            ctx,
-            instruction_data,
-            exec_at,
-            stop_at,
-            recurr,
-            bump,
-        )
+        task_create::handler(ctx, instruction_data, exec_at, stop_at, recurr, bump)
     }
 
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {

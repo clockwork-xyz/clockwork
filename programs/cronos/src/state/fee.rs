@@ -1,3 +1,5 @@
+use crate::pda::PDA;
+
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use std::convert::TryFrom;
@@ -16,5 +18,11 @@ impl TryFrom<Vec<u8>> for Fee {
     type Error = ProgramError;
     fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
         Fee::try_deserialize(&mut data.as_slice())
+    }
+}
+
+impl Fee {
+    pub fn find_pda(daemon: Pubkey) -> PDA {
+        Pubkey::find_program_address(&[SEED_FEE, daemon.as_ref()], &crate::ID)
     }
 }
