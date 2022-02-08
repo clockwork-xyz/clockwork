@@ -1,1 +1,5 @@
+# Cargo
 /target
+
+# Postgres
+postgres-data

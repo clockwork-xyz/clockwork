@@ -1,5 +1,5 @@
-use anchor_lang::{prelude::ProgramError, AccountDeserialize};
-use cronos_program::state::*;
+// use anchor_lang::{prelude::ProgramError, AccountDeserialize};
+use cronos_sdk::account::*;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     pubsub_client::PubsubClient,
@@ -29,6 +29,7 @@ fn main() -> ClientResult<()> {
     for new_blocktime in blocktime_receiver {
         current_blocktime = new_blocktime;
         println!("Latest blocktime: {}", current_blocktime);
+        // TODO process pending tasks that have come due
     }
 
     Ok(())
@@ -39,7 +40,7 @@ fn replicate_cronos_tasks(wss_endpoint: &'static str) {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
             wss_endpoint.into(),
-            &cronos_program::ID,
+            &cronos_sdk::ID,
             Some(RpcProgramAccountsConfig {
                 account_config: RpcAccountInfoConfig {
                     encoding: Some(UiAccountEncoding::Base64),
@@ -52,26 +53,30 @@ fn replicate_cronos_tasks(wss_endpoint: &'static str) {
         )
         .unwrap();
 
-        // keyed_account_receiver.recv()
-        // keyed_account_receiver.recv_deadline(deadline)
-
         // Listen for new accounts
         for keyed_account_response in keyed_account_receiver {
             let keyed_account = keyed_account_response.value;
             let account = keyed_account.account.decode::<Account>().unwrap();
-            let buf = &mut account.data.as_slice();
 
             println!("Got account: {:?}", keyed_account);
 
-            // Try deserializing to a task
-            let task: Result<Task, ProgramError> = Task::try_deserialize(buf);
+            let task = Task::try_from(account.data);
             if !task.is_err() {
-                let task = task.unwrap();
-                // TODO write task to Postgres
+                let _task = task.unwrap();
+
+                // Build postgres client
+                let mut _psql =
+                    postgres::Client::connect("host=localhost user=postgres", postgres::NoTls)
+                        .unwrap();
+
+                // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&keyed_account.pubkey.as_str(), &task.daemon.as_str(), &task.status, &task.execute_at]).unwrap();
+                // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&"a", &"b", &"c", &task.execute_at]).unwrap();
+
+                // TODO Write task to postgres
             }
         }
 
-        println!("Websocket timed out!");
+        println!("Websocket timed out");
     });
 }
 
