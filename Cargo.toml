@@ -2,6 +2,13 @@
 name = "cronos-sdk"
 version = "0.0.1"
 edition = "2021"
+description = "Created with Anchor"
+edition = "2018"
+license = "ISC"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/sdk"
+documentation = "https://docs.rs/cronos-sdk"
+readme = "./README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
