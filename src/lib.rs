@@ -2,7 +2,7 @@ pub mod instruction;
 pub mod pda;
 
 pub use cronos_program::errors;
-pub use cronos_program::state;
+pub use cronos_program::state as account;
 
 // Export current solana-program types for downstream users who may also be
 // building with a different solana-program version
