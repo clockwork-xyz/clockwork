@@ -107,7 +107,7 @@ fn monitor_blocktime(https_endpoint: &'static str, wss_endpoint: &'static str) -
     return blocktime_receiver;
 }
 
-fn sign_and_submit(rpc_client: Client, ixs: &[Instruction]) {
+fn _sign_and_submit(rpc_client: Client, ixs: &[Instruction]) {
     let mut tx = Transaction::new_with_payer(ixs, Some(&rpc_client.payer_pubkey()));
     tx.sign(
         &vec![&rpc_client.payer],
