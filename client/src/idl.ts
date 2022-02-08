@@ -1,9 +1,60 @@
 export type Cronos = {
-  "version": "0.0.2",
+  "version": "0.0.7",
   "name": "cronos",
   "instructions": [
     {
-      "name": "configUpdateAdminAuthority",
+      "name": "adminScheduleHealthCheck",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "health",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "configUpdateAdmin",
       "accounts": [
         {
           "name": "admin",
@@ -18,7 +69,7 @@ export type Cronos = {
       ],
       "args": [
         {
-          "name": "newAdminAuthority",
+          "name": "newAdmin",
           "type": "publicKey"
         }
       ]
@@ -79,6 +130,11 @@ export type Cronos = {
           "isSigner": true
         },
         {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -86,7 +142,11 @@ export type Cronos = {
       ],
       "args": [
         {
-          "name": "bump",
+          "name": "daemonBump",
+          "type": "u8"
+        },
+        {
+          "name": "feeBump",
           "type": "u8"
         }
       ]
@@ -115,6 +175,27 @@ export type Cronos = {
       ]
     },
     {
+      "name": "feeCollect",
+      "accounts": [
+        {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize",
       "accounts": [
         {
@@ -124,6 +205,21 @@ export type Cronos = {
         },
         {
           "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "health",
           "isMut": true,
           "isSigner": false
         },
@@ -153,62 +249,48 @@ export type Cronos = {
           "type": "u8"
         },
         {
+          "name": "daemonBump",
+          "type": "u8"
+        },
+        {
+          "name": "feeBump",
+          "type": "u8"
+        },
+        {
+          "name": "healthBump",
+          "type": "u8"
+        },
+        {
           "name": "treasuryBump",
           "type": "u8"
         }
       ]
     },
     {
-      "name": "revenueCollect",
+      "name": "healthCheck",
       "accounts": [
         {
-          "name": "revenue",
-          "isMut": true,
+          "name": "clock",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "signer",
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "treasury",
+          "name": "health",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": []
-    },
-    {
-      "name": "revenueCreate",
-      "accounts": [
-        {
-          "name": "daemon",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "revenue",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "signer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
     },
     {
       "name": "taskCancel",
@@ -234,6 +316,11 @@ export type Cronos = {
     {
       "name": "taskCreate",
       "accounts": [
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "daemon",
           "isMut": true,
@@ -299,7 +386,7 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "revenue",
+          "name": "fee",
           "isMut": true,
           "isSigner": false
         },
@@ -315,47 +402,6 @@ export type Cronos = {
         }
       ],
       "args": []
-    },
-    {
-      "name": "taskRepeat",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "daemon",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "prevTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "worker",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -377,7 +423,7 @@ export type Cronos = {
         "kind": "struct",
         "fields": [
           {
-            "name": "adminAuthority",
+            "name": "admin",
             "type": "publicKey"
           },
           {
@@ -416,7 +462,7 @@ export type Cronos = {
       }
     },
     {
-      "name": "revenue",
+      "name": "fee",
       "type": {
         "kind": "struct",
         "fields": [
@@ -426,6 +472,26 @@ export type Cronos = {
           },
           {
             "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "health",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "realTime",
+            "type": "u64"
+          },
+          {
+            "name": "targetTime",
             "type": "u64"
           },
           {
@@ -550,9 +616,6 @@ export type Cronos = {
           },
           {
             "name": "Pending"
-          },
-          {
-            "name": "Repeatable"
           }
         ]
       }
@@ -566,8 +629,8 @@ export type Cronos = {
     },
     {
       "code": 6001,
-      "name": "InvalidTimestamp",
-      "msg": "The provided timestamp is not a valid frame"
+      "name": "InvalidExecuteAt",
+      "msg": "Tasks cannot be scheduled for execution in the past"
     },
     {
       "code": 6002,
@@ -576,16 +639,11 @@ export type Cronos = {
     },
     {
       "code": 6003,
-      "name": "TaskNotRepeatable",
-      "msg": "This task is not marked for repeat"
-    },
-    {
-      "code": 6004,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6005,
+      "code": 6004,
       "name": "Unknown",
       "msg": "Unknown error"
     }
@@ -593,11 +651,62 @@ export type Cronos = {
 };
 
 export const IDL: Cronos = {
-  "version": "0.0.2",
+  "version": "0.0.7",
   "name": "cronos",
   "instructions": [
     {
-      "name": "configUpdateAdminAuthority",
+      "name": "adminScheduleHealthCheck",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "health",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "configUpdateAdmin",
       "accounts": [
         {
           "name": "admin",
@@ -612,7 +721,7 @@ export const IDL: Cronos = {
       ],
       "args": [
         {
-          "name": "newAdminAuthority",
+          "name": "newAdmin",
           "type": "publicKey"
         }
       ]
@@ -673,6 +782,11 @@ export const IDL: Cronos = {
           "isSigner": true
         },
         {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -680,7 +794,11 @@ export const IDL: Cronos = {
       ],
       "args": [
         {
-          "name": "bump",
+          "name": "daemonBump",
+          "type": "u8"
+        },
+        {
+          "name": "feeBump",
           "type": "u8"
         }
       ]
@@ -709,6 +827,27 @@ export const IDL: Cronos = {
       ]
     },
     {
+      "name": "feeCollect",
+      "accounts": [
+        {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize",
       "accounts": [
         {
@@ -718,6 +857,21 @@ export const IDL: Cronos = {
         },
         {
           "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "health",
           "isMut": true,
           "isSigner": false
         },
@@ -747,62 +901,48 @@ export const IDL: Cronos = {
           "type": "u8"
         },
         {
+          "name": "daemonBump",
+          "type": "u8"
+        },
+        {
+          "name": "feeBump",
+          "type": "u8"
+        },
+        {
+          "name": "healthBump",
+          "type": "u8"
+        },
+        {
           "name": "treasuryBump",
           "type": "u8"
         }
       ]
     },
     {
-      "name": "revenueCollect",
+      "name": "healthCheck",
       "accounts": [
         {
-          "name": "revenue",
-          "isMut": true,
+          "name": "clock",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "signer",
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "treasury",
+          "name": "health",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": []
-    },
-    {
-      "name": "revenueCreate",
-      "accounts": [
-        {
-          "name": "daemon",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "revenue",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "signer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
     },
     {
       "name": "taskCancel",
@@ -828,6 +968,11 @@ export const IDL: Cronos = {
     {
       "name": "taskCreate",
       "accounts": [
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "daemon",
           "isMut": true,
@@ -893,7 +1038,7 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "revenue",
+          "name": "fee",
           "isMut": true,
           "isSigner": false
         },
@@ -909,47 +1054,6 @@ export const IDL: Cronos = {
         }
       ],
       "args": []
-    },
-    {
-      "name": "taskRepeat",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "daemon",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "nextTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "prevTask",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "worker",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -971,7 +1075,7 @@ export const IDL: Cronos = {
         "kind": "struct",
         "fields": [
           {
-            "name": "adminAuthority",
+            "name": "admin",
             "type": "publicKey"
           },
           {
@@ -1010,7 +1114,7 @@ export const IDL: Cronos = {
       }
     },
     {
-      "name": "revenue",
+      "name": "fee",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1020,6 +1124,26 @@ export const IDL: Cronos = {
           },
           {
             "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "health",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "realTime",
+            "type": "u64"
+          },
+          {
+            "name": "targetTime",
             "type": "u64"
           },
           {
@@ -1144,9 +1268,6 @@ export const IDL: Cronos = {
           },
           {
             "name": "Pending"
-          },
-          {
-            "name": "Repeatable"
           }
         ]
       }
@@ -1160,8 +1281,8 @@ export const IDL: Cronos = {
     },
     {
       "code": 6001,
-      "name": "InvalidTimestamp",
-      "msg": "The provided timestamp is not a valid frame"
+      "name": "InvalidExecuteAt",
+      "msg": "Tasks cannot be scheduled for execution in the past"
     },
     {
       "code": 6002,
@@ -1170,16 +1291,11 @@ export const IDL: Cronos = {
     },
     {
       "code": 6003,
-      "name": "TaskNotRepeatable",
-      "msg": "This task is not marked for repeat"
-    },
-    {
-      "code": 6004,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6005,
+      "code": 6004,
       "name": "Unknown",
       "msg": "Unknown error"
     }

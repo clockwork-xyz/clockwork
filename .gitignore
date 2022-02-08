@@ -8,6 +8,7 @@ target
 **/dist
 **/node_modules
 **/tsconfig.tsbuildinfo
+**/yarn-error.log
 
 # Solana
 **/test-ledger

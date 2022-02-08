@@ -8,6 +8,6 @@ build () {
     cd $2
 }
 
-build programs/cronos/client ../../..
+build client ..
 
 exit

@@ -4,9 +4,9 @@ version = "0.0.7"
 description = "Created with Anchor"
 edition = "2018"
 license = "ISC"
-homepage = "https://github.com/cronos-so/cronos/tree/main/programs/cronos"
+homepage = "https://cronos.so"
 repository = "https://github.com/cronos-so/cronos"
-documentation = "https://cronos.so"
+documentation = "https://docs.cronos.so"
 readme = "./README.md"
 
 [lib]

@@ -1,9 +1,0 @@
-{
-  "name": "cronos",
-  "license": "ISC",
-  "private": true,
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "copy-idl": "./scripts/copy-idl.sh"
-  }
-}

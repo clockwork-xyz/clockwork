@@ -1,1 +1,1 @@
-cp target/types/cronos.ts programs/cronos/client/src/idl.ts 
+cp target/types/cronos.ts client/src/idl.ts 
