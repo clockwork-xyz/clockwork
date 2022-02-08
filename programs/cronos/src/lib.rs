@@ -5,7 +5,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("7P8LoWNary3QwAqfzJUTxi55SnDZxFqcBiD3okJQSkAj");
+declare_id!("AUDt6tUdA3eMNjX5pyirrroNLyqupKUnzpeFdsrGBWmv");
 
 #[program]
 pub mod cronos {
