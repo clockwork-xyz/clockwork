@@ -8,15 +8,15 @@ use {
 #[derive(Accounts)]
 #[instruction(
     instruction_data: InstructionData,
-    execute_at: u64, 
-    repeat_every: u64,
-    repeat_until: u64,
+    execute_at: i64, 
+    repeat_every: i64,
+    repeat_until: i64,
     bump: u8,
 )]
 pub struct TaskCreate<'info> {
     #[account(
         address = sysvar::clock::ID,
-        constraint = execute_at >= clock.unix_timestamp as u64 @ ErrorCode::InvalidExecuteAt
+        constraint = execute_at >= clock.unix_timestamp @ ErrorCode::InvalidExecuteAt
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -56,9 +56,9 @@ pub struct TaskCreate<'info> {
 pub fn handler(
     ctx: Context<TaskCreate>,
     instruction_data: InstructionData,
-    execute_at: u64, 
-    repeat_every: u64,
-    repeat_until: u64,
+    execute_at: i64, 
+    repeat_every: i64,
+    repeat_until: i64,
     bump: u8,
 ) -> ProgramResult {
     // Get accounts.

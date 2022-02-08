@@ -50,7 +50,7 @@ pub struct TaskProcess<'info> {
         bump = task.bump,
         has_one = daemon,
         constraint = task.status == TaskStatus::Pending @ ErrorCode::TaskNotPending,
-        constraint = task.execute_at <= clock.unix_timestamp as u64 @ ErrorCode::TaskNotDue,
+        constraint = task.execute_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
         owner = crate::ID
     )]
     pub task: Account<'info, Task>,
@@ -69,7 +69,7 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
 
     // Update task state.
     if task.repeat_every > 0 {
-        let next_execute_at: u64 = task.execute_at.checked_add(task.repeat_every).unwrap();
+        let next_execute_at = task.execute_at.checked_add(task.repeat_every).unwrap();
         if next_execute_at <= task.repeat_until {
             task.execute_at = next_execute_at
         }

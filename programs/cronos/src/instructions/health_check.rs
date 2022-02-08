@@ -44,7 +44,7 @@ pub fn handler(ctx: Context<HealthCheck>) -> ProgramResult {
 
     // Update the health account.
     health.target_time = health.target_time.checked_add(1).unwrap();
-    health.real_time = clock.unix_timestamp as u64;
+    health.real_time = clock.unix_timestamp;
 
     Ok(())
 }

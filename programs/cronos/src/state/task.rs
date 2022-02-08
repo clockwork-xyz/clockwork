@@ -19,9 +19,9 @@ pub struct Task {
     pub id: u128,
     pub instruction_data: InstructionData,
     pub status: TaskStatus,
-    pub execute_at: u64,
-    pub repeat_every: u64,
-    pub repeat_until: u64,
+    pub execute_at: i64,
+    pub repeat_every: i64,
+    pub repeat_until: i64,
     pub bump: u8,
 }
 

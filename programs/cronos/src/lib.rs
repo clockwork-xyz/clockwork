@@ -88,9 +88,9 @@ pub mod cronos {
     pub fn task_create(
         ctx: Context<TaskCreate>,
         instruction_data: InstructionData,
-        execute_at: u64,
-        repeat_every: u64,
-        repeat_until: u64,
+        execute_at: i64,
+        repeat_every: i64,
+        repeat_until: i64,
         bump: u8,
     ) -> ProgramResult {
         task_create::handler(
