@@ -10,14 +10,6 @@ declare_id!("GYJGrWYmH9L3JtrHGPVnMuUtLtdLkqvNVBV93oGtCtDs");
 pub mod cronos {
     use super::*;
 
-    pub fn admin_create_daemon(
-        ctx: Context<AdminCreateDaemon>,
-        daemon_bump: u8,
-        fee_bump: u8,
-    ) -> ProgramResult {
-        admin_create_daemon::handler(ctx, daemon_bump, fee_bump)
-    }
-
     pub fn admin_schedule_health_check(
         ctx: Context<AdminScheduleHealthCheck>,
         bump: u8,
@@ -69,10 +61,20 @@ pub mod cronos {
         ctx: Context<Initialize>,
         authority_bump: u8,
         config_bump: u8,
+        daemon_bump: u8,
+        fee_bump: u8,
         health_bump: u8,
         treasury_bump: u8,
     ) -> ProgramResult {
-        initialize::handler(ctx, authority_bump, config_bump, health_bump, treasury_bump)
+        initialize::handler(
+            ctx,
+            authority_bump,
+            config_bump,
+            daemon_bump,
+            fee_bump,
+            health_bump,
+            treasury_bump,
+        )
     }
 
     pub fn health_check(ctx: Context<HealthCheck>) -> ProgramResult {
