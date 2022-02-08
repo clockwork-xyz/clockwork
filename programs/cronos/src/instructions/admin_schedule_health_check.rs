@@ -33,11 +33,12 @@ pub struct AdminScheduleHealthCheck<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
+        mut,
         seeds = [
             SEED_DAEMON, 
             daemon.owner.as_ref()
         ],
-        bump = bump,
+        bump = daemon.bump,
         constraint = daemon.owner == authority.key(),
     )]
     pub daemon: Account<'info, Daemon>,
@@ -75,11 +76,6 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
     let health = &mut ctx.accounts.health;
     let task = &mut ctx.accounts.task;
 
-    // Initialize daemon account.
-    daemon.owner = authority.key();
-    daemon.task_count = 0;
-    daemon.bump = bump;
-
     // Setup the health account.
     let now = clock.unix_timestamp as u64;
     let execute_at = now.checked_add(1).unwrap();
@@ -99,8 +95,6 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
             data: vec![],
         }
     );
-
-    sol_log(format!("Health_check ix size: {:?}", size_of_val(&health_check_ix)).as_str());
 
     // Initialize task account.
     task.daemon = daemon.key();
