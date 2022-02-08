@@ -31,3 +31,24 @@ message UpdateAccountEvent {
   // write_version.
   uint64 write_version = 8;
 }
+
+message SlotStatusEvent {
+  uint64 slot = 1;
+
+  uint64 parent = 2;
+
+  SlotStatus status = 3;
+}
+
+enum SlotStatus {
+  // The highest slot of the heaviest fork processed by the node. Ledger state at this slot is
+  // not derived from a confirmed or finalized block, but if multiple forks are present, is from
+  // the fork the validator believes is most likely to finalize.
+  Processed = 0;
+
+  // The highest slot having reached max vote lockout.
+  Rooted = 1;
+
+  // The highest slot that has been voted on by supermajority of the cluster, ie. is confirmed.
+  Confirmed = 2;
+}

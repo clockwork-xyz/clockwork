@@ -9,6 +9,7 @@ use {
         Result as PluginResult,
         ReplicaAccountInfo,
         ReplicaAccountInfoVersions,
+        SlotStatus as PluginSlotStatus,
     },
     std::fmt::{Debug, Formatter},
 };
@@ -86,15 +87,32 @@ impl AccountsDbPlugin for KafkaPlugin {
 
         let publisher = self.unwrap_publisher();
         publisher.update_account(event)
-            .map_err(|e| PluginError::AccountsUpdateError {
-                msg: e.to_string(),
-            })?;
+            .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
+    }
 
-        Ok(())
+    fn update_slot_status(
+        &mut self,
+        slot: u64,
+        parent: Option<u64>,
+        status: PluginSlotStatus,
+    ) -> PluginResult<()> {
+        let publisher = self.unwrap_publisher();
+        if !publisher.wants_slot_status() {
+            return Ok(());
+        }
+
+        let event = SlotStatusEvent {
+            slot,
+            parent: parent.unwrap_or(0),
+            status: SlotStatus::from(status).into(),
+        };
+
+        publisher.update_slot_status(event)
+            .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
     }
 
     fn account_data_notifications_enabled(&self) -> bool {
-        !self.unwrap_publisher().update_account_topic.is_empty()
+        self.unwrap_publisher().wants_update_account()
     }
 
     fn transaction_notifications_enabled(&self) -> bool {

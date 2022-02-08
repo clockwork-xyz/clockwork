@@ -28,6 +28,9 @@ pub struct Config {
     /// Kafka topic to send account updates to.
     #[serde(default)]
     pub update_account_topic: String,
+    /// Kafka topic to send slot status updates to.
+    #[serde(default)]
+    pub slot_status_topic: String,
 }
 
 impl Default for Config {
@@ -36,6 +39,7 @@ impl Default for Config {
             kafka: HashMap::new(),
             shutdown_timeout_ms: 30_000,
             update_account_topic: "".to_owned(),
+            slot_status_topic: "".to_owned(),
         }
     }
 }
