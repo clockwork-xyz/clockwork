@@ -1,4 +1,3 @@
-use crate::pda::PDA;
 use anchor_client::anchor_lang::{
     solana_program::{
         instruction::{AccountMeta, Instruction},
@@ -7,6 +6,7 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
+use cronos_program::pda::PDA;
 use cronos_program::state::InstructionData as CronosInstructionData;
 
 pub fn task_create(
