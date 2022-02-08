@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
+use std::convert::TryFrom;
 
 pub const SEED_HEALTH: &[u8] = b"health";
 
@@ -11,8 +12,9 @@ pub struct Health {
     pub bump: u8,
 }
 
-impl From<Vec<u8>> for Health {
-    fn from(data: Vec<u8>) -> Self {
-        Health::try_deserialize(&mut data.as_slice()).unwrap()
+impl TryFrom<Vec<u8>> for Health {
+    type Error = ProgramError;
+    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+        Health::try_deserialize(&mut data.as_slice())
     }
 }

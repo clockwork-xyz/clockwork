@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use solana_program::instruction::Instruction;
+use std::convert::TryFrom;
 
 pub const SEED_TASK: &[u8] = b"task";
 
@@ -44,9 +45,10 @@ pub struct AccountMetaData {
     pub is_writable: bool,
 }
 
-impl From<Vec<u8>> for Task {
-    fn from(data: Vec<u8>) -> Self {
-        Task::try_deserialize(&mut data.as_slice()).unwrap()
+impl TryFrom<Vec<u8>> for Task {
+    type Error = ProgramError;
+    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+        Task::try_deserialize(&mut data.as_slice())
     }
 }
 

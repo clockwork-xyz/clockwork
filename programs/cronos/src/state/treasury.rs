@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::AnchorDeserialize;
+use std::convert::TryFrom;
 
 pub const SEED_TREASURY: &[u8] = b"treasury";
 
@@ -9,8 +10,9 @@ pub struct Treasury {
     pub bump: u8,
 }
 
-impl From<Vec<u8>> for Treasury {
-    fn from(data: Vec<u8>) -> Self {
-        Treasury::try_deserialize(&mut data.as_slice()).unwrap()
+impl TryFrom<Vec<u8>> for Treasury {
+    type Error = ProgramError;
+    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+        Treasury::try_deserialize(&mut data.as_slice())
     }
 }
