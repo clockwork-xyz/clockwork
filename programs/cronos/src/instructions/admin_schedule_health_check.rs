@@ -1,10 +1,6 @@
-use std::mem::size_of_val;
-
-use solana_program::{log::sol_log, sysvar};
-
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program, solana_program::instruction::Instruction},
+    anchor_lang::{prelude::*, solana_program::{system_program, instruction::Instruction, sysvar}},
     std::mem::size_of,
 };
 
@@ -40,6 +36,7 @@ pub struct AdminScheduleHealthCheck<'info> {
         ],
         bump = daemon.bump,
         constraint = daemon.owner == authority.key(),
+        owner = crate::ID,
     )]
     pub daemon: Account<'info, Daemon>,
 
