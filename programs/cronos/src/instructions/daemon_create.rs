@@ -22,9 +22,6 @@ pub struct DaemonCreate<'info> {
     )]
     pub daemon: Account<'info, Daemon>,
 
-    #[account(mut)]
-    pub owner: Signer<'info>,
-
     #[account(
         init,
         seeds = [
@@ -37,6 +34,9 @@ pub struct DaemonCreate<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
@@ -44,8 +44,8 @@ pub struct DaemonCreate<'info> {
 pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> ProgramResult {
     // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
-    let owner = &ctx.accounts.owner;
     let fee = &mut ctx.accounts.fee;
+    let owner = &ctx.accounts.owner;
 
     // Initialize daemon account.
     daemon.owner = owner.key();
