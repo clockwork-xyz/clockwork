@@ -1,6 +1,6 @@
 [package]
 name = "cronos-sdk"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 description = "Created with Anchor"
 license = "ISC"
@@ -13,5 +13,5 @@ readme = "./README.md"
 
 [dependencies]
 anchor-client = { version = "0.20.1", features = ["debug"] }
-cronos-program = { version = "0.0.8", features = ["no-entrypoint"] }
+cronos-program = { version = "0.0.9", features = ["no-entrypoint"] }
 solana-program = "1.9.5"
