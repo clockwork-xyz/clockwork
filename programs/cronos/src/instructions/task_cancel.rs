@@ -17,6 +17,9 @@ pub struct TaskCancel<'info> {
     )]
     pub daemon: Account<'info, Daemon>,
 
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
     #[account(
         mut,
         seeds = [
@@ -29,9 +32,6 @@ pub struct TaskCancel<'info> {
         owner = crate::ID
     )]
     pub task: Account<'info, Task>,
-
-    #[account(mut)]
-    pub owner: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<TaskCancel>) -> ProgramResult {
