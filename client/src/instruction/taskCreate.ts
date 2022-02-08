@@ -2,6 +2,7 @@ import { BN, Program } from "@project-serum/anchor";
 import {
   PublicKey,
   SystemProgram,
+  SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
 import { buildInstructionData } from "./utils";
@@ -10,9 +11,9 @@ import { Account } from "../account";
 
 export type TaskCreateArgs = {
   daemon: PublicKey;
-  executeAt: BN;
-  repeatEvery: BN;
-  repeatUntil: BN;
+  execAt: BN;
+  stopAt: BN;
+  recurr: BN;
   instruction: TransactionInstruction;
 };
 
@@ -27,9 +28,9 @@ export class TaskCreate {
 
   public async taskCreate({
     daemon,
-    executeAt,
-    repeatEvery,
-    repeatUntil,
+    execAt,
+    stopAt,
+    recurr,
     instruction,
   }: TaskCreateArgs): Promise<TransactionInstruction> {
     const daemonData = await this.account.daemon.data(daemon);
@@ -37,12 +38,13 @@ export class TaskCreate {
     const instructionData = buildInstructionData(instruction);
     return this.cronos.instruction.taskCreate(
       instructionData,
-      executeAt,
-      repeatEvery,
-      repeatUntil,
+      execAt,
+      stopAt,
+      recurr,
       taskPDA.bump,
       {
         accounts: {
+          clock: SYSVAR_CLOCK_PUBKEY,
           daemon: daemon,
           task: taskPDA.address,
           owner: daemonData.owner,

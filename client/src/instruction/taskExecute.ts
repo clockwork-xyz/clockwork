@@ -28,13 +28,13 @@ export class TaskExecute {
   }: TaskExecuteArgs): Promise<TransactionInstruction> {
     const configPDA = await this.account.config.pda();
     const taskData = await this.account.task.data(task);
-    const revenuePDA = await this.account.revenue.pda(taskData.daemon);
+    const feePDA = await this.account.fee.pda(taskData.daemon);
     return this.cronos.instruction.taskExecute({
       accounts: {
         clock: SYSVAR_CLOCK_PUBKEY,
         config: configPDA.address,
         daemon: taskData.daemon,
-        revenue: revenuePDA.address,
+        fee: feePDA.address,
         task: task,
         worker: worker,
       },

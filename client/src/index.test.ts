@@ -24,8 +24,6 @@ describe("Cronos", () => {
   let worker: Keypair;
   let authorityPDA: PDA;
   let daemonPDA: PDA;
-  let revenuePDA: PDA;
-  let frame0PDA: PDA;
   let task1PDA: PDA;
   let task2PDA: PDA;
   let signerTokens: PublicKey;
@@ -75,22 +73,6 @@ describe("Cronos", () => {
     let daemonData = await cronos.account.daemon.data(daemonPDA.address);
     assert(daemonData.owner.toString() === signer.publicKey.toString());
     assert(daemonData.bump === daemonPDA.bump);
-  });
-
-  it("Creates a revenue account", async () => {
-    // Submit instruction.
-    let ix = await cronos.instruction.revenueCreate({
-      daemon: daemonPDA.address,
-      signer: signer.publicKey,
-    });
-    await signAndSubmit(provider.connection, [ix], signer);
-
-    // Validate revenue account.
-    revenuePDA = await cronos.account.revenue.pda(daemonPDA.address);
-    let revenueData = await cronos.account.revenue.data(revenuePDA.address);
-    assert(revenueData.balance.eq(new BN(0)));
-    assert(revenueData.daemon.toString() === daemonPDA.address.toString());
-    assert(revenueData.bump === revenuePDA.bump);
   });
 
   before(async () => {
@@ -153,22 +135,6 @@ describe("Cronos", () => {
     );
   });
 
-  it("Creates a frame", async () => {
-    // Submit instruction.
-    timestamp = nextFrameTimestamp();
-    const ix = await cronos.instruction.frameCreate({
-      signer: signer.publicKey,
-      timestamp: timestamp,
-    });
-    await signAndSubmit(provider.connection, [ix], signer);
-
-    // Validate frame account.
-    frame0PDA = await cronos.account.frame.pda(timestamp);
-    const frameData = await cronos.account.frame.data(frame0PDA.address);
-    assert(frameData.timestamp.eq(timestamp));
-    assert(frameData.bump == frame0PDA.bump);
-  });
-
   it("Schedules a one-time task", async () => {
     // Submit instruction
     const transferIx = Token.createTransferInstruction(
@@ -179,11 +145,12 @@ describe("Cronos", () => {
       [],
       TRANSFER_AMOUNT.toNumber()
     );
+    timestamp = new BN(dateToSeconds(new Date()) + 10);
     const ix = await cronos.instruction.taskCreate({
       daemon: daemonPDA.address,
-      executeAt: timestamp,
-      repeatEvery: new BN(0),
-      repeatUntil: timestamp,
+      execAt: timestamp,
+      stopAt: timestamp,
+      recurr: new BN(0),
       instruction: transferIx,
     });
     await signAndSubmit(provider.connection, [ix], signer);
@@ -193,9 +160,9 @@ describe("Cronos", () => {
     let taskData = await cronos.account.task.data(task1PDA.address);
     assert(taskData.daemon.toString() === daemonPDA.address.toString());
     assert(Object.keys(taskData.status)[0] === "pending");
-    assert(taskData.executeAt.eq(timestamp));
-    assert(taskData.repeatEvery.eq(new BN(0)));
-    assert(taskData.repeatUntil.eq(timestamp));
+    assert(taskData.execAt.eq(timestamp));
+    assert(taskData.stopAt.eq(timestamp));
+    assert(taskData.recurr.eq(new BN(0)));
     assert(taskData.bump === task1PDA.bump);
   });
 
@@ -211,9 +178,9 @@ describe("Cronos", () => {
     );
     const ix = await cronos.instruction.taskCreate({
       daemon: daemonPDA.address,
-      executeAt: timestamp,
-      repeatEvery: ONE_MINUTE,
-      repeatUntil: timestamp.add(ONE_MINUTE),
+      execAt: timestamp,
+      stopAt: timestamp.add(ONE_MINUTE),
+      recurr: ONE_MINUTE,
       instruction: transferIx,
     });
     await signAndSubmit(provider.connection, [ix], signer);
@@ -223,9 +190,9 @@ describe("Cronos", () => {
     let taskData = await cronos.account.task.data(task2PDA.address);
     assert(taskData.daemon.toString() === daemonPDA.address.toString());
     assert(Object.keys(taskData.status)[0] === "pending");
-    assert(taskData.executeAt.eq(timestamp));
-    assert(taskData.repeatEvery.eq(ONE_MINUTE));
-    assert(taskData.repeatUntil.eq(timestamp.add(ONE_MINUTE)));
+    assert(taskData.execAt.eq(timestamp));
+    assert(taskData.stopAt.eq(timestamp.add(ONE_MINUTE)));
+    assert(taskData.recurr.eq(ONE_MINUTE));
     assert(taskData.bump === task2PDA.bump);
   });
 
@@ -306,43 +273,6 @@ describe("Cronos", () => {
 
     // Validate task data
     const taskData = await cronos.account.task.data(task2PDA.address);
-    assert(Object.keys(taskData.status)[0] === "repeatable");
-  });
-
-  it("Repeats a recurring task", async () => {
-    // Submit instructions
-    const taskData = await cronos.account.task.data(task2PDA.address);
-    const nextTimestamp = taskData.executeAt.add(taskData.repeatEvery);
-    const ixA = await cronos.instruction.frameCreate({
-      signer: worker.publicKey,
-      timestamp: nextTimestamp,
-    });
-    const ixB = await cronos.instruction.taskRepeat({
-      task: task2PDA.address,
-      worker: worker.publicKey,
-    });
-    await signAndSubmit(provider.connection, [ixA, ixB], worker);
-
-    // Validate next task data.
-    const nextTaskPDA = await cronos.account.task.pda(
-      daemonPDA.address,
-      new BN(2)
-    );
-    const nextTaskData = await cronos.account.task.data(nextTaskPDA.address);
-    assert(nextTaskData.daemon.toString() === daemonPDA.address.toString());
-    assert(Object.keys(nextTaskData.status)[0] === "pending");
-    assert(nextTaskData.executeAt.eq(nextTimestamp));
-    assert(nextTaskData.repeatEvery.eq(taskData.repeatEvery));
-    assert(nextTaskData.repeatUntil.eq(taskData.repeatUntil));
-    assert(nextTaskData.bump === nextTaskPDA.bump);
+    assert(Object.keys(taskData.status)[0] === "pending");
   });
 });
-
-function nextFrameTimestamp(): BN {
-  const now = new Date();
-  const thisFrame = new Date(now.setSeconds(0, 0));
-  const nextFrame = new Date(
-    thisFrame.getTime() + ONE_MINUTE.toNumber() * 1000
-  );
-  return new BN(dateToSeconds(nextFrame));
-}

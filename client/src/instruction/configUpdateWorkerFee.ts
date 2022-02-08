@@ -23,7 +23,7 @@ export class ConfigUpdateWorkerFee {
     const configData = await this.account.config.data(configPDA.address);
     return this.cronos.instruction.configUpdateWorkerFee(newWorkerFee, {
       accounts: {
-        admin: configData.adminAuthority,
+        admin: configData.admin,
         config: configPDA.address,
       },
     });

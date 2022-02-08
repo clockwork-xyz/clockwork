@@ -1,5 +1,5 @@
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "/Users/garfield/.config/solana/id.json"
 
 [programs.localnet]
@@ -9,4 +9,4 @@ cronos = "AUDt6tUdA3eMNjX5pyirrroNLyqupKUnzpeFdsrGBWmv"
 url = "https://anchor.projectserum.com"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 programs/**/client/src/*.test.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 client/src/*.test.ts"

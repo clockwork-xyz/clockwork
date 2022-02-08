@@ -3,12 +3,12 @@ import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { Cronos } from "../idl";
 import { Account } from "../account";
 
-export type RevenueCollectArgs = {
-  revenue: PublicKey;
+export type FeeCollectArgs = {
+  fee: PublicKey;
   signer: PublicKey;
 };
 
-export class RevenueCollect {
+export class FeeCollect {
   private account: Account;
   private cronos: Program<Cronos>;
 
@@ -17,14 +17,14 @@ export class RevenueCollect {
     this.cronos = cronos;
   }
 
-  public async revenueCollect({
-    revenue,
+  public async feeCollect({
+    fee,
     signer,
-  }: RevenueCollectArgs): Promise<TransactionInstruction> {
+  }: FeeCollectArgs): Promise<TransactionInstruction> {
     const treasuryPDA = await this.account.treasury.pda();
-    return this.cronos.instruction.revenueCollect({
+    return this.cronos.instruction.feeCollect({
       accounts: {
-        revenue: revenue,
+        fee: fee,
         signer: signer,
         treasury: treasuryPDA.address,
       },

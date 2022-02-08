@@ -1,5 +1,5 @@
 export type Cronos = {
-  "version": "0.0.10",
+  "version": "0.0.15",
   "name": "cronos",
   "instructions": [
     {
@@ -125,14 +125,14 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "fee",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -301,14 +301,14 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -327,14 +327,14 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -350,15 +350,15 @@ export type Cronos = {
           }
         },
         {
-          "name": "executeAt",
+          "name": "execAt",
           "type": "i64"
         },
         {
-          "name": "repeatEvery",
+          "name": "stopAt",
           "type": "i64"
         },
         {
-          "name": "repeatUntil",
+          "name": "recurr",
           "type": "i64"
         },
         {
@@ -527,15 +527,15 @@ export type Cronos = {
             }
           },
           {
-            "name": "executeAt",
+            "name": "execAt",
             "type": "i64"
           },
           {
-            "name": "repeatEvery",
+            "name": "stopAt",
             "type": "i64"
           },
           {
-            "name": "repeatUntil",
+            "name": "recurr",
             "type": "i64"
           },
           {
@@ -624,26 +624,36 @@ export type Cronos = {
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidSignatory",
-      "msg": "Your daemon cannot provide all required signatures for this instruction"
+      "name": "InvalidChronology",
+      "msg": "Tasks cannot be started before they are stopped"
     },
     {
       "code": 6001,
-      "name": "InvalidExecuteAt",
+      "name": "InvalidExecAtStale",
       "msg": "Tasks cannot be scheduled for execution in the past"
     },
     {
       "code": 6002,
+      "name": "InvalidRecurrNegative",
+      "msg": "Recurrence interval cannot be negative"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidSignatory",
+      "msg": "Your daemon cannot provide all required signatures for this instruction"
+    },
+    {
+      "code": 6004,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6003,
+      "code": 6005,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6004,
+      "code": 6006,
       "name": "Unknown",
       "msg": "Unknown error"
     }
@@ -651,7 +661,7 @@ export type Cronos = {
 };
 
 export const IDL: Cronos = {
-  "version": "0.0.10",
+  "version": "0.0.15",
   "name": "cronos",
   "instructions": [
     {
@@ -777,14 +787,14 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "fee",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -953,14 +963,14 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": []
@@ -979,14 +989,14 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "task",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -1002,15 +1012,15 @@ export const IDL: Cronos = {
           }
         },
         {
-          "name": "executeAt",
+          "name": "execAt",
           "type": "i64"
         },
         {
-          "name": "repeatEvery",
+          "name": "stopAt",
           "type": "i64"
         },
         {
-          "name": "repeatUntil",
+          "name": "recurr",
           "type": "i64"
         },
         {
@@ -1179,15 +1189,15 @@ export const IDL: Cronos = {
             }
           },
           {
-            "name": "executeAt",
+            "name": "execAt",
             "type": "i64"
           },
           {
-            "name": "repeatEvery",
+            "name": "stopAt",
             "type": "i64"
           },
           {
-            "name": "repeatUntil",
+            "name": "recurr",
             "type": "i64"
           },
           {
@@ -1276,26 +1286,36 @@ export const IDL: Cronos = {
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidSignatory",
-      "msg": "Your daemon cannot provide all required signatures for this instruction"
+      "name": "InvalidChronology",
+      "msg": "Tasks cannot be started before they are stopped"
     },
     {
       "code": 6001,
-      "name": "InvalidExecuteAt",
+      "name": "InvalidExecAtStale",
       "msg": "Tasks cannot be scheduled for execution in the past"
     },
     {
       "code": 6002,
+      "name": "InvalidRecurrNegative",
+      "msg": "Recurrence interval cannot be negative"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidSignatory",
+      "msg": "Your daemon cannot provide all required signatures for this instruction"
+    },
+    {
+      "code": 6004,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6003,
+      "code": 6005,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6004,
+      "code": 6006,
       "name": "Unknown",
       "msg": "Unknown error"
     }

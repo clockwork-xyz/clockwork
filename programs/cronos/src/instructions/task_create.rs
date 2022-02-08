@@ -1,3 +1,5 @@
+use solana_program::log::sol_log;
+
 use {
     crate::{state::*, errors::*},
     anchor_lang::prelude::*,
@@ -16,7 +18,7 @@ use {
 pub struct TaskCreate<'info> {
     #[account(
         address = sysvar::clock::ID,
-        constraint = exec_at >= clock.unix_timestamp @ ErrorCode::InvalidExecAtStale
+        constraint = exec_at >= clock.unix_timestamp - 60 @ ErrorCode::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -45,7 +47,6 @@ pub struct TaskCreate<'info> {
         bump = bump,
         payer = owner,
         space = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data),
-        // TODO dont let tasks be scheduled in the past.
     )]
     pub task: Account<'info, Task>,
 
@@ -67,18 +68,18 @@ pub fn handler(
 
     // Validate the scheduling chronology.
     require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
-
-    // Validate recurrence interval is not negative.
     require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
 
-    // Validate the daemon is the only required signer on the instruction.
-    // If the instruction has other required signers, we should just fail now.
+    // Reject the instruction if it has other signers besides the daemon.
     for acc in instruction_data.keys.as_slice() {
         require!(
             !acc.is_signer || acc.pubkey == daemon.key(), 
             ErrorCode::InvalidSignatory
         );
     }
+
+    let size = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data);
+    sol_log(format!("Size: {:?}", size).as_str());
 
     // Initialize task account.
     task.daemon = daemon.key();
@@ -89,6 +90,9 @@ pub fn handler(
     task.stop_at = stop_at;
     task.recurr = recurr;
     task.bump = bump;
+
+    let task_size = std::mem::size_of_val(&task);
+    sol_log(format!("Task size: {:?}", task_size).as_str());
 
     // Increment daemon task counter.
     daemon.task_count = daemon.task_count.checked_add(1).unwrap();

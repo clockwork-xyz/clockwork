@@ -6,9 +6,10 @@ import { Cronos } from "./idl";
 export type AuthorityAccountData = AccountData<Cronos["accounts"][0], Cronos>;
 export type ConfigAccountData = AccountData<Cronos["accounts"][1], Cronos>;
 export type DaemonAccountData = AccountData<Cronos["accounts"][2], Cronos>;
-export type RevenueAccountData = AccountData<Cronos["accounts"][3], Cronos>;
-export type TaskAccountData = AccountData<Cronos["accounts"][4], Cronos>;
-export type TreasuryAccountData = AccountData<Cronos["accounts"][5], Cronos>;
+export type FeeAccountData = AccountData<Cronos["accounts"][3], Cronos>;
+export type HealthAccountData = AccountData<Cronos["accounts"][4], Cronos>;
+export type TaskAccountData = AccountData<Cronos["accounts"][5], Cronos>;
+export type TreasuryAccountData = AccountData<Cronos["accounts"][6], Cronos>;
 
 // Types
 export type InstructionData = TypeDef<Cronos["types"][0], Cronos>;

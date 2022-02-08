@@ -24,9 +24,11 @@ export class DaemonCreate {
     owner,
   }: DaemonCreateArgs): Promise<TransactionInstruction> {
     const daemonPDA = await this.account.daemon.pda(owner);
-    return this.cronos.instruction.daemonCreate(daemonPDA.bump, {
+    const feePDA = await this.account.fee.pda(daemonPDA.address);
+    return this.cronos.instruction.daemonCreate(daemonPDA.bump, feePDA.bump, {
       accounts: {
         daemon: daemonPDA.address,
+        fee: feePDA.address,
         owner: owner,
         systemProgram: SystemProgram.programId,
       },

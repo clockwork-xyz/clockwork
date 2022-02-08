@@ -23,7 +23,7 @@ export class ConfigUpdateProgramFee {
     const configData = await this.account.config.data(configPDA.address);
     return this.cronos.instruction.configUpdateProgramFee(newProgramFee, {
       accounts: {
-        admin: configData.adminAuthority,
+        admin: configData.admin,
         config: configPDA.address,
       },
     });

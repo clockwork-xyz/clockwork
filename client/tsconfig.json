@@ -1,6 +1,6 @@
 {
+    "extends": "../tsconfig.json",
     "compilerOptions": {
-        "baseUrl": ".",
         "rootDir": "./src",
         "outDir": "./dist",
         "target": "esnext",
@@ -10,28 +10,8 @@
             "dom.iterable",
             "esnext"
         ],
-        "paths": {},
-        "types": [
-            "mocha",
-            "chai"
-        ],
-        "typeRoots": [
-            "./node_modules/@types"
-        ],
-        "esModuleInterop": true,
-        "incremental": true,
-        "noEmit": false,
-        "composite": false,
-        "declaration": true,
-        "strict": true,
-        "useUnknownInCatchVariables": true,
-        "allowJs": false,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "jsx": "react-jsx"
+        "baseUrl": ".",
+        "paths": {}
     },
     "exclude": [
         "dist",

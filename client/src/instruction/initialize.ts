@@ -25,15 +25,24 @@ export class Initialize {
   }: InitializeArgs): Promise<TransactionInstruction> {
     const authorityPDA = await this.account.authority.pda();
     const configPDA = await this.account.config.pda();
+    const daemonPDA = await this.account.daemon.pda(authorityPDA.address);
+    const feePDA = await this.account.fee.pda(daemonPDA.address);
+    const healthPDA = await this.account.health.pda();
     const treasuryPDA = await this.account.treasury.pda();
     return this.cronos.instruction.initialize(
       authorityPDA.bump,
       configPDA.bump,
+      daemonPDA.bump,
+      feePDA.bump,
+      healthPDA.bump,
       treasuryPDA.bump,
       {
         accounts: {
           authority: authorityPDA.address,
           config: configPDA.address,
+          daemon: daemonPDA.address,
+          fee: feePDA.address,
+          health: healthPDA.address,
           signer: signer,
           systemProgram: SystemProgram.programId,
           treasury: treasuryPDA.address,
