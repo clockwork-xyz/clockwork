@@ -1,6 +1,6 @@
 [package]
 name = "cronos-program"
-version = "0.0.3"
+version = "0.0.4"
 description = "Created with Anchor"
 edition = "2018"
 license = "ISC"

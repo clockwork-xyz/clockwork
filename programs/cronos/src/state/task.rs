@@ -8,7 +8,6 @@ pub enum TaskStatus {
     Cancelled,
     Executed,
     Pending,
-    Repeatable,
 }
 
 #[account]

@@ -10,12 +10,12 @@ declare_id!("EikDpw2iRwqMrDwGBxAdbdfVAURkvDajZLWrFoYc2dc5");
 pub mod cronos {
     use super::*;
 
-    pub fn admin_create_daemon(ctx: Context<AdminCreateDaemon>, bump: u8) -> ProgramResult {
-        admin_create_daemon::handler(ctx, bump)
-    }
-
-    pub fn admin_create_revenue(ctx: Context<AdminCreateRevenue>, bump: u8) -> ProgramResult {
-        admin_create_revenue::handler(ctx, bump)
+    pub fn admin_create_daemon(
+        ctx: Context<AdminCreateDaemon>,
+        daemon_bump: u8,
+        fee_bump: u8,
+    ) -> ProgramResult {
+        admin_create_daemon::handler(ctx, daemon_bump, fee_bump)
     }
 
     pub fn admin_schedule_health_check(
@@ -46,8 +46,12 @@ pub mod cronos {
         config_update_worker_fee::handler(ctx, new_worker_fee)
     }
 
-    pub fn daemon_create(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
-        daemon_create::handler(ctx, bump)
+    pub fn daemon_create(
+        ctx: Context<DaemonCreate>,
+        daemon_bump: u8,
+        fee_bump: u8,
+    ) -> ProgramResult {
+        daemon_create::handler(ctx, daemon_bump, fee_bump)
     }
 
     pub fn daemon_invoke(
@@ -55,6 +59,10 @@ pub mod cronos {
         instruction_data: InstructionData,
     ) -> ProgramResult {
         daemon_invoke::handler(ctx, instruction_data)
+    }
+
+    pub fn fee_collect(ctx: Context<FeeCollect>) -> ProgramResult {
+        fee_collect::handler(ctx)
     }
 
     pub fn initialize(
@@ -69,14 +77,6 @@ pub mod cronos {
 
     pub fn health_check(ctx: Context<HealthCheck>) -> ProgramResult {
         health_check::handler(ctx)
-    }
-
-    pub fn revenue_collect(ctx: Context<RevenueCollect>) -> ProgramResult {
-        revenue_collect::handler(ctx)
-    }
-
-    pub fn revenue_create(ctx: Context<RevenueCreate>, bump: u8) -> ProgramResult {
-        revenue_create::handler(ctx, bump)
     }
 
     pub fn task_cancel(ctx: Context<TaskCancel>) -> ProgramResult {
@@ -103,9 +103,5 @@ pub mod cronos {
 
     pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
         task_execute::handler(ctx)
-    }
-
-    pub fn task_repeat(ctx: Context<TaskRepeat>, bump: u8) -> ProgramResult {
-        task_repeat::handler(ctx, bump)
     }
 }

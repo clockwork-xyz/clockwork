@@ -5,7 +5,10 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction(
+    daemon_bump: u8,
+    fee_bump: u8,
+)]
 pub struct DaemonCreate<'info> {
     #[account(
         init,
@@ -13,7 +16,7 @@ pub struct DaemonCreate<'info> {
             SEED_DAEMON, 
             owner.key().as_ref()
         ],
-        bump = bump,
+        bump = daemon_bump,
         payer = owner,
         space = 8 + size_of::<Daemon>(),
     )]
@@ -22,19 +25,37 @@ pub struct DaemonCreate<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    #[account(
+        init,
+        seeds = [
+            SEED_FEE, 
+            daemon.key().as_ref()
+        ],
+        bump = fee_bump,
+        payer = owner,
+        space = 8 + size_of::<Fee>(),
+    )]
+    pub fee: Account<'info, Fee>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<DaemonCreate>, bump: u8) -> ProgramResult {
+pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> ProgramResult {
     // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
     let owner = &ctx.accounts.owner;
+    let fee = &mut ctx.accounts.fee;
 
     // Initialize daemon account.
     daemon.owner = owner.key();
     daemon.task_count = 0;
-    daemon.bump = bump;
+    daemon.bump = daemon_bump;
+
+    // Initialize fee account.
+    fee.daemon = daemon.key();
+    fee.balance = 0;
+    fee.bump = fee_bump;
 
     Ok(())
 }

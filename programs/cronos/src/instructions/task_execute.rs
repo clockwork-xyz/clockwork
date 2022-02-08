@@ -30,14 +30,14 @@ pub struct TaskProcess<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_REVENUE,
-            revenue.daemon.as_ref()
+            SEED_FEE,
+            fee.daemon.as_ref()
         ],
-        bump = revenue.bump,
-        constraint = revenue.daemon == daemon.key(),
+        bump = fee.bump,
+        constraint = fee.daemon == daemon.key(),
         owner = crate::ID
     )]
-    pub revenue: Account<'info, Revenue>,
+    pub fee: Account<'info, Fee>,
 
     #[account(
         mut,
@@ -62,20 +62,22 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
     // Get accounts.
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
+    let fee = &mut ctx.accounts.fee;
     let task = &mut ctx.accounts.task;
-    let revenue = &mut ctx.accounts.revenue;
     let worker = &mut ctx.accounts.worker;
 
     // Update task state.
-    let next_execution_frame: u64 = task.execute_at.checked_add(task.repeat_every).unwrap();
-    if task.repeat_every > 0 && next_execution_frame <= task.repeat_until {
-        task.status = TaskStatus::Repeatable;
+    if task.repeat_every > 0 {
+        let next_execute_at: u64 = task.execute_at.checked_add(task.repeat_every).unwrap();
+        if next_execute_at <= task.repeat_until {
+            task.execute_at = next_execute_at
+        }
     } else {
         task.status = TaskStatus::Executed;
     }
 
-    // Increment collectable revenue balance. 
-    revenue.balance = revenue.balance.checked_add(config.program_fee).unwrap();
+    // Increment collectable fee balance. 
+    fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
 
     // Invoke instruction.
     invoke_signed(
@@ -84,9 +86,9 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
         &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
     )?;
 
-    // Transfer lamports from daemon to revenue account.
+    // Transfer lamports from daemon to fee account.
     **daemon.to_account_info().try_borrow_mut_lamports()? -= config.program_fee;
-    **revenue.to_account_info().try_borrow_mut_lamports()? += config.program_fee;
+    **fee.to_account_info().try_borrow_mut_lamports()? += config.program_fee;
 
     // Transfer lamports from daemon to worker.
     **daemon.to_account_info().try_borrow_mut_lamports()? -= config.worker_fee;
