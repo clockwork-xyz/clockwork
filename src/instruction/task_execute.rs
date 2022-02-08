@@ -1,8 +1,10 @@
-use anchor_client::anchor_lang::InstructionData;
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-    sysvar,
+use anchor_client::anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        sysvar,
+    },
+    InstructionData,
 };
 
 pub fn task_execute(

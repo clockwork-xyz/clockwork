@@ -1,7 +1,9 @@
-use anchor_client::anchor_lang::InstructionData;
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
+use anchor_client::anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+    },
+    InstructionData,
 };
 
 pub fn task_cancel(daemon: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {

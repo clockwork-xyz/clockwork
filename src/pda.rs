@@ -1,5 +1,5 @@
+use anchor_client::anchor_lang::solana_program::pubkey::Pubkey;
 use cronos_program::state::*;
-use solana_program::pubkey::Pubkey;
 
 pub type PDA = (Pubkey, u8);
 
