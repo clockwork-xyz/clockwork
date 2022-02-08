@@ -14,9 +14,9 @@ pub fn task_create(
     daemon: Pubkey,
     owner: Pubkey,
     instruction: Instruction,
-    execute_at: u64,
-    repeat_every: u64,
-    repeat_until: u64,
+    exec_at: i64,
+    stop_at: i64,
+    recurr: i64,
 ) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
@@ -29,9 +29,9 @@ pub fn task_create(
         ],
         data: cronos_program::instruction::TaskCreate {
             instruction_data: CronosInstructionData::from(instruction),
-            execute_at,
-            repeat_every,
-            repeat_until,
+            exec_at,
+            stop_at,
+            recurr,
             bump: task_pda.1,
         }
         .data(),

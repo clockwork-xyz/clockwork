@@ -1,17 +1,18 @@
 [package]
 name = "cronos-sdk"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
-description = "Created with Anchor"
-license = "ISC"
+description = "Cronos program Rust client"
+license = "Apache-2.0"
 homepage = "https://cronos.so"
 repository = "https://github.com/cronos-so/sdk"
 documentation = "https://docs.rs/cronos-sdk"
 readme = "./README.md"
+keywords = ["solana", "cronos", "sdk"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anchor-client = { version = "0.20.1", features = ["debug"] }
-cronos-program = { version = "0.0.9", features = ["no-entrypoint"] }
+cronos-program = { version = "0.0.11", features = ["no-entrypoint"] }
 solana-program = "1.9.5"
