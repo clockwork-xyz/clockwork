@@ -65,11 +65,11 @@ pub fn handler(
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
-    // Validate recurrence interval is not negative.
-    require!(recurr >= 0, ErrorCode::InvalidRecIntNegative);
-
     // Validate the scheduling chronology.
     require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
+
+    // Validate recurrence interval is not negative.
+    require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
 
     // Validate the daemon is the only required signer on the instruction.
     // If the instruction has other required signers, we should just fail now.
