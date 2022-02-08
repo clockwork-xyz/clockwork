@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const SEED_FEE: &[u8] = b"free";
+pub const SEED_FEE: &[u8] = b"fee";
 
 #[account]
 #[derive(Debug)]
