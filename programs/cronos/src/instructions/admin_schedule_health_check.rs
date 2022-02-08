@@ -4,7 +4,6 @@ use {
     std::mem::size_of,
 };
 
-
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct AdminScheduleHealthCheck<'info> {
