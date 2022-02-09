@@ -11,6 +11,7 @@ use cronos_program::state::InstructionData as CronosInstructionData;
 
 pub fn task_create(
     task_pda: PDA,
+    config: Pubkey,
     daemon: Pubkey,
     owner: Pubkey,
     ix: Instruction,
@@ -22,6 +23,7 @@ pub fn task_create(
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
+            AccountMeta::new_readonly(config, false),
             AccountMeta::new(daemon, false),
             AccountMeta::new(owner, true),
             AccountMeta::new(task_pda.0, false),
