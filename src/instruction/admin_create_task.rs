@@ -7,14 +7,18 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 use cronos_program::pda::PDA;
+use cronos_program::state::InstructionData as CronosInstructionData;
 
-pub fn admin_schedule_health_check(
+pub fn admin_create_task(
     task_pda: PDA,
     admin: Pubkey,
     authority: Pubkey,
     config: Pubkey,
     daemon: Pubkey,
-    health: Pubkey,
+    ix: Instruction,
+    exec_at: i64,
+    stop_at: i64,
+    recurr: i64,
 ) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
@@ -23,11 +27,17 @@ pub fn admin_schedule_health_check(
             AccountMeta::new_readonly(authority, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new_readonly(daemon, false),
-            AccountMeta::new(health, false),
+            AccountMeta::new(daemon, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task_pda.0, false),
         ],
-        data: cronos_program::instruction::AdminScheduleHealthCheck { bump: task_pda.1 }.data(),
+        data: cronos_program::instruction::AdminCreateTask {
+            ix: CronosInstructionData::from(ix),
+            exec_at,
+            stop_at,
+            recurr,
+            bump: task_pda.1,
+        }
+        .data(),
     }
 }
