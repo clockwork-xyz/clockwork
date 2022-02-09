@@ -6,14 +6,14 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
-use cronos_program::pda::PDA;
 use cronos_program::state::InstructionData as CronosInstructionData;
+use cronos_program::{pda::PDA, state::Task};
 
 pub fn task_create(
     task_pda: PDA,
     daemon: Pubkey,
     owner: Pubkey,
-    instruction: Instruction,
+    ix: Instruction,
     exec_at: i64,
     stop_at: i64,
     recurr: i64,
@@ -28,7 +28,7 @@ pub fn task_create(
             AccountMeta::new_readonly(system_program::ID, false),
         ],
         data: cronos_program::instruction::TaskCreate {
-            instruction_data: CronosInstructionData::from(instruction),
+            ix: CronosInstructionData::from(ix),
             exec_at,
             stop_at,
             recurr,
