@@ -36,12 +36,35 @@ fn main() -> ClientResult<()> {
     Ok(())
 }
 
-fn new_rpc_client() -> Client {
-    let payer = read_keypair(&mut File::open(KEYPAIR_PATH).unwrap()).unwrap();
-    let client =
-        RpcClient::new_with_commitment(DEVNET_HTTPS_ENDPOINT.into(), CommitmentConfig::confirmed());
-    Client { client, payer }
+// Blocktime monitoring
+
+fn monitor_blocktime() -> Receiver<i64> {
+    let (blocktime_sender, blocktime_receiver) = mpsc::channel::<i64>();
+    thread::spawn(move || {
+        let mut latest_blocktime: i64 = 0;
+
+        // Rpc client
+        let client = new_rpc_client();
+
+        // Websocket client
+        let (_ws_client, slot_receiver) =
+            PubsubClient::slot_subscribe(DEVNET_WSS_ENDPOINT.into()).unwrap();
+
+        // Listen for new slots
+        for slot_info in slot_receiver {
+            let blocktime = client.get_block_time(slot_info.slot).unwrap();
+
+            // Publish updated blocktimes
+            if blocktime > latest_blocktime {
+                latest_blocktime = blocktime;
+                blocktime_sender.send(blocktime).unwrap();
+            }
+        }
+    });
+    return blocktime_receiver;
 }
+
+// Task execution
 
 fn execute_pending_tasks(blocktime: i64, psql_conn_params: &str) {
     // Build postgres client
@@ -88,6 +111,8 @@ fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
     }
 }
 
+// Task replication
+
 fn replicate_cronos_tasks() {
     thread::spawn(move || {
         // Websocket client
@@ -118,6 +143,8 @@ fn replicate_cronos_tasks() {
                 replicate_task(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task);
             }
         }
+
+        println!("❌ Websocket connection timed out")
     });
 }
 
@@ -146,30 +173,13 @@ fn replicate_task(pubkey: Pubkey, task: Task) {
     .unwrap();
 }
 
-fn monitor_blocktime() -> Receiver<i64> {
-    let (blocktime_sender, blocktime_receiver) = mpsc::channel::<i64>();
-    thread::spawn(move || {
-        let mut latest_blocktime: i64 = 0;
+// Helpers
 
-        // Rpc client
-        let client = new_rpc_client();
-
-        // Websocket client
-        let (_ws_client, slot_receiver) =
-            PubsubClient::slot_subscribe(DEVNET_WSS_ENDPOINT.into()).unwrap();
-
-        // Listen for new slots
-        for slot_info in slot_receiver {
-            let blocktime = client.get_block_time(slot_info.slot).unwrap();
-
-            // Publish updated blocktimes
-            if blocktime > latest_blocktime {
-                latest_blocktime = blocktime;
-                blocktime_sender.send(blocktime).unwrap();
-            }
-        }
-    });
-    return blocktime_receiver;
+fn new_rpc_client() -> Client {
+    let payer = read_keypair(&mut File::open(KEYPAIR_PATH).unwrap()).unwrap();
+    let client =
+        RpcClient::new_with_commitment(DEVNET_HTTPS_ENDPOINT.into(), CommitmentConfig::confirmed());
+    Client { client, payer }
 }
 
 fn sign_and_submit(client: Client, ixs: &[Instruction], memo: &str) {
