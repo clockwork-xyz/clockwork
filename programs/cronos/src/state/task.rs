@@ -14,6 +14,16 @@ pub enum TaskStatus {
     Pending,
 }
 
+impl std::fmt::Display for TaskStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TaskStatus::Cancelled => write!(f, "cancelled"),
+            TaskStatus::Executed => write!(f, "executed"),
+            TaskStatus::Pending => write!(f, "pending"),
+        }
+    }
+}
+
 #[account]
 #[derive(Debug)]
 pub struct Task {
