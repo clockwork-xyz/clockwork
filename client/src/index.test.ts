@@ -247,6 +247,7 @@ describe("Cronos", () => {
     );
 
     // Process task
+    const preTaskData = await cronos.account.task.data(task2PDA.address);
     const ix = await cronos.instruction.taskExecute({
       task: task2PDA.address,
       worker: worker.publicKey,
@@ -273,6 +274,7 @@ describe("Cronos", () => {
 
     // Validate task data
     const taskData = await cronos.account.task.data(task2PDA.address);
+    assert(taskData.execAt.eq(preTaskData.execAt.add(preTaskData.recurr)));
     assert(Object.keys(taskData.status)[0] === "pending");
   });
 });

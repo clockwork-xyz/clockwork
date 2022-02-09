@@ -432,7 +432,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.0.16"
+version = "0.0.17"
 dependencies = [
  "anchor-lang",
  "solana-program",

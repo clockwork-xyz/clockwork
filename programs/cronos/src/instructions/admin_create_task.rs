@@ -1,7 +1,7 @@
 use {
     crate::{errors::*, state::*},
     anchor_lang::{prelude::*, solana_program::{system_program, sysvar}},
-    std::mem::{size_of, size_of_val},
+    std::mem::size_of,
 };
 
 
@@ -26,7 +26,7 @@ pub struct AdminCreateTask<'info> {
     
     #[account(
         address = sysvar::clock::ID,
-        constraint = exec_at >= clock.unix_timestamp - 60 @ ErrorCode::InvalidExecAtStale
+        constraint = exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -61,7 +61,7 @@ pub struct AdminCreateTask<'info> {
         ],
         bump = bump,
         payer = admin,
-        space = 32 + size_of::<Task>() + size_of_val(&ix), 
+        space = 8 + size_of::<Task>() + borsh::to_vec(&ix).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
 }

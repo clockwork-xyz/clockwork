@@ -68,13 +68,11 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
     let worker = &mut ctx.accounts.worker;
 
     // Update task state.
-    if task.recurr > 0 {
-        let next_exec_at = task.exec_at.checked_add(task.recurr).unwrap();
-        if next_exec_at <= task.stop_at {
-            task.exec_at = next_exec_at
-        }
-    } else {
+    let next_exec_at = task.exec_at.checked_add(task.recurr).unwrap();
+    if task.recurr == 0 || next_exec_at > task.stop_at {
         task.status = TaskStatus::Executed;
+    } else {
+        task.exec_at = next_exec_at;
     }
 
     // Increment collectable fee balance. 

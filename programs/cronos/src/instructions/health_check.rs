@@ -6,15 +6,22 @@ use {
 #[derive(Accounts)]
 #[instruction()]
 pub struct HealthCheck<'info> {
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
-
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump = authority.bump, 
         owner = crate::ID,
     )]
     pub authority: Account<'info, Authority>,
+    
+    #[account(address = sysvar::clock::ID)]
+    pub clock: Sysvar<'info, Clock>,
+
+    #[account(
+        seeds = [SEED_CONFIG],
+        bump = config.bump,
+        owner = crate::ID
+    )]
+    pub config: Account<'info, Config>,
 
     #[account(
         mut,
@@ -41,10 +48,11 @@ pub struct HealthCheck<'info> {
 pub fn handler(ctx: Context<HealthCheck>) -> ProgramResult {
     // Get accounts.
     let clock = &ctx.accounts.clock;
+    let config = &ctx.accounts.config;
     let health = &mut ctx.accounts.health;
 
     // Update the health account.
-    health.target_time = health.target_time.checked_add(1).unwrap();
+    health.target_time = health.target_time.checked_add(config.min_recurr).unwrap();
     health.real_time = clock.unix_timestamp;
 
     Ok(())
