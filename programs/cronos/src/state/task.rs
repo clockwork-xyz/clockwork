@@ -19,7 +19,7 @@ pub enum TaskStatus {
 pub struct Task {
     pub daemon: Pubkey,
     pub id: u128,
-    pub instruction_data: InstructionData,
+    pub ix: InstructionData,
     pub status: TaskStatus,
     pub exec_at: i64, // Execute at
     pub stop_at: i64, // Stop executing at
@@ -41,7 +41,7 @@ pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
     /// Metadata for what accounts should be passed to the instruction processor
-    pub keys: Vec<AccountMetaData>,
+    pub accounts: Vec<AccountMetaData>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
 }
@@ -67,7 +67,7 @@ impl From<Instruction> for InstructionData {
     fn from(instruction: Instruction) -> Self {
         InstructionData {
             program_id: instruction.program_id,
-            keys: instruction
+            accounts: instruction
                 .accounts
                 .iter()
                 .map(|a| AccountMetaData {
@@ -86,7 +86,7 @@ impl From<&InstructionData> for Instruction {
         Instruction {
             program_id: instruction.program_id,
             accounts: instruction
-                .keys
+                .accounts
                 .iter()
                 .map(|a| AccountMeta {
                     pubkey: a.pubkey,

@@ -82,7 +82,7 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
 
     // Invoke instruction.
     invoke_signed(
-        &Instruction::from(&task.instruction_data),
+        &Instruction::from(&task.ix),
         &ctx.remaining_accounts.iter().as_slice(),
         &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
     )?;

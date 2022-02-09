@@ -6,7 +6,7 @@ export function buildInstructionData(
 ): InstructionData {
   return {
     programId: ix.programId,
-    keys: ix.keys as Array<AccountMetaData>,
+    accounts: ix.keys as Array<AccountMetaData>,
     data: ix.data,
   };
 }
@@ -15,7 +15,7 @@ export function buildRemainingAccounts(
   ixData: InstructionData,
   daemon: PublicKey
 ): Array<AccountMetaData> {
-  return (ixData.keys as Array<AccountMetaData>)
+  return (ixData.accounts as Array<AccountMetaData>)
     .map((acc) => ({
       pubkey: acc.pubkey,
       isSigner:

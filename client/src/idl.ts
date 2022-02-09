@@ -515,7 +515,7 @@ export type Cronos = {
             "type": "u128"
           },
           {
-            "name": "instructionData",
+            "name": "ix",
             "type": {
               "defined": "InstructionData"
             }
@@ -569,7 +569,7 @@ export type Cronos = {
             "type": "publicKey"
           },
           {
-            "name": "keys",
+            "name": "accounts",
             "type": {
               "vec": {
                 "defined": "AccountMetaData"
@@ -1177,7 +1177,7 @@ export const IDL: Cronos = {
             "type": "u128"
           },
           {
-            "name": "instructionData",
+            "name": "ix",
             "type": {
               "defined": "InstructionData"
             }
@@ -1231,7 +1231,7 @@ export const IDL: Cronos = {
             "type": "publicKey"
           },
           {
-            "name": "keys",
+            "name": "accounts",
             "type": {
               "vec": {
                 "defined": "AccountMetaData"

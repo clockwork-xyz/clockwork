@@ -38,10 +38,7 @@ export class TaskExecute {
         task: task,
         worker: worker,
       },
-      remainingAccounts: buildRemainingAccounts(
-        taskData.instructionData,
-        taskData.daemon
-      ),
+      remainingAccounts: buildRemainingAccounts(taskData.ix, taskData.daemon),
     });
   }
 }

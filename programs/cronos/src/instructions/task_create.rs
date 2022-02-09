@@ -1,5 +1,3 @@
-use solana_program::log::sol_log;
-
 use {
     crate::{state::*, errors::*},
     anchor_lang::prelude::*,
@@ -9,7 +7,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction(
-    instruction_data: InstructionData,
+    ix: InstructionData,
     exec_at: i64, 
     stop_at: i64,
     recurr: i64,
@@ -46,7 +44,7 @@ pub struct TaskCreate<'info> {
         ],
         bump = bump,
         payer = owner,
-        space = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data),
+        space = 32 + size_of::<Task>() + std::mem::size_of_val(&ix),
     )]
     pub task: Account<'info, Task>,
 
@@ -56,7 +54,7 @@ pub struct TaskCreate<'info> {
 
 pub fn handler(
     ctx: Context<TaskCreate>,
-    instruction_data: InstructionData,
+    ix: InstructionData,
     exec_at: i64, 
     stop_at: i64,
     recurr: i64,
@@ -71,28 +69,22 @@ pub fn handler(
     require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
 
     // Reject the instruction if it has other signers besides the daemon.
-    for acc in instruction_data.keys.as_slice() {
+    for acc in ix.accounts.as_slice() {
         require!(
             !acc.is_signer || acc.pubkey == daemon.key(), 
             ErrorCode::InvalidSignatory
         );
     }
 
-    let size = 8 + size_of::<Task>() + std::mem::size_of_val(&instruction_data);
-    sol_log(format!("Size: {:?}", size).as_str());
-
     // Initialize task account.
     task.daemon = daemon.key();
     task.id = daemon.task_count;
-    task.instruction_data = instruction_data;
+    task.ix = ix;
     task.status = TaskStatus::Pending;
     task.exec_at = exec_at;
     task.stop_at = stop_at;
     task.recurr = recurr;
     task.bump = bump;
-
-    let task_size = std::mem::size_of_val(&task);
-    sol_log(format!("Task size: {:?}", task_size).as_str());
 
     // Increment daemon task counter.
     daemon.task_count = daemon.task_count.checked_add(1).unwrap();

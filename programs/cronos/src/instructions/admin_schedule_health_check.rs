@@ -4,6 +4,8 @@ use {
     std::mem::size_of,
 };
 
+const SIZE_OF_HEALTH_CHECK_IX: usize = 80;
+
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct AdminScheduleHealthCheck<'info> {
@@ -59,7 +61,7 @@ pub struct AdminScheduleHealthCheck<'info> {
         ],
         bump = bump,
         payer = admin,
-        space = 8 + size_of::<Task>() + 80, 
+        space = 32 + size_of::<Task>() + SIZE_OF_HEALTH_CHECK_IX, 
     )]
     pub task: Account<'info, Task>,
 }
@@ -95,7 +97,7 @@ pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResul
     // Initialize task account.
     task.daemon = daemon.key();
     task.id = daemon.task_count;
-    task.instruction_data = health_check_ix;
+    task.ix = health_check_ix;
     task.status = TaskStatus::Pending;
     task.exec_at = exec_at;
     task.stop_at = i64::MAX;
