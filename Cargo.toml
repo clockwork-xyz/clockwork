@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 anchor-lang = "0.20.1"
-clap = { version = "3.0.14", features = ["derive"] }
 cronos-sdk = { path = "../sdk" }
 dotenv = "0.15.0"
 postgres = "0.19.2"
