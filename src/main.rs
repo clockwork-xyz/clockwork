@@ -30,7 +30,7 @@ fn main() -> ClientResult<()> {
     let blocktime_receiver = monitor_blocktime();
     for blocktime in blocktime_receiver {
         println!("⏳ Blocktime: {}", blocktime);
-        thread::spawn(move || execute_pending_tasks(blocktime, PSQL_CONN_PARAMS));
+        thread::spawn(move || execute_pending_tasks(blocktime));
     }
 
     Ok(())
@@ -66,10 +66,9 @@ fn monitor_blocktime() -> Receiver<i64> {
 
 // Task execution
 
-fn execute_pending_tasks(blocktime: i64, psql_conn_params: &str) {
-    // Build postgres client
-    let mut psql = postgres::Client::connect(psql_conn_params, postgres::NoTls).unwrap();
-    let query = "SELECT * FROM tasks WHERE status = 'pending' AND exec_at < $1";
+fn execute_pending_tasks(blocktime: i64) {
+    let mut psql = postgres::Client::connect(PSQL_CONN_PARAMS, postgres::NoTls).unwrap();
+    let query = "SELECT * FROM tasks WHERE status = 'pending' AND exec_at <= $1";
     for row in psql.query(query, &[&blocktime]).unwrap() {
         let task = Pubkey::from_str(row.get(0)).unwrap();
         let daemon = Pubkey::from_str(row.get(1)).unwrap();
