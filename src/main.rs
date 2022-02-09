@@ -1,5 +1,6 @@
 use anchor_lang::prelude::{AccountMeta, Pubkey};
 use cronos_sdk::account::*;
+use dotenv::dotenv;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     pubsub_client::PubsubClient,
@@ -11,18 +12,17 @@ use solana_sdk::{
     signature::read_keypair, transaction::Transaction,
 };
 use std::{
+    env,
     fs::File,
     str::FromStr,
     sync::mpsc::{self, Receiver},
     thread,
 };
 
-const KEYPAIR_PATH: &str = "./keypair.json";
-const PSQL_CONN_PARAMS: &str = "host=localhost user=postgres password=postgres";
-const DEVNET_HTTPS_ENDPOINT: &str = "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/";
-const DEVNET_WSS_ENDPOINT: &str = "wss://psytrbhymqlkfrhudd.dev.genesysgo.net:8900/";
-
 fn main() -> ClientResult<()> {
+    // Load env file
+    dotenv().ok();
+
     // Replicate Cronos tasks to Postgres
     replicate_cronos_tasks();
 
@@ -48,7 +48,7 @@ fn monitor_blocktime() -> Receiver<i64> {
 
         // Websocket client
         let (_ws_client, slot_receiver) =
-            PubsubClient::slot_subscribe(DEVNET_WSS_ENDPOINT.into()).unwrap();
+            PubsubClient::slot_subscribe(env_wss_endpoint().as_str().into()).unwrap();
 
         // Listen for new slots
         for slot_info in slot_receiver {
@@ -67,7 +67,7 @@ fn monitor_blocktime() -> Receiver<i64> {
 // Task execution
 
 fn execute_pending_tasks(blocktime: i64) {
-    let mut psql = postgres::Client::connect(PSQL_CONN_PARAMS, postgres::NoTls).unwrap();
+    let mut psql = postgres::Client::connect(env_psql_params().as_str(), postgres::NoTls).unwrap();
     let query = "SELECT * FROM tasks WHERE status = 'pending' AND exec_at <= $1";
     for row in psql.query(query, &[&blocktime]).unwrap() {
         let task = Pubkey::from_str(row.get(0)).unwrap();
@@ -116,7 +116,7 @@ fn replicate_cronos_tasks() {
     thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
-            DEVNET_WSS_ENDPOINT.into(),
+            env_wss_endpoint().as_str().into(),
             &cronos_sdk::ID,
             Some(RpcProgramAccountsConfig {
                 account_config: RpcAccountInfoConfig {
@@ -151,7 +151,7 @@ fn replicate_task(pubkey: Pubkey, task: Task) {
     println!("💽 Replicate task: {} {}", pubkey, task.status);
 
     // Build postgres client
-    let mut psql = postgres::Client::connect(PSQL_CONN_PARAMS, postgres::NoTls).unwrap();
+    let mut psql = postgres::Client::connect(env_psql_params().as_str(), postgres::NoTls).unwrap();
 
     // Write task to postgres
     let query = "INSERT INTO tasks 
@@ -172,12 +172,31 @@ fn replicate_task(pubkey: Pubkey, task: Task) {
     .unwrap();
 }
 
+// Env
+fn env_keypath() -> String {
+    env::var("KEYPATH").unwrap()
+}
+
+fn env_psql_params() -> String {
+    env::var("PSQL_PARAMS").unwrap()
+}
+
+fn env_rpc_endpoint() -> String {
+    env::var("RPC_ENDPOINT").unwrap()
+}
+
+fn env_wss_endpoint() -> String {
+    env::var("WSS_ENDPOINT").unwrap()
+}
+
 // Helpers
 
 fn new_rpc_client() -> Client {
-    let payer = read_keypair(&mut File::open(KEYPAIR_PATH).unwrap()).unwrap();
-    let client =
-        RpcClient::new_with_commitment(DEVNET_HTTPS_ENDPOINT.into(), CommitmentConfig::confirmed());
+    let payer = read_keypair(&mut File::open(env_keypath().as_str()).unwrap()).unwrap();
+    let client = RpcClient::new_with_commitment(
+        env_rpc_endpoint().as_str().into(),
+        CommitmentConfig::confirmed(),
+    );
     Client { client, payer }
 }
 
