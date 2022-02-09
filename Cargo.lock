@@ -619,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "anchor-client",
  "cronos-program",
