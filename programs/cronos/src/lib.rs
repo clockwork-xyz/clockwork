@@ -5,17 +5,29 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("5SXHntQ3KcnXVHd9dkrMhxuwwuNcX9TqcML68DHd8kKx");
+declare_id!("CNrijHMMmZRo819rsKJBYQTwmiRAXNVPpYBHAQoruCSA");
 
 #[program]
 pub mod cronos {
     use super::*;
 
-    pub fn admin_schedule_health_check(
-        ctx: Context<AdminScheduleHealthCheck>,
+    pub fn admin_cancel_task(ctx: Context<AdminCancelTask>) -> ProgramResult {
+        admin_cancel_task::handler(ctx)
+    }
+
+    pub fn admin_create_task(
+        ctx: Context<AdminCreateTask>,
+        ix: InstructionData,
+        exec_at: i64,
+        stop_at: i64,
+        recurr: i64,
         bump: u8,
     ) -> ProgramResult {
-        admin_schedule_health_check::handler(ctx, bump)
+        admin_create_task::handler(ctx, ix, exec_at, stop_at, recurr, bump)
+    }
+
+    pub fn admin_reset_health(ctx: Context<AdminResetHealth>) -> ProgramResult {
+        admin_reset_health::handler(ctx)
     }
 
     pub fn config_update_admin(

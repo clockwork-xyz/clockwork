@@ -2,7 +2,7 @@ use {
     crate::{state::*, errors::*},
     anchor_lang::prelude::*,
     solana_program::{system_program, sysvar},
-    std::mem::size_of,
+    std::mem::{size_of, size_of_val},
 };
 
 #[derive(Accounts)]
@@ -44,7 +44,7 @@ pub struct TaskCreate<'info> {
         ],
         bump = bump,
         payer = owner,
-        space = 32 + size_of::<Task>() + std::mem::size_of_val(&ix),
+        space = 32 + size_of::<Task>() + size_of_val(&ix),
     )]
     pub task: Account<'info, Task>,
 

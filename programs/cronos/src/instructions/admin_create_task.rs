@@ -1,14 +1,19 @@
 use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::{system_program, instruction::Instruction, sysvar}},
-    std::mem::size_of,
+    crate::{errors::*, state::*},
+    anchor_lang::{prelude::*, solana_program::{system_program, sysvar}},
+    std::mem::{size_of, size_of_val},
 };
 
-const SIZE_OF_HEALTH_CHECK_IX: usize = 80;
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
-pub struct AdminScheduleHealthCheck<'info> {
+#[instruction(
+    ix: InstructionData,
+    exec_at: i64,
+    stop_at: i64,
+    recurr: i64,
+    bump: u8
+)]
+pub struct AdminCreateTask<'info> {
     #[account(mut, address = config.admin)]
     pub admin: Signer<'info>,
 
@@ -19,7 +24,10 @@ pub struct AdminScheduleHealthCheck<'info> {
     )]
     pub authority: Account<'info, Authority>,
     
-    #[account(address = sysvar::clock::ID)]
+    #[account(
+        address = sysvar::clock::ID,
+        constraint = exec_at >= clock.unix_timestamp - 60 @ ErrorCode::InvalidExecAtStale
+    )]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
@@ -41,14 +49,6 @@ pub struct AdminScheduleHealthCheck<'info> {
     )]
     pub daemon: Account<'info, Daemon>,
 
-    #[account(
-        mut,
-        seeds = [SEED_HEALTH],
-        bump = health.bump,
-        owner = crate::ID,
-    )]
-    pub health: Account<'info, Health>,
-
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
@@ -61,47 +61,43 @@ pub struct AdminScheduleHealthCheck<'info> {
         ],
         bump = bump,
         payer = admin,
-        space = 32 + size_of::<Task>() + SIZE_OF_HEALTH_CHECK_IX, 
+        space = 32 + size_of::<Task>() + size_of_val(&ix), 
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<AdminScheduleHealthCheck>, bump: u8) -> ProgramResult {
+pub fn handler(
+    ctx: Context<AdminCreateTask>, 
+    ix: InstructionData,
+    exec_at: i64,
+    stop_at: i64,
+    recurr: i64,
+    bump: u8
+) -> ProgramResult {
     // Get accounts.
-    let authority = &ctx.accounts.authority;
-    let clock = &ctx.accounts.clock;
     let daemon = &mut ctx.accounts.daemon;
-    let health = &mut ctx.accounts.health;
     let task = &mut ctx.accounts.task;
 
-    // Setup the health account.
-    let now = clock.unix_timestamp;
-    let exec_at = now.checked_add(1).unwrap();
-    health.real_time = now;
-    health.target_time = exec_at;
+    // Validate the scheduling chronology.
+    require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
+    require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
 
-    // Create health check instruction
-    let health_check_ix = InstructionData::from(
-        Instruction {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMeta::new_readonly(clock.key(), false),
-                AccountMeta::new_readonly(authority.key(), false),
-                AccountMeta::new(daemon.key(), true),
-                AccountMeta::new(health.key(), false),
-            ],
-            data: vec![],
-        }
-    );
+    // Reject the instruction if it has other signers besides the daemon.
+    for acc in ix.accounts.as_slice() {
+        require!(
+            !acc.is_signer || acc.pubkey == daemon.key(), 
+            ErrorCode::InvalidSignatory
+        );
+    }
 
     // Initialize task account.
     task.daemon = daemon.key();
     task.id = daemon.task_count;
-    task.ix = health_check_ix;
+    task.ix = ix;
     task.status = TaskStatus::Pending;
     task.exec_at = exec_at;
-    task.stop_at = i64::MAX;
-    task.recurr = 1;
+    task.stop_at = stop_at;
+    task.recurr = recurr;
     task.bump = bump;
 
     // Increment daemon task counter.

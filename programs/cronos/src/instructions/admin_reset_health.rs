@@ -5,29 +5,19 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct HealthCheck<'info> {
+pub struct AdminResetHealth<'info> {
+    #[account(mut, address = config.admin)]
+    pub admin: Signer<'info>,
+
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
-        seeds = [SEED_AUTHORITY], 
-        bump = authority.bump, 
+        seeds = [SEED_CONFIG],
+        bump = config.bump,
         owner = crate::ID,
     )]
-    pub authority: Account<'info, Authority>,
-
-    #[account(
-        mut,
-        seeds = [
-            SEED_DAEMON, 
-            daemon.owner.as_ref()
-        ],
-        bump = daemon.bump,
-        constraint = daemon.owner == authority.key(),
-        owner = crate::ID,
-        signer 
-    )]
-    pub daemon: Account<'info, Daemon>,
+    pub config: Account<'info, Config>,
 
     #[account(
         mut,
@@ -38,13 +28,13 @@ pub struct HealthCheck<'info> {
     pub health: Account<'info, Health>,
 }
 
-pub fn handler(ctx: Context<HealthCheck>) -> ProgramResult {
+pub fn handler(ctx: Context<AdminResetHealth>) -> ProgramResult {
     // Get accounts.
     let clock = &ctx.accounts.clock;
     let health = &mut ctx.accounts.health;
 
     // Update the health account.
-    health.target_time = health.target_time.checked_add(1).unwrap();
+    health.target_time = clock.unix_timestamp;
     health.real_time = clock.unix_timestamp;
 
     Ok(())

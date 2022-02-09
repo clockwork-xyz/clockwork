@@ -3,7 +3,7 @@ cluster = "devnet"
 wallet = "/Users/garfield/.config/solana/id.json"
 
 [programs.localnet]
-cronos = "5SXHntQ3KcnXVHd9dkrMhxuwwuNcX9TqcML68DHd8kKx"
+cronos = "CNrijHMMmZRo819rsKJBYQTwmiRAXNVPpYBHAQoruCSA"
 
 [registry]
 url = "https://anchor.projectserum.com"

@@ -1,4 +1,6 @@
-pub mod admin_schedule_health_check;
+pub mod admin_cancel_task;
+pub mod admin_create_task;
+pub mod admin_reset_health;
 pub mod config_update_admin;
 pub mod config_update_program_fee;
 pub mod config_update_worker_fee;
@@ -11,7 +13,9 @@ pub mod task_cancel;
 pub mod task_create;
 pub mod task_execute;
 
-pub use admin_schedule_health_check::*;
+pub use admin_cancel_task::*;
+pub use admin_create_task::*;
+pub use admin_reset_health::*;
 pub use config_update_admin::*;
 pub use config_update_program_fee::*;
 pub use config_update_worker_fee::*;
