@@ -8,6 +8,8 @@ pub enum ErrorCode {
     InvalidExecAtStale,
     #[msg("Recurrence interval cannot be negative")]
     InvalidRecurrNegative,
+    #[msg("Recurrence interval is below the minimum supported time granulartiy")]
+    InvalidRecurrBelowMin,
     #[msg("Your daemon cannot provide all required signatures for this instruction")]
     InvalidSignatory,
     #[msg("Task is not pending and may not executed")]

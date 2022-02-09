@@ -1,9 +1,40 @@
 export type Cronos = {
-  "version": "0.0.15",
+  "version": "0.0.16",
   "name": "cronos",
   "instructions": [
     {
-      "name": "adminScheduleHealthCheck",
+      "name": "adminCancelTask",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "adminCreateTask",
       "accounts": [
         {
           "name": "admin",
@@ -31,11 +62,6 @@ export type Cronos = {
           "isSigner": false
         },
         {
-          "name": "health",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -48,10 +74,54 @@ export type Cronos = {
       ],
       "args": [
         {
+          "name": "ix",
+          "type": {
+            "defined": "InstructionData"
+          }
+        },
+        {
+          "name": "execAt",
+          "type": "i64"
+        },
+        {
+          "name": "stopAt",
+          "type": "i64"
+        },
+        {
+          "name": "recurr",
+          "type": "i64"
+        },
+        {
           "name": "bump",
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "adminResetHealth",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "health",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
       "name": "configUpdateAdmin",
@@ -322,6 +392,11 @@ export type Cronos = {
           "isSigner": false
         },
         {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "daemon",
           "isMut": true,
           "isSigner": false
@@ -344,7 +419,7 @@ export type Cronos = {
       ],
       "args": [
         {
-          "name": "instructionData",
+          "name": "ix",
           "type": {
             "defined": "InstructionData"
           }
@@ -425,6 +500,10 @@ export type Cronos = {
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "minRecurr",
+            "type": "i64"
           },
           {
             "name": "programFee",
@@ -639,21 +718,26 @@ export type Cronos = {
     },
     {
       "code": 6003,
+      "name": "InvalidRecurrBelowMin",
+      "msg": "Recurrence interval is below the minimum supported time granulartiy"
+    },
+    {
+      "code": 6004,
       "name": "InvalidSignatory",
       "msg": "Your daemon cannot provide all required signatures for this instruction"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "Unknown",
       "msg": "Unknown error"
     }
@@ -661,11 +745,42 @@ export type Cronos = {
 };
 
 export const IDL: Cronos = {
-  "version": "0.0.15",
+  "version": "0.0.16",
   "name": "cronos",
   "instructions": [
     {
-      "name": "adminScheduleHealthCheck",
+      "name": "adminCancelTask",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daemon",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "task",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "adminCreateTask",
       "accounts": [
         {
           "name": "admin",
@@ -693,11 +808,6 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
-          "name": "health",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -710,10 +820,54 @@ export const IDL: Cronos = {
       ],
       "args": [
         {
+          "name": "ix",
+          "type": {
+            "defined": "InstructionData"
+          }
+        },
+        {
+          "name": "execAt",
+          "type": "i64"
+        },
+        {
+          "name": "stopAt",
+          "type": "i64"
+        },
+        {
+          "name": "recurr",
+          "type": "i64"
+        },
+        {
           "name": "bump",
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "adminResetHealth",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "health",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
       "name": "configUpdateAdmin",
@@ -984,6 +1138,11 @@ export const IDL: Cronos = {
           "isSigner": false
         },
         {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "daemon",
           "isMut": true,
           "isSigner": false
@@ -1006,7 +1165,7 @@ export const IDL: Cronos = {
       ],
       "args": [
         {
-          "name": "instructionData",
+          "name": "ix",
           "type": {
             "defined": "InstructionData"
           }
@@ -1087,6 +1246,10 @@ export const IDL: Cronos = {
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "minRecurr",
+            "type": "i64"
           },
           {
             "name": "programFee",
@@ -1301,21 +1464,26 @@ export const IDL: Cronos = {
     },
     {
       "code": 6003,
+      "name": "InvalidRecurrBelowMin",
+      "msg": "Recurrence interval is below the minimum supported time granulartiy"
+    },
+    {
+      "code": 6004,
       "name": "InvalidSignatory",
       "msg": "Your daemon cannot provide all required signatures for this instruction"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "TaskNotPending",
       "msg": "Task is not pending and may not executed"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "TaskNotDue",
       "msg": "This task is not due and may not be executed yet"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "Unknown",
       "msg": "Unknown error"
     }

@@ -5,7 +5,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("CNrijHMMmZRo819rsKJBYQTwmiRAXNVPpYBHAQoruCSA");
+declare_id!("FsyxXDdg7RiVVzq825P2QYqHJLkUVzHUcY3aVNSw9i6E");
 
 #[program]
 pub mod cronos {
@@ -35,6 +35,13 @@ pub mod cronos {
         new_admin: Pubkey,
     ) -> ProgramResult {
         config_update_admin::handler(ctx, new_admin)
+    }
+
+    pub fn config_update_min_recurr(
+        ctx: Context<ConfigUpdateMinRecurr>,
+        new_min_recurr: i64,
+    ) -> ProgramResult {
+        config_update_min_recurr::handler(ctx, new_min_recurr)
     }
 
     pub fn config_update_program_fee(

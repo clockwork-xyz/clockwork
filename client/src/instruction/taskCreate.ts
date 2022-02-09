@@ -33,6 +33,7 @@ export class TaskCreate {
     recurr,
     instruction,
   }: TaskCreateArgs): Promise<TransactionInstruction> {
+    const configPDA = await this.account.config.pda();
     const daemonData = await this.account.daemon.data(daemon);
     const taskPDA = await this.account.task.pda(daemon, daemonData.taskCount);
     const instructionData = buildInstructionData(instruction);
@@ -45,6 +46,7 @@ export class TaskCreate {
       {
         accounts: {
           clock: SYSVAR_CLOCK_PUBKEY,
+          config: configPDA.address,
           daemon: daemon,
           task: taskPDA.address,
           owner: daemonData.owner,

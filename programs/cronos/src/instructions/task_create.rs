@@ -21,6 +21,13 @@ pub struct TaskCreate<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
+        seeds = [SEED_CONFIG],
+        bump = config.bump,
+        owner = crate::ID,
+    )]
+    pub config: Account<'info, Config>,
+
+    #[account(
         mut,
         seeds = [
             SEED_DAEMON, 
@@ -61,12 +68,14 @@ pub fn handler(
     bump: u8,
 ) -> ProgramResult {
     // Get accounts.
+    let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
     // Validate the scheduling chronology.
     require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
     require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
+    require!(recurr == 0 || recurr >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
 
     // Reject the instruction if it has other signers besides the daemon.
     for acc in ix.accounts.as_slice() {
