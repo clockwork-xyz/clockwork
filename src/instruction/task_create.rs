@@ -6,8 +6,8 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
+use cronos_program::pda::PDA;
 use cronos_program::state::InstructionData as CronosInstructionData;
-use cronos_program::{pda::PDA, state::Task};
 
 pub fn task_create(
     task_pda: PDA,
