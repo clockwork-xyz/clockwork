@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anchor-lang = "0.20.1"
+clap = { version = "3.0.14", features = ["derive"] }
 cronos-sdk = { path = "../sdk" }
 postgres = "0.19.2"
 solana-account-decoder = "1.9.5"

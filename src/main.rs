@@ -1,4 +1,4 @@
-// use anchor_lang::{prelude::ProgramError, AccountDeserialize};
+use anchor_lang::prelude::{AccountMeta, Pubkey};
 use cronos_sdk::account::*;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
@@ -8,38 +8,91 @@ use solana_client::{
 use solana_client_helpers::{Client, ClientResult, RpcClient};
 use solana_sdk::{
     account::Account, commitment_config::CommitmentConfig, instruction::Instruction,
-    transaction::Transaction,
+    signature::read_keypair, transaction::Transaction,
 };
 use std::{
+    fs::File,
+    str::FromStr,
     sync::mpsc::{self, Receiver},
     thread,
 };
 
-// const DEVNET_HTTPS_ENDPOINT: &str = "api.devnet.solana.com";
+const KEYPAIR_PATH: &str = "./keypair.json";
+const PSQL_CONN_PARAMS: &str = "host=localhost user=postgres password=postgres";
 const DEVNET_HTTPS_ENDPOINT: &str = "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/";
 const DEVNET_WSS_ENDPOINT: &str = "wss://psytrbhymqlkfrhudd.dev.genesysgo.net:8900/";
 
 fn main() -> ClientResult<()> {
     // Replicate Cronos tasks to Postgres
-    replicate_cronos_tasks(DEVNET_WSS_ENDPOINT);
+    replicate_cronos_tasks();
 
-    // Monitor Solana blocktime
-    let mut current_blocktime: i64;
-    let blocktime_receiver = monitor_blocktime(DEVNET_HTTPS_ENDPOINT, DEVNET_WSS_ENDPOINT);
-    for new_blocktime in blocktime_receiver {
-        current_blocktime = new_blocktime;
-        println!("Latest blocktime: {}", current_blocktime);
-        // TODO process pending tasks that have come due
+    // Process pending tasks when Solana blocktime updates
+    let blocktime_receiver = monitor_blocktime();
+    for blocktime in blocktime_receiver {
+        println!("⏳ Blocktime: {}", blocktime);
+        thread::spawn(move || execute_pending_tasks(blocktime, PSQL_CONN_PARAMS));
     }
 
     Ok(())
 }
 
-fn replicate_cronos_tasks(wss_endpoint: &'static str) {
-    let _handle = thread::spawn(move || {
+fn new_rpc_client() -> Client {
+    let payer = read_keypair(&mut File::open(KEYPAIR_PATH).unwrap()).unwrap();
+    let client =
+        RpcClient::new_with_commitment(DEVNET_HTTPS_ENDPOINT.into(), CommitmentConfig::confirmed());
+    Client { client, payer }
+}
+
+fn execute_pending_tasks(blocktime: i64, psql_conn_params: &str) {
+    // Build postgres client
+    let mut psql = postgres::Client::connect(psql_conn_params, postgres::NoTls).unwrap();
+    let query = "SELECT * FROM tasks WHERE status = 'pending' AND exec_at < $1";
+    for row in psql.query(query, &[&blocktime]).unwrap() {
+        let task = Pubkey::from_str(row.get(0)).unwrap();
+        let daemon = Pubkey::from_str(row.get(1)).unwrap();
+        thread::spawn(move || execute_task(task, daemon));
+    }
+}
+
+fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
+    let client = new_rpc_client();
+    let data = client.get_account_data(&pubkey).unwrap();
+    let task = Task::try_from(data).unwrap();
+    match task.status {
+        TaskStatus::Cancelled | TaskStatus::Executed => {
+            replicate_task(pubkey, task);
+            return;
+        }
+        TaskStatus::Pending => {
+            let config = Config::find_pda().0;
+            let fee = Fee::find_pda(daemon).0;
+            let mut ix = cronos_sdk::instruction::task_execute(
+                config,
+                daemon,
+                fee,
+                pubkey,
+                client.payer_pubkey(),
+            );
+            for acc in task.ix.accounts {
+                match acc.is_writable {
+                    true => ix.accounts.push(AccountMeta::new(acc.pubkey, false)),
+                    false => ix
+                        .accounts
+                        .push(AccountMeta::new_readonly(acc.pubkey, false)),
+                }
+            }
+            ix.accounts
+                .push(AccountMeta::new_readonly(task.ix.program_id, false));
+            sign_and_submit(client, &[ix], "Executing task");
+        }
+    }
+}
+
+fn replicate_cronos_tasks() {
+    thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
-            wss_endpoint.into(),
+            DEVNET_WSS_ENDPOINT.into(),
             &cronos_sdk::ID,
             Some(RpcProgramAccountsConfig {
                 account_config: RpcAccountInfoConfig {
@@ -58,61 +111,56 @@ fn replicate_cronos_tasks(wss_endpoint: &'static str) {
             let keyed_account = keyed_account_response.value;
             let account = keyed_account.account.decode::<Account>().unwrap();
 
-            println!("Got account: {:?}", keyed_account);
-
+            // Unwrap task
             let task = Task::try_from(account.data);
             if !task.is_err() {
                 let task = task.unwrap();
-
-                // Build postgres client
-                let mut psql = postgres::Client::connect(
-                    "host=localhost user=postgres password=postgres",
-                    postgres::NoTls,
-                )
-                .unwrap();
-
-                let query = "INSERT INTO tasks 
-                    (pubkey, daemon, status, exec_at) 
-                    VALUES ($1, $2, $3, $4)";
-                let res = psql.execute(
-                    query,
-                    &[
-                        &keyed_account.pubkey,
-                        &task.daemon.to_string(),
-                        &task.status.to_string(),
-                        &task.exec_at,
-                    ],
-                );
-
-                println!("Res: {:?}", res);
-
-                // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&keyed_account.pubkey.as_str(), &task.daemon.as_str(), &task.status, &task.execute_at]).unwrap();
-                // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&"a", &"b", &"c", &task.execute_at]).unwrap();
-
-                // TODO Write task to postgres
+                replicate_task(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task);
             }
         }
-
-        println!("Websocket timed out");
     });
 }
 
-fn monitor_blocktime(https_endpoint: &'static str, wss_endpoint: &'static str) -> Receiver<i64> {
+fn replicate_task(pubkey: Pubkey, task: Task) {
+    println!("💽 Replicate task: {} {}", pubkey, task.status);
+
+    // Build postgres client
+    let mut psql = postgres::Client::connect(PSQL_CONN_PARAMS, postgres::NoTls).unwrap();
+
+    // Write task to postgres
+    let query = "INSERT INTO tasks 
+        (pubkey, daemon, status, exec_at) 
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (pubkey) DO UPDATE SET
+        status = EXCLUDED.status,
+        exec_at = EXCLUDED.exec_at";
+    psql.execute(
+        query,
+        &[
+            &pubkey.to_string(),
+            &task.daemon.to_string(),
+            &task.status.to_string(),
+            &task.exec_at,
+        ],
+    )
+    .unwrap();
+}
+
+fn monitor_blocktime() -> Receiver<i64> {
     let (blocktime_sender, blocktime_receiver) = mpsc::channel::<i64>();
-    let _handle = thread::spawn(move || {
+    thread::spawn(move || {
         let mut latest_blocktime: i64 = 0;
 
         // Rpc client
-        let rpc_client =
-            RpcClient::new_with_commitment(https_endpoint.into(), CommitmentConfig::confirmed());
+        let client = new_rpc_client();
 
         // Websocket client
         let (_ws_client, slot_receiver) =
-            PubsubClient::slot_subscribe(wss_endpoint.into()).unwrap();
+            PubsubClient::slot_subscribe(DEVNET_WSS_ENDPOINT.into()).unwrap();
 
         // Listen for new slots
         for slot_info in slot_receiver {
-            let blocktime = rpc_client.get_block_time(slot_info.slot).unwrap();
+            let blocktime = client.get_block_time(slot_info.slot).unwrap();
 
             // Publish updated blocktimes
             if blocktime > latest_blocktime {
@@ -124,12 +172,10 @@ fn monitor_blocktime(https_endpoint: &'static str, wss_endpoint: &'static str) -
     return blocktime_receiver;
 }
 
-fn _sign_and_submit(rpc_client: Client, ixs: &[Instruction]) {
-    let mut tx = Transaction::new_with_payer(ixs, Some(&rpc_client.payer_pubkey()));
-    tx.sign(
-        &vec![&rpc_client.payer],
-        rpc_client.latest_blockhash().unwrap(),
-    );
-    let sig = rpc_client.send_and_confirm_transaction(&tx).unwrap();
-    println!("Sig: {:?}", sig);
+fn sign_and_submit(client: Client, ixs: &[Instruction], memo: &str) {
+    println!("🤖 {}", memo);
+    let mut tx = Transaction::new_with_payer(ixs, Some(&client.payer_pubkey()));
+    tx.sign(&vec![&client.payer], client.latest_blockhash().unwrap());
+    let sig = client.send_and_confirm_transaction(&tx).unwrap();
+    println!("🔏 {:?}", sig);
 }
