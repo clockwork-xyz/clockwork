@@ -62,12 +62,29 @@ fn replicate_cronos_tasks(wss_endpoint: &'static str) {
 
             let task = Task::try_from(account.data);
             if !task.is_err() {
-                let _task = task.unwrap();
+                let task = task.unwrap();
 
                 // Build postgres client
-                let mut _psql =
-                    postgres::Client::connect("host=localhost user=postgres", postgres::NoTls)
-                        .unwrap();
+                let mut psql = postgres::Client::connect(
+                    "host=localhost user=postgres password=postgres",
+                    postgres::NoTls,
+                )
+                .unwrap();
+
+                let query = "INSERT INTO tasks 
+                    (pubkey, daemon, status, exec_at) 
+                    VALUES ($1, $2, $3, $4)";
+                let res = psql.execute(
+                    query,
+                    &[
+                        &keyed_account.pubkey,
+                        &task.daemon.to_string(),
+                        &task.status.to_string(),
+                        &task.exec_at,
+                    ],
+                );
+
+                println!("Res: {:?}", res);
 
                 // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&keyed_account.pubkey.as_str(), &task.daemon.as_str(), &task.status, &task.execute_at]).unwrap();
                 // psql.execute("INSERT INTO tasks (pubkey, daemon, status, execute_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE status = EXCLUDED.status, execute_at = EXCLUDED.execute_at", &[&"a", &"b", &"c", &task.execute_at]).unwrap();

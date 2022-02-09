@@ -698,9 +698,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.0.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c7ccf1d3b9c57279ae3a7c09a091266bb21f9fa21d48052ae360c6e7cc6d80a"
+version = "0.0.16"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -708,13 +706,24 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d1fd06c75bbf96b76dc5e377b0b266428d16ca49ad10e82c38cd70cfc7d465c"
+version = "0.0.8"
 dependencies = [
  "anchor-client",
  "cronos-program",
  "solana-program",
+]
+
+[[package]]
+name = "cronos-worker"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "cronos-sdk",
+ "postgres",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-client-helpers",
+ "solana-sdk",
 ]
 
 [[package]]
@@ -3874,19 +3883,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0120db82e8a1e0b9fb3345a539c478767c0048d842860994d96113d5b667bd69"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "worker"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "cronos-sdk",
- "postgres",
- "solana-account-decoder",
- "solana-client",
- "solana-client-helpers",
- "solana-sdk",
 ]
 
 [[package]]
