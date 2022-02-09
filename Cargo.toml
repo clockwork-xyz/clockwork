@@ -14,5 +14,5 @@ keywords = ["solana", "cronos", "sdk"]
 
 [dependencies]
 anchor-client = { version = "0.20.1", features = ["debug"] }
-cronos-program = { path = "../programs/programs/cronos", features = ["no-entrypoint"] }
+cronos-program = { version = "0.0.17", features = ["no-entrypoint"] }
 solana-program = "1.9.5"
