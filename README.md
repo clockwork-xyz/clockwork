@@ -4,12 +4,11 @@ Kafka publisher for use with Solana's [plugin framework](https://docs.solana.com
 
 ## Installation
 
+### Binary releases
+
+Find binary releases at: https://github.com/Blockdaemon/solana-accountsdb-plugin-kafka/releases
+
 ### Building from source
-
-**Important:** Solana's plugin interface requires the build environment of the Solana validator and this plugin to be **identical**.
-
-This includes the Solana version and Rust compiler version.
-Loading a plugin targeting wrong versions will result in memory corruption and crashes.
 
 ```shell
 cargo build --release
@@ -17,6 +16,11 @@ cargo build --release
 
 - Linux: `./target/release/libsolana_accountsdb_plugin_kafka.so`
 - macOS: `./target/release/libsolana_accountsdb_plugin_kafka.dylib`
+
+**Important:** Solana's plugin interface requires the build environment of the Solana validator and this plugin to be **identical**.
+
+This includes the Solana version and Rust compiler version.
+Loading a plugin targeting wrong versions will result in memory corruption and crashes.
 
 ## Config
 
