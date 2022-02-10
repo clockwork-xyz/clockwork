@@ -33,6 +33,7 @@ fn main() -> ClientResult<()> {
         thread::spawn(move || execute_pending_tasks(blocktime));
     }
 
+    println!("❌ Exiting");
     Ok(())
 }
 
