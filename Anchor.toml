@@ -1,5 +1,5 @@
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "/Users/garfield/.config/solana/id.json"
 
 [programs.localnet]
