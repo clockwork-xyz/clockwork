@@ -1,22 +1,20 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use clap::ArgMatches;
 use solana_client::rpc_config::RpcSendTransactionConfig;
-use solana_client_helpers::RpcClient;
-use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer};
+use solana_sdk::commitment_config::CommitmentConfig;
 
 use crate::{command::CliCommand, error::CliError};
 
 pub const DEFAULT_RPC_TIMEOUT_SECONDS: Duration = Duration::from_secs(30);
 pub const DEFAULT_CONFIRM_TX_TIMEOUT_SECONDS: Duration = Duration::from_secs(5);
 
-pub struct CliConfig<'a> {
+#[derive(Debug)]
+pub struct CliConfig {
     pub command: CliCommand,
     pub json_rpc_url: String,
     pub websocket_url: String,
-    pub signers: Vec<&'a dyn Signer>,
     pub keypair_path: String,
-    pub rpc_client: Option<Arc<RpcClient>>,
     pub rpc_timeout: Duration,
     pub verbose: bool,
     pub commitment: CommitmentConfig,
@@ -24,15 +22,13 @@ pub struct CliConfig<'a> {
     pub confirm_transaction_initial_timeout: Duration,
 }
 
-impl Default for CliConfig<'_> {
+impl Default for CliConfig {
     fn default() -> Self {
         CliConfig {
             command: CliCommand::Health {},
-            json_rpc_url: solana_cli_config::Config::default().json_rpc_url,
+            json_rpc_url: "https://api.devnet.solana.com".to_string(), // solana_cli_config::Config::default().json_rpc_url,
             websocket_url: solana_cli_config::Config::default().websocket_url,
-            signers: Vec::new(),
             keypair_path: solana_cli_config::Config::default().keypair_path,
-            rpc_client: None,
             rpc_timeout: DEFAULT_RPC_TIMEOUT_SECONDS,
             verbose: false,
             commitment: CommitmentConfig::confirmed(),
@@ -42,7 +38,7 @@ impl Default for CliConfig<'_> {
     }
 }
 
-impl TryFrom<&ArgMatches> for CliConfig<'_> {
+impl TryFrom<&ArgMatches> for CliConfig {
     type Error = CliError;
 
     fn try_from(_matches: &ArgMatches) -> Result<Self, Self::Error> {
