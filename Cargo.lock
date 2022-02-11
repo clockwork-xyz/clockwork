@@ -664,8 +664,11 @@ dependencies = [
  "clap 3.0.14",
  "cronos-sdk",
  "solana-account-decoder",
+ "solana-clap-utils",
+ "solana-cli-config",
  "solana-client",
  "solana-client-helpers",
+ "solana-remote-wallet",
  "solana-sdk",
  "thiserror",
 ]

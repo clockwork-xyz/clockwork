@@ -8,6 +8,7 @@ use crate::error::CliError;
 pub enum CliCommand {
     DaemonData,
     DaemonNew,
+    Health,
     TaskData { address: Pubkey },
     TaskNew,
 }
@@ -29,6 +30,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 fn parse_daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("new", _matches)) => Ok(CliCommand::DaemonNew {}),
+        Some(("health", _matches)) => Ok(CliCommand::Health {}),
         Some(("data", _matches)) => Ok(CliCommand::DaemonData {}),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
