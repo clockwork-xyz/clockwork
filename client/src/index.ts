@@ -1,3 +1,4 @@
+import { now } from "@cronos-so/utils";
 import { Program, Provider } from "@project-serum/anchor";
 import { Account } from "./account";
 import { Instruction } from "./instruction";
@@ -22,3 +23,4 @@ export class Cronos {
 }
 
 export * from "./types";
+export { now };

@@ -64,6 +64,7 @@ describe("Cronos", () => {
 
   it("Creates a daemon", async () => {
     // Submit instruction.
+
     let ix = await cronos.instruction.daemonCreate({
       owner: signer.publicKey,
     });
