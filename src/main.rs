@@ -12,6 +12,7 @@ fn main() {
         .version("0.0.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(daemon_app())
+        .subcommand(task_app())
         .get_matches();
 
     let command = CliCommand::try_from(&matches);
@@ -21,16 +22,24 @@ fn main() {
 
 fn daemon_app() -> App<'static> {
     App::new("daemon")
-        .about("Manage your daemon account")
+        .about("Manage your daemon")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(App::new("data").about("Fetch daemon account data"))
+        .subcommand(App::new("new").about("Create a daemon account"))
+}
+
+fn task_app() -> App<'static> {
+    App::new("task")
+        .about("Manage your tasks")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(
-            App::new("data").about("Create a daemon account").arg(
+            App::new("data").about("Fetch task account data").arg(
                 Arg::new("address")
-                    .short('a')
-                    .long("address")
+                    .index(1)
                     .takes_value(true)
-                    .help("A daemon address"),
+                    .required(true)
+                    .help("A task address"),
             ),
         )
-        .subcommand(App::new("new").about("Create a daemon account"))
+        .subcommand(App::new("new").about("Create a task"))
 }
