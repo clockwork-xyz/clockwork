@@ -667,6 +667,7 @@ dependencies = [
  "solana-client",
  "solana-client-helpers",
  "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]

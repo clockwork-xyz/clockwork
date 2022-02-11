@@ -1,4 +1,9 @@
-use clap::{App, AppSettings, Arg, ArgGroup, ArgMatches, SubCommand};
+pub mod command;
+pub mod error;
+
+use crate::command::CliCommand;
+
+use clap::{App, AppSettings, Arg};
 
 fn main() {
     let matches = App::new("Cronos")
@@ -9,16 +14,23 @@ fn main() {
         .subcommand(daemon_app())
         .get_matches();
 
-    // do_main(&matches);
-    println!("{:?}", matches.subcommand());
+    let command = CliCommand::try_from(&matches);
 
-    println!("The app: {:?}", matches);
-    println!("Hello, world!");
+    println!("The command: {:?}", command);
 }
 
 fn daemon_app() -> App<'static> {
     App::new("daemon")
         .about("Manage your daemon account")
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(App::new("create").about("Create a daemon account"))
+        .subcommand(
+            App::new("data").about("Create a daemon account").arg(
+                Arg::new("address")
+                    .short('a')
+                    .long("address")
+                    .takes_value(true)
+                    .help("A daemon address"),
+            ),
+        )
+        .subcommand(App::new("new").about("Create a daemon account"))
 }
