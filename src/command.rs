@@ -1,6 +1,6 @@
 use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
-use std::{convert::TryFrom, str::FromStr};
+use std::{convert::TryFrom, fmt::Display, str::FromStr};
 
 use crate::error::CliError;
 
@@ -23,6 +23,18 @@ impl TryFrom<&ArgMatches> for CliCommand {
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
+        }
+    }
+}
+
+impl Display for CliCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CliCommand::DaemonData => write!(f, "daemon data"),
+            CliCommand::DaemonNew => write!(f, "daemon new"),
+            CliCommand::Health => write!(f, "health"),
+            CliCommand::TaskData { address } => write!(f, "task data {}", address),
+            CliCommand::TaskNew => write!(f, "task new"),
         }
     }
 }
