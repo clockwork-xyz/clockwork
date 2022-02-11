@@ -6,7 +6,7 @@ import { Account } from "../account";
 
 export type DaemonInvokeArgs = {
   daemon: PublicKey;
-  instruction: TransactionInstruction;
+  ix: TransactionInstruction;
 };
 
 export class DaemonInvoke {
@@ -20,10 +20,10 @@ export class DaemonInvoke {
 
   public async daemonInvoke({
     daemon,
-    instruction,
+    ix,
   }: DaemonInvokeArgs): Promise<TransactionInstruction> {
     const daemonData = await this.account.daemon.data(daemon);
-    const instructionData = buildInstructionData(instruction);
+    const instructionData = buildInstructionData(ix);
     return this.cronos.instruction.daemonInvoke(instructionData, {
       accounts: {
         daemon: daemon,

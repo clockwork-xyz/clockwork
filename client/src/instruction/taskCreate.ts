@@ -11,10 +11,10 @@ import { Account } from "../account";
 
 export type TaskCreateArgs = {
   daemon: PublicKey;
+  ix: TransactionInstruction;
   execAt: BN;
   stopAt: BN;
   recurr: BN;
-  instruction: TransactionInstruction;
 };
 
 export class TaskCreate {
@@ -28,15 +28,15 @@ export class TaskCreate {
 
   public async taskCreate({
     daemon,
+    ix,
     execAt,
     stopAt,
     recurr,
-    instruction,
   }: TaskCreateArgs): Promise<TransactionInstruction> {
     const configPDA = await this.account.config.pda();
     const daemonData = await this.account.daemon.data(daemon);
     const taskPDA = await this.account.task.pda(daemon, daemonData.taskCount);
-    const instructionData = buildInstructionData(instruction);
+    const instructionData = buildInstructionData(ix);
     return this.cronos.instruction.taskCreate(
       instructionData,
       execAt,
