@@ -697,6 +697,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-bot"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "cronos-sdk",
+ "dotenv",
+ "postgres",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-client-helpers",
+ "solana-sdk",
+ "ttl_cache",
+]
+
+[[package]]
 name = "cronos-program"
 version = "0.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -715,20 +730,6 @@ dependencies = [
  "anchor-client",
  "cronos-program",
  "solana-program",
-]
-
-[[package]]
-name = "cronos-worker"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "cronos-sdk",
- "dotenv",
- "postgres",
- "solana-account-decoder",
- "solana-client",
- "solana-client-helpers",
- "solana-sdk",
 ]
 
 [[package]]
@@ -3602,6 +3603,15 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
+
+[[package]]
+name = "ttl_cache"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4189890526f0168710b6ee65ceaedf1460c48a14318ceec933cb26baa492096a"
+dependencies = [
+ "linked-hash-map",
+]
 
 [[package]]
 name = "tungstenite"

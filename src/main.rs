@@ -27,11 +27,7 @@ fn main() -> ClientResult<()> {
     replicate_cronos_tasks();
 
     // Process pending tasks when Solana blocktime updates
-    let blocktime_receiver = monitor_blocktime();
-    for blocktime in blocktime_receiver {
-        println!("⏳ Blocktime: {}", blocktime);
-        thread::spawn(move || execute_pending_tasks(blocktime));
-    }
+    process_tasks();
 
     println!("❌ Exiting");
     Ok(())
@@ -66,6 +62,15 @@ fn monitor_blocktime() -> Receiver<i64> {
 }
 
 // Task execution
+
+fn process_tasks() {
+    let blocktime_receiver = monitor_blocktime();
+    for blocktime in blocktime_receiver {
+        println!("⏳ Blocktime: {}", blocktime);
+        thread::spawn(move || execute_pending_tasks(blocktime));
+    }
+    process_tasks()
+}
 
 fn execute_pending_tasks(blocktime: i64) {
     let mut psql = postgres::Client::connect(env_psql_params().as_str(), postgres::NoTls).unwrap();

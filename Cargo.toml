@@ -1,6 +1,6 @@
 [package]
-name = "cronos-worker"
-version = "0.1.0"
+name = "cronos-bot"
+version = "0.0.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,3 +14,4 @@ solana-account-decoder = "1.9.5"
 solana-client = "1.9.5"
 solana-client-helpers = "1.1.0"
 solana-sdk = "1.9.5"
+ttl_cache = "0.5.1"
