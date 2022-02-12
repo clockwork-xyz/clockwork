@@ -745,7 +745,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "anchor-client",
  "cronos-program",
