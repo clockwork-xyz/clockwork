@@ -25,7 +25,7 @@ pub struct CliConfig {
 impl Default for CliConfig {
     fn default() -> Self {
         CliConfig {
-            command: CliCommand::Health {},
+            command: CliCommand::HealthCheck {},
             json_rpc_url: "https://api.devnet.solana.com".to_string(), // solana_cli_config::Config::default().json_rpc_url,
             websocket_url: solana_cli_config::Config::default().websocket_url,
             keypair_path: solana_cli_config::Config::default().keypair_path,

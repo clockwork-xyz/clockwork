@@ -2,9 +2,9 @@ pub mod app;
 pub mod command;
 pub mod config;
 pub mod error;
+pub mod parse;
 pub mod process;
-
-use solana_clap_utils::keypair::DefaultSigner;
+pub mod signer;
 
 use crate::app::cronos_app;
 use crate::command::CliCommand;
@@ -16,6 +16,5 @@ fn main() -> Result<(), CliError> {
     let matches = cronos_app().get_matches();
     let command = CliCommand::try_from(&matches)?;
     let config = CliConfig::try_from(&matches)?;
-    let signer = DefaultSigner::new("keypair".to_string(), &config.keypair_path);
-    process_command(&command, &config, &signer)
+    process_command(&command, &config)
 }

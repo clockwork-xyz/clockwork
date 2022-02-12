@@ -7,6 +7,7 @@ pub fn cronos_app() -> App<'static> {
         .version("0.0.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(daemon_app())
+        .subcommand(health_app())
         .subcommand(task_app())
 }
 
@@ -16,6 +17,12 @@ fn daemon_app() -> App<'static> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(App::new("data").about("Fetch daemon account data"))
         .subcommand(App::new("new").about("Create a daemon account"))
+}
+
+fn health_app() -> App<'static> {
+    App::new("health")
+        .about("Check the Cronos health")
+        .subcommand(App::new("reset").about("Reset the Cronos health tracker"))
 }
 
 fn task_app() -> App<'static> {

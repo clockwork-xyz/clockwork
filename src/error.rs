@@ -12,4 +12,6 @@ pub enum CliError {
     CommandNotRecognized(String),
     #[error("Command not implemented: {0}")]
     CommandNotImplemented(String),
+    #[error("Unknown error")]
+    Unknown,
 }

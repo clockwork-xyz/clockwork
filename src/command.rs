@@ -1,14 +1,14 @@
 use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
-use std::{convert::TryFrom, fmt::Display, str::FromStr};
+use std::{convert::TryFrom, fmt::Display};
 
-use crate::error::CliError;
+use crate::{error::CliError, parse::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
     DaemonData,
     DaemonNew,
-    Health,
+    HealthCheck,
     TaskData { address: Pubkey },
     TaskNew,
 }
@@ -18,8 +18,9 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("daemon", matches)) => parse_daemon_command(matches),
-            Some(("task", matches)) => parse_task_command(matches),
+            Some(("daemon", matches)) => parse_daemon_app_command(matches),
+            Some(("health", matches)) => parse_health_app_command(matches),
+            Some(("task", matches)) => parse_task_app_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
@@ -32,38 +33,9 @@ impl Display for CliCommand {
         match self {
             CliCommand::DaemonData => write!(f, "daemon data"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
-            CliCommand::Health => write!(f, "health"),
+            CliCommand::HealthCheck => write!(f, "health"),
             CliCommand::TaskData { address } => write!(f, "task data {}", address),
             CliCommand::TaskNew => write!(f, "task new"),
         }
-    }
-}
-
-fn parse_daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("new", _matches)) => Ok(CliCommand::DaemonNew {}),
-        Some(("health", _matches)) => Ok(CliCommand::Health {}),
-        Some(("data", _matches)) => Ok(CliCommand::DaemonData {}),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
-}
-
-fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("new", _matches)) => Ok(CliCommand::TaskNew {}),
-        Some(("data", matches)) => {
-            let address = matches
-                .value_of("address")
-                .ok_or(CliError::BadParameter("address".into()))?;
-            Ok(CliCommand::TaskData {
-                address: Pubkey::from_str(address)
-                    .map_err(|_err| CliError::BadParameter("address".into()))?,
-            })
-        }
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
     }
 }
