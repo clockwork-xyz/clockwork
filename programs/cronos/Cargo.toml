@@ -1,6 +1,6 @@
 [package]
 name = "cronos-program"
-version = "0.0.17"
+version = "0.0.18"
 description = "Instruction scheduler for Solana"
 edition = "2018"
 license = "Apache-2.0"
