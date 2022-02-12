@@ -729,6 +729,7 @@ dependencies = [
  "solana-client-helpers",
  "solana-remote-wallet",
  "solana-sdk",
+ "spl-memo",
  "thiserror",
 ]
 
@@ -745,11 +746,10 @@ dependencies = [
 [[package]]
 name = "cronos-sdk"
 version = "0.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42857d3e244827e4731089d235a21f84aa710481df73fe9875bb65e3d50996fc"
 dependencies = [
  "anchor-client",
  "cronos-program",
+ "solana-client-helpers",
  "solana-program",
 ]
 

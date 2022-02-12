@@ -6,11 +6,19 @@ use crate::{error::CliError, parse::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
+    Blocktime,
     DaemonData,
     DaemonNew,
     HealthCheck,
-    TaskData { address: Pubkey },
-    TaskNew,
+    TaskData {
+        address: Pubkey,
+    },
+    TaskNewMemo {
+        memo: String,
+        exec_at: Option<i64>,
+        stop_at: Option<i64>,
+        recurr: Option<i64>,
+    },
 }
 
 impl TryFrom<&ArgMatches> for CliCommand {
@@ -18,6 +26,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
+            Some(("blocktime", _matches)) => Ok(CliCommand::Blocktime {}),
             Some(("daemon", matches)) => parse_daemon_app_command(matches),
             Some(("health", matches)) => parse_health_app_command(matches),
             Some(("task", matches)) => parse_task_app_command(matches),
@@ -31,11 +40,12 @@ impl TryFrom<&ArgMatches> for CliCommand {
 impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            CliCommand::Blocktime => write!(f, "blocktime"),
             CliCommand::DaemonData => write!(f, "daemon data"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
             CliCommand::HealthCheck => write!(f, "health"),
             CliCommand::TaskData { address } => write!(f, "task data {}", address),
-            CliCommand::TaskNew => write!(f, "task new"),
+            CliCommand::TaskNewMemo { .. } => write!(f, "task new memo"),
         }
     }
 }

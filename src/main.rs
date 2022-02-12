@@ -16,5 +16,5 @@ fn main() -> Result<(), CliError> {
     let matches = cronos_app().get_matches();
     let command = CliCommand::try_from(&matches)?;
     let config = CliConfig::try_from(&matches)?;
-    process_command(&command, &config)
+    process_command(command, config)
 }
