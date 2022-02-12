@@ -10,16 +10,16 @@ pub const SEED_TASK: &[u8] = b"task";
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
 pub enum TaskStatus {
     Cancelled,
-    Executed,
-    Pending,
+    Done,
+    Queued,
 }
 
 impl std::fmt::Display for TaskStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TaskStatus::Cancelled => write!(f, "cancelled"),
-            TaskStatus::Executed => write!(f, "executed"),
-            TaskStatus::Pending => write!(f, "pending"),
+            TaskStatus::Done => write!(f, "done"),
+            TaskStatus::Queued => write!(f, "queued"),
         }
     }
 }
@@ -28,12 +28,12 @@ impl std::fmt::Display for TaskStatus {
 #[derive(Debug)]
 pub struct Task {
     pub daemon: Pubkey,
-    pub id: u128,
+    pub exec_at: i64, // Time to execute at
+    pub int: u128,
+    pub interval: i64, // Duration between exec
     pub ix: InstructionData,
     pub status: TaskStatus,
-    pub exec_at: i64, // Execute at
     pub stop_at: i64, // Stop executing at
-    pub recurr: i64,  // Recurrence interval
     pub bump: u8,
 }
 

@@ -73,6 +73,10 @@ pub mod cronos {
         daemon_invoke::handler(ctx, instruction_data)
     }
 
+    pub fn daemon_widthdraw(ctx: Context<DaemonWidthdraw>, amount: u64) -> ProgramResult {
+        daemon_widthdraw::handler(ctx, amount)
+    }
+
     pub fn fee_collect(ctx: Context<FeeCollect>) -> ProgramResult {
         fee_collect::handler(ctx)
     }
@@ -110,13 +114,13 @@ pub mod cronos {
         ix: InstructionData,
         exec_at: i64,
         stop_at: i64,
-        recurr: i64,
+        interval: i64,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(ctx, ix, exec_at, stop_at, recurr, bump)
+        task_create::handler(ctx, ix, exec_at, stop_at, interval, bump)
     }
 
-    pub fn task_execute(ctx: Context<TaskProcess>) -> ProgramResult {
+    pub fn task_execute(ctx: Context<TaskExecute>) -> ProgramResult {
         task_execute::handler(ctx)
     }
 }

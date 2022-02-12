@@ -6,7 +6,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct TaskProcess<'info> {
+pub struct TaskExecute<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -45,11 +45,11 @@ pub struct TaskProcess<'info> {
         seeds = [
             SEED_TASK, 
             task.daemon.as_ref(),
-            task.id.to_be_bytes().as_ref(),
+            task.int.to_be_bytes().as_ref(),
         ],
         bump = task.bump,
         has_one = daemon,
-        constraint = task.status == TaskStatus::Pending @ ErrorCode::TaskNotPending,
+        constraint = task.status == TaskStatus::Queued @ ErrorCode::TaskNotPending,
         constraint = task.exec_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
         owner = crate::ID
     )]
@@ -59,7 +59,7 @@ pub struct TaskProcess<'info> {
     pub worker: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
+pub fn handler(ctx: Context<TaskExecute>) -> ProgramResult {
     // Get accounts.
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
@@ -68,9 +68,9 @@ pub fn handler(ctx: Context<TaskProcess>) -> ProgramResult {
     let worker = &mut ctx.accounts.worker;
 
     // Update task state.
-    let next_exec_at = task.exec_at.checked_add(task.recurr).unwrap();
-    if task.recurr == 0 || next_exec_at > task.stop_at {
-        task.status = TaskStatus::Executed;
+    let next_exec_at = task.exec_at.checked_add(task.interval).unwrap();
+    if task.interval == 0 || next_exec_at >= task.stop_at {
+        task.status = TaskStatus::Done;
     } else {
         task.exec_at = next_exec_at;
     }

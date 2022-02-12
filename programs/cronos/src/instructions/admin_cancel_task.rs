@@ -39,7 +39,7 @@ pub struct AdminCancelTask<'info> {
         seeds = [
             SEED_TASK, 
             task.daemon.as_ref(),
-            task.id.to_be_bytes().as_ref(),
+            task.int.to_be_bytes().as_ref(),
         ],
         bump = task.bump,
         constraint = task.daemon == daemon.key(),

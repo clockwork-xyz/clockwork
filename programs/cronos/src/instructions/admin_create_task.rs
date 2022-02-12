@@ -10,7 +10,7 @@ use {
     ix: InstructionData,
     exec_at: i64,
     stop_at: i64,
-    recurr: i64,
+    interval: i64,
     bump: u8
 )]
 pub struct AdminCreateTask<'info> {
@@ -71,7 +71,7 @@ pub fn handler(
     ix: InstructionData,
     exec_at: i64,
     stop_at: i64,
-    recurr: i64,
+    interval: i64,
     bump: u8
 ) -> ProgramResult {
     // Get accounts.
@@ -81,8 +81,8 @@ pub fn handler(
 
     // Validate the scheduling chronology.
     require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
-    require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
-    require!(recurr == 0 || recurr >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
+    require!(interval >= 0, ErrorCode::InvalidRecurrNegative);
+    require!(interval == 0 || interval >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
 
     // Reject the instruction if it has other signers besides the daemon.
     for acc in ix.accounts.as_slice() {
@@ -94,12 +94,12 @@ pub fn handler(
 
     // Initialize task account.
     task.daemon = daemon.key();
-    task.id = daemon.task_count;
+    task.int = daemon.task_count;
+    task.interval = interval;
     task.ix = ix;
-    task.status = TaskStatus::Pending;
+    task.status = TaskStatus::Queued;
     task.exec_at = exec_at;
     task.stop_at = stop_at;
-    task.recurr = recurr;
     task.bump = bump;
 
     // Increment daemon task counter.
