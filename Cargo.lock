@@ -687,9 +687,9 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.0.17"
+version = "0.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb2bbaf5f8150988ae37b92125ef342cab451952c8bade8a93bb35f52c57e0c2"
+checksum = "23b9db3a40f56700631f5c97f82713308e6be9c0e76d30658eed5024a9ba6183"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -697,7 +697,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.0.10"
+version = "0.0.11"
 dependencies = [
  "anchor-client",
  "cronos-program",
