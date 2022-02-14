@@ -14,6 +14,19 @@ pub struct Daemon {
     pub bump: u8,
 }
 
+impl std::fmt::Display for Daemon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{
+    owner: {},
+    task_count: {}
+}}",
+            self.owner, self.task_count,
+        )
+    }
+}
+
 impl TryFrom<Vec<u8>> for Daemon {
     type Error = ProgramError;
     fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
