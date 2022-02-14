@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use solana_client_helpers::Client;
 
-use crate::{error::CliError, signer::sign_and_submit};
+use crate::{error::CliError, utils::sign_and_submit};
 
-pub fn process(
+pub fn new(
     client: &Arc<Client>,
     memo: String,
     exec_at: Option<i64>,

@@ -3,30 +3,11 @@ use std::str::FromStr;
 use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
 
-use super::error::CliError;
+use crate::{command::CliCommand, error::CliError};
 
-use super::command::CliCommand;
-
-pub fn parse_daemon_app_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("new", _matches)) => Ok(CliCommand::DaemonNew {}),
-        _ => Ok(CliCommand::DaemonData {}),
-        // Some(("data", _matches)) => Ok(CliCommand::DaemonData {}),
-        // _ => Err(CliError::CommandNotRecognized(
-        //     matches.subcommand().unwrap().0.into(),
-        // )),
-    }
-}
-
-pub fn parse_health_app_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        _ => Ok(CliCommand::HealthCheck),
-    }
-}
-
-pub fn parse_task_app_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("new", matches)) => parse_task_new_app_command(matches),
+        Some(("new", matches)) => new_task_command(matches),
         _ => {
             let address = matches
                 .value_of("address")
@@ -39,7 +20,7 @@ pub fn parse_task_app_command(matches: &ArgMatches) -> Result<CliCommand, CliErr
     }
 }
 
-pub fn parse_task_new_app_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn new_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("memo", matches)) => {
             let memo = matches

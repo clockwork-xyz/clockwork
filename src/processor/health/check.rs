@@ -4,7 +4,7 @@ use solana_client_helpers::Client;
 
 use crate::error::CliError;
 
-pub fn process(client: &Arc<Client>) -> Result<(), CliError> {
+pub fn check(client: &Arc<Client>) -> Result<(), CliError> {
     // let owner = client.payer_pubkey();
     let health_addr = cronos_sdk::account::Health::find_pda().0;
     let data = client

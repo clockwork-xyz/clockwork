@@ -2,7 +2,7 @@ use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
 use std::{convert::TryFrom, fmt::Display};
 
-use crate::{error::CliError, parse::*};
+use crate::{error::CliError, parser::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
@@ -21,22 +21,6 @@ pub enum CliCommand {
     },
 }
 
-impl TryFrom<&ArgMatches> for CliCommand {
-    type Error = CliError;
-
-    fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
-        match matches.subcommand() {
-            Some(("blocktime", _matches)) => Ok(CliCommand::Blocktime {}),
-            Some(("daemon", matches)) => parse_daemon_app_command(matches),
-            Some(("health", matches)) => parse_health_app_command(matches),
-            Some(("task", matches)) => parse_task_app_command(matches),
-            _ => Err(CliError::CommandNotRecognized(
-                matches.subcommand().unwrap().0.into(),
-            )),
-        }
-    }
-}
-
 impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -46,6 +30,22 @@ impl Display for CliCommand {
             CliCommand::HealthCheck => write!(f, "health"),
             CliCommand::TaskData { address } => write!(f, "task {}", address),
             CliCommand::TaskNewMemo { .. } => write!(f, "task new memo"),
+        }
+    }
+}
+
+impl TryFrom<&ArgMatches> for CliCommand {
+    type Error = CliError;
+
+    fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
+        match matches.subcommand() {
+            Some(("blocktime", _matches)) => Ok(CliCommand::Blocktime {}),
+            Some(("daemon", matches)) => daemon_command(matches),
+            Some(("health", matches)) => health_command(matches),
+            Some(("task", matches)) => task_command(matches),
+            _ => Err(CliError::CommandNotRecognized(
+                matches.subcommand().unwrap().0.into(),
+            )),
         }
     }
 }
