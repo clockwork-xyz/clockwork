@@ -87,11 +87,11 @@ fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
     let data = client.get_account_data(&pubkey).unwrap();
     let task = Task::try_from(data).unwrap();
     match task.status {
-        TaskStatus::Cancelled | TaskStatus::Executed => {
+        TaskStatus::Cancelled | TaskStatus::Done => {
             replicate_task(pubkey, task);
             return;
         }
-        TaskStatus::Pending => {
+        TaskStatus::Queued => {
             let config = Config::find_pda().0;
             let fee = Fee::find_pda(daemon).0;
             let mut ix = cronos_sdk::instruction::task_execute(
@@ -172,13 +172,14 @@ fn replicate_task(pubkey: Pubkey, task: Task) {
             &pubkey.to_string(),
             &task.daemon.to_string(),
             &task.status.to_string(),
-            &task.exec_at,
+            &task.schedule.exec_at,
         ],
     )
     .unwrap();
 }
 
 // Env
+
 fn env_keypath() -> String {
     env::var("KEYPATH").unwrap()
 }
