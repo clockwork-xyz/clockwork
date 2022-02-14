@@ -746,6 +746,8 @@ dependencies = [
 [[package]]
 name = "cronos-sdk"
 version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38131161aa72e0482ac65ac7736563d68b979bbe3ac20e41f6868c08d58f5395"
 dependencies = [
  "anchor-client",
  "cronos-program",
