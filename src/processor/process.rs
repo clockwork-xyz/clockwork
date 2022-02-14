@@ -24,11 +24,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::DaemonData => super::daemon::data(&client),
         CliCommand::HealthCheck => super::health::check(&client),
         CliCommand::TaskData { address } => super::task::data(&client, &address),
-        CliCommand::TaskNewMemo {
-            memo,
+        CliCommand::TaskNew {
             exec_at,
             stop_at,
             recurr,
-        } => super::task::new(&client, memo, exec_at, stop_at, recurr),
+        } => super::task::new(&client, exec_at, stop_at, recurr),
     }
 }

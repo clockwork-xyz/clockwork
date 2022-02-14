@@ -1,6 +1,6 @@
 [package]
 name = "cronos-cli"
-version = "0.0.4"
+version = "0.0.5"
 description = "Command line instruction scheduler for Solana"
 edition = "2021"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ keywords = ["solana", "cronos", "cli"]
 [dependencies]
 anchor-lang = "0.20.1"
 clap = { version = "3.0.14", features = ["derive"] }
-cronos-sdk = "0.0.10"
+cronos-sdk = "0.0.11"
 solana-account-decoder = "1.9.5"
 solana-clap-utils = "1.9.5"
 solana-cli-config = "1.9.5"

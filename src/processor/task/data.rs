@@ -12,23 +12,6 @@ pub fn data(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountNotFound(address.to_string()))?;
     let task_data = Task::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-    println!(
-        "{{
-    daemon: {},
-    id: {},
-    status: {},
-    exec_at: {},
-    stop_at: {},
-    recurr: {},
-    ix: {:?}
-}}",
-        task_data.daemon,
-        task_data.id,
-        task_data.status,
-        task_data.exec_at,
-        task_data.stop_at,
-        task_data.recurr,
-        task_data.ix,
-    );
+    println!("{}", task_data);
     Ok(())
 }

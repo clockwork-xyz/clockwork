@@ -13,8 +13,7 @@ pub enum CliCommand {
     TaskData {
         address: Pubkey,
     },
-    TaskNewMemo {
-        memo: String,
+    TaskNew {
         exec_at: Option<i64>,
         stop_at: Option<i64>,
         recurr: Option<i64>,
@@ -29,7 +28,7 @@ impl Display for CliCommand {
             CliCommand::DaemonNew => write!(f, "daemon new"),
             CliCommand::HealthCheck => write!(f, "health"),
             CliCommand::TaskData { address } => write!(f, "task {}", address),
-            CliCommand::TaskNewMemo { .. } => write!(f, "task new memo"),
+            CliCommand::TaskNew { .. } => write!(f, "task new"),
         }
     }
 }

@@ -1,22 +1,21 @@
-use clap::{App, AppSettings, Arg};
+use clap::{App, Arg};
 
 pub fn app() -> App<'static> {
     App::new("task")
         .about("Manage your tasks")
+        .subcommand(task_new_app())
         .arg(
             Arg::new("address")
                 .index(1)
                 .takes_value(true)
-                .required(true)
+                // .required(true)
                 .help("A task address"),
         )
-        .subcommand(task_new_app())
 }
 
 fn task_new_app() -> App<'static> {
     App::new("new")
         .about("Schedule a new task")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
         .arg(
             Arg::new("exec_at")
                 .long("exec_at")
@@ -40,18 +39,5 @@ fn task_new_app() -> App<'static> {
                 .required(false)
                 .global(true)
                 .help("The duration to wait between instruction invocations"),
-        )
-        .subcommand(memo_app())
-}
-
-fn memo_app() -> App<'static> {
-    App::new("memo")
-        .about("Schedule memos with the SPL Memo program")
-        .arg(
-            Arg::new("memo")
-                .index(1)
-                .takes_value(true)
-                .required(true)
-                .help("The memo to write"),
         )
 }
