@@ -12,14 +12,6 @@ pub fn check(client: &Arc<Client>) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountNotFound(health_addr.to_string()))?;
     let health_data = cronos_sdk::account::Health::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(health_addr.to_string()))?;
-
-    let drift = health_data.target_time - health_data.real_time;
-    println!(
-        "Target ping: {}
-Last ping: {}
-Drift: {}",
-        health_data.target_time, health_data.real_time, drift
-    );
-
+    println!("{}", health_data);
     Ok(())
 }
