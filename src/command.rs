@@ -41,10 +41,10 @@ impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CliCommand::Blocktime => write!(f, "blocktime"),
-            CliCommand::DaemonData => write!(f, "daemon data"),
+            CliCommand::DaemonData => write!(f, "daemon"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
             CliCommand::HealthCheck => write!(f, "health"),
-            CliCommand::TaskData { address } => write!(f, "task data {}", address),
+            CliCommand::TaskData { address } => write!(f, "task {}", address),
             CliCommand::TaskNewMemo { .. } => write!(f, "task new memo"),
         }
     }

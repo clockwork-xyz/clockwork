@@ -19,8 +19,6 @@ fn blocktime_app() -> App<'static> {
 fn daemon_app() -> App<'static> {
     App::new("daemon")
         .about("Manage your daemon")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(App::new("data").about("Fetch daemon account data"))
         .subcommand(App::new("new").about("Create a daemon account"))
 }
 
@@ -33,17 +31,14 @@ fn health_app() -> App<'static> {
 fn task_app() -> App<'static> {
     App::new("task")
         .about("Manage your tasks")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(task_new_app())
-        .subcommand(
-            App::new("data").about("Fetch task account data").arg(
-                Arg::new("address")
-                    .index(1)
-                    .takes_value(true)
-                    .required(true)
-                    .help("A task address"),
-            ),
+        .arg(
+            Arg::new("address")
+                .index(1)
+                .takes_value(true)
+                .required(true)
+                .help("A task address"),
         )
+        .subcommand(task_new_app())
 }
 
 fn task_new_app() -> App<'static> {
