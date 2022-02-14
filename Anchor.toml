@@ -1,9 +1,9 @@
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "/Users/garfield/.config/solana/id.json"
 
 [programs.localnet]
-cronos = "5F5bYKuGwR5xrXr6mCo5wi6zAiSebSM2jzeDA8dwTF6A"
+cronos = "HGwuQXkzJKSAKQWinUZ2wX82M1AmHPchFYCHDNsNc7Yd"
 
 [registry]
 url = "https://anchor.projectserum.com"

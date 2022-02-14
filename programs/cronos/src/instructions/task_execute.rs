@@ -50,7 +50,7 @@ pub struct TaskExecute<'info> {
         bump = task.bump,
         has_one = daemon,
         constraint = task.status == TaskStatus::Queued @ ErrorCode::TaskNotPending,
-        constraint = task.exec_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
+        constraint = task.schedule.exec_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
         owner = crate::ID
     )]
     pub task: Account<'info, Task>,
@@ -68,11 +68,11 @@ pub fn handler(ctx: Context<TaskExecute>) -> ProgramResult {
     let worker = &mut ctx.accounts.worker;
 
     // Update task state.
-    let next_exec_at = task.exec_at.checked_add(task.interval).unwrap();
-    if task.interval == 0 || next_exec_at >= task.stop_at {
+    let next_exec_at = task.schedule.exec_at.checked_add(task.schedule.recurr).unwrap();
+    if task.schedule.recurr == 0 || next_exec_at >= task.schedule.stop_at {
         task.status = TaskStatus::Done;
     } else {
-        task.exec_at = next_exec_at;
+        task.schedule.exec_at = next_exec_at;
     }
 
     // Increment collectable fee balance. 

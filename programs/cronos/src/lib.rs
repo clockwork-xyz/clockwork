@@ -5,7 +5,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("5F5bYKuGwR5xrXr6mCo5wi6zAiSebSM2jzeDA8dwTF6A");
+declare_id!("HGwuQXkzJKSAKQWinUZ2wX82M1AmHPchFYCHDNsNc7Yd");
 
 #[program]
 pub mod cronos {
@@ -114,10 +114,10 @@ pub mod cronos {
         ix: InstructionData,
         exec_at: i64,
         stop_at: i64,
-        interval: i64,
+        recurr: i64,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(ctx, ix, exec_at, stop_at, interval, bump)
+        task_create::handler(ctx, ix, exec_at, stop_at, recurr, bump)
     }
 
     pub fn task_execute(ctx: Context<TaskExecute>) -> ProgramResult {

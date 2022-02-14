@@ -3,38 +3,36 @@ use crate::pda::PDA;
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use solana_program::instruction::Instruction;
+
 use std::convert::TryFrom;
 
 pub const SEED_TASK: &[u8] = b"task";
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
-pub enum TaskStatus {
-    Cancelled,
-    Done,
-    Queued,
-}
-
-impl std::fmt::Display for TaskStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TaskStatus::Cancelled => write!(f, "cancelled"),
-            TaskStatus::Done => write!(f, "done"),
-            TaskStatus::Queued => write!(f, "queued"),
-        }
-    }
-}
 
 #[account]
 #[derive(Debug)]
 pub struct Task {
     pub daemon: Pubkey,
-    pub exec_at: i64, // Time to execute at
     pub int: u128,
-    pub interval: i64, // Duration between exec
     pub ix: InstructionData,
+    pub schedule: TaskSchedule,
     pub status: TaskStatus,
-    pub stop_at: i64, // Stop executing at
     pub bump: u8,
+}
+
+impl std::fmt::Display for Task {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{
+    daemon: {},
+    int: {},
+    ix: {}
+    schedule: {},
+    status: {},
+}}",
+            self.daemon, self.int, self.ix, self.schedule, self.status,
+        )
+    }
 }
 
 impl Task {
@@ -54,6 +52,20 @@ pub struct InstructionData {
     pub accounts: Vec<AccountMetaData>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
+}
+
+impl std::fmt::Display for InstructionData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{
+        program_id: {},
+        accounts: {:?},
+        data: {:?}
+    }}",
+            self.program_id, self.accounts, self.data
+        )
+    }
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
@@ -105,6 +117,40 @@ impl From<&InstructionData> for Instruction {
                 })
                 .collect(),
             data: instruction.data.clone(),
+        }
+    }
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug)]
+pub struct TaskSchedule {
+    pub exec_at: i64, // Time to execute at
+    pub stop_at: i64, // Stop executing at
+    pub recurr: i64,  // Duration between exec
+}
+
+impl std::fmt::Display for TaskSchedule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{ exec_at: {}, stop_at: {}, recurr: {} }}",
+            self.exec_at, self.stop_at, self.recurr
+        )
+    }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
+pub enum TaskStatus {
+    Cancelled,
+    Done,
+    Queued,
+}
+
+impl std::fmt::Display for TaskStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TaskStatus::Cancelled => write!(f, "cancelled"),
+            TaskStatus::Done => write!(f, "done"),
+            TaskStatus::Queued => write!(f, "queued"),
         }
     }
 }
