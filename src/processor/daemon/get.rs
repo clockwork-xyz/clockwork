@@ -7,7 +7,7 @@ use crate::{
     utils::{explorer_url, ExplorerEntity},
 };
 
-pub fn data(client: &Arc<Client>) -> Result<(), CliError> {
+pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
     let daemon_addr = cronos_sdk::account::Daemon::find_pda(owner).0;
     let data = client

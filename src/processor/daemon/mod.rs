@@ -1,5 +1,5 @@
-mod data;
+mod get;
 mod new;
 
-pub use data::*;
+pub use get::*;
 pub use new::*;

@@ -1,5 +1,6 @@
 mod admin;
 mod blocktime;
+mod config;
 mod cronos;
 mod daemon;
 mod health;

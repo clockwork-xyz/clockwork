@@ -6,7 +6,7 @@ use solana_client_helpers::Client;
 
 use crate::{error::CliError, utils::*};
 
-pub fn data(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
+pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let data = client
         .get_account_data(address)
         .map_err(|_err| CliError::AccountNotFound(address.to_string()))?;

@@ -61,5 +61,5 @@ pub fn new(
     sign_and_submit(client, &[ix]);
 
     // Fetch task data
-    super::data(client, &task_pda.0)
+    super::get(client, &task_pda.0)
 }

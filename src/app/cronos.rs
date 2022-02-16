@@ -8,6 +8,7 @@ pub fn cronos() -> App<'static> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(super::admin::app())
         .subcommand(super::blocktime::app())
+        .subcommand(super::config::app())
         .subcommand(super::daemon::app())
         .subcommand(super::health::app())
         .subcommand(super::task::app())

@@ -1,9 +1,8 @@
-use std::str::FromStr;
-
-use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
 
 use crate::{command::CliCommand, error::CliError};
+
+use super::utils::parse_pubkey;
 
 pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
@@ -18,14 +17,8 @@ pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
                 recurr,
             })
         }
-        _ => {
-            let address = matches
-                .value_of("address")
-                .ok_or(CliError::BadParameter("address".into()))?;
-            Ok(CliCommand::TaskData {
-                address: Pubkey::from_str(address)
-                    .map_err(|_err| CliError::BadParameter("address".into()))?,
-            })
-        }
+        _ => Ok(CliCommand::TaskData {
+            address: parse_pubkey(&"address".into(), matches)?,
+        }),
     }
 }

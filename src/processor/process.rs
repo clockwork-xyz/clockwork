@@ -21,10 +21,14 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     match command {
         CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
         CliCommand::Blocktime => super::blocktime::get(&client),
+        CliCommand::ConfigGet => super::config::get(&client),
+        CliCommand::ConfigSetMinRecurr { new_value } => {
+            super::config::update_min_recurr(&client, &new_value)
+        }
         CliCommand::DaemonNew => super::daemon::new(&client),
-        CliCommand::DaemonData => super::daemon::data(&client),
+        CliCommand::DaemonData => super::daemon::get(&client),
         CliCommand::HealthCheck => super::health::check(&client),
-        CliCommand::TaskData { address } => super::task::data(&client, &address),
+        CliCommand::TaskData { address } => super::task::get(&client, &address),
         CliCommand::TaskNew {
             exec_at,
             stop_at,
