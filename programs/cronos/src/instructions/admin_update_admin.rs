@@ -2,9 +2,9 @@ use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 #[instruction(
-    new_program_fee: u64,
+    new_admin: Pubkey,
 )]
-pub struct ConfigUpdateProgramFee<'info> {
+pub struct AdminUpdateAdmin<'info> {
     #[account(
         mut,
         address = config.admin,
@@ -20,8 +20,8 @@ pub struct ConfigUpdateProgramFee<'info> {
     pub config: Account<'info, Config>,
 }
 
-pub fn handler(ctx: Context<ConfigUpdateProgramFee>, new_program_fee: u64) -> ProgramResult {
+pub fn handler(ctx: Context<AdminUpdateAdmin>, new_admin: Pubkey) -> ProgramResult {
     let config = &mut ctx.accounts.config;
-    config.program_fee = new_program_fee;
+    config.admin = new_admin;
     Ok(())
 }

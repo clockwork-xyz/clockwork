@@ -13,7 +13,7 @@ use {
     health_bump: u8,
     treasury_bump: u8,
 )]
-pub struct Initialize<'info> {
+pub struct AdminInitialize<'info> {
     #[account(
         init,
         seeds = [SEED_AUTHORITY],
@@ -83,7 +83,7 @@ pub struct Initialize<'info> {
 }
 
 pub fn handler(
-    ctx: Context<Initialize>,
+    ctx: Context<AdminInitialize>,
     authority_bump: u8,
     config_bump: u8,
     daemon_bump: u8,

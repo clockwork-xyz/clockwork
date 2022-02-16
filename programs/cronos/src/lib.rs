@@ -5,7 +5,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
-declare_id!("HGwuQXkzJKSAKQWinUZ2wX82M1AmHPchFYCHDNsNc7Yd");
+declare_id!("7fNcRaPYHSBbqZuM5E87s3k6hX9DfPWCwiNbmLib2XvZ");
 
 #[program]
 pub mod cronos {
@@ -26,36 +26,53 @@ pub mod cronos {
         admin_create_task::handler(ctx, ix, exec_at, stop_at, recurr, bump)
     }
 
+    pub fn admin_initialize(
+        ctx: Context<AdminInitialize>,
+        authority_bump: u8,
+        config_bump: u8,
+        daemon_bump: u8,
+        fee_bump: u8,
+        health_bump: u8,
+        treasury_bump: u8,
+    ) -> ProgramResult {
+        admin_initialize::handler(
+            ctx,
+            authority_bump,
+            config_bump,
+            daemon_bump,
+            fee_bump,
+            health_bump,
+            treasury_bump,
+        )
+    }
+
     pub fn admin_reset_health(ctx: Context<AdminResetHealth>) -> ProgramResult {
         admin_reset_health::handler(ctx)
     }
 
-    pub fn config_update_admin(
-        ctx: Context<ConfigUpdateAdmin>,
-        new_admin: Pubkey,
-    ) -> ProgramResult {
-        config_update_admin::handler(ctx, new_admin)
+    pub fn admin_update_admin(ctx: Context<AdminUpdateAdmin>, new_admin: Pubkey) -> ProgramResult {
+        admin_update_admin::handler(ctx, new_admin)
     }
 
-    pub fn config_update_min_recurr(
-        ctx: Context<ConfigUpdateMinRecurr>,
+    pub fn admin_update_min_recurr(
+        ctx: Context<AdminUpdateMinRecurr>,
         new_min_recurr: i64,
     ) -> ProgramResult {
-        config_update_min_recurr::handler(ctx, new_min_recurr)
+        admin_update_min_recurr::handler(ctx, new_min_recurr)
     }
 
-    pub fn config_update_program_fee(
-        ctx: Context<ConfigUpdateProgramFee>,
+    pub fn admin_update_program_fee(
+        ctx: Context<AdminUpdateProgramFee>,
         new_program_fee: u64,
     ) -> ProgramResult {
-        config_update_program_fee::handler(ctx, new_program_fee)
+        admin_update_program_fee::handler(ctx, new_program_fee)
     }
 
-    pub fn config_update_worker_fee(
-        ctx: Context<ConfigUpdateWorkerFee>,
+    pub fn admin_update_worker_fee(
+        ctx: Context<AdminUpdateWorkerFee>,
         new_worker_fee: u64,
     ) -> ProgramResult {
-        config_update_worker_fee::handler(ctx, new_worker_fee)
+        admin_update_worker_fee::handler(ctx, new_worker_fee)
     }
 
     pub fn daemon_create(
@@ -79,26 +96,6 @@ pub mod cronos {
 
     pub fn fee_collect(ctx: Context<FeeCollect>) -> ProgramResult {
         fee_collect::handler(ctx)
-    }
-
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        authority_bump: u8,
-        config_bump: u8,
-        daemon_bump: u8,
-        fee_bump: u8,
-        health_bump: u8,
-        treasury_bump: u8,
-    ) -> ProgramResult {
-        initialize::handler(
-            ctx,
-            authority_bump,
-            config_bump,
-            daemon_bump,
-            fee_bump,
-            health_bump,
-            treasury_bump,
-        )
     }
 
     pub fn health_check(ctx: Context<HealthCheck>) -> ProgramResult {

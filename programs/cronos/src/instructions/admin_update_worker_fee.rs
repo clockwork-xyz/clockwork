@@ -1,10 +1,10 @@
-use {crate::errors::*, crate::state::*, anchor_lang::prelude::*};
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 #[instruction(
-    new_min_recurr: i64,
+    new_worker_fee: u64,
 )]
-pub struct ConfigUpdateMinRecurr<'info> {
+pub struct AdminUpdateWorkerFee<'info> {
     #[account(
         mut,
         address = config.admin,
@@ -20,9 +20,8 @@ pub struct ConfigUpdateMinRecurr<'info> {
     pub config: Account<'info, Config>,
 }
 
-pub fn handler(ctx: Context<ConfigUpdateMinRecurr>, new_min_recurr: i64) -> ProgramResult {
+pub fn handler(ctx: Context<AdminUpdateWorkerFee>, new_worker_fee: u64) -> ProgramResult {
     let config = &mut ctx.accounts.config;
-    require!(new_min_recurr > 0, ErrorCode::InvalidRecurrNegative);
-    config.min_recurr = new_min_recurr;
+    config.worker_fee = new_worker_fee;
     Ok(())
 }
