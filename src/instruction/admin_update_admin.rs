@@ -6,13 +6,13 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn config_update_admin(admin: Pubkey, config: Pubkey, new_admin: Pubkey) -> Instruction {
+pub fn admin_update_admin(admin: Pubkey, config: Pubkey, new_admin: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_program::instruction::ConfigUpdateAdmin { new_admin }.data(),
+        data: cronos_program::instruction::AdminUpdateAdmin { new_admin }.data(),
     }
 }

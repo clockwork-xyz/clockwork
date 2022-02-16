@@ -8,7 +8,7 @@ use anchor_client::anchor_lang::{
 };
 use cronos_program::pda::PDA;
 
-pub fn initialize(
+pub fn admin_initialize(
     authority_pda: PDA,
     config_pda: PDA,
     daemon_pda: PDA,
@@ -29,7 +29,7 @@ pub fn initialize(
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(treasury_pda.0, false),
         ],
-        data: cronos_program::instruction::Initialize {
+        data: cronos_program::instruction::AdminInitialize {
             authority_bump: authority_pda.1,
             config_bump: config_pda.1,
             daemon_bump: daemon_pda.1,

@@ -6,7 +6,7 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn config_update_program_fee(
+pub fn admin_update_program_fee(
     admin: Pubkey,
     config: Pubkey,
     new_program_fee: u64,
@@ -17,6 +17,6 @@ pub fn config_update_program_fee(
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_program::instruction::ConfigUpdateProgramFee { new_program_fee }.data(),
+        data: cronos_program::instruction::AdminUpdateProgramFee { new_program_fee }.data(),
     }
 }
