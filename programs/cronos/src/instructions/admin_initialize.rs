@@ -120,7 +120,7 @@ pub fn handler(
 
     // Initialize config account.
     config.admin = signer.key();
-    config.min_recurr = 3; // Minimum supported recurrence interval
+    config.min_recurr = 5; // Minimum supported recurrence interval
     config.program_fee = 0; // Lamports to pay to program for each task execution
     config.worker_fee = 0; // Lamports to pay to worker for each task execution
     config.bump = config_bump;
