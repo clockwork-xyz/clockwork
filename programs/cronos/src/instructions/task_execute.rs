@@ -49,7 +49,7 @@ pub struct TaskExecute<'info> {
         ],
         bump = task.bump,
         has_one = daemon,
-        constraint = task.status == TaskStatus::Queued @ ErrorCode::TaskNotPending,
+        constraint = task.status == TaskStatus::Queued @ ErrorCode::TaskNotQueued,
         constraint = task.schedule.exec_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
         owner = crate::ID
     )]
