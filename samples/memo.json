@@ -1,0 +1,16 @@
+{
+  "program_id": "qwerty",
+  "accounts": [
+    {
+      "pubkey": "asdfa",
+      "is_signer": true,
+      "is_writable": true
+    },
+    {
+      "pubkey": "qwerty",
+      "is_signer": false,
+      "is_writable": false
+    }
+  ],
+  "data": "Hello, world! {current unix time}"
+}

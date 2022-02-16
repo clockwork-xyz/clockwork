@@ -1,3 +1,4 @@
+mod admin;
 mod blocktime;
 mod daemon;
 mod health;

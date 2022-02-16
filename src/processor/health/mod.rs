@@ -1,3 +1,3 @@
-pub mod check;
+mod check;
 
 pub use check::*;

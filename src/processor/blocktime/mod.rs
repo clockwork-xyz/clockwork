@@ -1,3 +1,3 @@
-pub mod get;
+mod get;
 
 pub use get::*;

@@ -6,6 +6,7 @@ pub fn cronos() -> App<'static> {
         .about("Cronos is an instruction scheduler for Solana")
         .version("0.0.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(super::admin::app())
         .subcommand(super::blocktime::app())
         .subcommand(super::daemon::app())
         .subcommand(super::health::app())

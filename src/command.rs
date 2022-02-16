@@ -6,6 +6,9 @@ use crate::{error::CliError, parser::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
+    AdminCancelTask {
+        address: Pubkey,
+    },
     Blocktime,
     DaemonData,
     DaemonNew,
@@ -23,6 +26,7 @@ pub enum CliCommand {
 impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            CliCommand::AdminCancelTask { address } => write!(f, "admin cancel {}", address),
             CliCommand::Blocktime => write!(f, "blocktime"),
             CliCommand::DaemonData => write!(f, "daemon"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
@@ -38,6 +42,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
+            Some(("admin", matches)) => admin_command(matches),
             Some(("blocktime", _matches)) => Ok(CliCommand::Blocktime {}),
             Some(("daemon", matches)) => daemon_command(matches),
             Some(("health", matches)) => health_command(matches),

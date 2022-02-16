@@ -8,7 +8,6 @@ pub fn app() -> App<'static> {
             Arg::new("address")
                 .index(1)
                 .takes_value(true)
-                // .required(true)
                 .help("A task address"),
         )
 }
@@ -16,12 +15,18 @@ pub fn app() -> App<'static> {
 fn task_new_app() -> App<'static> {
     App::new("new")
         .about("Schedule a new task")
+        // .arg(
+        //     Arg::new("filepath")
+        //         .long("filepath")
+        //         .short('f')
+        //         .required(true)
+        //         .help("Filepath to the instruction data to invoke"),
+        // )
         .arg(
             Arg::new("exec_at")
                 .long("exec_at")
                 .short('e')
                 .required(false)
-                .global(true)
                 .help("When to invoke the instruction"),
         )
         .arg(
@@ -29,7 +34,6 @@ fn task_new_app() -> App<'static> {
                 .long("stop_at")
                 .short('s')
                 .required(false)
-                .global(true)
                 .help("When to stop invoke the instruction"),
         )
         .arg(
@@ -37,7 +41,6 @@ fn task_new_app() -> App<'static> {
                 .long("recurr")
                 .short('r')
                 .required(false)
-                .global(true)
                 .help("The duration to wait between instruction invocations"),
         )
 }

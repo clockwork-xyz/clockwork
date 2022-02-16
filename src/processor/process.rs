@@ -19,6 +19,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let client = Arc::new(Client { client, payer });
 
     match command {
+        CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
         CliCommand::Blocktime => super::blocktime::get(&client),
         CliCommand::DaemonNew => super::daemon::new(&client),
         CliCommand::DaemonData => super::daemon::data(&client),
