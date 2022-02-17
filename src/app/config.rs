@@ -11,28 +11,38 @@ fn config_set_app() -> App<'static> {
         .about("Set Cronos config variables")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(config_set_min_recurr_app())
-    // .arg(
-    //     Arg::new("name")
-    //         .index(1)
-    //         .takes_value(true)
-    //         .help("The name of the config value to update"),
-    // )
-    // .arg(
-    //     Arg::new("new_value")
-    //         .index(1)
-    //         .takes_value(true)
-    //         .help("The value to update the config property to"),
-    // )
+        .subcommand(config_set_program_fee_app())
+        .subcommand(config_set_worker_fee_app())
 }
 
 fn config_set_min_recurr_app() -> App<'static> {
     App::new("min_recurr")
-        .about("Update the config min recurr value")
+        .about("Update the minimum recurrence interval")
         .arg(
             Arg::new("new_value")
                 .index(1)
                 .takes_value(true)
                 .required(true)
-                .help("The new minimum recurrence value to update the config to"),
+                .help("The new minimum recurrence interval"),
         )
+}
+
+fn config_set_program_fee_app() -> App<'static> {
+    App::new("program_fee").about("Update the program fee").arg(
+        Arg::new("new_value")
+            .index(1)
+            .takes_value(true)
+            .required(true)
+            .help("The new program fee"),
+    )
+}
+
+fn config_set_worker_fee_app() -> App<'static> {
+    App::new("worker_fee").about("Update the worker fee").arg(
+        Arg::new("new_value")
+            .index(1)
+            .takes_value(true)
+            .required(true)
+            .help("The new worker fee"),
+    )
 }

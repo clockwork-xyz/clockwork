@@ -2,7 +2,7 @@ use clap::ArgMatches;
 
 use crate::{command::CliCommand, error::CliError};
 
-use super::utils::parse_i64;
+use super::utils::{parse_i64, parse_u64};
 
 pub fn config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
@@ -13,16 +13,15 @@ pub fn config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn config_set_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("min_recurr", matches)) => {
-            // let new_value = matches
-            //     .value_of("new_value")
-            //     .ok_or(CliError::BadParameter("new_value".into()))?
-            //     .parse::<i64>()
-            //     .map_err(|_err| CliError::BadParameter("new_value".into()))?;
-            Ok(CliCommand::ConfigSetMinRecurr {
-                new_value: parse_i64(&"new_value".into(), matches)?,
-            })
-        }
+        Some(("min_recurr", matches)) => Ok(CliCommand::ConfigSetMinRecurr {
+            new_value: parse_i64(&"new_value".into(), matches)?,
+        }),
+        Some(("program_fee", matches)) => Ok(CliCommand::ConfigSetProgramFee {
+            new_value: parse_u64(&"new_value".into(), matches)?,
+        }),
+        Some(("worker_fee", matches)) => Ok(CliCommand::ConfigSetWorkerFee {
+            new_value: parse_u64(&"new_value".into(), matches)?,
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

@@ -14,6 +14,12 @@ pub enum CliCommand {
     ConfigSetMinRecurr {
         new_value: i64,
     },
+    ConfigSetProgramFee {
+        new_value: u64,
+    },
+    ConfigSetWorkerFee {
+        new_value: u64,
+    },
     DaemonData,
     DaemonNew,
     HealthCheck,
@@ -35,6 +41,12 @@ impl Display for CliCommand {
             CliCommand::ConfigGet => write!(f, "config"),
             CliCommand::ConfigSetMinRecurr { new_value } => {
                 write!(f, "config set min_recurr {}", new_value)
+            }
+            CliCommand::ConfigSetProgramFee { new_value } => {
+                write!(f, "config set program_fee {}", new_value)
+            }
+            CliCommand::ConfigSetWorkerFee { new_value } => {
+                write!(f, "config set worker_fee {}", new_value)
             }
             CliCommand::DaemonData => write!(f, "daemon"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
