@@ -1,6 +1,7 @@
-pub mod blocktime;
+mod blocktime;
 pub mod instruction;
 
+pub use blocktime::blocktime;
 pub use cronos_program::errors;
 pub use cronos_program::pda;
 pub use cronos_program::state as account;
