@@ -13,3 +13,6 @@
 [submodule "sdk"]
 	path = sdk
 	url = https://github.com/cronos-so/sdk.git
+[submodule "js/web"]
+	path = js/web
+	url = https://github.com/cronos-so/web.git

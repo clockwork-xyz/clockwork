@@ -1,0 +1,34 @@
+{
+  "name": "cronos-js",
+  "private": true,
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "nukenode": "rm -rf yarn.lock node_modules",
+    "clean": "yarn nukenode && yarn clean:web && yarn clean:playground",
+    "dev": "cd playground && yarn dev",
+    "clean:playground": "cd playground && yarn nukenode && yarn clean:dist && cd ..",
+    "clean:web": "cd web && yarn nukenode && yarn clean:dist && cd ..",
+    "refresh:web": "cd web && yarn && yarn build && cd ..",
+    "refresh:playground": "cd playground && yarn && yarn upgrade --latest && cd ..",
+    "refresh": "yarn clean && yarn && yarn refresh:web && yarn refresh:playground",
+    "refresh:keypairs": "solana-keygen new -o playground/keypairs/payer.json --force && solana-keygen new -o playground/keypairs/recipient.json --force",
+    "refresh:dev": "rm -rf test-ledger && yarn refresh:keypairs"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.18",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.5.1",
+    "ts-node": "^10.5.0",
+    "tsconfig-paths": "^3.12.0",
+    "typescript": "^4.5.5"
+  }
+}
