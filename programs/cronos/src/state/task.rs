@@ -19,24 +19,8 @@ pub struct Task {
     pub bump: u8,
 }
 
-impl std::fmt::Display for Task {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{
-    daemon: {},
-    int: {},
-    ix: {}
-    schedule: {},
-    status: {},
-}}",
-            self.daemon, self.int, self.ix, self.schedule, self.status,
-        )
-    }
-}
-
 impl Task {
-    pub fn find_pda(daemon: Pubkey, id: u128) -> PDA {
+    pub fn pda(daemon: Pubkey, id: u128) -> PDA {
         Pubkey::find_program_address(
             &[SEED_TASK, daemon.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,

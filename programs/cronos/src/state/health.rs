@@ -14,19 +14,6 @@ pub struct Health {
     pub bump: u8,
 }
 
-impl std::fmt::Display for Health {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let drift = self.target_time - self.real_time;
-        write!(
-            f,
-            "Target ping: {}
-Last ping: {}
-Drift: {}",
-            self.target_time, self.real_time, drift,
-        )
-    }
-}
-
 impl TryFrom<Vec<u8>> for Health {
     type Error = ProgramError;
     fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
@@ -35,7 +22,7 @@ impl TryFrom<Vec<u8>> for Health {
 }
 
 impl Health {
-    pub fn find_pda() -> PDA {
+    pub fn pda() -> PDA {
         Pubkey::find_program_address(&[SEED_HEALTH], &crate::ID)
     }
 }

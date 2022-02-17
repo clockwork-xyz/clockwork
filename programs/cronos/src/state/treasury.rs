@@ -20,7 +20,7 @@ impl TryFrom<Vec<u8>> for Treasury {
 }
 
 impl Treasury {
-    pub fn find_pda() -> PDA {
+    pub fn pda() -> PDA {
         Pubkey::find_program_address(&[SEED_TREASURY], &crate::ID)
     }
 }

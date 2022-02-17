@@ -22,7 +22,7 @@ impl TryFrom<Vec<u8>> for Fee {
 }
 
 impl Fee {
-    pub fn find_pda(daemon: Pubkey) -> PDA {
+    pub fn pda(daemon: Pubkey) -> PDA {
         Pubkey::find_program_address(&[SEED_FEE, daemon.as_ref()], &crate::ID)
     }
 }

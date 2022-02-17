@@ -16,21 +16,6 @@ pub struct Config {
     pub bump: u8,
 }
 
-impl std::fmt::Display for Config {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{
-    admin: {},
-    min_recurr: {},
-    program_fee: {},
-    worker_fee: {}
-}}",
-            self.admin, self.min_recurr, self.program_fee, self.worker_fee
-        )
-    }
-}
-
 impl TryFrom<Vec<u8>> for Config {
     type Error = ProgramError;
     fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
@@ -39,7 +24,7 @@ impl TryFrom<Vec<u8>> for Config {
 }
 
 impl Config {
-    pub fn find_pda() -> PDA {
+    pub fn pda() -> PDA {
         Pubkey::find_program_address(&[SEED_CONFIG], &crate::ID)
     }
 }
