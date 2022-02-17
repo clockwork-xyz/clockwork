@@ -9,8 +9,8 @@ pub const SEED_HEALTH: &[u8] = b"health";
 #[account]
 #[derive(Debug)]
 pub struct Health {
-    pub real_time: i64,
-    pub target_time: i64,
+    pub last_ping: i64,
+    pub target_ping: i64,
     pub bump: u8,
 }
 

@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[error]
 pub enum ErrorCode {
     #[msg("Tasks cannot be started before they are stopped")]
-    InvalidChronology = 6000,
+    InvalidChronology,
     #[msg("Tasks cannot be scheduled for execution in the past")]
     InvalidExecAtStale,
     #[msg("Recurrence interval cannot be negative")]

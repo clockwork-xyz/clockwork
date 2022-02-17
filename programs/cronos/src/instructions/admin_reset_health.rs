@@ -34,8 +34,8 @@ pub fn handler(ctx: Context<AdminResetHealth>) -> ProgramResult {
     let health = &mut ctx.accounts.health;
 
     // Update the health account.
-    health.target_time = clock.unix_timestamp;
-    health.real_time = clock.unix_timestamp;
+    health.last_ping = clock.unix_timestamp;
+    health.target_ping = clock.unix_timestamp;
 
     Ok(())
 }

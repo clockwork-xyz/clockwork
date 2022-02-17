@@ -114,8 +114,8 @@ pub fn handler(
     fee.bump = fee_bump;
 
     // Initialize health account.
-    health.real_time = 0;
-    health.target_time = 0;
+    health.last_ping = 0;
+    health.target_ping = 0;
     health.bump = health_bump;
 
     // Initialize config account.

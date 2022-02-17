@@ -52,8 +52,8 @@ pub fn handler(ctx: Context<HealthCheck>) -> ProgramResult {
     let health = &mut ctx.accounts.health;
 
     // Update the health account.
-    health.target_time = health.target_time.checked_add(config.min_recurr).unwrap();
-    health.real_time = clock.unix_timestamp;
+    health.last_ping = clock.unix_timestamp;
+    health.target_ping = health.target_ping.checked_add(config.min_recurr).unwrap();
 
     Ok(())
 }
