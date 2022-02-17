@@ -13,7 +13,7 @@ pub fn new(
 ) -> Result<(), CliError> {
     // Fetch daemon data.
     let owner = client.payer_pubkey();
-    let daemon_addr = Daemon::find_pda(owner).0;
+    let daemon_addr = Daemon::pda(owner).0;
     let data = client
         .get_account_data(&daemon_addr)
         .map_err(|_err| CliError::AccountNotFound(daemon_addr.to_string()))?;
@@ -25,12 +25,13 @@ pub fn new(
     let memo_ix = spl_memo::build_memo(memo.as_bytes(), &[&daemon_addr]);
 
     // Build task_create ix.
-    let task_pda = Task::find_pda(daemon_addr, daemon_data.task_count);
-    let config_addr = Config::find_pda().0;
+    let task_pda = Task::pda(daemon_addr, daemon_data.task_count);
+    let config_addr = Config::pda().0;
     let exec_at = match exec_at {
         Some(v) => v,
-        None => cronos_sdk::blocktime::blocktime(client)
-            .map_err(|err| CliError::BadClient(err.to_string()))?,
+        None => {
+            cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?
+        }
     };
     let recurr = match recurr {
         Some(v) => v,
@@ -59,7 +60,5 @@ pub fn new(
 
     // Sign and submit
     sign_and_submit(client, &[ix]);
-
-    // Fetch task data
     super::get(client, &task_pda.0)
 }

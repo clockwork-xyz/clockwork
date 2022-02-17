@@ -14,14 +14,16 @@ pub fn app() -> App<'static> {
 
 fn task_new_app() -> App<'static> {
     App::new("new")
-        .about("Schedule a new task")
-        // .arg(
-        //     Arg::new("filepath")
-        //         .long("filepath")
-        //         .short('f')
-        //         .required(true)
-        //         .help("Filepath to the instruction data to invoke"),
-        // )
+        .about("Creates a new task")
+        .arg(
+            Arg::new("filepath")
+                // .index(1)
+                .long("filepath")
+                .short('f')
+                .required(true)
+                .takes_value(true)
+                .help("Filepath to the instruction to invoke"),
+        )
         .arg(
             Arg::new("exec_at")
                 .long("exec_at")

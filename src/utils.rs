@@ -20,21 +20,21 @@ pub fn sign_and_submit(client: &Arc<Client>, ixs: &[Instruction]) {
     tx.sign(&vec![&client.payer], client.latest_blockhash().unwrap());
     let sig = client.send_and_confirm_transaction(&tx).unwrap();
     println!(
-        "\n\n{}\n\n",
-        explorer_url(ExplorerEntity::Tx, sig.to_string())
+        "Tx: {}",
+        solana_explorer_url(SolanaExplorerAccountType::Tx, sig.to_string())
     );
 }
 
-pub enum ExplorerEntity {
+pub enum SolanaExplorerAccountType {
     Account,
     Tx,
 }
 
-pub fn explorer_url(entity: ExplorerEntity, value: String) -> String {
+pub fn solana_explorer_url(entity: SolanaExplorerAccountType, value: String) -> String {
     let base_url = "https://explorer.solana.com";
     let entity_str = match entity {
-        ExplorerEntity::Account => "address",
-        ExplorerEntity::Tx => "tx",
+        SolanaExplorerAccountType::Account => "address",
+        SolanaExplorerAccountType::Tx => "tx",
     };
     let cluster_params = "cluster=devnet";
     format!("{}/{}/{}?{}", base_url, entity_str, value, cluster_params)

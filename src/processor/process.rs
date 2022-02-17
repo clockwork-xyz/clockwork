@@ -20,11 +20,12 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     match command {
         CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
+        CliCommand::AdminScheduleHealthCheck => super::admin::schedule_health_check(&client),
         CliCommand::Blocktime => super::blocktime::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSetMinRecurr { new_value } => {
             super::config::set_min_recurr(&client, &new_value)
-        },
+        }
         CliCommand::ConfigSetProgramFee { new_value } => {
             super::config::set_program_fee(&client, &new_value)
         }
@@ -33,7 +34,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         }
         CliCommand::DaemonNew => super::daemon::new(&client),
         CliCommand::DaemonData => super::daemon::get(&client),
-        CliCommand::HealthCheck => super::health::check(&client),
+        CliCommand::HealthGet => super::health::get(&client),
         CliCommand::TaskData { address } => super::task::get(&client, &address),
         CliCommand::TaskNew {
             exec_at,

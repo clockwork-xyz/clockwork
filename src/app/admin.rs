@@ -4,6 +4,11 @@ pub fn app() -> App<'static> {
     App::new("admin")
         .about("Run admin instructions against Cronos")
         .subcommand(cancel_task_app())
+        .subcommand(schedule_health_check_app())
+}
+
+fn schedule_health_check_app() -> App<'static> {
+    App::new("health").about("Schedules a new health check app")
 }
 
 fn cancel_task_app() -> App<'static> {

@@ -4,7 +4,10 @@ use anchor_lang::prelude::Pubkey;
 use cronos_sdk::account::Task;
 use solana_client_helpers::Client;
 
-use crate::{error::CliError, utils::*};
+use crate::{
+    error::CliError,
+    utils::{solana_explorer_url, SolanaExplorerAccountType},
+};
 
 pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let data = client
@@ -13,9 +16,9 @@ pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let task_data = Task::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!(
-        "\n\n{}\n\n{}\n\n",
-        explorer_url(ExplorerEntity::Account, address.to_string()),
-        task_data
+        "Explorer: {}",
+        solana_explorer_url(SolanaExplorerAccountType::Account, address.to_string())
     );
+    println!("{:#?}", task_data);
     Ok(())
 }

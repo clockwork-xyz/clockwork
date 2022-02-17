@@ -722,6 +722,8 @@ dependencies = [
  "anchor-lang",
  "clap 3.0.14",
  "cronos-sdk",
+ "serde",
+ "serde_json",
  "solana-account-decoder",
  "solana-clap-utils",
  "solana-cli-config",
@@ -735,9 +737,9 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.0.22"
+version = "0.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "705c49b1fabc74f0d891bcf230d63fc50624aad2a9545e4603d432bcc81fbd44"
+checksum = "19ec2e3d45e65c3730295928a80f251529ebbd7ae1088b66313c407807948fac"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -745,9 +747,9 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.0.14"
+version = "0.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e57e4a3608817fe22da4aeac4f326dae7b05eea7f188aae55e4c96080594d82"
+checksum = "eeeebea4b335851c97e62e617b17d94f6e9a159f29e721e03dac0abb76798d0d"
 dependencies = [
  "anchor-client",
  "cronos-program",
@@ -2412,9 +2414,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d23c1ba4cf0efd44be32017709280b32d1cea5c3f1275c3b6d9e8bc54f758085"
+checksum = "8e8d9fa5c3b304765ce1fd9c4c8a3de2c8db365a5b91be52f186efc675681d95"
 dependencies = [
  "itoa",
  "ryu",

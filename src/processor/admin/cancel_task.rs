@@ -7,7 +7,7 @@ use crate::{error::CliError, utils::sign_and_submit};
 
 pub fn cancel_task(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let admin = client.payer_pubkey();
-    let config = cronos_sdk::account::Config::find_pda().0;
+    let config = cronos_sdk::account::Config::pda().0;
     let ix = cronos_sdk::instruction::admin_cancel_task(admin, config, *address);
     sign_and_submit(client, &[ix]);
     Ok(())
