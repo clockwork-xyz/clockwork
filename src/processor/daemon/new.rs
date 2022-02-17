@@ -10,6 +10,5 @@ pub fn new(client: &Arc<Client>) -> Result<(), CliError> {
     let fee_pda = cronos_sdk::account::Fee::pda(daemon_pda.0);
     let ix = cronos_sdk::instruction::daemon_create(daemon_pda, fee_pda, owner);
     sign_and_submit(client, &[ix]);
-    super::get(client)?;
-    Ok(())
+    super::get(client)
 }
