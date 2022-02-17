@@ -1,8 +1,8 @@
 pub mod errors;
+pub mod pda;
 pub mod state;
 
 mod instructions;
-mod pda;
 
 use {anchor_lang::prelude::*, instructions::*, state::*};
 
