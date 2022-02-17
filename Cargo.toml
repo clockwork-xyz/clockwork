@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anchor-lang = "0.20.1"
-cronos-sdk = "0.0.14"
+cronos-sdk = "0.0.16"
 dotenv = "0.15.0"
 postgres = "0.19.2"
 solana-account-decoder = "1.9.5"

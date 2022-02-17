@@ -17,8 +17,8 @@ pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
             return;
         }
         TaskStatus::Queued => {
-            let config = Config::find_pda().0;
-            let fee = Fee::find_pda(daemon).0;
+            let config = Config::pda().0;
+            let fee = Fee::pda(daemon).0;
             let mut ix = cronos_sdk::instruction::task_execute(
                 config,
                 daemon,
