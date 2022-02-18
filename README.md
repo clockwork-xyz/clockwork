@@ -1,3 +1,5 @@
+Multi-repo for [Cronos](https://www.cronos.so/) comprised of SDKs, playground projects, and its program implementation.
+
 ## Packages
 
 | Package | Description | Version | Docs |
