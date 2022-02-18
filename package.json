@@ -1,0 +1,23 @@
+{
+  "name": "cronos-so",
+  "description": "A decentralized task scheduler for Solana.",
+  "scripts": {
+    "clean:dist": "find . -name \"dist\" -type d -prune -exec rm -rf '{}' +",
+    "clean:target": "find . -name \"target\" -type d -prune -exec rm -rf '{}' +",
+    "nuke:yarn-lock": "find . -name \"yarn.lock\" -type d -prune -exec rm -rf '{}' +",
+    "nuke:node-modules": "find . -name \"node_modules\" -type d -prune -exec rm -rf '{}' +",
+    "nuke:node": "yarn nuke:yarn-lock && yarn nuke:node-modules",
+    "build:sdk": "cd sdk && cargo build && cd ..",
+    "build:cli": "cd cli && cargo build && cd ..",
+    "build:bot": "cd bot && cargo build && cd ..",
+    "build:programs": "cd programs && anchor build && cd ..",
+    "build:crates": "yarn build:sdk && yarn build:cli && yarn build:bot && yarn build:programs",
+    "build:web": "cd web && yarn build && cd ..",
+    "clean": "yarn clean:dist && yarn clean:target",
+    "build": "yarn clean && yarn build:crates && yarn build:web"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.2",
+    "typescript": "^4.5.4"
+  }
+}
