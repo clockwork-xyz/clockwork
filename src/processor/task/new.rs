@@ -2,11 +2,13 @@ use std::sync::Arc;
 
 use cronos_sdk::account::*;
 use solana_client_helpers::Client;
+use solana_sdk::instruction::Instruction;
 
 use crate::{error::CliError, utils::sign_and_submit};
 
 pub fn new(
     client: &Arc<Client>,
+    ix: Instruction,
     exec_at: Option<i64>,
     stop_at: Option<i64>,
     recurr: Option<i64>,
@@ -21,8 +23,8 @@ pub fn new(
         .map_err(|_err| CliError::AccountDataNotParsable(daemon_addr.to_string()))?;
 
     // Build memo ix.
-    let memo = "Hello, world!";
-    let memo_ix = spl_memo::build_memo(memo.as_bytes(), &[&daemon_addr]);
+    // let memo = "Hello, world!";
+    // let memo_ix = spl_memo::build_memo(memo.as_bytes(), &[&daemon_addr]);
 
     // Build task_create ix.
     let task_pda = Task::pda(daemon_addr, daemon_data.task_count);
@@ -47,18 +49,18 @@ pub fn new(
             }
         }
     };
-    let ix = cronos_sdk::instruction::task_create(
+    let task_ix = cronos_sdk::instruction::task_create(
         task_pda,
         config_addr,
         daemon_addr,
         owner,
-        memo_ix,
+        ix,
         exec_at,
         stop_at,
         recurr,
     );
 
     // Sign and submit
-    sign_and_submit(client, &[ix]);
+    sign_and_submit(client, &[task_ix]);
     super::get(client, &task_pda.0)
 }

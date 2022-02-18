@@ -1,5 +1,6 @@
 use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
+use solana_sdk::instruction::Instruction;
 use std::{convert::TryFrom, fmt::Display};
 
 use crate::{error::CliError, parser::*};
@@ -28,6 +29,7 @@ pub enum CliCommand {
         address: Pubkey,
     },
     TaskNew {
+        ix: Instruction,
         exec_at: Option<i64>,
         stop_at: Option<i64>,
         recurr: Option<i64>,

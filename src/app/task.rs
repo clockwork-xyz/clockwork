@@ -17,7 +17,6 @@ fn task_new_app() -> App<'static> {
         .about("Creates a new task")
         .arg(
             Arg::new("filepath")
-                // .index(1)
                 .long("filepath")
                 .short('f')
                 .required(true)
@@ -28,6 +27,7 @@ fn task_new_app() -> App<'static> {
             Arg::new("exec_at")
                 .long("exec_at")
                 .short('e')
+                .takes_value(true)
                 .required(false)
                 .help("When to invoke the instruction"),
         )
@@ -35,6 +35,7 @@ fn task_new_app() -> App<'static> {
             Arg::new("stop_at")
                 .long("stop_at")
                 .short('s')
+                .takes_value(true)
                 .required(false)
                 .help("When to stop invoke the instruction"),
         )
@@ -42,6 +43,7 @@ fn task_new_app() -> App<'static> {
             Arg::new("recurr")
                 .long("recurr")
                 .short('r')
+                .takes_value(true)
                 .required(false)
                 .help("The duration to wait between instruction invocations"),
         )
