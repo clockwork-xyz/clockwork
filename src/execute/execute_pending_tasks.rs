@@ -2,7 +2,7 @@ use {
     crate::{env, execute_task},
     anchor_lang::prelude::Pubkey,
     cronos_sdk::account::*,
-    std::{str::FromStr, thread},
+    std::str::FromStr,
 };
 
 pub fn execute_pending_tasks(blocktime: i64) {
@@ -14,6 +14,6 @@ pub fn execute_pending_tasks(blocktime: i64) {
     {
         let task = Pubkey::from_str(row.get(0)).unwrap();
         let daemon = Pubkey::from_str(row.get(1)).unwrap();
-        thread::spawn(move || execute_task(task, daemon));
+        execute_task(task, daemon);
     }
 }
