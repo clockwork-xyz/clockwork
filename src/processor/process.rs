@@ -33,9 +33,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             super::config::set_worker_fee(&client, &new_value)
         }
         CliCommand::DaemonNew => super::daemon::new(&client),
-        CliCommand::DaemonData => super::daemon::get(&client),
+        CliCommand::DaemonGet => super::daemon::get(&client),
         CliCommand::HealthGet => super::health::get(&client),
-        CliCommand::TaskData { address } => super::task::get(&client, &address),
+        CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
+        CliCommand::TaskGet { address } => super::task::get(&client, &address),
         CliCommand::TaskNew {
             ix,
             exec_at,

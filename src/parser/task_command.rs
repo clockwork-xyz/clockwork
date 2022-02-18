@@ -6,18 +6,16 @@ use super::utils::{parse_i64_optional, parse_instruction, parse_pubkey, parse_st
 
 pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("cancel", matches)) => {
+            let address = parse_pubkey(&String::from("address"), matches)?;
+            Ok(CliCommand::TaskCancel { address })
+        }
         Some(("new", matches)) => {
-            // TODO parse arguments
             let filepath = parse_string(&String::from("filepath"), matches)?;
-            println!("Filepath: {}", filepath);
             let ix = parse_instruction(&filepath)?;
-            println!("Ix: {:#?}", ix);
             let exec_at = parse_i64_optional(&String::from("exec_at"), matches)?;
-            println!("Exec at: {:?}", exec_at);
             let stop_at = parse_i64_optional(&String::from("stop_at"), matches)?;
-            println!("Stop at: {:?}", stop_at);
             let recurr = parse_i64_optional(&String::from("recurr"), matches)?;
-            println!("Recurr: {:?}", recurr);
             Ok(CliCommand::TaskNew {
                 ix,
                 exec_at,
@@ -25,7 +23,7 @@ pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
                 recurr,
             })
         }
-        _ => Ok(CliCommand::TaskData {
+        _ => Ok(CliCommand::TaskGet {
             address: parse_pubkey(&String::from("address"), matches)?,
         }),
     }

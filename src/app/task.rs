@@ -3,6 +3,7 @@ use clap::{App, Arg};
 pub fn app() -> App<'static> {
     App::new("task")
         .about("Manage your tasks")
+        .subcommand(task_cancel_app())
         .subcommand(task_new_app())
         .arg(
             Arg::new("address")
@@ -10,6 +11,15 @@ pub fn app() -> App<'static> {
                 .takes_value(true)
                 .help("A task address"),
         )
+}
+
+fn task_cancel_app() -> App<'static> {
+    App::new("cancel").about("Cancels a task").arg(
+        Arg::new("address")
+            .index(1)
+            .takes_value(true)
+            .help("A task address"),
+    )
 }
 
 fn task_new_app() -> App<'static> {

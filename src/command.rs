@@ -22,10 +22,13 @@ pub enum CliCommand {
     ConfigSetWorkerFee {
         new_value: u64,
     },
-    DaemonData,
+    DaemonGet,
     DaemonNew,
     HealthGet,
-    TaskData {
+    TaskCancel {
+        address: Pubkey,
+    },
+    TaskGet {
         address: Pubkey,
     },
     TaskNew {
@@ -52,10 +55,11 @@ impl Display for CliCommand {
             CliCommand::ConfigSetWorkerFee { new_value } => {
                 write!(f, "config set worker_fee {}", new_value)
             }
-            CliCommand::DaemonData => write!(f, "daemon"),
+            CliCommand::DaemonGet => write!(f, "daemon"),
             CliCommand::DaemonNew => write!(f, "daemon new"),
             CliCommand::HealthGet => write!(f, "health"),
-            CliCommand::TaskData { address } => write!(f, "task {}", address),
+            CliCommand::TaskCancel { address } => write!(f, "task cancel {}", address),
+            CliCommand::TaskGet { address } => write!(f, "task {}", address),
             CliCommand::TaskNew { .. } => write!(f, "task new"),
         }
     }

@@ -22,10 +22,6 @@ pub fn new(
     let daemon_data = Daemon::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(daemon_addr.to_string()))?;
 
-    // Build memo ix.
-    // let memo = "Hello, world!";
-    // let memo_ix = spl_memo::build_memo(memo.as_bytes(), &[&daemon_addr]);
-
     // Build task_create ix.
     let task_pda = Task::pda(daemon_addr, daemon_data.task_count);
     let config_addr = Config::pda().0;
