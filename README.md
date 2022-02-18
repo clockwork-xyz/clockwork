@@ -1,6 +1,7 @@
 # Cronos
 
-Multi-repo for [Cronos](https://www.cronos.so/) comprised of SDKs, playground projects, and its program implementation.
+[Cronos](https://cronos.so) is a decentralized task scheduler for Solana. 
+
 
 ## Packages
 
