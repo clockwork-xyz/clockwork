@@ -6,9 +6,11 @@ use solana_client_helpers::{Client, RpcClient};
 use crate::{command::CliCommand, config::CliConfig, error::CliError, utils::load_keypair};
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
+    // Parse command and config
     let command = CliCommand::try_from(matches)?;
-    let config = CliConfig::try_from(matches)?;
+    let config = CliConfig::load();
 
+    // Build the RPC client
     let payer = load_keypair(&config);
     let client = RpcClient::new_with_timeouts_and_commitment(
         config.json_rpc_url.to_string(),
@@ -18,9 +20,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     );
     let client = Arc::new(Client { client, payer });
 
+    // Process the command
     match command {
         CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
-        CliCommand::AdminScheduleHealthCheck => super::admin::schedule_health_check(&client),
+        CliCommand::AdminHealthReset => super::admin::health_reset(&client),
+        CliCommand::AdminHealthStart => super::admin::health_start(&client),
         CliCommand::Blocktime => super::blocktime::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSetMinRecurr { new_value } => {

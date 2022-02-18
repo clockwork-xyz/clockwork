@@ -10,7 +10,8 @@ pub enum CliCommand {
     AdminCancelTask {
         address: Pubkey,
     },
-    AdminScheduleHealthCheck,
+    AdminHealthReset,
+    AdminHealthStart,
     Blocktime,
     ConfigGet,
     ConfigSetMinRecurr {
@@ -43,7 +44,8 @@ impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CliCommand::AdminCancelTask { address } => write!(f, "admin cancel {}", address),
-            CliCommand::AdminScheduleHealthCheck => write!(f, "admin health"),
+            CliCommand::AdminHealthReset => write!(f, "admin health reset"),
+            CliCommand::AdminHealthStart => write!(f, "admin health start"),
             CliCommand::Blocktime => write!(f, "blocktime"),
             CliCommand::ConfigGet => write!(f, "config"),
             CliCommand::ConfigSetMinRecurr { new_value } => {

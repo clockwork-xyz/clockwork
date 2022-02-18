@@ -8,7 +8,7 @@ use solana_client_helpers::Client;
 
 use crate::{error::CliError, utils::sign_and_submit};
 
-pub fn schedule_health_check(client: &Arc<Client>) -> Result<(), CliError> {
+pub fn health_start(client: &Arc<Client>) -> Result<(), CliError> {
     // Derive PDAs
     let admin = client.payer_pubkey();
     let authority = Authority::pda().0;
