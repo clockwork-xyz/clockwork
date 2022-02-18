@@ -1,1 +1,8 @@
 .DS_Store
+**/node_modules
+**/dist
+**/build
+**/target
+**/test-ledger
+**/tsconfig.tsbuildinfo
+*.diff
