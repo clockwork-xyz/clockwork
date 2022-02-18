@@ -2,6 +2,13 @@
 name = "cronos-bot"
 version = "0.0.1"
 edition = "2021"
+description = "Worker bot to execute Cronos tasks"
+license = "Apache-2.0"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/bot"
+documentation = "https://docs.cronos.so"
+readme = "./README.md"
+keywords = ["solana", "cronos", "program"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
