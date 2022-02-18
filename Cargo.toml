@@ -1,6 +1,6 @@
 [package]
 name = "cronos-cli"
-version = "0.0.7"
+version = "0.0.8"
 description = "Command line instruction scheduler for Solana"
 edition = "2021"
 license = "Apache-2.0"
