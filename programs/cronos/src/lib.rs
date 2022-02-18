@@ -110,12 +110,10 @@ pub mod cronos {
     pub fn task_create(
         ctx: Context<TaskCreate>,
         ix: InstructionData,
-        exec_at: i64,
-        stop_at: i64,
-        recurr: i64,
+        schedule: TaskSchedule,
         bump: u8,
     ) -> ProgramResult {
-        task_create::handler(ctx, ix, exec_at, stop_at, recurr, bump)
+        task_create::handler(ctx, ix, schedule, bump)
     }
 
     pub fn task_execute(ctx: Context<TaskExecute>) -> ProgramResult {

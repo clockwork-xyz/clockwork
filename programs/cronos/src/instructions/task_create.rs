@@ -8,15 +8,13 @@ use {
 #[derive(Accounts)]
 #[instruction(
     ix: InstructionData,
-    exec_at: i64, 
-    stop_at: i64,
-    recurr: i64,
+    schedule: TaskSchedule,
     bump: u8,
 )]
 pub struct TaskCreate<'info> {
     #[account(
         address = sysvar::clock::ID,
-        constraint = exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
+        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -62,9 +60,7 @@ pub struct TaskCreate<'info> {
 pub fn handler(
     ctx: Context<TaskCreate>,
     ix: InstructionData,
-    exec_at: i64, 
-    stop_at: i64,
-    recurr: i64,
+    schedule: TaskSchedule,
     bump: u8,
 ) -> ProgramResult {
     // Get accounts.
@@ -75,10 +71,10 @@ pub fn handler(
 
     clock.unix_timestamp.checked_add(10).unwrap();
 
-    // Validate the scheduling chronology.
-    require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
-    require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
-    require!(recurr == 0 || recurr >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
+    // Validate the task schedule.
+    require!(schedule.exec_at <= schedule.stop_at, ErrorCode::InvalidChronology);
+    require!(schedule.recurr >= 0, ErrorCode::InvalidRecurrNegative);
+    require!(schedule.recurr == 0 || schedule.recurr >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
 
     // Reject the instruction if it has other signers besides the daemon.
     for acc in ix.accounts.as_slice() {
@@ -92,11 +88,7 @@ pub fn handler(
     task.daemon = daemon.key();
     task.int = daemon.task_count;
     task.ix = ix;
-    task.schedule = TaskSchedule {
-        exec_at, 
-        stop_at,
-        recurr
-    };
+    task.schedule = schedule;
     task.status = TaskStatus::Queued;
     task.bump = bump;
 
