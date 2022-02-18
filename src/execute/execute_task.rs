@@ -5,16 +5,18 @@ use {
     },
     anchor_lang::prelude::{AccountMeta, Pubkey},
     cronos_sdk::account::*,
+    solana_sdk::signature::Signature,
 };
 
-pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
+#[cached::proc_macro::cached(size = 1_000_000, time = 5, option = true)]
+pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) -> Option<Signature> {
     let client = new_rpc_client();
     let data = client.get_account_data(&pubkey).unwrap();
     let task = Task::try_from(data).unwrap();
     match task.status {
         TaskStatus::Cancelled | TaskStatus::Done => {
             replicate_task(pubkey, task);
-            return;
+            return None;
         }
         TaskStatus::Queued => {
             let config = Config::pda().0;
@@ -36,7 +38,7 @@ pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
             }
             ix.accounts
                 .push(AccountMeta::new_readonly(task.ix.program_id, false));
-            sign_and_submit(client, &[ix], "Executing task");
+            Some(sign_and_submit(client, &[ix], "Executing task").unwrap())
         }
     }
 }
