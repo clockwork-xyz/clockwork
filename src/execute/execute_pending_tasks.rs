@@ -1,12 +1,12 @@
 use {
-    crate::{env::env_psql_params, execute_task},
+    crate::{env, execute_task},
     anchor_lang::prelude::Pubkey,
     cronos_sdk::account::*,
     std::{str::FromStr, thread},
 };
 
 pub fn execute_pending_tasks(blocktime: i64) {
-    let mut psql = postgres::Client::connect(env_psql_params().as_str(), postgres::NoTls).unwrap();
+    let mut psql = postgres::Client::connect(env::psql_params().as_str(), postgres::NoTls).unwrap();
     let query = "SELECT * FROM tasks WHERE status = $1 AND exec_at <= $2";
     for row in psql
         .query(query, &[&TaskStatus::Queued.to_string(), &blocktime])

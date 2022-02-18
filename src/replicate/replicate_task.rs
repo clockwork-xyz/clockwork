@@ -1,13 +1,13 @@
 use anchor_lang::prelude::Pubkey;
 use cronos_sdk::account::*;
 
-use crate::env::env_psql_params;
+use crate::env;
 
 pub fn replicate_task(pubkey: Pubkey, task: Task) {
     println!("💽 Replicate task: {} {}", pubkey, task.status);
 
     // Build postgres client
-    let mut psql = postgres::Client::connect(env_psql_params().as_str(), postgres::NoTls).unwrap();
+    let mut psql = postgres::Client::connect(env::psql_params().as_str(), postgres::NoTls).unwrap();
 
     // Write task to postgres
     let query = "INSERT INTO tasks 

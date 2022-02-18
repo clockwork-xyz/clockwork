@@ -8,13 +8,13 @@ use solana_client::{
 use solana_sdk::{account::Account, commitment_config::CommitmentConfig};
 use std::{str::FromStr, thread};
 
-use crate::{env::env_wss_endpoint, replicate_task};
+use crate::{env, replicate_task};
 
 pub fn replicate_cronos_tasks() {
     thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
-            env_wss_endpoint().as_str().into(),
+            env::wss_endpoint().as_str().into(),
             &cronos_sdk::ID,
             Some(RpcProgramAccountsConfig {
                 account_config: RpcAccountInfoConfig {
@@ -41,6 +41,7 @@ pub fn replicate_cronos_tasks() {
             }
         }
 
-        println!("❌ Websocket connection timed out")
+        // If we reach here, just restart the process.
+        replicate_cronos_tasks();
     });
 }

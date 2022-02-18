@@ -6,7 +6,7 @@ use {
     },
 };
 
-use crate::{env::env_wss_endpoint, utils::new_rpc_client};
+use crate::{env, utils::new_rpc_client};
 
 pub fn monitor_blocktime() -> Receiver<i64> {
     let (blocktime_sender, blocktime_receiver) = mpsc::channel::<i64>();
@@ -18,7 +18,7 @@ pub fn monitor_blocktime() -> Receiver<i64> {
 
         // Websocket client
         let (_ws_client, slot_receiver) =
-            PubsubClient::slot_subscribe(env_wss_endpoint().as_str().into()).unwrap();
+            PubsubClient::slot_subscribe(env::wss_endpoint().as_str().into()).unwrap();
 
         // Listen for new slots
         for slot_info in slot_receiver {

@@ -18,6 +18,5 @@ fn main() -> ClientResult<()> {
     // Process pending tasks when Solana blocktime updates
     process_tasks();
 
-    println!("❌ Exiting");
     Ok(())
 }
