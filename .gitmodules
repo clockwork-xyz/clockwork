@@ -1,15 +1,6 @@
-[submodule "programs"]
-	path = programs
-	url = https://github.com/cronos-so/programs.git
 [submodule "bot"]
 	path = bot
 	url = https://github.com/cronos-so/bot.git
 [submodule "cli"]
 	path = cli
 	url = https://github.com/cronos-so/cli.git
-[submodule "sdk"]
-	path = sdk
-	url = https://github.com/cronos-so/sdk.git
-[submodule "web"]
-	path = web
-	url = https://github.com/cronos-so/web.git
