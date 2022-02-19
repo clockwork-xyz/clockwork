@@ -25,6 +25,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
         CliCommand::AdminHealthReset => super::admin::health_reset(&client),
         CliCommand::AdminHealthStart => super::admin::health_start(&client),
+        CliCommand::AdminInitialize => super::admin::initialize(&client),
         CliCommand::Blocktime => super::blocktime::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSetMinRecurr { new_value } => {

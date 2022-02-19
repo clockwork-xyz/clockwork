@@ -9,6 +9,7 @@ pub fn admin_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             address: parse_pubkey(&"address".into(), matches)?,
         }),
         Some(("health", matches)) => admin_health_command(matches),
+        Some(("initialize", _matches)) => Ok(CliCommand::AdminInitialize),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

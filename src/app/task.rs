@@ -29,8 +29,8 @@ fn task_new_app() -> App<'static> {
             Arg::new("filepath")
                 .long("filepath")
                 .short('f')
-                .required(true)
                 .takes_value(true)
+                .required(true)
                 .help("Filepath to the instruction to invoke"),
         )
         .arg(

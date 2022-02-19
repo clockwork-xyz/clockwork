@@ -12,6 +12,7 @@ pub enum CliCommand {
     },
     AdminHealthReset,
     AdminHealthStart,
+    AdminInitialize,
     Blocktime,
     ConfigGet,
     ConfigSetMinRecurr {
@@ -46,6 +47,7 @@ impl Display for CliCommand {
             CliCommand::AdminCancelTask { address } => write!(f, "admin cancel {}", address),
             CliCommand::AdminHealthReset => write!(f, "admin health reset"),
             CliCommand::AdminHealthStart => write!(f, "admin health start"),
+            CliCommand::AdminInitialize => write!(f, "admin initialize"),
             CliCommand::Blocktime => write!(f, "blocktime"),
             CliCommand::ConfigGet => write!(f, "config"),
             CliCommand::ConfigSetMinRecurr { new_value } => {

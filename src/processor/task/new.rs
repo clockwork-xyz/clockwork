@@ -45,15 +45,18 @@ pub fn new(
             }
         }
     };
+    let schedule = cronos_sdk::account::TaskSchedule {
+        exec_at,
+        stop_at,
+        recurr
+    };
     let task_ix = cronos_sdk::instruction::task_create(
         task_pda,
         config_addr,
         daemon_addr,
         owner,
         ix,
-        exec_at,
-        stop_at,
-        recurr,
+        schedule
     );
 
     // Sign and submit
