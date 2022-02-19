@@ -5,7 +5,6 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
-use cronos_program::state::InstructionData as CronosInstructionData;
 
 pub fn daemon_widthdraw(daemon: Pubkey, owner: Pubkey, amount: u64) -> Instruction {
     Instruction {
