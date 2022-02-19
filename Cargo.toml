@@ -15,7 +15,7 @@ keywords = ["solana", "cronos", "program"]
 [dependencies]
 anchor-lang = "0.20.1"
 cached = { version = "0.30.0", features = ["async", "proc_macro"] }
-cronos-sdk = "0.0.16"
+cronos-sdk = "0.0.18"
 dotenv = "0.15.0"
 postgres = "0.19.2"
 solana-account-decoder = "1.9.5"
