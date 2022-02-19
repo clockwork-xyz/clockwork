@@ -14,6 +14,7 @@ pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     let blocktime =
         cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
     println!("Liveness: {}", blocktime - health_data.last_ping);
-    println!("Drift: {}", health_data.target_ping - health_data.last_ping);
+    println!("Drift: {}", health_data.last_ping - health_data.target_ping);
+    println!("{:#?}", health_data);
     Ok(())
 }

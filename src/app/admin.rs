@@ -3,6 +3,7 @@ use clap::{App, AppSettings, Arg};
 pub fn app() -> App<'static> {
     App::new("admin")
         .about("Run admin instructions against Cronos")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(admin_cancel_app())
         .subcommand(admin_health_app())
         .subcommand(admin_initialize_app())
