@@ -8,7 +8,7 @@ use {
     std::thread,
 };
 
-#[cached::proc_macro::cached(size = 1_000_000, time = 5)]
+#[cached::proc_macro::cached(size = 1_000_000, time = 4)]
 pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
     thread::spawn(move || {
         let client = new_rpc_client();
