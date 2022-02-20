@@ -99,10 +99,10 @@ pub fn handler(
     let signer = &ctx.accounts.signer;
     let treasury = &mut ctx.accounts.treasury;
 
-    authority.initialize(authority_bump)?;
-    config.initialize(signer.key(), config_bump)?;
-    daemon.initialize(authority.key(), daemon_bump)?;
-    health.initialize(health_bump)?;
-    fee.initialize(daemon.key(), fee_bump)?;
-    treasury.initialize(treasury_bump)
+    authority.init(authority_bump)?;
+    config.init(signer.key(), config_bump)?;
+    daemon.init(authority.key(), daemon_bump)?;
+    health.init(health_bump)?;
+    fee.init(daemon.key(), fee_bump)?;
+    treasury.init(treasury_bump)
 }

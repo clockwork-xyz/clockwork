@@ -4,6 +4,7 @@ use {crate::state::*, anchor_lang::prelude::*, solana_program::instruction::Inst
 #[instruction(ix: InstructionData)]
 pub struct DaemonInvoke<'info> {
     #[account(
+        mut,
         seeds = [SEED_DAEMON, daemon.owner.as_ref()],
         bump = daemon.bump,
         has_one = owner,
@@ -16,7 +17,8 @@ pub struct DaemonInvoke<'info> {
 }
 
 pub fn handler(ctx: Context<DaemonInvoke>, ix: InstructionData) -> ProgramResult {
-    let daemon = &ctx.accounts.daemon;
+    let daemon = &mut ctx.accounts.daemon;
+
     daemon.invoke(
         &Instruction::from(&ix),
         &ctx.remaining_accounts.iter().as_slice(),

@@ -1,9 +1,7 @@
 use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-#[instruction(
-    new_worker_fee: u64,
-)]
+#[instruction(new_worker_fee: u64)]
 pub struct AdminUpdateWorkerFee<'info> {
     #[account(
         mut,
@@ -21,7 +19,8 @@ pub struct AdminUpdateWorkerFee<'info> {
 }
 
 pub fn handler(ctx: Context<AdminUpdateWorkerFee>, new_worker_fee: u64) -> ProgramResult {
+    let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
-    config.worker_fee = new_worker_fee;
-    Ok(())
+
+    config.update_worker_fee(admin, new_worker_fee)
 }

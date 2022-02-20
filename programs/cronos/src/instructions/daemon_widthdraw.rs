@@ -22,13 +22,8 @@ pub struct DaemonWidthdraw<'info> {
 }
 
 pub fn handler(ctx: Context<DaemonWidthdraw>, amount: u64) -> ProgramResult {
-    // Get accounts.
     let daemon = &mut ctx.accounts.daemon;
     let owner = &ctx.accounts.owner;
 
-    // Transfer lamports from daemon to owner.
-    **daemon.to_account_info().try_borrow_mut_lamports()? -= amount;
-    **owner.to_account_info().try_borrow_mut_lamports()? += amount;
-
-    Ok(())
+    daemon.widthdraw(amount, owner)
 }

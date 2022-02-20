@@ -36,5 +36,6 @@ pub struct TaskCancel<'info> {
 
 pub fn handler(ctx: Context<TaskCancel>) -> ProgramResult {
     let task = &mut ctx.accounts.task;
+    
     task.cancel()
 }

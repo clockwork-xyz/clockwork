@@ -11,6 +11,10 @@ use super::*;
 
 pub const SEED_TASK: &[u8] = b"task";
 
+/**
+ * Task
+ */
+
 #[account]
 #[derive(Debug)]
 pub struct Task {
@@ -31,8 +35,41 @@ impl Task {
     }
 }
 
-impl Task {
-    pub fn initialize(
+impl TryFrom<Vec<u8>> for Task {
+    type Error = ProgramError;
+    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+        Task::try_deserialize(&mut data.as_slice())
+    }
+}
+
+/**
+ * TaskAccount
+ */
+
+pub trait TaskAccount {
+    fn init(
+        &mut self,
+        config: &Account<Config>,
+        daemon: &mut Account<Daemon>,
+        ix: InstructionData,
+        schedule: TaskSchedule,
+        bump: u8,
+    ) -> ProgramResult;
+
+    fn cancel(&mut self) -> ProgramResult;
+
+    fn execute(
+        &mut self,
+        account_infos: &[AccountInfo],
+        config: &Account<Config>,
+        daemon: &mut Account<Daemon>,
+        fee: &mut Account<Fee>,
+        worker: &mut Signer,
+    ) -> ProgramResult;
+}
+
+impl TaskAccount for Account<'_, Task> {
+    fn init(
         &mut self,
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
@@ -73,12 +110,12 @@ impl Task {
         Ok(())
     }
 
-    pub fn cancel(&mut self) -> ProgramResult {
+    fn cancel(&mut self) -> ProgramResult {
         self.status = TaskStatus::Cancelled;
         Ok(())
     }
 
-    pub fn execute(
+    fn execute(
         &mut self,
         account_infos: &[AccountInfo],
         config: &Account<Config>,
@@ -132,6 +169,10 @@ impl Task {
     }
 }
 
+/**
+ * InstructionData
+ */
+
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
 pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
@@ -153,23 +194,6 @@ impl std::fmt::Display for InstructionData {
     }}",
             self.program_id, self.accounts, self.data
         )
-    }
-}
-
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
-pub struct AccountMetaData {
-    /// An account's public key
-    pub pubkey: Pubkey,
-    /// True if an Instruction requires a Transaction signature matching `pubkey`.
-    pub is_signer: bool,
-    /// True if the `pubkey` can be loaded as a read-write account.
-    pub is_writable: bool,
-}
-
-impl TryFrom<Vec<u8>> for Task {
-    type Error = ProgramError;
-    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
-        Task::try_deserialize(&mut data.as_slice())
     }
 }
 
@@ -209,6 +233,24 @@ impl From<&InstructionData> for Instruction {
     }
 }
 
+/**
+ * AccountMetaData
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+pub struct AccountMetaData {
+    /// An account's public key
+    pub pubkey: Pubkey,
+    /// True if an Instruction requires a Transaction signature matching `pubkey`.
+    pub is_signer: bool,
+    /// True if the `pubkey` can be loaded as a read-write account.
+    pub is_writable: bool,
+}
+
+/**
+ * TaskSchedule
+ */
+
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug)]
 pub struct TaskSchedule {
     pub exec_at: i64, // Time to execute at
@@ -225,6 +267,10 @@ impl std::fmt::Display for TaskSchedule {
         )
     }
 }
+
+/**
+ * TaskStatus
+ */
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
 pub enum TaskStatus {

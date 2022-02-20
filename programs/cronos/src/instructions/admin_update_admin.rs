@@ -1,9 +1,7 @@
 use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-#[instruction(
-    new_admin: Pubkey,
-)]
+#[instruction(new_admin: Pubkey)]
 pub struct AdminUpdateAdmin<'info> {
     #[account(
         mut,
@@ -21,7 +19,8 @@ pub struct AdminUpdateAdmin<'info> {
 }
 
 pub fn handler(ctx: Context<AdminUpdateAdmin>, new_admin: Pubkey) -> ProgramResult {
+    let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
-    config.admin = new_admin;
-    Ok(())
+
+    config.update_admin(admin, new_admin)
 }

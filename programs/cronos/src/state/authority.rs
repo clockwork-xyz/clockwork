@@ -6,10 +6,20 @@ use std::convert::TryFrom;
 
 pub const SEED_AUTHORITY: &[u8] = b"authority";
 
+/**
+ * Authority
+ */
+
 #[account]
 #[derive(Debug)]
 pub struct Authority {
     pub bump: u8,
+}
+
+impl Authority {
+    pub fn pda() -> PDA {
+        Pubkey::find_program_address(&[SEED_AUTHORITY], &crate::ID)
+    }
 }
 
 impl TryFrom<Vec<u8>> for Authority {
@@ -19,14 +29,16 @@ impl TryFrom<Vec<u8>> for Authority {
     }
 }
 
-impl Authority {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_AUTHORITY], &crate::ID)
-    }
+/**
+ * AuthorityAccount
+ */
+
+pub trait AuthorityAccount {
+    fn init(&mut self, bump: u8) -> ProgramResult;
 }
 
-impl Authority {
-    pub fn initialize(&mut self, bump: u8) -> ProgramResult {
+impl AuthorityAccount for Account<'_, Authority> {
+    fn init(&mut self, bump: u8) -> ProgramResult {
         self.bump = bump;
         Ok(())
     }

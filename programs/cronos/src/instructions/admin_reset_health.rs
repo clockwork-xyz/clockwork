@@ -31,5 +31,6 @@ pub struct AdminResetHealth<'info> {
 pub fn handler(ctx: Context<AdminResetHealth>) -> ProgramResult {
     let clock = &ctx.accounts.clock;
     let health = &mut ctx.accounts.health;
+
     health.reset(clock)
 }

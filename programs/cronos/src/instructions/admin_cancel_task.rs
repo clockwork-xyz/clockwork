@@ -31,5 +31,6 @@ pub struct AdminCancelTask<'info> {
 
 pub fn handler(ctx: Context<AdminCancelTask>) -> ProgramResult {
     let task = &mut ctx.accounts.task;
+    
     task.cancel()
 }

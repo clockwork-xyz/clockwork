@@ -4,7 +4,13 @@ use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use std::convert::TryFrom;
 
+use super::Treasury;
+
 pub const SEED_FEE: &[u8] = b"fee";
+
+/**
+ * Fee
+ */
 
 #[account]
 #[derive(Debug)]
@@ -27,11 +33,39 @@ impl Fee {
     }
 }
 
-impl Fee {
-    pub fn initialize(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult {
+/**
+ * FeeAccount
+ */
+
+pub trait FeeAccount {
+    fn init(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult;
+    fn collect(&mut self, treasury: &mut Account<Treasury>) -> ProgramResult;
+}
+
+impl FeeAccount for Account<'_, Fee> {
+    fn init(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult {
         self.daemon = daemon;
         self.balance = 0;
         self.bump = bump;
+        Ok(())
+    }
+
+    fn collect(&mut self, treasury: &mut Account<Treasury>) -> ProgramResult {
+        // Collect lamports from fee account to treasury.
+        **self.to_account_info().try_borrow_mut_lamports()? = self
+            .to_account_info()
+            .lamports()
+            .checked_sub(self.balance)
+            .unwrap();
+        **treasury.to_account_info().try_borrow_mut_lamports()? = treasury
+            .to_account_info()
+            .lamports()
+            .checked_add(self.balance)
+            .unwrap();
+
+        // Zero out the collectable balance.
+        self.balance = 0;
+
         Ok(())
     }
 }

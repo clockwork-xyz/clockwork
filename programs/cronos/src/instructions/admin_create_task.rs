@@ -73,5 +73,6 @@ pub fn handler(
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
-    task.initialize(config, daemon, ix, schedule, bump)
+
+    task.init(config, daemon, ix, schedule, bump)
 }

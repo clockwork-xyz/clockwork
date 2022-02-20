@@ -6,10 +6,20 @@ use std::convert::TryFrom;
 
 pub const SEED_TREASURY: &[u8] = b"treasury";
 
+/**
+ * Treasury
+ */
+
 #[account]
 #[derive(Debug)]
 pub struct Treasury {
     pub bump: u8,
+}
+
+impl Treasury {
+    pub fn pda() -> PDA {
+        Pubkey::find_program_address(&[SEED_TREASURY], &crate::ID)
+    }
 }
 
 impl TryFrom<Vec<u8>> for Treasury {
@@ -19,14 +29,16 @@ impl TryFrom<Vec<u8>> for Treasury {
     }
 }
 
-impl Treasury {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_TREASURY], &crate::ID)
-    }
+/**
+ * TreasuryAccount
+ */
+
+pub trait TreasuryAccount {
+    fn init(&mut self, bump: u8) -> ProgramResult;
 }
 
-impl Treasury {
-    pub fn initialize(&mut self, bump: u8) -> ProgramResult {
+impl TreasuryAccount for Account<'_, Treasury> {
+    fn init(&mut self, bump: u8) -> ProgramResult {
         self.bump = bump;
         Ok(())
     }

@@ -46,6 +46,6 @@ pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> Pro
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;
 
-    daemon.initialize(owner.key(), daemon_bump)?;
-    fee.initialize(daemon.key(), fee_bump)
+    daemon.init(owner.key(), daemon_bump)?;
+    fee.init(daemon.key(), fee_bump)
 }
