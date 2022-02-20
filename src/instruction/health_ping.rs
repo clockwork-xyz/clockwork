@@ -7,7 +7,7 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn health_check(
+pub fn health_ping(
     authority: Pubkey,
     config: Pubkey,
     daemon: Pubkey,
@@ -22,6 +22,6 @@ pub fn health_check(
             AccountMeta::new(daemon, true),
             AccountMeta::new(health, false),
         ],
-        data: cronos_program::instruction::HealthCheck {}.data(),
+        data: cronos_program::instruction::HealthPing {}.data(),
     }
 }

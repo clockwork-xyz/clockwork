@@ -6,8 +6,8 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
-use cronos_program::pda::PDA;
 use cronos_program::state::InstructionData as CronosInstructionData;
+use cronos_program::{pda::PDA, state::TaskSchedule};
 
 pub fn admin_create_task(
     task_pda: PDA,
@@ -16,9 +16,7 @@ pub fn admin_create_task(
     config: Pubkey,
     daemon: Pubkey,
     ix: Instruction,
-    exec_at: i64,
-    stop_at: i64,
-    recurr: i64,
+    schedule: TaskSchedule,
 ) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
@@ -33,9 +31,7 @@ pub fn admin_create_task(
         ],
         data: cronos_program::instruction::AdminCreateTask {
             ix: CronosInstructionData::from(ix),
-            exec_at,
-            stop_at,
-            recurr,
+            schedule,
             bump: task_pda.1,
         }
         .data(),
