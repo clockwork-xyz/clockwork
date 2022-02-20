@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "lib": ["es2017", "dom", "esnext.asynciterable"],
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "typeRoots": [
+            "./node_modules/@types"
+        ],
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "incremental": true,
+        "noEmit": false,
+        "composite": false,
+        "declaration": true,
+        "strict": true,
+        "useUnknownInCatchVariables": true,
+        "allowJs": false,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {},
+        "rootDir": "src"
+    },
+    "include": ["src"],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ]
+}

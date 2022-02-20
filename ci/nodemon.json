@@ -1,0 +1,11 @@
+{
+  "watch": [
+      "src"
+  ],
+  "ext": "js,ts,json",
+  "ignore": [
+      "**/logs/*",
+      "**/*.{spec,test}.ts"
+  ],
+  "exec": "ts-node -r tsconfig-paths/register --transpile-only src/index.ts"
+}

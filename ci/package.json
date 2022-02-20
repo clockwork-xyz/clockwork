@@ -1,0 +1,33 @@
+{
+  "name": "@cronos-so/ci",
+  "description": "CI tools and scripts for Cronos",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development nodemon",
+    "clean": "rm -rf ./dist tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit --incremental false",
+    "bump:crates": "yarn build && cross-env NODE_ENV=production node dist/bumpCrates.js",
+    "build": "yarn clean && tsc",
+    "lint": "eslint --ignore-path .gitignore --ext .ts src/",
+    "format": "yarn run lint --fix"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.2",
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.5.0",
+    "tsconfig-paths": "^3.12.0",
+    "typescript": "^4.5.4",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "prettier": "^2.5.1"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "exec-sh": "^0.4.0",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
+  }
+}
