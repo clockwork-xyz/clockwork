@@ -33,8 +33,8 @@ pub fn handler(ctx: Context<FeeCollect>) -> ProgramResult {
     let treasury = &mut ctx.accounts.treasury;
 
     // Collect lamports fee account to treasury.
-    **fee.to_account_info().try_borrow_mut_lamports()? -= fee.balance;
-    **treasury.to_account_info().try_borrow_mut_lamports()? += fee.balance;
+    **fee.to_account_info().try_borrow_mut_lamports()? = fee.to_account_info().lamports().checked_sub(fee.balance).unwrap();
+    **treasury.to_account_info().try_borrow_mut_lamports()? = treasury.to_account_info().lamports().checked_add(fee.balance).unwrap();
 
     // Null out collectable fee balance.
     fee.balance = 0;

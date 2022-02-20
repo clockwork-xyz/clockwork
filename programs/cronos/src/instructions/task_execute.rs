@@ -86,12 +86,12 @@ pub fn handler(ctx: Context<TaskExecute>) -> ProgramResult {
     )?;
 
     // Transfer lamports from daemon to fee account.
-    **daemon.to_account_info().try_borrow_mut_lamports()? -= config.program_fee;
-    **fee.to_account_info().try_borrow_mut_lamports()? += config.program_fee;
+    **daemon.to_account_info().try_borrow_mut_lamports()? = daemon.to_account_info().lamports().checked_sub(config.program_fee).unwrap();
+    **fee.to_account_info().try_borrow_mut_lamports()? = fee.to_account_info().lamports().checked_add(config.program_fee).unwrap();
 
     // Transfer lamports from daemon to worker.
-    **daemon.to_account_info().try_borrow_mut_lamports()? -= config.worker_fee;
-    **worker.to_account_info().try_borrow_mut_lamports()? += config.worker_fee;
+    **daemon.to_account_info().try_borrow_mut_lamports()? = daemon.to_account_info().lamports().checked_sub(config.program_fee).unwrap();
+    **worker.to_account_info().try_borrow_mut_lamports()? = worker.to_account_info().lamports().checked_add(config.program_fee).unwrap();
 
     Ok(())
 }
