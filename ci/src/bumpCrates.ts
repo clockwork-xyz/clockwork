@@ -23,7 +23,7 @@ function getCargoDir(crate: string): string {
   {
     name: CrateNames.sdk,
     dir: getCargoDir('sdk'),
-    pattern: /cronos-sdk = \"\d+.\d+.\d+\"/,
+    pattern: /cronos-sdk = "\d+.\d+.\d+"/,
     formatter: (v: string) => `${CrateNames.sdk} = "${v}"`
   },
   {
@@ -34,40 +34,51 @@ function getCargoDir(crate: string): string {
   }
 ]
 
+const MEMBERS = ['bot', 'cli', 'programs/programs/cronos', 'sdk']
+
 function getCargoTomlPath(crate: string): string {
   const result = path.resolve(__dirname, '../..', crate, 'Cargo.toml')
 return result;
 }
 
 function getLatestCrateVersion(crate: typeof Crates[number]) {
-  const pattern = /version = "\d+.\d+.\d+"\n/
+  const DEPENDENCY_PATTERN = /version = "\d+.\d+.\d+"/
 
   const cargoToml = fs.readFileSync(getCargoTomlPath(crate.dir)).toString()
-  const versionField = cargoToml.match(pattern)?.toString()
+  const versionField = cargoToml.match(DEPENDENCY_PATTERN)?.toString()
   const version = versionField?.replace('version = ', '').replace("\"", '').replace("\"", '')
 
   invariant(version)
 
-  console.log(`[${crate.dir}] latest version: `, version)
 
   return version
 }
 
-async function bumpCrateDependents(crate: typeof Crates[number]) {
-  const latestVersion = getLatestCrateVersion(crate)
+async function read(file:string) {
+  const content = await fsp.readFile(file)
 
-  await Promise.all(Crates.map(async (dependent) => {
-    const dependentCargoTomlPath = getCargoTomlPath(dependent.dir)
-    // Read old toml config
-    const oldContent = (await fsp.readFile(dependentCargoTomlPath)).toString()
-    // Overrite toml config
-    const newContent = oldContent.replace(crate.pattern, dependent.formatter(latestVersion))
-    await fsp.writeFile(dependentCargoTomlPath, newContent)
-  }))
+  return content.toString()
 }
 
 async function bumpCrates() {
-  await Promise.all(Crates.map(bumpCrateDependents))
+  await Promise.all(Crates.map((crate) => {
+    const version = getLatestCrateVersion(crate)
+    console.log(`[${crate.dir}] latest version: `, version)   
+
+    MEMBERS.forEach(async (dependent) => {
+      const dependentCargoTomlPath = getCargoTomlPath(dependent)
+      // Read old toml config
+      const oldContent = await read(dependentCargoTomlPath)
+      // Overrite toml config
+      const pattern = new RegExp(`${crate.name} = "\\d+.\\d+.\\d+"`)
+      const match = oldContent.match(pattern)?.toString()
+      if (!match) return
+      const newContent = oldContent.replace(pattern, crate.formatter(version))
+      console.log("DEPENDENT: ", dependent)
+      console.log('MATCH: ',match)
+      await fsp.writeFile(dependentCargoTomlPath, newContent)
+    })
+  }))
 
   await execSh.promise('cargo update --workspace')
 }
