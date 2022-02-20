@@ -36,17 +36,20 @@ pub fn health_start(client: &Arc<Client>) -> Result<(), CliError> {
 
     // Build instructions
     let ix_a = cronos_sdk::instruction::admin_reset_health(admin, config, health);
-    let health_check_ix = cronos_sdk::instruction::health_check(authority, config, daemon, health);
+    let health_ping_ix = cronos_sdk::instruction::health_ping(authority, config, daemon, health);
+    let schedule = TaskSchedule {
+        exec_at: i64::try_from(exec_at).unwrap(),
+        stop_at: i64::try_from(stop_at).unwrap(),
+        recurr,
+    };
     let ix_b = cronos_sdk::instruction::admin_create_task(
         task_pda,
         admin,
         authority,
         config,
         daemon,
-        health_check_ix,
-        i64::try_from(exec_at).unwrap(),
-        i64::try_from(stop_at).unwrap(),
-        recurr,
+        health_ping_ix,
+        schedule,
     );
 
     // Sign and submit
