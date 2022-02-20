@@ -13,8 +13,16 @@ pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountDataNotParsable(health_addr.to_string()))?;
     let blocktime =
         cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
-    println!("Liveness: {}", blocktime - health_data.last_ping);
-    println!("Drift: {}", health_data.last_ping - health_data.target_ping);
-    println!("{:#?}", health_data);
+    println!("  Block time: {}", blocktime);
+    println!("   Last ping: {} sec", blocktime - health_data.last_ping);
+    println!("Recurr drift: {} sec", blocktime - health_data.target_ping);
+
+    // TODO measure change in drift since last query
+    // TODO calculate change in drift over 1/sec time frame
+    //
+    // This metric would measure if Cronos bots are
+    // "catching up" up or "falling behind" expected time.
+    //
+
     Ok(())
 }
