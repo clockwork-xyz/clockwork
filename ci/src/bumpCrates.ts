@@ -1,4 +1,5 @@
 import fs from 'fs'
+import fsp from 'fs/promises'
 import path from 'path'
 import execSh from "exec-sh";
 import { invariant } from './helpers';
@@ -11,6 +12,9 @@ const CrateNames = {
   program: 'cronos-program'
 } as const
 
+function getCargoDir(crate: string): string {
+  return path.resolve(__dirname, '../..', crate)
+}
 
 /**
  * List of "instructions" used to update Cargo.toml for a specific crate
@@ -18,74 +22,54 @@ const CrateNames = {
  const Crates = [
   {
     name: CrateNames.sdk,
-    dirPath: getCrateDirPath('sdk'),
-    version: getLatestCrateVersion('sdk'),
+    dir: getCargoDir('sdk'),
     pattern: /cronos-sdk = \"\d+.\d+.\d+\"/,
     formatter: (v: string) => `${CrateNames.sdk} = "${v}"`
   },
   {
     name: CrateNames.program,
-    dirPath: getCrateDirPath('programs/programs/cronos'),
-    version: getLatestCrateVersion(CrateNames.program),
+    dir: getCargoDir('programs/programs/cronos'),
     pattern: /cronos-program = \{\s?version = \"\d+.\d+.\d+\"/,
     formatter: (v: string) => `${CrateNames.program} = { version = "${v}"`
   }
 ]
 
-
-function getCrateDirPath(crate: string): string {
-  return path.resolve(__dirname, '../..', crate)
-}
-
 function getCargoTomlPath(crate: string): string {
-  return path.resolve(__dirname, '../..', crate, 'Cargo.toml')
+  const result = path.resolve(__dirname, '../..', crate, 'Cargo.toml')
+return result;
 }
 
-function getLatestCrateVersion(dirPath: string) {
+function getLatestCrateVersion(crate: typeof Crates[number]) {
   const pattern = /version = "\d+.\d+.\d+"\n/
 
-  const cargoToml = fs.readFileSync(getCargoTomlPath(dirPath)).toString()
+  const cargoToml = fs.readFileSync(getCargoTomlPath(crate.dir)).toString()
   const versionField = cargoToml.match(pattern)?.toString()
   const version = versionField?.replace('version = ', '').replace("\"", '').replace("\"", '')
 
   invariant(version)
 
-  console.log(`dirPath[${dirPath}] latest version: `, version)
+  console.log(`[${crate.dir}] latest version: `, version)
 
   return version
 }
 
-async function bumpCrates() {
-  await Promise.all(Crates.map(({ name, version, pattern, formatter }) => {
+async function bumpCrateDependents(crate: typeof Crates[number]) {
+  const latestVersion = getLatestCrateVersion(crate)
 
-    const crateDir = path.resolve(__dirname, '../..', name)
-    const filePath = path.resolve(__dirname, '../..', name, 'Cargo.toml')
-
-    return new Promise(async (resolve, reject) => {
-      const oldContent = fs.readFileSync(filePath).toString()
-
-      try {
-        Crates.forEach(async ({
-          dirPath,
-          version,
-          pattern,
-          formatter
-        }) => {
-          // Overrite toml config
-          const newContent = oldContent.replace(pattern, formatter(version))
-          fs.writeFileSync(filePath, newContent)
-
-          // Re-generate lockfile
-          const lockFilePath = path.resolve(dirPath, 'Cargo.lock')
-          const exists = fs.existsSync(lockFilePath)
-          exists && await execSh.promise(`cd ${crateDir} && rm -rf Cargo.lock && cargo update && cd ..`)
-        })
-        resolve(null)
-      } catch (err) {
-        reject(err)
-      }
-    })
+  await Promise.all(Crates.map(async (dependent) => {
+    const dependentCargoTomlPath = getCargoTomlPath(dependent.dir)
+    // Read old toml config
+    const oldContent = (await fsp.readFile(dependentCargoTomlPath)).toString()
+    // Overrite toml config
+    const newContent = oldContent.replace(crate.pattern, dependent.formatter(latestVersion))
+    await fsp.writeFile(dependentCargoTomlPath, newContent)
   }))
+}
+
+async function bumpCrates() {
+  await Promise.all(Crates.map(bumpCrateDependents))
+
+  await execSh.promise('cargo update --workspace')
 }
 
 bumpCrates()
