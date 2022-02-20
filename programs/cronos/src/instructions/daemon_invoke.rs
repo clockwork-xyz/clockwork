@@ -1,11 +1,7 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
-};
+use {crate::state::*, anchor_lang::prelude::*, solana_program::instruction::Instruction};
 
 #[derive(Accounts)]
-#[instruction(instruction_data: InstructionData)]
+#[instruction(ix: InstructionData)]
 pub struct DaemonInvoke<'info> {
     #[account(
         seeds = [SEED_DAEMON, daemon.owner.as_ref()],
@@ -19,14 +15,10 @@ pub struct DaemonInvoke<'info> {
     pub owner: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DaemonInvoke>, instruction_data: InstructionData) -> ProgramResult {
+pub fn handler(ctx: Context<DaemonInvoke>, ix: InstructionData) -> ProgramResult {
     let daemon = &ctx.accounts.daemon;
-
-    invoke_signed(
-        &Instruction::from(&instruction_data),
+    daemon.invoke(
+        &Instruction::from(&ix),
         &ctx.remaining_accounts.iter().as_slice(),
-        &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
-    )?;
-
-    Ok(())
+    )
 }

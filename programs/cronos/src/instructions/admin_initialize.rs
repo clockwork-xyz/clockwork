@@ -91,7 +91,6 @@ pub fn handler(
     health_bump: u8,
     treasury_bump: u8,
 ) -> ProgramResult {
-    // Get accounts.
     let authority = &mut ctx.accounts.authority;
     let config = &mut ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
@@ -100,33 +99,10 @@ pub fn handler(
     let signer = &ctx.accounts.signer;
     let treasury = &mut ctx.accounts.treasury;
 
-    // Initialize authority account.
-    authority.bump = authority_bump;
-
-    // Initialize daemon account.
-    daemon.owner = authority.key();
-    daemon.task_count = 0;
-    daemon.bump = daemon_bump;
-
-    // Initialize fee account.
-    fee.daemon = daemon.key();
-    fee.balance = 0;
-    fee.bump = fee_bump;
-
-    // Initialize health account.
-    health.last_ping = 0;
-    health.target_ping = 0;
-    health.bump = health_bump;
-
-    // Initialize config account.
-    config.admin = signer.key();
-    config.min_recurr = 5; // Minimum supported recurrence interval
-    config.program_fee = 0; // Lamports to pay to program for each task execution
-    config.worker_fee = 0; // Lamports to pay to worker for each task execution
-    config.bump = config_bump;
-
-    // Initialize treasury account.
-    treasury.bump = treasury_bump;
-
-    return Ok(());
+    authority.initialize(authority_bump)?;
+    config.initialize(signer.key(), config_bump)?;
+    daemon.initialize(authority.key(), daemon_bump)?;
+    health.initialize(health_bump)?;
+    fee.initialize(daemon.key(), fee_bump)?;
+    treasury.initialize(treasury_bump)
 }

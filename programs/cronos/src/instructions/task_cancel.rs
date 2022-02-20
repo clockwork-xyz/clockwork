@@ -35,11 +35,6 @@ pub struct TaskCancel<'info> {
 }
 
 pub fn handler(ctx: Context<TaskCancel>) -> ProgramResult {
-    // Get accounts.
     let task = &mut ctx.accounts.task;
-
-    // Mark task as cancelled.
-    task.status = TaskStatus::Cancelled;
-
-    Ok(())
+    task.cancel()
 }

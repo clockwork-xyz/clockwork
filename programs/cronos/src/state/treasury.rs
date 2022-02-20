@@ -24,3 +24,10 @@ impl Treasury {
         Pubkey::find_program_address(&[SEED_TREASURY], &crate::ID)
     }
 }
+
+impl Treasury {
+    pub fn initialize(&mut self, bump: u8) -> ProgramResult {
+        self.bump = bump;
+        Ok(())
+    }
+}

@@ -5,7 +5,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct HealthCheck<'info> {
+pub struct HealthPing<'info> {
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump = authority.bump, 
@@ -45,15 +45,10 @@ pub struct HealthCheck<'info> {
     pub health: Account<'info, Health>,
 }
 
-pub fn handler(ctx: Context<HealthCheck>) -> ProgramResult {
-    // Get accounts.
+pub fn handler(ctx: Context<HealthPing>) -> ProgramResult {
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let health = &mut ctx.accounts.health;
 
-    // Update the health account.
-    health.last_ping = clock.unix_timestamp;
-    health.target_ping = health.target_ping.checked_add(config.min_recurr).unwrap();
-
-    Ok(())
+    health.ping(clock, config)
 }

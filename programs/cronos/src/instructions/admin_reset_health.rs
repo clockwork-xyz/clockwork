@@ -29,13 +29,7 @@ pub struct AdminResetHealth<'info> {
 }
 
 pub fn handler(ctx: Context<AdminResetHealth>) -> ProgramResult {
-    // Get accounts.
     let clock = &ctx.accounts.clock;
     let health = &mut ctx.accounts.health;
-
-    // Update the health account.
-    health.last_ping = clock.unix_timestamp;
-    health.target_ping = clock.unix_timestamp;
-
-    Ok(())
+    health.reset(clock)
 }

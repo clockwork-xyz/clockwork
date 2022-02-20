@@ -19,12 +19,10 @@ pub mod cronos {
     pub fn admin_create_task(
         ctx: Context<AdminCreateTask>,
         ix: InstructionData,
-        exec_at: i64,
-        stop_at: i64,
-        recurr: i64,
+        schedule: TaskSchedule,
         bump: u8,
     ) -> ProgramResult {
-        admin_create_task::handler(ctx, ix, exec_at, stop_at, recurr, bump)
+        admin_create_task::handler(ctx, ix, schedule, bump)
     }
 
     pub fn admin_initialize(
@@ -99,8 +97,8 @@ pub mod cronos {
         fee_collect::handler(ctx)
     }
 
-    pub fn health_check(ctx: Context<HealthCheck>) -> ProgramResult {
-        health_check::handler(ctx)
+    pub fn health_ping(ctx: Context<HealthPing>) -> ProgramResult {
+        health_ping::handler(ctx)
     }
 
     pub fn task_cancel(ctx: Context<TaskCancel>) -> ProgramResult {

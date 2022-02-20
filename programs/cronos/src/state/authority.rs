@@ -24,3 +24,10 @@ impl Authority {
         Pubkey::find_program_address(&[SEED_AUTHORITY], &crate::ID)
     }
 }
+
+impl Authority {
+    pub fn initialize(&mut self, bump: u8) -> ProgramResult {
+        self.bump = bump;
+        Ok(())
+    }
+}

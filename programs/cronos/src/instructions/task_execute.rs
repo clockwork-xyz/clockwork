@@ -1,7 +1,7 @@
 use {
     crate::{errors::*, state::*},
     anchor_lang::prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed, sysvar},
+    solana_program::sysvar,
 };
 
 #[derive(Accounts)]
@@ -60,38 +60,11 @@ pub struct TaskExecute<'info> {
 }
 
 pub fn handler(ctx: Context<TaskExecute>) -> ProgramResult {
-    // Get accounts.
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;
     let task = &mut ctx.accounts.task;
     let worker = &mut ctx.accounts.worker;
 
-    // Update task state.
-    let next_exec_at = task.schedule.exec_at.checked_add(task.schedule.recurr).unwrap();
-    if task.schedule.recurr == 0 || next_exec_at >= task.schedule.stop_at {
-        task.status = TaskStatus::Done;
-    } else {
-        task.schedule.exec_at = next_exec_at;
-    }
-
-    // Increment collectable fee balance. 
-    fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
-
-    // Invoke instruction.
-    invoke_signed(
-        &Instruction::from(&task.ix),
-        &ctx.remaining_accounts.iter().as_slice(),
-        &[&[SEED_DAEMON, daemon.owner.key().as_ref(), &[daemon.bump]]],
-    )?;
-
-    // Transfer lamports from daemon to fee account.
-    **daemon.to_account_info().try_borrow_mut_lamports()? = daemon.to_account_info().lamports().checked_sub(config.program_fee).unwrap();
-    **fee.to_account_info().try_borrow_mut_lamports()? = fee.to_account_info().lamports().checked_add(config.program_fee).unwrap();
-
-    // Transfer lamports from daemon to worker.
-    **daemon.to_account_info().try_borrow_mut_lamports()? = daemon.to_account_info().lamports().checked_sub(config.program_fee).unwrap();
-    **worker.to_account_info().try_borrow_mut_lamports()? = worker.to_account_info().lamports().checked_add(config.program_fee).unwrap();
-
-    Ok(())
+    task.execute(&ctx.remaining_accounts.iter().as_slice(), config, daemon, fee, worker)
 }

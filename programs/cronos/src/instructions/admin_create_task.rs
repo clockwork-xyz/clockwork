@@ -8,9 +8,7 @@ use {
 #[derive(Accounts)]
 #[instruction(
     ix: InstructionData,
-    exec_at: i64,
-    stop_at: i64,
-    recurr: i64,
+    schedule: TaskSchedule,
     bump: u8
 )]
 pub struct AdminCreateTask<'info> {
@@ -26,7 +24,7 @@ pub struct AdminCreateTask<'info> {
     
     #[account(
         address = sysvar::clock::ID,
-        constraint = exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
+        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
@@ -69,43 +67,11 @@ pub struct AdminCreateTask<'info> {
 pub fn handler(
     ctx: Context<AdminCreateTask>, 
     ix: InstructionData,
-    exec_at: i64,
-    stop_at: i64,
-    recurr: i64,
+    schedule: TaskSchedule,
     bump: u8
 ) -> ProgramResult {
-    // Get accounts.
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
-
-    // Validate the scheduling chronology.
-    require!(exec_at <= stop_at, ErrorCode::InvalidChronology);
-    require!(recurr >= 0, ErrorCode::InvalidRecurrNegative);
-    require!(recurr == 0 || recurr >= config.min_recurr, ErrorCode::InvalidRecurrBelowMin);
-
-    // Reject the instruction if it has other signers besides the daemon.
-    for acc in ix.accounts.as_slice() {
-        require!(
-            !acc.is_signer || acc.pubkey == daemon.key(), 
-            ErrorCode::InvalidSignatory
-        );
-    }
-
-    // Initialize task account.
-    task.daemon = daemon.key();
-    task.int = daemon.task_count;
-    task.ix = ix;
-    task.status = TaskStatus::Queued;
-    task.schedule = TaskSchedule {
-        exec_at, 
-        stop_at,
-        recurr
-    };
-    task.bump = bump;
-
-    // Increment daemon task counter.
-    daemon.task_count = daemon.task_count.checked_add(1).unwrap();
-
-    Ok(())
+    task.initialize(config, daemon, ix, schedule, bump)
 }

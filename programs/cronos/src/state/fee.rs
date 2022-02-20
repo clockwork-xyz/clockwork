@@ -26,3 +26,12 @@ impl Fee {
         Pubkey::find_program_address(&[SEED_FEE, daemon.as_ref()], &crate::ID)
     }
 }
+
+impl Fee {
+    pub fn initialize(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult {
+        self.daemon = daemon;
+        self.balance = 0;
+        self.bump = bump;
+        Ok(())
+    }
+}

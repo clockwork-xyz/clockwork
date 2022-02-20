@@ -1,3 +1,4 @@
+use crate::errors::ErrorCode;
 use crate::pda::PDA;
 
 use anchor_lang::prelude::*;
@@ -5,6 +6,8 @@ use anchor_lang::AccountDeserialize;
 use solana_program::instruction::Instruction;
 
 use std::convert::TryFrom;
+
+use super::*;
 
 pub const SEED_TASK: &[u8] = b"task";
 
@@ -25,6 +28,107 @@ impl Task {
             &[SEED_TASK, daemon.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
+    }
+}
+
+impl Task {
+    pub fn initialize(
+        &mut self,
+        config: &Account<Config>,
+        daemon: &mut Account<Daemon>,
+        ix: InstructionData,
+        schedule: TaskSchedule,
+        bump: u8,
+    ) -> ProgramResult {
+        // Validate the task scheduling chronology.
+        require!(
+            schedule.exec_at <= schedule.stop_at,
+            ErrorCode::InvalidChronology
+        );
+        require!(schedule.recurr >= 0, ErrorCode::InvalidRecurrNegative);
+        require!(
+            schedule.recurr == 0 || schedule.recurr >= config.min_recurr,
+            ErrorCode::InvalidRecurrBelowMin
+        );
+
+        // Reject the instruction if it has other signers besides the daemon.
+        for acc in ix.accounts.as_slice() {
+            require!(
+                !acc.is_signer || acc.pubkey == daemon.key(),
+                ErrorCode::InvalidSignatory
+            );
+        }
+
+        // Initialize task account.
+        self.daemon = daemon.key();
+        self.int = daemon.task_count;
+        self.ix = ix;
+        self.status = TaskStatus::Queued;
+        self.schedule = schedule;
+        self.bump = bump;
+
+        // Increment daemon task count
+        daemon.task_count = daemon.task_count.checked_add(1).unwrap();
+
+        Ok(())
+    }
+
+    pub fn cancel(&mut self) -> ProgramResult {
+        self.status = TaskStatus::Cancelled;
+        Ok(())
+    }
+
+    pub fn execute(
+        &mut self,
+        account_infos: &[AccountInfo],
+        config: &Account<Config>,
+        daemon: &mut Account<Daemon>,
+        fee: &mut Account<Fee>,
+        worker: &mut Signer,
+    ) -> ProgramResult {
+        // Update task schedule.
+        let next_exec_at = self
+            .schedule
+            .exec_at
+            .checked_add(self.schedule.recurr)
+            .unwrap();
+        if self.schedule.recurr == 0 || next_exec_at >= self.schedule.stop_at {
+            self.status = TaskStatus::Done;
+        } else {
+            self.schedule.exec_at = next_exec_at;
+        }
+
+        // Increment collectable fee balance.
+        fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
+
+        // Invoke instruction.
+        daemon.invoke(&Instruction::from(&self.ix), account_infos)?;
+
+        // Transfer lamports from daemon to fee account.
+        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
+            .to_account_info()
+            .lamports()
+            .checked_sub(config.program_fee)
+            .unwrap();
+        **fee.to_account_info().try_borrow_mut_lamports()? = fee
+            .to_account_info()
+            .lamports()
+            .checked_add(config.program_fee)
+            .unwrap();
+
+        // Transfer lamports from daemon to worker.
+        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
+            .to_account_info()
+            .lamports()
+            .checked_sub(config.program_fee)
+            .unwrap();
+        **worker.to_account_info().try_borrow_mut_lamports()? = worker
+            .to_account_info()
+            .lamports()
+            .checked_add(config.program_fee)
+            .unwrap();
+
+        Ok(())
     }
 }
 

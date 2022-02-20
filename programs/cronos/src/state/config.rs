@@ -28,3 +28,14 @@ impl Config {
         Pubkey::find_program_address(&[SEED_CONFIG], &crate::ID)
     }
 }
+
+impl Config {
+    pub fn initialize(&mut self, admin: Pubkey, bump: u8) -> ProgramResult {
+        self.admin = admin;
+        self.min_recurr = 5; // Minimum supported recurrence interval
+        self.program_fee = 0; // Lamports to pay to program for each task execution
+        self.worker_fee = 0; // Lamports to pay to worker for each task execution
+        self.bump = bump;
+        Ok(())
+    }
+}

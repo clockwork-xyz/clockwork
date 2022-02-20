@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 #[error]
 pub enum ErrorCode {
+    #[msg("You are not the owner of this daemon")]
+    InsufficientAuthorizationNotOwner,
     #[msg("Tasks cannot be started before they are stopped")]
     InvalidChronology,
     #[msg("Tasks cannot be scheduled for execution in the past")]
