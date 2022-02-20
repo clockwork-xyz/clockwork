@@ -8,6 +8,13 @@ use {
     std::thread,
 };
 
+// TODO make cache time configurable thru CLI params
+//
+// WARNING
+// Lower cache times are useful when you want to run a bot with faster execution behaviors.
+// In many cases, this strategy isn't always efficient. Lower cache times lead a bot
+// to spend more on compute budgets and "compete with itself" for RPC threads.
+
 #[cached::proc_macro::cached(size = 1_000_000, time = 4)]
 pub fn execute_task(pubkey: Pubkey, daemon: Pubkey) {
     thread::spawn(move || {
