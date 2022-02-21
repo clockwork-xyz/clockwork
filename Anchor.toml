@@ -1,6 +1,6 @@
 [provider]
 cluster = "mainnet"
-wallet = "/Users/garfield/.config/solana/id.json"
+wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
 cronos = "CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW"
