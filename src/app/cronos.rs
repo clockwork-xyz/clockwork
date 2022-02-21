@@ -4,7 +4,7 @@ pub fn cronos() -> App<'static> {
     App::new("Cronos")
         .bin_name("cronos")
         .about("Cronos is an instruction scheduler for Solana")
-        .version("0.0.1")
+        .version("0.1.0")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(super::admin::app())
         .subcommand(super::blocktime::app())
