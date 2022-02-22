@@ -36,6 +36,5 @@ pub fn solana_explorer_url(entity: SolanaExplorerAccountType, value: String) -> 
         SolanaExplorerAccountType::Account => "address",
         SolanaExplorerAccountType::Tx => "tx",
     };
-    let cluster_params = "cluster=devnet";
-    format!("{}/{}/{}?{}", base_url, entity_str, value, cluster_params)
+    format!("{}/{}/{}", base_url, entity_str, value)
 }
