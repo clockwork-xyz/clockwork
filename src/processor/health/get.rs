@@ -22,7 +22,6 @@ pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     //
     // This metric would measure if Cronos bots are
     // "catching up" up or "falling behind" expected time.
-    //
 
     Ok(())
 }
