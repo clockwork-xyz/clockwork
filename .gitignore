@@ -7,11 +7,5 @@ target
 # Docker
 docker-target
 
-# Node
-**/dist
-**/node_modules
-**/tsconfig.tsbuildinfo
-**/yarn-error.log
-
 # Solana
 **/test-ledger

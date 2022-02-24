@@ -7,6 +7,3 @@ cronos = "CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW"
 
 [registry]
 url = "https://anchor.projectserum.com"
-
-[scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 client/src/*.test.ts"
