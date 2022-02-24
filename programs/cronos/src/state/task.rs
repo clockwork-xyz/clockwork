@@ -173,7 +173,15 @@ impl TaskAccount for Account<'_, Task> {
  * InstructionData
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Clone,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
@@ -233,11 +241,26 @@ impl From<&InstructionData> for Instruction {
     }
 }
 
+impl TryFrom<Vec<u8>> for InstructionData {
+    type Error = ProgramError;
+    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+        bincode::deserialize(&data[..]).map_err(|_err| ProgramError::InvalidInstructionData)
+    }
+}
+
 /**
  * AccountMetaData
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Clone,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub struct AccountMetaData {
     /// An account's public key
     pub pubkey: Pubkey,
