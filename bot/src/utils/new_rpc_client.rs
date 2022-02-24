@@ -7,9 +7,9 @@ use {
 
 pub fn new_rpc_client() -> Client {
     let payer = read_keypair(&mut File::open(env::keypath().as_str()).unwrap()).unwrap();
-    let client = RpcClient::new_with_commitment(
+    let client = RpcClient::new_with_commitment::<String>(
         env::rpc_endpoint().as_str().into(),
-        CommitmentConfig::confirmed(),
+        CommitmentConfig::processed(),
     );
     Client { client, payer }
 }
