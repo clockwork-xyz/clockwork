@@ -20,6 +20,10 @@ pub fn health_start(client: &Arc<Client>) -> Result<(), CliError> {
     let data = client.get_account_data(&daemon).unwrap();
     let daemon_data = Daemon::try_from(data).unwrap();
 
+    // Fetch config data
+    let data = client.get_account_data(&config).unwrap();
+    let config_data = Config::try_from(data).unwrap();
+
     // Task PDA
     let task_pda = Task::pda(daemon, daemon_data.task_count);
 
@@ -30,9 +34,11 @@ pub fn health_start(client: &Arc<Client>) -> Result<(), CliError> {
             .unwrap()
             .as_secs(),
     )
+    .unwrap()
+    .checked_add(config_data.min_recurr)
     .unwrap();
     let stop_at = i64::MAX; // Continue indefinitely
-    let recurr = 5;
+    let recurr = config_data.min_recurr;
 
     // Build instructions
     let ix_a = cronos_sdk::instruction::admin_reset_health(admin, config, health);
