@@ -8,13 +8,13 @@ use {
 
 use std::str::FromStr;
 
-use anchor_lang::prelude::Pubkey;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::RpcAccountInfoConfig;
 use solana_sdk::{
     account::Account,
     clock::{Clock, Epoch, Slot, UnixTimestamp},
     commitment_config::CommitmentConfig,
+    pubkey::Pubkey,
 };
 
 use crate::env;
