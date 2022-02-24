@@ -1,0 +1,8 @@
+# Cargo
+/target
+
+# Postgres
+postgres-data
+
+# Solana
+keypair.json

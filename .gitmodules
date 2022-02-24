@@ -1,6 +1,3 @@
-[submodule "bot"]
-	path = bot
-	url = https://github.com/cronos-so/bot.git
 [submodule "cli"]
 	path = cli
 	url = https://github.com/cronos-so/cli.git
