@@ -1,9 +1,10 @@
-use {
-    crate::{errors::*, state::*},
-    anchor_lang::{prelude::*, solana_program::{system_program, sysvar}},
-    std::mem::size_of,
-};
+use crate::state::*;
+use crate::errors::CronosError;
 
+use anchor_lang::prelude::*;
+use solana_program::{system_program, sysvar};
+
+use std::mem::size_of;
 
 #[derive(Accounts)]
 #[instruction(
@@ -18,20 +19,18 @@ pub struct AdminCreateTask<'info> {
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump = authority.bump, 
-        owner = crate::ID
     )]
     pub authority: Account<'info, Authority>,
     
     #[account(
         address = sysvar::clock::ID,
-        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ ErrorCode::InvalidExecAtStale
+        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ CronosError::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID,
     )]
     pub config: Account<'info, Config>,
 
@@ -43,7 +42,6 @@ pub struct AdminCreateTask<'info> {
         ],
         bump = daemon.bump,
         constraint = daemon.owner == authority.key(),
-        owner = crate::ID,
     )]
     pub daemon: Account<'info, Daemon>,
 
@@ -57,7 +55,7 @@ pub struct AdminCreateTask<'info> {
             daemon.key().as_ref(),
             daemon.task_count.to_be_bytes().as_ref(),
         ],
-        bump = bump,
+        bump,
         payer = admin,
         space = 8 + size_of::<Task>() + borsh::to_vec(&ix).unwrap().len(),
     )]
@@ -69,7 +67,7 @@ pub fn handler(
     ix: InstructionData,
     schedule: TaskSchedule,
     bump: u8
-) -> ProgramResult {
+) -> Result<()> {
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;

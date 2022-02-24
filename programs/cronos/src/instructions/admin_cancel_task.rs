@@ -1,18 +1,19 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction()]
 pub struct AdminCancelTask<'info> {
-    #[account(mut, address = config.admin)]
+    #[account(
+        mut, 
+        address = config.admin
+    )]
     pub admin: Signer<'info>,
 
     #[account(
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID,
     )]
     pub config: Account<'info, Config>,
 
@@ -24,12 +25,11 @@ pub struct AdminCancelTask<'info> {
             task.int.to_be_bytes().as_ref(),
         ],
         bump = task.bump,
-        owner = crate::ID
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<AdminCancelTask>) -> ProgramResult {
+pub fn handler(ctx: Context<AdminCancelTask>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     
     task.cancel()

@@ -1,4 +1,6 @@
-use {crate::state::*, anchor_lang::prelude::*};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(new_admin: Pubkey)]
@@ -13,12 +15,11 @@ pub struct AdminUpdateAdmin<'info> {
         mut,
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID,
     )]
     pub config: Account<'info, Config>,
 }
 
-pub fn handler(ctx: Context<AdminUpdateAdmin>, new_admin: Pubkey) -> ProgramResult {
+pub fn handler(ctx: Context<AdminUpdateAdmin>, new_admin: Pubkey) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
 

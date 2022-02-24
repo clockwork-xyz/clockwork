@@ -1,8 +1,9 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of,
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
+use solana_program::system_program;
+
+use std::mem::size_of;
 
 #[derive(Accounts)]
 #[instruction(
@@ -17,7 +18,7 @@ pub struct AdminInitialize<'info> {
     #[account(
         init,
         seeds = [SEED_AUTHORITY],
-        bump = authority_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Authority>(),
     )]
@@ -26,7 +27,7 @@ pub struct AdminInitialize<'info> {
     #[account(
         init,
         seeds = [SEED_CONFIG],
-        bump = config_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Config>(),
     )]
@@ -38,7 +39,7 @@ pub struct AdminInitialize<'info> {
             SEED_DAEMON, 
             authority.key().as_ref()
         ],
-        bump = daemon_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Daemon>(),
     )]
@@ -50,7 +51,7 @@ pub struct AdminInitialize<'info> {
             SEED_FEE, 
             daemon.key().as_ref()
         ],
-        bump = fee_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Fee>(),
     )]
@@ -59,7 +60,7 @@ pub struct AdminInitialize<'info> {
     #[account(
         init,
         seeds = [SEED_HEALTH],
-        bump = health_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Health>(),
     )]
@@ -75,7 +76,7 @@ pub struct AdminInitialize<'info> {
     #[account(
         init,
         seeds = [SEED_TREASURY],
-        bump = treasury_bump,
+        bump,
         payer = signer,
         space = 8 + size_of::<Treasury>(),
     )]
@@ -90,7 +91,7 @@ pub fn handler(
     fee_bump: u8,
     health_bump: u8,
     treasury_bump: u8,
-) -> ProgramResult {
+) -> Result<()> {
     let authority = &mut ctx.accounts.authority;
     let config = &mut ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;

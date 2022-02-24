@@ -2,6 +2,7 @@ use crate::pda::PDA;
 
 use anchor_lang::prelude::*;
 use anchor_lang::AnchorDeserialize;
+
 use std::convert::TryFrom;
 
 pub const SEED_TREASURY: &[u8] = b"treasury";
@@ -23,8 +24,8 @@ impl Treasury {
 }
 
 impl TryFrom<Vec<u8>> for Treasury {
-    type Error = ProgramError;
-    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Treasury::try_deserialize(&mut data.as_slice())
     }
 }
@@ -34,11 +35,11 @@ impl TryFrom<Vec<u8>> for Treasury {
  */
 
 pub trait TreasuryAccount {
-    fn init(&mut self, bump: u8) -> ProgramResult;
+    fn init(&mut self, bump: u8) -> Result<()>;
 }
 
 impl TreasuryAccount for Account<'_, Treasury> {
-    fn init(&mut self, bump: u8) -> ProgramResult {
+    fn init(&mut self, bump: u8) -> Result<()> {
         self.bump = bump;
         Ok(())
     }

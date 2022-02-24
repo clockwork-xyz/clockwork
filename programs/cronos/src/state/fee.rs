@@ -1,10 +1,10 @@
+use super::Treasury;
 use crate::pda::PDA;
 
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
-use std::convert::TryFrom;
 
-use super::Treasury;
+use std::convert::TryFrom;
 
 pub const SEED_FEE: &[u8] = b"fee";
 
@@ -21,8 +21,8 @@ pub struct Fee {
 }
 
 impl TryFrom<Vec<u8>> for Fee {
-    type Error = ProgramError;
-    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Fee::try_deserialize(&mut data.as_slice())
     }
 }
@@ -38,19 +38,20 @@ impl Fee {
  */
 
 pub trait FeeAccount {
-    fn init(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult;
-    fn collect(&mut self, treasury: &mut Account<Treasury>) -> ProgramResult;
+    fn init(&mut self, daemon: Pubkey, bump: u8) -> Result<()>;
+
+    fn collect(&mut self, treasury: &mut Account<Treasury>) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
-    fn init(&mut self, daemon: Pubkey, bump: u8) -> ProgramResult {
+    fn init(&mut self, daemon: Pubkey, bump: u8) -> Result<()> {
         self.daemon = daemon;
         self.balance = 0;
         self.bump = bump;
         Ok(())
     }
 
-    fn collect(&mut self, treasury: &mut Account<Treasury>) -> ProgramResult {
+    fn collect(&mut self, treasury: &mut Account<Treasury>) -> Result<()> {
         // Collect lamports from fee account to treasury.
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()

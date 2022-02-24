@@ -1,7 +1,6 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction()]
@@ -9,11 +8,10 @@ pub struct TaskCancel<'info> {
     #[account(
         seeds = [
             SEED_DAEMON, 
-            daemon.owner.key().as_ref()
+            daemon.owner.as_ref()
         ],
         bump = daemon.bump,
         has_one = owner,
-        owner = crate::ID
     )]
     pub daemon: Account<'info, Daemon>,
 
@@ -29,12 +27,11 @@ pub struct TaskCancel<'info> {
         ],
         bump = task.bump,
         has_one = daemon,
-        owner = crate::ID
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<TaskCancel>) -> ProgramResult {
+pub fn handler(ctx: Context<TaskCancel>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     
     task.cancel()

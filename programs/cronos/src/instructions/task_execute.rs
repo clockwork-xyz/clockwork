@@ -1,8 +1,8 @@
-use {
-    crate::{errors::*, state::*},
-    anchor_lang::prelude::*,
-    solana_program::sysvar,
-};
+use crate::state::*;
+use crate::errors::CronosError;
+
+use anchor_lang::prelude::*;
+use solana_program::sysvar;
 
 #[derive(Accounts)]
 #[instruction()]
@@ -13,7 +13,6 @@ pub struct TaskExecute<'info> {
     #[account(
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID
     )]
     pub config: Account<'info, Config>,
 
@@ -21,10 +20,9 @@ pub struct TaskExecute<'info> {
         mut,
         seeds = [
             SEED_DAEMON, 
-            daemon.owner.key().as_ref()
+            daemon.owner.as_ref()
         ],
         bump = daemon.bump,
-        owner = crate::ID
     )]
     pub daemon: Account<'info, Daemon>,
 
@@ -36,7 +34,6 @@ pub struct TaskExecute<'info> {
         ],
         bump = fee.bump,
         constraint = fee.daemon == daemon.key(),
-        owner = crate::ID
     )]
     pub fee: Account<'info, Fee>,
 
@@ -49,9 +46,8 @@ pub struct TaskExecute<'info> {
         ],
         bump = task.bump,
         has_one = daemon,
-        constraint = task.status == TaskStatus::Queued @ ErrorCode::TaskNotQueued,
-        constraint = task.schedule.exec_at <= clock.unix_timestamp @ ErrorCode::TaskNotDue,
-        owner = crate::ID
+        constraint = task.status == TaskStatus::Queued @ CronosError::TaskNotQueued,
+        constraint = task.schedule.exec_at <= clock.unix_timestamp @ CronosError::TaskNotDue,
     )]
     pub task: Account<'info, Task>,
 
@@ -59,7 +55,7 @@ pub struct TaskExecute<'info> {
     pub worker: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<TaskExecute>) -> ProgramResult {
+pub fn handler(ctx: Context<TaskExecute>) -> Result<()> {
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;

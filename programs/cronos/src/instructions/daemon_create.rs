@@ -1,8 +1,9 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of,
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
+use solana_program::system_program;
+
+use std::mem::size_of;
 
 #[derive(Accounts)]
 #[instruction(
@@ -16,7 +17,7 @@ pub struct DaemonCreate<'info> {
             SEED_DAEMON, 
             owner.key().as_ref()
         ],
-        bump = daemon_bump,
+        bump,
         payer = owner,
         space = 8 + size_of::<Daemon>(),
     )]
@@ -28,7 +29,7 @@ pub struct DaemonCreate<'info> {
             SEED_FEE, 
             daemon.key().as_ref()
         ],
-        bump = fee_bump,
+        bump,
         payer = owner,
         space = 8 + size_of::<Fee>(),
     )]
@@ -41,7 +42,7 @@ pub struct DaemonCreate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> ProgramResult {
+pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
     let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;

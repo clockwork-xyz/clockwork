@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
-#[error]
-pub enum ErrorCode {
+#[error_code]
+pub enum CronosError {
     #[msg("Tasks cannot be started before they are stopped")]
     InvalidChronology,
     #[msg("Tasks cannot be scheduled for execution in the past")]
@@ -22,6 +22,8 @@ pub enum ErrorCode {
     TaskNotQueued,
     #[msg("This task is not due and may not be executed yet")]
     TaskNotDue,
+    #[msg("The task instruction invocation failed")]
+    TaskFailed,
 
     #[msg("Unknown error")]
     Unknown,

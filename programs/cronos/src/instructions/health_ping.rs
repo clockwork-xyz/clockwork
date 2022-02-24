@@ -1,7 +1,7 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::sysvar},
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*; 
+use solana_program::sysvar;
 
 #[derive(Accounts)]
 #[instruction()]
@@ -9,7 +9,6 @@ pub struct HealthPing<'info> {
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump = authority.bump, 
-        owner = crate::ID,
     )]
     pub authority: Account<'info, Authority>,
     
@@ -19,7 +18,6 @@ pub struct HealthPing<'info> {
     #[account(
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID
     )]
     pub config: Account<'info, Config>,
 
@@ -31,7 +29,6 @@ pub struct HealthPing<'info> {
         ],
         bump = daemon.bump,
         constraint = daemon.owner == authority.key(),
-        owner = crate::ID,
         signer 
     )]
     pub daemon: Account<'info, Daemon>,
@@ -40,12 +37,11 @@ pub struct HealthPing<'info> {
         mut,
         seeds = [SEED_HEALTH],
         bump = health.bump,
-        owner = crate::ID,
     )]
     pub health: Account<'info, Health>,
 }
 
-pub fn handler(ctx: Context<HealthPing>) -> ProgramResult {
+pub fn handler(ctx: Context<HealthPing>) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let health = &mut ctx.accounts.health;

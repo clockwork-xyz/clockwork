@@ -1,13 +1,13 @@
-use crate::errors::ErrorCode;
+use super::{Config, Daemon, DaemonAccount, Fee};
+use crate::errors::CronosError;
 use crate::pda::PDA;
 
+use anchor_lang::prelude::borsh::BorshSchema;
 use anchor_lang::prelude::*;
 use anchor_lang::AccountDeserialize;
 use solana_program::instruction::Instruction;
 
 use std::convert::TryFrom;
-
-use super::*;
 
 pub const SEED_TASK: &[u8] = b"task";
 
@@ -36,8 +36,8 @@ impl Task {
 }
 
 impl TryFrom<Vec<u8>> for Task {
-    type Error = ProgramError;
-    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Task::try_deserialize(&mut data.as_slice())
     }
 }
@@ -54,9 +54,9 @@ pub trait TaskAccount {
         ix: InstructionData,
         schedule: TaskSchedule,
         bump: u8,
-    ) -> ProgramResult;
+    ) -> Result<()>;
 
-    fn cancel(&mut self) -> ProgramResult;
+    fn cancel(&mut self) -> Result<()>;
 
     fn execute(
         &mut self,
@@ -65,7 +65,7 @@ pub trait TaskAccount {
         daemon: &mut Account<Daemon>,
         fee: &mut Account<Fee>,
         worker: &mut Signer,
-    ) -> ProgramResult;
+    ) -> Result<()>;
 }
 
 impl TaskAccount for Account<'_, Task> {
@@ -76,23 +76,23 @@ impl TaskAccount for Account<'_, Task> {
         ix: InstructionData,
         schedule: TaskSchedule,
         bump: u8,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         // Validate the task scheduling chronology.
         require!(
             schedule.exec_at <= schedule.stop_at,
-            ErrorCode::InvalidChronology
+            CronosError::InvalidChronology
         );
-        require!(schedule.recurr >= 0, ErrorCode::InvalidRecurrNegative);
+        require!(schedule.recurr >= 0, CronosError::InvalidRecurrNegative);
         require!(
             schedule.recurr == 0 || schedule.recurr >= config.min_recurr,
-            ErrorCode::InvalidRecurrBelowMin
+            CronosError::InvalidRecurrBelowMin
         );
 
         // Reject the instruction if it has other signers besides the daemon.
         for acc in ix.accounts.as_slice() {
             require!(
                 !acc.is_signer || acc.pubkey == daemon.key(),
-                ErrorCode::InvalidSignatory
+                CronosError::InvalidSignatory
             );
         }
 
@@ -110,7 +110,7 @@ impl TaskAccount for Account<'_, Task> {
         Ok(())
     }
 
-    fn cancel(&mut self) -> ProgramResult {
+    fn cancel(&mut self) -> Result<()> {
         self.status = TaskStatus::Cancelled;
         Ok(())
     }
@@ -122,7 +122,7 @@ impl TaskAccount for Account<'_, Task> {
         daemon: &mut Account<Daemon>,
         fee: &mut Account<Fee>,
         worker: &mut Signer,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         // Update task schedule.
         let next_exec_at = self
             .schedule
@@ -173,15 +173,7 @@ impl TaskAccount for Account<'_, Task> {
  * InstructionData
  */
 
-#[derive(
-    AnchorDeserialize,
-    AnchorSerialize,
-    Clone,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
 pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
@@ -242,9 +234,12 @@ impl From<&InstructionData> for Instruction {
 }
 
 impl TryFrom<Vec<u8>> for InstructionData {
-    type Error = ProgramError;
-    fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
-        bincode::deserialize(&data[..]).map_err(|_err| ProgramError::InvalidInstructionData)
+    type Error = Error;
+    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        Ok(
+            borsh::try_from_slice_with_schema::<InstructionData>(data.as_slice())
+                .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
+        )
     }
 }
 
@@ -252,15 +247,7 @@ impl TryFrom<Vec<u8>> for InstructionData {
  * AccountMetaData
  */
 
-#[derive(
-    AnchorDeserialize,
-    AnchorSerialize,
-    Clone,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
 pub struct AccountMetaData {
     /// An account's public key
     pub pubkey: Pubkey,

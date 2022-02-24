@@ -1,7 +1,6 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction()]
@@ -27,7 +26,7 @@ pub struct FeeCollect<'info> {
     pub treasury: Account<'info, Treasury>,
 }
 
-pub fn handler(ctx: Context<FeeCollect>) -> ProgramResult {
+pub fn handler(ctx: Context<FeeCollect>) -> Result<()> {
     let fee = &mut ctx.accounts.fee;
     let treasury = &mut ctx.accounts.treasury;
 

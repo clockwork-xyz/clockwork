@@ -1,12 +1,15 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::sysvar},
-};
+use crate::state::*;
+
+use anchor_lang::prelude::*;
+use solana_program::sysvar;
 
 #[derive(Accounts)]
 #[instruction()]
 pub struct AdminResetHealth<'info> {
-    #[account(mut, address = config.admin)]
+    #[account(
+        mut, 
+        address = config.admin
+    )]
     pub admin: Signer<'info>,
 
     #[account(address = sysvar::clock::ID)]
@@ -15,7 +18,6 @@ pub struct AdminResetHealth<'info> {
     #[account(
         seeds = [SEED_CONFIG],
         bump = config.bump,
-        owner = crate::ID,
     )]
     pub config: Account<'info, Config>,
 
@@ -23,12 +25,11 @@ pub struct AdminResetHealth<'info> {
         mut,
         seeds = [SEED_HEALTH],
         bump = health.bump,
-        owner = crate::ID,
     )]
     pub health: Account<'info, Health>,
 }
 
-pub fn handler(ctx: Context<AdminResetHealth>) -> ProgramResult {
+pub fn handler(ctx: Context<AdminResetHealth>) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let health = &mut ctx.accounts.health;
 
