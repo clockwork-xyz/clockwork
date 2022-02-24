@@ -1,3 +1,13 @@
+# Anchor
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+
+# Docker
+docker-target
+
+# Solana
 .DS_Store
 **/node_modules
 **/dist
