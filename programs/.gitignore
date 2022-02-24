@@ -1,0 +1,11 @@
+# Anchor
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+
+# Docker
+docker-target
+
+# Solana
+**/test-ledger
