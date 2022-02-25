@@ -7,5 +7,5 @@ for(( c = 0 ; c < 4 ; c++))
 do
   echo ${arr[$c]} version bump:
   read bump_version
-  sed -i -e '3s/.*/'${bump_version}'/' ${paths[$c]}
+  sed -i '' -e '3s/.*/version = "'${bump_version}'"/g' ${paths[$c]}
 done
