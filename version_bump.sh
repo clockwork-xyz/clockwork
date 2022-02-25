@@ -38,6 +38,6 @@ git checkout -b release/${new_version}
 git add .
 git commit -m "Bump to $new_version"
 git tag "v$new_version"
-git push --set-upstream origin release/${new_version}
+git push --set-upstream origin release/${new_version} --tags
 
 exit 
