@@ -1,6 +1,6 @@
 [package]
 name = "cronos-sdk"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "Cronos program Rust client"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ keywords = ["solana", "cronos", "sdk"]
 
 [dependencies]
 anchor-client = { version = "0.22.0", features = ["debug"] }
-cronos-program = { path = "../programs/cronos", features = ["no-entrypoint"], version = "0.1.4" }
+cronos-program = { path = "../programs/cronos", features = ["no-entrypoint"], version = "0.1.5" }
 solana-client-helpers = "1.1.0"
 solana-program = "1.9.5"
 solana-sdk = "1.9.8"
