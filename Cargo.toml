@@ -2,7 +2,7 @@
 name = "solana-accountsdb-plugin-kafka"
 description = "Solana AccountsDb plugin for Kafka"
 authors = ["Blockdaemon"]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 repository = "https://github.com/Blockdaemon/solana-accountsdb-plugin-kafka"
 license = "Apache-2.0"
@@ -13,8 +13,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 prost = "0.9"
 rdkafka = { version = "0.28", features = ["ssl-vendored", "sasl"] }
-solana-logger = { version = "=1.9.5" }
-solana-accountsdb-plugin-interface = { version = "=1.9.5" }
+solana-logger = { version = "=1.9.9" }
+solana-accountsdb-plugin-interface = { version = "=1.9.9" }
 log = "0.4"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
