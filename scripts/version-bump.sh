@@ -48,8 +48,7 @@ do
       sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${versions[1]}'" }/g' ${paths[$c]}
     fi
 
-  if [ ${arr[$c]} == cli ];
-  then
+  else
     # bump cronos cli version
     sed -i '' -e 's/^version =.*/version = "'${bump_version}'"/g' ${paths[$c]}
 
