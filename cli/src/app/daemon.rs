@@ -1,7 +1,7 @@
-use clap::App;
+use clap::Command;
 
-pub fn app() -> App<'static> {
-    App::new("daemon")
+pub fn app() -> Command<'static> {
+    Command::new("daemon")
         .about("Manage your daemon")
-        .subcommand(App::new("new").about("Create a daemon account"))
+        .subcommand(Command::new("new").about("Create a daemon account"))
 }

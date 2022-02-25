@@ -1,7 +1,7 @@
-use clap::{App, Arg};
+use clap::{Command, Arg};
 
-pub fn app() -> App<'static> {
-    App::new("task")
+pub fn app() -> Command<'static> {
+    Command::new("task")
         .about("Manage your tasks")
         .subcommand(task_cancel_app())
         .subcommand(task_new_app())
@@ -13,8 +13,8 @@ pub fn app() -> App<'static> {
         )
 }
 
-fn task_cancel_app() -> App<'static> {
-    App::new("cancel").about("Cancels a task").arg(
+fn task_cancel_app() -> Command<'static> {
+    Command::new("cancel").about("Cancels a task").arg(
         Arg::new("address")
             .index(1)
             .takes_value(true)
@@ -22,8 +22,8 @@ fn task_cancel_app() -> App<'static> {
     )
 }
 
-fn task_new_app() -> App<'static> {
-    App::new("new")
+fn task_new_app() -> Command<'static> {
+    Command::new("new")
         .about("Creates a new task")
         .arg(
             Arg::new("filepath")

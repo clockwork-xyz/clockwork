@@ -1,11 +1,11 @@
-use clap::{App, AppSettings};
+use clap::Command;
 
-pub fn cronos() -> App<'static> {
-    App::new("Cronos")
+pub fn cronos() -> Command<'static> {
+    Command::new("Cronos")
         .bin_name("cronos")
         .about("Cronos is an instruction scheduler for Solana")
         .version(version!())
-        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand_required(true)
         .subcommand(super::admin::app())
         .subcommand(super::blocktime::app())
         .subcommand(super::config::app())

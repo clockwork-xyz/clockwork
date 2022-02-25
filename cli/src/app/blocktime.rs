@@ -1,5 +1,5 @@
-use clap::App;
+use clap::Command;
 
-pub fn app() -> App<'static> {
-    App::new("blocktime").about("Check the current Solana blocktime")
+pub fn app() -> Command<'static> {
+    Command::new("blocktime").about("Check the current Solana blocktime")
 }

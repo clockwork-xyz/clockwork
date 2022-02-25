@@ -1,7 +1,7 @@
-use clap::App;
+use clap::Command;
 
-pub fn app() -> App<'static> {
-    App::new("health")
+pub fn app() -> Command<'static> {
+    Command::new("health")
         .about("Check the Cronos health")
-        .subcommand(App::new("reset").about("Reset the Cronos health tracker"))
+        .subcommand(Command::new("reset").about("Reset the Cronos health tracker"))
 }

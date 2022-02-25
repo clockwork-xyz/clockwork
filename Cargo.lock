@@ -732,7 +732,7 @@ name = "cronos-bot"
 version = "0.1.3"
 dependencies = [
  "anchor-client",
- "cronos-sdk 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cronos-sdk",
  "dotenv",
  "postgres",
  "solana-account-decoder",
@@ -749,7 +749,7 @@ version = "0.1.3"
 dependencies = [
  "anchor-lang",
  "clap 3.1.2",
- "cronos-sdk 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cronos-sdk",
  "serde",
  "serde_json",
  "solana-account-decoder",
@@ -773,34 +773,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-program"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06a2670e6a851d5fb9d8002959cf17b51f2336b9ba094380f8e2d2392ce9fea"
-dependencies = [
- "anchor-lang",
- "solana-program",
-]
-
-[[package]]
 name = "cronos-sdk"
 version = "0.1.3"
 dependencies = [
  "anchor-client",
- "cronos-program 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-client-helpers",
- "solana-program",
- "solana-sdk",
-]
-
-[[package]]
-name = "cronos-sdk"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46288c50255a5d9ae9550754b6e56827299c10f043d0a30d5c2d4b5598e26269"
-dependencies = [
- "anchor-client",
- "cronos-program 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cronos-program",
  "solana-client-helpers",
  "solana-program",
  "solana-sdk",
