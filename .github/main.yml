@@ -1,0 +1,27 @@
+name: main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+  defaults:
+    run:
+      shell: bash
+      working-directory: .
+
+jobs:
+  build:
+  runs-on: ubuntu-latest
+  # Our entire environment is handled by Serum's Docker container,
+  # so no rust, solana, or anchor installation is necessary.
+  container: projectserum/build:v0.22.0
+  steps:
+    - uses: actions/checkout@v2
+    - run: solana-keygen new --no-bip39-passphrase
+    - run: rustup default nightly
+    - run: cargo test
+    - run: anchor build
+    - run: anchor test
+    - run: cargo fmt -- --check
