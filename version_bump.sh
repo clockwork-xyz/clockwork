@@ -23,12 +23,6 @@ sed -i '' -e '3s/^version = "'${old_version}'"/version = "'${new_version}'"/g' b
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${old_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
 
-# Cargo publish
-cargo publish --allow-dirty --manifest-path programs/cronos/Cargo.toml || (echo "Failed to publish cronos-program" && exit)
-cargo publish --allow-dirty --manifest-path sdk/Cargo.toml || (echo "Failed to publish cronos-sdk" && exit)
-cargo publish --allow-dirty --manifest-path bot/Cargo.toml || (echo "Failed to publish cronos-bot" && exit)
-cargo publish --allow-dirty --manifest-path cli/Cargo.toml || (echo "Failed to publish cronos-cli" && exit)
-
 # Update version
 echo $new_version > VERSION
 
