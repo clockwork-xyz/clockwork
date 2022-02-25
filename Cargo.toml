@@ -3,6 +3,7 @@ name = "solana-accountsdb-plugin-kafka"
 authors = ["Blockdaemon"]
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
