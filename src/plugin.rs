@@ -27,6 +27,7 @@ use {
 #[derive(Default)]
 pub struct KafkaPlugin {
     publisher: Option<Publisher>,
+    filter: Option<Filter>,
 }
 
 impl Debug for KafkaPlugin {
@@ -64,15 +65,15 @@ impl AccountsDbPlugin for KafkaPlugin {
 
         let publisher = Publisher::new(producer, &config);
         self.publisher = Some(publisher);
+        self.filter = Some(Filter::new(&config));
         info!("Spawned producer");
 
         Ok(())
     }
 
     fn on_unload(&mut self) {
-        if let Some(publisher) = self.publisher.take() {
-            drop(publisher);
-        }
+        self.publisher = None;
+        self.filter = None;
     }
 
     fn update_account(
@@ -86,6 +87,10 @@ impl AccountsDbPlugin for KafkaPlugin {
         }
 
         let info = Self::unwrap_update_account(account);
+        if !self.unwrap_filter().wants_program(info.pubkey) {
+            return Ok(());
+        }
+
         let event = UpdateAccountEvent {
             slot,
             pubkey: info.pubkey.to_vec(),
@@ -141,6 +146,10 @@ impl KafkaPlugin {
 
     fn unwrap_publisher(&self) -> &Publisher {
         self.publisher.as_ref().expect("publisher is unavailable")
+    }
+
+    fn unwrap_filter(&self) -> &Filter {
+        self.filter.as_ref().expect("filter is unavailable")
     }
 
     fn unwrap_update_account(account: ReplicaAccountInfoVersions) -> &ReplicaAccountInfo {

@@ -16,12 +16,14 @@ use solana_accountsdb_plugin_interface::accountsdb_plugin_interface::AccountsDbP
 
 mod config;
 mod event;
+mod filter;
 mod plugin;
 mod publisher;
 
 pub use {
     config::{Config, Producer},
     event::*,
+    filter::Filter,
     plugin::KafkaPlugin,
     publisher::Publisher,
 };
