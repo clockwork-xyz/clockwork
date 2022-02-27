@@ -3,12 +3,7 @@
 # Get new version
 current_version=$(cat ./VERSION)
 echo "Current version: $current_version"
-read -p "    New version: $new_version" 
-echo "Bumping from $current_version to $new_version"
-
-echo $new_version
-
-exit
+read -r -p "    New version: " new_version
 
 # Build
 RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
