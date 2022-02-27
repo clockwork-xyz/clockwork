@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cargo publish -p cronos-program
 sleep 5 
 cargo publish -p cronos-sdk
