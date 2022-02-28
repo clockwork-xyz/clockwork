@@ -25,7 +25,7 @@ pub fn replicate_task(task: Pubkey, task_data: Task) {
             &task_data.daemon.to_string(),
             &task_data.status.to_string(),
             &task_data.schedule.exec_at,
-            &borsh::to_vec(&task_data.ix).unwrap(),
+            &borsh::try_to_vec_with_schema(&task_data.ix).unwrap(),
         ],
     )
     .unwrap();
