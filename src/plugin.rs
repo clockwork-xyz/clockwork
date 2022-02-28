@@ -87,7 +87,7 @@ impl AccountsDbPlugin for KafkaPlugin {
         }
 
         let info = Self::unwrap_update_account(account);
-        if !self.unwrap_filter().wants_program(info.pubkey) {
+        if !self.unwrap_filter().wants_program(info.owner) {
             return Ok(());
         }
 
