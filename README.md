@@ -41,10 +41,11 @@ Config is specified via the plugin's JSON config file.
   "shutdown_timeout_ms": 30000,
   "update_account_topic": "solana.testnet.account_updates",
   "slot_status_topic": "solana.testnet.slot_status",
+  "publish_all_accounts": false,
   "program_ignores": [
     "Sysvar1111111111111111111111111111111111111",
     "Vote111111111111111111111111111111111111111"
-  ],
+  ]
 }
 ```
 
@@ -56,6 +57,7 @@ Config is specified via the plugin's JSON config file.
 - `shutdown_timeout_ms`: Time the plugin is given to flush out all messages to Kafka upon exit request.
 - `update_account_topic`: Topic name of account updates. Omit to disable.
 - `slot_status_topic`: Topic name of slot status update. Omit to disable.
+- `publish_all_accounts`: Publish all accounts on startup. Omit to disable.
 - `program_ignores`: Solana program IDs for which to ignore updates for owned accounts.
 
 ## Buffering

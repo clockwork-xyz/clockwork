@@ -48,11 +48,13 @@ mod tests {
 
     #[test]
     fn test_filter() {
-        let mut config = Config::default();
-        config.program_ignores = vec![
-            "Sysvar1111111111111111111111111111111111111".to_owned(),
-            "Vote111111111111111111111111111111111111111".to_owned(),
-        ];
+        let config = Config {
+            program_ignores: vec![
+                "Sysvar1111111111111111111111111111111111111".to_owned(),
+                "Vote111111111111111111111111111111111111111".to_owned(),
+            ],
+            ..Config::default()
+        };
 
         let filter = Filter::new(&config);
         assert_eq!(filter.program_ignores.len(), 2);

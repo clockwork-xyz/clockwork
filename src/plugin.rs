@@ -28,6 +28,7 @@ use {
 pub struct KafkaPlugin {
     publisher: Option<Publisher>,
     filter: Option<Filter>,
+    publish_all_accounts: bool,
 }
 
 impl Debug for KafkaPlugin {
@@ -54,6 +55,7 @@ impl AccountsDbPlugin for KafkaPlugin {
             config_file
         );
         let config = Config::read_from(config_file)?;
+        self.publish_all_accounts = config.publish_all_accounts;
 
         let (version_n, version_s) = get_rdkafka_version();
         info!("rd_kafka_version: {:#08x}, {}", version_n, version_s);
@@ -82,7 +84,7 @@ impl AccountsDbPlugin for KafkaPlugin {
         slot: u64,
         is_startup: bool,
     ) -> PluginResult<()> {
-        if is_startup {
+        if is_startup && !self.publish_all_accounts {
             return Ok(());
         }
 
