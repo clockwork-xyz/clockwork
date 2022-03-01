@@ -1,15 +1,15 @@
 use cronos_sdk::account::*;
 use solana_sdk::{instruction::AccountMeta, pubkey::Pubkey};
+use solana_client_helpers::Client;
 
 use std::thread;
 use std::sync::{Arc, RwLock};
 
 use crate::store::{TaskStore, MutableTaskStore};
-use crate::utils::{new_rpc_client, sign_and_submit};
+use crate::utils::sign_and_submit;
 
-pub fn execute_task(store: Arc<RwLock<TaskStore>>, key: Pubkey, task: Task) {
+pub fn execute_task(store: Arc<RwLock<TaskStore>>, client: Arc<Client>, key: Pubkey, task: Task) {
     thread::spawn(move || {
-        let client = new_rpc_client();
         let config = Config::pda().0;
         let fee = Fee::pda(task.daemon).0;
 
