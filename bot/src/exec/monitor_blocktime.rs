@@ -9,7 +9,7 @@ use {
 use std::str::FromStr;
 
 use solana_account_decoder::UiAccountEncoding;
-use solana_client::rpc_config::RpcAccountInfoConfig;
+use solana_client::{rpc_config::RpcAccountInfoConfig};
 use solana_sdk::{
     account::Account,
     clock::{Clock, Epoch, Slot, UnixTimestamp},
@@ -38,7 +38,7 @@ pub fn monitor_blocktime() -> Receiver<i64> {
         for ui_account_response in clock_receiver {
             let ui_account = ui_account_response.value;
             let account = ui_account.decode::<Account>().unwrap();
-            let clock = get_clock_from_data(account.data);
+            let clock = deserialize_clock(account.data);
             let blocktime = clock.unix_timestamp;
 
             if blocktime > latest_blocktime {
@@ -50,7 +50,7 @@ pub fn monitor_blocktime() -> Receiver<i64> {
     return blocktime_receiver;
 }
 
-fn get_clock_from_data(data: Vec<u8>) -> Clock {
+fn deserialize_clock(data: Vec<u8>) -> Clock {
     Clock {
         slot: Slot::from_le_bytes(data.as_slice()[0..8].try_into().unwrap()),
         epoch_start_timestamp: UnixTimestamp::from_le_bytes(

@@ -7,11 +7,11 @@ use solana_client::{
     rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
 };
 use solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey};
-use std::{str::FromStr, thread};
+use std::{str::FromStr, thread, sync::{Arc, RwLock}};
 
-use crate::{env, replicate_task};
+use crate::{env, store::{TaskStore, MutableTaskStore}};
 
-pub fn replicate_cronos_tasks() {
+pub fn replicate_cronos_tasks(store: Arc<RwLock<TaskStore>>) {
     thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
@@ -38,11 +38,12 @@ pub fn replicate_cronos_tasks() {
             let task = Task::try_from(account.data);
             if !task.is_err() {
                 let task = task.unwrap();
-                replicate_task(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task);
+                let mut w_store = store.write().unwrap();
+                w_store.insert(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task)
             }
         }
 
         // If we reach here, just restart the process.
-        replicate_cronos_tasks();
+        replicate_cronos_tasks(store);
     });
 }
