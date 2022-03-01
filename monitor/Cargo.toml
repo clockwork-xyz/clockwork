@@ -11,4 +11,4 @@ dotenv = "0.15.0"
 solana-account-decoder = "1.9.9"
 solana-client = "1.9.9"
 solana-sdk = "1.9.9"
-
+solana-client-helpers = "1.1.0"

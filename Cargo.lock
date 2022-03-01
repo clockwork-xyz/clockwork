@@ -1826,6 +1826,7 @@ dependencies = [
  "dotenv",
  "solana-account-decoder",
  "solana-client",
+ "solana-client-helpers",
  "solana-sdk",
 ]
 
