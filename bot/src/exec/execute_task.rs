@@ -8,7 +8,7 @@ use std::sync::{Arc, RwLock};
 use crate::store::{TaskStore, MutableTaskStore};
 use crate::utils::sign_and_submit;
 
-pub fn execute_task(store: Arc<RwLock<TaskStore>>, client: Arc<Client>, key: Pubkey, task: Task) {
+pub fn execute_task(client: Arc<Client>, store: Arc<RwLock<TaskStore>>, key: Pubkey, task: Task) {
     thread::spawn(move || {
         let config = Config::pda().0;
         let fee = Fee::pda(task.daemon).0;

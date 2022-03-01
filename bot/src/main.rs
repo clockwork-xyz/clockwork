@@ -1,8 +1,9 @@
-use std::{sync::{Arc, RwLock}};
+use std::sync::{Arc, RwLock};
 
 use dotenv::dotenv;
 use solana_client_helpers::ClientResult;
-use store::{TaskStore, MutableTaskStore};
+use store::{MutableTaskStore, TaskStore};
+use utils::new_rpc_client;
 
 mod env;
 mod exec;
@@ -17,13 +18,14 @@ fn main() -> ClientResult<()> {
     dotenv().ok();
 
     // Create task store
+    let client = Arc::new(new_rpc_client());
     let store = Arc::new(RwLock::new(TaskStore::new()));
 
     // Replicate Cronos tasks to local store
     replicate_cronos_tasks(store.clone());
 
     // Process pending tasks when Solana blocktime updates
-    process_tasks(store);
+    process_tasks(client, store);
 
     Ok(())
 }
