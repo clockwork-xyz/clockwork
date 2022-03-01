@@ -45,12 +45,6 @@ fn execute_tasks_in_lookback_window(
         let r_cache = cache.read().unwrap();
         r_cache.index.get(&t).and_then(|keys| {
             for key in keys.iter() {
-                // handles.push(execute_task(
-                //     client.clone(),
-                //     cache.clone(),
-                //     bucket.clone(),
-                //     *key,
-                // ));
                 r_cache.data.get(key).and_then(|task| {
                     handles.push(execute_task(
                         client.clone(),
