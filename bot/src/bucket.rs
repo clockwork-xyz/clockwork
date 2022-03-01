@@ -1,7 +1,10 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-
-use solana_sdk::pubkey::Pubkey;
+use {
+    solana_sdk::pubkey::Pubkey,
+    std::{
+        collections::HashMap,
+        sync::{Arc, Mutex},
+    },
+};
 
 pub struct Bucket {
     locks: HashMap<(Pubkey, i64), Arc<Mutex<()>>>,

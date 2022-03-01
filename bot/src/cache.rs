@@ -1,7 +1,8 @@
-use std::collections::{HashMap, HashSet};
-
-use cronos_sdk::account::Task;
-use solana_sdk::pubkey::Pubkey;
+use {
+    cronos_sdk::account::Task,
+    solana_sdk::pubkey::Pubkey,
+    std::collections::{HashMap, HashSet},
+};
 
 pub struct TaskCache {
     pub data: HashMap<Pubkey, Task>,

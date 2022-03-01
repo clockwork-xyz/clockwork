@@ -1,9 +1,6 @@
-use solana_client_helpers::ClientResult;
-use solana_sdk::signature::Signature;
-
 use {
-    solana_client_helpers::Client,
-    solana_sdk::{instruction::Instruction, transaction::Transaction},
+    solana_client_helpers::{Client, ClientResult},
+    solana_sdk::{instruction::Instruction, signature::Signature, transaction::Transaction},
 };
 
 pub fn sign_and_submit(

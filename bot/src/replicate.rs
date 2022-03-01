@@ -1,19 +1,18 @@
-// use anchor_lang::prelude::Pubkey;
-
-use cronos_sdk::account::*;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::{
-    pubsub_client::PubsubClient,
-    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+use {
+    crate::{cache::TaskCache, env},
+    cronos_sdk::account::*,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::{
+        pubsub_client::PubsubClient,
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+    },
+    solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey},
+    std::{
+        str::FromStr,
+        sync::{Arc, RwLock},
+        thread,
+    },
 };
-use solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey};
-use std::{
-    str::FromStr,
-    sync::{Arc, RwLock},
-    thread,
-};
-
-use crate::{cache::TaskCache, env};
 
 pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
     thread::spawn(move || {
