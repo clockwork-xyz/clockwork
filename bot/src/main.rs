@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, RwLock};
 
 use bucket::Bucket;
-use cache::{MutableTaskCache, TaskCache};
+use cache::TaskCache;
 use dotenv::dotenv;
 use solana_client_helpers::ClientResult;
 use utils::new_rpc_client;

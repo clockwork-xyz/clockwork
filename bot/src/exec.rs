@@ -7,7 +7,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::thread::{self, JoinHandle};
 
 use crate::bucket::Bucket;
-use crate::cache::MutableTaskCache;
 use crate::utils::sign_and_submit;
 use crate::{cache::TaskCache, utils::monitor_blocktime};
 

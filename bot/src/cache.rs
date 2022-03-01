@@ -8,21 +8,15 @@ pub struct TaskCache {
     pub index: HashMap<i64, HashSet<Pubkey>>,
 }
 
-pub trait MutableTaskCache {
-    fn new() -> TaskCache;
-    fn insert(&mut self, key: Pubkey, task: Task);
-    fn delete(&mut self, key: Pubkey);
-}
-
-impl MutableTaskCache for TaskCache {
-    fn new() -> TaskCache {
+impl TaskCache {
+    pub fn new() -> TaskCache {
         TaskCache {
             data: HashMap::new(),
             index: HashMap::new(),
         }
     }
 
-    fn insert(&mut self, key: Pubkey, task: Task) {
+    pub fn insert(&mut self, key: Pubkey, task: Task) {
         self.delete(key);
         self.data.insert(key, task.clone());
 
@@ -38,7 +32,7 @@ impl MutableTaskCache for TaskCache {
         }
     }
 
-    fn delete(&mut self, key: Pubkey) {
+    pub fn delete(&mut self, key: Pubkey) {
         self.data.clone().get(&key).and_then(|task| {
             self.data.remove(&key);
             self.index

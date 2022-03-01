@@ -13,10 +13,7 @@ use std::{
     thread,
 };
 
-use crate::{
-    cache::{MutableTaskCache, TaskCache},
-    env,
-};
+use crate::{cache::TaskCache, env};
 
 pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
     thread::spawn(move || {
