@@ -13,7 +13,7 @@ use {
     },
 };
 
-const LOOKBACK_WINDOW: i64 = 60 * 10; // Number of seconds to lookback
+const LOOKBACK_WINDOW: i64 = 60 * 15; // Number of seconds to lookback
 
 pub fn execute_tasks(
     client: Arc<Client>,
@@ -41,7 +41,7 @@ fn execute_tasks_in_lookback_window(
 ) {
     // Spawn threads to execute tasks in lookback window
     let mut handles = vec![];
-    for t in (blocktime - LOOKBACK_WINDOW)..blocktime {
+    for t in (blocktime - LOOKBACK_WINDOW)..=blocktime {
         let r_cache = cache.read().unwrap();
         r_cache.index.get(&t).and_then(|keys| {
             for key in keys.iter() {
