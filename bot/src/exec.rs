@@ -4,13 +4,13 @@ use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 
 use std::sync::{Arc, RwLock};
-use std::thread;
+use std::thread::{self, JoinHandle};
 
 use crate::store::MutableTaskStore;
 use crate::utils::sign_and_submit;
 use crate::{store::TaskStore, utils::monitor_blocktime};
 
-const LOOKBACK_WINDOW: i64 = 10; // Number of seconds to lookback
+const LOOKBACK_WINDOW: i64 = 120; // Number of seconds to lookback
 
 pub fn execute_tasks(client: Arc<Client>, store: Arc<RwLock<TaskStore>>) {
     let blocktime_receiver = monitor_blocktime();
@@ -28,21 +28,45 @@ fn execute_tasks_in_lookback_window(
     store: Arc<RwLock<TaskStore>>,
     blocktime: i64,
 ) {
+    // Spawn threads to execute tasks in lookback window
+    let mut handles = vec![];
     for t in (blocktime - LOOKBACK_WINDOW)..blocktime {
         let r_store = store.read().unwrap();
         r_store.index.get(&t).and_then(|keys| {
             for key in keys.iter() {
                 r_store.data.get(key).and_then(|task| {
-                    execute_task(client.clone(), store.clone(), *key, task.clone());
+                    handles.push(execute_task(
+                        client.clone(),
+                        store.clone(),
+                        *key,
+                        task.clone(),
+                    ));
                     Some(())
                 });
             }
             Some(())
         });
     }
+
+    // Join threads
+    if !handles.is_empty() {
+        println!(
+            "Processed {} tasks in blocktime window starting at {}",
+            handles.len(),
+            blocktime
+        );
+        for h in handles {
+            h.join().unwrap();
+        }
+    }
 }
 
-fn execute_task(client: Arc<Client>, store: Arc<RwLock<TaskStore>>, key: Pubkey, task: Task) {
+fn execute_task(
+    client: Arc<Client>,
+    store: Arc<RwLock<TaskStore>>,
+    key: Pubkey,
+    task: Task,
+) -> JoinHandle<()> {
     thread::spawn(move || {
         // Get accounts
         let config = Config::pda().0;
@@ -77,10 +101,12 @@ fn execute_task(client: Arc<Client>, store: Arc<RwLock<TaskStore>>, key: Pubkey,
 
         // If exec failed, replicate the task data
         if res.is_err() {
+            let err = res.err().unwrap();
+            println!("❌ {}", err);
             let data = client.get_account_data(&key).unwrap();
             let task = Task::try_from(data).unwrap();
             let mut w_store = store.write().unwrap();
             w_store.insert(key, task)
         }
-    });
+    })
 }
