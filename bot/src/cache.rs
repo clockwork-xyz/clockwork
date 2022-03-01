@@ -1,24 +1,24 @@
-use std::{collections::{HashMap, HashSet}};
+use std::collections::{HashMap, HashSet};
 
 use cronos_sdk::account::Task;
 use solana_sdk::pubkey::Pubkey;
 
-pub struct TaskStore {
+pub struct TaskCache {
     pub data: HashMap<Pubkey, Task>,
-    pub index: HashMap<i64, HashSet<Pubkey>>
+    pub index: HashMap<i64, HashSet<Pubkey>>,
 }
 
-pub trait MutableTaskStore {
-    fn new() -> TaskStore;
+pub trait MutableTaskCache {
+    fn new() -> TaskCache;
     fn insert(&mut self, key: Pubkey, task: Task);
     fn delete(&mut self, key: Pubkey);
 }
 
-impl MutableTaskStore for TaskStore {
-    fn new() -> TaskStore {
-        TaskStore { 
-            data: HashMap::new(), 
-            index: HashMap::new() 
+impl MutableTaskCache for TaskCache {
+    fn new() -> TaskCache {
+        TaskCache {
+            data: HashMap::new(),
+            index: HashMap::new(),
         }
     }
 
@@ -29,7 +29,7 @@ impl MutableTaskStore for TaskStore {
         match self.index.get_mut(&task.schedule.exec_at) {
             Some(cached_set) => {
                 cached_set.insert(key);
-            },
+            }
             None => {
                 let mut set = HashSet::new();
                 set.insert(key);
@@ -41,7 +41,8 @@ impl MutableTaskStore for TaskStore {
     fn delete(&mut self, key: Pubkey) {
         self.data.clone().get(&key).and_then(|task| {
             self.data.remove(&key);
-            self.index.clone()
+            self.index
+                .clone()
                 .get_mut(&task.schedule.exec_at)
                 .and_then(|cached_set| {
                     cached_set.remove(&key);

@@ -6,38 +6,38 @@ use solana_sdk::pubkey::Pubkey;
 use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 
-use crate::store::MutableTaskStore;
+use crate::cache::MutableTaskCache;
 use crate::utils::sign_and_submit;
-use crate::{store::TaskStore, utils::monitor_blocktime};
+use crate::{cache::TaskCache, utils::monitor_blocktime};
 
 const LOOKBACK_WINDOW: i64 = 120; // Number of seconds to lookback
 
-pub fn execute_tasks(client: Arc<Client>, store: Arc<RwLock<TaskStore>>) {
+pub fn execute_tasks(client: Arc<Client>, cache: Arc<RwLock<TaskCache>>) {
     let blocktime_receiver = monitor_blocktime();
     for blocktime in blocktime_receiver {
         println!("⏳ Blocktime: {}", blocktime);
-        let tstore = store.clone();
+        let tcache = cache.clone();
         let tclient = client.clone();
-        thread::spawn(move || execute_tasks_in_lookback_window(tclient, tstore, blocktime));
+        thread::spawn(move || execute_tasks_in_lookback_window(tclient, tcache, blocktime));
     }
-    execute_tasks(client, store)
+    execute_tasks(client, cache)
 }
 
 fn execute_tasks_in_lookback_window(
     client: Arc<Client>,
-    store: Arc<RwLock<TaskStore>>,
+    cache: Arc<RwLock<TaskCache>>,
     blocktime: i64,
 ) {
     // Spawn threads to execute tasks in lookback window
     let mut handles = vec![];
     for t in (blocktime - LOOKBACK_WINDOW)..blocktime {
-        let r_store = store.read().unwrap();
-        r_store.index.get(&t).and_then(|keys| {
+        let r_cache = cache.read().unwrap();
+        r_cache.index.get(&t).and_then(|keys| {
             for key in keys.iter() {
-                r_store.data.get(key).and_then(|task| {
+                r_cache.data.get(key).and_then(|task| {
                     handles.push(execute_task(
                         client.clone(),
-                        store.clone(),
+                        cache.clone(),
                         *key,
                         task.clone(),
                     ));
@@ -63,7 +63,7 @@ fn execute_tasks_in_lookback_window(
 
 fn execute_task(
     client: Arc<Client>,
-    store: Arc<RwLock<TaskStore>>,
+    cache: Arc<RwLock<TaskCache>>,
     key: Pubkey,
     task: Task,
 ) -> JoinHandle<()> {
@@ -105,8 +105,8 @@ fn execute_task(
             println!("❌ {}", err);
             let data = client.get_account_data(&key).unwrap();
             let task = Task::try_from(data).unwrap();
-            let mut w_store = store.write().unwrap();
-            w_store.insert(key, task)
+            let mut w_cache = cache.write().unwrap();
+            w_cache.insert(key, task)
         }
     })
 }

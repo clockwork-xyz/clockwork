@@ -1,14 +1,14 @@
 use std::sync::{Arc, RwLock};
 
+use cache::{MutableTaskCache, TaskCache};
 use dotenv::dotenv;
 use solana_client_helpers::ClientResult;
-use store::{MutableTaskStore, TaskStore};
 use utils::new_rpc_client;
 
+mod cache;
 mod env;
 mod exec;
 mod replicate;
-mod store;
 mod utils;
 
 use {exec::*, replicate::*};
@@ -17,15 +17,15 @@ fn main() -> ClientResult<()> {
     // Load env file
     dotenv().ok();
 
-    // Create task store
+    // Load resources
     let client = Arc::new(new_rpc_client());
-    let store = Arc::new(RwLock::new(TaskStore::new()));
+    let cache = Arc::new(RwLock::new(TaskCache::new()));
 
     // Replicate tasks
-    replicate_tasks(store.clone());
+    replicate_tasks(cache.clone());
 
     // Execute tasks
-    execute_tasks(client, store);
+    execute_tasks(client, cache);
 
     Ok(())
 }

@@ -14,11 +14,11 @@ use std::{
 };
 
 use crate::{
+    cache::{MutableTaskCache, TaskCache},
     env,
-    store::{MutableTaskStore, TaskStore},
 };
 
-pub fn replicate_tasks(store: Arc<RwLock<TaskStore>>) {
+pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
     thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
@@ -47,15 +47,15 @@ pub fn replicate_tasks(store: Arc<RwLock<TaskStore>>) {
                 let key = Pubkey::from_str(&keyed_account.pubkey).unwrap();
                 let task = task.unwrap();
                 println!("💽 Replicating task {} {}", key, task.status);
-                let mut w_store = store.write().unwrap();
+                let mut w_cache = cache.write().unwrap();
                 match task.status {
-                    TaskStatus::Queued => w_store.insert(key, task),
-                    TaskStatus::Cancelled | TaskStatus::Done => w_store.delete(key),
+                    TaskStatus::Queued => w_cache.insert(key, task),
+                    TaskStatus::Cancelled | TaskStatus::Done => w_cache.delete(key),
                 }
             }
         }
 
         // If we reach here, just restart the process.
-        replicate_tasks(store);
+        replicate_tasks(cache);
     });
 }
