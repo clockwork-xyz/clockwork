@@ -13,7 +13,7 @@ use {
     },
 };
 
-const LOOKBACK_WINDOW: i64 = 120; // Number of seconds to lookback
+const LOOKBACK_WINDOW: i64 = 60 * 10; // Number of seconds to lookback
 
 pub fn execute_tasks(
     client: Arc<Client>,
