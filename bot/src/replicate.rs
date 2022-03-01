@@ -37,9 +37,11 @@ pub fn replicate_cronos_tasks(store: Arc<RwLock<TaskStore>>) {
             // Unwrap task
             let task = Task::try_from(account.data);
             if !task.is_err() {
+                let key = Pubkey::from_str(&keyed_account.pubkey).unwrap();
                 let task = task.unwrap();
+                println!("💽 Replicating task {} {}", key, task.status);
                 let mut w_store = store.write().unwrap();
-                w_store.insert(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task)
+                w_store.insert(key, task);
             }
         }
 
