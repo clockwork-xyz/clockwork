@@ -1,18 +1,14 @@
-use solana_sdk::clock::*;
-
 use {
+    crate::utils::new_rpc_client,
     cronos_sdk::account::Health,
     dotenv::dotenv,
     solana_account_decoder::UiAccountEncoding,
     solana_client::{pubsub_client::PubsubClient, rpc_config::RpcAccountInfoConfig},
-    solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey},
+    solana_sdk::{account::Account, clock::*, commitment_config::CommitmentConfig, pubkey::Pubkey},
     std::str::FromStr,
 };
 
-mod env;
-mod new_rpc_client;
-
-use crate::new_rpc_client::new_rpc_client;
+mod utils;
 
 fn main() {
     dotenv().ok();
