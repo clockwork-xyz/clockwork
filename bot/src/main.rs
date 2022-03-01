@@ -21,11 +21,11 @@ fn main() -> ClientResult<()> {
     let client = Arc::new(new_rpc_client());
     let store = Arc::new(RwLock::new(TaskStore::new()));
 
-    // Replicate Cronos tasks to local store
-    replicate_cronos_tasks(store.clone());
+    // Replicate tasks
+    replicate_tasks(store.clone());
 
-    // Process pending tasks when Solana blocktime updates
-    process_tasks(client, store);
+    // Execute tasks
+    execute_tasks(client, store);
 
     Ok(())
 }
