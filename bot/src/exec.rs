@@ -3,29 +3,38 @@ use solana_client_helpers::Client;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread::{self, JoinHandle};
 
+use crate::bucket::Bucket;
 use crate::cache::MutableTaskCache;
 use crate::utils::sign_and_submit;
 use crate::{cache::TaskCache, utils::monitor_blocktime};
 
 const LOOKBACK_WINDOW: i64 = 120; // Number of seconds to lookback
 
-pub fn execute_tasks(client: Arc<Client>, cache: Arc<RwLock<TaskCache>>) {
+pub fn execute_tasks(
+    client: Arc<Client>,
+    cache: Arc<RwLock<TaskCache>>,
+    bucket: Arc<Mutex<Bucket>>,
+) {
     let blocktime_receiver = monitor_blocktime();
     for blocktime in blocktime_receiver {
         println!("⏳ Blocktime: {}", blocktime);
         let tcache = cache.clone();
         let tclient = client.clone();
-        thread::spawn(move || execute_tasks_in_lookback_window(tclient, tcache, blocktime));
+        let tbucket = bucket.clone();
+        thread::spawn(move || {
+            execute_tasks_in_lookback_window(tclient, tcache, tbucket, blocktime)
+        });
     }
-    execute_tasks(client, cache)
+    execute_tasks(client, cache, bucket)
 }
 
 fn execute_tasks_in_lookback_window(
     client: Arc<Client>,
     cache: Arc<RwLock<TaskCache>>,
+    bucket: Arc<Mutex<Bucket>>,
     blocktime: i64,
 ) {
     // Spawn threads to execute tasks in lookback window
@@ -34,10 +43,17 @@ fn execute_tasks_in_lookback_window(
         let r_cache = cache.read().unwrap();
         r_cache.index.get(&t).and_then(|keys| {
             for key in keys.iter() {
+                // handles.push(execute_task(
+                //     client.clone(),
+                //     cache.clone(),
+                //     bucket.clone(),
+                //     *key,
+                // ));
                 r_cache.data.get(key).and_then(|task| {
                     handles.push(execute_task(
                         client.clone(),
                         cache.clone(),
+                        bucket.clone(),
                         *key,
                         task.clone(),
                     ));
@@ -50,11 +66,6 @@ fn execute_tasks_in_lookback_window(
 
     // Join threads
     if !handles.is_empty() {
-        println!(
-            "Processed {} tasks in blocktime window starting at {}",
-            handles.len(),
-            blocktime
-        );
         for h in handles {
             h.join().unwrap();
         }
@@ -64,10 +75,22 @@ fn execute_tasks_in_lookback_window(
 fn execute_task(
     client: Arc<Client>,
     cache: Arc<RwLock<TaskCache>>,
+    bucket: Arc<Mutex<Bucket>>,
     key: Pubkey,
     task: Task,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
+        // Lock the mutex for this task
+        let mutex = bucket
+            .lock()
+            .unwrap()
+            .get_mutex((key, task.schedule.exec_at));
+        let guard = mutex.try_lock();
+        if guard.is_err() {
+            return;
+        };
+        let guard = guard.unwrap();
+
         // Get accounts
         let config = Config::pda().0;
         let fee = Fee::pda(task.daemon).0;
@@ -96,7 +119,7 @@ fn execute_task(
         let res = sign_and_submit(
             &client,
             &[ix_exec],
-            format!("Executing task: {} {}", key, task.daemon).as_str(),
+            format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
         );
 
         // If exec failed, replicate the task data
@@ -106,7 +129,10 @@ fn execute_task(
             let data = client.get_account_data(&key).unwrap();
             let task = Task::try_from(data).unwrap();
             let mut w_cache = cache.write().unwrap();
-            w_cache.insert(key, task)
+            w_cache.insert(key, task);
         }
+
+        // Drop the mutex
+        drop(guard)
     })
 }

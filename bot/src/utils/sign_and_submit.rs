@@ -11,11 +11,11 @@ pub fn sign_and_submit(
     ixs: &[Instruction],
     memo: &str,
 ) -> ClientResult<Signature> {
-    println!("🤖 {}", memo);
+    println!("{}", memo);
     let payer = client.payer_pubkey();
     let mut tx = Transaction::new_with_payer(ixs, Some(&payer));
     tx.sign(&vec![&client.payer], client.latest_blockhash()?);
     let sig = client.send_and_confirm_transaction(&tx)?;
-    println!("🔏 {:?}", sig);
+    println!("✅ {:?}", sig);
     Ok(sig)
 }
