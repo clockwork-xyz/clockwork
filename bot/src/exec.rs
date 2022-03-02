@@ -1,9 +1,5 @@
 use {
-    crate::{
-        bucket::Bucket,
-        cache::TaskCache,
-        utils::{monitor_blocktime, sign_and_submit},
-    },
+    crate::{bucket::Bucket, cache::TaskCache, client::RPCClient, env},
     cronos_sdk::account::*,
     solana_client_helpers::Client,
     solana_sdk::{instruction::AccountMeta, pubkey::Pubkey},
@@ -20,7 +16,7 @@ pub fn execute_tasks(
     cache: Arc<RwLock<TaskCache>>,
     bucket: Arc<Mutex<Bucket>>,
 ) {
-    let blocktime_receiver = monitor_blocktime();
+    let blocktime_receiver = cronos_sdk::monitor_blocktime(env::wss_endpoint());
     for blocktime in blocktime_receiver {
         println!("⏳ Blocktime: {}", blocktime);
         let tcache = cache.clone();
@@ -112,8 +108,7 @@ fn execute_task(
             .push(AccountMeta::new_readonly(task.ix.program_id, false));
 
         // Sign and submit
-        let res = sign_and_submit(
-            &client,
+        let res = client.sign_and_submit(
             &[ix_exec],
             format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
         );

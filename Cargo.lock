@@ -778,6 +778,8 @@ version = "0.1.6"
 dependencies = [
  "anchor-client",
  "cronos-program",
+ "solana-account-decoder",
+ "solana-client",
  "solana-client-helpers",
  "solana-program",
  "solana-sdk",

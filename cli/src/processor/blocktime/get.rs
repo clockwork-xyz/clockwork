@@ -6,7 +6,7 @@ use crate::error::CliError;
 
 pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     let blocktime =
-        cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
+        cronos_sdk::get_blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
     println!("Blocktime: {}", blocktime);
     Ok(())
 }

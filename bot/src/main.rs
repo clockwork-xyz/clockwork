@@ -2,16 +2,16 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use bucket::Bucket;
 use cache::TaskCache;
+use client::RPCClient;
 use dotenv::dotenv;
-use solana_client_helpers::ClientResult;
-use utils::new_rpc_client;
+use solana_client_helpers::{Client, ClientResult};
 
 mod bucket;
 mod cache;
+mod client;
 mod env;
 mod exec;
 mod replicate;
-mod utils;
 
 use {exec::*, replicate::*};
 
@@ -20,7 +20,7 @@ fn main() -> ClientResult<()> {
     dotenv().ok();
 
     // Load resources
-    let client = Arc::new(new_rpc_client());
+    let client = Arc::new(Client::new());
     let cache = Arc::new(RwLock::new(TaskCache::new()));
     let bucket = Arc::new(Mutex::new(Bucket::default()));
 
