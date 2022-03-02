@@ -26,10 +26,9 @@ pub fn monitor_blocktime(url: String) -> Receiver<i64> {
     let (blocktime_sender, blocktime_receiver) = mpsc::channel::<i64>();
     thread::spawn(move || {
         let mut latest_blocktime: i64 = 0;
-        let clock_addr = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
         let (_ws_client, clock_receiver) = PubsubClient::account_subscribe(
             url.as_str(),
-            &clock_addr,
+            &clock_sysvar_address(),
             Some(RpcAccountInfoConfig {
                 encoding: Some(UiAccountEncoding::Base64),
                 commitment: Some(CommitmentConfig::processed()),
@@ -41,7 +40,7 @@ pub fn monitor_blocktime(url: String) -> Receiver<i64> {
         for ui_account_response in clock_receiver {
             let ui_account = ui_account_response.value;
             let account = ui_account.decode::<Account>().unwrap();
-            let clock = deserialize_clock(account.data);
+            let clock = deserialize_clock_sysvar(account.data);
             let blocktime = clock.unix_timestamp;
             if blocktime > latest_blocktime {
                 latest_blocktime = blocktime;
@@ -52,13 +51,16 @@ pub fn monitor_blocktime(url: String) -> Receiver<i64> {
     return blocktime_receiver;
 }
 
-fn fetch_clock_sysvar(client: &Arc<Client>) -> Result<Clock, ClientError> {
-    let clock_addr = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
-    let data = client.get_account_data(&clock_addr)?;
-    Ok(deserialize_clock(data))
+fn clock_sysvar_address() -> Pubkey {
+    Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap()
 }
 
-fn deserialize_clock(data: Vec<u8>) -> Clock {
+fn fetch_clock_sysvar(client: &Arc<Client>) -> Result<Clock, ClientError> {
+    let data = client.get_account_data(&clock_sysvar_address())?;
+    Ok(deserialize_clock_sysvar(data))
+}
+
+fn deserialize_clock_sysvar(data: Vec<u8>) -> Clock {
     Clock {
         slot: Slot::from_le_bytes(data.as_slice()[0..8].try_into().unwrap()),
         epoch_start_timestamp: UnixTimestamp::from_le_bytes(
