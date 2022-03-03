@@ -4,40 +4,41 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_WORKER_PAGE: &[u8] = b"worker_page";
+pub const SEED_POOL: &[u8] = b"pool";
 
 /**
- * WorkerPage
+ * Pool
  */
 
 #[account]
 #[derive(Debug)]
-pub struct WorkerPage {
+pub struct Pool {
+    pub workers: Vec<Pubkey>,
     pub bump: u8,
 }
 
-impl WorkerPage {
+impl Pool {
     pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_WORKER_PAGE], &crate::ID)
+        Pubkey::find_program_address(&[SEED_POOL], &crate::ID)
     }
 }
 
-impl TryFrom<Vec<u8>> for WorkerPage {
+impl TryFrom<Vec<u8>> for Pool {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        WorkerPage::try_deserialize(&mut data.as_slice())
+        Pool::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * WorkerPageAccount
+ * PoolAccount
  */
 
-pub trait WorkerPageAccount {
+pub trait PoolAccount {
     fn init(&mut self, bump: u8) -> Result<()>;
 }
 
-impl WorkerPageAccount for Account<'_, WorkerPage> {
+impl PoolAccount for Account<'_, Pool> {
     fn init(&mut self, bump: u8) -> Result<()> {
         self.bump = bump;
         Ok(())

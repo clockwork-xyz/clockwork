@@ -34,8 +34,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ConfigSetProgramFee { new_value } => {
             super::config::set_program_fee(&client, &new_value)
         }
-        CliCommand::ConfigSetWorkerFee { new_value } => {
-            super::config::set_worker_fee(&client, &new_value)
+        CliCommand::ConfigSetWorkerExecFee { new_value } => {
+            super::config::set_worker_exec_fee(&client, &new_value)
         }
         CliCommand::DaemonNew => super::daemon::new(&client),
         CliCommand::DaemonGet => super::daemon::get(&client),

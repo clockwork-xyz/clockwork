@@ -21,7 +21,7 @@ pub enum CliCommand {
     ConfigSetProgramFee {
         new_value: u64,
     },
-    ConfigSetWorkerFee {
+    ConfigSetWorkerExecFee {
         new_value: u64,
     },
     DaemonGet,
@@ -56,8 +56,8 @@ impl Display for CliCommand {
             CliCommand::ConfigSetProgramFee { new_value } => {
                 write!(f, "config set program_fee {}", new_value)
             }
-            CliCommand::ConfigSetWorkerFee { new_value } => {
-                write!(f, "config set worker_fee {}", new_value)
+            CliCommand::ConfigSetWorkerExecFee { new_value } => {
+                write!(f, "config set worker_exec_fee {}", new_value)
             }
             CliCommand::DaemonGet => write!(f, "daemon"),
             CliCommand::DaemonNew => write!(f, "daemon new"),

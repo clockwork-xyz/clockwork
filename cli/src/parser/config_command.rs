@@ -19,7 +19,7 @@ fn config_set_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("program_fee", matches)) => Ok(CliCommand::ConfigSetProgramFee {
             new_value: parse_u64(&"new_value".into(), matches)?,
         }),
-        Some(("worker_fee", matches)) => Ok(CliCommand::ConfigSetWorkerFee {
+        Some(("worker_exec_fee", matches)) => Ok(CliCommand::ConfigSetWorkerExecFee {
             new_value: parse_u64(&"new_value".into(), matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(

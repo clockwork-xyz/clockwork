@@ -69,11 +69,18 @@ pub mod cronos {
         admin_update_program_fee::handler(ctx, new_program_fee)
     }
 
-    pub fn admin_update_worker_fee(
-        ctx: Context<AdminUpdateWorkerFee>,
-        new_worker_fee: u64,
+    pub fn admin_update_worker_exec_fee(
+        ctx: Context<AdminUpdateWorkerExecFee>,
+        new_worker_exec_fee: u64,
     ) -> Result<()> {
-        admin_update_worker_fee::handler(ctx, new_worker_fee)
+        admin_update_worker_exec_fee::handler(ctx, new_worker_exec_fee)
+    }
+
+    pub fn admin_update_worker_noop_fee(
+        ctx: Context<AdminUpdateWorkerNoopFee>,
+        new_worker_noop_fee: u64,
+    ) -> Result<()> {
+        admin_update_worker_noop_fee::handler(ctx, new_worker_noop_fee)
     }
 
     pub fn daemon_create(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> Result<()> {

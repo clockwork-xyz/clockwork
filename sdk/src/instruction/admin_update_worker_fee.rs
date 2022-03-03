@@ -6,13 +6,20 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn admin_update_worker_fee(admin: Pubkey, config: Pubkey, new_worker_fee: u64) -> Instruction {
+pub fn admin_update_worker_exec_fee(
+    admin: Pubkey,
+    config: Pubkey,
+    new_worker_exec_fee: u64,
+) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_program::instruction::AdminUpdateWorkerFee { new_worker_fee }.data(),
+        data: cronos_program::instruction::AdminUpdateWorkerExecFee {
+            new_worker_exec_fee,
+        }
+        .data(),
     }
 }
