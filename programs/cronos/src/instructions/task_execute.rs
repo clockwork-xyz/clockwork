@@ -1,8 +1,8 @@
-use crate::state::*;
-use crate::errors::CronosError;
-
-use anchor_lang::prelude::*;
-use solana_program::sysvar;
+use {
+    crate::{state::*, errors::CronosError},
+    anchor_lang::prelude::*,
+    solana_program::sysvar
+};
 
 #[derive(Accounts)]
 #[instruction()]

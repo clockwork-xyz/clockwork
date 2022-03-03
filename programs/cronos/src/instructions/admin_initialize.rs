@@ -1,9 +1,9 @@
-use crate::state::*;
-
-use anchor_lang::prelude::*;
-use solana_program::system_program;
-
-use std::mem::size_of;
+use {
+    crate::state::*,
+    anchor_lang::prelude::*,
+    solana_program::system_program,
+    std::mem::size_of,
+};
 
 #[derive(Accounts)]
 #[instruction(

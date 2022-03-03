@@ -1,10 +1,10 @@
-use crate::state::*;
-use crate::errors::CronosError;
+use {
+    crate::{state::*, errors::CronosError},
+    anchor_lang::prelude::*,
+    solana_program::{system_program, sysvar},
+    std::mem::size_of
+};
 
-use anchor_lang::prelude::*;
-use solana_program::{system_program, sysvar};
-
-use std::mem::size_of;
 
 #[derive(Accounts)]
 #[instruction(

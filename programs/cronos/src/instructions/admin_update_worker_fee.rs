@@ -1,6 +1,4 @@
-use crate::state::*;
-
-use anchor_lang::prelude::*;
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 #[instruction(new_worker_fee: u64)]
