@@ -12,7 +12,7 @@ pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     let health_data = cronos_sdk::account::Health::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(health_addr.to_string()))?;
     let blocktime =
-        cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
+        cronos_sdk::get_blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?;
 
     println!("  Block time: {}", blocktime);
     println!("   Last ping: {} sec", blocktime - health_data.last_ping);

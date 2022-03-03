@@ -1,22 +1,34 @@
+use std::sync::{Arc, Mutex, RwLock};
+
+use bucket::Bucket;
+use cache::TaskCache;
+use client::RPCClient;
 use dotenv::dotenv;
-use solana_client_helpers::ClientResult;
+use solana_client_helpers::{Client, ClientResult};
 
+mod bucket;
+mod cache;
+mod client;
 mod env;
-mod execute;
+mod exec;
 mod replicate;
-mod utils;
 
-use {execute::*, replicate::*};
+use {exec::*, replicate::*};
 
 fn main() -> ClientResult<()> {
     // Load env file
     dotenv().ok();
 
-    // Replicate Cronos tasks to Postgres
-    replicate_cronos_tasks();
+    // Load resources
+    let client = Arc::new(Client::new());
+    let cache = Arc::new(RwLock::new(TaskCache::new()));
+    let bucket = Arc::new(Mutex::new(Bucket::default()));
 
-    // Process pending tasks when Solana blocktime updates
-    process_tasks();
+    // Replicate tasks
+    replicate_tasks(cache.clone());
+
+    // Execute tasks
+    execute_tasks(client, cache, bucket);
 
     Ok(())
 }

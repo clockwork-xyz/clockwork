@@ -729,7 +729,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-bot"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anchor-client",
  "cronos-sdk",
@@ -745,7 +745,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cli"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anchor-lang",
  "clap 3.1.2",
@@ -766,7 +766,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -774,10 +774,12 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anchor-client",
  "cronos-program",
+ "solana-account-decoder",
+ "solana-client",
  "solana-client-helpers",
  "solana-program",
  "solana-sdk",

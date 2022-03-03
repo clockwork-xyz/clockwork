@@ -1,17 +1,20 @@
-// use anchor_lang::prelude::Pubkey;
-
-use cronos_sdk::account::*;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::{
-    pubsub_client::PubsubClient,
-    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+use {
+    crate::{cache::TaskCache, env},
+    cronos_sdk::account::*,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::{
+        pubsub_client::PubsubClient,
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+    },
+    solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey},
+    std::{
+        str::FromStr,
+        sync::{Arc, RwLock},
+        thread,
+    },
 };
-use solana_sdk::{account::Account, commitment_config::CommitmentConfig, pubkey::Pubkey};
-use std::{str::FromStr, thread};
 
-use crate::{env, replicate_task};
-
-pub fn replicate_cronos_tasks() {
+pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
     thread::spawn(move || {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
@@ -37,12 +40,18 @@ pub fn replicate_cronos_tasks() {
             // Unwrap task
             let task = Task::try_from(account.data);
             if !task.is_err() {
+                let key = Pubkey::from_str(&keyed_account.pubkey).unwrap();
                 let task = task.unwrap();
-                replicate_task(Pubkey::from_str(&keyed_account.pubkey).unwrap(), task);
+                println!("💽 Replicating task {} {}", key, task.status);
+                let mut w_cache = cache.write().unwrap();
+                match task.status {
+                    TaskStatus::Queued => w_cache.insert(key, task),
+                    TaskStatus::Cancelled | TaskStatus::Done => w_cache.delete(key),
+                }
             }
         }
 
         // If we reach here, just restart the process.
-        replicate_cronos_tasks();
+        replicate_tasks(cache);
     });
 }

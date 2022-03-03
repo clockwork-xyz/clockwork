@@ -26,6 +26,9 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 # Update version
 echo $new_version > VERSION
 
+# Wait for Cargo.toml update
+sleep 10
+
 # Git commit 
 echo "$(git diff --stat | tail -n1)"
 git checkout -b release/${new_version}

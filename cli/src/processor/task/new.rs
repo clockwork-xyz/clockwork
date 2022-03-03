@@ -28,7 +28,7 @@ pub fn new(
     let exec_at = match exec_at {
         Some(v) => v,
         None => {
-            cronos_sdk::blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?
+            cronos_sdk::get_blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?
         }
     };
     let recurr = match recurr {
@@ -48,7 +48,7 @@ pub fn new(
     let schedule = cronos_sdk::account::TaskSchedule {
         exec_at,
         stop_at,
-        recurr
+        recurr,
     };
     let task_ix = cronos_sdk::instruction::task_create(
         task_pda,
@@ -56,7 +56,7 @@ pub fn new(
         daemon_addr,
         owner,
         ix,
-        schedule
+        schedule,
     );
 
     // Sign and submit
