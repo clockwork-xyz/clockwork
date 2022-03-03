@@ -1,9 +1,8 @@
-use crate::pda::PDA;
-
-use anchor_lang::prelude::*;
-use anchor_lang::AnchorDeserialize;
-
-use std::convert::TryFrom;
+use {
+    crate::pda::PDA,
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    std::convert::TryFrom,
+};
 
 pub const SEED_TREASURY: &[u8] = b"treasury";
 

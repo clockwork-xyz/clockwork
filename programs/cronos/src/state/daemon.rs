@@ -1,12 +1,9 @@
-use crate::errors::CronosError;
-use crate::pda::PDA;
-
-use anchor_lang::prelude::*;
-use anchor_lang::AccountDeserialize;
-use solana_program::instruction::Instruction;
-use solana_program::program::invoke_signed;
-
-use std::convert::TryFrom;
+use {
+    crate::{errors::CronosError, pda::PDA},
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    solana_program::{instruction::Instruction, program::invoke_signed},
+    std::convert::TryFrom,
+};
 
 pub const SEED_DAEMON: &[u8] = b"daemon";
 

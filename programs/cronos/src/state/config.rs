@@ -1,10 +1,8 @@
-use crate::errors::CronosError;
-use crate::pda::PDA;
-
-use anchor_lang::prelude::*;
-use anchor_lang::AccountDeserialize;
-
-use std::convert::TryFrom;
+use {
+    crate::{errors::CronosError, pda::PDA},
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    std::convert::TryFrom,
+};
 
 pub const SEED_CONFIG: &[u8] = b"config";
 

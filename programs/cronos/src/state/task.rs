@@ -1,13 +1,10 @@
-use super::{Config, Daemon, DaemonAccount, Fee};
-use crate::errors::CronosError;
-use crate::pda::PDA;
-
-use anchor_lang::prelude::borsh::BorshSchema;
-use anchor_lang::prelude::*;
-use anchor_lang::AccountDeserialize;
-use solana_program::instruction::Instruction;
-
-use std::convert::TryFrom;
+use {
+    super::{Config, Daemon, DaemonAccount, Fee},
+    crate::{errors::CronosError, pda::PDA},
+    anchor_lang::{prelude::borsh::BorshSchema, prelude::*, AnchorDeserialize},
+    solana_program::instruction::Instruction,
+    std::convert::TryFrom,
+};
 
 pub const SEED_TASK: &[u8] = b"task";
 
