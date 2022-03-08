@@ -1,6 +1,6 @@
 
 use chrono::offset::TimeZone;
-use chrono::{DateTime, Datelike, Timelike, Utc};
+use chrono::{DateTime, Datelike, Timelike};
 use std::ops::Bound::{Included, Unbounded};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
@@ -217,14 +217,14 @@ impl Schedule {
         None
     }
 
-    /// Provides an iterator which will return each DateTime that matches the schedule starting with
-    /// the current time if applicable.
-    pub fn upcoming<Z>(&self, timezone: Z) -> ScheduleIterator<'_, Z>
-    where
-        Z: TimeZone,
-    {
-        self.after(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
-    }
+    // /// Provides an iterator which will return each DateTime that matches the schedule starting with
+    // /// the current time if applicable.
+    // pub fn upcoming<Z>(&self, timezone: Z) -> ScheduleIterator<'_, Z>
+    // where
+    //     Z: TimeZone,
+    // {
+    //     self.after(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
+    // }
 
     /// Like the `upcoming` method, but allows you to specify a start time other than the present.
     pub fn after<Z>(&self, after: &DateTime<Z>) -> ScheduleIterator<'_, Z>
@@ -423,91 +423,91 @@ mod test {
     use super::*;
     use std::str::{FromStr};
 
-    #[test]
-    fn test_next_and_prev_from() {
-        let expression = "0 5,13,40-42 17 1 Jan *";
-        let schedule = Schedule::from_str(expression).unwrap();
+    // #[test]
+    // fn test_next_and_prev_from() {
+    //     let expression = "0 5,13,40-42 17 1 Jan *";
+    //     let schedule = Schedule::from_str(expression).unwrap();
 
-        let next = schedule.next_after(&Utc::now());
-        println!("NEXT AFTER for {} {:?}", expression, next);
-        assert!(next.is_some());
+    //     let next = schedule.next_after(&Utc::now());
+    //     println!("NEXT AFTER for {} {:?}", expression, next);
+    //     assert!(next.is_some());
 
-        let next2 = schedule.next_after(&next.unwrap());
-        println!("NEXT2 AFTER for {} {:?}", expression, next2);
-        assert!(next2.is_some());
+    //     let next2 = schedule.next_after(&next.unwrap());
+    //     println!("NEXT2 AFTER for {} {:?}", expression, next2);
+    //     assert!(next2.is_some());
 
-        let prev = schedule.prev_from(&next2.unwrap());
-        println!("PREV FROM for {} {:?}", expression, prev);
-        assert!(prev.is_some());
-        assert_eq!(prev, next);
-    }
+    //     let prev = schedule.prev_from(&next2.unwrap());
+    //     println!("PREV FROM for {} {:?}", expression, prev);
+    //     assert!(prev.is_some());
+    //     assert_eq!(prev, next);
+    // }
 
-    #[test]
-    fn test_prev_from() {
-        let expression = "0 5,13,40-42 17 1 Jan *";
-        let schedule = Schedule::from_str(expression).unwrap();
-        let prev = schedule.prev_from(&Utc::now());
-        println!("PREV FROM for {} {:?}", expression, prev);
-        assert!(prev.is_some());
-    }
+    // #[test]
+    // fn test_prev_from() {
+    //     let expression = "0 5,13,40-42 17 1 Jan *";
+    //     let schedule = Schedule::from_str(expression).unwrap();
+    //     let prev = schedule.prev_from(&Utc::now());
+    //     println!("PREV FROM for {} {:?}", expression, prev);
+    //     assert!(prev.is_some());
+    // }
 
-    #[test]
-    fn test_next_after() {
-        let expression = "0 5,13,40-42 17 1 Jan *";
-        let schedule = Schedule::from_str(expression).unwrap();
-        let next = schedule.next_after(&Utc::now());
-        println!("NEXT AFTER for {} {:?}", expression, next);
-        assert!(next.is_some());
-    }
+    // #[test]
+    // fn test_next_after() {
+    //     let expression = "0 5,13,40-42 17 1 Jan *";
+    //     let schedule = Schedule::from_str(expression).unwrap();
+    //     let next = schedule.next_after(&Utc::now());
+    //     println!("NEXT AFTER for {} {:?}", expression, next);
+    //     assert!(next.is_some());
+    // }
 
-    #[test]
-    fn test_upcoming_utc() {
-        let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
-        let schedule = Schedule::from_str(expression).unwrap();
-        let mut upcoming = schedule.upcoming(Utc);
-        let next1 = upcoming.next();
-        assert!(next1.is_some());
-        let next2 = upcoming.next();
-        assert!(next2.is_some());
-        let next3 = upcoming.next();
-        assert!(next3.is_some());
-        println!("Upcoming 1 for {} {:?}", expression, next1);
-        println!("Upcoming 2 for {} {:?}", expression, next2);
-        println!("Upcoming 3 for {} {:?}", expression, next3);
-    }
+    // #[test]
+    // fn test_upcoming_utc() {
+    //     let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
+    //     let schedule = Schedule::from_str(expression).unwrap();
+    //     let mut upcoming = schedule.upcoming(Utc);
+    //     let next1 = upcoming.next();
+    //     assert!(next1.is_some());
+    //     let next2 = upcoming.next();
+    //     assert!(next2.is_some());
+    //     let next3 = upcoming.next();
+    //     assert!(next3.is_some());
+    //     println!("Upcoming 1 for {} {:?}", expression, next1);
+    //     println!("Upcoming 2 for {} {:?}", expression, next2);
+    //     println!("Upcoming 3 for {} {:?}", expression, next3);
+    // }
 
-    #[test]
-    fn test_upcoming_rev_utc() {
-        let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
-        let schedule = Schedule::from_str(expression).unwrap();
-        let mut upcoming = schedule.upcoming(Utc).rev();
-        let prev1 = upcoming.next();
-        assert!(prev1.is_some());
-        let prev2 = upcoming.next();
-        assert!(prev2.is_some());
-        let prev3 = upcoming.next();
-        assert!(prev3.is_some());
-        println!("Prev Upcoming 1 for {} {:?}", expression, prev1);
-        println!("Prev Upcoming 2 for {} {:?}", expression, prev2);
-        println!("Prev Upcoming 3 for {} {:?}", expression, prev3);
-    }
+    // #[test]
+    // fn test_upcoming_rev_utc() {
+    //     let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
+    //     let schedule = Schedule::from_str(expression).unwrap();
+    //     let mut upcoming = schedule.upcoming(Utc).rev();
+    //     let prev1 = upcoming.next();
+    //     assert!(prev1.is_some());
+    //     let prev2 = upcoming.next();
+    //     assert!(prev2.is_some());
+    //     let prev3 = upcoming.next();
+    //     assert!(prev3.is_some());
+    //     println!("Prev Upcoming 1 for {} {:?}", expression, prev1);
+    //     println!("Prev Upcoming 2 for {} {:?}", expression, prev2);
+    //     println!("Prev Upcoming 3 for {} {:?}", expression, prev3);
+    // }
 
-    #[test]
-    fn test_upcoming_local() {
-        use chrono::Local;
-        let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
-        let schedule = Schedule::from_str(expression).unwrap();
-        let mut upcoming = schedule.upcoming(Local);
-        let next1 = upcoming.next();
-        assert!(next1.is_some());
-        let next2 = upcoming.next();
-        assert!(next2.is_some());
-        let next3 = upcoming.next();
-        assert!(next3.is_some());
-        println!("Upcoming 1 for {} {:?}", expression, next1);
-        println!("Upcoming 2 for {} {:?}", expression, next2);
-        println!("Upcoming 3 for {} {:?}", expression, next3);
-    }
+    // #[test]
+    // fn test_upcoming_local() {
+    //     use chrono::Local;
+    //     let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
+    //     let schedule = Schedule::from_str(expression).unwrap();
+    //     let mut upcoming = schedule.upcoming(Local);
+    //     let next1 = upcoming.next();
+    //     assert!(next1.is_some());
+    //     let next2 = upcoming.next();
+    //     assert!(next2.is_some());
+    //     let next3 = upcoming.next();
+    //     assert!(next3.is_some());
+    //     println!("Upcoming 1 for {} {:?}", expression, next1);
+    //     println!("Upcoming 2 for {} {:?}", expression, next2);
+    //     println!("Upcoming 3 for {} {:?}", expression, next3);
+    // }
 
     #[test]
     fn test_schedule_to_string() {
