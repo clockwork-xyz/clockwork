@@ -1,3 +1,5 @@
+use solana_program::log::sol_log_compute_units;
+
 use {
     crate::{state::*, errors::CronosError},
     anchor_lang::prelude::*,
@@ -64,7 +66,12 @@ pub fn handler(
 ) -> Result<()> {
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
+    let owner = &ctx.accounts.owner;
     let task = &mut ctx.accounts.task;
 
-    task.init(config, daemon, ix, schedule, bump)
+    let res = task.init(config, daemon, owner.key(), ix, schedule, bump);
+
+    sol_log_compute_units();
+
+    res
 }

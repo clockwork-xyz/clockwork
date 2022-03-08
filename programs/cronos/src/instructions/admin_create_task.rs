@@ -70,9 +70,10 @@ pub fn handler(
     schedule: TaskSchedule,
     bump: u8
 ) -> Result<()> {
+    let admin = &ctx.accounts.admin;
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
-    task.init(config, daemon, ix, schedule, bump)
+    task.init(config, daemon,  admin.key(), ix, schedule, bump)
 }

@@ -26,6 +26,9 @@ pub struct TaskExecute<'info> {
     )]
     pub daemon: Account<'info, Daemon>,
 
+    #[account(mut)]
+    pub executor: Signer<'info>,
+
     #[account(
         mut,
         seeds = [
@@ -48,19 +51,17 @@ pub struct TaskExecute<'info> {
         has_one = daemon,
         constraint = task.status == TaskStatus::Queued @ CronosError::TaskNotQueued,
         constraint = task.schedule.exec_at <= clock.unix_timestamp @ CronosError::TaskNotDue,
+        constraint = task.executor == executor.key() || task.executor == crate::ID
     )]
     pub task: Account<'info, Task>,
-
-    #[account(mut)]
-    pub worker: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<TaskExecute>) -> Result<()> {
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
+    let executor = &mut ctx.accounts.executor;
     let fee = &mut ctx.accounts.fee;
     let task = &mut ctx.accounts.task;
-    let worker = &mut ctx.accounts.worker;
-
-    task.execute(&ctx.remaining_accounts.iter().as_slice(), config, daemon, fee, worker)
+    
+    task.execute(&ctx.remaining_accounts.iter().as_slice(), config, daemon, executor, fee)
 }

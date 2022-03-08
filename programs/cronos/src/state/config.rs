@@ -14,10 +14,10 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
+    pub exec_timeout: i64,
     pub min_recurr: i64,
     pub program_fee: u64,
-    pub worker_exec_fee: u64,
-    pub worker_noop_fee: u64,
+    pub worker_fee: u64,
     pub bump: u8,
 }
 
@@ -47,18 +47,16 @@ pub trait ConfigAccount {
 
     fn update_program_fee(&mut self, admin: &Signer, new_program_fee: u64) -> Result<()>;
 
-    fn update_worker_exec_fee(&mut self, admin: &Signer, new_worker_exec_fee: u64) -> Result<()>;
-
-    fn update_worker_noop_fee(&mut self, admin: &Signer, new_worker_noopo_fee: u64) -> Result<()>;
+    fn update_worker_fee(&mut self, admin: &Signer, new_worker_fee: u64) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
     fn init(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
         self.admin = admin;
+        self.exec_timeout = 10; // Time window in which authorized workers must execute a task before anyone is allowed to attempt exec
         self.min_recurr = 5; // Minimum supported recurrence interval
         self.program_fee = 0; // Lamports to pay to program for each task execution
-        self.worker_exec_fee = 0; // Lamports to pay worker for executing a task
-        self.worker_noop_fee = 0; // Lamports to pay authorized worker that lost the exec race
+        self.worker_fee = 0; // Lamports to pay worker for executing a task
         self.bump = bump;
         Ok(())
     }
@@ -82,15 +80,9 @@ impl ConfigAccount for Account<'_, Config> {
         Ok(())
     }
 
-    fn update_worker_exec_fee(&mut self, admin: &Signer, new_worker_exec_fee: u64) -> Result<()> {
+    fn update_worker_fee(&mut self, admin: &Signer, new_worker_fee: u64) -> Result<()> {
         require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        self.worker_exec_fee = new_worker_exec_fee;
-        Ok(())
-    }
-
-    fn update_worker_noop_fee(&mut self, admin: &Signer, new_worker_noop_fee: u64) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        self.worker_noop_fee = new_worker_noop_fee;
+        self.worker_fee = new_worker_fee;
         Ok(())
     }
 }

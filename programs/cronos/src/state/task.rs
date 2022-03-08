@@ -16,10 +16,12 @@ pub const SEED_TASK: &[u8] = b"task";
 #[derive(Debug)]
 pub struct Task {
     pub daemon: Pubkey,
+    pub executor: Pubkey,
     pub int: u128,
     pub ix: InstructionData,
     pub schedule: TaskSchedule,
     pub status: TaskStatus,
+    pub worker: Pubkey,
     pub bump: u8,
 }
 
@@ -48,6 +50,7 @@ pub trait TaskAccount {
         &mut self,
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
+        executor: Pubkey,
         ix: InstructionData,
         schedule: TaskSchedule,
         bump: u8,
@@ -55,13 +58,15 @@ pub trait TaskAccount {
 
     fn cancel(&mut self) -> Result<()>;
 
+    fn delegate(&mut self, to: Pubkey) -> Result<()>;
+
     fn execute(
         &mut self,
         account_infos: &[AccountInfo],
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
+        executor: &mut Signer,
         fee: &mut Account<Fee>,
-        worker: &mut Signer,
     ) -> Result<()>;
 }
 
@@ -70,6 +75,7 @@ impl TaskAccount for Account<'_, Task> {
         &mut self,
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
+        executor: Pubkey,
         ix: InstructionData,
         schedule: TaskSchedule,
         bump: u8,
@@ -95,6 +101,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Initialize task account.
         self.daemon = daemon.key();
+        self.executor = executor;
         self.int = daemon.task_count;
         self.ix = ix;
         self.status = TaskStatus::Queued;
@@ -112,13 +119,18 @@ impl TaskAccount for Account<'_, Task> {
         Ok(())
     }
 
+    fn delegate(&mut self, to: Pubkey) -> Result<()> {
+        self.executor = to;
+        Ok(())
+    }
+
     fn execute(
         &mut self,
         account_infos: &[AccountInfo],
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
+        executor: &mut Signer,
         fee: &mut Account<Fee>,
-        worker: &mut Signer,
     ) -> Result<()> {
         // Update task schedule.
         let next_exec_at = self
@@ -156,7 +168,7 @@ impl TaskAccount for Account<'_, Task> {
             .lamports()
             .checked_sub(config.program_fee)
             .unwrap();
-        **worker.to_account_info().try_borrow_mut_lamports()? = worker
+        **executor.to_account_info().try_borrow_mut_lamports()? = executor
             .to_account_info()
             .lamports()
             .checked_add(config.program_fee)
@@ -178,20 +190,6 @@ pub struct InstructionData {
     pub accounts: Vec<AccountMetaData>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
-}
-
-impl std::fmt::Display for InstructionData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{
-        program_id: {},
-        accounts: {:?},
-        data: {:?}
-    }}",
-            self.program_id, self.accounts, self.data
-        )
-    }
 }
 
 impl From<Instruction> for InstructionData {
@@ -263,16 +261,6 @@ pub struct TaskSchedule {
     pub exec_at: i64, // Time to execute at
     pub stop_at: i64, // Stop executing at
     pub recurr: i64,  // Duration between exec
-}
-
-impl std::fmt::Display for TaskSchedule {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{ exec_at: {}, stop_at: {}, recurr: {} }}",
-            self.exec_at, self.stop_at, self.recurr
-        )
-    }
 }
 
 /**
