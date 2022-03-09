@@ -42,7 +42,6 @@ pub struct ConfigSettings {
     pub program_fee: u64,
     pub bot_fee: u64,
 }
-
 /**
  * ConfigAccount
  */

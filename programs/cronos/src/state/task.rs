@@ -83,7 +83,7 @@ impl TaskAccount for Account<'_, Task> {
         schedule: String,
     ) -> Result<()> {
         // Reject the instruction if it has signers other than the daemon.
-        // (Feature request): Multi-sig ixs
+        // TODO Support multi-sig ixs
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 require!(
