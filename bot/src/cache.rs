@@ -18,34 +18,34 @@ impl TaskCache {
     }
 
     pub fn insert(&mut self, key: Pubkey, task: Task) {
-        self.delete(key);
-        self.data.insert(key, task.clone());
+        // self.delete(key);
+        // self.data.insert(key, task.clone());
 
-        match self.index.get_mut(&task.schedule.exec_at) {
-            Some(cached_set) => {
-                cached_set.insert(key);
-            }
-            None => {
-                let mut set = HashSet::new();
-                set.insert(key);
-                self.index.insert(task.schedule.exec_at, set);
-            }
-        }
+        // match self.index.get_mut(&task.schedule.exec_at) {
+        //     Some(cached_set) => {
+        //         cached_set.insert(key);
+        //     }
+        //     None => {
+        //         let mut set = HashSet::new();
+        //         set.insert(key);
+        //         self.index.insert(task.schedule.exec_at, set);
+        //     }
+        // }
     }
 
     pub fn delete(&mut self, key: Pubkey) {
-        self.data.clone().get(&key).and_then(|task| {
-            self.data.remove(&key);
-            self.index
-                .clone()
-                .get_mut(&task.schedule.exec_at)
-                .and_then(|cached_set| {
-                    cached_set.remove(&key);
-                    if cached_set.is_empty() {
-                        self.index.remove(&task.schedule.exec_at);
-                    }
-                    Some(())
-                })
-        });
+        // self.data.clone().get(&key).and_then(|task| {
+        //     self.data.remove(&key);
+        //     self.index
+        //         .clone()
+        //         .get_mut(&task.schedule.exec_at)
+        //         .and_then(|cached_set| {
+        //             cached_set.remove(&key);
+        //             if cached_set.is_empty() {
+        //                 self.index.remove(&task.schedule.exec_at);
+        //             }
+        //             Some(())
+        //         })
+        // });
     }
 }

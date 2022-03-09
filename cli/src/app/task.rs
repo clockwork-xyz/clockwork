@@ -1,4 +1,4 @@
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 
 pub fn app() -> Command<'static> {
     Command::new("task")
@@ -34,27 +34,11 @@ fn task_new_app() -> Command<'static> {
                 .help("Filepath to the instruction to invoke"),
         )
         .arg(
-            Arg::new("exec_at")
-                .long("exec_at")
-                .short('e')
-                .takes_value(true)
-                .required(false)
-                .help("When to invoke the instruction"),
-        )
-        .arg(
-            Arg::new("stop_at")
-                .long("stop_at")
+            Arg::new("schedule")
+                .long("schedule")
                 .short('s')
                 .takes_value(true)
                 .required(false)
-                .help("When to stop invoke the instruction"),
-        )
-        .arg(
-            Arg::new("recurr")
-                .long("recurr")
-                .short('r')
-                .takes_value(true)
-                .required(false)
-                .help("The duration to wait between instruction invocations"),
+                .help("Schedule to invoke the instruction"),
         )
 }

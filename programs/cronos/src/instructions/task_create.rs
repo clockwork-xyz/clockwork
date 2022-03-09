@@ -1,5 +1,3 @@
-use solana_program::log::sol_log_compute_units;
-
 use {
     crate::{state::*, errors::CronosError},
     anchor_lang::prelude::*,
@@ -20,12 +18,6 @@ pub struct TaskCreate<'info> {
         constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ CronosError::InvalidExecAtStale
     )]
     pub clock: Sysvar<'info, Clock>,
-
-    #[account(
-        seeds = [SEED_CONFIG],
-        bump = config.bump,
-    )]
-    pub config: Account<'info, Config>,
 
     #[account(
         mut,
@@ -61,17 +53,13 @@ pub struct TaskCreate<'info> {
 pub fn handler(
     ctx: Context<TaskCreate>,
     ix: InstructionData,
-    schedule: TaskSchedule,
+    schedule: String,
     bump: u8,
 ) -> Result<()> {
-    let config = &ctx.accounts.config;
+    let clock = &ctx.accounts.clock;
     let daemon = &mut ctx.accounts.daemon;
     let owner = &ctx.accounts.owner;
     let task = &mut ctx.accounts.task;
 
-    let res = task.init(config, daemon, owner.key(), ix, schedule, bump);
-
-    sol_log_compute_units();
-
-    res
+    task.init(clock, daemon, owner.key(), ix, schedule, bump)
 }

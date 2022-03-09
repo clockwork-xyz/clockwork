@@ -67,13 +67,13 @@ pub struct AdminCreateTask<'info> {
 pub fn handler(
     ctx: Context<AdminCreateTask>, 
     ix: InstructionData,
-    schedule: TaskSchedule,
+    schedule: String,
     bump: u8
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
-    let config = &ctx.accounts.config;
+    let clock = &ctx.accounts.clock;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
-    task.init(config, daemon,  admin.key(), ix, schedule, bump)
+    task.init(clock, daemon,  admin.key(), ix, schedule, bump)
 }

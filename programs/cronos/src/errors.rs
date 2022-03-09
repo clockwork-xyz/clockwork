@@ -10,6 +10,8 @@ pub enum CronosError {
     InvalidRecurrNegative,
     #[msg("Recurrence interval is below the minimum supported time granulartiy")]
     InvalidRecurrBelowMin,
+    #[msg("The cron expression is invalid")]
+    InvalidSchedule,
     #[msg("Your daemon cannot provide all required signatures for this instruction")]
     InvalidSignatory,
 

@@ -7,38 +7,21 @@ use crate::{error::CliError, parser::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
-    AdminCancelTask {
-        address: Pubkey,
-    },
+    AdminCancelTask { address: Pubkey },
     AdminHealthReset,
     AdminHealthStart,
     AdminInitialize,
     Blocktime,
     ConfigGet,
-    ConfigSetMinRecurr {
-        new_value: i64,
-    },
-    ConfigSetProgramFee {
-        new_value: u64,
-    },
-    ConfigSetWorkerExecFee {
-        new_value: u64,
-    },
+    ConfigSetMinRecurr { new_value: i64 },
+    ConfigSetProgramFee { new_value: u64 },
+    ConfigSetWorkerExecFee { new_value: u64 },
     DaemonGet,
     DaemonNew,
     HealthGet,
-    TaskCancel {
-        address: Pubkey,
-    },
-    TaskGet {
-        address: Pubkey,
-    },
-    TaskNew {
-        ix: Instruction,
-        exec_at: Option<i64>,
-        stop_at: Option<i64>,
-        recurr: Option<i64>,
-    },
+    TaskCancel { address: Pubkey },
+    TaskGet { address: Pubkey },
+    TaskNew { ix: Instruction, schedule: String },
 }
 
 impl Display for CliCommand {

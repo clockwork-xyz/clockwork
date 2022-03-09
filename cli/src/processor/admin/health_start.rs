@@ -27,27 +27,10 @@ pub fn health_start(client: &Arc<Client>) -> Result<(), CliError> {
     // Task PDA
     let task_pda = Task::pda(daemon, daemon_data.task_count);
 
-    // Exec at
-    let exec_at = i64::try_from(
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs(),
-    )
-    .unwrap()
-    .checked_add(config_data.min_recurr)
-    .unwrap();
-    let stop_at = i64::MAX; // Continue indefinitely
-    let recurr = config_data.min_recurr;
-
     // Build instructions
+    let schedule = String::from("10 * * * *"); // Every 10 seconds
     let ix_a = cronos_sdk::instruction::admin_reset_health(admin, config, health);
     let health_ping_ix = cronos_sdk::instruction::health_ping(authority, config, daemon, health);
-    let schedule = TaskSchedule {
-        exec_at: i64::try_from(exec_at).unwrap(),
-        stop_at: i64::try_from(stop_at).unwrap(),
-        recurr,
-    };
     let ix_b = cronos_sdk::instruction::admin_create_task(
         task_pda,
         admin,

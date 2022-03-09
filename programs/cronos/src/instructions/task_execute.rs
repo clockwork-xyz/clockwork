@@ -50,8 +50,7 @@ pub struct TaskExecute<'info> {
         bump = task.bump,
         has_one = daemon,
         constraint = task.status == TaskStatus::Queued @ CronosError::TaskNotQueued,
-        constraint = task.schedule.exec_at <= clock.unix_timestamp @ CronosError::TaskNotDue,
-        constraint = task.executor == executor.key() || task.executor == crate::ID
+        constraint = task.exec_at <= clock.unix_timestamp @ CronosError::TaskNotDue,
     )]
     pub task: Account<'info, Task>,
 }

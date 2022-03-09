@@ -13,7 +13,7 @@ pub fn parse_i64(arg: &String, matches: &ArgMatches) -> Result<i64, CliError> {
         .map_err(|_err| CliError::BadParameter(arg.into()))
 }
 
-pub fn parse_i64_optional(arg: &String, matches: &ArgMatches) -> Result<Option<i64>, CliError> {
+pub fn _parse_i64_optional(arg: &String, matches: &ArgMatches) -> Result<Option<i64>, CliError> {
     let i = parse_i64(arg, matches);
     if i.is_err() {
         Ok(None)

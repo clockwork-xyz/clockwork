@@ -42,11 +42,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::HealthGet => super::health::get(&client),
         CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
         CliCommand::TaskGet { address } => super::task::get(&client, &address),
-        CliCommand::TaskNew {
-            ix,
-            exec_at,
-            stop_at,
-            recurr,
-        } => super::task::new(&client, ix, exec_at, stop_at, recurr),
+        CliCommand::TaskNew { ix, schedule } => super::task::new(&client, ix, schedule),
     }
 }

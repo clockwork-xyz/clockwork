@@ -1,7 +1,13 @@
+use std::str::FromStr;
+
+use chrono::{DateTime, NaiveDateTime};
+
 use {
     super::{Config, Daemon, DaemonAccount, Fee},
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::borsh::BorshSchema, prelude::*, AnchorDeserialize},
+    chrono::Utc,
+    cronos_cron::Schedule,
     solana_program::instruction::Instruction,
     std::convert::TryFrom,
 };
@@ -17,11 +23,11 @@ pub const SEED_TASK: &[u8] = b"task";
 pub struct Task {
     pub daemon: Pubkey,
     pub executor: Pubkey,
+    pub exec_at: i64,
     pub int: u128,
     pub ix: InstructionData,
-    pub schedule: TaskSchedule,
+    pub schedule: String,
     pub status: TaskStatus,
-    pub worker: Pubkey,
     pub bump: u8,
 }
 
@@ -48,11 +54,11 @@ impl TryFrom<Vec<u8>> for Task {
 pub trait TaskAccount {
     fn init(
         &mut self,
-        config: &Account<Config>,
+        clock: &Sysvar<Clock>,
         daemon: &mut Account<Daemon>,
         executor: Pubkey,
         ix: InstructionData,
-        schedule: TaskSchedule,
+        schedule: String,
         bump: u8,
     ) -> Result<()>;
 
@@ -68,29 +74,20 @@ pub trait TaskAccount {
         executor: &mut Signer,
         fee: &mut Account<Fee>,
     ) -> Result<()>;
+
+    fn next_exec_after(&self, ts: i64) -> Option<i64>;
 }
 
 impl TaskAccount for Account<'_, Task> {
     fn init(
         &mut self,
-        config: &Account<Config>,
+        clock: &Sysvar<Clock>,
         daemon: &mut Account<Daemon>,
         executor: Pubkey,
         ix: InstructionData,
-        schedule: TaskSchedule,
+        schedule: String,
         bump: u8,
     ) -> Result<()> {
-        // Validate the task scheduling chronology.
-        require!(
-            schedule.exec_at <= schedule.stop_at,
-            CronosError::InvalidChronology
-        );
-        require!(schedule.recurr >= 0, CronosError::InvalidRecurrNegative);
-        require!(
-            schedule.recurr == 0 || schedule.recurr >= config.min_recurr,
-            CronosError::InvalidRecurrBelowMin
-        );
-
         // Reject the instruction if it has other signers besides the daemon.
         for acc in ix.accounts.as_slice() {
             require!(
@@ -104,9 +101,15 @@ impl TaskAccount for Account<'_, Task> {
         self.executor = executor;
         self.int = daemon.task_count;
         self.ix = ix;
-        self.status = TaskStatus::Queued;
         self.schedule = schedule;
+        self.status = TaskStatus::Queued;
         self.bump = bump;
+
+        // Load exec_at
+        self.exec_at = self
+            .next_exec_after(clock.unix_timestamp)
+            .ok_or(CronosError::InvalidSchedule)
+            .unwrap();
 
         // Increment daemon task count
         daemon.task_count = daemon.task_count.checked_add(1).unwrap();
@@ -132,23 +135,11 @@ impl TaskAccount for Account<'_, Task> {
         executor: &mut Signer,
         fee: &mut Account<Fee>,
     ) -> Result<()> {
-        // Update task schedule.
-        let next_exec_at = self
-            .schedule
-            .exec_at
-            .checked_add(self.schedule.recurr)
-            .unwrap();
-        if self.schedule.recurr == 0 || next_exec_at >= self.schedule.stop_at {
-            self.status = TaskStatus::Done;
-        } else {
-            self.schedule.exec_at = next_exec_at;
-        }
+        // Invoke instruction.
+        daemon.invoke(&Instruction::from(&self.ix), account_infos)?;
 
         // Increment collectable fee balance.
         fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
-
-        // Invoke instruction.
-        daemon.invoke(&Instruction::from(&self.ix), account_infos)?;
 
         // Transfer lamports from daemon to fee account.
         **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
@@ -174,7 +165,28 @@ impl TaskAccount for Account<'_, Task> {
             .checked_add(config.program_fee)
             .unwrap();
 
+        // Update task schedule.
+        match self.next_exec_after(self.exec_at) {
+            Some(next_exec_at) => self.exec_at = next_exec_at,
+            None => self.status = TaskStatus::Done, // TODO close the task account if done
+        };
+
         Ok(())
+    }
+
+    fn next_exec_after(&self, ts: i64) -> Option<i64> {
+        match Schedule::from_str(&self.schedule)
+            .unwrap()
+            .after(&DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp(ts, 0),
+                Utc,
+            ))
+            .take(1)
+            .next()
+        {
+            Some(datetime) => Some(datetime.timestamp()),
+            None => None,
+        }
     }
 }
 

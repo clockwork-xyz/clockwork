@@ -6,22 +6,19 @@ use anchor_client::anchor_lang::{
     },
     InstructionData,
 };
-use cronos_program::state::InstructionData as CronosInstructionData;
-use cronos_program::{pda::PDA, state::TaskSchedule};
+use cronos_program::{pda::PDA, state::InstructionData as CronosInstructionData};
 
 pub fn task_create(
     task_pda: PDA,
-    config: Pubkey,
     daemon: Pubkey,
     owner: Pubkey,
     ix: Instruction,
-    schedule: TaskSchedule,
+    schedule: String,
 ) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new_readonly(config, false),
             AccountMeta::new(daemon, false),
             AccountMeta::new(owner, true),
             AccountMeta::new(task_pda.0, false),

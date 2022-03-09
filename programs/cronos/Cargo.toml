@@ -23,4 +23,6 @@ default = []
 
 [dependencies]
 anchor-lang = "0.22.0"
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+cronos-cron = "0.0.1"
 solana-program = "1.9.9"

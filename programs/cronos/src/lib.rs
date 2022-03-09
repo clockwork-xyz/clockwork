@@ -1,3 +1,6 @@
+extern crate chrono;
+extern crate cronos_cron;
+
 pub mod errors;
 pub mod pda;
 pub mod state;
@@ -21,7 +24,7 @@ pub mod cronos {
     pub fn admin_create_task(
         ctx: Context<AdminCreateTask>,
         ix: InstructionData,
-        schedule: TaskSchedule,
+        schedule: String,
         bump: u8,
     ) -> Result<()> {
         admin_create_task::handler(ctx, ix, schedule, bump)
@@ -106,7 +109,7 @@ pub mod cronos {
     pub fn task_create(
         ctx: Context<TaskCreate>,
         ix: InstructionData,
-        schedule: TaskSchedule,
+        schedule: String,
         bump: u8,
     ) -> Result<()> {
         task_create::handler(ctx, ix, schedule, bump)
