@@ -1,5 +1,4 @@
 use {
-    super::Treasury,
     crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
@@ -39,7 +38,7 @@ impl Fee {
 pub trait FeeAccount {
     fn init(&mut self, daemon: Pubkey, bump: u8) -> Result<()>;
 
-    fn collect(&mut self, treasury: &mut Account<Treasury>) -> Result<()>;
+    fn collect(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
@@ -50,20 +49,18 @@ impl FeeAccount for Account<'_, Fee> {
         Ok(())
     }
 
-    fn collect(&mut self, treasury: &mut Account<Treasury>) -> Result<()> {
-        // Collect lamports from fee account to treasury.
+    fn collect(&mut self, to: &mut Signer) -> Result<()> {
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()
             .lamports()
             .checked_sub(self.balance)
             .unwrap();
-        **treasury.to_account_info().try_borrow_mut_lamports()? = treasury
+        **to.to_account_info().try_borrow_mut_lamports()? = to
             .to_account_info()
             .lamports()
             .checked_add(self.balance)
             .unwrap();
 
-        // Zero out the collectable balance.
         self.balance = 0;
 
         Ok(())

@@ -4,8 +4,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
-pub struct DaemonWidthdraw<'info> {
+pub struct DaemonClose<'info> {
     #[account(
         mut,
         seeds = [
@@ -13,7 +12,7 @@ pub struct DaemonWidthdraw<'info> {
             daemon.owner.as_ref()
         ],
         bump = daemon.bump,
-        constraint = daemon.owner == owner.key()
+        has_one = owner,
     )]
     pub daemon: Account<'info, Daemon>,
 
@@ -21,9 +20,9 @@ pub struct DaemonWidthdraw<'info> {
     pub owner: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DaemonWidthdraw>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<DaemonClose>) -> Result<()> {
     let daemon = &mut ctx.accounts.daemon;
-    let owner = &ctx.accounts.owner;
+    let owner = &mut ctx.accounts.owner;
 
-    daemon.widthdraw(amount, owner)
+    daemon.close(owner)
 }

@@ -5,8 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction()]
-pub struct AdminResetHealth<'info> {
+pub struct AdminHealthReset<'info> {
     #[account(
         mut, 
         address = config.admin
@@ -30,7 +29,7 @@ pub struct AdminResetHealth<'info> {
     pub health: Account<'info, Health>,
 }
 
-pub fn handler(ctx: Context<AdminResetHealth>) -> Result<()> {
+pub fn handler(ctx: Context<AdminHealthReset>) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let health = &mut ctx.accounts.health;
 

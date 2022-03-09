@@ -21,14 +21,12 @@ pub const SEED_TASK: &[u8] = b"task";
 #[account]
 #[derive(Debug)]
 pub struct Task {
-    pub daemon: Pubkey,
-    pub executor: Pubkey,
-    pub exec_at: i64,
-    pub int: u128,
-    pub ix: InstructionData,
-    pub schedule: String,
-    pub status: TaskStatus,
     pub bump: u8,
+    pub daemon: Pubkey,
+    pub exec_at: Option<i64>,
+    pub int: u128,
+    pub ixs: Vec<InstructionData>,
+    pub schedule: String,
 }
 
 impl Task {
@@ -52,96 +50,113 @@ impl TryFrom<Vec<u8>> for Task {
  */
 
 pub trait TaskAccount {
-    fn init(
+    fn open(
         &mut self,
+        bump: u8,
         clock: &Sysvar<Clock>,
         daemon: &mut Account<Daemon>,
-        executor: Pubkey,
-        ix: InstructionData,
+        ixs: Vec<InstructionData>,
         schedule: String,
-        bump: u8,
     ) -> Result<()>;
 
-    fn cancel(&mut self) -> Result<()>;
+    fn close(&mut self, to: &mut Signer) -> Result<()>;
 
-    fn delegate(&mut self, to: Pubkey) -> Result<()>;
-
-    fn execute(
+    fn exec(
         &mut self,
         account_infos: &[AccountInfo],
+        bot: &mut Signer,
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
-        executor: &mut Signer,
         fee: &mut Account<Fee>,
     ) -> Result<()>;
 
-    fn next_exec_after(&self, ts: i64) -> Option<i64>;
+    fn next_exec_at(&self, ts: i64) -> Option<i64>;
 }
 
 impl TaskAccount for Account<'_, Task> {
-    fn init(
+    fn open(
         &mut self,
+        bump: u8,
         clock: &Sysvar<Clock>,
         daemon: &mut Account<Daemon>,
-        executor: Pubkey,
-        ix: InstructionData,
+        ixs: Vec<InstructionData>,
         schedule: String,
-        bump: u8,
     ) -> Result<()> {
-        // Reject the instruction if it has other signers besides the daemon.
-        for acc in ix.accounts.as_slice() {
-            require!(
-                !acc.is_signer || acc.pubkey == daemon.key(),
-                CronosError::InvalidSignatory
-            );
+        // Reject the instruction if it has signers other than the daemon.
+        // (Feature request): Multi-sig ixs
+        for ix in ixs.iter() {
+            for acc in ix.accounts.iter() {
+                require!(
+                    !acc.is_signer || acc.pubkey == daemon.key(),
+                    CronosError::InvalidSignatory
+                );
+            }
         }
 
         // Initialize task account.
-        self.daemon = daemon.key();
-        self.executor = executor;
-        self.int = daemon.task_count;
-        self.ix = ix;
-        self.schedule = schedule;
-        self.status = TaskStatus::Queued;
         self.bump = bump;
+        self.daemon = daemon.key();
+        self.int = daemon.task_count;
+        self.ixs = ixs;
+        self.schedule = schedule;
 
-        // Load exec_at
-        self.exec_at = self
-            .next_exec_after(clock.unix_timestamp)
-            .ok_or(CronosError::InvalidSchedule)
-            .unwrap();
+        // Move forward, one step in time
+        self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
-        // Increment daemon task count
+        // Increment daemon task counter
         daemon.task_count = daemon.task_count.checked_add(1).unwrap();
 
         Ok(())
     }
 
-    fn cancel(&mut self) -> Result<()> {
-        self.status = TaskStatus::Cancelled;
+    fn close(&mut self, to: &mut Signer) -> Result<()> {
+        let lamports = self.to_account_info().lamports();
+        **self.to_account_info().try_borrow_mut_lamports()? = self
+            .to_account_info()
+            .lamports()
+            .checked_sub(lamports)
+            .unwrap();
+        **to.to_account_info().try_borrow_mut_lamports()? = to
+            .to_account_info()
+            .lamports()
+            .checked_add(lamports)
+            .unwrap();
+
         Ok(())
     }
 
-    fn delegate(&mut self, to: Pubkey) -> Result<()> {
-        self.executor = to;
-        Ok(())
-    }
-
-    fn execute(
+    fn exec(
         &mut self,
         account_infos: &[AccountInfo],
+        bot: &mut Signer,
         config: &Account<Config>,
         daemon: &mut Account<Daemon>,
-        executor: &mut Signer,
         fee: &mut Account<Fee>,
     ) -> Result<()> {
-        // Invoke instruction.
-        daemon.invoke(&Instruction::from(&self.ix), account_infos)?;
+        // Sign all of the task instructions
+        for ix in &self.ixs {
+            daemon.sign(&Instruction::from(ix), account_infos)?;
+        }
 
-        // Increment collectable fee balance.
-        fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
+        // Update the exec_at timestamp
+        match self.exec_at {
+            Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
+            None => {}
+        }
 
-        // Transfer lamports from daemon to fee account.
+        // Pay automation fees.
+        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
+            .to_account_info()
+            .lamports()
+            .checked_sub(config.program_fee)
+            .unwrap();
+        **bot.to_account_info().try_borrow_mut_lamports()? = bot
+            .to_account_info()
+            .lamports()
+            .checked_add(config.program_fee)
+            .unwrap();
+
+        // Pay program fees.
         **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
             .to_account_info()
             .lamports()
@@ -153,28 +168,13 @@ impl TaskAccount for Account<'_, Task> {
             .checked_add(config.program_fee)
             .unwrap();
 
-        // Transfer lamports from daemon to worker.
-        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
-            .to_account_info()
-            .lamports()
-            .checked_sub(config.program_fee)
-            .unwrap();
-        **executor.to_account_info().try_borrow_mut_lamports()? = executor
-            .to_account_info()
-            .lamports()
-            .checked_add(config.program_fee)
-            .unwrap();
-
-        // Update task schedule.
-        match self.next_exec_after(self.exec_at) {
-            Some(next_exec_at) => self.exec_at = next_exec_at,
-            None => self.status = TaskStatus::Done, // TODO close the task account if done
-        };
+        // Increment collectable fee balance.
+        fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
 
         Ok(())
     }
 
-    fn next_exec_after(&self, ts: i64) -> Option<i64> {
+    fn next_exec_at(&self, ts: i64) -> Option<i64> {
         match Schedule::from_str(&self.schedule)
             .unwrap()
             .after(&DateTime::<Utc>::from_utc(
@@ -262,36 +262,4 @@ pub struct AccountMetaData {
     pub is_signer: bool,
     /// True if the `pubkey` can be loaded as a read-write account.
     pub is_writable: bool,
-}
-
-/**
- * TaskSchedule
- */
-
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug)]
-pub struct TaskSchedule {
-    pub exec_at: i64, // Time to execute at
-    pub stop_at: i64, // Stop executing at
-    pub recurr: i64,  // Duration between exec
-}
-
-/**
- * TaskStatus
- */
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
-pub enum TaskStatus {
-    Cancelled,
-    Done,
-    Queued,
-}
-
-impl std::fmt::Display for TaskStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TaskStatus::Cancelled => write!(f, "cancelled"),
-            TaskStatus::Done => write!(f, "done"),
-            TaskStatus::Queued => write!(f, "queued"),
-        }
-    }
 }

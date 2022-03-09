@@ -1,8 +1,5 @@
 use {
-    crate::{
-        state::*,
-        errors::CronosError,
-    },
+    crate::state::*,
     anchor_lang::prelude::*,
     solana_program::{system_program, sysvar},
     std::mem::size_of
@@ -10,11 +7,11 @@ use {
 
 #[derive(Accounts)]
 #[instruction(
-    ix: InstructionData,
-    schedule: TaskSchedule,
+    ixs: Vec<InstructionData>,
+    schedule: String,
     bump: u8
 )]
-pub struct AdminCreateTask<'info> {
+pub struct AdminTaskOpen<'info> {
     #[account(mut, address = config.admin)]
     pub admin: Signer<'info>,
 
@@ -24,10 +21,7 @@ pub struct AdminCreateTask<'info> {
     )]
     pub authority: Account<'info, Authority>,
     
-    #[account(
-        address = sysvar::clock::ID,
-        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ CronosError::InvalidExecAtStale
-    )]
+    #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
@@ -59,21 +53,20 @@ pub struct AdminCreateTask<'info> {
         ],
         bump,
         payer = admin,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ix).unwrap().len(),
+        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
 }
 
 pub fn handler(
-    ctx: Context<AdminCreateTask>, 
-    ix: InstructionData,
+    ctx: Context<AdminTaskOpen>, 
+    ixs: Vec<InstructionData>,
     schedule: String,
     bump: u8
 ) -> Result<()> {
-    let admin = &ctx.accounts.admin;
     let clock = &ctx.accounts.clock;
     let daemon = &mut ctx.accounts.daemon;
     let task = &mut ctx.accounts.task;
 
-    task.init(clock, daemon,  admin.key(), ix, schedule, bump)
+    task.open(bump, clock, daemon, ixs, schedule)
 }

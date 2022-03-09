@@ -1,5 +1,5 @@
 use {
-    crate::{state::*, errors::CronosError},
+    crate::state::*,
     anchor_lang::prelude::*,
     solana_program::{system_program, sysvar},
     std::mem::size_of
@@ -9,14 +9,11 @@ use {
 #[derive(Accounts)]
 #[instruction(
     ix: InstructionData,
-    schedule: TaskSchedule,
+    schedule: String,
     bump: u8,
 )]
-pub struct TaskCreate<'info> {
-    #[account(
-        address = sysvar::clock::ID,
-        constraint = schedule.exec_at >= clock.unix_timestamp - 10 @ CronosError::InvalidExecAtStale
-    )]
+pub struct TaskOpen<'info> {
+    #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
@@ -51,15 +48,14 @@ pub struct TaskCreate<'info> {
 }
 
 pub fn handler(
-    ctx: Context<TaskCreate>,
-    ix: InstructionData,
+    ctx: Context<TaskOpen>,
+    ixs: Vec<InstructionData>,
     schedule: String,
     bump: u8,
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let daemon = &mut ctx.accounts.daemon;
-    let owner = &ctx.accounts.owner;
     let task = &mut ctx.accounts.task;
 
-    task.init(clock, daemon, owner.key(), ix, schedule, bump)
+    task.open(bump, clock, daemon, ixs, schedule)
 }

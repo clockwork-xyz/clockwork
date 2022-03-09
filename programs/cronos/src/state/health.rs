@@ -1,5 +1,4 @@
 use {
-    super::Config,
     crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
@@ -39,7 +38,7 @@ impl TryFrom<Vec<u8>> for Health {
 pub trait HealthAccount {
     fn init(&mut self, bump: u8) -> Result<()>;
 
-    fn ping(&mut self, clock: &Sysvar<Clock>, config: &Account<Config>) -> Result<()>;
+    fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
 
     fn reset(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
 }
@@ -52,9 +51,9 @@ impl HealthAccount for Account<'_, Health> {
         Ok(())
     }
 
-    fn ping(&mut self, clock: &Sysvar<Clock>, config: &Account<Config>) -> Result<()> {
+    fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()> {
         self.last_ping = clock.unix_timestamp;
-        self.target_ping = self.target_ping.checked_add(config.min_recurr).unwrap();
+        self.target_ping = self.target_ping.checked_add(1).unwrap();
         Ok(())
     }
 

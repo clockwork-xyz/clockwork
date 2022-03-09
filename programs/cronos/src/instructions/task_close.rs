@@ -5,7 +5,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct TaskCancel<'info> {
+pub struct TaskClose<'info> {
     #[account(
         seeds = [
             SEED_DAEMON, 
@@ -32,8 +32,9 @@ pub struct TaskCancel<'info> {
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<TaskCancel>) -> Result<()> {
+pub fn handler(ctx: Context<TaskClose>) -> Result<()> {
     let task = &mut ctx.accounts.task;
+    let owner = &mut ctx.accounts.owner;
     
-    task.cancel()
+    task.close(owner)
 }

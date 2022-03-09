@@ -14,10 +14,8 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub exec_timeout: i64,
-    pub min_recurr: i64,
+    pub bot_fee: u64,
     pub program_fee: u64,
-    pub worker_fee: u64,
     pub bump: u8,
 }
 
@@ -35,54 +33,40 @@ impl TryFrom<Vec<u8>> for Config {
 }
 
 /**
+ * ConfigSettings
+ */
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ConfigSettings {
+    pub admin: Pubkey,
+    pub program_fee: u64,
+    pub bot_fee: u64,
+}
+
+/**
  * ConfigAccount
  */
 
 pub trait ConfigAccount {
     fn init(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
 
-    fn update_admin(&mut self, admin: &Signer, new_admin: Pubkey) -> Result<()>;
-
-    fn update_min_recurr(&mut self, admin: &Signer, new_min_recurr: i64) -> Result<()>;
-
-    fn update_program_fee(&mut self, admin: &Signer, new_program_fee: u64) -> Result<()>;
-
-    fn update_worker_fee(&mut self, admin: &Signer, new_worker_fee: u64) -> Result<()>;
+    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
     fn init(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
         self.admin = admin;
-        self.exec_timeout = 10; // Time window in which authorized workers must execute a task before anyone is allowed to attempt exec
-        self.min_recurr = 5; // Minimum supported recurrence interval
-        self.program_fee = 0; // Lamports to pay to program for each task execution
-        self.worker_fee = 0; // Lamports to pay worker for executing a task
+        self.bot_fee = 0; // Lamports to pay bot per task exec
+        self.program_fee = 0; // Lamports to pay to program per task exec
         self.bump = bump;
         Ok(())
     }
 
-    fn update_admin(&mut self, admin: &Signer, new_admin: Pubkey) -> Result<()> {
+    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
         require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        self.admin = new_admin;
-        Ok(())
-    }
-
-    fn update_min_recurr(&mut self, admin: &Signer, new_min_recurr: i64) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        require!(new_min_recurr >= 0, CronosError::InvalidRecurrNegative);
-        self.min_recurr = new_min_recurr;
-        Ok(())
-    }
-
-    fn update_program_fee(&mut self, admin: &Signer, new_program_fee: u64) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        self.program_fee = new_program_fee;
-        Ok(())
-    }
-
-    fn update_worker_fee(&mut self, admin: &Signer, new_worker_fee: u64) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
-        self.worker_fee = new_worker_fee;
+        self.admin = settings.admin;
+        self.bot_fee = settings.bot_fee;
+        self.program_fee = settings.program_fee;
         Ok(())
     }
 }

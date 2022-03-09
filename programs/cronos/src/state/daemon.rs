@@ -39,9 +39,9 @@ impl TryFrom<Vec<u8>> for Daemon {
 pub trait DaemonAccount {
     fn init(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
 
-    fn invoke(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
+    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
 
-    fn widthdraw(&mut self, amount: u64, owner: &Signer) -> Result<()>;
+    fn close(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl DaemonAccount for Account<'_, Daemon> {
@@ -52,7 +52,7 @@ impl DaemonAccount for Account<'_, Daemon> {
         Ok(())
     }
 
-    fn invoke(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
+    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
         invoke_signed(
             ix,
             account_infos,
@@ -61,21 +61,22 @@ impl DaemonAccount for Account<'_, Daemon> {
         .map_err(|_err| CronosError::TaskFailed.into())
     }
 
-    fn widthdraw(&mut self, amount: u64, owner: &Signer) -> Result<()> {
+    fn close(&mut self, to: &mut Signer) -> Result<()> {
         require!(
-            owner.key() == self.owner,
+            self.owner == to.key(),
             CronosError::NotAuthorizedDaemonOwner
         );
 
+        let lamports = self.to_account_info().lamports();
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()
             .lamports()
-            .checked_sub(amount)
+            .checked_sub(lamports)
             .unwrap();
-        **owner.to_account_info().try_borrow_mut_lamports()? = owner
+        **to.to_account_info().try_borrow_mut_lamports()? = to
             .to_account_info()
             .lamports()
-            .checked_add(amount)
+            .checked_add(lamports)
             .unwrap();
 
         Ok(())

@@ -11,7 +11,7 @@ use {
     daemon_bump: u8,
     fee_bump: u8,
 )]
-pub struct DaemonCreate<'info> {
+pub struct DaemonOpen<'info> {
     #[account(
         init,
         seeds = [
@@ -43,7 +43,7 @@ pub struct DaemonCreate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<DaemonCreate>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
+pub fn handler(ctx: Context<DaemonOpen>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
     let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;

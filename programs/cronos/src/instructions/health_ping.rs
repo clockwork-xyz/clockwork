@@ -17,12 +17,6 @@ pub struct HealthPing<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
-        seeds = [SEED_CONFIG],
-        bump = config.bump,
-    )]
-    pub config: Account<'info, Config>,
-
-    #[account(
         mut,
         seeds = [
             SEED_DAEMON, 
@@ -44,8 +38,7 @@ pub struct HealthPing<'info> {
 
 pub fn handler(ctx: Context<HealthPing>) -> Result<()> {
     let clock = &ctx.accounts.clock;
-    let config = &ctx.accounts.config;
     let health = &mut ctx.accounts.health;
 
-    health.ping(clock, config)
+    health.ping(clock)
 }

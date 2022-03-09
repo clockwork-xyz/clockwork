@@ -5,7 +5,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct AdminCancelTask<'info> {
+pub struct AdminTaskClose<'info> {
     #[account(
         mut, 
         address = config.admin
@@ -30,8 +30,9 @@ pub struct AdminCancelTask<'info> {
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<AdminCancelTask>) -> Result<()> {
+pub fn handler(ctx: Context<AdminTaskClose>) -> Result<()> {
+    let admin = &mut ctx.accounts.admin;
     let task = &mut ctx.accounts.task;
     
-    task.cancel()
+    task.close(admin)
 }

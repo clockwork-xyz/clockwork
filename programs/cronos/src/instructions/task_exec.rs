@@ -6,7 +6,10 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct TaskExecute<'info> {
+pub struct TaskExec<'info> {
+    #[account(mut)]
+    pub bot: Signer<'info>,
+
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -25,9 +28,6 @@ pub struct TaskExecute<'info> {
         bump = daemon.bump,
     )]
     pub daemon: Account<'info, Daemon>,
-
-    #[account(mut)]
-    pub executor: Signer<'info>,
 
     #[account(
         mut,
@@ -49,18 +49,17 @@ pub struct TaskExecute<'info> {
         ],
         bump = task.bump,
         has_one = daemon,
-        constraint = task.status == TaskStatus::Queued @ CronosError::TaskNotQueued,
-        constraint = task.exec_at <= clock.unix_timestamp @ CronosError::TaskNotDue,
+        constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<TaskExecute>) -> Result<()> {
+pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
+    let bot = &mut ctx.accounts.bot;
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
-    let executor = &mut ctx.accounts.executor;
     let fee = &mut ctx.accounts.fee;
     let task = &mut ctx.accounts.task;
-    
-    task.execute(&ctx.remaining_accounts.iter().as_slice(), config, daemon, executor, fee)
+
+    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, daemon, fee)
 }
