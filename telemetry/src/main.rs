@@ -13,7 +13,7 @@ fn main() {
     dotenv().ok();
     let client = &Arc::new(new_client());
     let (health_pubkey, _health_bump) = Health::pda();
-    let time_receiver = cronos_sdk::clock::get_time(client);
+    let time_receiver = cronos_sdk::clock::monitor_time(client);
     for ts in time_receiver {
         let health_account = client.get_account_data(&health_pubkey).unwrap();
         let health_data = Health::try_from(health_account).unwrap();
