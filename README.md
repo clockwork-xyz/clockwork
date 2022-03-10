@@ -1,4 +1,5 @@
-# cronos-cron [![Rust](https://github.com/cronos-so/cron/workflows/Rust/badge.svg)](https://github.com/cronos-so/cron/actions) [![](https://img.shields.io/crates/v/cronos-cron.svg)](https://crates.io/crates/cronos-cron) [![](https://docs.rs/cron/badge.svg)](https://docs.rs/cronos-cron)
+# cronos-cron [![](https://img.shields.io/crates/v/cronos-cron.svg)](https://crates.io/crates/cronos-cron) [![](https://docs.rs/cron/badge.svg)](https://docs.rs/cronos-cron)
+
 A cron expression parser that's safe to use in the Solana runtime. Works with stable Rust v1.28.0.
 
 ```rust
