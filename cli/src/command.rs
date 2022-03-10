@@ -13,7 +13,7 @@ pub enum CliCommand {
     AdminHealthReset,
     AdminHealthStart,
     AdminInitialize,
-    Blocktime,
+    Clock,
     ConfigGet,
     ConfigSetMinRecurr {
         new_value: i64,
@@ -48,7 +48,7 @@ impl Display for CliCommand {
             CliCommand::AdminHealthReset => write!(f, "admin health reset"),
             CliCommand::AdminHealthStart => write!(f, "admin health start"),
             CliCommand::AdminInitialize => write!(f, "admin initialize"),
-            CliCommand::Blocktime => write!(f, "blocktime"),
+            CliCommand::Clock => write!(f, "clock"),
             CliCommand::ConfigGet => write!(f, "config"),
             CliCommand::ConfigSetMinRecurr { new_value } => {
                 write!(f, "config set min_recurr {}", new_value)
@@ -75,7 +75,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
             Some(("admin", matches)) => admin_command(matches),
-            Some(("blocktime", _matches)) => Ok(CliCommand::Blocktime {}),
+            Some(("clock", _matches)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => config_command(matches),
             Some(("daemon", matches)) => daemon_command(matches),
             Some(("health", matches)) => health_command(matches),

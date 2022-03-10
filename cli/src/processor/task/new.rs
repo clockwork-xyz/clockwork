@@ -27,9 +27,8 @@ pub fn new(
     let config_addr = Config::pda().0;
     let exec_at = match exec_at {
         Some(v) => v,
-        None => {
-            cronos_sdk::get_blocktime(client).map_err(|err| CliError::BadClient(err.to_string()))?
-        }
+        None => cronos_sdk::clock::get_time(client)
+            .map_err(|err| CliError::BadClient(err.to_string()))?,
     };
     let recurr = match recurr {
         Some(v) => v,
