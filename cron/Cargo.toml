@@ -1,6 +1,6 @@
 [package]
 name = "cronos-cron"
-version = "0.0.1"
+version = "0.1.7"
 description = "A cron expression parser that's safe to use in the Solana runtime"
 edition = "2021"
 license = "Apache-2.0"

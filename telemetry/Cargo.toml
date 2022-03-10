@@ -1,12 +1,12 @@
 [package]
 name = "cronos-telemetry"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cronos-sdk = { path = "../sdk", version = "0.1.6" }
+cronos-sdk = { path = "../sdk", version = "0.1.7" }
 dotenv = "0.15.0"
 solana-account-decoder = "1.9.9"
 solana-client = "1.9.9"
