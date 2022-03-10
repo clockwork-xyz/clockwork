@@ -786,6 +786,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-telemetry"
+version = "0.1.6"
+dependencies = [
+ "cronos-sdk",
+ "dotenv",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-client-helpers",
+ "solana-sdk",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

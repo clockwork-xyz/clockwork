@@ -3,5 +3,6 @@ members = [
     "bot",
     "cli",
     "programs/*",
-    "sdk"
+    "sdk", 
+    "monitor"
 ]
