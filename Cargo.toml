@@ -2,6 +2,7 @@
 members = [
     "bot",
     "cli",
+    "cron",
     "programs/*",
     "sdk", 
     "monitor"
