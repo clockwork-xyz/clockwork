@@ -13,17 +13,17 @@ pub fn rpc_endpoint() -> String {
 }
 
 pub fn es_cloud_id() -> String {
-    env::var("es_cloud_id").unwrap()
+    env::var("ES_CLOUD_ID").unwrap()
 }
 
 pub fn es_user() -> String {
-    env::var("es_user").unwrap()
+    env::var("ES_USER").unwrap()
 }
 
 pub fn es_password() -> String {
-    env::var("es_password").unwrap()
+    env::var("ES_PASSWORD").unwrap()
 }
 
 pub fn es_health_index() -> String {
-    env::var("es_health_index").unwrap()
+    env::var("ES_HEALTH_INDEX").unwrap()
 }
