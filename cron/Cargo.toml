@@ -1,0 +1,22 @@
+[package]
+name = "cronos-cron"
+version = "0.0.1"
+authors = ["Nick Garfield <nick@cronos.so>"]
+repository = "https://github.com/cronos-so/cron"
+documentation = "https://docs.rs/cronos-cron"
+readme = "README.md"
+description = "A cron expression parser and schedule explorer."
+keywords = [ "cron", "schedule", "repeat", "periodic", "time" ]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+
+[lib]
+name = "cronos_cron"
+
+[dependencies]
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+nom = "~7"
+once_cell = "1.5.2"
+
+[dev-dependencies]
+chrono-tz = "0.6.1"
