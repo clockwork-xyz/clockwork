@@ -784,6 +784,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-telemetry"
+version = "0.1.6"
+dependencies = [
+ "cronos-sdk",
+ "dotenv",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-client-helpers",
+ "solana-sdk",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1816,18 +1828,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "monitor"
-version = "0.1.0"
-dependencies = [
- "cronos-sdk",
- "dotenv",
- "solana-account-decoder",
- "solana-client",
- "solana-client-helpers",
- "solana-sdk",
 ]
 
 [[package]]

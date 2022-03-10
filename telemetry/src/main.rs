@@ -1,5 +1,5 @@
 use {
-    crate::utils::new_rpc_client,
+    crate::utils::{new_rpc_client, wss_endpoint},
     cronos_sdk::account::Health,
     dotenv::dotenv,
     solana_account_decoder::UiAccountEncoding,
@@ -12,7 +12,6 @@ mod utils;
 
 fn main() {
     dotenv().ok();
-    const FIVE_MINUTES: i32 = 300;
 
     let client = new_rpc_client();
 
@@ -20,7 +19,7 @@ fn main() {
     let clock_addr = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
 
     let (_ws_client, clock_receiver) = PubsubClient::account_subscribe(
-        env::wss_endpoint().as_str().into(),
+        wss_endpoint().as_str().into(),
         &clock_addr,
         Some(RpcAccountInfoConfig {
             encoding: Some(UiAccountEncoding::Base64),
@@ -45,10 +44,6 @@ fn main() {
         println!("   Blocktime: {}", blocktime);
         println!("   Last ping: {} sec", last_ping);
         println!("Recurr drift: {} sec\n", recurr_drift);
-
-        if recurr_drift > FIVE_MINUTES.into() {
-            //TODO: CALL TWILLIO API
-        }
     }
 }
 
