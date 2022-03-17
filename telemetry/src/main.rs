@@ -25,7 +25,7 @@ async fn monitor_health_telemetry() {
     let time_receiver = cronos_sdk::clock::monitor_time(env::wss_endpoint().as_str().into());
 
     for ts in time_receiver {
-        if ts > latest_ts + 9 {
+        if ts > latest_ts {
             latest_ts = ts;
             record_health_data(client, es_client, ts).await;
         }
