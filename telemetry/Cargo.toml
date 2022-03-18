@@ -1,7 +1,15 @@
 [package]
 name = "cronos-telemetry"
 version = "0.1.8"
+description = "Monitoring service for Cronos bot clusters"
 edition = "2021"
+license = "Apache-2.0"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/cli"
+documentation = "https://docs.cronos.so"
+readme = "./README.md"
+keywords = ["solana", "cronos", "cli"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
