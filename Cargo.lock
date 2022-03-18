@@ -190,9 +190,9 @@ dependencies = [
 
 [[package]]
 name = "anchor-lang"
-version = "0.22.1"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef066f4bc0cb4080ff6244b6a66ef31b6077e0302738b365ca894540f5b7dcf8"
+checksum = "f3fab2e8305bfe8971e04e963a442a767d81f8d61e73effdbe04df73bb7f9feb"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
