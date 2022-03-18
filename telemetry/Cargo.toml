@@ -1,0 +1,18 @@
+[package]
+name = "cronos-telemetry"
+version = "0.1.8"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.19"
+cronos-sdk = { path = "../sdk", version = "0.1.8" }
+dotenv = "0.15.0"
+elasticsearch = "7.14.0-alpha.1"
+serde_json = "~1"
+solana-account-decoder = "1.9.9"
+solana-client = "1.9.9"
+solana-client-helpers = "1.1.0"
+solana-sdk = "1.9.9"
+tokio = { version = "1.17.0", features = ["full"] }

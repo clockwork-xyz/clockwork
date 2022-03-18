@@ -2,6 +2,8 @@
 members = [
     "bot",
     "cli",
+    "cron",
     "programs/*",
-    "sdk"
+    "sdk",
+    "telemetry"
 ]

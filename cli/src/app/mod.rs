@@ -1,5 +1,5 @@
 mod admin;
-mod blocktime;
+mod clock;
 mod config;
 mod cronos;
 mod daemon;

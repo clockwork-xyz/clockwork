@@ -8,6 +8,9 @@ read -r -p "    New version: " new_version
 # Build
 RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 
+# Bump cronos-crono 
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
+
 # Bump cronos-program 
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/cronos/Cargo.toml
 
@@ -22,6 +25,10 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 # Bump cronos-cli
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
+
+# Bump cronos-telemetry
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' telemetry/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' telemetry/Cargo.toml
 
 # Update version
 echo $new_version > VERSION
