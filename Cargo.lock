@@ -786,7 +786,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-bot"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anchor-client",
  "cronos-sdk",
@@ -802,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cli"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "clap 3.1.2",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cron"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -833,7 +833,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-program"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -841,7 +841,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-sdk"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anchor-client",
  "cronos-program",
@@ -854,7 +854,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-telemetry"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "chrono",
  "cronos-sdk",

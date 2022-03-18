@@ -1,6 +1,6 @@
 [package]
 name = "cronos-bot"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "Worker bot to execute Cronos tasks"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ keywords = ["solana", "cronos", "program"]
 
 [dependencies]
 anchor-client = "0.22.0"
-cronos-sdk = { path = "../sdk", version = "0.1.7" }
+cronos-sdk = { path = "../sdk", version = "0.1.8" }
 dotenv = "0.15.0"
 postgres = "0.19.2"
 solana-account-decoder = "1.9.9"
