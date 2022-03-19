@@ -7,7 +7,7 @@ pub fn cronos() -> Command<'static> {
         .version(version!())
         .subcommand_required(true)
         .subcommand(super::admin::app())
-        .subcommand(super::blocktime::app())
+        .subcommand(super::clock::app())
         .subcommand(super::config::app())
         .subcommand(super::daemon::app())
         .subcommand(super::health::app())

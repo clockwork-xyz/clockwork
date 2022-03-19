@@ -26,7 +26,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::AdminHealthReset => super::admin::health_reset(&client),
         CliCommand::AdminHealthStart => super::admin::health_start(&client),
         CliCommand::AdminInitialize => super::admin::initialize(&client),
-        CliCommand::Blocktime => super::blocktime::get(&client),
+        CliCommand::Clock => super::clock::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSetMinRecurr { new_value } => {
             super::config::set_min_recurr(&client, &new_value)

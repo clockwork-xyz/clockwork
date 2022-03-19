@@ -16,3 +16,4 @@ docker-target
 **/test-ledger
 **/tsconfig.tsbuildinfo
 *.diff
+**/keypair.json

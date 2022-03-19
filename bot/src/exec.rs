@@ -16,15 +16,13 @@ pub fn execute_tasks(
     cache: Arc<RwLock<TaskCache>>,
     bucket: Arc<Mutex<Bucket>>,
 ) {
-    let blocktime_receiver = cronos_sdk::monitor_blocktime(env::wss_endpoint());
-    for blocktime in blocktime_receiver {
-        println!("⏳ Blocktime: {}", blocktime);
+    let time_receiver = cronos_sdk::clock::monitor_time(env::wss_endpoint());
+    for ts in time_receiver {
+        println!("⏳ Blocktime: {}", ts);
         let tcache = cache.clone();
         let tclient = client.clone();
         let tbucket = bucket.clone();
-        thread::spawn(move || {
-            execute_tasks_in_lookback_window(tclient, tcache, tbucket, blocktime)
-        });
+        thread::spawn(move || execute_tasks_in_lookback_window(tclient, tcache, tbucket, ts));
     }
     execute_tasks(client, cache, bucket)
 }
