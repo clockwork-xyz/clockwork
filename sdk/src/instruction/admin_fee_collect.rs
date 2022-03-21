@@ -6,14 +6,14 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn admin_cancel_task(admin: Pubkey, config: Pubkey, task: Pubkey) -> Instruction {
+pub fn admin_fee_collect(admin: Pubkey, config: Pubkey, fee: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
-            AccountMeta::new_readonly(config, false),
-            AccountMeta::new(task, false),
+            AccountMeta::new(config, false),
+            AccountMeta::new(fee, false),
         ],
-        data: cronos_program::instruction::AdminCancelTask {}.data(),
+        data: cronos_program::instruction::AdminFeeCollect {}.data(),
     }
 }

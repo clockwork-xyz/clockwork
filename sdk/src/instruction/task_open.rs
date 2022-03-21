@@ -1,18 +1,20 @@
-use anchor_client::anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        system_program, sysvar,
+use {
+    anchor_client::anchor_lang::{
+        solana_program::{
+            instruction::{AccountMeta, Instruction},
+            pubkey::Pubkey,
+            system_program, sysvar,
+        },
+        InstructionData,
     },
-    InstructionData,
+    cronos_program::{pda::PDA, state::InstructionData as CronosInstructionData}
 };
-use cronos_program::{pda::PDA, state::InstructionData as CronosInstructionData};
 
-pub fn task_create(
+pub fn task_open(
     task_pda: PDA,
     daemon: Pubkey,
     owner: Pubkey,
-    ix: Instruction,
+    ixs: Vec<Instruction>,
     schedule: String,
 ) -> Instruction {
     Instruction {
@@ -24,8 +26,8 @@ pub fn task_create(
             AccountMeta::new(task_pda.0, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_program::instruction::TaskCreate {
-            ix: CronosInstructionData::from(ix),
+        data: cronos_program::instruction::TaskOpen {
+            ixs: ixs.iter().map(|ix| CronosInstructionData::from(ix.clone())).collect(),
             schedule,
             bump: task_pda.1,
         }

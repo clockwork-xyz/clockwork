@@ -1,18 +1,21 @@
-use anchor_client::anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
+use {
+    anchor_client::anchor_lang::{
+        solana_program::{
+            instruction::{AccountMeta, Instruction},
+            pubkey::Pubkey,
+        },
+        InstructionData,
     },
-    InstructionData,
+    cronos_program::state::ConfigSettings
 };
 
-pub fn admin_update_admin(admin: Pubkey, config: Pubkey, new_admin: Pubkey) -> Instruction {
+pub fn admin_config_update(admin: Pubkey, config: Pubkey, settings: ConfigSettings) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_program::instruction::AdminUpdateAdmin { new_admin }.data(),
+        data: cronos_program::instruction::AdminConfigUpdate { settings }.data(),
     }
 }

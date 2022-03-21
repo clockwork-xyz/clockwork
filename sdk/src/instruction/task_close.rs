@@ -6,7 +6,7 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn task_cancel(daemon: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {
+pub fn task_close(daemon: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
@@ -14,6 +14,6 @@ pub fn task_cancel(daemon: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {
             AccountMeta::new(owner, true),
             AccountMeta::new(task, false),
         ],
-        data: cronos_program::instruction::TaskCancel {}.data(),
+        data: cronos_program::instruction::TaskClose {}.data(),
     }
 }

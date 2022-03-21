@@ -7,23 +7,15 @@ use anchor_client::anchor_lang::{
     InstructionData,
 };
 
-pub fn task_execute(
-    config: Pubkey,
-    daemon: Pubkey,
-    fee: Pubkey,
-    task: Pubkey,
-    worker: Pubkey,
-) -> Instruction {
+pub fn admin_health_reset(admin: Pubkey, config: Pubkey, health: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_program::ID,
         accounts: vec![
+            AccountMeta::new(admin, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new(daemon, false),
-            AccountMeta::new(fee, false),
-            AccountMeta::new(task, false),
-            AccountMeta::new(worker, true),
+            AccountMeta::new(health, false),
         ],
-        data: cronos_program::instruction::TaskExecute {}.data(),
+        data: cronos_program::instruction::AdminHealthReset {}.data(),
     }
 }
