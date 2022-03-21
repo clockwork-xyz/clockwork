@@ -22,26 +22,16 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        CliCommand::AdminCancelTask { address } => super::admin::cancel_task(&client, &address),
+        CliCommand::AdminTaskClose { address } => super::admin::task_close(&client, &address),
         CliCommand::AdminHealthReset => super::admin::health_reset(&client),
-        CliCommand::AdminHealthStart => super::admin::health_start(&client),
-        CliCommand::AdminInitialize => super::admin::initialize(&client),
+        CliCommand::AdminOpen => super::admin::open(&client),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
-        CliCommand::ConfigSetMinRecurr { new_value } => {
-            super::config::set_min_recurr(&client, &new_value)
-        }
-        CliCommand::ConfigSetProgramFee { new_value } => {
-            super::config::set_program_fee(&client, &new_value)
-        }
-        CliCommand::ConfigSetWorkerExecFee { new_value } => {
-            super::config::set_worker_exec_fee(&client, &new_value)
-        }
-        CliCommand::DaemonNew => super::daemon::new(&client),
+        CliCommand::DaemonOpen => super::daemon::open(&client),
         CliCommand::DaemonGet => super::daemon::get(&client),
         CliCommand::HealthGet => super::health::get(&client),
-        CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
+        CliCommand::TaskClose { address } => super::task::close(&client, &address),
         CliCommand::TaskGet { address } => super::task::get(&client, &address),
-        CliCommand::TaskNew { ix, schedule } => super::task::new(&client, ix, schedule),
+        CliCommand::TaskOpen { ix, schedule } => super::task::open(&client, ix, schedule),
     }
 }

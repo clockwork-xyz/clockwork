@@ -7,14 +7,14 @@ use solana_sdk::instruction::{AccountMeta, Instruction};
 
 use crate::error::CliError;
 
-pub fn parse_i64(arg: &String, matches: &ArgMatches) -> Result<i64, CliError> {
+pub fn _parse_i64(arg: &String, matches: &ArgMatches) -> Result<i64, CliError> {
     parse_string(arg, matches)?
         .parse::<i64>()
         .map_err(|_err| CliError::BadParameter(arg.into()))
 }
 
 pub fn _parse_i64_optional(arg: &String, matches: &ArgMatches) -> Result<Option<i64>, CliError> {
-    let i = parse_i64(arg, matches);
+    let i = _parse_i64(arg, matches);
     if i.is_err() {
         Ok(None)
     } else {
@@ -22,7 +22,7 @@ pub fn _parse_i64_optional(arg: &String, matches: &ArgMatches) -> Result<Option<
     }
 }
 
-pub fn parse_u64(arg: &String, matches: &ArgMatches) -> Result<u64, CliError> {
+pub fn _parse_u64(arg: &String, matches: &ArgMatches) -> Result<u64, CliError> {
     parse_string(arg, matches)?
         .parse::<u64>()
         .map_err(|_err| CliError::BadParameter(arg.into()))

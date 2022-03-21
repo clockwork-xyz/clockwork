@@ -7,12 +7,12 @@ use {
 };
 
 pub struct Bucket {
-    locks: HashMap<(Pubkey, i64), Arc<Mutex<()>>>,
+    _locks: HashMap<(Pubkey, i64), Arc<Mutex<()>>>,
 }
 
 impl Bucket {
-    pub fn get_mutex(&mut self, key: impl Into<(Pubkey, i64)>) -> Arc<Mutex<()>> {
-        let mutex = self.locks.entry(key.into()).or_default();
+    pub fn _get_mutex(&mut self, key: impl Into<(Pubkey, i64)>) -> Arc<Mutex<()>> {
+        let mutex = self._locks.entry(key.into()).or_default();
         mutex.clone()
     }
 }
@@ -20,7 +20,7 @@ impl Bucket {
 impl Default for Bucket {
     fn default() -> Self {
         Self {
-            locks: HashMap::new(),
+            _locks: HashMap::new(),
         }
     }
 }

@@ -17,7 +17,7 @@ impl TaskCache {
         }
     }
 
-    pub fn insert(&mut self, key: Pubkey, task: Task) {
+    pub fn insert(&mut self, _key: Pubkey, _task: Task) {
         // self.delete(key);
         // self.data.insert(key, task.clone());
 
@@ -33,7 +33,7 @@ impl TaskCache {
         // }
     }
 
-    pub fn delete(&mut self, key: Pubkey) {
+    pub fn delete(&mut self, _key: Pubkey) {
         // self.data.clone().get(&key).and_then(|task| {
         //     self.data.remove(&key);
         //     self.index

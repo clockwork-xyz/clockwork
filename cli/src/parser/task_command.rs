@@ -6,15 +6,15 @@ use super::utils::{parse_instruction, parse_pubkey, parse_string};
 
 pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("cancel", matches)) => {
+        Some(("close", matches)) => {
             let address = parse_pubkey(&String::from("address"), matches)?;
-            Ok(CliCommand::TaskCancel { address })
+            Ok(CliCommand::TaskClose { address })
         }
-        Some(("new", matches)) => {
+        Some(("open", matches)) => {
             let filepath = parse_string(&String::from("filepath"), matches)?;
             let ix = parse_instruction(&filepath)?;
             let schedule = parse_string(&String::from("schedule"), matches)?;
-            Ok(CliCommand::TaskNew { ix, schedule })
+            Ok(CliCommand::TaskOpen { ix, schedule })
         }
         _ => Ok(CliCommand::TaskGet {
             address: parse_pubkey(&String::from("address"), matches)?,

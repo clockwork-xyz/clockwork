@@ -7,47 +7,33 @@ use crate::{error::CliError, parser::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
-    AdminCancelTask { address: Pubkey },
     AdminHealthReset,
-    AdminHealthStart,
-    AdminInitialize,
+    AdminOpen,
+    AdminTaskClose { address: Pubkey },
     Clock,
     ConfigGet,
-    ConfigSetMinRecurr { new_value: i64 },
-    ConfigSetProgramFee { new_value: u64 },
-    ConfigSetWorkerExecFee { new_value: u64 },
     DaemonGet,
-    DaemonNew,
+    DaemonOpen,
     HealthGet,
-    TaskCancel { address: Pubkey },
+    TaskClose { address: Pubkey },
     TaskGet { address: Pubkey },
-    TaskNew { ix: Instruction, schedule: String },
+    TaskOpen { ix: Instruction, schedule: String },
 }
 
 impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CliCommand::AdminCancelTask { address } => write!(f, "admin cancel {}", address),
             CliCommand::AdminHealthReset => write!(f, "admin health reset"),
-            CliCommand::AdminHealthStart => write!(f, "admin health start"),
-            CliCommand::AdminInitialize => write!(f, "admin initialize"),
+            CliCommand::AdminOpen => write!(f, "admin open"),
+            CliCommand::AdminTaskClose { address } => write!(f, "admin task close {}", address),
             CliCommand::Clock => write!(f, "clock"),
             CliCommand::ConfigGet => write!(f, "config"),
-            CliCommand::ConfigSetMinRecurr { new_value } => {
-                write!(f, "config set min_recurr {}", new_value)
-            }
-            CliCommand::ConfigSetProgramFee { new_value } => {
-                write!(f, "config set program_fee {}", new_value)
-            }
-            CliCommand::ConfigSetWorkerExecFee { new_value } => {
-                write!(f, "config set worker_exec_fee {}", new_value)
-            }
             CliCommand::DaemonGet => write!(f, "daemon"),
-            CliCommand::DaemonNew => write!(f, "daemon new"),
+            CliCommand::DaemonOpen => write!(f, "daemon open"),
             CliCommand::HealthGet => write!(f, "health"),
-            CliCommand::TaskCancel { address } => write!(f, "task cancel {}", address),
+            CliCommand::TaskClose { address } => write!(f, "task close {}", address),
             CliCommand::TaskGet { address } => write!(f, "task {}", address),
-            CliCommand::TaskNew { .. } => write!(f, "task new"),
+            CliCommand::TaskOpen { .. } => write!(f, "task open"),
         }
     }
 }

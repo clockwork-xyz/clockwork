@@ -42,11 +42,12 @@ pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
             if !task.is_err() {
                 let key = Pubkey::from_str(&keyed_account.pubkey).unwrap();
                 let task = task.unwrap();
-                println!("💽 Replicating task {} {}", key, task.status);
+                println!("💽 Replicating task {}", key);
                 let mut w_cache = cache.write().unwrap();
-                match task.status {
-                    TaskStatus::Queued => w_cache.insert(key, task),
-                    TaskStatus::Cancelled | TaskStatus::Done => w_cache.delete(key),
+                if account.lamports == 0 {
+                    w_cache.delete(key)
+                } else {
+                    w_cache.insert(key, task)
                 }
             }
         }

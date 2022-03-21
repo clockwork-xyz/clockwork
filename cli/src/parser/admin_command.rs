@@ -5,11 +5,9 @@ use crate::{command::CliCommand, error::CliError};
 
 pub fn admin_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("cancel", matches)) => Ok(CliCommand::AdminCancelTask {
-            address: parse_pubkey(&"address".into(), matches)?,
-        }),
+        Some(("task", matches)) => admin_task_command(matches),
         Some(("health", matches)) => admin_health_command(matches),
-        Some(("initialize", _matches)) => Ok(CliCommand::AdminInitialize),
+        Some(("open", _matches)) => Ok(CliCommand::AdminOpen),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
@@ -19,7 +17,17 @@ pub fn admin_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn admin_health_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("reset", _matches)) => Ok(CliCommand::AdminHealthReset),
-        Some(("start", _matches)) => Ok(CliCommand::AdminHealthStart),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn admin_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("close", matches)) => Ok(CliCommand::AdminTaskClose {
+            address: parse_pubkey(&"address".into(), matches)?,
+        }),        
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

@@ -4,7 +4,7 @@ use crate::{command::CliCommand, error::CliError};
 
 pub fn daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("new", _matches)) => Ok(CliCommand::DaemonNew {}),
+        Some(("open", _matches)) => Ok(CliCommand::DaemonOpen {}),
         _ => Ok(CliCommand::DaemonGet {}),
     }
 }
