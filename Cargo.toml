@@ -12,7 +12,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 prost = "0.9"
-rdkafka = { version = "0.28", features = ["ssl-vendored", "sasl"] }
 solana-accountsdb-plugin-interface = { version = "=1.9.12" }
 solana-logger = { version = "=1.9.12" }
 solana-program = { version = "=1.9.12" }

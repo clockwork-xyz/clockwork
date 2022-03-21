@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use {
-    rdkafka::{
-        config::FromClientConfig,
-        error::KafkaResult,
-        producer::{DefaultProducerContext, ThreadedProducer},
-        ClientConfig,
-    },
+    // rdkafka::{
+    //     config::FromClientConfig,
+    //     error::KafkaResult,
+    //     producer::{DefaultProducerContext, ThreadedProducer},
+    //     ClientConfig,
+    // },
     serde::Deserialize,
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
         AccountsDbPluginError, Result as PluginResult,
@@ -72,13 +72,13 @@ impl Config {
     }
 
     /// Create rdkafka::FutureProducer from config.
-    pub fn producer(&self) -> KafkaResult<Producer> {
-        let mut config = ClientConfig::new();
-        for (k, v) in self.kafka.iter() {
-            config.set(k, v);
-        }
-        ThreadedProducer::from_config(&config)
-    }
+    // pub fn producer(&self) -> KafkaResult<Producer> {
+    //     let mut config = ClientConfig::new();
+    //     for (k, v) in self.kafka.iter() {
+    //         config.set(k, v);
+    //     }
+    //     ThreadedProducer::from_config(&config)
+    // }
 
     fn set_default(&mut self, k: &'static str, v: &'static str) {
         if !self.kafka.contains_key(k) {
@@ -94,4 +94,4 @@ impl Config {
     }
 }
 
-pub type Producer = ThreadedProducer<DefaultProducerContext>;
+// pub type Producer = ThreadedProducer<DefaultProducerContext>;

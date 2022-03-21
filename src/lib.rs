@@ -21,10 +21,10 @@ mod plugin;
 mod publisher;
 
 pub use {
-    config::{Config, Producer},
+    config::Config,
     event::*,
     filter::Filter,
-    plugin::KafkaPlugin,
+    plugin::CronosPlugin,
     publisher::Publisher,
 };
 
@@ -37,7 +37,7 @@ pub use {
 /// The Solana validator and this plugin must be compiled with the same Rust compiler version and Solana core version.
 /// Loading this plugin with mismatching versions is undefined behavior and will likely cause memory corruption.
 pub unsafe extern "C" fn _create_plugin() -> *mut dyn AccountsDbPlugin {
-    let plugin = KafkaPlugin::new();
+    let plugin = CronosPlugin::new();
     let plugin: Box<dyn AccountsDbPlugin> = Box::new(plugin);
     Box::into_raw(plugin)
 }
