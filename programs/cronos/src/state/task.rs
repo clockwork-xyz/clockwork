@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use {
     super::{Config, Daemon, DaemonAccount, Fee},
     crate::{errors::CronosError, pda::PDA},
@@ -22,6 +24,7 @@ pub struct Task {
     pub exec_at: Option<i64>,
     pub int: u128,
     pub ixs: Vec<InstructionData>,
+    pub pool: HashSet<Pubkey>,
     pub schedule: String,
 }
 

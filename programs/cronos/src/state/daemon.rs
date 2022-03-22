@@ -37,7 +37,7 @@ impl TryFrom<Vec<u8>> for Daemon {
  */
 
 pub trait DaemonAccount {
-    fn init(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
+    fn open(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
 
     fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
 
@@ -45,7 +45,7 @@ pub trait DaemonAccount {
 }
 
 impl DaemonAccount for Account<'_, Daemon> {
-    fn init(&mut self, owner: Pubkey, bump: u8) -> Result<()> {
+    fn open(&mut self, owner: Pubkey, bump: u8) -> Result<()> {
         self.owner = owner;
         self.task_count = 0;
         self.bump = bump;

@@ -36,7 +36,7 @@ impl TryFrom<Vec<u8>> for Health {
  */
 
 pub trait HealthAccount {
-    fn init(&mut self, bump: u8) -> Result<()>;
+    fn open(&mut self, bump: u8) -> Result<()>;
 
     fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
 
@@ -44,7 +44,7 @@ pub trait HealthAccount {
 }
 
 impl HealthAccount for Account<'_, Health> {
-    fn init(&mut self, bump: u8) -> Result<()> {
+    fn open(&mut self, bump: u8) -> Result<()> {
         self.last_ping = 0;
         self.target_ping = 0;
         self.bump = bump;

@@ -87,11 +87,11 @@ pub fn handler(
     let fee = &mut ctx.accounts.fee;
     let health = &mut ctx.accounts.health;
 
-    authority.init(authority_bump)?;
-    config.init(admin.key(), config_bump)?;
-    daemon.init(authority.key(), daemon_bump)?;
-    health.init(health_bump)?;
-    fee.init(daemon.key(), fee_bump)?;
+    authority.open(authority_bump)?;
+    config.open(admin.key(), config_bump)?;
+    daemon.open(authority.key(), daemon_bump)?;
+    health.open(health_bump)?;
+    fee.open(daemon.key(), fee_bump)?;
 
     Ok(())
 }

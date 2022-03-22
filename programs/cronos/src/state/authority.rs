@@ -34,11 +34,11 @@ impl TryFrom<Vec<u8>> for Authority {
  */
 
 pub trait AuthorityAccount {
-    fn init(&mut self, bump: u8) -> Result<()>;
+    fn open(&mut self, bump: u8) -> Result<()>;
 }
 
 impl AuthorityAccount for Account<'_, Authority> {
-    fn init(&mut self, bump: u8) -> Result<()> {
+    fn open(&mut self, bump: u8) -> Result<()> {
         self.bump = bump;
         Ok(())
     }

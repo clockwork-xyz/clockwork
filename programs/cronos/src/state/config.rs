@@ -47,13 +47,13 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn init(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
+    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn init(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
+    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
         self.admin = admin;
         self.bot_fee = 0; // Lamports to pay bot per task exec
         self.program_fee = 0; // Lamports to pay to program per task exec
