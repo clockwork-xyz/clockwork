@@ -1,4 +1,6 @@
 /target
+/test-ledger
+/ledger
 Cargo.lock
 .idea/
 *.json
