@@ -12,20 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use log::debug;
+
 use {
-    crate::*,
+    // crate::*,
+    crate::{bucket::Bucket, cache::TaskCache, *},
+    cronos_sdk::account::Task,
+    log::info,
+    simple_error::simple_error,
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
         AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
         ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus as PluginSlotStatus,
     },
-    std::fmt::{Debug, Formatter},
+    solana_program::pubkey::Pubkey,
+    std::sync::Mutex,
+    std::{
+        fmt::{Debug, Formatter},
+        sync::{Arc, RwLock},
+    },
+    thiserror::Error,
 };
 
 #[derive(Default)]
 pub struct CronosPlugin {
-    // publisher: Option<Publisher>,
+    cache: Option<Arc<RwLock<TaskCache>>>,
+    bucket: Option<Arc<Mutex<Bucket>>>,
     filter: Option<Filter>,
-    // publish_all_accounts: bool,
 }
 
 impl Debug for CronosPlugin {
@@ -34,51 +46,68 @@ impl Debug for CronosPlugin {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum CronosPluginError {
+    #[error("Error writing to local cache. Error message: ({msg})")]
+    CacheError { msg: String },
+
+    #[error("Error deserializing task data")]
+    TaskAccountInfoError,
+}
+
 impl AccountsDbPlugin for CronosPlugin {
     fn name(&self) -> &'static str {
         "CronosPlugin"
     }
 
-    fn on_load(&mut self, _config_file: &str) -> PluginResult<()> {
-        // if self.publisher.is_some() {
-        //     let err = simple_error!("plugin already loaded");
-        //     return Err(PluginError::Custom(Box::new(err)));
-        // }
+    fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
+        if self.cache.is_some() {
+            let err = simple_error!("Cronos Plugin already Loaded");
+            return Err(PluginError::Custom(Box::new(err)));
+        }
 
-        // solana_logger::setup_with_default("info");
-        // info!(
-        //     "Loading plugin {:?} from config_file {:?}",
-        //     self.name(),
-        //     config_file
-        // );
-        // let config = Config::read_from(config_file)?;
-        // self.publish_all_accounts = config.publish_all_accounts;
+        solana_logger::setup_with_default("info");
 
-        // let (version_n, version_s) = get_rdkafka_version();
-        // info!("rd_kafka_version: {:#08x}, {}", version_n, version_s);
+        info!(
+            "Loading plugin {:?} from config_file {:?}",
+            self.name(),
+            config_file
+        );
 
-        // let producer = config
-        //     .producer()
-        //     .map_err(|e| PluginError::Custom(Box::new(e)))?;
-        // info!("Created rdkafka::FutureProducer");
+        let result = Config::read_from(config_file);
 
-        // let publisher = Publisher::new(producer, &config);
-        // self.publisher = Some(publisher);
-        // self.filter = Some(Filter::new(&config));
-        // info!("Spawned producer");
+        match result {
+            Err(err) => {
+                return Err(PluginError::ConfigFileReadError {
+                    msg: format!(
+                        "The config file is not in the JSON format expected: {:?}",
+                        err
+                    ),
+                })
+            }
+            Ok(config) => self.filter = Some(Filter::new(&config)),
+        }
+
+        self.cache = Some(Arc::new(RwLock::new(TaskCache::new())));
+        self.bucket = Some(Arc::new(Mutex::new(Bucket::new())));
+
+        info!("Loaded Cronos Plugin");
 
         Ok(())
     }
 
     fn on_unload(&mut self) {
-        // self.publisher = None;
-        // self.filter = None;
+        info!("Unloading plugin: {:?}", self.name());
+
+        self.cache = None;
+        self.bucket = None;
+        self.filter = None;
     }
 
     fn update_account(
         &mut self,
         account: ReplicaAccountInfoVersions,
-        _slot: u64,
+        slot: u64,
         is_startup: bool,
     ) -> PluginResult<()> {
         if is_startup {
@@ -86,61 +115,63 @@ impl AccountsDbPlugin for CronosPlugin {
         }
 
         let info = Self::unwrap_update_account(account);
+
         if !self.unwrap_filter().wants_program(info.owner) {
             return Ok(());
         }
 
-        // let event = UpdateAccountEvent {
-        //     slot,
-        //     pubkey: info.pubkey.to_vec(),
-        //     lamports: info.lamports,
-        //     owner: info.owner.to_vec(),
-        //     executable: info.executable,
-        //     rent_epoch: info.rent_epoch,
-        //     data: info.data.to_vec(),
-        //     write_version: info.write_version,
-        // };
+        debug!(
+            "Updating account {:?} with owner {:?} at slot {:?}",
+            bs58::encode(info.pubkey).into_string(),
+            bs58::encode(info.owner).into_string(),
+            slot
+        );
 
-        // let publisher = self.unwrap_publisher();
-        // publisher
-        //     .update_account(event)
-        //     .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
+        match &mut self.cache {
+            None => {
+                return Err(PluginError::Custom(Box::new(
+                    CronosPluginError::CacheError {
+                        msg: "There is no available cache to update account data".to_string(),
+                    },
+                )));
+            }
+            Some(cache) => {
+                let task = Task::try_from(info.data.to_vec());
+                let key = Pubkey::new(info.pubkey);
+                let lamports = info.lamports;
 
-        Ok(())
-    }
-
-    fn update_slot_status(
-        &mut self,
-        _slot: u64,
-        _parent: Option<u64>,
-        _status: PluginSlotStatus,
-    ) -> PluginResult<()> {
-        // let publisher = self.unwrap_publisher();
-        // if !publisher.wants_slot_status() {
-        //     return Ok(());
-        // }
-
-        // let event = SlotStatusEvent {
-        //     slot,
-        //     parent: parent.unwrap_or(0),
-        //     status: SlotStatus::from(status).into(),
-        // };
-
-        // publisher
-        //     .update_slot_status(event)
-        //     .map_err(|e| PluginError::AccountsUpdateError { msg: e.to_string() })
+                match task {
+                    Err(err) => {
+                        return Err(PluginError::Custom(Box::new(
+                            CronosPluginError::TaskAccountInfoError,
+                        )))
+                    }
+                    Ok(task) => {
+                        self.replicate_task(key, task, lamports);
+                    }
+                }
+            }
+        }
 
         Ok(())
     }
 
-    fn account_data_notifications_enabled(&self) -> bool {
-        // self.unwrap_publisher().wants_update_account()
-        true
-    }
+    // fn update_slot_status(
+    //     &mut self,
+    //     slot: u64,
+    //     parent: Option<u64>,
+    //     status: PluginSlotStatus,
+    // ) -> PluginResult<()> {
+    //     info!("Updating slot {:?} with status {:?}", slot, status);
+    // }
 
-    fn transaction_notifications_enabled(&self) -> bool {
-        false
-    }
+    // fn account_data_notifications_enabled(&self) -> bool {
+    //     true
+    // }
+
+    // fn transaction_notifications_enabled(&self) -> bool {
+    //     false
+    // }
 }
 
 impl CronosPlugin {
@@ -152,9 +183,26 @@ impl CronosPlugin {
         self.filter.as_ref().expect("filter is unavailable")
     }
 
+    fn unwrap_cache(&self) -> &Arc<RwLock<TaskCache>> {
+        self.cache.as_ref().expect("cache is unavailable")
+    }
+
     fn unwrap_update_account(account: ReplicaAccountInfoVersions) -> &ReplicaAccountInfo {
         match account {
             ReplicaAccountInfoVersions::V0_0_1(info) => info,
         }
     }
+
+    fn replicate_task(&self, key: Pubkey, task: Task, lamports: u64) {
+        info!("💽 Replicating task {}", key);
+        let mut w_cache = self.unwrap_cache().write().unwrap();
+        if lamports == 0 {
+            w_cache.delete(key)
+        } else {
+            w_cache.insert(key, task)
+        }
+    }
+
+    // TODO:
+    // fn execute_task() {}
 }

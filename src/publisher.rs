@@ -14,7 +14,7 @@
 
 use {
     crate::*,
-    // prost::Message,
+    prost::Message,
     // rdkafka::{
     //     error::KafkaError,
     //     producer::{BaseRecord, Producer as KafkaProducer},
@@ -25,7 +25,6 @@ use {
 pub struct Publisher {
     // producer: Producer,
     shutdown_timeout: Duration,
-
     update_account_topic: String,
     slot_status_topic: String,
 }
@@ -42,10 +41,11 @@ impl Publisher {
 
     // pub fn update_account(&self, ev: UpdateAccountEvent) -> Result<(), KafkaError> {
     //     let buf = ev.encode_to_vec();
-    //     let record = BaseRecord::<Vec<u8>, _>::to(&self.update_account_topic)
-    //         .key(&ev.pubkey)
-    //         .payload(&buf);
-    //     self.producer.send(record).map(|_| ()).map_err(|(e, _)| e)
+
+    // let record = Record::<Vec<u8>, _>::to(&self.update_account_topic)
+    //     .key(&ev.pubkey)
+    //     .payload(&buf);
+    // self.producer.send(record).map(|_| ()).map_err(|(e, _)| e)
     // }
 
     // pub fn update_slot_status(&self, ev: SlotStatusEvent) -> Result<(), KafkaError> {
