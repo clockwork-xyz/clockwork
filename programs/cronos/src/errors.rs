@@ -2,6 +2,9 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum CronosError {
+    #[msg("This account is already open")]
+    AccountAlreadyOpen,
+
     #[msg("Tasks cannot be started before they are stopped")]
     InvalidChronology,
     #[msg("Tasks cannot be scheduled for execution in the past")]

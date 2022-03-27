@@ -843,6 +843,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-pool"
+version = "0.1.8"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
+]
+
+[[package]]
 name = "cronos-program"
 version = "0.1.8"
 dependencies = [

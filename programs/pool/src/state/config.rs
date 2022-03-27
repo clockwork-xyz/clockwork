@@ -1,5 +1,5 @@
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::{errors::{AccountError, AdminError}, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -15,9 +15,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
 pub struct Config {
     pub admin: Pubkey,
     pub bump: u8,
-    pub node_fee: u64,
-    pub program_fee: u64,
-    pub registry_address: Pubkey,
+    pub pool_size: usize,
 }
 
 impl Config {
@@ -40,36 +38,31 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
-    pub node_fee: u64,
-    pub program_fee: u64,
+    pub pool_size: usize,
 }
 /**
  * ConfigAccount
  */
 
 pub trait ConfigAccount {
-    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
+        require!(self.bump == 0, AccountError::AlreadyInitialized);
         self.admin = admin;
         self.bump = bump;
-        self.node_fee = 0; // Lamports to pay node per task exec
-        self.program_fee = 0; // Lamports to pay to program per task exec
-        
-        // TODO initialize registry_address
-
+        self.pool_size = 1; 
         Ok(())
     }
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
+        require!(self.admin == admin.key(), AdminError::NotAuthorized);
         self.admin = settings.admin;
-        self.node_fee = settings.node_fee;
-        self.program_fee = settings.program_fee;
+        self.pool_size = settings.pool_size;
         Ok(())
     }
 }

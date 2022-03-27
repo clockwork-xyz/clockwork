@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use {
     super::{Config, Daemon, DaemonAccount, Fee},
     crate::{errors::CronosError, pda::PDA},
@@ -7,7 +5,7 @@ use {
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
     solana_program::instruction::Instruction,
-    std::{convert::TryFrom, str::FromStr},
+    std::{collections::HashSet, convert::TryFrom, str::FromStr},
 };
 
 pub const SEED_TASK: &[u8] = b"task";
@@ -21,10 +19,10 @@ pub const SEED_TASK: &[u8] = b"task";
 pub struct Task {
     pub bump: u8,
     pub daemon: Pubkey,
+    pub delegates: HashSet<Pubkey>,
     pub exec_at: Option<i64>,
     pub int: u128,
     pub ixs: Vec<InstructionData>,
-    pub pool: HashSet<Pubkey>,
     pub schedule: String,
 }
 

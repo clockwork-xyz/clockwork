@@ -1,0 +1,26 @@
+[package]
+name = "cronos-pool"
+version = "0.1.8"
+description = ""
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/cronos"
+documentation = "https://docs.cronos.so"
+readme = "./README.md"
+keywords = ["solana", "cronos", "program"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cronos_pool"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "=0.22.0"
+solana-program = "=1.9.9"

@@ -79,10 +79,6 @@ pub mod cronos {
         health_ping::handler(ctx)
     }
 
-    pub fn node_open(ctx: Context<NodeOpen>, bump: u8, int: u128) -> Result<()> {
-        node_open::handler(ctx, bump, int)
-    }
-
     pub fn task_close(ctx: Context<TaskClose>) -> Result<()> {
         task_close::handler(ctx)
     }
