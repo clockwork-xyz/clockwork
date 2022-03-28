@@ -1,8 +1,6 @@
-use super::Node;
-
 use {
     crate::{errors::SnapshotError, pda::PDA},
-    super::{SnapshotPage, Registry, RegistryPage, RegistryAccount},
+    super::{Node, SnapshotPage, Registry, RegistryPage, RegistryAccount},
     anchor_lang::{AnchorDeserialize, prelude::*},
     std::convert::TryFrom,
 };
@@ -20,7 +18,7 @@ pub struct Snapshot {
     pub node_count: u64,
     pub page_count: u64,
     pub status: SnapshotStatus,
-    pub token_stake: u64,
+    pub cumulative_stake: u64,
     pub ts: i64,
 }
 
@@ -52,7 +50,7 @@ pub trait SnapshotAccount {
         timestamp: i64
     ) -> Result<()>;
 
-    fn image(
+    fn capture(
         &mut self, 
         nodes: Vec<&Account<Node>>,
         registry: &mut Account<Registry>, 
@@ -77,7 +75,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         registry.lock()
     }
 
-    fn image(
+    fn capture(
         &mut self, 
         nodes: Vec<&Account<Node>>,
         registry: &mut Account<Registry>, 
@@ -100,16 +98,16 @@ impl SnapshotAccount for Account<'_, Snapshot> {
             }
         };
         
-        // Recording the cumulative stake distrubtion
+        // Record the cumulative stake
         for node in nodes {
-            self.token_stake = self.token_stake.checked_add(node.stake).unwrap();
-            snapshot_page.entries.push((node.authority, self.token_stake));
+            self.cumulative_stake = self.cumulative_stake.checked_add(node.stake).unwrap();
+            snapshot_page.entries.push((node.authority, self.cumulative_stake));
         }
 
         // If all pages have been processed, mark the snapshot as done and unlock the registry
         if registry_page.id.checked_add(1).unwrap() >= registry.page_count {
             self.status = SnapshotStatus::Done;
-            registry.unlock().unwrap();
+            registry.unlock(self.ts).unwrap();
         }
         
         Ok(())
@@ -119,7 +117,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 /**
  * SnapshotStatus
  */
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
 pub enum SnapshotStatus {
     Done,
     InProgress {

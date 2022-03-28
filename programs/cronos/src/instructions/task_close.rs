@@ -24,7 +24,7 @@ pub struct TaskClose<'info> {
         seeds = [
             SEED_TASK, 
             task.daemon.as_ref(),
-            task.int.to_be_bytes().as_ref(),
+            task.id.to_be_bytes().as_ref(),
         ],
         bump = task.bump,
         has_one = daemon,

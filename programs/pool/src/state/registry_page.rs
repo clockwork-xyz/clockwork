@@ -1,3 +1,7 @@
+use crate::errors::{AccountError, RegistryError};
+
+use super::Node;
+
 use {
     crate::pda::PDA,
     anchor_lang::{AnchorDeserialize, prelude::*},
@@ -6,6 +10,7 @@ use {
 
 pub const SEED_REGISTRY_PAGE: &[u8] = b"registry_page";
 
+pub const PAGE_LIMIT: usize = 10_000;
 /**
  * RegistryPage
  */
@@ -43,13 +48,22 @@ impl TryFrom<Vec<u8>> for RegistryPage {
 
 pub trait RegistryPageAccount {
     fn new(&mut self, bump: u8, id: u64) -> Result<()>;
+
+    fn append(&mut self, node: &mut Account<Node>) -> Result<()>;
 }
 
 impl RegistryPageAccount for Account<'_, RegistryPage> {
     fn new(&mut self, bump: u8, id: u64) -> Result<()> {
+        require!(self.bump == 0, AccountError::AlreadyInitialized);
         self.bump = bump;
         self.id = id;
         self.nodes = vec![];
+        Ok(())
+    }
+
+    fn append(&mut self, node: &mut Account<Node>) -> Result<()> {
+        require!(self.nodes.len() < PAGE_LIMIT, RegistryError::PageFull);
+        self.nodes.push(node.key());
         Ok(())
     }
 }

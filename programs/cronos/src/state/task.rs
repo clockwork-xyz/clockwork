@@ -21,7 +21,7 @@ pub struct Task {
     pub daemon: Pubkey,
     pub delegates: HashSet<Pubkey>,
     pub exec_at: Option<i64>,
-    pub int: u128,
+    pub id: u128,
     pub ixs: Vec<InstructionData>,
     pub schedule: String,
 }
@@ -93,7 +93,7 @@ impl TaskAccount for Account<'_, Task> {
         // Initialize task account.
         self.bump = bump;
         self.daemon = daemon.key();
-        self.int = daemon.task_count;
+        self.id = daemon.task_count;
         self.ixs = ixs;
         self.schedule = schedule;
 
