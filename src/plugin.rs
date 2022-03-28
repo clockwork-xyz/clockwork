@@ -122,9 +122,7 @@ impl AccountsDbPlugin for CronosPlugin {
 
         debug!(
             "Updating account {:?} with owner {:?} at slot {:?}",
-            bs58::encode(info.pubkey).into_string(),
-            bs58::encode(info.owner).into_string(),
-            slot
+            info.pubkey, info.owner, slot
         );
 
         match &mut self.cache {
