@@ -1,5 +1,5 @@
 use {
-    crate::{errors::AccountError, pda::PDA},
+    crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -49,7 +49,7 @@ pub trait NodeAccount {
 
 impl NodeAccount for Account<'_, Node> {
     fn new(&mut self, authority: &mut Signer, bump: u8) -> Result<()> {
-        require!(self.bump == 0, AccountError::AlreadyInitialized);
+        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.authority = authority.key();
         self.bump = bump;
         self.stake = 0;

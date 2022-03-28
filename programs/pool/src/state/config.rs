@@ -1,5 +1,5 @@
 use {
-    crate::{errors::{AccountError, AdminError}, pda::PDA},
+    crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -40,6 +40,7 @@ pub struct ConfigSettings {
     pub admin: Pubkey,
     pub pool_size: usize,
 }
+
 /**
  * ConfigAccount
  */
@@ -52,7 +53,7 @@ pub trait ConfigAccount {
 
 impl ConfigAccount for Account<'_, Config> {
     fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
-        require!(self.bump == 0, AccountError::AlreadyInitialized);
+        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.admin = admin;
         self.bump = bump;
         self.pool_size = 1; 
@@ -60,7 +61,7 @@ impl ConfigAccount for Account<'_, Config> {
     }
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(self.admin == admin.key(), AdminError::NotAuthorized);
+        require!(self.admin == admin.key(), CronosError::AdminAuthorityInvalid);
         self.admin = settings.admin;
         self.pool_size = settings.pool_size;
         Ok(())

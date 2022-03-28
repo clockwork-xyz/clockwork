@@ -1,6 +1,6 @@
 use {
-    crate::{errors::{AccountError, PoolError, SnapshotError}, pda::PDA, state::SnapshotStatus},
-    super::{Config, Registry, SnapshotPage, Snapshot},
+    crate::{errors::CronosError, pda::PDA, state::{SnapshotEntry, SnapshotStatus}},
+    super::{Config, SnapshotPage, Snapshot},
     anchor_lang::{AnchorDeserialize, prelude::*},
     std::{collections::{hash_map::DefaultHasher, VecDeque}, convert::TryFrom, hash::{Hasher, Hash}},
 };
@@ -43,7 +43,6 @@ pub trait PoolAccount {
     fn cycle(
         &mut self, 
         config: &Account<Config>, 
-        registry: &Account<Registry>,
         snapshot: &Account<Snapshot>,
         snapshot_page: &Account<SnapshotPage>
     ) -> Result<()>;
@@ -51,7 +50,7 @@ pub trait PoolAccount {
 
 impl PoolAccount for Account<'_, Pool> {
     fn new(&mut self, bump: u8) -> Result<()> {
-        require!(self.bump == 0, AccountError::AlreadyInitialized);
+        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.bump = bump;
         self.delegates = VecDeque::new();
         Ok(())
@@ -60,32 +59,37 @@ impl PoolAccount for Account<'_, Pool> {
     fn cycle(
         &mut self, 
         config: &Account<Config>,
-        registry: &Account<Registry>,
         snapshot: &Account<Snapshot>,
         snapshot_page: &Account<SnapshotPage>
     ) -> Result<()> {
-        require!(snapshot.status == SnapshotStatus::Done, SnapshotError::NotDone);
-        require!(registry.last_snapshot_ts.is_some(), PoolError::InvalidSnapshot);
-        require!(registry.last_snapshot_ts.unwrap() == snapshot.ts, PoolError::InvalidSnapshot);
-        require!(snapshot_page.entries.len() > 0, PoolError::InvalidSnapshotPage);
+        require!(snapshot.status == SnapshotStatus::Current, CronosError::SnapshotNotCurrent);
+        require!(snapshot_page.entries.len() > 0, CronosError::PageRangeInvalid);
 
         // Sample the nonce value
-        let sample = self.nonce.checked_rem(snapshot.cumulative_stake).unwrap();
+        let sample: u64 = self.nonce.checked_rem(snapshot.cumulative_stake).unwrap();
 
-        // Verify the sample is withing the snapshot page range 
-        let r0: u64 = snapshot_page.entries.first().unwrap().1;
-        let r1: u64 = snapshot_page.entries.last().unwrap().1;
-        require!(sample >= r0 && sample <= r1, PoolError::InvalidSnapshotPage);
+        // Verify the sample is within the snapshot page range 
+        let first: &SnapshotEntry = snapshot_page.entries.first().unwrap();
+        let last: &SnapshotEntry = snapshot_page.entries.last().unwrap();
+        require!(
+            sample >= first.node_cumulative_stake && 
+            sample <= last.node_cumulative_stake, 
+            CronosError::PageRangeInvalid
+        );
 
         // Pop the last delegate out of the pool
         self.delegates.pop_front();
 
-        // Push the new delegate into the pool
+        // Push the sampled delegate into the pool
         self.delegates.push_back(
-            snapshot_page.entries.iter().rev().find(|e| e.1 <= sample).unwrap().0
+            snapshot_page.entries.iter().rev().find(
+                |e| e.node_cumulative_stake <= sample
+            )
+            .unwrap()
+            .node_authority
         );
 
-        // Drain pool to configured size limit
+        // Drain pool to the configured size limit
         while self.delegates.len() > config.pool_size {
             self.delegates.pop_front();
         }

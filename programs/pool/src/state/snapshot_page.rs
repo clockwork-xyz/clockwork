@@ -14,7 +14,7 @@ pub const SEED_SNAPSHOT_PAGE: &[u8] = b"snapshot_page";
 #[derive(Debug)]
 pub struct SnapshotPage {
     pub bump: u8,
-    pub entries: Vec<(Pubkey, u64)>,
+    pub entries: Vec<SnapshotEntry>,
     pub id: u128,
 }
 
@@ -54,3 +54,13 @@ impl SnapshotPageAccount for Account<'_, SnapshotPage> {
     }
 }
 
+
+/**
+ * SnapshotEntry
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+pub struct SnapshotEntry {
+    pub node_authority: Pubkey,
+    pub node_cumulative_stake: u64
+}

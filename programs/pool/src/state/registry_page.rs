@@ -1,9 +1,6 @@
-use crate::errors::{AccountError, RegistryError};
-
-use super::Node;
-
 use {
-    crate::pda::PDA,
+    crate::{errors::CronosError, pda::PDA},
+    super::Node,
     anchor_lang::{AnchorDeserialize, prelude::*},
     std::convert::TryFrom,
 };
@@ -54,7 +51,7 @@ pub trait RegistryPageAccount {
 
 impl RegistryPageAccount for Account<'_, RegistryPage> {
     fn new(&mut self, bump: u8, id: u64) -> Result<()> {
-        require!(self.bump == 0, AccountError::AlreadyInitialized);
+        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.bump = bump;
         self.id = id;
         self.nodes = vec![];
@@ -62,7 +59,7 @@ impl RegistryPageAccount for Account<'_, RegistryPage> {
     }
 
     fn append(&mut self, node: &mut Account<Node>) -> Result<()> {
-        require!(self.nodes.len() < PAGE_LIMIT, RegistryError::PageFull);
+        require!(self.nodes.len() < PAGE_LIMIT, CronosError::PageIsFull);
         self.nodes.push(node.key());
         Ok(())
     }
