@@ -1,3 +1,5 @@
+use crate::state::SnapshotPageAccount;
+
 use {
     crate::{errors::CronosError, pda::PDA, state::RegistryAccount},
     super::{Node, SnapshotEntry, SnapshotPage, Registry, RegistryPage},
@@ -23,10 +25,10 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    pub fn pda(ts: i64) -> PDA {
+    pub fn pda(id: u64) -> PDA {
         Pubkey::find_program_address(&[
             SEED_SNAPSHOT,
-            ts.to_be_bytes().as_ref(),
+            id.to_be_bytes().as_ref(),
         ], &crate::ID)
     }
 }
@@ -44,6 +46,13 @@ impl TryFrom<Vec<u8>> for Snapshot {
 
 pub trait SnapshotAccount {
     fn new(&mut self, bump: u8, id: u64) -> Result<()>;
+
+    fn new_page(
+        &mut self, 
+        page: &mut Account<SnapshotPage>, 
+        page_bump: u8, 
+        registry: &Account<Registry>
+    ) -> Result<()>;
 
     fn capture(
         &mut self, 
@@ -67,6 +76,29 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         self.node_count = 0;
         self.page_count = 0;
         self.status = SnapshotStatus::InProgress { page_id: 0 };
+        Ok(())
+    }
+
+    fn new_page(&mut self, page: &mut Account<SnapshotPage>, page_bump: u8, registry: &Account<Registry>) -> Result<()> {
+
+        // Validate the registry is locked
+        require!(registry.is_locked, CronosError::RegistryMustBeLocked);
+
+        // Validate snapshot is in progress and a new page is needed
+        match self.status {
+            SnapshotStatus::InProgress { page_id } => 
+                require!(page_id.checked_add(1).unwrap() < registry.page_count, CronosError::SnapshotIncomplete),
+            _ => return Err(CronosError::SnapshotNotInProgress.into())
+        };
+
+        // TODO has the snapshot captured the entire page?
+
+        // Initialize new page
+        page.new(page_bump, registry.page_count)?;
+
+        // Increment page count
+        self.page_count = self.page_count.checked_add(1).unwrap();
+
         Ok(())
     }
 
@@ -107,7 +139,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
             SnapshotStatus::InProgress { page_id } => 
                 require!(page_id.checked_add(1).unwrap() >= registry.page_count, CronosError::SnapshotIncomplete),
             _ => return Err(CronosError::SnapshotNotInProgress.into())
-        };        
+        };
         
         // Validate the next snapshot checksums
         require!(

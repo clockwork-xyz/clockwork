@@ -15,16 +15,18 @@ pub const SEED_SNAPSHOT_PAGE: &[u8] = b"snapshot_page";
 pub struct SnapshotPage {
     pub bump: u8,
     pub entries: Vec<SnapshotEntry>,
-    pub id: u128,
+    pub id: u64,
 }
 
 impl SnapshotPage {
-    pub fn pda(id: u128) -> PDA {
+
+    pub fn pda(snapshot: Pubkey, id: u64) -> PDA {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_PAGE, 
+                snapshot.as_ref(),
                 id.to_be_bytes().as_ref()
-            ], 
+            ],
             &crate::ID
         )
     }
@@ -42,11 +44,11 @@ impl TryFrom<Vec<u8>> for SnapshotPage {
  */
 
 pub trait SnapshotPageAccount {
-    fn new(&mut self, bump: u8, id: u128) -> Result<()>;
+    fn new(&mut self, bump: u8, id: u64) -> Result<()>;
 }
 
 impl SnapshotPageAccount for Account<'_, SnapshotPage> {
-    fn new(&mut self, bump: u8, id: u128) -> Result<()> {
+    fn new(&mut self, bump: u8, id: u64) -> Result<()> {
         self.bump = bump;
         self.entries = vec![];
         self.id = id;

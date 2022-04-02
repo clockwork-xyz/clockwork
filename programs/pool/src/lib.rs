@@ -6,14 +6,11 @@ mod instructions;
 
 use anchor_lang::prelude::*;
 use instructions::*;
-// use state::*;
 
 declare_id!("EKpcZk331JDfGaetHvU1LuUmDCh4Pv3392sfNZYt8gbQ");
 
 #[program]
 pub mod cronos_registry {
-    use crate::instructions::Initialize;
-
     use super::*;
 
     pub fn initialize(
@@ -21,14 +18,18 @@ pub mod cronos_registry {
         config_bump: u8,
         pool_bump: u8,
         registry_bump: u8,
-        snapshot_bump: u8
+        registry_page_bump: u8,
+        snapshot_bump: u8,
+        snapshot_page_bump: u8,
     ) -> Result<()> {
         initialize::handler(
             ctx,
             config_bump,
             pool_bump,
             registry_bump,
-            snapshot_bump
+            registry_page_bump,
+            snapshot_bump,
+            snapshot_page_bump,
         )
     }
     

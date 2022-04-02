@@ -29,6 +29,8 @@ pub enum CronosError {
     #[msg("The snapshot is incomplete and has more to capture")]
     SnapshotIncomplete,
 
+    #[msg("A new ")]
+    SnapshotPage,
 
 }
 
