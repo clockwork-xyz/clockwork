@@ -1,6 +1,6 @@
 # Cronos
 
-Cronos is a decentralized task scheduler for Solana.
+Cronos is a task scheduler for Solana.
 
 ## Docs
 
