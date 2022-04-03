@@ -903,6 +903,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-tests"
+version = "0.1.8"
+dependencies = [
+ "cronos-sdk",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-client-helpers",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

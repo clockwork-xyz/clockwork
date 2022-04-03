@@ -4,7 +4,7 @@ wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
 cronos = "CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW"
-registry = "EKpcZk331JDfGaetHvU1LuUmDCh4Pv3392sfNZYt8gbQ"
+pool = "EKpcZk331JDfGaetHvU1LuUmDCh4Pv3392sfNZYt8gbQ"
 
 [registry]
 url = "https://anchor.projectserum.com"

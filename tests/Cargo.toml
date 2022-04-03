@@ -1,0 +1,21 @@
+[package]
+name = "cronos-tests"
+version = "0.1.8"
+description = "A test suite for Cronos"
+edition = "2021"
+license = "Apache-2.0"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/cronos"
+documentation = "https://docs.cronos.so"
+readme = "./README.md"
+keywords = ["solana", "cronos", "program"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cronos_tests"
+
+[dependencies]
+cronos-sdk = { path = "../sdk", version = "0.1.8" }
+solana-account-decoder = "=1.9.9"
+solana-client = "=1.9.9"
+solana-client-helpers = "=1.1.0"

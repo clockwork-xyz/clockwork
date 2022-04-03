@@ -5,5 +5,6 @@ members = [
     "cron",
     "programs/*",
     "sdk",
-    "telemetry"
+    "telemetry",
+    "tests"
 ]

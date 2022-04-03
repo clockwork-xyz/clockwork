@@ -3,18 +3,26 @@
 A cron expression parser that's safe to use in the Solana runtime. Works with stable Rust v1.28.0.
 
 ```rust
-use cron::Schedule;
-use chrono::Utc;
+use cronos_cron::Schedule;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use std::str::FromStr;
 
 fn main() {
   //               sec  min   hour   day of month   month   day of week   year
   let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
   let schedule = Schedule::from_str(expression).unwrap();
-  println!("Upcoming fire times:");
-  for datetime in schedule.upcoming(Utc).take(10) {
-    println!("-> {}", datetime);
-  }
+  let ts = 1234567890;
+  let next_exec_at = schedule
+      .after(&DateTime::<Utc>::from_utc(
+          NaiveDateTime::from_timestamp(ts, 0),
+          Utc,
+      ))
+      .take(1)
+      .next()
+    {
+        Some(datetime) => Some(datetime.timestamp()),
+        None => None,
+    }
 }
 
 /*
@@ -35,9 +43,10 @@ Upcoming fire times:
 ## License
 
 Licensed under either of
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
-at your option.
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
+  at your option.
 
 ### Contribution
 

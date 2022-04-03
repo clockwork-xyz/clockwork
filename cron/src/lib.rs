@@ -3,18 +3,26 @@
 //! A cron expression parser and schedule explorer
 //! # Example
 //! ```
-//! use cron::Schedule;
-//! use chrono::Utc;
+//! use cronos_cron::Schedule;
+//! use chrono::{DateTime, NaiveDateTime, Utc};
 //! use std::str::FromStr;
 //!
 //! fn main() {
 //!   //               sec  min   hour   day of month   month   day of week   year
 //!   let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
 //!   let schedule = Schedule::from_str(expression).unwrap();
-//!   println!("Upcoming fire times:");
-//!   for datetime in schedule.upcoming(Utc).take(10) {
-//!     println!("-> {}", datetime);
-//!   }
+//!   let ts = 1234567890;
+//!   let next_exec_at = match schedule
+//!     .after(&DateTime::<Utc>::from_utc(
+//!         NaiveDateTime::from_timestamp(ts, 0),
+//!         Utc,
+//!     ))
+//!     .take(1)
+//!     .next()
+//!     {
+//!         Some(datetime) => Some(datetime.timestamp()),
+//!         None => None,
+//!     };
 //! }
 //!
 //! /*
@@ -33,12 +41,12 @@
 //! ```
 
 pub mod error;
-mod schedule;
-mod time_unit;
 mod ordinal;
-mod specifier;
-mod queries;
 mod parsing;
+mod queries;
+mod schedule;
+mod specifier;
+mod time_unit;
 
 pub use crate::schedule::Schedule;
 pub use crate::time_unit::TimeUnitSpec;

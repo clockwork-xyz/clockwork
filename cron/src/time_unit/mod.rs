@@ -59,7 +59,7 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
 /// Methods exposing a schedule's configured ordinals for each individual unit of time.
 /// # Example
 /// ```
-/// use cron::{Schedule,TimeUnitSpec};
+/// use cronos_cron::{Schedule,TimeUnitSpec};
 /// use std::ops::Bound::{Included,Excluded};
 /// use std::str::FromStr;
 ///
@@ -93,7 +93,7 @@ pub trait TimeUnitSpec {
     /// being described.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cronos_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * * * * 2015-2044";
@@ -109,7 +109,7 @@ pub trait TimeUnitSpec {
     /// lowest to highest.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cronos_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * * 5-8 * *";
@@ -128,7 +128,7 @@ pub trait TimeUnitSpec {
     /// Provides an iterator which will return each included ordinal within the specified range.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cronos_cron::{Schedule,TimeUnitSpec};
     /// use std::ops::Bound::{Included,Excluded};
     /// use std::str::FromStr;
     ///
@@ -147,7 +147,7 @@ pub trait TimeUnitSpec {
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cronos_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";
@@ -160,7 +160,7 @@ pub trait TimeUnitSpec {
     /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or in the case of weekdays '1-7')
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cronos_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";
@@ -211,23 +211,23 @@ where
     fn inclusive_min() -> Ordinal;
     fn inclusive_max() -> Ordinal;
     fn ordinals(&self) -> &OrdinalSet;
-    
+
     fn from_ordinal(ordinal: Ordinal) -> Self {
         Self::from_ordinal_set(iter::once(ordinal).collect())
     }
-    
+
     fn supported_ordinals() -> OrdinalSet {
         (Self::inclusive_min()..Self::inclusive_max() + 1).collect()
-    }    
-    
+    }
+
     fn all() -> Self {
         Self::from_optional_ordinal_set(None)
     }
-    
+
     fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
         Self::from_optional_ordinal_set(Some(ordinal_set))
     }
-    
+
     fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
         Err(ErrorKind::Expression(format!(
             "The '{}' field does not support using names. '{}' \
