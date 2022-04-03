@@ -213,6 +213,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "anchor-spl"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e49a20ac8743546bc76a247ff0a81ceb0cee7653b087ccb330bf3553d907d522"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "anchor-syn"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -847,6 +859,7 @@ name = "cronos-pool"
 version = "0.1.8"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "solana-program",
 ]
 

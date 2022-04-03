@@ -22,32 +22,25 @@ pub enum CronosError {
 
     #[msg("The snapshot has already been captured and is not currently in progress")]
     SnapshotNotInProgress,
-    
+
     #[msg("The snapshot is not current")]
     SnapshotNotCurrent,
 
     #[msg("The snapshot is incomplete and has more to capture")]
     SnapshotIncomplete,
 
-    #[msg("A new ")]
-    SnapshotPage,
-
+    #[msg("A new snapshot page is not needed")]
+    SnapshotPageNotNeeded,
 }
-
 
 #[error_code]
 pub enum SnapshotError {
     #[msg("The registry page int does not match the current state of the snapshot")]
     InvalidRegistryPage,
-
-    
 }
 
 #[error_code]
 pub enum PoolError {
-    
     #[msg("The provided snapshot page doesn't hold the sampled node")]
     InvalidSnapshotPage,
-
-
 }

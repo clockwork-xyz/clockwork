@@ -1,9 +1,11 @@
-use crate::state::SnapshotPageAccount;
-
 use {
-    crate::{errors::CronosError, pda::PDA, state::RegistryAccount},
-    super::{Node, SnapshotEntry, SnapshotPage, Registry, RegistryPage},
-    anchor_lang::{AnchorDeserialize, prelude::*},
+    super::{Node, Registry, RegistryPage, SnapshotEntry, SnapshotPage},
+    crate::{
+        errors::CronosError,
+        pda::PDA,
+        state::{SnapshotPageAccount, PAGE_LIMIT},
+    },
+    anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
 
@@ -26,10 +28,7 @@ pub struct Snapshot {
 
 impl Snapshot {
     pub fn pda(id: u64) -> PDA {
-        Pubkey::find_program_address(&[
-            SEED_SNAPSHOT,
-            id.to_be_bytes().as_ref(),
-        ], &crate::ID)
+        Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID)
     }
 }
 
@@ -48,24 +47,17 @@ pub trait SnapshotAccount {
     fn new(&mut self, bump: u8, id: u64) -> Result<()>;
 
     fn new_page(
-        &mut self, 
-        page: &mut Account<SnapshotPage>, 
-        page_bump: u8, 
-        registry: &Account<Registry>
+        &mut self,
+        page: &mut Account<SnapshotPage>,
+        page_bump: u8,
+        registry: &Account<Registry>,
     ) -> Result<()>;
 
     fn capture(
-        &mut self, 
+        &mut self,
         nodes: Vec<&Account<Node>>,
         registry_page: &Account<RegistryPage>,
-        snapshot_page: &mut Account<SnapshotPage>, 
-    ) -> Result<()>;
-
-    fn rotate(
-        &mut self,
-        clock: Sysvar<Clock>,
-        next_snapshot: &mut Account<Snapshot>, 
-        registry: &mut Account<Registry>
+        snapshot_page: &mut Account<SnapshotPage>,
     ) -> Result<()>;
 }
 
@@ -75,23 +67,30 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         self.id = id;
         self.node_count = 0;
         self.page_count = 0;
-        self.status = SnapshotStatus::InProgress { page_id: 0 };
+        self.status = SnapshotStatus::InProgress;
         Ok(())
     }
 
-    fn new_page(&mut self, page: &mut Account<SnapshotPage>, page_bump: u8, registry: &Account<Registry>) -> Result<()> {
-
+    fn new_page(
+        &mut self,
+        page: &mut Account<SnapshotPage>,
+        page_bump: u8,
+        registry: &Account<Registry>,
+    ) -> Result<()> {
         // Validate the registry is locked
         require!(registry.is_locked, CronosError::RegistryMustBeLocked);
 
-        // Validate snapshot is in progress and a new page is needed
-        match self.status {
-            SnapshotStatus::InProgress { page_id } => 
-                require!(page_id.checked_add(1).unwrap() < registry.page_count, CronosError::SnapshotIncomplete),
-            _ => return Err(CronosError::SnapshotNotInProgress.into())
-        };
+        // Validate the snapshot is in progress
+        require!(
+            self.status == SnapshotStatus::InProgress,
+            CronosError::SnapshotNotInProgress
+        );
 
-        // TODO has the snapshot captured the entire page?
+        // Validate a new page is needed
+        require!(
+            self.page_count < registry.page_count,
+            CronosError::PageRangeInvalid
+        );
 
         // Initialize new page
         page.new(page_bump, registry.page_count)?;
@@ -103,59 +102,42 @@ impl SnapshotAccount for Account<'_, Snapshot> {
     }
 
     fn capture(
-        &mut self, 
+        &mut self,
         nodes: Vec<&Account<Node>>,
         registry_page: &Account<RegistryPage>,
-        snapshot_page: &mut Account<SnapshotPage>
+        snapshot_page: &mut Account<SnapshotPage>,
     ) -> Result<()> {
+        // Validate the snapshot is in progress
+        require!(
+            self.status == SnapshotStatus::InProgress,
+            CronosError::SnapshotNotInProgress
+        );
 
-        // Validate the snapshot status
-        match self.clone().into_inner().status {
-            SnapshotStatus::InProgress { page_id} => 
-                require!(registry_page.id == page_id, CronosError::PageRangeInvalid),
-            _ => return Err(CronosError::SnapshotNotInProgress.into())
-        };
-        
+        // Validate this is the correct page to capture
+        require!(
+            snapshot_page.id == registry_page.id,
+            CronosError::PageRangeInvalid
+        );
+
         // Record the cumulative stake of the node authorities
-        for node in nodes {
+        let offset = self.node_count.checked_div(PAGE_LIMIT as u64).unwrap() as usize;
+        for i in 0..nodes.len() {
+            let node = nodes[i];
+            require!(
+                registry_page.nodes[offset + i] == node.key(),
+                CronosError::PageRangeInvalid,
+            );
             self.cumulative_stake = self.cumulative_stake.checked_add(node.stake).unwrap();
             snapshot_page.entries.push(SnapshotEntry {
                 node_authority: node.authority,
-                node_cumulative_stake: self.cumulative_stake
+                node_cumulative_stake: self.cumulative_stake,
             });
         }
-        
+
+        // Update the node count
+        self.node_count = self.node_count.checked_add(nodes.len() as u64).unwrap();
+
         Ok(())
-    }
-
-    fn rotate(&mut self, clock: Sysvar<Clock>, next_snapshot: &mut Account<Snapshot>, registry: &mut Account<Registry>) -> Result<()> {
-
-        // Validate the snapshot is current and the registry is locked
-        require!(self.status == SnapshotStatus::Current, CronosError::SnapshotNotCurrent);
-        require!(registry.is_locked, CronosError::RegistryMustBeLocked);
-
-        // Validate the next snapshot progress has captured the entire registry
-        match next_snapshot.status {
-            SnapshotStatus::InProgress { page_id } => 
-                require!(page_id.checked_add(1).unwrap() >= registry.page_count, CronosError::SnapshotIncomplete),
-            _ => return Err(CronosError::SnapshotNotInProgress.into())
-        };
-        
-        // Validate the next snapshot checksums
-        require!(
-            next_snapshot.page_count == registry.page_count && 
-            next_snapshot.node_count == registry.node_count,
-            CronosError::SnapshotIncomplete
-        );
-
-        // Mark the current snapshot as archived
-        self.status = SnapshotStatus::Archived { ts: clock.unix_timestamp };
-
-        // Mark the next snapshot as current
-        next_snapshot.status = SnapshotStatus::Current;
-
-        // Unlock the registry
-        registry.unlock()
     }
 }
 
@@ -166,5 +148,5 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 pub enum SnapshotStatus {
     Archived { ts: i64 },
     Current,
-    InProgress { page_id: u64 }
+    InProgress,
 }

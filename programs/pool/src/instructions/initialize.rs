@@ -19,6 +19,9 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
+    #[account(address = sysvar::clock::ID)]
+    pub clock: Sysvar<'info, Clock>,
+
     #[account(
         init,
         seeds = [SEED_CONFIG],
@@ -67,7 +70,6 @@ pub struct Initialize<'info> {
     )]
     pub registry_page: Account<'info, RegistryPage>,
 
-
     #[account(
         init,
         seeds = [
@@ -113,6 +115,7 @@ pub fn handler(
     snapshot_page_bump: u8
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
+    let clock = &ctx.accounts.clock;
     let config = &mut ctx.accounts.config;
     let mint = &ctx.accounts.mint;
     let pool = &mut ctx.accounts.pool;
@@ -125,8 +128,9 @@ pub fn handler(
     pool.new(pool_bump)?;
     registry.new(registry_bump, mint)?;
     registry.new_page(registry_page, registry_page_bump)?;
-    snapshot.new(snapshot_bump, 0)?;
+    registry.new_snapshot(snapshot, snapshot_bump)?;
     snapshot.new_page(snapshot_page, snapshot_page_bump, registry)?;
+    registry.rotate_snapshot(clock, None, snapshot)?;
 
     Ok(())
 }

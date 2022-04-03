@@ -7,7 +7,7 @@ mod instructions;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("EKpcZk331JDfGaetHvU1LuUmDCh4Pv3392sfNZYt8gbQ");
+declare_id!("GJUQ4tvAm15DDoxeQDhPcV7uWqJpAozdqquxaa5e7b7P");
 
 #[program]
 pub mod cronos_registry {
@@ -32,5 +32,4 @@ pub mod cronos_registry {
             snapshot_page_bump,
         )
     }
-    
 }

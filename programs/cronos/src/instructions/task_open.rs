@@ -5,7 +5,6 @@ use {
     std::mem::size_of
 };
 
-
 #[derive(Accounts)]
 #[instruction(
     ix: InstructionData,
