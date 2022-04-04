@@ -11,7 +11,7 @@ license = "Apache-2.0"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-prost = "0.9"
+prost = "0.10.0"
 solana-accountsdb-plugin-interface = { version = "1.9.9" }
 solana-logger = { version = "1.9.9" }
 solana-program = { version = "1.9.9" }
@@ -29,7 +29,7 @@ solana-account-decoder = "1.9.9"
 bincode = "1.3.3"
 
 [build-dependencies]
-prost-build = "0.9"
+prost-build = "0.10.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
