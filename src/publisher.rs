@@ -12,19 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use {
-    crate::*,
-    prost::Message,
-    // rdkafka::{
-    //     error::KafkaError,
-    //     producer::{BaseRecord, Producer as KafkaProducer},
-    // },
-    std::time::Duration,
-};
-
 pub struct Publisher {
     // producer: Producer,
-    shutdown_timeout: Duration,
+    // shutdown_timeout: Duration,
     update_account_topic: String,
     slot_status_topic: String,
 }
