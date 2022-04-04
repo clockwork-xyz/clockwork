@@ -18,6 +18,7 @@ use {
     std::{collections::HashSet, str::FromStr},
 };
 
+#[derive(Clone)]
 pub struct Filter {
     program_includes: HashSet<[u8; 32]>,
 }

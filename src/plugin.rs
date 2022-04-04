@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{borrow::BorrowMut, future::Future, sync::RwLockWriteGuard};
+use std::{borrow::BorrowMut, future::Future, sync::RwLockWriteGuard, thread::JoinHandle};
 
 use solana_account_decoder::parse_sysvar::{parse_sysvar, SysvarAccountType};
 use solana_program::{
@@ -26,8 +26,7 @@ use crate::env;
 use {
     crate::{bucket::Bucket, cache::TaskCache, client::RPCClient, Config, Filter},
     bincode::deserialize,
-    cronos_program::state::{Config as cpConfig, Fee},
-    cronos_sdk::account::{Task, TaskStatus},
+    cronos_sdk::account::{Config as cpConfig, Fee, Task, TaskStatus},
     log::debug,
     log::info,
     solana_account_decoder::parse_sysvar,
@@ -46,6 +45,7 @@ use {
     },
     thiserror::Error,
 };
+#[derive(Clone)]
 pub struct CronosPlugin {
     client: Option<Arc<Client>>,
     cache: Option<Arc<RwLock<TaskCache>>>,
@@ -162,6 +162,7 @@ impl AccountsDbPlugin for CronosPlugin {
                             if self.latest_clock_value < clock.unix_timestamp {
                                 self.latest_clock_value = clock.unix_timestamp;
                                 info!("clock unix_timestamp: {}", self.latest_clock_value);
+                                // let owned = Arc::new(self);
                                 self.execute_tasks_in_lookback_window();
                             }
                         }
@@ -266,6 +267,7 @@ impl CronosPlugin {
     }
 
     fn execute_tasks_in_lookback_window(&self) {
+        // let cloned_self = s.clone();
         // thread::spawn(move || {
         const LOOKBACK_WINDOW: i64 = 60 * 15; // Number of seconds to lookback
         info!("executing tasks for unix_ts: {}", self.latest_clock_value);
@@ -277,8 +279,18 @@ impl CronosPlugin {
             r_cache.index.get(&t).and_then(|keys| {
                 for key in keys.iter() {
                     r_cache.data.get(key).and_then(|task| {
-                        // handles.push(self.execute_task(*key, task.clone()));
-                        self.execute_task(*key, task.clone());
+                        // handles.push(execute_task(
+
+                        //     *key,
+                        //     task.clone(),
+                        // ));
+                        execute_task(
+                            self.unwrap_client().clone(),
+                            self.unwrap_cache().clone(),
+                            self.unwrap_bucket().clone(),
+                            *key,
+                            task.clone(),
+                        );
                         Some(())
                     });
                 }
@@ -287,19 +299,25 @@ impl CronosPlugin {
         }
 
         // Join threads
-        // if !handles.is_empty() {
-        //     for h in handles {
-        //         h.join().unwrap();
+        //     if !handles.is_empty() {
+        //         for h in handles {
+        //             h.join().unwrap();
+        //         }
         //     }
-        // }
         // });
     }
+}
 
-    fn execute_task(&self, key: Pubkey, task: Task) -> () {
-        // thread::spawn(move || {
+fn execute_task(
+    client: Arc<Client>,
+    cache: Arc<RwLock<TaskCache>>,
+    bucket: Arc<Mutex<Bucket>>,
+    key: Pubkey,
+    task: Task,
+) -> JoinHandle<()> {
+    thread::spawn(move || {
         // Lock the mutex for this task
-        let mutex = self
-            .unwrap_bucket()
+        let mutex = bucket
             .lock()
             .unwrap()
             .get_mutex((key, task.schedule.exec_at));
@@ -307,32 +325,11 @@ impl CronosPlugin {
         if guard.is_err() {
             return;
         };
-        // let guard = guard.unwrap();
-
-        let data = self
-            .unwrap_client()
-            .client
-            .get_account_data(&task.daemon)
-            .unwrap();
-
-        let daemon_data = cronos_sdk::account::Daemon::try_from(data).unwrap();
-
-        info!(
-            "daemon data: owner - {}, task count - {}",
-            daemon_data.owner, daemon_data.task_count
-        );
+        let guard = guard.unwrap();
 
         // Get accounts
-        let config = cpConfig::pda().0;
-        let fee = Fee::pda(task.daemon).0;
-
-        // for acc in &task.ix.accounts {
-        //     let acc_info = self.unwrap_client().client.get_account(&acc.pubkey);
-
-        //     if acc_info.is_err() {
-        //         info!("address {} does not exist", &acc.pubkey);
-        //     }
-        // }
+        let config = cronos_sdk::account::Config::pda().0;
+        let fee = cronos_sdk::account::Fee::pda(task.daemon).0;
 
         // Add accounts to exec instruction
         let mut ix_exec = cronos_sdk::instruction::task_execute(
@@ -340,7 +337,7 @@ impl CronosPlugin {
             task.daemon,
             fee,
             key,
-            self.unwrap_client().payer_pubkey(),
+            client.payer_pubkey(),
         );
         for acc in task.ix.accounts {
             match acc.is_writable {
@@ -355,7 +352,7 @@ impl CronosPlugin {
             .push(AccountMeta::new_readonly(task.ix.program_id, false));
 
         // Sign and submit
-        let res = self.unwrap_client().sign_and_submit(
+        let res = client.sign_and_submit(
             &[ix_exec],
             format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
         );
@@ -363,15 +360,95 @@ impl CronosPlugin {
         // If exec failed, replicate the task data
         if res.is_err() {
             let err = res.err().unwrap();
-            info!("❌ {}", err);
-            // let data = self.unwrap_client().get_account_data(&key).unwrap();
-            // let task = Task::try_from(data).unwrap();
-            // let mut w_cache = self.unwrap_cache().write().unwrap();
-            // w_cache.insert(key, task);
+            println!("❌ {}", err);
+            let data = client.get_account_data(&key).unwrap();
+            let task = Task::try_from(data).unwrap();
+            let mut w_cache = cache.write().unwrap();
+            w_cache.insert(key, task);
         }
 
         // Drop the mutex
-        // drop(guard)
-        // })
-    }
+        drop(guard)
+    })
 }
+
+// fn execute_task(self, key: Pubkey, task: Task) -> JoinHandle<()> {
+//     thread::spawn(move || {
+//         // Lock the mutex for this task
+//         let mutex = self
+//             .unwrap_bucket()
+//             .lock()
+//             .unwrap()
+//             .get_mutex((key, task.schedule.exec_at));
+//         let guard = mutex.try_lock();
+//         if guard.is_err() {
+//             return;
+//         };
+//         let guard = guard.unwrap();
+
+//         let data = self
+//             .unwrap_client()
+//             .client
+//             .get_account_data(&task.daemon)
+//             .unwrap();
+
+//         let daemon_data = cronos_sdk::account::Daemon::try_from(data).unwrap();
+
+//         info!(
+//             "daemon data: owner - {}, task count - {}",
+//             daemon_data.owner, daemon_data.task_count
+//         );
+
+//         // Get accounts
+//         let config = cpConfig::pda().0;
+//         let fee = Fee::pda(task.daemon).0;
+
+//         for acc in &task.ix.accounts {
+//             let acc_info = self.unwrap_client().client.get_account(&acc.pubkey);
+
+//             if acc_info.is_err() {
+//                 info!("address {} does not exist", &acc.pubkey);
+//             }
+//         }
+
+//         // Add accounts to exec instruction
+//         let mut ix_exec = cronos_sdk::instruction::task_execute(
+//             config,
+//             task.daemon,
+//             fee,
+//             key,
+//             self.unwrap_client().payer_pubkey(),
+//         );
+//         for acc in task.ix.accounts {
+//             match acc.is_writable {
+//                 true => ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false)),
+//                 false => ix_exec
+//                     .accounts
+//                     .push(AccountMeta::new_readonly(acc.pubkey, false)),
+//             }
+//         }
+//         ix_exec
+//             .accounts
+//             .push(AccountMeta::new_readonly(task.ix.program_id, false));
+
+//         // Sign and submit
+//         let res = self.unwrap_client().sign_and_submit(
+//             &[ix_exec],
+//             format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
+//         );
+
+//         // If exec failed, replicate the task data
+//         if res.is_err() {
+//             let err = res.err().unwrap();
+//             info!("❌ {}", err);
+//             let data = self.unwrap_client().get_account_data(&key).unwrap();
+//             let task = Task::try_from(data).unwrap();
+//             let mut w_cache = self.unwrap_cache().write().unwrap();
+//             w_cache.insert(key, task);
+//         }
+
+//         // Drop the mutex
+//         drop(guard)
+//     })
+// }
+// }
