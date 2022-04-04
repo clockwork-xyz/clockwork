@@ -26,7 +26,10 @@ mod filter;
 mod plugin;
 mod publisher;
 
-pub use {config::Config, filter::Filter, plugin::CronosPlugin, publisher::Publisher};
+pub use {
+    bucket::Bucket, cache::TaskCache, config::Config, filter::Filter, plugin::CronosPlugin,
+    publisher::Publisher,
+};
 
 #[no_mangle]
 #[allow(improper_ctypes_definitions)]
