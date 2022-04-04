@@ -1,50 +1,24 @@
-// Copyright 2022 Blockdaemon Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-use std::{borrow::BorrowMut, future::Future, sync::RwLockWriteGuard, thread::JoinHandle};
-
-use solana_account_decoder::parse_sysvar::{parse_sysvar, SysvarAccountType};
-use solana_program::{
-    clock::{Clock, Epoch, Slot, UnixTimestamp},
-    sysvar::{self, Sysvar},
-};
-use solana_sdk::account::Account;
-
-use crate::env;
-
 use {
-    crate::{bucket::Bucket, cache::TaskCache, client::RPCClient, Config, Filter},
+    crate::{client::RPCClient, Bucket, Config, Filter, TaskCache},
     bincode::deserialize,
-    cronos_sdk::account::{Config as cpConfig, Fee, Task, TaskStatus},
-    log::debug,
-    log::info,
-    solana_account_decoder::parse_sysvar,
+    cronos_sdk::account::{Fee, Task, TaskStatus},
+    log::{debug, info},
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
         AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
         ReplicaAccountInfoVersions, Result as PluginResult,
     },
     solana_client_helpers::Client,
-    solana_program::pubkey::Pubkey,
+    solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
     solana_sdk::instruction::AccountMeta,
-    std::sync::Mutex,
     std::{
         fmt::{Debug, Formatter},
+        sync::Mutex,
         sync::{Arc, RwLock},
-        thread,
+        thread::{self, JoinHandle},
     },
     thiserror::Error,
 };
+
 #[derive(Clone)]
 pub struct CronosPlugin {
     client: Option<Arc<Client>>,
@@ -62,7 +36,7 @@ impl Debug for CronosPlugin {
 
 #[derive(Error, Debug)]
 pub enum CronosPluginError {
-    #[error("Error writing to local cache. Error message: ({msg})")]
+    #[error("Error reading and/or writing to local cache. Error message: ({msg})")]
     CacheError { msg: String },
 
     #[error("Error deserializing task data")]
@@ -80,11 +54,9 @@ impl AccountsDbPlugin for CronosPlugin {
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
 
-        info!(
-            "Loading plugin {:?} from config_file {:?}",
-            self.name(),
-            config_file
-        );
+        info!("Loading plugin {:?}", self.name());
+        info!("Program ID: {}", &cronos_sdk::ID);
+        info!("config_file: {:?} ", config_file);
 
         let result = Config::read_from(config_file);
 
@@ -161,17 +133,11 @@ impl AccountsDbPlugin for CronosPlugin {
                         Ok(clock) => {
                             if self.latest_clock_value < clock.unix_timestamp {
                                 self.latest_clock_value = clock.unix_timestamp;
-                                info!("clock unix_timestamp: {}", self.latest_clock_value);
-                                // let owned = Arc::new(self);
                                 self.execute_tasks_in_lookback_window();
                             }
                         }
                     }
-
-                //TODO: better check for validating cronos related accounts
-                } else if &sysvar::id().to_bytes() != info.owner {
-                    info!("cronos here!");
-
+                } else if &cronos_sdk::ID.to_bytes() == info.owner {
                     let task = Task::try_from(info.data.to_vec());
                     let key = Pubkey::new(info.pubkey);
 
@@ -198,24 +164,24 @@ impl AccountsDbPlugin for CronosPlugin {
 
     fn update_slot_status(
         &mut self,
-        slot: u64,
-        parent: Option<u64>,
-        status: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::SlotStatus,
+        _slot: u64,
+        _parent: Option<u64>,
+        _status: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
         Ok(())
     }
 
     fn notify_transaction(
         &mut self,
-        transaction: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaTransactionInfoVersions,
-        slot: u64,
+        _transaction: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaTransactionInfoVersions,
+        _slot: u64,
     ) -> PluginResult<()> {
         Ok(())
     }
 
     fn notify_block_metadata(
         &mut self,
-        blockinfo: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaBlockInfoVersions,
+        _blockinfo: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaBlockInfoVersions,
     ) -> PluginResult<()> {
         Ok(())
     }
@@ -267,44 +233,45 @@ impl CronosPlugin {
     }
 
     fn execute_tasks_in_lookback_window(&self) {
-        // let cloned_self = s.clone();
-        // thread::spawn(move || {
-        const LOOKBACK_WINDOW: i64 = 60 * 15; // Number of seconds to lookback
-        info!("executing tasks for unix_ts: {}", self.latest_clock_value);
+        let self_clone = self.clone();
+        let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
+        let cp_clone = cp_arc.clone();
 
-        // Spawn threads to execute tasks in lookback window
-        // let mut handles = vec![];
-        for t in (self.latest_clock_value - LOOKBACK_WINDOW)..=self.latest_clock_value {
-            let r_cache = self.unwrap_cache().read().unwrap();
-            r_cache.index.get(&t).and_then(|keys| {
-                for key in keys.iter() {
-                    r_cache.data.get(key).and_then(|task| {
-                        // handles.push(execute_task(
+        thread::spawn(move || {
+            const LOOKBACK_WINDOW: i64 = 60 * 15; // Number of seconds to lookback
+            info!(
+                "executing tasks for unix_ts: {}",
+                cp_clone.latest_clock_value
+            );
 
-                        //     *key,
-                        //     task.clone(),
-                        // ));
-                        execute_task(
-                            self.unwrap_client().clone(),
-                            self.unwrap_cache().clone(),
-                            self.unwrap_bucket().clone(),
-                            *key,
-                            task.clone(),
-                        );
-                        Some(())
-                    });
+            // Spawn threads to execute tasks in lookback window
+            let mut handlesb = vec![];
+            for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
+                let r_cache = cp_clone.unwrap_cache().read().unwrap();
+                r_cache.index.get(&t).and_then(|keys| {
+                    for key in keys.iter() {
+                        r_cache.data.get(key).and_then(|task| {
+                            handlesb.push(execute_task(
+                                cp_clone.unwrap_client().clone(),
+                                cp_clone.unwrap_cache().clone(),
+                                cp_clone.unwrap_bucket().clone(),
+                                *key,
+                                task.clone(),
+                            ));
+                            Some(())
+                        });
+                    }
+                    Some(())
+                });
+            }
+
+            // Join threads
+            if !handlesb.is_empty() {
+                for h in handlesb {
+                    h.join().unwrap();
                 }
-                Some(())
-            });
-        }
-
-        // Join threads
-        //     if !handles.is_empty() {
-        //         for h in handles {
-        //             h.join().unwrap();
-        //         }
-        //     }
-        // });
+            }
+        });
     }
 }
 
@@ -329,7 +296,7 @@ fn execute_task(
 
         // Get accounts
         let config = cronos_sdk::account::Config::pda().0;
-        let fee = cronos_sdk::account::Fee::pda(task.daemon).0;
+        let fee = Fee::pda(task.daemon).0;
 
         // Add accounts to exec instruction
         let mut ix_exec = cronos_sdk::instruction::task_execute(
@@ -360,7 +327,7 @@ fn execute_task(
         // If exec failed, replicate the task data
         if res.is_err() {
             let err = res.err().unwrap();
-            println!("❌ {}", err);
+            info!("❌ {}", err);
             let data = client.get_account_data(&key).unwrap();
             let task = Task::try_from(data).unwrap();
             let mut w_cache = cache.write().unwrap();
@@ -371,84 +338,3 @@ fn execute_task(
         drop(guard)
     })
 }
-
-// fn execute_task(self, key: Pubkey, task: Task) -> JoinHandle<()> {
-//     thread::spawn(move || {
-//         // Lock the mutex for this task
-//         let mutex = self
-//             .unwrap_bucket()
-//             .lock()
-//             .unwrap()
-//             .get_mutex((key, task.schedule.exec_at));
-//         let guard = mutex.try_lock();
-//         if guard.is_err() {
-//             return;
-//         };
-//         let guard = guard.unwrap();
-
-//         let data = self
-//             .unwrap_client()
-//             .client
-//             .get_account_data(&task.daemon)
-//             .unwrap();
-
-//         let daemon_data = cronos_sdk::account::Daemon::try_from(data).unwrap();
-
-//         info!(
-//             "daemon data: owner - {}, task count - {}",
-//             daemon_data.owner, daemon_data.task_count
-//         );
-
-//         // Get accounts
-//         let config = cpConfig::pda().0;
-//         let fee = Fee::pda(task.daemon).0;
-
-//         for acc in &task.ix.accounts {
-//             let acc_info = self.unwrap_client().client.get_account(&acc.pubkey);
-
-//             if acc_info.is_err() {
-//                 info!("address {} does not exist", &acc.pubkey);
-//             }
-//         }
-
-//         // Add accounts to exec instruction
-//         let mut ix_exec = cronos_sdk::instruction::task_execute(
-//             config,
-//             task.daemon,
-//             fee,
-//             key,
-//             self.unwrap_client().payer_pubkey(),
-//         );
-//         for acc in task.ix.accounts {
-//             match acc.is_writable {
-//                 true => ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false)),
-//                 false => ix_exec
-//                     .accounts
-//                     .push(AccountMeta::new_readonly(acc.pubkey, false)),
-//             }
-//         }
-//         ix_exec
-//             .accounts
-//             .push(AccountMeta::new_readonly(task.ix.program_id, false));
-
-//         // Sign and submit
-//         let res = self.unwrap_client().sign_and_submit(
-//             &[ix_exec],
-//             format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
-//         );
-
-//         // If exec failed, replicate the task data
-//         if res.is_err() {
-//             let err = res.err().unwrap();
-//             info!("❌ {}", err);
-//             let data = self.unwrap_client().get_account_data(&key).unwrap();
-//             let task = Task::try_from(data).unwrap();
-//             let mut w_cache = self.unwrap_cache().write().unwrap();
-//             w_cache.insert(key, task);
-//         }
-
-//         // Drop the mutex
-//         drop(guard)
-//     })
-// }
-// }
