@@ -10,7 +10,9 @@ documentation = "https://docs.rs/cronos-sdk"
 readme = "./README.md"
 keywords = ["solana", "cronos", "sdk"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cronos_sdk"
 
 [dependencies]
 anchor-client = "=0.22.0"

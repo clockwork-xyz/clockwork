@@ -11,7 +11,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
 
-declare_id!("CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW");
+declare_id!("B9d3x3owH4F3cX8fF18EVvr35xpRsACa5xJgDzEeVgsN");
 
 #[program]
 pub mod cronos {
@@ -63,36 +63,36 @@ pub mod cronos {
         admin_task_close::handler(ctx)
     }
 
-    pub fn daemon_open(ctx: Context<DaemonOpen>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
-        daemon_open::handler(ctx, daemon_bump, fee_bump)
-    }
+    // pub fn daemon_open(ctx: Context<DaemonOpen>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
+    //     daemon_open::handler(ctx, daemon_bump, fee_bump)
+    // }
 
-    pub fn daemon_sign(ctx: Context<DaemonSign>, ix: InstructionData) -> Result<()> {
-        daemon_sign::handler(ctx, ix)
-    }
+    // pub fn daemon_sign(ctx: Context<DaemonSign>, ix: InstructionData) -> Result<()> {
+    //     daemon_sign::handler(ctx, ix)
+    // }
 
-    pub fn daemon_close(ctx: Context<DaemonClose>) -> Result<()> {
-        daemon_close::handler(ctx)
-    }
+    // pub fn daemon_close(ctx: Context<DaemonClose>) -> Result<()> {
+    //     daemon_close::handler(ctx)
+    // }
 
-    pub fn health_ping(ctx: Context<HealthPing>) -> Result<()> {
-        health_ping::handler(ctx)
-    }
+    // pub fn health_ping(ctx: Context<HealthPing>) -> Result<()> {
+    //     health_ping::handler(ctx)
+    // }
 
-    pub fn task_close(ctx: Context<TaskClose>) -> Result<()> {
-        task_close::handler(ctx)
-    }
+    // pub fn task_close(ctx: Context<TaskClose>) -> Result<()> {
+    //     task_close::handler(ctx)
+    // }
 
-    pub fn task_open(
-        ctx: Context<TaskOpen>,
-        ixs: Vec<InstructionData>,
-        schedule: String,
-        bump: u8,
-    ) -> Result<()> {
-        task_open::handler(ctx, ixs, schedule, bump)
-    }
+    // pub fn task_open(
+    //     ctx: Context<TaskOpen>,
+    //     ixs: Vec<InstructionData>,
+    //     schedule: String,
+    //     bump: u8,
+    // ) -> Result<()> {
+    //     task_open::handler(ctx, ixs, schedule, bump)
+    // }
 
-    pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
-        task_exec::handler(ctx)
-    }
+    // pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
+    //     task_exec::handler(ctx)
+    // }
 }

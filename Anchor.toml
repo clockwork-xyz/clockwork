@@ -1,10 +1,10 @@
 [provider]
-cluster = "mainnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-cronos = "CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW"
-pool = "EKpcZk331JDfGaetHvU1LuUmDCh4Pv3392sfNZYt8gbQ"
+cronos = "B9d3x3owH4F3cX8fF18EVvr35xpRsACa5xJgDzEeVgsN"
+pool = "CPfZ1wMDn7coZeaqGj7gmKyHAysC2NzkNYhMVpTYd8SS"
 
 [registry]
 url = "https://anchor.projectserum.com"
