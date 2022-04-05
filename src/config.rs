@@ -25,16 +25,12 @@ use {
 pub struct Config {
     #[serde(default)]
     pub program_includes: Vec<String>,
-    /// Publish all accounts on startup.
-    #[serde(default)]
-    pub publish_all_accounts: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             program_includes: Vec::new(),
-            publish_all_accounts: false,
         }
     }
 }

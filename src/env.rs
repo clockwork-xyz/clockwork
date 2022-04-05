@@ -1,7 +1,5 @@
 use std::env;
 
-// use crate::Config;
-
 pub fn keypath() -> String {
     env::var("KEYPATH").unwrap()
 }
