@@ -245,19 +245,13 @@ impl CronosPlugin {
             );
 
             // Spawn threads to execute tasks in lookback window
-            let mut handlesb = vec![];
+            let mut handles = vec![];
             for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
                 let r_cache = cp_clone.unwrap_cache().read().unwrap();
                 r_cache.index.get(&t).and_then(|keys| {
                     for key in keys.iter() {
                         r_cache.data.get(key).and_then(|task| {
-                            handlesb.push(execute_task(
-                                cp_clone.unwrap_client().clone(),
-                                cp_clone.unwrap_cache().clone(),
-                                cp_clone.unwrap_bucket().clone(),
-                                *key,
-                                task.clone(),
-                            ));
+                            handles.push(cp_clone.execute_task(*key, task.clone()));
                             Some(())
                         });
                     }
@@ -266,75 +260,74 @@ impl CronosPlugin {
             }
 
             // Join threads
-            if !handlesb.is_empty() {
-                for h in handlesb {
+            if !handles.is_empty() {
+                for h in handles {
                     h.join().unwrap();
                 }
             }
         });
     }
-}
 
-fn execute_task(
-    client: Arc<Client>,
-    cache: Arc<RwLock<TaskCache>>,
-    bucket: Arc<Mutex<Bucket>>,
-    key: Pubkey,
-    task: Task,
-) -> JoinHandle<()> {
-    thread::spawn(move || {
-        // Lock the mutex for this task
-        let mutex = bucket
-            .lock()
-            .unwrap()
-            .get_mutex((key, task.schedule.exec_at));
-        let guard = mutex.try_lock();
-        if guard.is_err() {
-            return;
-        };
-        let guard = guard.unwrap();
+    fn execute_task(&self, key: Pubkey, task: Task) -> JoinHandle<()> {
+        let self_clone = self.clone();
+        let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
+        let cp_clone = cp_arc.clone();
 
-        // Get accounts
-        let config = cronos_sdk::account::Config::pda().0;
-        let fee = Fee::pda(task.daemon).0;
+        thread::spawn(move || {
+            // Lock the mutex for this task
+            let mutex = cp_clone
+                .unwrap_bucket()
+                .lock()
+                .unwrap()
+                .get_mutex((key, task.schedule.exec_at));
+            let guard = mutex.try_lock();
+            if guard.is_err() {
+                return;
+            };
+            let guard = guard.unwrap();
 
-        // Add accounts to exec instruction
-        let mut ix_exec = cronos_sdk::instruction::task_execute(
-            config,
-            task.daemon,
-            fee,
-            key,
-            client.payer_pubkey(),
-        );
-        for acc in task.ix.accounts {
-            match acc.is_writable {
-                true => ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false)),
-                false => ix_exec
-                    .accounts
-                    .push(AccountMeta::new_readonly(acc.pubkey, false)),
+            // Get accounts
+            let config = cronos_sdk::account::Config::pda().0;
+            let fee = Fee::pda(task.daemon).0;
+
+            // Add accounts to exec instruction
+            let mut ix_exec = cronos_sdk::instruction::task_execute(
+                config,
+                task.daemon,
+                fee,
+                key,
+                cp_clone.unwrap_client().payer_pubkey(),
+            );
+            for acc in task.ix.accounts {
+                match acc.is_writable {
+                    true => ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false)),
+                    false => ix_exec
+                        .accounts
+                        .push(AccountMeta::new_readonly(acc.pubkey, false)),
+                }
             }
-        }
-        ix_exec
-            .accounts
-            .push(AccountMeta::new_readonly(task.ix.program_id, false));
+            ix_exec
+                .accounts
+                .push(AccountMeta::new_readonly(task.ix.program_id, false));
 
-        // Sign and submit
-        let res = client.sign_and_submit(
-            &[ix_exec],
-            format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
-        );
+            // Sign and submit
+            let res = cp_clone.unwrap_client().sign_and_submit(
+                &[ix_exec],
+                format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
+            );
 
-        // If exec failed, replicate the task data
-        if res.is_err() {
-            let err = res.err().unwrap();
-            info!("❌ {}", err);
-            let data = client.get_account_data(&key).unwrap();
-            let task = Task::try_from(data).unwrap();
-            let mut w_cache = cache.write().unwrap();
-            w_cache.insert(key, task);
-        }
+            // If exec failed, replicate the task data
+            if res.is_err() {
+                let err = res.err().unwrap();
+                info!("❌ {}", err);
+                let data = cp_clone.unwrap_client().get_account_data(&key).unwrap();
+                let task = Task::try_from(data).unwrap();
+                let mut w_cache = cp_clone.unwrap_cache().write().unwrap();
+                w_cache.insert(key, task);
+            }
 
-        // Drop the mutex
-        drop(guard)
-    })
+            // Drop the mutex
+            drop(guard)
+        })
+    }
 }
