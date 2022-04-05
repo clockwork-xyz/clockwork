@@ -245,13 +245,13 @@ impl CronosPlugin {
             );
 
             // Spawn threads to execute tasks in lookback window
-            let mut handlesb = vec![];
+            let mut handles = vec![];
             for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
                 let r_cache = cp_clone.unwrap_cache().read().unwrap();
                 r_cache.index.get(&t).and_then(|keys| {
                     for key in keys.iter() {
                         r_cache.data.get(key).and_then(|task| {
-                            handlesb.push(execute_task(
+                            handles.push(execute_task(
                                 cp_clone.unwrap_client().clone(),
                                 cp_clone.unwrap_cache().clone(),
                                 cp_clone.unwrap_bucket().clone(),
@@ -266,8 +266,8 @@ impl CronosPlugin {
             }
 
             // Join threads
-            if !handlesb.is_empty() {
-                for h in handlesb {
+            if !handles.is_empty() {
+                for h in handles {
                     h.join().unwrap();
                 }
             }
