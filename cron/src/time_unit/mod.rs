@@ -18,43 +18,7 @@ use crate::error::*;
 use crate::ordinal::{Ordinal, OrdinalSet};
 use crate::specifier::{RootSpecifier, Specifier};
 use std::borrow::Cow;
-use std::collections::btree_set;
 use std::iter;
-use std::ops::RangeBounds;
-
-pub struct OrdinalIter<'a> {
-    set_iter: btree_set::Iter<'a, Ordinal>,
-}
-
-impl<'a> Iterator for OrdinalIter<'a> {
-    type Item = Ordinal;
-    fn next(&mut self) -> Option<Ordinal> {
-        self.set_iter.next().copied()
-    }
-}
-
-impl<'a> DoubleEndedIterator for OrdinalIter<'a> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.set_iter.next_back().copied()
-    }
-}
-
-pub struct OrdinalRangeIter<'a> {
-    range_iter: btree_set::Range<'a, Ordinal>,
-}
-
-impl<'a> Iterator for OrdinalRangeIter<'a> {
-    type Item = Ordinal;
-    fn next(&mut self) -> Option<Ordinal> {
-        self.range_iter.next().copied()
-    }
-}
-
-impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.range_iter.next_back().copied()
-    }
-}
 
 /// Methods exposing a schedule's configured ordinals for each individual unit of time.
 /// # Example
@@ -72,21 +36,6 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
 ///
 /// // Number of years specified
 /// assert_eq!(30, schedule.years().count());
-///
-/// // Iterator
-/// let mut years_iter = schedule.years().iter();
-/// assert_eq!(Some(2015), years_iter.next());
-/// assert_eq!(Some(2016), years_iter.next());
-/// // ...
-///
-/// // Range Iterator
-/// let mut five_year_plan = schedule.years().range((Included(2017), Excluded(2017 + 5)));
-/// assert_eq!(Some(2017), five_year_plan.next());
-/// assert_eq!(Some(2018), five_year_plan.next());
-/// assert_eq!(Some(2019), five_year_plan.next());
-/// assert_eq!(Some(2020), five_year_plan.next());
-/// assert_eq!(Some(2021), five_year_plan.next());
-/// assert_eq!(None, five_year_plan.next());
 /// ```
 pub trait TimeUnitSpec {
     /// Returns true if the provided ordinal was included in the schedule spec for the unit of time
@@ -104,45 +53,6 @@ pub trait TimeUnitSpec {
     /// assert_eq!(false, schedule.years().includes(2004));
     /// ```
     fn includes(&self, ordinal: Ordinal) -> bool;
-
-    /// Provides an iterator which will return each included ordinal for this schedule in order from
-    /// lowest to highest.
-    /// # Example
-    /// ```
-    /// use cronos_cron::{Schedule,TimeUnitSpec};
-    /// use std::str::FromStr;
-    ///
-    /// let expression = "* * * * 5-8 * *";
-    /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
-    ///
-    /// // Iterator
-    /// let mut summer = schedule.months().iter();
-    /// assert_eq!(Some(5), summer.next());
-    /// assert_eq!(Some(6), summer.next());
-    /// assert_eq!(Some(7), summer.next());
-    /// assert_eq!(Some(8), summer.next());
-    /// assert_eq!(None, summer.next());
-    /// ```
-    fn iter(&self) -> OrdinalIter<'_>;
-
-    /// Provides an iterator which will return each included ordinal within the specified range.
-    /// # Example
-    /// ```
-    /// use cronos_cron::{Schedule,TimeUnitSpec};
-    /// use std::ops::Bound::{Included,Excluded};
-    /// use std::str::FromStr;
-    ///
-    /// let expression = "* * * 1,15 * * *";
-    /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
-    ///
-    /// // Range Iterator
-    /// let mut mid_month_paydays = schedule.days_of_month().range((Included(10), Included(20)));
-    /// assert_eq!(Some(15), mid_month_paydays.next());
-    /// assert_eq!(None, mid_month_paydays.next());
-    /// ```
-    fn range<R>(&self, range: R) -> OrdinalRangeIter<'_>
-    where
-        R: RangeBounds<Ordinal>;
 
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
@@ -179,19 +89,7 @@ where
     fn includes(&self, ordinal: Ordinal) -> bool {
         self.ordinals().contains(&ordinal)
     }
-    fn iter(&self) -> OrdinalIter<'_> {
-        OrdinalIter {
-            set_iter: TimeUnitField::ordinals(self).iter(),
-        }
-    }
-    fn range<R>(&'_ self, range: R) -> OrdinalRangeIter<'_>
-    where
-        R: RangeBounds<Ordinal>,
-    {
-        OrdinalRangeIter {
-            range_iter: TimeUnitField::ordinals(self).range(range),
-        }
-    }
+
     fn count(&self) -> u32 {
         self.ordinals().len() as u32
     }
@@ -210,7 +108,7 @@ where
     fn name() -> Cow<'static, str>;
     fn inclusive_min() -> Ordinal;
     fn inclusive_max() -> Ordinal;
-    fn ordinals(&self) -> &OrdinalSet;
+    fn ordinals(&self) -> OrdinalSet;
 
     fn from_ordinal(ordinal: Ordinal) -> Self {
         Self::from_ordinal_set(iter::once(ordinal).collect())
@@ -237,6 +135,7 @@ where
         ))
         .into())
     }
+
     fn validate_ordinal(ordinal: Ordinal) -> Result<Ordinal, Error> {
         //println!("validate_ordinal for {} => {}", Self::name(), ordinal);
         match ordinal {
@@ -263,7 +162,7 @@ where
         use self::Specifier::*;
         //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
         match *specifier {
-            All => Ok(Self::supported_ordinals()),
+            All => Ok(Self::supported_ordinals().clone()),
             Point(ordinal) => Ok((&[ordinal]).iter().cloned().collect()),
             Range(start, end) => {
                 match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
