@@ -10,7 +10,7 @@ pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             let address = parse_pubkey(&String::from("address"), matches)?;
             Ok(CliCommand::TaskClose { address })
         }
-        Some(("open", matches)) => {
+        Some(("new", matches)) => {
             let filepath = parse_string(&String::from("filepath"), matches)?;
             let ix = parse_instruction(&filepath)?;
             let schedule = parse_string(&String::from("schedule"), matches)?;
