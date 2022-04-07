@@ -6,7 +6,7 @@ use super::utils::{parse_instruction, parse_pubkey, parse_string};
 
 pub fn task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("close", matches)) => {
+        Some(("cancel", matches)) => {
             let address = parse_pubkey(&String::from("address"), matches)?;
             Ok(CliCommand::TaskClose { address })
         }
