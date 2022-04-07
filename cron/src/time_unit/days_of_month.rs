@@ -2,8 +2,6 @@ use crate::ordinal::{Ordinal, OrdinalSet};
 use crate::time_unit::TimeUnitField;
 use std::borrow::Cow;
 
-// static ALL: OrdinalSet = DaysOfMonth::supported_ordinals();
-
 #[derive(Clone, Debug, Eq)]
 pub struct DaysOfMonth {
     ordinals: Option<OrdinalSet>,
