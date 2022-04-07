@@ -22,17 +22,16 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        // CliCommand::AdminTaskClose { address } => super::admin::task_close(&client, &address),
-        // CliCommand::AdminHealthReset => super::admin::health_reset(&client),
+        CliCommand::AdminTaskClose { address } => super::admin::task_close(&client, &address),
+        CliCommand::AdminHealthReset => super::admin::health_reset(&client),
         CliCommand::AdminOpen => super::admin::open(&client),
-        // CliCommand::Clock => super::clock::get(&client),
-        // CliCommand::ConfigGet => super::config::get(&client),
-        // CliCommand::DaemonOpen => super::daemon::open(&client),
-        // CliCommand::DaemonGet => super::daemon::get(&client),
-        // CliCommand::HealthGet => super::health::get(&client),
-        // CliCommand::TaskClose { address } => super::task::close(&client, &address),
-        // CliCommand::TaskGet { address } => super::task::get(&client, &address),
-        // CliCommand::TaskOpen { ix, schedule } => super::task::open(&client, ix, schedule),
-        _ => Ok(()),
+        CliCommand::Clock => super::clock::get(&client),
+        CliCommand::ConfigGet => super::config::get(&client),
+        CliCommand::DaemonOpen => super::daemon::open(&client),
+        CliCommand::DaemonGet => super::daemon::get(&client),
+        CliCommand::HealthGet => super::health::get(&client),
+        CliCommand::TaskClose { address } => super::task::close(&client, &address),
+        CliCommand::TaskGet { address } => super::task::get(&client, &address),
+        CliCommand::TaskOpen { ix, schedule } => super::task::open(&client, ix, schedule),
     }
 }

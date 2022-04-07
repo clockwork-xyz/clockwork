@@ -172,19 +172,18 @@ impl TaskAccount for Account<'_, Task> {
     }
 
     fn next_exec_at(&self, ts: i64) -> Option<i64> {
-        None
-        // match Schedule::from_str(&self.schedule)
-        //     .unwrap()
-        //     .after(&DateTime::<Utc>::from_utc(
-        //         NaiveDateTime::from_timestamp(ts, 0),
-        //         Utc,
-        //     ))
-        //     .take(1)
-        //     .next()
-        // {
-        //     Some(datetime) => Some(datetime.timestamp()),
-        //     None => None,
-        // }
+        match Schedule::from_str(&self.schedule)
+            .unwrap()
+            .after(&DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp(ts, 0),
+                Utc,
+            ))
+            .take(1)
+            .next()
+        {
+            Some(datetime) => Some(datetime.timestamp()),
+            None => None,
+        }
     }
 }
 
