@@ -22,14 +22,14 @@ impl TaskCache {
         self.delete(key);
         self.data.insert(key, task.clone());
 
-        match self.index.get_mut(&task.schedule.exec_at) {
+        match self.index.get_mut(&task.exec_at.unwrap()) {
             Some(cached_set) => {
                 cached_set.insert(key);
             }
             None => {
                 let mut set = HashSet::new();
                 set.insert(key);
-                self.index.insert(task.schedule.exec_at, set);
+                self.index.insert(task.exec_at.unwrap(), set);
             }
         }
     }
@@ -39,11 +39,11 @@ impl TaskCache {
             self.data.remove(&key);
             self.index
                 .clone()
-                .get_mut(&task.schedule.exec_at)
+                .get_mut(&task.exec_at.unwrap())
                 .and_then(|cached_set| {
                     cached_set.remove(&key);
                     if cached_set.is_empty() {
-                        self.index.remove(&task.schedule.exec_at);
+                        self.index.remove(&task.exec_at.unwrap());
                     }
                     Some(())
                 })

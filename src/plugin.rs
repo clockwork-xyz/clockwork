@@ -1,7 +1,7 @@
 use {
     crate::{client::RPCClient, Bucket, Config, Filter, TaskCache},
     bincode::deserialize,
-    cronos_sdk::account::{Fee, Task, TaskStatus},
+    cronos_sdk::account::{AccountMetaData, Fee, Task},
     log::{debug, info},
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
         AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
@@ -11,6 +11,7 @@ use {
     solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
     solana_sdk::instruction::AccountMeta,
     std::{
+        collections::HashMap,
         fmt::{Debug, Formatter},
         sync::Mutex,
         sync::{Arc, RwLock},
@@ -226,9 +227,9 @@ impl CronosPlugin {
     fn replicate_task(&self, key: Pubkey, task: Task) {
         info!("💽 Replicating task {}", key);
         let mut w_cache = self.unwrap_cache().write().unwrap();
-        match task.status {
-            TaskStatus::Queued => w_cache.insert(key, task),
-            TaskStatus::Cancelled | TaskStatus::Done => w_cache.delete(key),
+        match task.exec_at {
+            Some(_t) => w_cache.insert(key, task),
+            None => w_cache.delete(key),
         }
     }
 
@@ -279,7 +280,7 @@ impl CronosPlugin {
                 .unwrap_bucket()
                 .lock()
                 .unwrap()
-                .get_mutex((key, task.schedule.exec_at));
+                .get_mutex((key, task.exec_at.unwrap()));
             let guard = mutex.try_lock();
             if guard.is_err() {
                 return;
@@ -291,29 +292,48 @@ impl CronosPlugin {
             let fee = Fee::pda(task.daemon).0;
 
             // Add accounts to exec instruction
-            let mut ix_exec = cronos_sdk::instruction::task_execute(
+            let mut ix_exec = cronos_sdk::instruction::task_exec(
+                cp_clone.unwrap_client().payer_pubkey(),
                 config,
                 task.daemon,
                 fee,
                 key,
-                cp_clone.unwrap_client().payer_pubkey(),
             );
-            for acc in task.ix.accounts {
-                match acc.is_writable {
-                    true => ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false)),
-                    false => ix_exec
-                        .accounts
-                        .push(AccountMeta::new_readonly(acc.pubkey, false)),
+
+            // create account cache to dedupe accounts in exec ix
+            let mut acc_cache = HashMap::<Pubkey, AccountMetaData>::new();
+
+            for ix in &task.ixs {
+                for acc in &ix.accounts {
+                    match acc.is_writable {
+                        true => {
+                            if !acc_cache.contains_key(&acc.pubkey) {
+                                acc_cache.insert(acc.pubkey, acc.clone());
+                                ix_exec.accounts.push(AccountMeta::new(acc.pubkey, false))
+                            }
+                        }
+                        false => {
+                            if !acc_cache.contains_key(&acc.pubkey) {
+                                acc_cache.insert(acc.pubkey, acc.clone());
+                                ix_exec
+                                    .accounts
+                                    .push(AccountMeta::new_readonly(acc.pubkey, false))
+                            }
+                        }
+                    }
                 }
             }
-            ix_exec
-                .accounts
-                .push(AccountMeta::new_readonly(task.ix.program_id, false));
+
+            // add Program ID
+            ix_exec.accounts.push(AccountMeta::new_readonly(
+                task.ixs.first().unwrap().program_id,
+                false,
+            ));
 
             // Sign and submit
             let res = cp_clone.unwrap_client().sign_and_submit(
                 &[ix_exec],
-                format!("🤖 Executing task: {} {}", key, task.schedule.exec_at).as_str(),
+                format!("🤖 Executing task: {} {}", key, task.exec_at.unwrap()).as_str(),
             );
 
             // If exec failed, replicate the task data
