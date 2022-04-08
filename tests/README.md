@@ -1,3 +1,3 @@
 # Cronos Tests
 
-A testing suite for Cronos.
+A test suite for Cronos.
