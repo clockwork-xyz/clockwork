@@ -16,4 +16,4 @@ https://docs.cronos.so
 | `cronos-program`   | Cronos Solana program                      | ![crates](https://img.shields.io/crates/v/cronos-program?color=blue)   | [![Docs.rs](https://docs.rs/cronos-program/badge.svg)](https://docs.rs/cronos-program) |
 | `cronos-sdk`       | Cronos Rust SDK                            | ![crates](https://img.shields.io/crates/v/cronos-sdk?color=blue)       | [![Docs.rs](https://docs.rs/cronos-sdk/badge.svg)](https://docs.rs/cronos-sdk)         |
 | `cronos-telemetry` | Monitoring service for Cronos clusters | ![crates](https://img.shields.io/crates/v/cronos-telemetry?color=blue) | Coming soon!                                                                           |
-| `cronos-tests` | Stress testing suite for Cronos clusters  | ![crates](https://img.shields.io/crates/v/cronos-telemetry?color=blue) | Coming soon!                                                                           |
+| `cronos-tests` | Stress testing suite for Cronos clusters  | ![crates](https://img.shields.io/crates/v/cronos-tests?color=blue) | Coming soon!                                                                           |
