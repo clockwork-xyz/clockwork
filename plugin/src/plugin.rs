@@ -1,7 +1,7 @@
 use {
     crate::{client::RPCClient, Bucket, Config, Filter, TaskCache},
     bincode::deserialize,
-    cronos_sdk::account::{AccountMetaData, Fee, Task},
+    cronos_sdk::scheduler::state::{AccountMetaData, Fee, Task},
     log::{debug, info},
     solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
         AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
@@ -56,7 +56,7 @@ impl AccountsDbPlugin for CronosPlugin {
         solana_logger::setup_with_default("info");
 
         info!("Loading plugin {:?}", self.name());
-        info!("Program ID: {}", &cronos_sdk::ID);
+        info!("Program ID: {}", &cronos_sdk::SCHEDULER_PROGRAM_ID);
         info!("config_file: {:?} ", config_file);
 
         let result = Config::read_from(config_file);
@@ -138,7 +138,7 @@ impl AccountsDbPlugin for CronosPlugin {
                             }
                         }
                     }
-                } else if &cronos_sdk::ID.to_bytes() == info.owner {
+                } else if &cronos_sdk::SCHEDULER_PROGRAM_ID.to_bytes() == info.owner {
                     let task = Task::try_from(info.data.to_vec());
                     let key = Pubkey::new(info.pubkey);
 
@@ -288,11 +288,11 @@ impl CronosPlugin {
             let guard = guard.unwrap();
 
             // Get accounts
-            let config = cronos_sdk::account::Config::pda().0;
+            let config = cronos_sdk::scheduler::state::Config::pda().0;
             let fee = Fee::pda(task.daemon).0;
 
             // Add accounts to exec instruction
-            let mut ix_exec = cronos_sdk::instruction::task_exec(
+            let mut ix_exec = cronos_sdk::scheduler::instruction::task_exec(
                 cp_clone.unwrap_client().payer_pubkey(),
                 config,
                 task.daemon,
