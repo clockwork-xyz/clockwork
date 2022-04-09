@@ -1,7 +1,7 @@
 [package]
 name = "cronos-pool"
 version = "0.1.8"
-description = ""
+description = "A staking program for nodes running the Cronos plugin"
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://cronos.so"

@@ -15,7 +15,7 @@ pub fn task_exec(
     task: Pubkey,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_program::ID,
+        program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(bot, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
@@ -24,6 +24,6 @@ pub fn task_exec(
             AccountMeta::new(fee, false),
             AccountMeta::new(task, false),
         ],
-        data: cronos_program::instruction::TaskExec {}.data(),
+        data: cronos_scheduler::instruction::TaskExec {}.data(),
     }
 }

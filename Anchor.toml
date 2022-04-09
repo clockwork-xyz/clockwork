@@ -3,8 +3,9 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-cronos = "B9d3x3owH4F3cX8fF18EVvr35xpRsACa5xJgDzEeVgsN"
-pool = "CPfZ1wMDn7coZeaqGj7gmKyHAysC2NzkNYhMVpTYd8SS"
+heartbeat = "H7HagBMAbQCqSH6w7L5pmEGxo2WPdZpP81sjEjr2X6HV"
+pool = "5fkWJPVaiCqtJgYx8MLgCxL3W8F4iYCn68mtdbsA37G1"
+scheduler = "5GPxreRtDdv5qKLyhzDhwDQB9v227NVWCGb6AwNcv81B"
 
 [registry]
 url = "https://anchor.projectserum.com"

@@ -134,7 +134,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
             });
         }
 
-        // Update the node count
+        // Update the snapshot's node count
         self.node_count = self.node_count.checked_add(nodes.len() as u64).unwrap();
 
         Ok(())

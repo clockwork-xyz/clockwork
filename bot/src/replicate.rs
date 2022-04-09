@@ -19,7 +19,7 @@ pub fn replicate_tasks(cache: Arc<RwLock<TaskCache>>) {
         // Websocket client
         let (_ws_client, keyed_account_receiver) = PubsubClient::program_subscribe(
             env::wss_endpoint().as_str().into(),
-            &cronos_sdk::ID,
+            &cronos_sdk::SCHEDULER_PROGRAM_ID,
             Some(RpcProgramAccountsConfig {
                 account_config: RpcAccountInfoConfig {
                     encoding: Some(UiAccountEncoding::Base64),

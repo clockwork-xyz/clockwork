@@ -1,4 +1,5 @@
 #!/bin/bash
+
 cargo publish -p cronos-cron
 sleep 10
 cargo publish -p cronos-program

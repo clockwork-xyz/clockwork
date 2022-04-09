@@ -861,7 +861,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-program"
+name = "cronos-scheduler"
 version = "0.1.8"
 dependencies = [
  "anchor-lang",
@@ -876,7 +876,7 @@ version = "0.1.8"
 dependencies = [
  "anchor-client",
  "cronos-heartbeat",
- "cronos-program",
+ "cronos-scheduler",
  "solana-account-decoder",
  "solana-client",
  "solana-client-helpers",

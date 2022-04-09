@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    cronos_program::{pda::PDA, state::InstructionData as CronosInstructionData},
+    cronos_scheduler::{pda::PDA, state::InstructionData as CronosInstructionData},
 };
 
 pub fn task_new(
@@ -18,7 +18,7 @@ pub fn task_new(
     schedule: String,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_program::ID,
+        program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(daemon, false),
@@ -26,7 +26,7 @@ pub fn task_new(
             AccountMeta::new(task_pda.0, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_program::instruction::TaskNew {
+        data: cronos_scheduler::instruction::TaskNew {
             ixs: ixs
                 .iter()
                 .map(|ix| CronosInstructionData::from(ix.clone()))

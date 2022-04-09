@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    cronos_program::{pda::PDA, state::InstructionData as CronosInstructionData},
+    cronos_scheduler::{pda::PDA, state::InstructionData as CronosInstructionData},
 };
 
 pub fn admin_task_new(
@@ -20,7 +20,7 @@ pub fn admin_task_new(
     schedule: String,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_program::ID,
+        program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new_readonly(authority, false),
@@ -30,7 +30,7 @@ pub fn admin_task_new(
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task_pda.0, false),
         ],
-        data: cronos_program::instruction::AdminTaskNew {
+        data: cronos_scheduler::instruction::AdminTaskNew {
             ixs: ixs
                 .iter()
                 .map(|ix| CronosInstructionData::from(ix.clone()))

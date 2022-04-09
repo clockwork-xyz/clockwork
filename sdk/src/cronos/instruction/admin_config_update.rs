@@ -6,16 +6,16 @@ use {
         },
         InstructionData,
     },
-    cronos_program::state::ConfigSettings,
+    cronos_scheduler::state::ConfigSettings,
 };
 
 pub fn admin_config_update(admin: Pubkey, config: Pubkey, settings: ConfigSettings) -> Instruction {
     Instruction {
-        program_id: cronos_program::ID,
+        program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_program::instruction::AdminConfigUpdate { settings }.data(),
+        data: cronos_scheduler::instruction::AdminConfigUpdate { settings }.data(),
     }
 }
