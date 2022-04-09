@@ -7,7 +7,6 @@ mod bucket;
 mod cache;
 mod client;
 mod config;
-mod env;
 mod filter;
 mod plugin;
 

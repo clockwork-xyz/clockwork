@@ -1,0 +1,9 @@
+{
+  "libpath": "./target/debug/libcronos_geyser_plugin.dylib",
+  "keypath": "./test-ledger/validator-keypair.json",
+  "rpc_url": "http://127.0.0.1:8899",
+  "program_includes": [
+    "5GPxreRtDdv5qKLyhzDhwDQB9v227NVWCGb6AwNcv81B",
+    "Sysvar1111111111111111111111111111111111111"
+  ]
+}

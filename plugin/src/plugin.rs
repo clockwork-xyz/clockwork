@@ -56,30 +56,14 @@ impl AccountsDbPlugin for CronosPlugin {
         solana_logger::setup_with_default("info");
 
         info!("Loading plugin {:?}", self.name());
-        info!("Program ID: {}", &cronos_sdk::SCHEDULER_PROGRAM_ID);
-        info!("config_file: {:?} ", config_file);
 
-        let result = Config::read_from(config_file);
+        let config = Config::read_from(config_file)?;
 
-        match result {
-            Err(err) => {
-                return Err(PluginError::ConfigFileReadError {
-                    msg: format!(
-                        "The config file is not in the JSON format expected: {:?}",
-                        err
-                    ),
-                })
-            }
-            Ok(config) => self.filter = Some(Filter::new(&config)),
-        }
-
+        self.filter = Some(Filter::new(&config));
         self.bucket = Some(Arc::new(Mutex::new(Bucket::new())));
         self.cache = Some(Arc::new(RwLock::new(TaskCache::new())));
-        self.client = Some(Arc::new(Client::new()));
+        self.client = Some(Arc::new(Client::new(config.keypath, config.rpc_url)));
         self.latest_clock_value = 0;
-
-        info!("Loaded Cronos Plugin");
-
         Ok(())
     }
 
@@ -199,9 +183,9 @@ impl AccountsDbPlugin for CronosPlugin {
 impl CronosPlugin {
     pub fn new() -> Self {
         Self {
-            client: Some(Arc::new(Client::new())),
-            cache: Some(Arc::new(RwLock::new(TaskCache::new()))),
-            bucket: Some(Arc::new(Mutex::new(Bucket::new()))),
+            cache: None,
+            client: None,
+            bucket: None,
             filter: None,
             latest_clock_value: 0,
         }

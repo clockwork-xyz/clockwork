@@ -9,14 +9,17 @@ use {
 /// Plugin config.
 #[derive(Deserialize)]
 pub struct Config {
-    #[serde(default)]
+    pub keypath: String,
     pub program_includes: Vec<String>,
+    pub rpc_url: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
+            keypath: "".to_string(),
             program_includes: Vec::new(),
+            rpc_url: "http://127.0.0.1:8899".to_string(),
         }
     }
 }
