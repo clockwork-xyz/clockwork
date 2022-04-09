@@ -1,6 +1,6 @@
 use {
     crate::{bucket::Bucket, cache::TaskCache, env},
-    cronos_sdk::cronos::state::*,
+    cronos_sdk::scheduler::state::*,
     solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
     std::{

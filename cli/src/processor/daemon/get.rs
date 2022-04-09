@@ -9,11 +9,11 @@ use crate::{
 
 pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
-    let daemon_addr = cronos_sdk::cronos::state::Daemon::pda(owner).0;
+    let daemon_addr = cronos_sdk::scheduler::state::Daemon::pda(owner).0;
     let data = client
         .get_account_data(&daemon_addr)
         .map_err(|_err| CliError::AccountNotFound(daemon_addr.to_string()))?;
-    let daemon_data = cronos_sdk::cronos::state::Daemon::try_from(data)
+    let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(daemon_addr.to_string()))?;
     println!(
         "Explorer: {}",

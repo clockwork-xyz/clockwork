@@ -1,2 +1,3 @@
 pub mod instruction;
-pub mod state;
+
+pub use cronos_heartbeat::state;

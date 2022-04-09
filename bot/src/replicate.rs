@@ -1,6 +1,6 @@
 use {
     crate::{cache::TaskCache, env},
-    cronos_sdk::cronos::state::*,
+    cronos_sdk::scheduler::state::*,
     solana_account_decoder::UiAccountEncoding,
     solana_client::{
         pubsub_client::PubsubClient,

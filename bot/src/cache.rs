@@ -1,5 +1,5 @@
 use {
-    cronos_sdk::cronos::state::Task,
+    cronos_sdk::scheduler::state::Task,
     solana_sdk::pubkey::Pubkey,
     std::collections::{HashMap, HashSet},
 };

@@ -1,6 +1,6 @@
 use {
     crate::{error::CliError, utils::sign_and_submit},
-    cronos_sdk::cronos::state::*,
+    cronos_sdk::scheduler::state::*,
     solana_client_helpers::Client,
     solana_sdk::instruction::Instruction,
     std::sync::Arc,
@@ -18,8 +18,13 @@ pub fn new(client: &Arc<Client>, ix: Instruction, schedule: String) -> Result<()
 
     // Build task_create ix.
     let task_pda = Task::pda(daemon_addr, daemon_data.task_count);
-    let task_ix =
-        cronos_sdk::cronos::instruction::task_new(task_pda, daemon_addr, owner, vec![ix], schedule);
+    let task_ix = cronos_sdk::scheduler::instruction::task_new(
+        task_pda,
+        daemon_addr,
+        owner,
+        vec![ix],
+        schedule,
+    );
 
     // Sign and submit
     sign_and_submit(client, &[task_ix]);

@@ -7,8 +7,8 @@ use {
 
 pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
-    let daemon = cronos_sdk::cronos::state::Daemon::pda(owner).0;
-    let ix = cronos_sdk::cronos::instruction::task_cancel(daemon, *address, owner);
+    let daemon = cronos_sdk::scheduler::state::Daemon::pda(owner).0;
+    let ix = cronos_sdk::scheduler::instruction::task_cancel(daemon, *address, owner);
     sign_and_submit(client, &[ix]);
     super::get(client, address)
 }

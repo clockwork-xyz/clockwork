@@ -1,5 +1,5 @@
+mod heartbeat_ping;
 mod initialize;
-mod ping;
 
+pub use heartbeat_ping::*;
 pub use initialize::*;
-pub use ping::*;

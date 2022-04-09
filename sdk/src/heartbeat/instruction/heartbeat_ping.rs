@@ -15,6 +15,6 @@ pub fn ping(heartbeat: Pubkey, signer: Pubkey) -> Instruction {
             AccountMeta::new(heartbeat, false),
             AccountMeta::new(signer, true),
         ],
-        data: cronos_heartbeat::instruction::Ping {}.data(),
+        data: cronos_heartbeat::instruction::HeartbeatPing {}.data(),
     }
 }

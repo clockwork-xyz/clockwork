@@ -1,6 +1,6 @@
 pub mod clock;
-pub mod cronos;
 pub mod heartbeat;
+pub mod scheduler;
 
 pub use cronos_scheduler::errors;
 pub use cronos_scheduler::pda;
