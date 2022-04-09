@@ -2,7 +2,7 @@ use {crate::state::*, anchor_lang::prelude::*, solana_program::sysvar};
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct Ping<'info> {
+pub struct HeartbeatPing<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -17,7 +17,7 @@ pub struct Ping<'info> {
     pub signer: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<Ping>) -> Result<()> {
+pub fn handler(ctx: Context<HeartbeatPing>) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let heartbeat = &mut ctx.accounts.heartbeat;
 

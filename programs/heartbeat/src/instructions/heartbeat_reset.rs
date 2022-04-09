@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct Reset<'info> {
+pub struct HeartbeatReset<'info> {
     #[account(
         mut, 
         address = config.admin
@@ -29,7 +29,7 @@ pub struct Reset<'info> {
     pub heartbeat: Account<'info, Heartbeat>,
 }
 
-pub fn handler(ctx: Context<Reset>) -> Result<()> {
+pub fn handler(ctx: Context<HeartbeatReset>) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let heartbeat = &mut ctx.accounts.heartbeat;
 

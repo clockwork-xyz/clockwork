@@ -33,7 +33,6 @@ mod tests {
     #[ignore]
     fn initialize() {
         let client = new_client();
-
         let authority_pda = cronos::state::Authority::pda();
         let config_pda = cronos::state::Config::pda();
         let daemon_pda = cronos::state::Daemon::pda(authority_pda.0);
@@ -45,9 +44,7 @@ mod tests {
             daemon_pda,
             fee_pda,
         );
-
         sign_and_submit(&client, &[ix]);
-
         assert_eq!(2 + 2, 4);
     }
 

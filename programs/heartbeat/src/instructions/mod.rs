@@ -1,7 +1,7 @@
+pub mod heartbeat_ping;
+pub mod heartbeat_reset;
 pub mod initialize;
-pub mod ping;
-pub mod reset;
 
+pub use heartbeat_ping::*;
+pub use heartbeat_reset::*;
 pub use initialize::*;
-pub use ping::*;
-pub use reset::*;
