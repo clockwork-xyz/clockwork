@@ -11,7 +11,6 @@ use {
     config_bump: u8,
     daemon_bump: u8,
     fee_bump: u8,
-    health_bump: u8,
 )]
 pub struct Initialize<'info> {
     #[account(mut)]

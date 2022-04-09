@@ -7,7 +7,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction(
-    ix: InstructionData,
+    ixs: Vec<InstructionData>,
     schedule: String,
     bump: u8,
 )]
@@ -38,7 +38,7 @@ pub struct TaskNew<'info> {
         ],
         bump,
         payer = owner,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ix).unwrap().len(),
+        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
 
