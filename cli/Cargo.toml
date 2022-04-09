@@ -13,18 +13,17 @@ keywords = ["solana", "cronos", "cli"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anchor-lang = "=0.22.0"
 clap = { version = "3.1.2", features = ["derive"] }
 cronos-sdk = { path = "../sdk", version = "0.1.8" }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
-solana-account-decoder = "=1.9.9"
-solana-clap-utils = "=1.9.9"
-solana-cli-config = "=1.9.9"
-solana-client = "=1.9.9"
+solana-account-decoder = "1.10.7"
+solana-clap-utils = "1.10.7"
+solana-cli-config = "1.10.7"
+solana-client = "1.10.7"
 solana-client-helpers = "=1.1.0"
-solana-remote-wallet = "=1.9.9"
-solana-sdk = "=1.9.9"
+solana-remote-wallet = "1.10.7"
+solana-sdk = "1.10.7"
 spl-memo = "3.0.1"
 thiserror = "1.0.30"
 version = "3.0.0"

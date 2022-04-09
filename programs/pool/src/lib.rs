@@ -7,7 +7,7 @@ mod instructions;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("5fkWJPVaiCqtJgYx8MLgCxL3W8F4iYCn68mtdbsA37G1");
+declare_id!("Dqd4HhPyEctk93KYVphjn5E3egojCDEnLJ5Q4Q1sfRbq");
 
 #[program]
 pub mod cronos_pool {

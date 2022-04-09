@@ -7,7 +7,7 @@ mod instructions;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("H7HagBMAbQCqSH6w7L5pmEGxo2WPdZpP81sjEjr2X6HV");
+declare_id!("5xsnhFwZY855X69QBkXsXrppYT2qmL5NypcstMZhVPgX");
 
 #[program]
 pub mod cronos_heartbeat {

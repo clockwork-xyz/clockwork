@@ -22,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "=0.22.0"
+anchor-lang = "0.23.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 cronos-cron = { path = "../../cron", version = "0.1.8" }
-solana-program = "=1.9.9"
+solana-program = "1.10.7"

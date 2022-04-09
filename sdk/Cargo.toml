@@ -15,11 +15,10 @@ crate-type = ["cdylib", "lib"]
 name = "cronos_sdk"
 
 [dependencies]
-anchor-client = "=0.22.0"
 cronos-heartbeat = { path = "../programs/heartbeat", features = ["no-entrypoint"], version = "0.1.8" }
 cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.1.8" }
-solana-account-decoder = "=1.9.9"
-solana-client = "=1.9.9"
+solana-account-decoder = "1.10.7"
+solana-client = "1.10.7"
 solana-client-helpers = "1.1.0"
-solana-program = "=1.9.9"
-solana-sdk = "=1.9.9"
+solana-program = "1.10.7"
+solana-sdk = "1.10.7"
