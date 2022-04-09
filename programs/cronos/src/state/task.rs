@@ -47,7 +47,7 @@ impl TryFrom<Vec<u8>> for Task {
  */
 
 pub trait TaskAccount {
-    fn open(
+    fn new(
         &mut self,
         bump: u8,
         clock: &Sysvar<Clock>,
@@ -56,7 +56,7 @@ pub trait TaskAccount {
         schedule: String,
     ) -> Result<()>;
 
-    fn close(&mut self, to: &mut Signer) -> Result<()>;
+    fn cancel(&mut self, to: &mut Signer) -> Result<()>;
 
     fn exec(
         &mut self,
@@ -71,7 +71,7 @@ pub trait TaskAccount {
 }
 
 impl TaskAccount for Account<'_, Task> {
-    fn open(
+    fn new(
         &mut self,
         bump: u8,
         clock: &Sysvar<Clock>,
@@ -106,7 +106,7 @@ impl TaskAccount for Account<'_, Task> {
         Ok(())
     }
 
-    fn close(&mut self, to: &mut Signer) -> Result<()> {
+    fn cancel(&mut self, to: &mut Signer) -> Result<()> {
         let lamports = self.to_account_info().lamports();
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()

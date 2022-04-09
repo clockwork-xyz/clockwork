@@ -36,13 +36,13 @@ impl Fee {
  */
 
 pub trait FeeAccount {
-    fn open(&mut self, daemon: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, daemon: Pubkey, bump: u8) -> Result<()>;
 
     fn collect(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
-    fn open(&mut self, daemon: Pubkey, bump: u8) -> Result<()> {
+    fn new(&mut self, daemon: Pubkey, bump: u8) -> Result<()> {
         self.daemon = daemon;
         self.balance = 0;
         self.bump = bump;

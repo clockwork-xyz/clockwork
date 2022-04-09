@@ -1,9 +1,9 @@
 pub mod clock;
-pub mod instruction;
+pub mod cronos;
+pub mod heartbeat;
 
 pub use cronos_program::errors;
 pub use cronos_program::pda;
-pub use cronos_program::state as account;
 
 // Export current solana-program types for downstream users who may also be
 // building with a different solana-program version

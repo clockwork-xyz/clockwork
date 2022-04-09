@@ -7,7 +7,7 @@ pub fn admin_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("task", matches)) => admin_task_command(matches),
         Some(("health", matches)) => admin_health_command(matches),
-        Some(("initialize", _matches)) => Ok(CliCommand::AdminOpen),
+        Some(("initialize", _matches)) => Ok(CliCommand::AdminInitialize),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
@@ -25,7 +25,7 @@ fn admin_health_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn admin_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("close", matches)) => Ok(CliCommand::AdminTaskClose {
+        Some(("cancel", matches)) => Ok(CliCommand::AdminTaskCancel {
             address: parse_pubkey(&"address".into(), matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(

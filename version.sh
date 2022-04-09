@@ -11,8 +11,10 @@ RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 # Bump cronos-crono 
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
 
-# Bump cronos-program 
+# Bump programs
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/cronos/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/heartbeat/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/pool/Cargo.toml
 
 # Bump cronos-sdk
 sed -i '' -e 's/^cronos-program =.*/cronos-program = { path = "..\/programs\/cronos", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
@@ -29,6 +31,10 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 # Bump cronos-telemetry
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' telemetry/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' telemetry/Cargo.toml
+
+# Bump cronos-tests
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' tests/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' tests/Cargo.toml
 
 # Update version
 echo $new_version > VERSION

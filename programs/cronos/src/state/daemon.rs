@@ -37,15 +37,13 @@ impl TryFrom<Vec<u8>> for Daemon {
  */
 
 pub trait DaemonAccount {
-    fn open(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
 
     fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
-
-    fn close(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl DaemonAccount for Account<'_, Daemon> {
-    fn open(&mut self, owner: Pubkey, bump: u8) -> Result<()> {
+    fn new(&mut self, owner: Pubkey, bump: u8) -> Result<()> {
         self.owner = owner;
         self.task_count = 0;
         self.bump = bump;
@@ -59,26 +57,5 @@ impl DaemonAccount for Account<'_, Daemon> {
             &[&[SEED_DAEMON, self.owner.as_ref(), &[self.bump]]],
         )
         .map_err(|_err| CronosError::TaskFailed.into())
-    }
-
-    fn close(&mut self, to: &mut Signer) -> Result<()> {
-        require!(
-            self.owner == to.key(),
-            CronosError::NotAuthorizedDaemonOwner
-        );
-
-        let lamports = self.to_account_info().lamports();
-        **self.to_account_info().try_borrow_mut_lamports()? = self
-            .to_account_info()
-            .lamports()
-            .checked_sub(lamports)
-            .unwrap();
-        **to.to_account_info().try_borrow_mut_lamports()? = to
-            .to_account_info()
-            .lamports()
-            .checked_add(lamports)
-            .unwrap();
-
-        Ok(())
     }
 }

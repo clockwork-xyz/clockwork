@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use {
+        cronos_sdk::cronos,
         solana_client_helpers::{Client, RpcClient},
         solana_sdk::{
             commitment_config::CommitmentConfig, instruction::Instruction,
@@ -33,18 +34,16 @@ mod tests {
     fn initialize() {
         let client = new_client();
 
-        let authority_pda = cronos_sdk::account::Authority::pda();
-        let config_pda = cronos_sdk::account::Config::pda();
-        let daemon_pda = cronos_sdk::account::Daemon::pda(authority_pda.0);
-        let fee_pda = cronos_sdk::account::Fee::pda(daemon_pda.0);
-        let health_pda = cronos_sdk::account::Health::pda();
-        let ix = cronos_sdk::instruction::admin_open(
+        let authority_pda = cronos::state::Authority::pda();
+        let config_pda = cronos::state::Config::pda();
+        let daemon_pda = cronos::state::Daemon::pda(authority_pda.0);
+        let fee_pda = cronos::state::Fee::pda(daemon_pda.0);
+        let ix = cronos::instruction::admin_initialize(
             client.payer_pubkey(),
             authority_pda,
             config_pda,
             daemon_pda,
             fee_pda,
-            health_pda,
         );
 
         sign_and_submit(&client, &[ix]);

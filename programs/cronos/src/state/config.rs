@@ -48,18 +48,18 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn open(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
         self.admin = admin;
         self.bump = bump;
         self.node_fee = 0; // Lamports to pay node per task exec
         self.program_fee = 0; // Lamports to pay to program per task exec
-        
+
         // TODO initialize registry_address
 
         Ok(())

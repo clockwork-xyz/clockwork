@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anchor_lang::prelude::Pubkey;
-use cronos_sdk::account::Task;
+use cronos_sdk::cronos::state::Task;
 use solana_client_helpers::Client;
 
 use crate::{

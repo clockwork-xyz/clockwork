@@ -8,11 +8,11 @@ use crate::{
 };
 
 pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
-    let config_addr = cronos_sdk::account::Config::pda().0;
+    let config_addr = cronos_sdk::cronos::state::Config::pda().0;
     let data = client
         .get_account_data(&config_addr)
         .map_err(|_err| CliError::AccountNotFound(config_addr.to_string()))?;
-    let config_data = cronos_sdk::account::Config::try_from(data)
+    let config_data = cronos_sdk::cronos::state::Config::try_from(data)
         .map_err(|_err| CliError::AccountDataNotParsable(config_addr.to_string()))?;
     println!(
         "{}",

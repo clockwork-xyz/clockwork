@@ -28,68 +28,48 @@ pub mod cronos {
         admin_fee_collect::handler(ctx)
     }
 
-    pub fn admin_health_reset(ctx: Context<AdminHealthReset>) -> Result<()> {
-        admin_health_reset::handler(ctx)
-    }
-
-    pub fn admin_open(
-        ctx: Context<AdminOpen>,
+    pub fn initialize(
+        ctx: Context<Initialize>,
         authority_bump: u8,
         config_bump: u8,
         daemon_bump: u8,
         fee_bump: u8,
-        health_bump: u8,
     ) -> Result<()> {
-        admin_open::handler(
-            ctx,
-            authority_bump,
-            config_bump,
-            daemon_bump,
-            fee_bump,
-            health_bump,
-        )
+        initialize::handler(ctx, authority_bump, config_bump, daemon_bump, fee_bump)
     }
 
-    pub fn admin_task_open(
-        ctx: Context<AdminTaskOpen>,
+    pub fn admin_task_new(
+        ctx: Context<AdminTaskNew>,
         ixs: Vec<InstructionData>,
         schedule: String,
         bump: u8,
     ) -> Result<()> {
-        admin_task_open::handler(ctx, ixs, schedule, bump)
+        admin_task_new::handler(ctx, ixs, schedule, bump)
     }
 
-    pub fn admin_task_close(ctx: Context<AdminTaskClose>) -> Result<()> {
-        admin_task_close::handler(ctx)
+    pub fn admin_task_cancel(ctx: Context<AdminTaskCancel>) -> Result<()> {
+        admin_task_cancel::handler(ctx)
     }
 
-    pub fn daemon_open(ctx: Context<DaemonOpen>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
-        daemon_open::handler(ctx, daemon_bump, fee_bump)
+    pub fn daemon_new(ctx: Context<DaemonNew>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
+        daemon_new::handler(ctx, daemon_bump, fee_bump)
     }
 
     pub fn daemon_sign(ctx: Context<DaemonSign>, ix: InstructionData) -> Result<()> {
         daemon_sign::handler(ctx, ix)
     }
 
-    pub fn daemon_close(ctx: Context<DaemonClose>) -> Result<()> {
-        daemon_close::handler(ctx)
+    pub fn task_cancel(ctx: Context<TaskCancel>) -> Result<()> {
+        task_cancel::handler(ctx)
     }
 
-    pub fn health_ping(ctx: Context<HealthPing>) -> Result<()> {
-        health_ping::handler(ctx)
-    }
-
-    pub fn task_close(ctx: Context<TaskClose>) -> Result<()> {
-        task_close::handler(ctx)
-    }
-
-    pub fn task_open(
-        ctx: Context<TaskOpen>,
+    pub fn task_new(
+        ctx: Context<TaskNew>,
         ixs: Vec<InstructionData>,
         schedule: String,
         bump: u8,
     ) -> Result<()> {
-        task_open::handler(ctx, ixs, schedule, bump)
+        task_new::handler(ctx, ixs, schedule, bump)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
