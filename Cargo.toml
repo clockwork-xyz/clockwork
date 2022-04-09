@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "bot",
     "cli",
     "cron",
     "plugin",

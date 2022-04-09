@@ -238,7 +238,7 @@ dependencies = [
  "quote 1.0.16",
  "serde",
  "serde_json",
- "sha2 0.9.9",
+ "sha2",
  "syn 1.0.89",
  "thiserror",
 ]
@@ -287,17 +287,6 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "tokio",
-]
-
-[[package]]
-name = "async-trait"
-version = "0.1.52"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "061a7acccaa286c011ddc30970520b98fa40e00c9d644633fb26b5fc63a265e3"
-dependencies = [
- "proc-macro2 1.0.36",
- "quote 1.0.16",
- "syn 1.0.89",
 ]
 
 [[package]]
@@ -806,22 +795,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-bot"
-version = "0.1.8"
-dependencies = [
- "anchor-client",
- "cronos-sdk",
- "dotenv",
- "postgres",
- "solana-account-decoder",
- "solana-client",
- "solana-client-helpers",
- "solana-sdk",
- "to_bytes",
- "ttl_cache",
-]
-
-[[package]]
 name = "cronos-cli"
 version = "0.1.8"
 dependencies = [
@@ -1218,7 +1191,7 @@ dependencies = [
  "ed25519",
  "rand 0.7.3",
  "serde",
- "sha2 0.9.9",
+ "sha2",
  "zeroize",
 ]
 
@@ -1232,7 +1205,7 @@ dependencies = [
  "ed25519-dalek",
  "failure",
  "hmac 0.9.0",
- "sha2 0.9.9",
+ "sha2",
 ]
 
 [[package]]
@@ -1363,12 +1336,6 @@ dependencies = [
  "syn 1.0.89",
  "synstructure",
 ]
-
-[[package]]
-name = "fallible-iterator"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
 
 [[package]]
 name = "fastrand"
@@ -1686,15 +1653,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hmac"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
-dependencies = [
- "digest 0.10.3",
-]
-
-[[package]]
 name = "hmac-drbg"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1946,7 +1904,7 @@ dependencies = [
  "libsecp256k1-gen-genmult",
  "rand 0.7.3",
  "serde",
- "sha2 0.9.9",
+ "sha2",
  "typenum",
 ]
 
@@ -2008,15 +1966,6 @@ name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
-
-[[package]]
-name = "md-5"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "658646b21e0b72f7866c7038ab086d3d5e1cd6271f060fd37defb241949d0582"
-dependencies = [
- "digest 0.10.3",
-]
 
 [[package]]
 name = "memchr"
@@ -2444,49 +2393,6 @@ name = "pkg-config"
 version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
-
-[[package]]
-name = "postgres"
-version = "0.19.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb76d6535496f633fa799bb872ffb4790e9cbdedda9d35564ca0252f930c0dd5"
-dependencies = [
- "bytes",
- "fallible-iterator",
- "futures",
- "log",
- "tokio",
- "tokio-postgres",
-]
-
-[[package]]
-name = "postgres-protocol"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79ec03bce71f18b4a27c4c64c6ba2ddf74686d69b91d8714fb32ead3adaed713"
-dependencies = [
- "base64 0.13.0",
- "byteorder",
- "bytes",
- "fallible-iterator",
- "hmac 0.12.1",
- "md-5",
- "memchr",
- "rand 0.8.5",
- "sha2 0.10.2",
- "stringprep",
-]
-
-[[package]]
-name = "postgres-types"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04619f94ba0cc80999f4fc7073607cb825bc739a883cb6d20900fc5e009d6b0d"
-dependencies = [
- "bytes",
- "fallible-iterator",
- "postgres-protocol",
-]
 
 [[package]]
 name = "ppv-lite86"
@@ -3122,17 +3028,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha2"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55deaec60f81eefe3cce0dc50bda92d6d8e88f2a27df7c5033b42afeb1ed2676"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest 0.10.3",
-]
-
-[[package]]
 name = "sha3"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3425,7 +3320,7 @@ dependencies = [
  "rustc_version 0.4.0",
  "serde",
  "serde_derive",
- "sha2 0.9.9",
+ "sha2",
  "solana-frozen-abi-macro",
  "solana-logger",
  "thiserror",
@@ -3561,7 +3456,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_derive",
- "sha2 0.9.9",
+ "sha2",
  "sha3",
  "solana-frozen-abi",
  "solana-frozen-abi-macro",
@@ -3721,7 +3616,7 @@ dependencies = [
  "serde_bytes",
  "serde_derive",
  "serde_json",
- "sha2 0.9.9",
+ "sha2",
  "sha3",
  "solana-frozen-abi",
  "solana-frozen-abi-macro",
@@ -3916,16 +3811,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
-name = "stringprep"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ee348cb74b87454fff4b551cbf727025810a004f88aeacae7f85b87f4e9a1c1"
-dependencies = [
- "unicode-bidi",
- "unicode-normalization",
-]
-
-[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4085,7 +3970,7 @@ dependencies = [
  "pbkdf2 0.4.0",
  "rand 0.7.3",
  "rustc-hash",
- "sha2 0.9.9",
+ "sha2",
  "thiserror",
  "unicode-normalization",
  "wasm-bindgen",
@@ -4106,26 +3991,6 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
-
-[[package]]
-name = "to_bytes"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "083d422349f54f6d36468d84e1fb12a4504a6577b456f0d1884f01f1ac2ce826"
-dependencies = [
- "to_bytes_derive",
-]
-
-[[package]]
-name = "to_bytes_derive"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d6df6d8adbda89d608b4aee649f1d0762bf8993c51163b688a9a513df4635db"
-dependencies = [
- "proc-macro2 1.0.36",
- "quote 1.0.16",
- "syn 1.0.89",
-]
 
 [[package]]
 name = "tokio"
@@ -4166,29 +4031,6 @@ checksum = "f7d995660bd2b7f8c1568414c1126076c13fbb725c40112dc0120b78eb9b717b"
 dependencies = [
  "native-tls",
  "tokio",
-]
-
-[[package]]
-name = "tokio-postgres"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b6c8b33df661b548dcd8f9bf87debb8c56c05657ed291122e1188698c2ece95"
-dependencies = [
- "async-trait",
- "byteorder",
- "bytes",
- "fallible-iterator",
- "futures",
- "log",
- "parking_lot 0.11.2",
- "percent-encoding",
- "phf",
- "pin-project-lite",
- "postgres-protocol",
- "postgres-types",
- "socket2",
- "tokio",
- "tokio-util",
 ]
 
 [[package]]
@@ -4256,15 +4098,6 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
-
-[[package]]
-name = "ttl_cache"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4189890526f0168710b6ee65ceaedf1460c48a14318ceec933cb26baa492096a"
-dependencies = [
- "linked-hash-map",
-]
 
 [[package]]
 name = "tungstenite"
