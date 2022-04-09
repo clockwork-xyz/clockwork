@@ -3,6 +3,7 @@ members = [
     "bot",
     "cli",
     "cron",
+    "plugin",
     "programs/*",
     "sdk",
     "telemetry",
