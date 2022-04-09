@@ -20,13 +20,13 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 sed -i '' -e 's/^cronos-program =.*/cronos-program = { path = "..\/programs\/cronos", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
 
-# Bump cronos-bot
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' bot/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' bot/Cargo.toml
-
 # Bump cronos-cli
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
+
+# Bump cronos-plugin
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
 
 # Bump cronos-telemetry
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' telemetry/Cargo.toml
