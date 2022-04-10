@@ -1,7 +1,6 @@
 use {
     crate::{state::*, errors::CronosError},
-    anchor_lang::prelude::*,
-    solana_program::sysvar
+    anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]

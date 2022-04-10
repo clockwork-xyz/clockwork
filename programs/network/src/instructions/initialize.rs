@@ -1,8 +1,10 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*},
+    anchor_lang::{
+        prelude::*, 
+        solana_program::{system_program, sysvar}
+    },
     anchor_spl::token::{Mint, Token},
-    solana_program::{system_program, sysvar},
     std::mem::size_of,
 };
 

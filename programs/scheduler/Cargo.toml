@@ -1,7 +1,7 @@
 [package]
 name = "cronos-scheduler"
 version = "0.1.8"
-description = "A task scheduling protocol for Solana"
+description = "Task scheduling protocol for Solana"
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://cronos.so"
@@ -25,4 +25,3 @@ default = []
 anchor-lang = "0.23.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 cronos-cron = { path = "../../cron", version = "0.1.8" }
-solana-program = "1.10.7"

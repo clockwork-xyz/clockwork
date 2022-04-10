@@ -1,7 +1,6 @@
 use {
     crate::state::*, 
-    anchor_lang::prelude::*, 
-    solana_program::system_program, 
+    anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of
 };
 

@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*, solana_program::instruction::Instruction};
+use {
+    crate::state::*, 
+    anchor_lang::{prelude::*, solana_program::instruction::Instruction},
+};
 
 #[derive(Accounts)]
 #[instruction(ix: InstructionData)]

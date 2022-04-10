@@ -1,4 +1,4 @@
-pub mod clock;
+// pub mod clock;
 pub mod heartbeat;
 pub mod scheduler;
 
@@ -7,7 +7,7 @@ pub use cronos_scheduler::pda;
 
 // Export current solana-program types for downstream users who may also be
 // building with a different solana-program version
-pub use solana_program;
+// pub use anchor_lang::solana_program;
 
 // Program IDs
 pub use cronos_heartbeat::ID as HEARTBEAT_PROGRAM_ID;

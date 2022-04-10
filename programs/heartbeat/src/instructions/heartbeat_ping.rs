@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*, solana_program::sysvar};
+use {
+    crate::state::*, 
+    anchor_lang::{prelude::*, solana_program::sysvar}
+};
 
 #[derive(Accounts)]
 #[instruction()]
