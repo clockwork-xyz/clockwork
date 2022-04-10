@@ -1,5 +1,5 @@
 [package]
-name = "cronos-pool"
+name = "cronos-network"
 version = "0.1.8"
 description = "A staking program for nodes running the Cronos plugin"
 edition = "2021"
@@ -12,7 +12,7 @@ keywords = ["solana", "cronos", "program"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_pool"
+name = "cronos_network"
 
 [features]
 no-entrypoint = []

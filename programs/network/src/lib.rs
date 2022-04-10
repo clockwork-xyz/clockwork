@@ -10,7 +10,7 @@ use instructions::*;
 declare_id!("");
 
 #[program]
-pub mod cronos_pool {
+pub mod cronos_network {
     use super::*;
 
     pub fn initialize(
