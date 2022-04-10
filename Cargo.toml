@@ -4,7 +4,7 @@ members = [
     "cron",
     # "plugin",
     "programs/*",
-    # "sdk",
+    "sdk",
     # "telemetry",
     # "tests"
 ]

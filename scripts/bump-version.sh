@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO Borrow the increment-cargo-version.sh script from Solana
+
 # Get new version
 current_version=$(cat ./VERSION)
 echo "Current version: $current_version"
