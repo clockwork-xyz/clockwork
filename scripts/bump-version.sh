@@ -40,14 +40,12 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 echo $new_version > VERSION
 
 # Wait for Cargo.toml update
-sleep 10
+sleep 25
 
 # Git commit 
 echo "$(git diff --stat | tail -n1)"
 git checkout -b release/${new_version}
 git add .
-git commit -m "Bump to $new_version"
+git commit -m "Bump from $current_version to $new_version"
 git tag "v$new_version"
 git push --set-upstream origin release/${new_version} --tags
-
-exit 

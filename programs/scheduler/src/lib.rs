@@ -11,10 +11,10 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
 
-declare_id!("2tU7j7TodRG1sA2azpSncutz8t9Mo6RX1hWm4m9FjLmD");
+declare_id!("");
 
 #[program]
-pub mod cronos {
+pub mod cronos_scheduler {
     use super::*;
 
     pub fn admin_config_update(

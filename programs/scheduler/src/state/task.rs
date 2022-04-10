@@ -141,7 +141,7 @@ impl TaskAccount for Account<'_, Task> {
             None => {}
         }
 
-        // Pay automation fees.
+        // Pay automation fees
         **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
             .to_account_info()
             .lamports()
@@ -153,7 +153,7 @@ impl TaskAccount for Account<'_, Task> {
             .checked_add(config.program_fee)
             .unwrap();
 
-        // Pay program fees.
+        // Pay program fees
         **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
             .to_account_info()
             .lamports()
