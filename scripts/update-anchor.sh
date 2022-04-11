@@ -1,2 +1,5 @@
-anchor-lang
-anchor-client
+
+deps=(
+    anchor-lang,
+    anchor-client
+)

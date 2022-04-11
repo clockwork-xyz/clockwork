@@ -11,5 +11,3 @@ deps=(
     solana-remote-wallet,
     solana-sdk
 )
-
-

@@ -27,7 +27,7 @@ solana-account-decoder = "1.10.7"
 solana-geyser-plugin-interface = "1.10.7"
 solana-client-helpers = "1.1.0"
 solana-logger = "1.10.7"
-# solana-program = "1.10.7"
+solana-program = "1.10.7"
 solana-sdk = "1.10.7"
 thiserror = "1.0.30"
 

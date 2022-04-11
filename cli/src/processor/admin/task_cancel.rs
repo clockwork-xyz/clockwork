@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anchor_lang::prelude::Pubkey;
+use solana_sdk::pubkey::Pubkey;
 use solana_client_helpers::Client;
 
 use crate::{error::CliError, utils::sign_and_submit};

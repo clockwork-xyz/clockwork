@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    # "cli",
+    "cli",
     "cron",
-    # "plugin",
+    "plugin",
     "programs/*",
     "sdk",
-    # "telemetry",
-    # "tests"
+    "telemetry",
+    "tests"
 ]

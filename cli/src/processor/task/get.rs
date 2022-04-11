@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use anchor_lang::prelude::Pubkey;
 use cronos_sdk::scheduler::state::Task;
 use solana_client_helpers::Client;
+use solana_sdk::pubkey::Pubkey;
 
 use crate::{
     error::CliError,

@@ -1,7 +1,7 @@
 use {
     crate::{error::CliError, utils::sign_and_submit},
-    anchor_lang::prelude::Pubkey,
     solana_client_helpers::Client,
+    solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
 };
 

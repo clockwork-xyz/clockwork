@@ -1,6 +1,5 @@
-use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
-use solana_sdk::instruction::Instruction;
+use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
 use std::{convert::TryFrom, fmt::Display};
 
 use crate::{error::CliError, parser::*};

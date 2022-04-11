@@ -3,8 +3,8 @@ use {
     bincode::deserialize,
     cronos_sdk::scheduler::state::{AccountMetaData, Fee, Task},
     log::{debug, info},
-    solana_accountsdb_plugin_interface::accountsdb_plugin_interface::{
-        AccountsDbPlugin, AccountsDbPluginError as PluginError, ReplicaAccountInfo,
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPlugin, GeyserPluginError as PluginError, ReplicaAccountInfo,
         ReplicaAccountInfoVersions, Result as PluginResult,
     },
     solana_client_helpers::Client,
@@ -47,7 +47,7 @@ pub enum CronosPluginError {
     ClockAccountInfoError,
 }
 
-impl AccountsDbPlugin for CronosPlugin {
+impl GeyserPlugin for CronosPlugin {
     fn name(&self) -> &'static str {
         "CronosPlugin"
     }
@@ -151,14 +151,14 @@ impl AccountsDbPlugin for CronosPlugin {
         &mut self,
         _slot: u64,
         _parent: Option<u64>,
-        _status: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::SlotStatus,
+        _status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
         Ok(())
     }
 
     fn notify_transaction(
         &mut self,
-        _transaction: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaTransactionInfoVersions,
+        _transaction: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions,
         _slot: u64,
     ) -> PluginResult<()> {
         Ok(())
@@ -166,7 +166,7 @@ impl AccountsDbPlugin for CronosPlugin {
 
     fn notify_block_metadata(
         &mut self,
-        _blockinfo: solana_accountsdb_plugin_interface::accountsdb_plugin_interface::ReplicaBlockInfoVersions,
+        _blockinfo: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaBlockInfoVersions,
     ) -> PluginResult<()> {
         Ok(())
     }

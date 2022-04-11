@@ -21,19 +21,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn monitor_heartbeat() {
-    let mut latest_ts: i64 = 0;
-    let es_client = &elastic_client().unwrap();
-    let client = &Arc::new(new_client());
-    let time_receiver = cronos_sdk::clock::monitor_time(env::wss_endpoint().as_str().into());
-    for ts in time_receiver {
-        if ts > latest_ts {
-            latest_ts = ts;
-            record_heartbeat(client, es_client, ts).await;
-        }
-    }
+    panic!("Not implemented – coming back after resolving clock bugs in sdk")
+    // let mut latest_ts: i64 = 0;
+    // let es_client = &elastic_client().unwrap();
+    // let client = &Arc::new(new_client());
+    // let time_receiver = cronos_sdk::clock::monitor_time(env::wss_endpoint().as_str().into());
+    // for ts in time_receiver {
+    //     if ts > latest_ts {
+    //         latest_ts = ts;
+    //         record_heartbeat(client, es_client, ts).await;
+    //     }
+    // }
 }
 
-async fn record_heartbeat(client: &Arc<Client>, es_client: &Elasticsearch, ts: i64) {
+async fn _record_heartbeat(client: &Arc<Client>, es_client: &Elasticsearch, ts: i64) {
     let heartbeat_pubkey = Heartbeat::pda().0;
     let heartbeat_account = client.get_account_data(&heartbeat_pubkey).unwrap();
     let heartbeat_data = Heartbeat::try_from(heartbeat_account).unwrap();
@@ -61,7 +62,7 @@ async fn record_heartbeat(client: &Arc<Client>, es_client: &Elasticsearch, ts: i
         .unwrap();
 }
 
-fn new_client() -> Client {
+fn _new_client() -> Client {
     let payer = read_keypair(&mut File::open(env::keypath().as_str()).unwrap()).unwrap();
     let client = RpcClient::new_with_commitment::<String>(
         env::rpc_endpoint().as_str().into(),
@@ -70,7 +71,7 @@ fn new_client() -> Client {
     Client { client, payer }
 }
 
-fn elastic_client() -> Result<Elasticsearch, Error> {
+fn _elastic_client() -> Result<Elasticsearch, Error> {
     let cloud_id = env::es_cloud_id();
     let credentials = Credentials::Basic(env::es_user(), env::es_password());
     let transport = Transport::cloud(&cloud_id, credentials)?;

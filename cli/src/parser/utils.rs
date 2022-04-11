@@ -1,9 +1,8 @@
 use std::{fs, str::FromStr};
 
-use anchor_lang::prelude::Pubkey;
 use clap::ArgMatches;
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
-use solana_sdk::instruction::{AccountMeta, Instruction};
+use solana_sdk::{instruction::{AccountMeta, Instruction}, pubkey::Pubkey};
 
 use crate::error::CliError;
 
