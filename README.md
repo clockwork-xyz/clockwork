@@ -1,10 +1,7 @@
 # Cronos
 
-Cronos is a task scheduling protocol for Solana.
+Automation infrastructure for [Solana](https://solana.com). 
 
-## Docs
-
-https://docs.cronos.so
 
 ## Packages
 
