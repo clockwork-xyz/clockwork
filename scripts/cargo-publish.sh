@@ -3,7 +3,7 @@
 cargo publish -p cronos-cron
 sleep 25
 cargo publish -p cronos-heartbeat
-cargo publish -p cronos-pool
+cargo publish -p cronos-network
 cargo publish -p cronos-scheduler
 sleep 25
 cargo publish -p cronos-sdk
