@@ -1,5 +1,5 @@
 [package]
-name = "cronos_geyser_plugin"
+name = "cronos_plugin"
 version = "0.1.8"
 edition = "2021"
 description = "Cronos plugin for Solana validators"
