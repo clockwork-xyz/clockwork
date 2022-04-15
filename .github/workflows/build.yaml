@@ -12,6 +12,9 @@ jobs:
     name: Anchor Build
     runs-on: ubuntu-latest
     steps:
+      - name: cargo clean
+        run: cargo clean
+        shell: bash
       - name: Remove Cargo Lock for fresh build
         run: rm -rf Cargo.Lock
         shell: bash
