@@ -1,4 +1,4 @@
-name: Build
+name: Anchor Build
 
 on:
   push:
@@ -11,11 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Remove Cargo Lock for fresh build
+        run: rm -rf Cargo.Lock
+        shell: bash
       - uses: actions/checkout@v3
       - uses: mrgnlabs/anchor-build-action@v0.3
-      # - name: Cargo Build
-      #   run: cargo build --verbose
-      #   shell: bash
-      # - name: Cargo Test
-      #   run: cargo build --verbose
-      #   shell: bash
