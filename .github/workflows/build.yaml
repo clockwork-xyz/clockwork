@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ls
-        run: echo ls
+        run: echo $"ls"
         shell: bash
       # - name: cargo clean
       #   run: cargo clean
