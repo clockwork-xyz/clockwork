@@ -12,5 +12,4 @@ jobs:
         run: cargo update
         shell: bash
       - name: Anchor Test
-
         uses: mrgnlabs/anchor-test-action@v0.4
