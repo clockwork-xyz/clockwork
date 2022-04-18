@@ -83,7 +83,7 @@ checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -96,7 +96,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -110,7 +110,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -131,7 +131,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -156,7 +156,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -168,7 +168,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -192,7 +192,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#1c40517e5c06cbb7abc4ae152c8d7ad7c979cb2a"
+source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -713,16 +713,16 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.8"
+version = "3.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c47df61d9e16dc010b55dba1952a57d8c215dbb533fd13cdd13369aac73b1c"
+checksum = "6aad2534fad53df1cc12519c5cda696dd3e20e6118a027e24054aea14a0bdcbe"
 dependencies = [
  "atty",
  "bitflags",
  "clap_derive",
+ "clap_lex",
  "indexmap",
  "lazy_static",
- "os_str_bytes",
  "strsim 0.10.0",
  "termcolor",
  "textwrap 0.15.0",
@@ -739,6 +739,15 @@ dependencies = [
  "proc-macro2 1.0.37",
  "quote 1.0.18",
  "syn 1.0.91",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "189ddd3b5d32a70b35e7686054371742a937b0d99128e76dde6340210e966669"
+dependencies = [
+ "os_str_bytes",
 ]
 
 [[package]]
@@ -835,7 +844,7 @@ dependencies = [
 name = "cronos-cli"
 version = "0.1.8"
 dependencies = [
- "clap 3.1.8",
+ "clap 3.1.9",
  "cronos-sdk",
  "serde",
  "serde_json",
@@ -1832,9 +1841,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "itertools"
@@ -2287,9 +2296,6 @@ name = "os_str_bytes"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
-dependencies = [
- "memchr",
-]
 
 [[package]]
 name = "ouroboros"
