@@ -1,0 +1,19 @@
+name: Anchor Build
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Anchor Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cargo Update
+        run: cargo update
+        shell: bash
+      - uses: mrgnlabs/anchor-build-action@v0.3
