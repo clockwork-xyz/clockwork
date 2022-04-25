@@ -5,17 +5,17 @@ wallet = "~/.config/solana/id.json"
 [programs.localnet]
 heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
 network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "5yENQ4pQnf4dN4Fh2dcc5fejk1tPPe7v4A1sm9boigVT"
+scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
 
 [programs.testnet]
 heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
 network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "5yENQ4pQnf4dN4Fh2dcc5fejk1tPPe7v4A1sm9boigVT"
+scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
 
 [programs.mainnet]
 heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
 network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "5yENQ4pQnf4dN4Fh2dcc5fejk1tPPe7v4A1sm9boigVT"
+scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
 
 [registry]
 url = "https://anchor.projectserum.com"
