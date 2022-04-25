@@ -11,7 +11,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
 
-declare_id!("GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG");
+declare_id!("FgaywchEfqzBcDVp8Eprf2jg6tv4Z3ptpahfHa15Eg6G");
 
 #[program]
 pub mod cronos_scheduler {

@@ -3,19 +3,19 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
-network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
+heartbeat = "2ysCzNg41B2FSnjHqcyRVdrzf9d2pazqLARrb2qDJpbF"
+network = "5Xu6iNDMf17wVC6aSoKeQsjF87aTQjrqpA9sX3sA5VJX"
+scheduler = "FgaywchEfqzBcDVp8Eprf2jg6tv4Z3ptpahfHa15Eg6G"
 
 [programs.testnet]
-heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
-network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
+heartbeat = "2ysCzNg41B2FSnjHqcyRVdrzf9d2pazqLARrb2qDJpbF"
+network = "5Xu6iNDMf17wVC6aSoKeQsjF87aTQjrqpA9sX3sA5VJX"
+scheduler = "FgaywchEfqzBcDVp8Eprf2jg6tv4Z3ptpahfHa15Eg6G"
 
 [programs.mainnet]
-heartbeat = "arpxFMhub9LxVS5vE1gxVHTFKSFwE5QHakg5FvQv4Rt"
-network = "EtPRQQTVAoq9cLwyHg54AHgGxjDaFDP6FYApCVwWB86o"
-scheduler = "GUFXv661EJ1ewMMN8A5usQzMfyGzhvUgBPJ7UsmxSLFG"
+heartbeat = "2ysCzNg41B2FSnjHqcyRVdrzf9d2pazqLARrb2qDJpbF"
+network = "5Xu6iNDMf17wVC6aSoKeQsjF87aTQjrqpA9sX3sA5VJX"
+scheduler = "FgaywchEfqzBcDVp8Eprf2jg6tv4Z3ptpahfHa15Eg6G"
 
 [registry]
 url = "https://anchor.projectserum.com"
