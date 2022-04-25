@@ -15,7 +15,7 @@ crate-type = ["cdylib", "lib"]
 name = "cronos_sdk"
 
 [dependencies]
-anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "latest" }
+anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "solana-v1.10.8" }
 cronos-heartbeat = { path = "../programs/heartbeat", features = ["no-entrypoint"], version = "0.1.8" }
 cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.1.8" }
 # solana-program = "1.10.8"

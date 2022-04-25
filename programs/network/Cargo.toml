@@ -22,5 +22,5 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "latest" }
-anchor-spl = { git = "https://github.com/cronos-so/anchor", features = ["mint", "token"], branch = "latest" }
+anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "solana-v1.10.8" }
+anchor-spl = { features = ["mint", "token"], git = "https://github.com/cronos-so/anchor", branch = "solana-v1.10.8" }

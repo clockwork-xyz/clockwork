@@ -83,7 +83,7 @@ checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -96,7 +96,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -110,7 +110,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -131,7 +131,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -156,7 +156,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -168,7 +168,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -192,7 +192,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=latest#8bbfacb550c100768803a759d5f4118f20795850"
+source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -252,9 +252,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
 name = "arrayref"
@@ -713,9 +713,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.9"
+version = "3.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aad2534fad53df1cc12519c5cda696dd3e20e6118a027e24054aea14a0bdcbe"
+checksum = "7c167e37342afc5f33fd87bbc870cedd020d2a6dffa05d45ccd9241fbdd146db"
 dependencies = [
  "atty",
  "bitflags",
@@ -844,7 +844,7 @@ dependencies = [
 name = "cronos-cli"
 version = "0.1.8"
 dependencies = [
- "clap 3.1.9",
+ "clap 3.1.12",
  "cronos-sdk",
  "serde",
  "serde_json",
@@ -924,10 +924,13 @@ name = "cronos-tests"
 version = "0.1.8"
 dependencies = [
  "cronos-sdk",
+ "serde",
+ "serde_json",
  "solana-account-decoder",
  "solana-client",
  "solana-client-helpers",
  "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]
@@ -1907,9 +1910,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.123"
+version = "0.2.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb691a747a7ab48abc15c5b42066eaafde10dc427e3b6ee2a1cf43db04c763bd"
+checksum = "21a41fed9d98f27ab1c6d161da622a4fa35e8a54a8adc24bbf3ddd0ef70b0e50"
 
 [[package]]
 name = "libloading"
@@ -3150,9 +3153,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "1.12.1"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "946fa04a8ac43ff78a1f4b811990afb9ddbdf5890b46d6dda0ba1998230138b7"
+checksum = "b827f2113224f3f19a665136f006709194bdfdcb1fdc1e4b2b5cbac8e0cced54"
 dependencies = [
  "rustversion",
  "serde",
