@@ -19,8 +19,8 @@ cronos-sdk = { path = "../sdk", version = "0.1.8" }
 dotenv = "0.15.0"
 elasticsearch = "7.14.0-alpha.1"
 serde_json = "~1"
-solana-account-decoder = "1.10.7"
-solana-client = "1.10.7"
+solana-account-decoder = "1.10.8"
+solana-client = "1.10.8"
 solana-client-helpers = "=1.1.0"
-solana-sdk = "1.10.7"
+solana-sdk = "1.10.8"
 tokio = { version = "1.17.0", features = ["full"] }
