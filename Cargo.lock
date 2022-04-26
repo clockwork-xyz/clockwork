@@ -83,7 +83,7 @@ checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -96,7 +96,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -110,7 +110,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.37",
@@ -131,7 +131,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -156,7 +156,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -168,7 +168,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -192,7 +192,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=solana-v1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2+solana.1.10.8#980791eda3f94b1630bdeb78e5ffb405dd168f49"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
