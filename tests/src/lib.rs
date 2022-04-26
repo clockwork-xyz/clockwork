@@ -56,10 +56,8 @@ impl TryFrom<&JsonAccountMetaData> for AccountMeta {
 
 #[cfg(test)]
 mod tests {
-    use crate::JsonInstructionData;
-
     use {
-        crate::errors::TestError,
+        crate::{errors::TestError, JsonInstructionData},
         serde_json::json,
         solana_client_helpers::{Client, RpcClient},
         solana_sdk::{
@@ -85,7 +83,7 @@ mod tests {
         let mut tx = Transaction::new_with_payer(ixs, Some(&client.payer_pubkey()));
         tx.sign(&vec![&client.payer], client.latest_blockhash().unwrap());
         let sig = client.send_and_confirm_transaction(&tx).unwrap();
-        println!("Tx: https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899", sig);
+        println!("Signature: {}", sig);
     }
 
     #[test]
@@ -157,7 +155,7 @@ mod tests {
             daemon_pda.0,
             owner,
             vec![ix],
-            "*/10 * * * * * *".to_string(),
+            "* * * * * * *".to_string(),
         );
 
         sign_and_submit(&client, &[task_ix]);
@@ -186,25 +184,25 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn plugin_bench_100_tasks() {
+    fn plugin_bench_1_daemon_100_tasks() {
         let client = new_client();
         let owner = client.payer_pubkey();
 
         let daemon_pda = cronos_sdk::scheduler::state::Daemon::pda(owner);
         let daemon_addr = daemon_pda.0;
-        let fee_pda = cronos_sdk::scheduler::state::Fee::pda(daemon_pda.0);
+        let fee_pda = cronos_sdk::scheduler::state::Fee::pda(daemon_addr);
 
         let ix = cronos_sdk::scheduler::instruction::daemon_new(daemon_pda, fee_pda, owner);
 
         sign_and_submit(&client, &[ix]);
 
         let data = client
-            .get_account_data(&daemon_pda.0)
-            .map_err(|_err| TestError::AccountNotFound(daemon_pda.0.to_string()))
+            .get_account_data(&daemon_addr)
+            .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
             .unwrap();
 
         let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
-            .map_err(|_err| TestError::AccountDataNotParsable(daemon_pda.0.to_string()))
+            .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
             .unwrap();
 
         assert_eq!(daemon_data.task_count, 0);
@@ -228,12 +226,12 @@ mod tests {
             let ix = Instruction::try_from(&ix_json).unwrap();
 
             let data = client
-                .get_account_data(&daemon_pda.0)
-                .map_err(|_err| TestError::AccountNotFound(daemon_pda.0.to_string()))
+                .get_account_data(&daemon_addr)
+                .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
                 .unwrap();
 
             let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
-                .map_err(|_err| TestError::AccountDataNotParsable(daemon_pda.0.to_string()))
+                .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
                 .unwrap();
 
             let task_pda =
@@ -241,7 +239,7 @@ mod tests {
 
             let task_ix = cronos_sdk::scheduler::instruction::task_new(
                 task_pda,
-                daemon_pda.0,
+                daemon_addr,
                 owner,
                 vec![ix],
                 "* * * * * *".to_string(),
@@ -251,14 +249,94 @@ mod tests {
         }
 
         let data = client
-            .get_account_data(&daemon_pda.0)
-            .map_err(|_err| TestError::AccountNotFound(daemon_pda.0.to_string()))
+            .get_account_data(&daemon_addr)
+            .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
             .unwrap();
 
         let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
-            .map_err(|_err| TestError::AccountDataNotParsable(daemon_pda.0.to_string()))
+            .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
             .unwrap();
 
         assert_eq!(daemon_data.task_count, 100);
+    }
+
+    #[test]
+    #[ignore]
+    fn plugin_bench_10_daemons_10_tasks() {
+        for _i in 0..10 {
+            let client = new_client();
+            let owner = client.payer_pubkey();
+
+            let daemon_pda = cronos_sdk::scheduler::state::Daemon::pda(owner);
+            let daemon_addr = daemon_pda.0;
+            let fee_pda = cronos_sdk::scheduler::state::Fee::pda(daemon_addr);
+
+            let ix = cronos_sdk::scheduler::instruction::daemon_new(daemon_pda, fee_pda, owner);
+
+            sign_and_submit(&client, &[ix]);
+
+            let data = client
+                .get_account_data(&daemon_addr)
+                .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
+                .unwrap();
+
+            let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
+                .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
+                .unwrap();
+
+            assert_eq!(daemon_data.task_count, 0);
+
+            let memo = json!({
+              "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+              "accounts": [
+                {
+                  "pubkey": daemon_addr.to_string(),
+                  "is_signer": true,
+                  "is_writable": false
+                }
+              ],
+              "data": [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
+            });
+
+            let ix_json = serde_json::from_value::<JsonInstructionData>(memo)
+                .expect("JSON was not well-formatted");
+
+            for _i in 0..10 {
+                let ix = Instruction::try_from(&ix_json).unwrap();
+
+                let data = client
+                    .get_account_data(&daemon_addr)
+                    .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
+                    .unwrap();
+
+                let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
+                    .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
+                    .unwrap();
+
+                let task_pda =
+                    cronos_sdk::scheduler::state::Task::pda(daemon_addr, daemon_data.task_count);
+
+                let task_ix = cronos_sdk::scheduler::instruction::task_new(
+                    task_pda,
+                    daemon_addr,
+                    owner,
+                    vec![ix],
+                    "* * * * * *".to_string(),
+                );
+
+                sign_and_submit(&client, &[task_ix]);
+            }
+
+            let data = client
+                .get_account_data(&daemon_addr)
+                .map_err(|_err| TestError::AccountNotFound(daemon_addr.to_string()))
+                .unwrap();
+
+            let daemon_data = cronos_sdk::scheduler::state::Daemon::try_from(data)
+                .map_err(|_err| TestError::AccountDataNotParsable(daemon_addr.to_string()))
+                .unwrap();
+
+            assert_eq!(daemon_data.task_count, 10);
+        }
     }
 }
