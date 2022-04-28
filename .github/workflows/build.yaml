@@ -12,12 +12,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: projectserum/build:v0.24.2
+    container: solanalabs/solana:beta
     steps:
       - uses: actions/checkout@v3
-      - name: List rustup toolchains
-        run: rustup toolchain list
       - name: Set default toolchain
         run: rustup default stable
-      - name: Build
+      - name: Cargo build
         run: cargo build
