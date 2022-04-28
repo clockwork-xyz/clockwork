@@ -15,7 +15,5 @@ jobs:
     container: solanalabs/solana:beta
     steps:
       - uses: actions/checkout@v3
-      - name: Set default toolchain
-        run: rustup default stable
       - name: Cargo build
         run: cargo build
