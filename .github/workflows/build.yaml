@@ -1,19 +1,23 @@
-name: Anchor Build
+name: Build
 
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-    name: Anchor Build
+    name: Build
     runs-on: ubuntu-latest
+    container: projectserum/build:v0.24.2
     steps:
       - uses: actions/checkout@v3
-      - name: Cargo Update
-        run: cargo update
-        shell: bash
-      - uses: mrgnlabs/anchor-build-action@v0.3
+      - name: List rustup toolchains
+        run: rustup toolchain list
+      - name: Set default toolchain
+        run: rustup default stable
+      - name: Build
+        run: cargo build
