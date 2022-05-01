@@ -7,10 +7,12 @@ on:
 
 jobs:
   audit:
+    name: Audit
     runs-on: ubuntu-latest
+    container: solanalabs/solana:v1.10.8
     steps:
       - name: Check-out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Soteria Audit
         continue-on-error: false
         uses: silas-x/soteria-action@main
