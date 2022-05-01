@@ -10,5 +10,10 @@ jobs:
       - name: Check-out the repository
         uses: actions/checkout@v2
       - name: Soteria Audit
-        continue-on-error: true
+        continue-on-error: false
         uses: silas-x/soteria-action@main
+        with:
+          solana-version: "1.10.8"
+          run-mode: "-analyzeAll"
+          cargo-com: "."
+          program-path: "."
