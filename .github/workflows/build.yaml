@@ -15,5 +15,5 @@ jobs:
     container: projectserum/build:v0.24.2
     steps:
       - uses: actions/checkout@v3
-      - name: Cargo build
-        run: cargo build
+      - name: Anchor build
+        run: anchor build
