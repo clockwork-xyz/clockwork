@@ -14,7 +14,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v3
       - name: Set rust toolchain
-        run: rustup default stable
+        run: rustup default bpf
       - name: Cargo build
         run: cargo build
       - name: Soteria audit
