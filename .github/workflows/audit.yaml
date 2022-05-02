@@ -20,4 +20,4 @@ jobs:
       - name: Cargo build
         run: cargo build
       - name: Soteria audit
-        run: soteria -analyzeAll .
+        run: pwd && ls && soteria -analyzeAll .

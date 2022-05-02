@@ -32,7 +32,8 @@ RUN sh -c "$(curl -k https://supercompiler.xyz/install)"
 
 # Install BPF toolchain.
 WORKDIR ${HOME}/.local/share/solana/install/active_release/bin/sdk/bpf
-RUN chmod +x env.sh && ./env.sh
+RUN chmod +x env.sh && \
+    sh env.sh -y
 
 # Set workdir.
 WORKDIR /workdir
