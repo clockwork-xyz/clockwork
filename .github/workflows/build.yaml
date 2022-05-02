@@ -15,5 +15,11 @@ jobs:
     container: projectserum/build:v0.24.2
     steps:
       - uses: actions/checkout@v3
+      - name: List rustup toolchains
+        run: rustup toolchain list
+      - name: Set default toolchain
+        run: rustup default stable
+      - name: List rustup toolchains
+        run: rustup toolchain list
       - name: Anchor build
         run: anchor build
