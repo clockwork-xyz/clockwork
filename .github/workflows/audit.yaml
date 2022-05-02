@@ -1,14 +1,17 @@
-name: Soteria Audit
+name: Audit
 
 on:
   push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   audit:
+    name: Audit
     runs-on: ubuntu-latest
+    container: cronoslabs/dev:v1.10.8
     steps:
-      - name: Check-out the repository
-        uses: actions/checkout@v2
-      - name: Soteria Audit
-        continue-on-error: true
-        uses: silas-x/soteria-action@main
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Cargo build
+        run: soteria -analyzeAll .
