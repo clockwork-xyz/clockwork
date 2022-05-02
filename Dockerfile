@@ -22,7 +22,9 @@ WORKDIR ${HOME}
 # Install Rust.
 RUN curl "https://sh.rustup.rs" -sfo rustup.sh && \
     sh rustup.sh -y && \
-    rustup component add rustfmt clippy
+    rustup component add rustfmt clippy && \
+    rustup toolchain list && \
+    rustup default stable
 
 # Install Solana.
 RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
