@@ -26,9 +26,18 @@ pub fn _parse_u32(arg: &String, matches: &ArgMatches) -> Result<u32, TestError> 
 }
 
 pub fn _parse_f32(arg: &String, matches: &ArgMatches) -> Result<f32, TestError> {
-    parse_string(arg, matches)?
+    let value = parse_string(arg, matches)?
         .parse::<f32>()
         .map_err(|_err| TestError::BadParameter(arg.into()))
+        .unwrap();
+
+    if arg == "percent" && value > 1.0 {
+        return Err(TestError::BadParameter(
+            "percent parameter cannot be greater than 1".to_string(),
+        ));
+    }
+
+    Ok(value)
 }
 
 pub fn parse_string(arg: &String, matches: &ArgMatches) -> Result<String, TestError> {
