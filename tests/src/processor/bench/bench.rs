@@ -7,12 +7,11 @@ use {
 use crate::{error::TestError, parser::*, utils::new_client, utils::sign_and_submit};
 
 pub fn test(count: u32, time: u32, percent: f32) -> Result<(), TestError> {
-    let daemons_p = count as f32 * percent; // number of daemons that are parallelized
-    let mut remaining_tasks = count; // count of remaining tasks to schedule serialized task in single daemon
+    let tasks_p = count as f32 * percent; // number of tasks that are parallelized
+    let mut remaining_tasks = count; // count of remaining tasks to serialized in a single daemon
 
-    // creating x parallellized daaemons
-    for _i in 0..daemons_p as i32 {
-        // reinitialize client to be able to create new daemons each loop
+    // creating x tasks running in parallel
+    for _i in 0..tasks_p as i32 {
         let client = new_client();
         let owner = client.payer_pubkey();
 
