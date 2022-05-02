@@ -11,9 +11,9 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
-    container: solanalabs/solana:v1.10.8
+    container: cronoslabs/dev:v1.10.8
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout the repository
+        uses: actions/checkout@v3
       - name: Cargo build
         run: cargo build
