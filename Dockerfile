@@ -30,5 +30,9 @@ RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
 # Install Soteria.
 RUN sh -c "$(curl -k https://supercompiler.xyz/install)"
 
+# Install BPF toolchain.
+WORKDIR ${HOME}/.local/share/solana/install/active_release/bin/sdk/bpf
+RUN chmod +x env.sh && ./env.sh
+
 # Set workdir.
 WORKDIR /workdir
