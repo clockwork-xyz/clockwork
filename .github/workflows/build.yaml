@@ -19,7 +19,7 @@ jobs:
       - name: List rustup toolchains
         run: rustup toolchain list
       - name: Set default toolchain
-        run: rustup default bpf
+        run: rustup default stable
       - name: List rustup toolchains
         run: rustup toolchain list
       - name: Cargo build
