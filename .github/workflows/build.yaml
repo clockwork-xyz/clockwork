@@ -12,7 +12,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: solanalabs/solana:v1.10.8
+    container: projectserum/build:v0.24.2
     steps:
       - uses: actions/checkout@v3
       - name: Cargo build
