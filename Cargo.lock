@@ -841,6 +841,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d76219e9243e100d5a37676005f08379297f8addfebc247613299600625c734d"
+dependencies = [
+ "chrono",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
 name = "cronos-cli"
 version = "0.1.8"
 dependencies = [
@@ -920,17 +931,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-tests"
+name = "cronos-testing-suite"
 version = "0.1.8"
 dependencies = [
+ "chrono",
+ "clap 3.1.12",
+ "cron",
  "cronos-sdk",
  "serde",
  "serde_json",
  "solana-account-decoder",
+ "solana-clap-utils",
+ "solana-cli-config",
  "solana-client",
  "solana-client-helpers",
  "solana-sdk",
  "thiserror",
+ "version",
 ]
 
 [[package]]

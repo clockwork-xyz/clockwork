@@ -10,10 +10,6 @@ documentation = "https://docs.cronos.so"
 readme = "./README.md"
 keywords = ["solana", "cronos", "program"]
 
-[lib]
-crate-type = ["cdylib", "lib"]
-name = "cronos_tests"
-
 [dependencies]
 cronos-sdk = { path = "../sdk", version = "0.1.8" }
 solana-account-decoder = "1.10.8"
@@ -23,3 +19,13 @@ solana-sdk = "1.10.8"
 thiserror = "1.0.30"
 serde_json = "1.0.79"
 serde = { version = "1.0.136", features = ["derive"] }
+clap = { version = "3.1.2", features = ["derive"] }
+solana-clap-utils = "1.10.8"
+version = "3.0.0"
+solana-cli-config = "1.10.8"
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+cron = "0.11.0"
+
+[[bin]]
+name = "cronos_tests"
+path = "src/main.rs"
