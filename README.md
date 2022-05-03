@@ -2,8 +2,6 @@
 
 Automation infrastructure for [Solana](https://solana.com). 
 
-[![Build](https://github.com/cronos-so/cronos/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/cronos-so/cronos/actions/workflows/build.yaml)
-
 
 ## Packages
 
