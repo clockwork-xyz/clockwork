@@ -17,6 +17,6 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v3
       - name: Set rust toolchain
-        run: rustup default stable
+        run: rustup toolchain list && rustup default stable && rustup toolchain list
       - name: Cargo build
         run: cargo build

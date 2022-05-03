@@ -18,10 +18,10 @@ jobs:
       - name: Install bpf toolchain
         run: |
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf
-          sh env.sh
+          sh env.sh -y
           cd $HOME
       - name: Set rust toolchain
-        run: rustup default bpf
+        run: rustup toolchain list && rustup default stable && rustup toolchain list
       - name: Cargo build
         run: cargo build
       - name: Soteria audit
