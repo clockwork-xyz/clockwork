@@ -55,6 +55,7 @@ pub struct TaskExec<'info> {
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let bot = &mut ctx.accounts.bot;
+    let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;
@@ -65,6 +66,7 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     emit!(TaskExecuted {
         bot: bot.key(),
         task: task.key(),
+        ts: clock.unix_timestamp,
     });
 
     Ok(())

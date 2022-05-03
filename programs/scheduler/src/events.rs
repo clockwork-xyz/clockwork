@@ -4,4 +4,5 @@ use anchor_lang::prelude::*;
 pub struct TaskExecuted {
     pub bot: Pubkey,
     pub task: Pubkey,
+    pub ts: i64,
 }
