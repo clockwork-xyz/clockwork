@@ -3,7 +3,6 @@ use clap::{Arg, Command};
 pub fn app() -> Command<'static> {
     Command::new("bench")
         .about("Cronos testing bench")
-        // .subcommand_required(true)
         .arg(
             Arg::new("count")
                 .long("count")
