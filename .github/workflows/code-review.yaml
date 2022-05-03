@@ -1,4 +1,4 @@
-name: Code Review
+name: Code review
 
 on:
   push:
@@ -30,11 +30,11 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - cmd: soteria -analyzeAll .
+          - cmd: cd programs/heartbeat && soteria -analyzeAll .
             path: programs/heartbeat
-          - cmd: soteria -analyzeAll .
+          - cmd: cd programs/network && soteria -analyzeAll .
             path: programs/network
-          - cmd: soteria -analyzeAll .
+          - cmd: cd programs/scheduler && soteria -analyzeAll .
             path: programs/scheduler
     steps:
       - name: Checkout repository
