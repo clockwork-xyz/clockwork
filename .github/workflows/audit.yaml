@@ -23,5 +23,18 @@ jobs:
           ./install.sh
           cd $HOME
           rustup default bpf
-      - name: Soteria audit
-        run: soteria -analyzeAll .
+      - name: Soteria audit (heartbeat)
+        run: |
+          cd programs/heartbeat
+          soteria -analyzeAll .
+          cd ../../
+      - name: Soteria audit (network)
+        run: |
+          cd programs/network
+          soteria -analyzeAll .
+          cd ../../
+      - name: Soteria audit (scheduler)
+        run: |
+          cd programs/scheduler
+          soteria -analyzeAll .
+          cd ../../
