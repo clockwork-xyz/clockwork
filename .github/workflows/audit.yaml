@@ -22,8 +22,8 @@ jobs:
           rustup toolchain list
       - name: Install bpf toolchain
         run: |
-          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf
-          sh env.sh -y
+          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
+          sh install.sh
           cd $HOME
           rustup toolchain list
       - name: Cargo build
