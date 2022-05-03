@@ -13,27 +13,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Rust toolchain
-        run: rustup default stable
-      - name: Cargo build
-        run: cargo build
-      - name: Rust toolchain BPF
+      - name: Install BPF toolchain
         run: |
+          rustup default stable
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
           ./install.sh
           cd $HOME
           rustup default bpf
-      - name: Soteria audit (heartbeat)
+      - name: Audit heartbeat program
         run: |
           cd programs/heartbeat
           soteria -analyzeAll .
           cd ../../
-      - name: Soteria audit (network)
+      - name: Audit network program
         run: |
           cd programs/network
           soteria -analyzeAll .
           cd ../../
-      - name: Soteria audit (scheduler)
+      - name: Audit scheduler program
         run: |
           cd programs/scheduler
           soteria -analyzeAll .
