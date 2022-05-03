@@ -11,21 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     container: cronoslabs/dev:v1.10.8
     steps:
-      - name: Checkout the repository
+      - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Which solana
-        run: which solana
-      - name: Set rust toolchain
+      - name: Rust toolchain
         run: |
-          rustup toolchain list
           rustup default stable
-          rustup toolchain list
-      - name: Install bpf toolchain
-        run: |
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
           ./install.sh
           cd $HOME
-          rustup toolchain list
+          rustup default bpf
       - name: Cargo build
         run: cargo build
       - name: Soteria audit
