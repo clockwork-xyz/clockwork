@@ -1,4 +1,4 @@
-name: Analyze
+name: Code Review
 
 on:
   push:
