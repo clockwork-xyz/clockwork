@@ -16,7 +16,10 @@ jobs:
       - name: Which solana
         run: which solana
       - name: Install bpf toolchain
-        run: sh /root/.local/share/solana/install/active_release/bin/sdk/bpf/env.sh
+        run: |
+          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf
+          sh env.sh
+          cd $HOME
       - name: Set rust toolchain
         run: rustup default bpf
       - name: Cargo build
