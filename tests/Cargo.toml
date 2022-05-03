@@ -1,5 +1,5 @@
 [package]
-name = "cronos-testing-suite"
+name = "cronos-tests"
 version = "0.1.8"
 description = "A test suite for Cronos"
 edition = "2021"
