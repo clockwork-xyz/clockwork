@@ -23,7 +23,7 @@ jobs:
 
   audit:
     needs: build
-    name: Audit
+    name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
     container: cronoslabs/dev:v1.10.8
     strategy:
@@ -46,5 +46,5 @@ jobs:
           ./install.sh
           cd $HOME
           rustup default bpf
-      - name: Audit ${{ matrix.node.path }}
+      - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
