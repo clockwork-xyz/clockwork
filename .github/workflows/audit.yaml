@@ -14,13 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Rust toolchain
+        run: rustup default stable
+      - name: Cargo build
+        run: cargo build
+      - name: Rust toolchain BPF
         run: |
-          rustup default stable
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
           ./install.sh
           cd $HOME
           rustup default bpf
-      - name: Cargo build
-        run: cargo build
       - name: Soteria audit
         run: soteria -analyzeAll .
