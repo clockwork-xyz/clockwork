@@ -1,5 +1,5 @@
 use {
-    crate::{state::*, errors::CronosError},
+    crate::{events::*, state::*, errors::CronosError},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
@@ -60,5 +60,12 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let fee = &mut ctx.accounts.fee;
     let task = &mut ctx.accounts.task;
 
-    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, daemon, fee)
+    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, daemon, fee)?;
+
+    emit!(TaskExecuted {
+        bot: bot.key(),
+        task: task.key(),
+    });
+
+    Ok(())
 }

@@ -2,6 +2,7 @@ extern crate chrono;
 extern crate cronos_cron;
 
 pub mod errors;
+pub mod events;
 pub mod pda;
 pub mod state;
 
