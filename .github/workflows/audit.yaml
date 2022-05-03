@@ -21,17 +21,8 @@ jobs:
           cd $HOME
           rustup default bpf
       - name: Audit heartbeat program
-        run: |
-          cd programs/heartbeat
-          soteria -analyzeAll .
-          cd ../../
+        run: soteria -analyzeAll programs/heartbeat
       - name: Audit network program
-        run: |
-          cd programs/network
-          soteria -analyzeAll .
-          cd ../../
+        run: soteria -analyzeAll programs/network
       - name: Audit scheduler program
-        run: |
-          cd programs/scheduler
-          soteria -analyzeAll .
-          cd ../../
+        run: soteria -analyzeAll programs/scheduler
