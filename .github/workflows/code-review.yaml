@@ -1,0 +1,50 @@
+name: Code review
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: cronoslabs/dev:v1.10.8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install default toolchain
+        run: rustup default stable
+      - name: Cargo build
+        run: cargo build
+
+  audit:
+    needs: build
+    name: Audit ${{ matrix.node.path }}
+    runs-on: ubuntu-latest
+    container: cronoslabs/dev:v1.10.8
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - cmd: cd programs/heartbeat && soteria -analyzeAll .
+            path: programs/heartbeat
+          - cmd: cd programs/network && soteria -analyzeAll .
+            path: programs/network
+          - cmd: cd programs/scheduler && soteria -analyzeAll .
+            path: programs/scheduler
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install BPF toolchain
+        run: |
+          rustup default stable
+          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
+          ./install.sh
+          cd $HOME
+          rustup default bpf
+      - name: Run soteria on ${{ matrix.node.path }}
+        run: ${{ matrix.node.cmd }}
