@@ -918,6 +918,7 @@ dependencies = [
 name = "cronos-telemetry"
 version = "0.1.8"
 dependencies = [
+ "bincode",
  "chrono",
  "cronos-sdk",
  "dotenv",
@@ -926,6 +927,7 @@ dependencies = [
  "solana-account-decoder",
  "solana-client",
  "solana-client-helpers",
+ "solana-program",
  "solana-sdk",
  "tokio",
 ]

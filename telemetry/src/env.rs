@@ -1,29 +1,31 @@
-use std::env;
+use std::{env, fmt};
 
-pub fn keypath() -> String {
-    env::var("KEYPATH").unwrap()
+#[derive(Debug)]
+pub enum Envvar {
+    Keypath,
+    RpcEndpoint,
+    EsCloudId,
+    EsUser,
+    EsPassword,
+    EsIndex,
 }
 
-pub fn wss_endpoint() -> String {
-    env::var("WSS_ENDPOINT").unwrap()
+impl fmt::Display for Envvar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Envvar::Keypath => write!(f, "KEYPATH"),
+            Envvar::RpcEndpoint => write!(f, "RPC_ENDPOINT"),
+            Envvar::EsCloudId => write!(f, "ES_CLOUD_ID"),
+            Envvar::EsUser => write!(f, "ES_USER"),
+            Envvar::EsPassword => write!(f, "ES_PASSWORD"),
+            Envvar::EsIndex => write!(f, "ES_INDEX"),
+        }
+    }
 }
 
-pub fn rpc_endpoint() -> String {
-    env::var("RPC_ENDPOINT").unwrap()
-}
-
-pub fn es_cloud_id() -> String {
-    env::var("ES_CLOUD_ID").unwrap()
-}
-
-pub fn es_user() -> String {
-    env::var("ES_USER").unwrap()
-}
-
-pub fn es_password() -> String {
-    env::var("ES_PASSWORD").unwrap()
-}
-
-pub fn es_health_index() -> String {
-    env::var("ES_HEALTH_INDEX").unwrap()
+impl Envvar {
+    pub fn get(self) -> String {
+        println!("Getting env {:#?}", self.to_string());
+        env::var(self.to_string()).unwrap()
+    }
 }
