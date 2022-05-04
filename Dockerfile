@@ -1,3 +1,15 @@
+# This Dockerfile provides a Linux-based environment, pre-installed with Solana dev tooling
+# such as Rust, the Solana CLI, and the latest Soteria code scanner.
+# 
+# You can pull the latest published image from Dockerhub (https://hub.docker.com/r/cronoslabs/dev)
+# Or you can build an image from source using the Docker CLI:
+#  ```sh
+#  docker build -t cronoslabs/dev .
+#  ```
+# 
+# Note: When building Docker images on an M1 Mac, you should use the `--platform linux/amd64` flag.
+# 
+
 FROM ubuntu:18.04
 
 # Set dependency versions.
