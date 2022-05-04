@@ -2,6 +2,8 @@
 
 Automation infrastructure for [Solana](https://solana.com). 
 
+[![Code scan](https://github.com/cronos-so/cronos/actions/workflows/code-scan.yaml/badge.svg?branch=main)](https://github.com/cronos-so/cronos/actions/workflows/code-scan.yaml)
+
 
 ## Packages
 
