@@ -1,14 +1,14 @@
 [package]
 name = "cronos-scheduler"
 version = "0.1.8"
-description = "Task scheduling protocol for Solana"
+description = "Cronos scheduling protocol"
 edition = "2021"
 license = "GNU AGPLv3"
 homepage = "https://cronos.so"
 repository = "https://github.com/cronos-so/cronos"
 documentation = "https://docs.cronos.so"
 readme = "./README.md"
-keywords = ["solana", "cronos", "program"]
+keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
