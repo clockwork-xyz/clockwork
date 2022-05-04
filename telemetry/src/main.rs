@@ -37,7 +37,7 @@ async fn record_heartbeat() {
     let client = Client::new(Envvar::Keypath.get(), Envvar::RpcEndpoint.get());
     let es_client = elastic_client().unwrap();
 
-    // TODO Get clock data
+    // Get clock data
     let clock_pubkey = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
     let clock_data = client.get_account_data(&clock_pubkey).unwrap();
     let clock_data = deserialize::<Clock>(&clock_data).unwrap();
