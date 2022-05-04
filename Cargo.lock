@@ -911,7 +911,9 @@ version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "cronos-heartbeat",
+ "cronos-network",
  "cronos-scheduler",
+ "spl-token",
 ]
 
 [[package]]
