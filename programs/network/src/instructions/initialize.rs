@@ -36,7 +36,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = admin,
-        mint::decimals = 7,
+        mint::decimals = 9,
         mint::authority = admin,
         mint::freeze_authority = admin
     )]
