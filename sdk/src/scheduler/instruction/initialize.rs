@@ -16,6 +16,7 @@ pub fn admin_initialize(
     config_pda: PDA,
     daemon_pda: PDA,
     fee_pda: PDA,
+    registry_pubkey: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
@@ -32,6 +33,7 @@ pub fn admin_initialize(
             config_bump: config_pda.1,
             daemon_bump: daemon_pda.1,
             fee_bump: fee_pda.1,
+            registry_pubkey,
         }
         .data(),
     }
