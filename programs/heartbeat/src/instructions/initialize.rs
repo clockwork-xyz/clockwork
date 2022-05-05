@@ -1,16 +1,13 @@
 use {
-    crate::state::*, 
+    crate::state::*,
     anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of
+    std::mem::size_of,
 };
 
 #[derive(Accounts)]
 #[instruction(
-    authority_bump: u8,
     config_bump: u8,
-    daemon_bump: u8,
-    fee_bump: u8,
-    health_bump: u8,
+    heartbeat_bump: u8,
 )]
 pub struct Initialize<'info> {
     #[account(mut)]
