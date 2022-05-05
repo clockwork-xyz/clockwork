@@ -5,14 +5,12 @@ use crate::{error::TestError, parser::*};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
-    AdminInitialize,
     Bench { count: u32, time: u32, percent: f32 },
 }
 
 impl Display for CliCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CliCommand::AdminInitialize => write!(f, "admin initialize"),
             CliCommand::Bench { .. } => write!(f, "bench"),
         }
     }
@@ -23,7 +21,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("admin", matches)) => admin_command(matches),
             Some(("bench", matches)) => bench_command(matches),
             _ => Err(TestError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),

@@ -24,7 +24,7 @@ pub fn new_client() -> Arc<Client> {
     client
 }
 
-pub fn load_keypair(config: &CliConfig) -> Keypair {
+pub fn _load_keypair(config: &CliConfig) -> Keypair {
     let signer = DefaultSigner::new("keypair".to_string(), &config.keypair_path);
     read_keypair(&mut File::open(signer.path.as_str()).unwrap()).unwrap()
 }
