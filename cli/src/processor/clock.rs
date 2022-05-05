@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
+use crate::cli::CliError;
 use solana_client_helpers::Client;
-
-use crate::error::CliError;
+use std::sync::Arc;
 
 pub fn get(_client: &Arc<Client>) -> Result<(), CliError> {
     panic!("Not implemented")

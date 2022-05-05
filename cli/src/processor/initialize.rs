@@ -1,5 +1,5 @@
 use {
-    crate::error::CliError,
+    crate::cli::CliError,
     solana_client_helpers::Client,
     solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction},
     std::sync::Arc,

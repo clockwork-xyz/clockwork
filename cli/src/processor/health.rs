@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use solana_client_helpers::Client;
 
-use crate::error::CliError;
+use crate::cli::CliError;
 
 pub fn get(_client: &Arc<Client>) -> Result<(), CliError> {
     panic!("Not implemented – moving to heartbeat program")

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use solana_client_helpers::Client;
 
 use crate::{
-    error::CliError,
+    cli::CliError,
     utils::{solana_explorer_url, SolanaExplorerAccountType},
 };
 
