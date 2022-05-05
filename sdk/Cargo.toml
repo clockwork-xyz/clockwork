@@ -8,7 +8,7 @@ homepage = "https://cronos.so"
 repository = "https://github.com/cronos-so/sdk"
 documentation = "https://docs.rs/cronos-sdk"
 readme = "./README.md"
-keywords = ["solana", "cronos", "sdk"]
+keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
