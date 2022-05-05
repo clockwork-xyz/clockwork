@@ -67,6 +67,7 @@ pub fn handler(
     config_bump: u8,
     daemon_bump: u8,
     fee_bump: u8,
+    registry_pubkey: Pubkey
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
@@ -75,7 +76,7 @@ pub fn handler(
     let fee = &mut ctx.accounts.fee;
 
     authority.new(authority_bump)?;
-    config.new(admin.key(), config_bump)?;
+    config.new(admin.key(), config_bump, registry_pubkey)?;
     daemon.new(authority.key(), daemon_bump)?;
     fee.new(daemon.key(), fee_bump)?;
 

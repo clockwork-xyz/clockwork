@@ -35,8 +35,16 @@ pub mod cronos_scheduler {
         config_bump: u8,
         daemon_bump: u8,
         fee_bump: u8,
+        registry_pubkey: Pubkey,
     ) -> Result<()> {
-        initialize::handler(ctx, authority_bump, config_bump, daemon_bump, fee_bump)
+        initialize::handler(
+            ctx,
+            authority_bump,
+            config_bump,
+            daemon_bump,
+            fee_bump,
+            registry_pubkey,
+        )
     }
 
     pub fn admin_task_new(
