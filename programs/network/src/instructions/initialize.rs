@@ -44,7 +44,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_REGISTRY],
+        seeds = [SEED_POOL],
         bump,
         payer = admin,
         space = 8 + size_of::<Pool>(),
