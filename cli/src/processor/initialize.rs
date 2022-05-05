@@ -38,12 +38,13 @@ pub fn initialize(client: &Arc<Client>) -> Result<(), CliError> {
     let config_pda = cronos_sdk::scheduler::state::Config::pda();
     let daemon_pda = cronos_sdk::scheduler::state::Daemon::pda(authority_pda.0);
     let fee_pda = cronos_sdk::scheduler::state::Fee::pda(daemon_pda.0);
-    let ix_c = cronos_sdk::scheduler::instruction::admin_initialize(
+    let ix_c = cronos_sdk::scheduler::instruction::initialize(
         admin,
         authority_pda,
         config_pda,
         daemon_pda,
         fee_pda,
+        registry_pda.0,
     );
 
     // Submit tx

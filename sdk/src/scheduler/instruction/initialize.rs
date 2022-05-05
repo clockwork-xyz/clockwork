@@ -10,7 +10,7 @@ use {
     cronos_scheduler::pda::PDA,
 };
 
-pub fn admin_initialize(
+pub fn initialize(
     admin: Pubkey,
     authority_pda: PDA,
     config_pda: PDA,
