@@ -11,6 +11,9 @@ pub enum CliCommand {
     DaemonCreate,
     DaemonGet { address: Pubkey },
 
+    // Node commands
+    NodeRegister { identity: Pubkey },
+
     // Task commands
     TaskCancel { address: Pubkey },
     TaskCreate { ix: Instruction, schedule: String },
@@ -56,6 +59,22 @@ pub fn app() -> Command<'static> {
                             .required(true)
                             .help("Public address of a daemon"),
                     ),
+                ),
+        )
+        .subcommand(
+            Command::new("node")
+                .about("Manage your nodes")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("register")
+                        .about("Register a new node with the Cronos network")
+                        .arg(
+                            Arg::new("identity")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("Public gossip address of the node on the Solana network"),
+                        ),
                 ),
         )
         .subcommand(

@@ -910,10 +910,10 @@ name = "cronos-sdk"
 version = "0.1.8"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "cronos-heartbeat",
  "cronos-network",
  "cronos-scheduler",
- "spl-token",
 ]
 
 [[package]]

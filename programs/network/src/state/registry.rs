@@ -1,12 +1,13 @@
+use anchor_spl::token::TokenAccount;
+
 use {
-    super::{Node, RegistryPage, RegistryPageAccount, Snapshot},
+    super::{Node, Snapshot},
     crate::{
         errors::CronosError,
         pda::PDA,
-        state::{NodeAccount, SnapshotAccount, SnapshotStatus, PAGE_LIMIT},
+        state::{NodeAccount, SnapshotAccount, SnapshotStatus},
     },
     anchor_lang::{prelude::*, AnchorDeserialize},
-    anchor_spl::token::Mint,
     std::convert::TryFrom,
 };
 
@@ -21,9 +22,7 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 pub struct Registry {
     pub bump: u8,
     pub is_locked: bool,
-    pub mint: Pubkey,
     pub node_count: u64,
-    pub page_count: u64,
     pub snapshot_count: u64,
 }
 
@@ -45,20 +44,14 @@ impl TryFrom<Vec<u8>> for Registry {
  */
 
 pub trait RegistryAccount {
-    fn new(&mut self, bump: u8, mint: &Account<Mint>) -> Result<()>;
+    fn new(&mut self, bump: u8) -> Result<()>;
 
     fn new_node(
         &mut self,
-        authority: &mut Signer,
+        identity: &mut Signer,
         node: &mut Account<Node>,
         node_bump: u8,
-        registry_page: &mut Account<RegistryPage>,
-    ) -> Result<()>;
-
-    fn new_page(
-        &mut self,
-        registry_page: &mut Account<RegistryPage>,
-        registry_page_bump: u8,
+        stake_tokens: &mut Account<TokenAccount>,
     ) -> Result<()>;
 
     fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>, snapshot_bump: u8) -> Result<()>;
@@ -76,40 +69,25 @@ pub trait RegistryAccount {
 }
 
 impl RegistryAccount for Account<'_, Registry> {
-    fn new(&mut self, bump: u8, mint: &Account<Mint>) -> Result<()> {
+    fn new(&mut self, bump: u8) -> Result<()> {
         require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.bump = bump;
         self.is_locked = false;
         self.node_count = 0;
-        self.page_count = 0;
         self.snapshot_count = 0;
-        self.mint = mint.key();
         Ok(())
     }
 
     fn new_node(
         &mut self,
-        authority: &mut Signer,
+        identity: &mut Signer,
         node: &mut Account<Node>,
         node_bump: u8,
-        registry_page: &mut Account<RegistryPage>,
+        stake_tokens: &mut Account<TokenAccount>,
     ) -> Result<()> {
         require!(!self.is_locked, CronosError::RegistryLocked);
-        node.new(authority, node_bump)?;
-        registry_page.append(node)?;
+        node.new(node_bump, self.node_count, identity, stake_tokens)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
-        Ok(())
-    }
-
-    fn new_page(&mut self, page: &mut Account<RegistryPage>, page_bump: u8) -> Result<()> {
-        require!(!self.is_locked, CronosError::RegistryLocked);
-        require!(
-            self.node_count.checked_rem(PAGE_LIMIT as u64).unwrap() == 0
-                && self.node_count.checked_div(PAGE_LIMIT as u64).unwrap() == self.page_count,
-            CronosError::PageRangeInvalid
-        );
-        page.new(page_bump, self.page_count)?;
-        self.page_count = self.page_count.checked_add(1).unwrap();
         Ok(())
     }
 
@@ -137,15 +115,8 @@ impl RegistryAccount for Account<'_, Registry> {
 
         // Validate the snapshot has captured the entire registry
         require!(
-            next_snapshot.page_count == self.page_count
-                && next_snapshot.node_count == self.node_count,
+            next_snapshot.entry_count == self.node_count,
             CronosError::SnapshotIncomplete
-        );
-
-        // Require the current snapshot if there should be one
-        require!(
-            self.snapshot_count == 0 || current_snapshot.is_some(),
-            CronosError::SnapshotNotCurrent
         );
 
         // Archive the current snapshot

@@ -15,6 +15,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
 pub struct Config {
     pub admin: Pubkey,
     pub bump: u8,
+    pub mint: Pubkey,
     pub pool_size: usize,
 }
 
@@ -39,6 +40,7 @@ impl TryFrom<Vec<u8>> for Config {
 pub struct ConfigSettings {
     pub admin: Pubkey,
     pub pool_size: usize,
+    pub mint: Pubkey,
 }
 
 /**
@@ -46,22 +48,26 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, bump: u8, mint: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, bump: u8, mint: Pubkey) -> Result<()> {
         require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
         self.admin = admin;
         self.bump = bump;
-        self.pool_size = 1; 
+        self.mint = mint;
+        self.pool_size = 1;
         Ok(())
     }
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::AdminAuthorityInvalid);
+        require!(
+            self.admin == admin.key(),
+            CronosError::AdminAuthorityInvalid
+        );
         self.admin = settings.admin;
         self.pool_size = settings.pool_size;
         Ok(())

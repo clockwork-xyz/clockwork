@@ -13,9 +13,7 @@ use {
     config_bump: u8,
     pool_bump: u8,
     registry_bump: u8,
-    registry_page_bump: u8,
     snapshot_bump: u8,
-    snapshot_page_bump: u8
 )]
 pub struct Initialize<'info> {
     #[account(mut)]
@@ -59,19 +57,7 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Registry>(),
     )]
     pub registry: Account<'info, Registry>,
-
-    #[account(
-        init,
-        seeds = [
-            SEED_REGISTRY_PAGE,
-            (0 as u64).to_be_bytes().as_ref()
-        ],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<RegistryPage>(),
-    )]
-    pub registry_page: Account<'info, RegistryPage>,
-
+ 
     #[account(
         init,
         seeds = [
@@ -83,19 +69,6 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Snapshot>(),
     )]
     pub snapshot: Account<'info, Snapshot>,
-
-    #[account(
-        init,
-        seeds = [
-            SEED_SNAPSHOT_PAGE,
-            snapshot.key().as_ref(),
-            (0 as u64).to_be_bytes().as_ref()
-        ],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<SnapshotPage>(),
-    )]
-    pub snapshot_page: Account<'info, SnapshotPage>,
 
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
@@ -112,9 +85,7 @@ pub fn handler(
     config_bump: u8,
     pool_bump: u8,
     registry_bump: u8,
-    registry_page_bump: u8,
     snapshot_bump: u8,
-    snapshot_page_bump: u8
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let clock = &ctx.accounts.clock;
@@ -122,16 +93,12 @@ pub fn handler(
     let mint = &ctx.accounts.mint;
     let pool = &mut ctx.accounts.pool;
     let registry = &mut ctx.accounts.registry;
-    let registry_page = &mut ctx.accounts.registry_page;
     let snapshot = &mut ctx.accounts.snapshot;
-    let snapshot_page = &mut ctx.accounts.snapshot_page;
 
-    config.new(admin.key(), config_bump)?;
+    config.new(admin.key(), config_bump, mint.key())?;
     pool.new(pool_bump)?;
-    registry.new(registry_bump, mint)?;
-    registry.new_page(registry_page, registry_page_bump)?;
+    registry.new(registry_bump)?;
     registry.new_snapshot(snapshot, snapshot_bump)?;
-    snapshot.new_page(snapshot_page, snapshot_page_bump, registry)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
 
     Ok(())

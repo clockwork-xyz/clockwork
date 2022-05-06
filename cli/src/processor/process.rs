@@ -24,14 +24,13 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        // CliCommand::AdminTaskCancel { address } => super::admin::task_cancel(&client, &address),
-        // CliCommand::AdminHealthReset => super::admin::health_reset(&client),
         CliCommand::Initialize => super::initialize::initialize(&client),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::Config => super::config::get(&client),
         CliCommand::DaemonCreate => super::daemon::create(&client),
         CliCommand::DaemonGet { address } => super::daemon::get(&client, &address),
         CliCommand::Health => super::health::get(&client),
+        CliCommand::NodeRegister { identity } => super::node::register(&client, identity),
         CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
         CliCommand::TaskCreate { ix, schedule } => super::task::create(&client, ix, schedule),
         CliCommand::TaskGet { address } => super::task::get(&client, &address),

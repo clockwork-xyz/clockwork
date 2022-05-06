@@ -18,18 +18,12 @@ pub mod cronos_network {
         config_bump: u8,
         pool_bump: u8,
         registry_bump: u8,
-        registry_page_bump: u8,
         snapshot_bump: u8,
-        snapshot_page_bump: u8,
     ) -> Result<()> {
-        initialize::handler(
-            ctx,
-            config_bump,
-            pool_bump,
-            registry_bump,
-            registry_page_bump,
-            snapshot_bump,
-            snapshot_page_bump,
-        )
+        initialize::handler(ctx, config_bump, pool_bump, registry_bump, snapshot_bump)
+    }
+
+    pub fn register(ctx: Context<Register>, node_bump: u8) -> Result<()> {
+        register::handler(ctx, node_bump)
     }
 }

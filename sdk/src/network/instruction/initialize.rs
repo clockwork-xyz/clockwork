@@ -7,6 +7,7 @@ use {
         },
         InstructionData,
     },
+    anchor_spl::token,
     cronos_network::pda::PDA,
 };
 
@@ -16,9 +17,7 @@ pub fn initialize(
     config_pda: PDA,
     pool_pda: PDA,
     registry_pda: PDA,
-    registry_page_pda: PDA,
     snapshot_pda: PDA,
-    snapshot_page_pda: PDA,
 ) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
@@ -29,20 +28,16 @@ pub fn initialize(
             AccountMeta::new(mint, true),
             AccountMeta::new(pool_pda.0, false),
             AccountMeta::new(registry_pda.0, false),
-            AccountMeta::new(registry_page_pda.0, false),
             AccountMeta::new(snapshot_pda.0, false),
-            AccountMeta::new(snapshot_page_pda.0, false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new_readonly(spl_token::ID, false),
+            AccountMeta::new_readonly(token::ID, false),
         ],
         data: cronos_network::instruction::Initialize {
             config_bump: config_pda.1,
             pool_bump: pool_pda.1,
             registry_bump: registry_pda.1,
-            registry_page_bump: registry_page_pda.1,
             snapshot_bump: snapshot_pda.1,
-            snapshot_page_bump: snapshot_page_pda.1,
         }
         .data(),
     }

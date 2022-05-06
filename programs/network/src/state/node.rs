@@ -1,3 +1,5 @@
+use anchor_spl::token::TokenAccount;
+
 use {
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
@@ -13,17 +15,16 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
-    pub authority: Pubkey,
     pub bump: u8,
-    pub stake: u64,
+    pub id: u64,
+    pub identity: Pubkey,
+    pub stake_size: u64,
+    pub stake: Pubkey, // The associated token account
 }
 
 impl Node {
-    pub fn pda(authority: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[
-            SEED_NODE,
-            authority.as_ref(),
-        ], &crate::ID)
+    pub fn pda(identity: Pubkey) -> PDA {
+        Pubkey::find_program_address(&[SEED_NODE, identity.as_ref()], &crate::ID)
     }
 }
 
@@ -34,13 +35,18 @@ impl TryFrom<Vec<u8>> for Node {
     }
 }
 
-
 /**
  * NodeAccount
  */
 
 pub trait NodeAccount {
-    fn new(&mut self, authority: &mut Signer, bump: u8) -> Result<()>;
+    fn new(
+        &mut self,
+        bump: u8,
+        id: u64,
+        identity: &mut Signer,
+        stake: &mut Account<TokenAccount>,
+    ) -> Result<()>;
 
     fn stake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()>;
 
@@ -48,23 +54,29 @@ pub trait NodeAccount {
 }
 
 impl NodeAccount for Account<'_, Node> {
-    fn new(&mut self, authority: &mut Signer, bump: u8) -> Result<()> {
+    fn new(
+        &mut self,
+        bump: u8,
+        id: u64,
+        identity: &mut Signer,
+        stake: &mut Account<TokenAccount>,
+    ) -> Result<()> {
         require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
-        self.authority = authority.key();
         self.bump = bump;
-        self.stake = 0;
+        self.id = id;
+        self.identity = identity.key();
+        self.stake_size = 0;
+        self.stake = stake.key();
         Ok(())
     }
 
     fn stake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()> {
-        
         // TODO transfer tokens from authority token account to node token account
 
         Ok(())
     }
 
     fn unstake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()> {
-        
         // TODO transfer tokens from node token account to authority token account
 
         Ok(())

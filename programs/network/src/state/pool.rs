@@ -1,8 +1,16 @@
 use {
-    crate::{errors::CronosError, pda::PDA, state::{SnapshotEntry, SnapshotStatus}},
-    super::{Config, SnapshotPage, Snapshot},
-    anchor_lang::{AnchorDeserialize, prelude::*},
-    std::{collections::{hash_map::DefaultHasher, VecDeque}, convert::TryFrom, hash::{Hasher, Hash}},
+    super::{Config, Snapshot},
+    crate::{
+        errors::CronosError,
+        pda::PDA,
+        state::{SnapshotEntry, SnapshotStatus},
+    },
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    std::{
+        collections::{hash_map::DefaultHasher, VecDeque},
+        convert::TryFrom,
+        hash::{Hash, Hasher},
+    },
 };
 
 pub const SEED_POOL: &[u8] = b"pool";
@@ -41,10 +49,10 @@ pub trait PoolAccount {
     fn new(&mut self, bump: u8) -> Result<()>;
 
     fn cycle(
-        &mut self, 
-        config: &Account<Config>, 
+        &mut self,
+        config: &Account<Config>,
         snapshot: &Account<Snapshot>,
-        snapshot_page: &Account<SnapshotPage>
+        snapshot_entry: &Account<SnapshotEntry>,
     ) -> Result<()>;
 }
 
@@ -57,37 +65,36 @@ impl PoolAccount for Account<'_, Pool> {
     }
 
     fn cycle(
-        &mut self, 
+        &mut self,
         config: &Account<Config>,
         snapshot: &Account<Snapshot>,
-        snapshot_page: &Account<SnapshotPage>
+        snapshot_entry: &Account<SnapshotEntry>,
     ) -> Result<()> {
-        require!(snapshot.status == SnapshotStatus::Current, CronosError::SnapshotNotCurrent);
-        require!(snapshot_page.entries.len() > 0, CronosError::PageRangeInvalid);
+        // Verify the snapshot is current
+        require!(
+            snapshot.status == SnapshotStatus::Current,
+            CronosError::SnapshotNotCurrent
+        );
 
         // Sample the nonce value
-        let sample: u64 = self.nonce.checked_rem(snapshot.cumulative_stake).unwrap();
+        let sample: u64 = self.nonce.checked_rem(snapshot.stake_total).unwrap();
 
-        // Verify the sample is within the snapshot page range 
-        let first: &SnapshotEntry = snapshot_page.entries.first().unwrap();
-        let last: &SnapshotEntry = snapshot_page.entries.last().unwrap();
+        // Verify the sample is within the snapshot entry's stake range
         require!(
-            sample >= first.node_cumulative_stake && 
-            sample <= last.node_cumulative_stake, 
-            CronosError::PageRangeInvalid
+            sample >= snapshot_entry.stake_offset
+                && sample
+                    < snapshot_entry
+                        .stake_offset
+                        .checked_add(snapshot_entry.stake_size)
+                        .unwrap(),
+            CronosError::InvalidSnapshotEntry
         );
 
-        // Pop the last delegate out of the pool
+        // Pop a delegate out of the pool
         self.delegates.pop_front();
 
-        // Push the sampled delegate into the pool
-        self.delegates.push_back(
-            snapshot_page.entries.iter().rev().find(
-                |e| e.node_cumulative_stake <= sample
-            )
-            .unwrap()
-            .node_authority
-        );
+        // Push sampled node into the pool
+        self.delegates.push_back(snapshot_entry.node_identity);
 
         // Drain pool to the configured size limit
         while self.delegates.len() > config.pool_size {
@@ -102,4 +109,3 @@ impl PoolAccount for Account<'_, Pool> {
         Ok(())
     }
 }
-

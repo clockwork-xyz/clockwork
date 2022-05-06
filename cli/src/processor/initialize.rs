@@ -19,18 +19,14 @@ pub fn initialize(client: &Arc<Client>) -> Result<(), CliError> {
     let config_pda = cronos_sdk::network::state::Config::pda();
     let pool_pda = cronos_sdk::network::state::Pool::pda();
     let registry_pda = cronos_sdk::network::state::Registry::pda();
-    let registry_page_pda = cronos_sdk::network::state::RegistryPage::pda(0);
     let snapshot_pda = cronos_sdk::network::state::Snapshot::pda(0);
-    let snapshot_page_pda = cronos_sdk::network::state::SnapshotPage::pda(snapshot_pda.0, 0);
     let ix_b = cronos_sdk::network::instruction::initialize(
         admin,
         mint.pubkey(),
         config_pda,
         pool_pda,
         registry_pda,
-        registry_page_pda,
         snapshot_pda,
-        snapshot_page_pda,
     );
 
     // Initialize scheduler program

@@ -18,6 +18,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("daemon", matches)) => parse_daemon_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("initialize", _)) => Ok(CliCommand::Initialize {}),
+            Some(("node", matches)) => parse_node_command(matches),
             Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -33,6 +34,17 @@ fn parse_daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("create", _)) => Ok(CliCommand::DaemonCreate {}),
         Some(("get", matches)) => Ok(CliCommand::DaemonGet {
             address: parse_pubkey("address", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
+            identity: parse_pubkey("identity", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
