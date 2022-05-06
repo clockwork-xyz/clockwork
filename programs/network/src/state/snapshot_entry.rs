@@ -16,8 +16,8 @@ pub struct SnapshotEntry {
     pub id: u64,
     pub node_identity: Pubkey,
     pub snapshot: Pubkey,
+    pub stake_amount: u64,
     pub stake_offset: u64,
-    pub stake_size: u64,
 }
 
 impl SnapshotEntry {
@@ -51,7 +51,7 @@ pub trait SnapshotEntryAccount {
         id: u64,
         node_identity: Pubkey,
         stake_offset: u64,
-        stake_size: u64,
+        stake_amount: u64,
         snapshot: Pubkey,
     ) -> Result<()>;
 }
@@ -63,14 +63,14 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
         id: u64,
         node_identity: Pubkey,
         stake_offset: u64,
-        stake_size: u64,
+        stake_amount: u64,
         snapshot: Pubkey,
     ) -> Result<()> {
         self.bump = bump;
         self.id = id;
         self.node_identity = node_identity;
         self.stake_offset = stake_offset;
-        self.stake_size = stake_size;
+        self.stake_amount = stake_amount;
         self.snapshot = snapshot;
         Ok(())
     }

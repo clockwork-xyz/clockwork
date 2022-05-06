@@ -1,10 +1,8 @@
-use crate::state::SnapshotEntryAccount;
-
-use super::{Node, SnapshotEntry};
-
 use {
-    crate::{errors::CronosError, pda::PDA},
+    super::{Node, SnapshotEntry},
+    crate::{errors::CronosError, pda::PDA, state::SnapshotEntryAccount},
     anchor_lang::{prelude::*, AnchorDeserialize},
+    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
@@ -20,7 +18,7 @@ pub struct Snapshot {
     pub bump: u8,
     pub entry_count: u64,
     pub id: u64,
-    pub stake_total: u64,
+    pub stake_amount_total: u64,
     pub status: SnapshotStatus,
 }
 
@@ -49,6 +47,7 @@ pub trait SnapshotAccount {
         node: &Account<Node>,
         snapshot_entry: &mut Account<SnapshotEntry>,
         snapshot_entry_bump: u8,
+        stake: &Account<TokenAccount>,
     ) -> Result<()>;
 }
 
@@ -66,6 +65,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         node: &Account<Node>,
         snapshot_entry: &mut Account<SnapshotEntry>,
         snapshot_entry_bump: u8,
+        stake: &Account<TokenAccount>,
     ) -> Result<()> {
         // Validate the snapshot is in progress
         require!(
@@ -79,18 +79,24 @@ impl SnapshotAccount for Account<'_, Snapshot> {
             CronosError::InvalidSnapshotEntry
         );
 
+        // Validate the node is the owner of the stake account
+        require!(stake.owner == node.key(), CronosError::InvalidStakeAccount);
+
         // Record the new snapshot entry
         snapshot_entry.new(
             snapshot_entry_bump,
             self.entry_count,
             node.identity,
-            self.stake_total,
-            node.stake_size,
+            self.stake_amount_total,
+            stake.amount,
             self.key(),
         )?;
 
         // Update the snapshot's entry count
         self.entry_count = self.entry_count.checked_add(1).unwrap();
+
+        // Update the sum stake amount
+        self.stake_amount_total = self.stake_amount_total.checked_add(stake.amount).unwrap();
 
         Ok(())
     }

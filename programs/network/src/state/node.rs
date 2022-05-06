@@ -1,8 +1,7 @@
-use anchor_spl::token::TokenAccount;
-
 use {
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
+    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
@@ -18,7 +17,6 @@ pub struct Node {
     pub bump: u8,
     pub id: u64,
     pub identity: Pubkey,
-    pub stake_size: u64,
     pub stake: Pubkey, // The associated token account
 }
 
@@ -65,7 +63,6 @@ impl NodeAccount for Account<'_, Node> {
         self.bump = bump;
         self.id = id;
         self.identity = identity.key();
-        self.stake_size = 0;
         self.stake = stake.key();
         Ok(())
     }

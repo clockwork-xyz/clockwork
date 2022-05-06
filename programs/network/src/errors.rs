@@ -11,21 +11,21 @@ pub enum CronosError {
     #[msg("The provided snapshot entry cannot be used for this operation")]
     InvalidSnapshotEntry,
 
-    #[msg("The registry is locked and may not be changed")]
+    #[msg("The stake account cannot be used for this operation")]
+    InvalidStakeAccount,
+
+    #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
 
-    #[msg("The registry must be locked for this operation to be executed")]
+    #[msg("The registry must be locked for this operation")]
     RegistryMustBeLocked,
 
-    #[msg("The snapshot has already been captured and is not currently in progress")]
+    #[msg("The snapshot is not in progress")]
     SnapshotNotInProgress,
 
     #[msg("The snapshot is not current")]
     SnapshotNotCurrent,
 
-    #[msg("The snapshot is incomplete and has more to capture")]
+    #[msg("The snapshot is incomplete")]
     SnapshotIncomplete,
-
-    #[msg("A new snapshot page is not needed")]
-    SnapshotPageNotNeeded,
 }
