@@ -17,7 +17,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("config", _)) => Ok(CliCommand::Config {}),
             Some(("daemon", matches)) => parse_daemon_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
-            Some(("initialize", _)) => Ok(CliCommand::Initialize {}),
+            Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
             Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
@@ -39,6 +39,12 @@ fn parse_daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             matches.subcommand().unwrap().0.into(),
         )),
     }
+}
+
+fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::Initialize {
+        mint: parse_pubkey("mint", matches)?,
+    })
 }
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {

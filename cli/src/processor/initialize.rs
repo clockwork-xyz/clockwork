@@ -1,14 +1,13 @@
 use {
-    crate::cli::CliError,
+    crate::{cli::CliError, utils::sign_and_submit},
     solana_client_helpers::Client,
-    solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction},
+    solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
 };
 
-pub fn initialize(client: &Arc<Client>) -> Result<(), CliError> {
+pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     // Common
     let admin = client.payer_pubkey();
-    let mint = Keypair::new();
 
     // Initialize the heartbeat program
     let config_pda = cronos_sdk::heartbeat::state::Config::pda();
@@ -22,7 +21,7 @@ pub fn initialize(client: &Arc<Client>) -> Result<(), CliError> {
     let snapshot_pda = cronos_sdk::network::state::Snapshot::pda(0);
     let ix_b = cronos_sdk::network::instruction::initialize(
         admin,
-        mint.pubkey(),
+        mint,
         config_pda,
         pool_pda,
         registry_pda,
@@ -44,13 +43,6 @@ pub fn initialize(client: &Arc<Client>) -> Result<(), CliError> {
     );
 
     // Submit tx
-    let mut tx = Transaction::new_with_payer(&[ix_a, ix_b, ix_c], Some(&client.payer_pubkey()));
-    tx.sign(
-        &vec![&client.payer, &mint],
-        client.latest_blockhash().unwrap(),
-    );
-    let sig = client.send_and_confirm_transaction(&tx).unwrap();
-    println!("Tx: {}", sig.to_string());
-
+    sign_and_submit(client, &[ix_a, ix_b, ix_c]);
     Ok(())
 }

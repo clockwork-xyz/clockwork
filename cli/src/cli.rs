@@ -5,7 +5,7 @@ use thiserror::Error;
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
     // Admin commands
-    Initialize,
+    Initialize { mint: Pubkey },
 
     // Daemon commands
     DaemonCreate,
@@ -45,7 +45,18 @@ pub fn app() -> Command<'static> {
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
-        .subcommand(Command::new("initialize").about("Initialize the Cronos programs"))
+        .subcommand(
+            Command::new("initialize")
+                .about("Initialize the Cronos programs")
+                .arg(
+                    Arg::new("mint")
+                        .long("mint")
+                        .short('m')
+                        .takes_value(true)
+                        .required(true)
+                        .help("Mint address of network token"),
+                ),
+        )
         .subcommand(
             Command::new("daemon")
                 .about("Manage your daemons")

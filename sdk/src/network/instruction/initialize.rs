@@ -7,7 +7,6 @@ use {
         },
         InstructionData,
     },
-    anchor_spl::token,
     cronos_network::pda::PDA,
 };
 
@@ -25,13 +24,11 @@ pub fn initialize(
             AccountMeta::new(admin, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(config_pda.0, false),
-            AccountMeta::new(mint, true),
+            AccountMeta::new(mint, false),
             AccountMeta::new(pool_pda.0, false),
             AccountMeta::new(registry_pda.0, false),
             AccountMeta::new(snapshot_pda.0, false),
-            AccountMeta::new_readonly(sysvar::rent::ID, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new_readonly(token::ID, false),
         ],
         data: cronos_network::instruction::Initialize {
             config_bump: config_pda.1,

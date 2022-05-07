@@ -4,7 +4,7 @@ use {
         prelude::*, 
         solana_program::{system_program, sysvar}
     },
-    anchor_spl::token::{Mint, Token},
+    anchor_spl::token::Mint,
     std::mem::size_of,
 };
 
@@ -31,13 +31,7 @@ pub struct Initialize<'info> {
     )]
     pub config: Account<'info, Config>,
 
-    #[account(
-        init,
-        payer = admin,
-        mint::decimals = 7,
-        mint::authority = admin,
-        mint::freeze_authority = admin
-    )]
+    #[account()]
     pub mint: Account<'info, Mint>,
 
     #[account(
@@ -70,14 +64,8 @@ pub struct Initialize<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(address = sysvar::rent::ID)]
-    pub rent: Sysvar<'info, Rent>,
-
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
-
-    #[account(address = anchor_spl::token::ID)]
-    pub token_program: Program<'info, Token>,
 }
 
 pub fn handler(

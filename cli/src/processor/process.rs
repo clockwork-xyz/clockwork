@@ -24,7 +24,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        CliCommand::Initialize => super::initialize::initialize(&client),
+        CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::Config => super::config::get(&client),
         CliCommand::DaemonCreate => super::daemon::create(&client),
