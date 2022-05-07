@@ -1,23 +1,34 @@
-use std::sync::Arc;
-
-use solana_client_helpers::Client;
-
-use crate::{
-    cli::CliError,
-    utils::{solana_explorer_url, SolanaExplorerAccountType},
-};
+use {crate::cli::CliError, solana_client_helpers::Client, std::sync::Arc};
 
 pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
-    let config_addr = cronos_sdk::scheduler::state::Config::pda().0;
+    // Get heartbeat config
+    let config_pubkey = cronos_sdk::heartbeat::state::Config::pda().0;
     let data = client
-        .get_account_data(&config_addr)
-        .map_err(|_err| CliError::AccountNotFound(config_addr.to_string()))?;
-    let config_data = cronos_sdk::scheduler::state::Config::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(config_addr.to_string()))?;
-    println!(
-        "{}",
-        solana_explorer_url(SolanaExplorerAccountType::Account, config_addr.to_string()),
-    );
-    println!("{:#?}", config_data);
+        .get_account_data(&config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
+    let heartbeat_config = cronos_sdk::heartbeat::state::Config::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+
+    // Get network config
+    let config_pubkey = cronos_sdk::network::state::Config::pda().0;
+    let data = client
+        .get_account_data(&config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
+    let network_config = cronos_sdk::network::state::Config::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+
+    // Get scheduler config
+    let config_pubkey = cronos_sdk::scheduler::state::Config::pda().0;
+    let data = client
+        .get_account_data(&config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
+    let scheduler_config = cronos_sdk::scheduler::state::Config::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+
+    // Print configs
+    println!("Heartbeat {:#?}", heartbeat_config);
+    println!("Network {:#?}", network_config);
+    println!("Scheduler {:#?}", scheduler_config);
+
     Ok(())
 }
