@@ -1,5 +1,5 @@
 [package]
-name = "cronos-test"
+name = "cronos-stress"
 version = "0.1.8"
 description = "A stress testing tool for Cronos"
 edition = "2021"

@@ -6,5 +6,5 @@ members = [
     "programs/*",
     "sdk",
     "telemetry",
-    "test"
+    "stress"
 ]
