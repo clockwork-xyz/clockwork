@@ -1,16 +1,15 @@
-use std::{fs::File, sync::Arc};
-
-use solana_clap_utils::keypair::DefaultSigner;
-use solana_client_helpers::{Client, RpcClient};
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    instruction::Instruction,
-    native_token::LAMPORTS_PER_SOL,
-    signature::{read_keypair, Keypair},
-    transaction::Transaction,
+use {
+    solana_clap_utils::keypair::DefaultSigner,
+    solana_client_helpers::{Client, RpcClient},
+    solana_sdk::{
+        commitment_config::CommitmentConfig,
+        instruction::Instruction,
+        native_token::LAMPORTS_PER_SOL,
+        signature::{read_keypair, Keypair, Signer},
+        transaction::Transaction,
+    },
+    std::{fs::File, sync::Arc},
 };
-
-use crate::config::CliConfig;
 
 pub fn new_client() -> Arc<Client> {
     let url = "http://localhost:8899";
@@ -24,14 +23,14 @@ pub fn new_client() -> Arc<Client> {
     client
 }
 
-pub fn _load_keypair(config: &CliConfig) -> Keypair {
-    let signer = DefaultSigner::new("keypair".to_string(), &config.keypair_path);
+pub fn _load_keypair(path: &String) -> Keypair {
+    let signer = DefaultSigner::new("keypair".to_string(), &path);
     read_keypair(&mut File::open(signer.path.as_str()).unwrap()).unwrap()
 }
 
-pub fn sign_and_submit(client: &Arc<Client>, ixs: &[Instruction]) {
-    let mut tx = Transaction::new_with_payer(ixs, Some(&client.payer_pubkey()));
-    tx.sign(&vec![&client.payer], client.latest_blockhash().unwrap());
+pub fn sign_and_submit(client: &Arc<Client>, ixs: &[Instruction], signer: &Keypair) {
+    let mut tx = Transaction::new_with_payer(ixs, Some(&signer.pubkey()));
+    tx.sign(&[signer], client.latest_blockhash().unwrap());
     let sig = client.send_and_confirm_transaction(&tx).unwrap();
     println!(
         "Tx: {}",
@@ -45,8 +44,8 @@ pub enum SolanaExplorerAccountType {
 
 pub fn solana_explorer_url(entity: SolanaExplorerAccountType, value: String) -> String {
     let base_url = "https://explorer.solana.com";
-    let entity_str = match entity {
+    let entity_path = match entity {
         SolanaExplorerAccountType::Tx => "tx",
     };
-    format!("{}/{}/{}", base_url, entity_str, value)
+    format!("{}/{}/{}", base_url, entity_path, value)
 }

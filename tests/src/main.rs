@@ -1,15 +1,16 @@
 #[macro_use]
 extern crate version;
 
-mod app;
-mod command;
+// mod app;
+mod cli;
 mod config;
-mod error;
 mod parser;
 mod processor;
 mod utils;
 
-fn main() -> Result<(), crate::error::TestError> {
-    let matches = crate::app::cronos().get_matches();
-    crate::processor::process(&matches)
+use cli::{app, CliError};
+use processor::process;
+
+fn main() -> Result<(), CliError> {
+    process(&app().get_matches())
 }
