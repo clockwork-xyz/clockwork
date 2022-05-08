@@ -16,8 +16,8 @@ pub const SEED_NODE: &[u8] = b"node";
 pub struct Node {
     pub bump: u8,
     pub id: u64,
-    pub identity: Pubkey,
-    pub stake: Pubkey, // The associated token account
+    pub identity: Pubkey, // The node's address on the Solana gossip network
+    pub stake: Pubkey,    // The associated token account
 }
 
 impl Node {
@@ -45,10 +45,6 @@ pub trait NodeAccount {
         identity: &mut Signer,
         stake: &mut Account<TokenAccount>,
     ) -> Result<()>;
-
-    fn stake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()>;
-
-    fn unstake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()>;
 }
 
 impl NodeAccount for Account<'_, Node> {
@@ -64,18 +60,6 @@ impl NodeAccount for Account<'_, Node> {
         self.id = id;
         self.identity = identity.key();
         self.stake = stake.key();
-        Ok(())
-    }
-
-    fn stake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()> {
-        // TODO transfer tokens from authority token account to node token account
-
-        Ok(())
-    }
-
-    fn unstake(&mut self, _amount: u64, _authority: &mut Signer) -> Result<()> {
-        // TODO transfer tokens from node token account to authority token account
-
         Ok(())
     }
 }
