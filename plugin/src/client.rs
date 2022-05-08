@@ -13,8 +13,6 @@ pub trait RPCClient {
     fn sign_and_submit(&self, ixs: &[Instruction], memo: &str) -> ClientResult<Signature>;
 }
 
-// "http://127.0.0.1:8899"
-
 impl RPCClient for Client {
     fn new(keypath: String, url: String) -> Client {
         let payer = read_keypair(&mut File::open(keypath).unwrap()).unwrap();

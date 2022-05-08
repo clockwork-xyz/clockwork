@@ -1,13 +1,13 @@
 use {
-    crate::{client::RPCClient, Bucket, Config, Filter, TaskCache},
+    crate::{bucket::Bucket, cache::TaskCache, client::RPCClient, config::Config, filter},
     bincode::deserialize,
     cronos_sdk::scheduler::state::{AccountMetaData, Fee, Task},
     log::{debug, info},
+    solana_client_helpers::Client,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError as PluginError, ReplicaAccountInfo,
         ReplicaAccountInfoVersions, Result as PluginResult,
     },
-    solana_client_helpers::Client,
     solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
     solana_sdk::instruction::AccountMeta,
     std::{
@@ -25,7 +25,6 @@ pub struct CronosPlugin {
     client: Option<Arc<Client>>,
     cache: Option<Arc<RwLock<TaskCache>>>,
     bucket: Option<Arc<Mutex<Bucket>>>,
-    filter: Option<Filter>,
     latest_clock_value: i64,
 }
 
@@ -58,8 +57,6 @@ impl GeyserPlugin for CronosPlugin {
         info!("Loading plugin {:?}", self.name());
 
         let config = Config::read_from(config_file)?;
-
-        self.filter = Some(Filter::new(&config));
         self.bucket = Some(Arc::new(Mutex::new(Bucket::new())));
         self.cache = Some(Arc::new(RwLock::new(TaskCache::new())));
         self.client = Some(Arc::new(Client::new(config.keypath, config.rpc_url)));
@@ -73,7 +70,6 @@ impl GeyserPlugin for CronosPlugin {
         self.bucket = None;
         self.cache = None;
         self.client = None;
-        self.filter = None;
     }
 
     fn update_account(
@@ -87,8 +83,7 @@ impl GeyserPlugin for CronosPlugin {
         }
 
         let info = Self::unwrap_update_account(account);
-
-        if !self.unwrap_filter().wants_program(info.owner) {
+        if !filter::wants_account(info) {
             return Ok(());
         }
 
@@ -122,7 +117,7 @@ impl GeyserPlugin for CronosPlugin {
                             }
                         }
                     }
-                } else if &cronos_sdk::SCHEDULER_PROGRAM_ID.to_bytes() == info.owner {
+                } else if &cronos_sdk::scheduler::ID.to_bytes() == info.owner {
                     let task = Task::try_from(info.data.to_vec());
                     let key = Pubkey::new(info.pubkey);
 
@@ -186,7 +181,6 @@ impl CronosPlugin {
             cache: None,
             client: None,
             bucket: None,
-            filter: None,
             latest_clock_value: 0,
         }
     }
@@ -198,9 +192,6 @@ impl CronosPlugin {
     }
     fn unwrap_client(&self) -> &Arc<Client> {
         self.client.as_ref().expect("client is unavailable")
-    }
-    fn unwrap_filter(&self) -> &Filter {
-        self.filter.as_ref().expect("filter is unavailable")
     }
     fn unwrap_update_account(account: ReplicaAccountInfoVersions) -> &ReplicaAccountInfo {
         match account {

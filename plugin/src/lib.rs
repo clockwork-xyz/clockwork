@@ -7,7 +7,7 @@ mod config;
 mod filter;
 mod plugin;
 
-pub use {bucket::Bucket, cache::TaskCache, config::Config, filter::Filter, plugin::CronosPlugin};
+pub use plugin::CronosPlugin;
 
 #[no_mangle]
 #[allow(improper_ctypes_definitions)]

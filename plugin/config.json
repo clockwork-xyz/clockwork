@@ -1,9 +1,5 @@
 {
   "libpath": "../target/debug/libcronos_plugin.dylib",
   "keypath": "./test-ledger/validator-keypair.json",
-  "rpc_url": "http://127.0.0.1:8899",
-  "program_includes": [
-    "954gq7DotHyMPGJs57abBFJtGUn5iTRmFLUJgmbXwdck",
-    "Sysvar1111111111111111111111111111111111111"
-  ]
+  "rpc_url": "http://127.0.0.1:8899"
 }

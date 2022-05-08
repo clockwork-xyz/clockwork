@@ -1,58 +1,21 @@
-use {
-    crate::*,
-    solana_program::pubkey::Pubkey,
-    std::{collections::HashSet, str::FromStr},
-};
+use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
+use solana_program::{pubkey::Pubkey, sysvar};
 
-#[derive(Clone)]
-pub struct Filter {
-    program_includes: HashSet<[u8; 32]>,
-}
+pub fn wants_account(info: &ReplicaAccountInfo) -> bool {
+    // If the account is the sysvar clock, return true
+    let account_pubkey = Pubkey::new(info.pubkey);
+    if account_pubkey.eq(&sysvar::clock::ID) {
+        return true;
+    }
 
-impl Filter {
-    pub fn new(config: &Config) -> Self {
-        Self {
-            program_includes: config
-                .program_includes
-                .iter()
-                .flat_map(|p| Pubkey::from_str(p).ok().map(|p| p.to_bytes()))
-                .collect(),
+    // If the account is a cronos task, return true
+    if info.data.len() > 8 {
+        let owner_pubkey = Pubkey::new(info.owner);
+        if owner_pubkey == cronos_sdk::scheduler::ID {
+            return true;
         }
     }
 
-    pub fn wants_program(&self, program: &[u8]) -> bool {
-        let key = match <&[u8; 32]>::try_from(program) {
-            Ok(key) => key,
-            _ => return true,
-        };
-        self.program_includes.contains(key)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_filter() {
-        let config = Config {
-            program_includes: vec!["CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW".to_owned()],
-            ..Config::default()
-        };
-
-        let filter = Filter::new(&config);
-        assert_eq!(filter.program_includes.len(), 1);
-
-        assert!(filter.wants_program(
-            &Pubkey::from_str("CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW")
-                .unwrap()
-                .to_bytes()
-        ));
-
-        assert!(!filter.wants_program(
-            &Pubkey::from_str("Vote111111111111111111111111111111111111111")
-                .unwrap()
-                .to_bytes()
-        ));
-    }
+    // Ignore everything else
+    return false;
 }
