@@ -1,7 +1,7 @@
 [package]
-name = "cronos-tests"
+name = "cronos-test"
 version = "0.1.8"
-description = "A test suite for Cronos"
+description = "A stress testing tool for Cronos"
 edition = "2021"
 license = "GNU AGPLv3"
 homepage = "https://cronos.so"

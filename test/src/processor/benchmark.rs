@@ -45,6 +45,9 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         schedule_memo_task(&client, owner, recurrence);
     }
 
+    // TODO Loop and monitor for task execs
+    // TODO Print performance results to stdout
+
     Ok(())
 }
 

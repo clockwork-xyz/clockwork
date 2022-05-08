@@ -935,7 +935,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-tests"
+name = "cronos-test"
 version = "0.1.8"
 dependencies = [
  "chrono",
