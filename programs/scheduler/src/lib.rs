@@ -34,16 +34,16 @@ pub mod cronos_scheduler {
         ctx: Context<Initialize>,
         authority_bump: u8,
         config_bump: u8,
-        daemon_bump: u8,
         fee_bump: u8,
+        queue_bump: u8,
         registry_pubkey: Pubkey,
     ) -> Result<()> {
         initialize::handler(
             ctx,
             authority_bump,
             config_bump,
-            daemon_bump,
             fee_bump,
+            queue_bump,
             registry_pubkey,
         )
     }
@@ -61,12 +61,12 @@ pub mod cronos_scheduler {
         admin_task_cancel::handler(ctx)
     }
 
-    pub fn daemon_new(ctx: Context<DaemonNew>, daemon_bump: u8, fee_bump: u8) -> Result<()> {
-        daemon_new::handler(ctx, daemon_bump, fee_bump)
+    pub fn queue_new(ctx: Context<QueueNew>, fee_bump: u8, queue_bump: u8) -> Result<()> {
+        queue_new::handler(ctx, fee_bump, queue_bump)
     }
 
-    pub fn daemon_sign(ctx: Context<DaemonSign>, ix: InstructionData) -> Result<()> {
-        daemon_sign::handler(ctx, ix)
+    pub fn queue_sign(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {
+        queue_sign::handler(ctx, ix)
     }
 
     pub fn task_cancel(ctx: Context<TaskCancel>) -> Result<()> {
@@ -75,11 +75,11 @@ pub mod cronos_scheduler {
 
     pub fn task_new(
         ctx: Context<TaskNew>,
+        bump: u8,
         ixs: Vec<InstructionData>,
         schedule: String,
-        bump: u8,
     ) -> Result<()> {
-        task_new::handler(ctx, ixs, schedule, bump)
+        task_new::handler(ctx, bump, ixs, schedule)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {

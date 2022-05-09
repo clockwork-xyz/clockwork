@@ -7,13 +7,13 @@ pub enum CliCommand {
     // Admin commands
     Initialize { mint: Pubkey },
 
-    // Daemon commands
-    DaemonCreate,
-    DaemonGet { address: Pubkey },
-
     // Node commands
     NodeRegister,
     NodeStake { amount: u64 },
+
+    // Queue commands
+    QueueCreate,
+    QueueGet { address: Pubkey },
 
     // Task commands
     TaskCancel { address: Pubkey },
@@ -59,21 +59,6 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
-            Command::new("daemon")
-                .about("Manage your daemons")
-                .arg_required_else_help(true)
-                .subcommand(Command::new("create").about("Create a new daemon"))
-                .subcommand(
-                    Command::new("get").about("Get a daemon").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a daemon"),
-                    ),
-                ),
-        )
-        .subcommand(
             Command::new("node")
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
@@ -90,6 +75,21 @@ pub fn app() -> Command<'static> {
                                 .required(true)
                                 .help("The number of tokens to stake"),
                         ),
+                ),
+        )
+        .subcommand(
+            Command::new("queue")
+                .about("Manage your queues")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("create").about("Create a new queue"))
+                .subcommand(
+                    Command::new("get").about("Get a queue").arg(
+                        Arg::new("address")
+                            .index(1)
+                            .takes_value(true)
+                            .required(true)
+                            .help("Public address of a queue"),
+                    ),
                 ),
         )
         .subcommand(

@@ -1,55 +1,55 @@
 use {
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{
+        prelude::*,
+        solana_program::{instruction::Instruction, program::invoke_signed},
         AnchorDeserialize,
-        prelude::*, 
-        solana_program::{instruction::Instruction, program::invoke_signed}
     },
     std::convert::TryFrom,
 };
 
-pub const SEED_DAEMON: &[u8] = b"daemon";
+pub const SEED_QUEUE: &[u8] = b"queue";
 
 /**
- * Daemon
+ * Queue
  */
 
 #[account]
 #[derive(Debug)]
-pub struct Daemon {
+pub struct Queue {
     pub owner: Pubkey,
     pub task_count: u128,
     pub bump: u8,
 }
 
-impl Daemon {
+impl Queue {
     pub fn pda(owner: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_DAEMON, owner.as_ref()], &crate::ID)
+        Pubkey::find_program_address(&[SEED_QUEUE, owner.as_ref()], &crate::ID)
     }
 }
 
-impl TryFrom<Vec<u8>> for Daemon {
+impl TryFrom<Vec<u8>> for Queue {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Daemon::try_deserialize(&mut data.as_slice())
+        Queue::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * DaemonAccount
+ * QueueAccount
  */
 
-pub trait DaemonAccount {
-    fn new(&mut self, owner: Pubkey, bump: u8) -> Result<()>;
+pub trait QueueAccount {
+    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
     fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
 }
 
-impl DaemonAccount for Account<'_, Daemon> {
-    fn new(&mut self, owner: Pubkey, bump: u8) -> Result<()> {
+impl QueueAccount for Account<'_, Queue> {
+    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()> {
+        self.bump = bump;
         self.owner = owner;
         self.task_count = 0;
-        self.bump = bump;
         Ok(())
     }
 
@@ -57,7 +57,7 @@ impl DaemonAccount for Account<'_, Daemon> {
         invoke_signed(
             ix,
             account_infos,
-            &[&[SEED_DAEMON, self.owner.as_ref(), &[self.bump]]],
+            &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
         )
         .map_err(|_err| CronosError::TaskFailed.into())
     }
