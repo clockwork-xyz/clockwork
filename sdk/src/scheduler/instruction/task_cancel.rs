@@ -6,12 +6,12 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn task_cancel(daemon: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {
+pub fn task_cancel(queue: Pubkey, task: Pubkey, owner: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new_readonly(daemon, false),
             AccountMeta::new(owner, true),
+            AccountMeta::new_readonly(queue, false),
             AccountMeta::new(task, false),
         ],
         data: cronos_scheduler::instruction::TaskCancel {}.data(),

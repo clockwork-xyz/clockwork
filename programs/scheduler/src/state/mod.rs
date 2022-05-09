@@ -1,11 +1,11 @@
 mod authority;
 mod config;
-mod daemon;
 mod fee;
+mod queue;
 mod task;
 
 pub use authority::*;
 pub use config::*;
-pub use daemon::*;
 pub use fee::*;
+pub use queue::*;
 pub use task::*;

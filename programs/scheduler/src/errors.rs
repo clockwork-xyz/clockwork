@@ -15,13 +15,13 @@ pub enum CronosError {
     InvalidRecurrBelowMin,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
-    #[msg("Your daemon cannot provide all required signatures for this instruction")]
+    #[msg("Your queue cannot provide all required signatures for this instruction")]
     InvalidSignatory,
 
     #[msg("This instruction requires admin authority")]
     NotAuthorizedAdmin,
-    #[msg("You are not the owner of this daemon")]
-    NotAuthorizedDaemonOwner,
+    #[msg("You are not the owner of this queue")]
+    NotAuthorizedQueueOwner,
 
     #[msg("Task is not queued and may not executed")]
     TaskNotQueued,

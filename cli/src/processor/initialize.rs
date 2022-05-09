@@ -31,14 +31,14 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     // Initialize scheduler program
     let authority_pda = cronos_sdk::scheduler::state::Authority::pda();
     let config_pda = cronos_sdk::scheduler::state::Config::pda();
-    let daemon_pda = cronos_sdk::scheduler::state::Daemon::pda(authority_pda.0);
-    let fee_pda = cronos_sdk::scheduler::state::Fee::pda(daemon_pda.0);
+    let queue_pda = cronos_sdk::scheduler::state::Queue::pda(authority_pda.0);
+    let fee_pda = cronos_sdk::scheduler::state::Fee::pda(queue_pda.0);
     let ix_c = cronos_sdk::scheduler::instruction::initialize(
         admin,
         authority_pda,
         config_pda,
-        daemon_pda,
         fee_pda,
+        queue_pda,
         registry_pda.0,
     );
 

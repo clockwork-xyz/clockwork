@@ -15,7 +15,7 @@ pub fn admin_task_new(
     admin: Pubkey,
     authority: Pubkey,
     config: Pubkey,
-    daemon: Pubkey,
+    queue: Pubkey,
     ixs: Vec<Instruction>,
     schedule: String,
 ) -> Instruction {
@@ -26,7 +26,7 @@ pub fn admin_task_new(
             AccountMeta::new_readonly(authority, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new(daemon, false),
+            AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task_pda.0, false),
         ],

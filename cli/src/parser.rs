@@ -15,10 +15,10 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", _)) => Ok(CliCommand::Config {}),
-            Some(("daemon", matches)) => parse_daemon_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
+            Some(("queue", matches)) => parse_queue_command(matches),
             Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -28,18 +28,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
 }
 
 // Command parsers
-
-fn parse_daemon_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("create", _)) => Ok(CliCommand::DaemonCreate {}),
-        Some(("get", matches)) => Ok(CliCommand::DaemonGet {
-            address: parse_pubkey("address", matches)?,
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
-}
 
 fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     Ok(CliCommand::Initialize {
@@ -52,6 +40,18 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("register", _)) => Ok(CliCommand::NodeRegister {}),
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("create", _)) => Ok(CliCommand::QueueCreate {}),
+        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+            address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

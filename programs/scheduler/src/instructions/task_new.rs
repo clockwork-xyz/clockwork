@@ -6,54 +6,54 @@ use {
 
 #[derive(Accounts)]
 #[instruction(
+    bump: u8,
     ixs: Vec<InstructionData>,
     schedule: String,
-    bump: u8,
 )]
 pub struct TaskNew<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
     #[account(
         mut,
         seeds = [
-            SEED_DAEMON, 
-            daemon.owner.as_ref()
+            SEED_QUEUE, 
+            queue.owner.as_ref()
         ],
-        bump = daemon.bump,
+        bump = queue.bump,
         has_one = owner,
     )]
-    pub daemon: Account<'info, Daemon>,
+    pub queue: Account<'info, Queue>,
 
-    #[account(mut)]
-    pub owner: Signer<'info>,
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
 
     #[account(
         init,
         seeds = [
             SEED_TASK, 
-            daemon.key().as_ref(),
-            daemon.task_count.to_be_bytes().as_ref(),
+            queue.key().as_ref(),
+            queue.task_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = owner,
         space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
-
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(
     ctx: Context<TaskNew>,
+    bump: u8,
     ixs: Vec<InstructionData>,
     schedule: String,
-    bump: u8,
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
-    let daemon = &mut ctx.accounts.daemon;
+    let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, daemon, ixs, schedule)
+    task.new(bump, clock, ixs, queue, schedule)
 }

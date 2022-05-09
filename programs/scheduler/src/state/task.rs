@@ -1,11 +1,9 @@
 use {
-    super::{Config, Daemon, DaemonAccount, Fee},
+    super::{Config, Fee, Queue, QueueAccount},
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{
+        prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
-        prelude::borsh::BorshSchema, 
-        prelude::*, 
-        solana_program::instruction::Instruction
     },
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
@@ -22,18 +20,18 @@ pub const SEED_TASK: &[u8] = b"task";
 #[derive(Debug)]
 pub struct Task {
     pub bump: u8,
-    pub daemon: Pubkey,
     pub delegates: HashSet<Pubkey>,
     pub exec_at: Option<i64>,
     pub id: u128,
     pub ixs: Vec<InstructionData>,
+    pub queue: Pubkey,
     pub schedule: String,
 }
 
 impl Task {
-    pub fn pda(daemon: Pubkey, id: u128) -> PDA {
+    pub fn pda(queue: Pubkey, id: u128) -> PDA {
         Pubkey::find_program_address(
-            &[SEED_TASK, daemon.as_ref(), id.to_be_bytes().as_ref()],
+            &[SEED_TASK, queue.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
     }
@@ -55,8 +53,8 @@ pub trait TaskAccount {
         &mut self,
         bump: u8,
         clock: &Sysvar<Clock>,
-        daemon: &mut Account<Daemon>,
         ixs: Vec<InstructionData>,
+        queue: &mut Account<Queue>,
         schedule: String,
     ) -> Result<()>;
 
@@ -67,8 +65,8 @@ pub trait TaskAccount {
         account_infos: &[AccountInfo],
         bot: &mut Signer,
         config: &Account<Config>,
-        daemon: &mut Account<Daemon>,
         fee: &mut Account<Fee>,
+        queue: &mut Account<Queue>,
     ) -> Result<()>;
 
     fn next_exec_at(&self, ts: i64) -> Option<i64>;
@@ -79,16 +77,16 @@ impl TaskAccount for Account<'_, Task> {
         &mut self,
         bump: u8,
         clock: &Sysvar<Clock>,
-        daemon: &mut Account<Daemon>,
         ixs: Vec<InstructionData>,
+        queue: &mut Account<Queue>,
         schedule: String,
     ) -> Result<()> {
-        // Reject the instruction if it has signers other than the daemon.
+        // Reject the instruction if it has signers other than the queue.
         // TODO Support multi-sig ixs
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 require!(
-                    !acc.is_signer || acc.pubkey == daemon.key(),
+                    !acc.is_signer || acc.pubkey == queue.key(),
                     CronosError::InvalidSignatory
                 );
             }
@@ -96,16 +94,16 @@ impl TaskAccount for Account<'_, Task> {
 
         // Initialize task account.
         self.bump = bump;
-        self.daemon = daemon.key();
-        self.id = daemon.task_count;
+        self.id = queue.task_count;
         self.ixs = ixs;
+        self.queue = queue.key();
         self.schedule = schedule;
 
         // Move forward, one step in time
         self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
-        // Increment daemon task counter
-        daemon.task_count = daemon.task_count.checked_add(1).unwrap();
+        // Increment queue task counter
+        queue.task_count = queue.task_count.checked_add(1).unwrap();
 
         Ok(())
     }
@@ -131,12 +129,12 @@ impl TaskAccount for Account<'_, Task> {
         account_infos: &[AccountInfo],
         bot: &mut Signer,
         config: &Account<Config>,
-        daemon: &mut Account<Daemon>,
         fee: &mut Account<Fee>,
+        queue: &mut Account<Queue>,
     ) -> Result<()> {
         // Sign all of the task instructions
         for ix in &self.ixs {
-            daemon.sign(&Instruction::from(ix), account_infos)?;
+            queue.sign(&Instruction::from(ix), account_infos)?;
         }
 
         // Update the exec_at timestamp
@@ -146,7 +144,7 @@ impl TaskAccount for Account<'_, Task> {
         }
 
         // Pay automation fees
-        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
+        **queue.to_account_info().try_borrow_mut_lamports()? = queue
             .to_account_info()
             .lamports()
             .checked_sub(config.program_fee)
@@ -158,7 +156,7 @@ impl TaskAccount for Account<'_, Task> {
             .unwrap();
 
         // Pay program fees
-        **daemon.to_account_info().try_borrow_mut_lamports()? = daemon
+        **queue.to_account_info().try_borrow_mut_lamports()? = queue
             .to_account_info()
             .lamports()
             .checked_sub(config.program_fee)

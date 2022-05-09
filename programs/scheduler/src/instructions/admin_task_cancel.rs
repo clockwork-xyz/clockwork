@@ -22,7 +22,7 @@ pub struct AdminTaskCancel<'info> {
         mut,
         seeds = [
             SEED_TASK, 
-            task.daemon.as_ref(),
+            task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
         bump = task.bump,

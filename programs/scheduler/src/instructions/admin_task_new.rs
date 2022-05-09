@@ -32,13 +32,13 @@ pub struct AdminTaskNew<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_DAEMON, 
-            daemon.owner.as_ref()
+            SEED_QUEUE,
+            queue.owner.as_ref()
         ],
-        bump = daemon.bump,
-        constraint = daemon.owner == authority.key(),
+        bump = queue.bump,
+        constraint = queue.owner == authority.key(),
     )]
-    pub daemon: Account<'info, Daemon>,
+    pub queue: Account<'info, Queue>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -47,8 +47,8 @@ pub struct AdminTaskNew<'info> {
         init,
         seeds = [
             SEED_TASK, 
-            daemon.key().as_ref(),
-            daemon.task_count.to_be_bytes().as_ref(),
+            queue.key().as_ref(),
+            queue.task_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = admin,
@@ -64,8 +64,8 @@ pub fn handler(
     bump: u8
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
-    let daemon = &mut ctx.accounts.daemon;
+    let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, daemon, ixs, schedule)
+    task.new(bump, clock, ixs, queue, schedule)
 }

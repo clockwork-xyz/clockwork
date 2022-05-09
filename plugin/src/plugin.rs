@@ -264,14 +264,14 @@ impl CronosPlugin {
 
             // Get accounts
             let config = cronos_sdk::scheduler::state::Config::pda().0;
-            let fee = Fee::pda(task.daemon).0;
+            let fee = Fee::pda(task.queue).0;
 
             // Add accounts to exec instruction
             let mut ix_exec = cronos_sdk::scheduler::instruction::task_exec(
                 cp_clone.unwrap_client().payer_pubkey(),
                 config,
-                task.daemon,
                 fee,
+                task.queue,
                 key,
             );
 

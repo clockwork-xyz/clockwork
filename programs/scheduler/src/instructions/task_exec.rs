@@ -21,33 +21,33 @@ pub struct TaskExec<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_DAEMON, 
-            daemon.owner.as_ref()
-        ],
-        bump = daemon.bump,
-    )]
-    pub daemon: Account<'info, Daemon>,
-
-    #[account(
-        mut,
-        seeds = [
             SEED_FEE,
-            fee.daemon.as_ref()
+            fee.queue.as_ref()
         ],
         bump = fee.bump,
-        constraint = fee.daemon == daemon.key(),
+        constraint = fee.queue == queue.key(),
     )]
     pub fee: Account<'info, Fee>,
 
     #[account(
         mut,
         seeds = [
+            SEED_QUEUE,
+            queue.owner.as_ref()
+        ],
+        bump = queue.bump,
+    )]
+    pub queue: Account<'info, Queue>,
+
+    #[account(
+        mut,
+        seeds = [
             SEED_TASK, 
-            task.daemon.as_ref(),
+            task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
         bump = task.bump,
-        has_one = daemon,
+        has_one = queue,
         constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
     )]
     pub task: Account<'info, Task>,
@@ -57,11 +57,11 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let bot = &mut ctx.accounts.bot;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
-    let daemon = &mut ctx.accounts.daemon;
     let fee = &mut ctx.accounts.fee;
+    let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, daemon, fee)?;
+    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, fee, queue)?;
 
     emit!(TaskExecuted {
         bot: bot.key(),

@@ -8,8 +8,9 @@ use {
 #[instruction(
     authority_bump: u8,
     config_bump: u8,
-    daemon_bump: u8,
     fee_bump: u8,
+    queue_bump: u8,
+    registry_pubkey: Pubkey
 )]
 pub struct Initialize<'info> {
     #[account(mut)]
@@ -36,26 +37,26 @@ pub struct Initialize<'info> {
     #[account(
         init,
         seeds = [
-            SEED_DAEMON, 
-            authority.key().as_ref()
-        ],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<Daemon>(),
-    )]
-    pub daemon: Account<'info, Daemon>,
-
-    #[account(
-        init,
-        seeds = [
             SEED_FEE, 
-            daemon.key().as_ref()
+            queue.key().as_ref()
         ],
         bump,
         payer = admin,
         space = 8 + size_of::<Fee>(),
     )]
     pub fee: Account<'info, Fee>,
+
+    #[account(
+        init,
+        seeds = [
+            SEED_QUEUE,
+            authority.key().as_ref()
+        ],
+        bump,
+        payer = admin,
+        space = 8 + size_of::<Queue>(),
+    )]
+    pub queue: Account<'info, Queue>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -65,20 +66,20 @@ pub fn handler(
     ctx: Context<Initialize>,
     authority_bump: u8,
     config_bump: u8,
-    daemon_bump: u8,
     fee_bump: u8,
+    queue_bump: u8,
     registry_pubkey: Pubkey
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
     let config = &mut ctx.accounts.config;
-    let daemon = &mut ctx.accounts.daemon;
+    let queue = &mut ctx.accounts.queue;
     let fee = &mut ctx.accounts.fee;
 
     authority.new(authority_bump)?;
     config.new(admin.key(), config_bump, registry_pubkey)?;
-    daemon.new(authority.key(), daemon_bump)?;
-    fee.new(daemon.key(), fee_bump)?;
+    queue.new(queue_bump, authority.key())?;
+    fee.new(fee_bump, queue.key())?;
 
     Ok(())
 }

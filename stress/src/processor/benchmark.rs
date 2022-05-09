@@ -1,14 +1,15 @@
-use solana_sdk::native_token::LAMPORTS_PER_SOL;
-
 use {
     crate::{
         cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
     },
     chrono::{prelude::*, Duration},
-    cronos_sdk::scheduler::state::{Daemon, Fee, Task},
+    cronos_sdk::scheduler::state::{Fee, Queue, Task},
     serde_json::json,
     solana_client_helpers::Client,
-    solana_sdk::{instruction::Instruction, pubkey::Pubkey, signature::Keypair, signer::Signer},
+    solana_sdk::{
+        instruction::Instruction, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
+        signature::Keypair, signer::Signer,
+    },
     std::sync::Arc,
 };
 
@@ -20,14 +21,13 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     let mut owners: Vec<Keypair> = vec![];
 
-    // Create daemons
+    // Create queues
     for _ in 0..(num_tasks_parallel + 1) {
         let owner = Keypair::new();
-        let daemon_pda = Daemon::pda(owner.pubkey());
-        let daemon_addr = daemon_pda.0;
-        let fee_pda = Fee::pda(daemon_addr);
-        let ix =
-            cronos_sdk::scheduler::instruction::daemon_new(daemon_pda, fee_pda, owner.pubkey());
+        let queue_pda = Queue::pda(owner.pubkey());
+        let queue_addr = queue_pda.0;
+        let fee_pda = Fee::pda(queue_addr);
+        let ix = cronos_sdk::scheduler::instruction::queue_new(fee_pda, owner.pubkey(), queue_pda);
         client.airdrop(&owner.pubkey(), LAMPORTS_PER_SOL).unwrap();
         sign_and_submit(&client, &[ix], &owner);
         owners.push(owner);
@@ -51,12 +51,12 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     Ok(())
 }
 
-fn build_memo_ix(daemon_pubkey: &Pubkey) -> Instruction {
+fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     let hello_world_memo = json!({
       "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
       "accounts": [
         {
-          "pubkey": daemon_pubkey.to_string(),
+          "pubkey": queue_pubkey.to_string(),
           "is_signer": true,
           "is_writable": false
         }
@@ -71,16 +71,16 @@ fn build_memo_ix(daemon_pubkey: &Pubkey) -> Instruction {
 }
 
 fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
-    let daemon_pubkey = Daemon::pda(owner.pubkey()).0;
-    let memo_ix = build_memo_ix(&daemon_pubkey);
-    let daemon_data = client
-        .get_account_data(&daemon_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(daemon_pubkey.to_string()))
+    let queue_pubkey = Queue::pda(owner.pubkey()).0;
+    let memo_ix = build_memo_ix(&queue_pubkey);
+    let queue_data = client
+        .get_account_data(&queue_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
         .unwrap();
-    let daemon = Daemon::try_from(daemon_data)
-        .map_err(|_err| CliError::AccountDataNotParsable(daemon_pubkey.to_string()))
+    let queue = Queue::try_from(queue_data)
+        .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
-    let task_pda = Task::pda(daemon_pubkey, daemon.task_count);
+    let task_pda = Task::pda(queue_pubkey, queue.task_count);
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -94,11 +94,11 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
         next_minute.year()
     );
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
-        task_pda,
-        daemon_pubkey,
-        owner.pubkey(),
         vec![memo_ix],
+        owner.pubkey(),
+        queue_pubkey,
         schedule,
+        task_pda,
     );
     sign_and_submit(&client, &[create_task_ix], owner);
 }

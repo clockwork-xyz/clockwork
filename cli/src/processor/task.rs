@@ -1,4 +1,4 @@
-use cronos_sdk::scheduler::state::{Daemon, Task};
+use cronos_sdk::scheduler::state::{Queue, Task};
 use solana_sdk::instruction::Instruction;
 
 use crate::utils::{solana_explorer_url, SolanaExplorerAccountType};
@@ -12,30 +12,30 @@ use {
 
 pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
-    let daemon = cronos_sdk::scheduler::state::Daemon::pda(owner).0;
-    let ix = cronos_sdk::scheduler::instruction::task_cancel(daemon, *address, owner);
+    let queue = cronos_sdk::scheduler::state::Queue::pda(owner).0;
+    let ix = cronos_sdk::scheduler::instruction::task_cancel(queue, *address, owner);
     sign_and_submit(client, &[ix]);
     get(client, address)
 }
 
 pub fn create(client: &Arc<Client>, ix: Instruction, schedule: String) -> Result<(), CliError> {
-    // Fetch daemon data.
+    // Fetch queue data.
     let owner = client.payer_pubkey();
-    let daemon_addr = Daemon::pda(owner).0;
+    let queue_addr = Queue::pda(owner).0;
     let data = client
-        .get_account_data(&daemon_addr)
-        .map_err(|_err| CliError::AccountNotFound(daemon_addr.to_string()))?;
-    let daemon_data = Daemon::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(daemon_addr.to_string()))?;
+        .get_account_data(&queue_addr)
+        .map_err(|_err| CliError::AccountNotFound(queue_addr.to_string()))?;
+    let queue_data = Queue::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(queue_addr.to_string()))?;
 
     // Build task_create ix.
-    let task_pda = Task::pda(daemon_addr, daemon_data.task_count);
+    let task_pda = Task::pda(queue_addr, queue_data.task_count);
     let task_ix = cronos_sdk::scheduler::instruction::task_new(
-        task_pda,
-        daemon_addr,
-        owner,
         vec![ix],
+        owner,
+        queue_addr,
         schedule,
+        task_pda,
     );
 
     // Sign and submit
