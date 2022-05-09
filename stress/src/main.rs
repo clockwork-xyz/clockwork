@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate version;
 
-// mod app;
 mod cli;
 mod config;
 mod parser;
