@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create mint 
-log=$(./scripts/new-mint.sh | grep Token:)
+log=$(./scripts/mint.sh | grep Token:)
 mint=${log: -44}
 
 # Initialize the Cronos programs

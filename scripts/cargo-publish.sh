@@ -10,5 +10,5 @@ cargo publish -p cronos-sdk
 sleep 25
 cargo publish -p cronos-cli
 cargo publish -p cronos-plugin
+cargo publish -p cronos-stress
 cargo publish -p cronos-telemetry
-cargo publish -p cronos-tests
