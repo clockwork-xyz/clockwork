@@ -3,16 +3,17 @@ extern crate cronos_cron;
 
 pub mod errors;
 pub mod events;
+pub mod id;
 pub mod pda;
 pub mod state;
 
 mod instructions;
 
+pub use id::ID;
+
 use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
-
-declare_id!("954gq7DotHyMPGJs57abBFJtGUn5iTRmFLUJgmbXwdck");
 
 #[program]
 pub mod cronos_scheduler {
