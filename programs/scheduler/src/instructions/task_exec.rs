@@ -6,6 +6,13 @@ use {
 #[derive(Accounts)]
 #[instruction()]
 pub struct TaskExec<'info> {
+    #[account(
+        mut,
+        seeds = [SEED_ACTION, task.key().as_ref(), (0 as u128).to_be_bytes().as_ref()],
+        bump = action.bump
+    )]
+    pub action: Account<'info, Action>,
+
     #[account(mut)]
     pub bot: Signer<'info>,
 
@@ -54,6 +61,7 @@ pub struct TaskExec<'info> {
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
+    let action = &mut ctx.accounts.action;
     let bot = &mut ctx.accounts.bot;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
@@ -61,7 +69,7 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.exec(&ctx.remaining_accounts.iter().as_slice(), bot, config, fee, queue)?;
+    task.exec(&ctx.remaining_accounts.iter().as_slice(), action, bot, config, fee, queue)?;
 
     emit!(TaskExecuted {
         bot: bot.key(),

@@ -7,16 +7,10 @@ use {
         },
         InstructionData,
     },
-    cronos_scheduler::{pda::PDA, state::InstructionData as CronosInstructionData},
+    cronos_scheduler::pda::PDA,
 };
 
-pub fn task_new(
-    ixs: Vec<Instruction>,
-    owner: Pubkey,
-    queue: Pubkey,
-    schedule: String,
-    task_pda: PDA,
-) -> Instruction {
+pub fn task_new(owner: Pubkey, queue: Pubkey, schedule: String, task_pda: PDA) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
@@ -28,12 +22,13 @@ pub fn task_new(
         ],
         data: cronos_scheduler::instruction::TaskNew {
             bump: task_pda.1,
-            ixs: ixs
-                .iter()
-                .map(|ix| CronosInstructionData::from(ix.clone()))
-                .collect(),
             schedule,
         }
         .data(),
     }
 }
+
+// ixs
+// .iter()
+// .map(|ix| CronosInstructionData::from(ix.clone()))
+// .collect(),

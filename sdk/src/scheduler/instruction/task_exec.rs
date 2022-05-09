@@ -8,6 +8,7 @@ use anchor_lang::{
 };
 
 pub fn task_exec(
+    action: Pubkey,
     bot: Pubkey,
     config: Pubkey,
     fee: Pubkey,
@@ -17,6 +18,7 @@ pub fn task_exec(
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
+            AccountMeta::new(action, false),
             AccountMeta::new(bot, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),

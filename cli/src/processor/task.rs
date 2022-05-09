@@ -1,5 +1,4 @@
 use cronos_sdk::scheduler::state::{Queue, Task};
-use solana_sdk::instruction::Instruction;
 
 use crate::utils::{solana_explorer_url, SolanaExplorerAccountType};
 
@@ -18,7 +17,7 @@ pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     get(client, address)
 }
 
-pub fn create(client: &Arc<Client>, ix: Instruction, schedule: String) -> Result<(), CliError> {
+pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
     // Fetch queue data.
     let owner = client.payer_pubkey();
     let queue_addr = Queue::pda(owner).0;
@@ -30,13 +29,8 @@ pub fn create(client: &Arc<Client>, ix: Instruction, schedule: String) -> Result
 
     // Build task_create ix.
     let task_pda = Task::pda(queue_addr, queue_data.task_count);
-    let task_ix = cronos_sdk::scheduler::instruction::task_new(
-        vec![ix],
-        owner,
-        queue_addr,
-        schedule,
-        task_pda,
-    );
+    let task_ix =
+        cronos_sdk::scheduler::instruction::task_new(owner, queue_addr, schedule, task_pda);
 
     // Sign and submit
     sign_and_submit(client, &[task_ix]);

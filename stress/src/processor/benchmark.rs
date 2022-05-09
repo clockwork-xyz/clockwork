@@ -71,8 +71,9 @@ fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
 }
 
 fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
+    let now: DateTime<Utc> = Utc::now();
+    let next_minute = now + Duration::minutes(1);
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
-    let memo_ix = build_memo_ix(&queue_pubkey);
     let queue_data = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
@@ -80,9 +81,6 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
     let queue = Queue::try_from(queue_data)
         .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
-    let task_pda = Task::pda(queue_pubkey, queue.task_count);
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
         recurrence,
@@ -93,12 +91,17 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
         next_minute.weekday(),
         next_minute.year()
     );
+    let task_pda = Task::pda(queue_pubkey, queue.task_count);
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
-        vec![memo_ix],
         owner.pubkey(),
         queue_pubkey,
         schedule,
         task_pda,
     );
+
+    // TODO create an action
+    // vec![memo_ix],
+    let _memo_ix = build_memo_ix(&queue_pubkey);
+
     sign_and_submit(&client, &[create_task_ix], owner);
 }
