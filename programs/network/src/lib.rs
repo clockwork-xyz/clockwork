@@ -1,13 +1,14 @@
 pub mod errors;
+pub mod id;
 pub mod pda;
 pub mod state;
 
 mod instructions;
 
+pub use id::ID;
+
 use anchor_lang::prelude::*;
 use instructions::*;
-
-declare_id!("5Xu6iNDMf17wVC6aSoKeQsjF87aTQjrqpA9sX3sA5VJX");
 
 #[program]
 pub mod cronos_network {
