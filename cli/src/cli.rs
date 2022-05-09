@@ -12,7 +12,8 @@ pub enum CliCommand {
     DaemonGet { address: Pubkey },
 
     // Node commands
-    NodeRegister { identity: Pubkey },
+    NodeRegister,
+    NodeStake { amount: u64 },
 
     // Task commands
     TaskCancel { address: Pubkey },
@@ -77,14 +78,17 @@ pub fn app() -> Command<'static> {
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
                 .subcommand(
-                    Command::new("register")
-                        .about("Register a new node with the Cronos network")
+                    Command::new("register").about("Register a new node with the Cronos network"),
+                )
+                .subcommand(
+                    Command::new("stake")
+                        .about("Stake CRON with your Solana node")
                         .arg(
-                            Arg::new("identity")
+                            Arg::new("amount")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
-                                .help("Public gossip address of the node on the Solana network"),
+                                .help("The number of tokens to stake"),
                         ),
                 ),
         )

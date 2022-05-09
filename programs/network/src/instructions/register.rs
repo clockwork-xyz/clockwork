@@ -26,6 +26,9 @@ pub struct Register<'info> {
     #[account(mut)]
     pub identity: Signer<'info>,
 
+    #[account(address = config.mint)]
+    pub mint: Account<'info, Mint>,
+
     #[account(
         init,
         seeds = [
@@ -37,9 +40,6 @@ pub struct Register<'info> {
         space = 8 + size_of::<Node>(),
     )]
     pub node: Account<'info, Node>,
-
-    #[account(address = config.mint)]
-    pub mint: Account<'info, Mint>,
 
     #[account(
         mut,

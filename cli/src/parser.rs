@@ -49,8 +49,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
-            identity: parse_pubkey("identity", matches)?,
+        Some(("register", _)) => Ok(CliCommand::NodeRegister {}),
+        Some(("stake", matches)) => Ok(CliCommand::NodeStake {
+            amount: parse_u64("amount", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -88,6 +89,13 @@ fn parse_string(arg: &str, matches: &ArgMatches) -> Result<String, CliError> {
         .value_of(arg)
         .ok_or(CliError::BadParameter(arg.into()))?
         .to_string())
+}
+
+pub fn parse_u64(arg: &str, matches: &ArgMatches) -> Result<u64, CliError> {
+    Ok(parse_string(arg, matches)?
+        .parse::<u64>()
+        .map_err(|_err| CliError::BadParameter(arg.into()))
+        .unwrap())
 }
 
 // Json parsers
