@@ -24,6 +24,8 @@ solana-clap-utils = "1.10.8"
 solana-cli-config = "1.10.8"
 thiserror = "1.0.30"
 version = "3.0.0"
+base64 = "0.13.0"
+cron = "0.11.0"
 
 [[bin]]
 name = "cronos_tests"
