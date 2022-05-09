@@ -1,13 +1,14 @@
 pub mod errors;
+pub mod id;
 pub mod pda;
 pub mod state;
 
 mod instructions;
 
+pub use id::ID;
+
 use anchor_lang::prelude::*;
 use instructions::*;
-
-declare_id!("2ysCzNg41B2FSnjHqcyRVdrzf9d2pazqLARrb2qDJpbF");
 
 #[program]
 pub mod cronos_heartbeat {
