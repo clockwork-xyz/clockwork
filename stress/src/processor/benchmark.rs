@@ -28,7 +28,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     println!("    total queues: {}", num_tasks_parallel + 1);
     println!("     -- queues in parallel: {}", num_tasks_parallel);
-    println!("     -- serial queues: {}", 1);
+    println!("     -- serial queue: {}", 1);
     println!("tasks in parallel: {}", num_tasks_parallel);
     println!("  tasks in serial: {}\n", num_tasks_serial);
 
@@ -61,22 +61,26 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         schedule_memo_task(&client, owner, recurrence, &mut expected_exec);
     }
 
-    let included: Vec<String> = vec![cronos_sdk::scheduler::ID.to_string()];
+    let included_programs: Vec<String> = vec![cronos_sdk::scheduler::ID.to_string()];
     let url = "ws://localhost:8900/";
 
     // open web socket to listen for task events
     let (_ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         url,
-        RpcTransactionLogsFilter::Mentions(included),
+        RpcTransactionLogsFilter::Mentions(included_programs),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
     )
     .unwrap();
 
-    // parse log data
     let mut counter = 0;
+
+    let now = Instant::now();
+    // parse log data
     for log_response in log_receiver {
+        let elapsed_time = now.elapsed().as_secs();
+        println!("elapsed time: {}", elapsed_time);
         let response = log_response.value;
         let logs = response.logs;
         let data = logs.into_iter();
@@ -143,21 +147,21 @@ fn schedule_memo_task(
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
 ) {
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
-
     let queue = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
         .unwrap();
 
-    let queue_data = Queue::try_from(queue).unwrap();
+    let queue_data = Queue::try_from(queue)
+        .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
+        .unwrap();
 
     let task_pda = Task::pda(queue_pubkey, queue_data.task_count);
 
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
+
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
         recurrence - 1,
@@ -169,10 +173,13 @@ fn schedule_memo_task(
         next_minute.year()
     );
 
+    println!("schedule: {}", schedule);
+
     let times = Schedule::from_str(&schedule).unwrap();
 
     //index expected fire times
-    for datetime in times.upcoming(Utc) {
+    for datetime in times.after(&Utc.from_utc_datetime(&Utc::now().naive_utc())) {
+        println!("--> {}", datetime.timestamp());
         expected_exec
             .entry(task_pda.0)
             .or_insert(Vec::new())
@@ -195,6 +202,7 @@ fn schedule_memo_task(
         queue_pubkey,
         task_pda.0,
     );
+
     sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
 }
 
