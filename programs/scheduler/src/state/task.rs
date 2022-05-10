@@ -4,7 +4,7 @@ use {
     anchor_lang::{prelude::*, solana_program::instruction::Instruction, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
-    std::{collections::HashSet, convert::TryFrom, str::FromStr},
+    std::{convert::TryFrom, str::FromStr},
 };
 
 pub const SEED_TASK: &[u8] = b"task";
@@ -18,7 +18,6 @@ pub const SEED_TASK: &[u8] = b"task";
 pub struct Task {
     pub action_count: u128,
     pub bump: u8,
-    pub delegates: HashSet<Pubkey>,
     pub exec_at: Option<i64>,
     pub id: u128,
     pub queue: Pubkey,
