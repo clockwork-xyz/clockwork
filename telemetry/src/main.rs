@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             record_heartbeat().await;
         }
     });
-    _ = forever.await;
+    let _ = forever.await;
     Ok(())
 }
 
