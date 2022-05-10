@@ -1,6 +1,9 @@
 use {
+    crate::{
+        cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
+    },
     chrono::{prelude::*, Duration},
-    cron::Schedule,
+    cronos_cron::Schedule,
     cronos_sdk::scheduler::events::TaskExecuted,
     cronos_sdk::scheduler::state::{Action, Fee, Queue, Task},
     serde_json::json,
@@ -14,10 +17,6 @@ use {
         native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Keypair, signer::Signer,
     },
     std::{collections::HashMap, str::FromStr, sync::Arc},
-};
-
-use crate::{
-    cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
 };
 
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
