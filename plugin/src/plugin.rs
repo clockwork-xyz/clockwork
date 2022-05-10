@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use {
     crate::{
         bucket::Bucket, cache::TaskCache, client::RPCClient, config::Config as PluginConfig, filter,
@@ -19,6 +17,7 @@ use {
         sysvar,
     },
     std::{
+        collections::HashSet,
         fmt::{Debug, Formatter},
         sync::Mutex,
         sync::{Arc, RwLock},
@@ -216,29 +215,36 @@ impl CronosPlugin {
     }
 
     fn execute_tasks_in_lookback_window(&self) {
-        // Spawn threads to execute tasks in lookback window
-        info!("Executing tasks for ts {}", self.latest_clock_value);
-        const LOOKBACK_WINDOW: i64 = 2; // sec
-        let mut handles = vec![];
-        for t in (self.latest_clock_value - LOOKBACK_WINDOW)..=self.latest_clock_value {
-            let r_cache = self.unwrap_cache().read().unwrap();
-            r_cache.index.get(&t).and_then(|keys| {
-                for key in keys.iter() {
-                    r_cache.data.get(key).and_then(|task| {
-                        handles.push(self.execute_task(*key, task.clone()));
-                        Some(())
-                    });
-                }
-                Some(())
-            });
-        }
+        let self_clone = self.clone();
+        let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
+        let cp_clone = cp_arc.clone();
 
-        // Join threads
-        if !handles.is_empty() {
-            for h in handles {
-                h.join().unwrap();
+        thread::spawn(move || {
+            const LOOKBACK_WINDOW: i64 = 7; // Number of seconds to lookback
+            info!("Executing tasks for ts {}", cp_clone.latest_clock_value);
+
+            // Spawn threads to execute tasks in lookback window
+            let mut handles = vec![];
+            for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
+                let r_cache = cp_clone.unwrap_cache().read().unwrap();
+                r_cache.index.get(&t).and_then(|keys| {
+                    for key in keys.iter() {
+                        r_cache.data.get(key).and_then(|task| {
+                            handles.push(cp_clone.execute_task(*key, task.clone()));
+                            Some(())
+                        });
+                    }
+                    Some(())
+                });
             }
-        }
+
+            // Join threads
+            if !handles.is_empty() {
+                for h in handles {
+                    h.join().unwrap();
+                }
+            }
+        });
     }
 
     fn execute_task(&self, task_pubkey: Pubkey, task: Task) -> JoinHandle<()> {
@@ -266,8 +272,8 @@ impl CronosPlugin {
             // Accumulate task_exec ixs here
             let mut ixs: Vec<Instruction> = vec![];
 
-            // For each action...
-            for i in 0..task.actions_count {
+            // Build an ix for each action
+            for i in 0..task.action_count {
                 // Get the action account
                 let action_pubkey = Action::pda(task_pubkey, i).0;
                 let action_data = Action::try_from(
@@ -288,7 +294,7 @@ impl CronosPlugin {
                     task_pubkey,
                 );
 
-                // Inject accounts for action inner ixs
+                // Inject accounts for inner ixs
                 let mut acc_dedupe = HashSet::<Pubkey>::new();
                 for inner_ix in &action_data.ixs {
                     // Program ids
@@ -310,6 +316,7 @@ impl CronosPlugin {
                     }
                 }
 
+                // Add to the list
                 ixs.push(ix)
             }
 
@@ -317,18 +324,15 @@ impl CronosPlugin {
             if ixs.is_empty() {
                 info!("📂 No actions for task {}", task_pubkey);
             } else {
-                cp_clone
-                    .unwrap_client()
-                    .sign_and_submit(
-                        ixs.as_slice(),
-                        format!(
-                            "🤖 Executing task {} for timestamp {}",
-                            task_pubkey,
-                            task.exec_at.unwrap()
-                        )
-                        .as_str(),
+                let _ = cp_clone.unwrap_client().sign_and_submit(
+                    ixs.as_slice(),
+                    format!(
+                        "🤖 Executing task {} for timestamp {}",
+                        task_pubkey,
+                        task.exec_at.unwrap()
                     )
-                    .unwrap();
+                    .as_str(),
+                );
             }
 
             // Drop the mutex

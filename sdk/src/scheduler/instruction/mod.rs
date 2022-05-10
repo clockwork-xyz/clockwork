@@ -1,3 +1,4 @@
+mod action_new;
 mod admin_config_update;
 mod admin_fee_collect;
 mod admin_task_cancel;
@@ -9,6 +10,7 @@ mod task_cancel;
 mod task_exec;
 mod task_new;
 
+pub use action_new::*;
 pub use admin_config_update::*;
 pub use admin_fee_collect::*;
 pub use admin_task_cancel::*;

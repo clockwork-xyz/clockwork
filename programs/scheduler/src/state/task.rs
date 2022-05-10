@@ -1,7 +1,5 @@
-use super::Action;
-
 use {
-    super::{Config, Fee, Queue, QueueAccount},
+    super::{Action, Config, Fee, Queue, QueueAccount},
     crate::pda::PDA,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
@@ -18,7 +16,7 @@ pub const SEED_TASK: &[u8] = b"task";
 #[account]
 #[derive(Debug)]
 pub struct Task {
-    pub actions_count: u128,
+    pub action_count: u128,
     pub bump: u8,
     pub delegates: HashSet<Pubkey>,
     pub exec_at: Option<i64>,
@@ -79,19 +77,8 @@ impl TaskAccount for Account<'_, Task> {
         queue: &mut Account<Queue>,
         schedule: String,
     ) -> Result<()> {
-        // Reject the instruction if it has signers other than the queue.
-        // TODO Support multi-sig ixs
-        // for ix in ixs.iter() {
-        //     for acc in ix.accounts.iter() {
-        //         require!(
-        //             !acc.is_signer || acc.pubkey == queue.key(),
-        //             CronosError::InvalidSignatory
-        //         );
-        //     }
-        // }
-
         // Initialize task account.
-        self.actions_count = 0;
+        self.action_count = 0;
         self.bump = bump;
         self.id = queue.task_count;
         self.queue = queue.key();

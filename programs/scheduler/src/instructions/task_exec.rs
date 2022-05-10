@@ -29,10 +29,10 @@ pub struct TaskExec<'info> {
         mut,
         seeds = [
             SEED_FEE,
-            fee.queue.as_ref()
+            queue.key().as_ref()
         ],
         bump = fee.bump,
-        constraint = fee.queue == queue.key(),
+        has_one = queue
     )]
     pub fee: Account<'info, Fee>,
 

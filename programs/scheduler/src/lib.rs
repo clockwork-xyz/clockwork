@@ -19,6 +19,10 @@ use state::*;
 pub mod cronos_scheduler {
     use super::*;
 
+    pub fn action_new(ctx: Context<ActionNew>, bump: u8, ixs: Vec<InstructionData>) -> Result<()> {
+        action_new::handler(ctx, bump, ixs)
+    }
+
     pub fn admin_config_update(
         ctx: Context<AdminConfigUpdate>,
         settings: ConfigSettings,

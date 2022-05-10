@@ -1,5 +1,6 @@
 use {
-    crate::pda::PDA,
+    super::Task,
+    crate::{errors::CronosError, pda::PDA},
     anchor_lang::{
         prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
@@ -17,7 +18,7 @@ pub const SEED_ACTION: &[u8] = b"action";
 #[derive(Debug)]
 pub struct Action {
     pub bump: u8,
-    pub id: i128,
+    pub id: u128,
     pub ixs: Vec<InstructionData>,
     pub task: Pubkey,
 }
@@ -43,12 +44,30 @@ impl TryFrom<Vec<u8>> for Action {
  */
 
 pub trait ActionAccount {
-    fn new(&mut self, bump: u8) -> Result<()>;
+    fn new(&mut self, bump: u8, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()>;
 }
 
 impl ActionAccount for Account<'_, Action> {
-    fn new(&mut self, bump: u8) -> Result<()> {
+    fn new(&mut self, bump: u8, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()> {
+        // Reject the instructions if they have signers other than the queue.
+        for ix in ixs.iter() {
+            for acc in ix.accounts.iter() {
+                require!(
+                    acc.pubkey == task.queue || !acc.is_signer,
+                    CronosError::InvalidSignatory
+                );
+            }
+        }
+
+        // Save data
         self.bump = bump;
+        self.id = task.action_count;
+        self.ixs = ixs;
+        self.task = task.key();
+
+        // Increment the action count
+        task.action_count = task.action_count.checked_add(1).unwrap();
+
         Ok(())
     }
 }

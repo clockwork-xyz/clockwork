@@ -3,7 +3,7 @@ use {
         cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
     },
     chrono::{prelude::*, Duration},
-    cronos_sdk::scheduler::state::{Fee, Queue, Task},
+    cronos_sdk::scheduler::state::{Action, Fee, Queue, Task},
     serde_json::json,
     solana_client_helpers::Client,
     solana_sdk::{
@@ -98,10 +98,14 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
         schedule,
         task_pda,
     );
-
-    // TODO create an action
-    // vec![memo_ix],
-    let _memo_ix = build_memo_ix(&queue_pubkey);
-
-    sign_and_submit(&client, &[create_task_ix], owner);
+    let action_pda = Action::pda(task_pda.0, 0);
+    let memo_ix = build_memo_ix(&queue_pubkey);
+    let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
+        action_pda,
+        vec![memo_ix],
+        owner.pubkey(),
+        queue_pubkey,
+        task_pda.0,
+    );
+    sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
 }
