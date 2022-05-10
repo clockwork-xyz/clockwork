@@ -164,16 +164,16 @@ impl TaskAccount for Account<'_, Task> {
                     // There are more actions to execute
                     self.status = TaskStatus::Executing {
                         action_id: next_action_id,
-                    }
+                    };
                 } else {
+                    // All actions have been executed
+                    self.status = TaskStatus::Pending;
+
                     // Update the exec_at timestamp
                     match self.exec_at {
                         Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
                         None => return Err(CronosError::TaskNotDue.into()),
                     };
-
-                    // All actions have been executed
-                    self.status = TaskStatus::Pending
                 };
             }
             _ => return Err(CronosError::InvalidTaskStatus.into()),
