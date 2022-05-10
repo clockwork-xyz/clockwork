@@ -76,15 +76,13 @@ impl TaskAccount for Account<'_, Task> {
         queue: &mut Account<Queue>,
         schedule: String,
     ) -> Result<()> {
-        // Initialize task account.
+        // Initialize task account
         self.action_count = 0;
         self.bump = bump;
+        self.exec_at = self.next_exec_at(clock.unix_timestamp);
         self.id = queue.task_count;
         self.queue = queue.key();
         self.schedule = schedule;
-
-        // Move forward, one step in time
-        self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
         // Increment queue task counter
         queue.task_count = queue.task_count.checked_add(1).unwrap();
