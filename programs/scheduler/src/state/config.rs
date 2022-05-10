@@ -64,7 +64,7 @@ impl ConfigAccount for Account<'_, Config> {
     }
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
+        require!(self.admin == admin.key(), CronosError::NotAdmin);
         self.admin = settings.admin;
         self.node_fee = settings.node_fee;
         self.program_fee = settings.program_fee;

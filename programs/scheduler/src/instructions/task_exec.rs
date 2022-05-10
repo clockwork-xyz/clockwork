@@ -8,7 +8,11 @@ use {
 pub struct TaskExec<'info> {
     #[account(
         mut,
-        seeds = [SEED_ACTION, task.key().as_ref(), (0 as u128).to_be_bytes().as_ref()],
+        seeds = [
+            SEED_ACTION,
+            action.task.as_ref(),
+            action.id.to_be_bytes().as_ref()
+        ],
         bump = action.bump
     )]
     pub action: Account<'info, Action>,
@@ -56,6 +60,11 @@ pub struct TaskExec<'info> {
         bump = task.bump,
         has_one = queue,
         constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
+        constraint = match task.status {
+            TaskStatus::Executing { action_id } => action_id == action.id,
+            TaskStatus::Paused => false,
+            TaskStatus::Pending => true,
+        } @ CronosError::InvalidTaskStatus
     )]
     pub task: Account<'info, Task>,
 }

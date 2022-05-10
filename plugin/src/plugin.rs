@@ -324,7 +324,7 @@ impl CronosPlugin {
             if ixs.is_empty() {
                 info!("📂 No actions for task {}", task_pubkey);
             } else {
-                let _ = cp_clone.unwrap_client().sign_and_submit(
+                let res = cp_clone.unwrap_client().sign_and_submit(
                     ixs.as_slice(),
                     format!(
                         "🤖 Executing task {} for timestamp {}",
@@ -333,6 +333,9 @@ impl CronosPlugin {
                     )
                     .as_str(),
                 );
+                if res.is_err() {
+                    info!("❌ Failed to execute task: {:#?}", res.err())
+                }
             }
 
             // Drop the mutex

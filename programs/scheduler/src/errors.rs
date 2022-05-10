@@ -2,26 +2,17 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum CronosError {
-    #[msg("This account is already open")]
-    AccountAlreadyOpen,
-
-    #[msg("Tasks cannot be started before they are stopped")]
-    InvalidChronology,
-    #[msg("Tasks cannot be scheduled for execution in the past")]
-    InvalidExecAtStale,
-    #[msg("Recurrence interval cannot be negative")]
-    InvalidRecurrNegative,
-    #[msg("Recurrence interval is below the minimum supported time granulartiy")]
-    InvalidRecurrBelowMin,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
     #[msg("Your queue cannot provide all required signatures for this instruction")]
     InvalidSignatory,
+    #[msg("The task does not have the right status for this operation")]
+    InvalidTaskStatus,
 
-    #[msg("This instruction requires admin authority")]
-    NotAuthorizedAdmin,
+    #[msg("Your are not the admin authority")]
+    NotAdmin,
     #[msg("You are not the owner of this queue")]
-    NotAuthorizedQueueOwner,
+    NotQueueOwner,
 
     #[msg("Task is not queued and may not executed")]
     TaskNotQueued,
@@ -29,7 +20,4 @@ pub enum CronosError {
     TaskNotDue,
     #[msg("The task instruction invocation failed")]
     TaskFailed,
-
-    #[msg("Unknown error")]
-    Unknown,
 }

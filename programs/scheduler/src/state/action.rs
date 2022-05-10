@@ -65,7 +65,7 @@ impl ActionAccount for Account<'_, Action> {
         self.ixs = ixs;
         self.task = task.key();
 
-        // Increment the action count
+        // Increment the task's action count
         task.action_count = task.action_count.checked_add(1).unwrap();
 
         Ok(())

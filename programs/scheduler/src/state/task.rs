@@ -1,6 +1,6 @@
 use {
     super::{Action, Config, Fee, Queue, QueueAccount},
-    crate::pda::PDA,
+    crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, solana_program::instruction::Instruction, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
@@ -22,6 +22,7 @@ pub struct Task {
     pub id: u128,
     pub queue: Pubkey,
     pub schedule: String,
+    pub status: TaskStatus,
 }
 
 impl Task {
@@ -82,6 +83,7 @@ impl TaskAccount for Account<'_, Task> {
         self.id = queue.task_count;
         self.queue = queue.key();
         self.schedule = schedule;
+        self.status = TaskStatus::Pending;
 
         // Set exec_at (schedule must be set first)
         self.exec_at = self.next_exec_at(clock.unix_timestamp);
@@ -117,15 +119,14 @@ impl TaskAccount for Account<'_, Task> {
         fee: &mut Account<Fee>,
         queue: &mut Account<Queue>,
     ) -> Result<()> {
-        // Sign all of the action instructions
-        for ix in &action.ixs {
-            queue.sign(&Instruction::from(ix), account_infos)?;
+        // If the task is pending, mark it as executing
+        if self.status == TaskStatus::Pending {
+            self.status = TaskStatus::Executing { action_id: 0 };
         }
 
-        // Update the exec_at timestamp
-        match self.exec_at {
-            Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
-            None => {}
+        // Process all of the action instructions
+        for ix in &action.ixs {
+            queue.sign(&Instruction::from(ix), account_infos)?;
         }
 
         // Pay automation fees
@@ -155,6 +156,29 @@ impl TaskAccount for Account<'_, Task> {
         // Increment collectable fee balance.
         fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
 
+        // Update the task status
+        match self.status {
+            TaskStatus::Executing { action_id } => {
+                let next_action_id = action_id.checked_add(1).unwrap();
+                if next_action_id < self.action_count {
+                    // There are more actions to execute
+                    self.status = TaskStatus::Executing {
+                        action_id: next_action_id,
+                    }
+                } else {
+                    // Update the exec_at timestamp
+                    match self.exec_at {
+                        Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
+                        None => return Err(CronosError::TaskNotDue.into()),
+                    };
+
+                    // All actions have been executed
+                    self.status = TaskStatus::Pending
+                };
+            }
+            _ => return Err(CronosError::InvalidTaskStatus.into()),
+        }
+
         Ok(())
     }
 
@@ -172,4 +196,15 @@ impl TaskAccount for Account<'_, Task> {
             None => None,
         }
     }
+}
+
+/**
+ * TaskStatus
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TaskStatus {
+    Executing { action_id: u128 },
+    Paused,
+    Pending,
 }
