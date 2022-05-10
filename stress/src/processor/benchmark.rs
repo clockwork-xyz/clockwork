@@ -76,11 +76,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     let mut counter = 0;
 
-    let now = Instant::now();
     // parse log data
     for log_response in log_receiver {
-        let elapsed_time = now.elapsed().as_secs();
-        println!("elapsed time: {}", elapsed_time);
         let response = log_response.value;
         let logs = response.logs;
         let data = logs.into_iter();
@@ -97,8 +94,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
                     let task_event =
                         borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
 
-                    println!("   task: {}", task_event.task);
-                    println!("task ts: {}", task_event.ts);
+                    println!("task: {}", task_event.task);
+                    println!("  ts: {}", task_event.ts);
 
                     actual_exec
                         .entry(task_event.task)
@@ -147,20 +144,16 @@ fn schedule_memo_task(
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
 ) {
+    let now: DateTime<Utc> = Utc::now();
+    let next_minute = now + Duration::minutes(1);
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
-    let queue = client
+    let queue_data = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
         .unwrap();
-
-    let queue_data = Queue::try_from(queue)
+    let queue = Queue::try_from(queue_data)
         .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
-
-    let task_pda = Task::pda(queue_pubkey, queue_data.task_count);
-
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
 
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
@@ -173,13 +166,13 @@ fn schedule_memo_task(
         next_minute.year()
     );
 
-    println!("schedule: {}", schedule);
+    let task_pda = Task::pda(queue_pubkey, queue.task_count);
 
+    // validating cron expression
     let times = Schedule::from_str(&schedule).unwrap();
 
-    //index expected fire times
+    // index expected fire times
     for datetime in times.after(&Utc.from_utc_datetime(&Utc::now().naive_utc())) {
-        println!("--> {}", datetime.timestamp());
         expected_exec
             .entry(task_pda.0)
             .or_insert(Vec::new())
@@ -189,7 +182,7 @@ fn schedule_memo_task(
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
         owner.pubkey(),
         queue_pubkey,
-        schedule,
+        schedule.to_owned(),
         task_pda,
     );
 
