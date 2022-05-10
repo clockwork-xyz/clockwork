@@ -22,16 +22,17 @@
   </h4>  
 </div>
 
+## Notes
+- Cronos is under active development. All interfaces and implementations are subject to change.
+- Smart contracts are automatically scanned by Soteria's [auditing software](https://www.soteria.dev/software), but have not been reviewed by a paid auditing firm. 
+- Use at your own risk.
+
+
 ## Deployments
 
 | Program | Devnet | Mainnet Beta |
 | --------|--------|------------- |
 | [v0.1.8](https://github.com/cronos-so/cronos/releases/tag/v0.1.8)  | `CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW` | `CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW` |
-
-## Notes
-- Cronos is under active development. All interfaces and implementations are subject to change.
-- Smart contracts are automatically scanned by Soteria's [auditing software](https://www.soteria.dev/software), but have not been reviewed by a paid auditing firm. 
-- Use at your own risk.
 
 
 ## Packages

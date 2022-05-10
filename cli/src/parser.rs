@@ -65,7 +65,6 @@ fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             address: parse_pubkey("address", matches)?,
         }),
         Some(("create", matches)) => Ok(CliCommand::TaskCreate {
-            ix: parse_instruction(&parse_string("filepath", matches)?)?,
             schedule: parse_string("schedule", matches)?,
         }),
         Some(("get", matches)) => Ok(CliCommand::TaskGet {
@@ -124,7 +123,7 @@ impl TryFrom<&JsonInstructionData> for Instruction {
     }
 }
 
-pub fn parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
+pub fn _parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
     let text =
         fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter("filepath".into()))?;
     let ix: JsonInstructionData =
