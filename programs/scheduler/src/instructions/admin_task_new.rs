@@ -59,7 +59,6 @@ pub struct AdminTaskNew<'info> {
 
 pub fn handler(
     ctx: Context<AdminTaskNew>, 
-    ixs: Vec<InstructionData>,
     schedule: String,
     bump: u8
 ) -> Result<()> {
@@ -67,5 +66,5 @@ pub fn handler(
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, ixs, queue, schedule)
+    task.new(bump, clock, queue, schedule)
 }

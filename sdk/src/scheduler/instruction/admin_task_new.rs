@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    cronos_scheduler::{pda::PDA, state::InstructionData as CronosInstructionData},
+    cronos_scheduler::pda::PDA,
 };
 
 pub fn admin_task_new(
@@ -16,7 +16,6 @@ pub fn admin_task_new(
     authority: Pubkey,
     config: Pubkey,
     queue: Pubkey,
-    ixs: Vec<Instruction>,
     schedule: String,
 ) -> Instruction {
     Instruction {
@@ -31,10 +30,6 @@ pub fn admin_task_new(
             AccountMeta::new(task_pda.0, false),
         ],
         data: cronos_scheduler::instruction::AdminTaskNew {
-            ixs: ixs
-                .iter()
-                .map(|ix| CronosInstructionData::from(ix.clone()))
-                .collect(),
             schedule,
             bump: task_pda.1,
         }

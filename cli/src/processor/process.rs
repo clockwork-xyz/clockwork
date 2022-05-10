@@ -33,7 +33,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::QueueCreate => super::queue::create(&client),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
         CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
-        CliCommand::TaskCreate { ix, schedule } => super::task::create(&client, ix, schedule),
+        CliCommand::TaskCreate { schedule } => super::task::create(&client, schedule),
         CliCommand::TaskGet { address } => super::task::get(&client, &address),
     }
 }

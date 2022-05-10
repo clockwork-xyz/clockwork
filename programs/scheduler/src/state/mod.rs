@@ -1,9 +1,11 @@
+mod action;
 mod authority;
 mod config;
 mod fee;
 mod queue;
 mod task;
 
+pub use action::*;
 pub use authority::*;
 pub use config::*;
 pub use fee::*;

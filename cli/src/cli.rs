@@ -1,5 +1,5 @@
 use clap::{Arg, Command};
-use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
+use solana_sdk::pubkey::Pubkey;
 use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
@@ -17,7 +17,7 @@ pub enum CliCommand {
 
     // Task commands
     TaskCancel { address: Pubkey },
-    TaskCreate { ix: Instruction, schedule: String },
+    TaskCreate { schedule: String },
     TaskGet { address: Pubkey },
 
     // Utility commands

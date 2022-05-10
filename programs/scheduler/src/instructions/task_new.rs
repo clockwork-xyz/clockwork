@@ -7,7 +7,6 @@ use {
 #[derive(Accounts)]
 #[instruction(
     bump: u8,
-    ixs: Vec<InstructionData>,
     schedule: String,
 )]
 pub struct TaskNew<'info> {
@@ -40,7 +39,7 @@ pub struct TaskNew<'info> {
         ],
         bump,
         payer = owner,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
+        space = 8 + size_of::<Task>(), // + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
 }
@@ -48,12 +47,11 @@ pub struct TaskNew<'info> {
 pub fn handler(
     ctx: Context<TaskNew>,
     bump: u8,
-    ixs: Vec<InstructionData>,
     schedule: String,
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, ixs, queue, schedule)
+    task.new(bump, clock, queue, schedule)
 }

@@ -3,7 +3,7 @@ use {
         cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
     },
     chrono::{prelude::*, Duration},
-    cronos_sdk::scheduler::state::{Fee, Queue, Task},
+    cronos_sdk::scheduler::state::{Action, Fee, Queue, Task},
     serde_json::json,
     solana_client_helpers::Client,
     solana_sdk::{
@@ -71,8 +71,9 @@ fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
 }
 
 fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
+    let now: DateTime<Utc> = Utc::now();
+    let next_minute = now + Duration::minutes(1);
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
-    let memo_ix = build_memo_ix(&queue_pubkey);
     let queue_data = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
@@ -80,9 +81,6 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
     let queue = Queue::try_from(queue_data)
         .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
-    let task_pda = Task::pda(queue_pubkey, queue.task_count);
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
         recurrence,
@@ -93,12 +91,21 @@ fn schedule_memo_task(client: &Arc<Client>, owner: &Keypair, recurrence: u32) {
         next_minute.weekday(),
         next_minute.year()
     );
+    let task_pda = Task::pda(queue_pubkey, queue.task_count);
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
-        vec![memo_ix],
         owner.pubkey(),
         queue_pubkey,
         schedule,
         task_pda,
     );
-    sign_and_submit(&client, &[create_task_ix], owner);
+    let action_pda = Action::pda(task_pda.0, 0);
+    let memo_ix = build_memo_ix(&queue_pubkey);
+    let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
+        action_pda,
+        vec![memo_ix],
+        owner.pubkey(),
+        queue_pubkey,
+        task_pda.0,
+    );
+    sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
 }
