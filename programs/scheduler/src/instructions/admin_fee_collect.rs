@@ -13,7 +13,7 @@ pub struct AdminFeeCollect<'info> {
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 
@@ -23,7 +23,7 @@ pub struct AdminFeeCollect<'info> {
             SEED_FEE, 
             fee.queue.as_ref()
         ],
-        bump = fee.bump,
+        bump,
     )]
     pub fee: Account<'info, Fee>,
 }

@@ -183,10 +183,10 @@ fn schedule_memo_task(
     }
 
     // Create an action
-    let action_pda = Action::pda(task_pubkey, 0);
+    let action_pubkey = Action::pda(task_pubkey, 0).0;
     let memo_ix = build_memo_ix(&queue_pubkey);
     let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
-        action_pda,
+        action_pubkey,
         vec![memo_ix],
         owner.pubkey(),
         queue_pubkey,

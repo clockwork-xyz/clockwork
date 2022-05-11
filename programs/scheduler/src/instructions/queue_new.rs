@@ -46,9 +46,8 @@ pub fn handler(ctx: Context<QueueNew>) -> Result<()> {
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;
 
-    let fee_bump = *ctx.bumps.get("fee").unwrap();
     let queue_bump = *ctx.bumps.get("queue").unwrap();
 
-    fee.new(fee_bump, queue.key())?;
+    fee.new( queue.key())?;
     queue.new(queue_bump, owner.key())
 }

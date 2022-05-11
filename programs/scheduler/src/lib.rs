@@ -19,8 +19,8 @@ use state::*;
 pub mod cronos_scheduler {
     use super::*;
 
-    pub fn action_new(ctx: Context<ActionNew>, bump: u8, ixs: Vec<InstructionData>) -> Result<()> {
-        action_new::handler(ctx, bump, ixs)
+    pub fn action_new(ctx: Context<ActionNew>, ixs: Vec<InstructionData>) -> Result<()> {
+        action_new::handler(ctx, ixs)
     }
 
     pub fn admin_config_update(
@@ -34,26 +34,12 @@ pub mod cronos_scheduler {
         admin_fee_collect::handler(ctx)
     }
 
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        authority_bump: u8,
-        config_bump: u8,
-        fee_bump: u8,
-        pool_pubkey: Pubkey,
-        queue_bump: u8,
-    ) -> Result<()> {
-        initialize::handler(
-            ctx,
-            authority_bump,
-            config_bump,
-            fee_bump,
-            pool_pubkey,
-            queue_bump,
-        )
+    pub fn initialize(ctx: Context<Initialize>, pool_pubkey: Pubkey) -> Result<()> {
+        initialize::handler(ctx, pool_pubkey)
     }
 
-    pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String, bump: u8) -> Result<()> {
-        admin_task_new::handler(ctx, schedule, bump)
+    pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String) -> Result<()> {
+        admin_task_new::handler(ctx, schedule)
     }
 
     pub fn admin_task_cancel(ctx: Context<AdminTaskCancel>) -> Result<()> {

@@ -7,11 +7,11 @@ use {
         },
         InstructionData,
     },
-    cronos_scheduler::{pda::PDA, state::InstructionData as CronosInstructionData},
+    cronos_scheduler::state::InstructionData as CronosInstructionData,
 };
 
 pub fn action_new(
-    action_pda: PDA,
+    action: Pubkey,
     ixs: Vec<Instruction>,
     owner: Pubkey,
     queue: Pubkey,
@@ -20,14 +20,13 @@ pub fn action_new(
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new(action_pda.0, false),
+            AccountMeta::new(action, false),
             AccountMeta::new(owner, true),
             AccountMeta::new_readonly(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task, false),
         ],
         data: cronos_scheduler::instruction::ActionNew {
-            bump: action_pda.1,
             ixs: ixs
                 .iter()
                 .map(|ix| CronosInstructionData::from(ix.clone()))

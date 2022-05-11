@@ -11,8 +11,11 @@ pub struct QueueSign<'info> {
 
     #[account(
         mut,
-        seeds = [SEED_QUEUE, queue.owner.as_ref()],
-        bump = queue.bump,
+        seeds = [
+            SEED_QUEUE, 
+            queue.owner.as_ref()
+        ],
+        bump,
         has_one = owner,
     )]
     pub queue: Account<'info, Queue>,

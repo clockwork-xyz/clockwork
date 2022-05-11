@@ -14,7 +14,7 @@ pub struct AdminTaskCancel<'info> {
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 
@@ -25,7 +25,7 @@ pub struct AdminTaskCancel<'info> {
             task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
-        bump = task.bump,
+        bump,
     )]
     pub task: Account<'info, Task>,
 }

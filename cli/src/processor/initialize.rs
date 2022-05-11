@@ -15,17 +15,14 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     let ix_a = cronos_sdk::heartbeat::instruction::initialize(admin, config_pda, heartbeat_pda);
 
     // Initialize scheduler program
-    let authority_pda = cronos_sdk::scheduler::state::Authority::pda();
-    let config_pda = cronos_sdk::scheduler::state::Config::pda();
-    let queue_pda = cronos_sdk::scheduler::state::Queue::pda(authority_pda.0);
-    let fee_pda = cronos_sdk::scheduler::state::Fee::pda(queue_pda.0);
+    let authority = cronos_sdk::scheduler::state::Authority::pda().0;
+    let config = cronos_sdk::scheduler::state::Config::pda().0;
+    let queue = cronos_sdk::scheduler::state::Queue::pda(authority).0;
+    let fee = cronos_sdk::scheduler::state::Fee::pda(queue).0;
     let ix_b = cronos_sdk::scheduler::instruction::initialize(
-        admin,
-        authority_pda,
-        config_pda,
-        fee_pda,
+        admin, authority, config, fee,
         admin, // TODO 'admin' is just a placeholder. Pass in correct pool id after building out the pool program.
-        queue_pda,
+        queue,
     );
 
     // Initialize the network program

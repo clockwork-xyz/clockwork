@@ -5,10 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(
-    bump: u8,
-    ixs: Vec<InstructionData>,
-)]
+#[instruction(ixs: Vec<InstructionData>)]
 pub struct ActionNew<'info> {
     #[account(
         init,
@@ -18,20 +15,23 @@ pub struct ActionNew<'info> {
             task.action_count.to_be_bytes().as_ref(),
         ],
         bump,
-        payer = owner,
+        payer = payer,
         space = 8 + size_of::<Action>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub action: Account<'info, Action>,
     
-    #[account(mut)]
+    #[account()]
     pub owner: Signer<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         seeds = [
             SEED_QUEUE, 
             queue.owner.as_ref()
         ],
-        bump = queue.bump,
+        bump,
         has_one = owner,
     )]
     pub queue: Account<'info, Queue>,
@@ -46,7 +46,7 @@ pub struct ActionNew<'info> {
             queue.key().as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
-        bump = task.bump,
+        bump,
         has_one = queue,
     )]
     pub task: Account<'info, Task>,
@@ -54,11 +54,10 @@ pub struct ActionNew<'info> {
 
 pub fn handler(
     ctx: Context<ActionNew>,
-    bump: u8,
     ixs: Vec<InstructionData>,
 ) -> Result<()> {
     let action = &mut ctx.accounts.action;
     let task = &mut ctx.accounts.task;
 
-    action.new(bump, ixs, task)
+    action.new( ixs, task)
 }

@@ -4,7 +4,6 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction()]
 pub struct TaskExec<'info> {
     #[account(
         mut,
@@ -13,7 +12,7 @@ pub struct TaskExec<'info> {
             action.task.as_ref(),
             action.id.to_be_bytes().as_ref()
         ],
-        bump = action.bump
+        bump,
     )]
     pub action: Account<'info, Action>,
 
@@ -25,7 +24,7 @@ pub struct TaskExec<'info> {
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 
@@ -35,7 +34,7 @@ pub struct TaskExec<'info> {
             SEED_FEE,
             queue.key().as_ref()
         ],
-        bump = fee.bump,
+        bump,
         has_one = queue
     )]
     pub fee: Account<'info, Fee>,
@@ -57,7 +56,7 @@ pub struct TaskExec<'info> {
             task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
-        bump = task.bump,
+        bump,
         has_one = queue,
         constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
         constraint = match task.status {

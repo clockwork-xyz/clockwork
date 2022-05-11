@@ -1,7 +1,4 @@
-use {
-    crate::state::*, 
-    anchor_lang::prelude::*
-};
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 #[instruction(settings: ConfigSettings)]
@@ -15,7 +12,7 @@ pub struct AdminConfigUpdate<'info> {
     #[account(
         mut,
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 }

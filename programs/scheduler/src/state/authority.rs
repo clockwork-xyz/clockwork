@@ -12,9 +12,7 @@ pub const SEED_AUTHORITY: &[u8] = b"authority";
 
 #[account]
 #[derive(Debug)]
-pub struct Authority {
-    pub bump: u8,
-}
+pub struct Authority {}
 
 impl Authority {
     pub fn pda() -> PDA {
@@ -26,20 +24,5 @@ impl TryFrom<Vec<u8>> for Authority {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Authority::try_deserialize(&mut data.as_slice())
-    }
-}
-
-/**
- * AuthorityAccount
- */
-
-pub trait AuthorityAccount {
-    fn new(&mut self, bump: u8) -> Result<()>;
-}
-
-impl AuthorityAccount for Account<'_, Authority> {
-    fn new(&mut self, bump: u8) -> Result<()> {
-        self.bump = bump;
-        Ok(())
     }
 }

@@ -17,7 +17,6 @@ pub const SEED_TASK: &[u8] = b"task";
 #[derive(Debug)]
 pub struct Task {
     pub action_count: u128,
-    pub bump: u8,
     pub exec_at: Option<i64>,
     pub id: u128,
     pub queue: Pubkey,
@@ -48,7 +47,6 @@ impl TryFrom<Vec<u8>> for Task {
 pub trait TaskAccount {
     fn new(
         &mut self,
-        bump: u8,
         clock: &Sysvar<Clock>,
         queue: &mut Account<Queue>,
         schedule: String,
@@ -72,14 +70,12 @@ pub trait TaskAccount {
 impl TaskAccount for Account<'_, Task> {
     fn new(
         &mut self,
-        bump: u8,
         clock: &Sysvar<Clock>,
         queue: &mut Account<Queue>,
         schedule: String,
     ) -> Result<()> {
         // Initialize task account
         self.action_count = 0;
-        self.bump = bump;
         self.id = queue.task_count;
         self.queue = queue.key();
         self.schedule = schedule;

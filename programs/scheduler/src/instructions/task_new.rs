@@ -49,7 +49,5 @@ pub fn handler(ctx: Context<TaskNew>, schedule: String) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    let task_bump = *ctx.bumps.get("task").unwrap();
-
-    task.new(task_bump, clock, queue, schedule)
+    task.new(clock, queue, schedule)
 }
