@@ -7,12 +7,13 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn queue_new(fee: Pubkey, owner: Pubkey, queue: Pubkey) -> Instruction {
+pub fn queue_new(fee: Pubkey, owner: Pubkey, payer: Pubkey, queue: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(fee, false),
-            AccountMeta::new(owner, true),
+            AccountMeta::new_readonly(owner, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],

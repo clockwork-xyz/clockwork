@@ -10,9 +10,9 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     let admin = client.payer_pubkey();
 
     // Initialize the heartbeat program
-    let config_pda = cronos_sdk::heartbeat::state::Config::pda();
-    let heartbeat_pda = cronos_sdk::heartbeat::state::Heartbeat::pda();
-    let ix_a = cronos_sdk::heartbeat::instruction::initialize(admin, config_pda, heartbeat_pda);
+    let config = cronos_sdk::heartbeat::state::Config::pda().0;
+    let heartbeat = cronos_sdk::heartbeat::state::Heartbeat::pda().0;
+    let ix_a = cronos_sdk::heartbeat::instruction::initialize(admin, config, heartbeat);
 
     // Initialize scheduler program
     let authority = cronos_sdk::scheduler::state::Authority::pda().0;
@@ -25,7 +25,7 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
         queue,
     );
 
-    // Initialize the network program
+    // Initialize network program
     let authority = cronos_sdk::network::state::Authority::pda().0;
     let config = cronos_sdk::network::state::Config::pda().0;
     let pool = cronos_sdk::network::state::Pool::pda().0;

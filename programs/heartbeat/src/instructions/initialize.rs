@@ -5,10 +5,6 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(
-    config_bump: u8,
-    heartbeat_bump: u8,
-)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -35,13 +31,13 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Initialize>, config_bump: u8, heartbeat_bump: u8) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
     let heartbeat = &mut ctx.accounts.heartbeat;
 
-    config.new(admin.key(), config_bump)?;
-    heartbeat.new(heartbeat_bump)?;
+    config.new(admin.key())?;
+    heartbeat.new()?;
 
     Ok(())
 }

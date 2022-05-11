@@ -14,7 +14,6 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub bump: u8,
 }
 
 impl Config {
@@ -43,16 +42,14 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()>;
+    fn new(&mut self, admin: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, bump: u8) -> Result<()> {
-        require!(self.bump == 0, CronosError::AccountAlreadyOpen);
+    fn new(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.bump = bump;
         Ok(())
     }
 

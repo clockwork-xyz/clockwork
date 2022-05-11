@@ -18,7 +18,7 @@ pub fn task_new(
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(owner, true),
+            AccountMeta::new_readonly(owner, true),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),

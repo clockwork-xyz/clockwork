@@ -22,7 +22,7 @@ pub mod cronos_heartbeat {
         heartbeat_reset::handler(ctx)
     }
 
-    pub fn initialize(ctx: Context<Initialize>, config_bump: u8, heartbeat_bump: u8) -> Result<()> {
-        initialize::handler(ctx, config_bump, heartbeat_bump)
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        initialize::handler(ctx)
     }
 }

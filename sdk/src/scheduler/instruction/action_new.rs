@@ -14,6 +14,7 @@ pub fn action_new(
     action: Pubkey,
     ixs: Vec<Instruction>,
     owner: Pubkey,
+    payer: Pubkey,
     queue: Pubkey,
     task: Pubkey,
 ) -> Instruction {
@@ -21,7 +22,8 @@ pub fn action_new(
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(action, false),
-            AccountMeta::new(owner, true),
+            AccountMeta::new_readonly(owner, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new_readonly(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task, false),

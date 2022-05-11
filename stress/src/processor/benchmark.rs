@@ -34,8 +34,12 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         let owner = Keypair::new();
         let queue_pubkey = Queue::pda(owner.pubkey()).0;
         let fee_pubkey = Fee::pda(queue_pubkey).0;
-        let ix =
-            cronos_sdk::scheduler::instruction::queue_new(fee_pubkey, owner.pubkey(), queue_pubkey);
+        let ix = cronos_sdk::scheduler::instruction::queue_new(
+            fee_pubkey,
+            owner.pubkey(),
+            owner.pubkey(),
+            queue_pubkey,
+        );
         client.airdrop(&owner.pubkey(), LAMPORTS_PER_SOL).unwrap();
         sign_and_submit(&client, &[ix], &owner);
         owners.push(owner);
@@ -188,6 +192,7 @@ fn schedule_memo_task(
     let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
         action_pubkey,
         vec![memo_ix],
+        owner.pubkey(),
         owner.pubkey(),
         queue_pubkey,
         task_pubkey,
