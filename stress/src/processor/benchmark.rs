@@ -16,7 +16,7 @@ use {
         borsh, commitment_config::CommitmentConfig, instruction::Instruction,
         native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Keypair, signer::Signer,
     },
-    std::{collections::HashMap, ops::Div, str::FromStr, sync::Arc, time::Instant},
+    std::{collections::HashMap, ops::Div, str::FromStr, sync::Arc},
 };
 
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
@@ -24,18 +24,10 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let client = new_client();
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
     let num_tasks_serial = count - num_tasks_parallel;
-    let total_tasks = count * recurrence;
-
-    println!("    total queues: {}", num_tasks_parallel + 1);
-    println!("     -- queues in parallel: {}", num_tasks_parallel);
-    println!("     -- serial queue: {}", 1);
-    println!("tasks in parallel: {}", num_tasks_parallel);
-    println!("  tasks in serial: {}\n", num_tasks_serial);
 
     let mut owners: Vec<Keypair> = vec![];
-
-    let mut expected_exec = HashMap::<Pubkey, Vec<i64>>::new();
-    let mut actual_exec = HashMap::<Pubkey, Vec<i64>>::new();
+    let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
+    let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
     // Create queues
     for _ in 0..(num_tasks_parallel + 1) {
@@ -52,37 +44,41 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     // Schedule parallel tasks
     for i in 0..num_tasks_parallel {
         let owner = owners.get(i as usize).unwrap();
-        schedule_memo_task(&client, owner, recurrence, &mut expected_exec);
+        schedule_memo_task(&client, owner, recurrence, &mut expected_exec_ats);
     }
 
     // Schedule serial tasks
     let owner = owners.last().unwrap();
     for _ in 0..num_tasks_serial {
-        schedule_memo_task(&client, owner, recurrence, &mut expected_exec);
+        schedule_memo_task(&client, owner, recurrence, &mut expected_exec_ats);
     }
 
-    let included_programs: Vec<String> = vec![cronos_sdk::scheduler::ID.to_string()];
-    let url = "ws://localhost:8900/";
+    // Collect and report test results
+    let num_expected_events = count * (recurrence + 1);
+    listen_for_events(num_expected_events, &mut actual_exec_ats)?;
+    calculate_and_report_stats(num_expected_events, expected_exec_ats, actual_exec_ats)?;
 
-    // Open web socket to listen for task events
-    let (_ws_sub, log_receiver) = PubsubClient::logs_subscribe(
-        url,
-        RpcTransactionLogsFilter::Mentions(included_programs),
+    Ok(())
+}
+
+fn listen_for_events(
+    num_expected_events: u32,
+    actual_exec_ats: &mut HashMap<Pubkey, Vec<i64>>,
+) -> Result<(), CliError> {
+    let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
+        "ws://localhost:8900/",
+        RpcTransactionLogsFilter::Mentions(vec![cronos_sdk::scheduler::ID.to_string()]),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
     )
-    .unwrap();
+    .map_err(|_| CliError::WebsocketError)?;
 
-    let mut counter = 0;
+    // Watch for task exec events
+    let mut event_count = 0;
 
-    // Parse log data
-    let now = Instant::now();
     for log_response in log_receiver {
-        let elapsed_time = now.elapsed().as_secs();
-        println!("elapsed time: {}", elapsed_time);
         let logs = log_response.value.logs.into_iter();
-
         for log in logs {
             match &log[..14] {
                 "Program data: " => {
@@ -91,22 +87,29 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
                     base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
                     let event =
                         borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
-                    actual_exec
+                    actual_exec_ats
                         .entry(event.task)
                         .or_insert(Vec::new())
                         .push(event.ts);
-                    counter += 1;
+                    event_count += 1;
                 }
                 _ => {}
             }
         }
 
-        if counter == total_tasks {
+        // Exit if we've received the expected number of events
+        if event_count == num_expected_events {
             break;
         }
     }
 
-    report_stats(expected_exec, actual_exec);
+    // TODO: Remove once https://github.com/solana-labs/solana/issues/16102
+    //       is addressed. Until then, drop the subscription handle in another
+    //       thread so that we deadlock in the other thread as to not block
+    //       this thread.
+    std::thread::spawn(move || {
+        ws_sub.send_unsubscribe().unwrap();
+    });
 
     Ok(())
 }
@@ -136,21 +139,20 @@ fn schedule_memo_task(
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
 ) {
+    // Get queue for owner
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
     let queue = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
         .unwrap();
-
     let queue_data = Queue::try_from(queue)
         .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
 
+    // Generate PDA for new task account
     let task_pda = Task::pda(queue_pubkey, queue_data.task_count);
-
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
-
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
         recurrence,
@@ -161,27 +163,25 @@ fn schedule_memo_task(
         next_minute.weekday(),
         next_minute.year()
     );
+    let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
+        owner.pubkey(),
+        queue_pubkey,
+        schedule.clone(),
+        task_pda,
+    );
 
-    println!("schedule: {}", schedule);
-
-    let times = Schedule::from_str(&schedule).unwrap();
-
-    // Index expected fire times
-    for datetime in times.after(&Utc.from_utc_datetime(&Utc::now().naive_utc())) {
-        println!("--> {}", datetime.timestamp());
+    // Index expected exec_at times
+    for datetime in Schedule::from_str(&schedule)
+        .unwrap()
+        .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))
+    {
         expected_exec
             .entry(task_pda.0)
             .or_insert(Vec::new())
             .push(datetime.timestamp());
     }
 
-    let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
-        owner.pubkey(),
-        queue_pubkey,
-        schedule,
-        task_pda,
-    );
-
+    // Create an action
     let action_pda = Action::pda(task_pda.0, 0);
     let memo_ix = build_memo_ix(&queue_pubkey);
     let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
@@ -195,45 +195,47 @@ fn schedule_memo_task(
     sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
 }
 
-fn report_stats(expected_exec: HashMap<Pubkey, Vec<i64>>, actual_exec: HashMap<Pubkey, Vec<i64>>) {
-    let mut tasks_avg: Vec<f32> = vec![];
-    for (k, v) in expected_exec {
-        let mut task_avg: Vec<f32> = vec![];
-        println!("               task: {}", k);
-        println!("           expected: {}", v.len());
-        println!("expected exec times: {:?}", v);
-
-        let actual = actual_exec.get(&k).unwrap();
-
-        println!("             actual: {}", actual.len());
-        println!("  actual exec times: {:?}\n", actual);
-
-        for i in 0..(v.len() - 1) {
-            task_avg.push((actual[i].abs() - v[i].abs()) as f32);
+fn calculate_and_report_stats(
+    num_expected_events: u32,
+    expecteds: HashMap<Pubkey, Vec<i64>>,
+    actuals: HashMap<Pubkey, Vec<i64>>,
+) -> Result<(), CliError> {
+    // Calculate delays
+    let mut delays: Vec<i64> = vec![];
+    let mut missing = 0;
+    for (task_pubkey, expecteds) in expecteds {
+        for i in 0..expecteds.len() {
+            let expected = expecteds.get(i).unwrap();
+            let actual = actuals.get(&task_pubkey).unwrap().get(i);
+            match actual {
+                None => missing += 1,
+                Some(actual) => {
+                    delays.push(actual - expected);
+                }
+            }
         }
-
-        // Push single task average to tasks_avg
-        tasks_avg.push(task_avg.iter().sum::<f32>() as f32 / task_avg.len() as f32);
     }
+    delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-    let count = tasks_avg.len();
-    let mean = tasks_avg.iter().sum::<f32>() as f32 / count as f32;
-    let mid = tasks_avg.len() / 2;
-    let std_dev = tasks_avg
+    // Compute stats on delay data
+    let mean = delays.iter().sum::<i64>() as f32 / delays.len() as f32;
+    let mid = delays.len() / 2;
+    let std_dev = delays
         .iter()
         .map(|value| {
             let diff = mean - (*value as f32);
             diff * diff
         })
         .sum::<f32>()
-        .div(count as f32)
+        .div(delays.len() as f32)
         .sqrt();
 
-    println!("mean exec time per task: {:?}", tasks_avg);
-    println!("mean: {}", mean);
+    // Stdout
+    println!("Expected execs: {}", num_expected_events);
+    println!("Missing execs: {}", missing);
+    println!("Delay (mean): {} sec", mean);
+    println!("Delay (median): {} sec", delays[mid]);
+    println!("Delay (stddev): {} sec", std_dev);
 
-    tasks_avg.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-    println!("median: {}", tasks_avg[mid]);
-    println!("standard dev: {}", std_dev);
+    Ok(())
 }
