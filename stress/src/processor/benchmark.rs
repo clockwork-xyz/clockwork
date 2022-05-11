@@ -16,7 +16,7 @@ use {
         borsh, commitment_config::CommitmentConfig, instruction::Instruction,
         native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Keypair, signer::Signer,
     },
-    std::{collections::HashMap, str::FromStr, sync::Arc},
+    std::{collections::HashMap, ops::Div, str::FromStr, sync::Arc, time::Instant},
 };
 
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
@@ -37,7 +37,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let mut expected_exec = HashMap::<Pubkey, Vec<i64>>::new();
     let mut actual_exec = HashMap::<Pubkey, Vec<i64>>::new();
 
-    // Create daemons
+    // Create queues
     for _ in 0..(num_tasks_parallel + 1) {
         let owner = Keypair::new();
         let queue_pda = Queue::pda(owner.pubkey());
@@ -64,7 +64,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let included_programs: Vec<String> = vec![cronos_sdk::scheduler::ID.to_string()];
     let url = "ws://localhost:8900/";
 
-    // open web socket to listen for task events
+    // Open web socket to listen for task events
     let (_ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         url,
         RpcTransactionLogsFilter::Mentions(included_programs),
@@ -76,34 +76,26 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     let mut counter = 0;
 
-    // parse log data
+    // Parse log data
+    let now = Instant::now();
     for log_response in log_receiver {
-        let response = log_response.value;
-        let logs = response.logs;
-        let data = logs.into_iter();
+        let elapsed_time = now.elapsed().as_secs();
+        println!("elapsed time: {}", elapsed_time);
+        let logs = log_response.value.logs.into_iter();
 
-        for string in data {
-            match &string[..14] {
+        for log in logs {
+            match &log[..14] {
                 "Program data: " => {
-                    // create buffer
+                    // Decode event from log data
                     let mut buffer = Vec::<u8>::new();
-                    // decode from string into buffer
-                    base64::decode_config_buf(&string[14..], base64::STANDARD, &mut buffer)
-                        .unwrap();
-
-                    let task_event =
+                    base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
+                    let event =
                         borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
-
-                    println!("task: {}", task_event.task);
-                    println!("  ts: {}", task_event.ts);
-
                     actual_exec
-                        .entry(task_event.task)
+                        .entry(event.task)
                         .or_insert(Vec::new())
-                        .push(task_event.ts);
-
+                        .push(event.ts);
                     counter += 1;
-                    println!("counter: {}", counter)
                 }
                 _ => {}
             }
@@ -114,17 +106,17 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         }
     }
 
-    stats(expected_exec, actual_exec);
+    report_stats(expected_exec, actual_exec);
 
     Ok(())
 }
 
-fn build_memo_ix(daemon_pubkey: &Pubkey) -> Instruction {
+fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     let hello_world_memo = json!({
       "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
       "accounts": [
         {
-          "pubkey": daemon_pubkey.to_string(),
+          "pubkey": queue_pubkey.to_string(),
           "is_signer": true,
           "is_writable": false
         }
@@ -144,20 +136,24 @@ fn schedule_memo_task(
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
 ) {
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
     let queue_pubkey = Queue::pda(owner.pubkey()).0;
-    let queue_data = client
+    let queue = client
         .get_account_data(&queue_pubkey)
         .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
         .unwrap();
-    let queue = Queue::try_from(queue_data)
+
+    let queue_data = Queue::try_from(queue)
         .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
         .unwrap();
 
+    let task_pda = Task::pda(queue_pubkey, queue_data.task_count);
+
+    let now: DateTime<Utc> = Utc::now();
+    let next_minute = now + Duration::minutes(1);
+
     let schedule = format!(
         "0-{} {} {} {} {} {} {}",
-        recurrence - 1,
+        recurrence,
         next_minute.minute(),
         next_minute.hour(),
         next_minute.day(),
@@ -166,13 +162,13 @@ fn schedule_memo_task(
         next_minute.year()
     );
 
-    let task_pda = Task::pda(queue_pubkey, queue.task_count);
+    println!("schedule: {}", schedule);
 
-    // validating cron expression
     let times = Schedule::from_str(&schedule).unwrap();
 
-    // index expected fire times
+    // Index expected fire times
     for datetime in times.after(&Utc.from_utc_datetime(&Utc::now().naive_utc())) {
+        println!("--> {}", datetime.timestamp());
         expected_exec
             .entry(task_pda.0)
             .or_insert(Vec::new())
@@ -182,7 +178,7 @@ fn schedule_memo_task(
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
         owner.pubkey(),
         queue_pubkey,
-        schedule.to_owned(),
+        schedule,
         task_pda,
     );
 
@@ -199,7 +195,7 @@ fn schedule_memo_task(
     sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
 }
 
-fn stats(expected_exec: HashMap<Pubkey, Vec<i64>>, actual_exec: HashMap<Pubkey, Vec<i64>>) {
+fn report_stats(expected_exec: HashMap<Pubkey, Vec<i64>>, actual_exec: HashMap<Pubkey, Vec<i64>>) {
     let mut tasks_avg: Vec<f32> = vec![];
     for (k, v) in expected_exec {
         let mut task_avg: Vec<f32> = vec![];
@@ -216,23 +212,21 @@ fn stats(expected_exec: HashMap<Pubkey, Vec<i64>>, actual_exec: HashMap<Pubkey, 
             task_avg.push((actual[i].abs() - v[i].abs()) as f32);
         }
 
-        // push single task average to tasks_avg
+        // Push single task average to tasks_avg
         tasks_avg.push(task_avg.iter().sum::<f32>() as f32 / task_avg.len() as f32);
     }
 
     let count = tasks_avg.len();
     let mean = tasks_avg.iter().sum::<f32>() as f32 / count as f32;
     let mid = tasks_avg.len() / 2;
-
-    let std_dev = (tasks_avg
+    let std_dev = tasks_avg
         .iter()
         .map(|value| {
             let diff = mean - (*value as f32);
-
             diff * diff
         })
         .sum::<f32>()
-        / count as f32)
+        .div(count as f32)
         .sqrt();
 
     println!("mean exec time per task: {:?}", tasks_avg);
