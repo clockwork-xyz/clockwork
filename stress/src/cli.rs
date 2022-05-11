@@ -24,6 +24,8 @@ pub enum CliError {
     CommandNotRecognized(String),
     #[error("No signers were provided")]
     NoSigners,
+    #[error("There was an error with the websocket client")]
+    WebsocketError,
 }
 
 pub fn app() -> Command<'static> {
