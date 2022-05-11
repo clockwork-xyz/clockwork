@@ -94,17 +94,13 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
-    let config_bump = *ctx.bumps.get("config").unwrap();
-    let pool_bump = *ctx.bumps.get("pool").unwrap();
-    let registry_bump = *ctx.bumps.get("registry").unwrap();
-    let snapshot_bump = *ctx.bumps.get("snapshot").unwrap();
 
     // Initialize accounts
-    authority.new(authority_bump, queue.key())?;
-    config.new(admin.key(), config_bump, mint.key())?;
-    pool.new(pool_bump)?;
-    registry.new(registry_bump)?;
-    registry.new_snapshot(snapshot, snapshot_bump)?;
+    authority.new(queue.key())?;
+    config.new(admin.key(),  mint.key())?;
+    pool.new()?;
+    registry.new()?;
+    registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
 
     // Create a queue

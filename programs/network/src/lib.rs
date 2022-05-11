@@ -18,8 +18,8 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
-    pub fn register(ctx: Context<Register>, node_bump: u8) -> Result<()> {
-        register::handler(ctx, node_bump)
+    pub fn register(ctx: Context<Register>) -> Result<()> {
+        register::handler(ctx)
     }
 
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {

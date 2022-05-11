@@ -22,7 +22,6 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[account]
 #[derive(Debug)]
 pub struct Pool {
-    pub bump: u8,
     pub delegates: VecDeque<Pubkey>,
     pub nonce: u64,
     pub snapshot_ts: i64,
@@ -46,7 +45,7 @@ impl TryFrom<Vec<u8>> for Pool {
  */
 
 pub trait PoolAccount {
-    fn new(&mut self, bump: u8) -> Result<()>;
+    fn new(&mut self) -> Result<()>;
 
     fn cycle(
         &mut self,
@@ -57,9 +56,7 @@ pub trait PoolAccount {
 }
 
 impl PoolAccount for Account<'_, Pool> {
-    fn new(&mut self, bump: u8) -> Result<()> {
-        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
-        self.bump = bump;
+    fn new(&mut self) -> Result<()> {
         self.delegates = VecDeque::new();
         Ok(())
     }

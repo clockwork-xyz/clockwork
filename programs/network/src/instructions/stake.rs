@@ -9,7 +9,7 @@ use {
 pub struct Stake<'info> {
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump
+        bump
     )]
     pub config: Account<'info, Config>,
 
@@ -21,7 +21,7 @@ pub struct Stake<'info> {
             SEED_NODE,
             identity.key().as_ref()
         ],
-        bump = node.bump,
+        bump
     )]
     pub node: Account<'info, Node>,
 

@@ -34,17 +34,17 @@ pub fn register(client: &Arc<Client>) -> Result<(), CliError> {
 
     // Build ix
     let identity = client.payer_pubkey();
-    let node_pda = Node::pda(identity);
+    let node_pubkey = Node::pda(identity).0;
     let registry_pubkey = Registry::pda().0;
     let ix = cronos_sdk::network::instruction::register(
         config_pubkey,
         identity,
         config_data.mint,
-        node_pda,
+        node_pubkey,
         registry_pubkey,
     );
     sign_and_submit(client, &[ix]);
-    get(client, &node_pda.0)
+    get(client, &node_pubkey)
 }
 
 pub fn stake(client: &Arc<Client>, amount: u64) -> Result<(), CliError> {

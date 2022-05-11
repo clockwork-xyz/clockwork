@@ -12,14 +12,13 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(node_bump: u8)]
 pub struct Register<'info> {
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump
+        bump
     )]
     pub config: Account<'info, Config>,
 
@@ -44,7 +43,7 @@ pub struct Register<'info> {
     #[account(
         mut,
         seeds = [SEED_REGISTRY],
-        bump = registry.bump,
+        bump,
     )]
     pub registry: Account<'info, Registry>,
 
@@ -66,13 +65,13 @@ pub struct Register<'info> {
     pub tokens: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<Register>, node_bump: u8) -> Result<()> {
+pub fn handler(ctx: Context<Register>) -> Result<()> {
     let identity = &mut ctx.accounts.identity;
     let node = &mut ctx.accounts.node;
     let registry = &mut ctx.accounts.registry;
     let tokens = &mut ctx.accounts.tokens;
 
-    registry.new_node(identity, node, node_bump, tokens)?;
+    registry.new_node(identity, node, tokens)?;
 
     // TODO add an action to the task
 

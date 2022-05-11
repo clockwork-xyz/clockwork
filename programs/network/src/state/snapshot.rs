@@ -15,7 +15,6 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
-    pub bump: u8,
     pub entry_count: u64,
     pub id: u64,
     pub stake_amount_total: u64,
@@ -40,20 +39,18 @@ impl TryFrom<Vec<u8>> for Snapshot {
  */
 
 pub trait SnapshotAccount {
-    fn new(&mut self, bump: u8, id: u64) -> Result<()>;
+    fn new(&mut self, id: u64) -> Result<()>;
 
     fn new_entry(
         &mut self,
         node: &Account<Node>,
         snapshot_entry: &mut Account<SnapshotEntry>,
-        snapshot_entry_bump: u8,
         stake: &Account<TokenAccount>,
     ) -> Result<()>;
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
-    fn new(&mut self, bump: u8, id: u64) -> Result<()> {
-        self.bump = bump;
+    fn new(&mut self, id: u64) -> Result<()> {
         self.entry_count = 0;
         self.id = id;
         self.status = SnapshotStatus::InProgress;
@@ -64,7 +61,6 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         &mut self,
         node: &Account<Node>,
         snapshot_entry: &mut Account<SnapshotEntry>,
-        snapshot_entry_bump: u8,
         stake: &Account<TokenAccount>,
     ) -> Result<()> {
         // Validate the snapshot is in progress
@@ -84,7 +80,6 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 
         // Record the new snapshot entry
         snapshot_entry.new(
-            snapshot_entry_bump,
             self.entry_count,
             node.identity,
             self.stake_amount_total,

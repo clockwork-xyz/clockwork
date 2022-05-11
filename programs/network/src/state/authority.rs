@@ -13,7 +13,6 @@ pub const SEED_AUTHORITY: &[u8] = b"authority";
 #[account]
 #[derive(Debug)]
 pub struct Authority {
-    pub bump: u8,
     pub queue: Pubkey,
 }
 
@@ -35,12 +34,11 @@ impl TryFrom<Vec<u8>> for Authority {
  */
 
 pub trait AuthorityAccount {
-    fn new(&mut self, bump: u8, queue: Pubkey) -> Result<()>;
+    fn new(&mut self, queue: Pubkey) -> Result<()>;
 }
 
 impl AuthorityAccount for Account<'_, Authority> {
-    fn new(&mut self, bump: u8, queue: Pubkey) -> Result<()> {
-        self.bump = bump;
+    fn new(&mut self, queue: Pubkey) -> Result<()> {
         self.queue = queue;
         Ok(())
     }
