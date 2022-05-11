@@ -74,5 +74,7 @@ pub fn handler(ctx: Context<Register>, node_bump: u8) -> Result<()> {
 
     registry.new_node(identity, node, node_bump, tokens)?;
 
+    // TODO add an action to the task
+
     Ok(())
 }

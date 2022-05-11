@@ -39,16 +39,16 @@ pub mod cronos_scheduler {
         authority_bump: u8,
         config_bump: u8,
         fee_bump: u8,
+        pool_pubkey: Pubkey,
         queue_bump: u8,
-        registry_pubkey: Pubkey,
     ) -> Result<()> {
         initialize::handler(
             ctx,
             authority_bump,
             config_bump,
             fee_bump,
+            pool_pubkey,
             queue_bump,
-            registry_pubkey,
         )
     }
 
@@ -60,8 +60,8 @@ pub mod cronos_scheduler {
         admin_task_cancel::handler(ctx)
     }
 
-    pub fn queue_new(ctx: Context<QueueNew>, fee_bump: u8, queue_bump: u8) -> Result<()> {
-        queue_new::handler(ctx, fee_bump, queue_bump)
+    pub fn queue_new(ctx: Context<QueueNew>) -> Result<()> {
+        queue_new::handler(ctx)
     }
 
     pub fn queue_sign(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {

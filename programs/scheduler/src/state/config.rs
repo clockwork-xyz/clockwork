@@ -17,7 +17,7 @@ pub struct Config {
     pub bump: u8,
     pub node_fee: u64,
     pub program_fee: u64,
-    pub registry_pubkey: Pubkey,
+    pub pool_pubkey: Pubkey,
 }
 
 impl Config {
@@ -48,18 +48,18 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, bump: u8, registry_pubkey: Pubkey) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, bump: u8, pool_pubkey: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, bump: u8, registry_pubkey: Pubkey) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, bump: u8, pool_pubkey: Pubkey) -> Result<()> {
         self.admin = admin;
         self.bump = bump;
         self.node_fee = 0; // Lamports to pay node per task exec
         self.program_fee = 0; // Lamports to pay to program per task exec
-        self.registry_pubkey = registry_pubkey;
+        self.pool_pubkey = pool_pubkey;
         Ok(())
     }
 

@@ -32,10 +32,10 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     // Create queues
     for _ in 0..(num_tasks_parallel + 1) {
         let owner = Keypair::new();
-        let queue_pda = Queue::pda(owner.pubkey());
-        let queue_addr = queue_pda.0;
-        let fee_pda = Fee::pda(queue_addr);
-        let ix = cronos_sdk::scheduler::instruction::queue_new(fee_pda, owner.pubkey(), queue_pda);
+        let queue_pubkey = Queue::pda(owner.pubkey()).0;
+        let fee_pubkey = Fee::pda(queue_pubkey).0;
+        let ix =
+            cronos_sdk::scheduler::instruction::queue_new(fee_pubkey, owner.pubkey(), queue_pubkey);
         client.airdrop(&owner.pubkey(), LAMPORTS_PER_SOL).unwrap();
         sign_and_submit(&client, &[ix], &owner);
         owners.push(owner);

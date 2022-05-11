@@ -9,8 +9,8 @@ use {
     authority_bump: u8,
     config_bump: u8,
     fee_bump: u8,
+    pool_pubkey: Pubkey,
     queue_bump: u8,
-    registry_pubkey: Pubkey
 )]
 pub struct Initialize<'info> {
     #[account(mut)]
@@ -67,8 +67,8 @@ pub fn handler(
     authority_bump: u8,
     config_bump: u8,
     fee_bump: u8,
+    pool_pubkey: Pubkey,
     queue_bump: u8,
-    registry_pubkey: Pubkey
 ) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
@@ -77,7 +77,7 @@ pub fn handler(
     let fee = &mut ctx.accounts.fee;
 
     authority.new(authority_bump)?;
-    config.new(admin.key(), config_bump, registry_pubkey)?;
+    config.new(admin.key(), config_bump, pool_pubkey)?;
     queue.new(queue_bump, authority.key())?;
     fee.new(fee_bump, queue.key())?;
 

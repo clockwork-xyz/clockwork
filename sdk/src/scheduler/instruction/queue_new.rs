@@ -1,28 +1,21 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program,
     },
-    cronos_scheduler::pda::PDA,
+    InstructionData,
 };
 
-pub fn queue_new(fee_pda: PDA, owner: Pubkey, queue_pda: PDA) -> Instruction {
+pub fn queue_new(fee: Pubkey, owner: Pubkey, queue: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new(fee_pda.0, false),
+            AccountMeta::new(fee, false),
             AccountMeta::new(owner, true),
-            AccountMeta::new(queue_pda.0, false),
+            AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_scheduler::instruction::QueueNew {
-            fee_bump: fee_pda.1,
-            queue_bump: queue_pda.1,
-        }
-        .data(),
+        data: cronos_scheduler::instruction::QueueNew {}.data(),
     }
 }

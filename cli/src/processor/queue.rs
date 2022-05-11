@@ -12,7 +12,7 @@ pub fn create(client: &Arc<Client>) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
     let queue_pda = cronos_sdk::scheduler::state::Queue::pda(owner);
     let fee_pda = cronos_sdk::scheduler::state::Fee::pda(queue_pda.0);
-    let ix = cronos_sdk::scheduler::instruction::queue_new(fee_pda, owner, queue_pda);
+    let ix = cronos_sdk::scheduler::instruction::queue_new(fee_pda.0, owner, queue_pda.0);
     sign_and_submit(client, &[ix]);
     get(client, &queue_pda.0)
 }

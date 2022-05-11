@@ -6,10 +6,6 @@ use {
 
 
 #[derive(Accounts)]
-#[instruction(
-    fee_bump: u8,
-    queue_bump: u8,
-)]
 pub struct QueueNew<'info> {
     #[account(
         init,
@@ -42,10 +38,13 @@ pub struct QueueNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueNew>, fee_bump: u8, queue_bump: u8) -> Result<()> {
+pub fn handler(ctx: Context<QueueNew>) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;
+
+    let fee_bump = *ctx.bumps.get("fee").unwrap();
+    let queue_bump = *ctx.bumps.get("queue").unwrap();
 
     fee.new(fee_bump, queue.key())?;
     queue.new(queue_bump, owner.key())

@@ -1,40 +1,50 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program, sysvar,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program, sysvar,
     },
-    cronos_network::pda::PDA,
+    InstructionData,
 };
 
 pub fn initialize(
     admin: Pubkey,
+    authority: Pubkey,
+    config: Pubkey,
+    fee: Pubkey,
     mint: Pubkey,
-    config_pda: PDA,
-    pool_pda: PDA,
-    registry_pda: PDA,
-    snapshot_pda: PDA,
+    pool: Pubkey,
+    queue: Pubkey,
+    registry: Pubkey,
+    snapshot: Pubkey,
+    task: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
+            AccountMeta::new(authority, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(config_pda.0, false),
+            AccountMeta::new(config, false),
+            AccountMeta::new(fee, false),
             AccountMeta::new(mint, false),
-            AccountMeta::new(pool_pda.0, false),
-            AccountMeta::new(registry_pda.0, false),
-            AccountMeta::new(snapshot_pda.0, false),
+            AccountMeta::new(pool, false),
+            AccountMeta::new(queue, false),
+            AccountMeta::new(registry, false),
+            AccountMeta::new_readonly(cronos_scheduler::ID, false),
+            AccountMeta::new(snapshot, false),
             AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(task, false),
         ],
         data: cronos_network::instruction::Initialize {
-            config_bump: config_pda.1,
-            pool_bump: pool_pda.1,
-            registry_bump: registry_pda.1,
-            snapshot_bump: snapshot_pda.1,
+            // authority_bump: authority_pda.1,
+            // config_bump: config_pda.1,
+            // fee_bump: fee_pda.1,
+            // pool_bump: pool_pda.1,
+            // queue_bump: queue_pda.1,
+            // registry_bump: registry_pda.1,
+            // snapshot_bump: snapshot_pda.1,
+            // task_bump: task_pda.1,
         }
         .data(),
     }
