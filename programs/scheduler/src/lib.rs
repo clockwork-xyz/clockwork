@@ -72,8 +72,8 @@ pub mod cronos_scheduler {
         task_cancel::handler(ctx)
     }
 
-    pub fn task_new(ctx: Context<TaskNew>, bump: u8, schedule: String) -> Result<()> {
-        task_new::handler(ctx, bump, schedule)
+    pub fn task_new(ctx: Context<TaskNew>, schedule: String) -> Result<()> {
+        task_new::handler(ctx, schedule)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {

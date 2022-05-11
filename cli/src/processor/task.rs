@@ -28,13 +28,18 @@ pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountDataNotParsable(queue_addr.to_string()))?;
 
     // Build task_create ix.
-    let task_pda = Task::pda(queue_addr, queue_data.task_count);
-    let task_ix =
-        cronos_sdk::scheduler::instruction::task_new(owner, queue_addr, schedule, task_pda);
+    let task_pubkey = Task::pda(queue_addr, queue_data.task_count).0;
+    let task_ix = cronos_sdk::scheduler::instruction::task_new(
+        owner,
+        owner,
+        queue_addr,
+        schedule,
+        task_pubkey,
+    );
 
     // Sign and submit
     sign_and_submit(client, &[task_ix]);
-    get(client, &task_pda.0)
+    get(client, &task_pubkey)
 }
 
 pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {

@@ -14,13 +14,16 @@ pub struct QueueNew<'info> {
             queue.key().as_ref()
         ],
         bump,
-        payer = owner,
+        payer = payer,
         space = 8 + size_of::<Fee>(),
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(mut)]
+    #[account()]
     pub owner: Signer<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         init,
@@ -29,7 +32,7 @@ pub struct QueueNew<'info> {
             owner.key().as_ref()
         ],
         bump,
-        payer = owner,
+        payer = payer,
         space = 8 + size_of::<Queue>(),
     )]
     pub queue: Account<'info, Queue>,

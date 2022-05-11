@@ -5,16 +5,16 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(
-    bump: u8,
-    schedule: String,
-)]
+#[instruction(schedule: String)]
 pub struct TaskNew<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
-    #[account(mut)]
+    #[account()]
     pub owner: Signer<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         mut,
@@ -38,20 +38,18 @@ pub struct TaskNew<'info> {
             queue.task_count.to_be_bytes().as_ref(),
         ],
         bump,
-        payer = owner,
+        payer = payer,
         space = 8 + size_of::<Task>(), // + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(
-    ctx: Context<TaskNew>,
-    bump: u8,
-    schedule: String,
-) -> Result<()> {
+pub fn handler(ctx: Context<TaskNew>, schedule: String) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, queue, schedule)
+    let task_bump = *ctx.bumps.get("task").unwrap();
+
+    task.new(task_bump, clock, queue, schedule)
 }

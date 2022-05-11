@@ -1,34 +1,29 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program, sysvar,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program, sysvar,
     },
-    cronos_scheduler::pda::PDA,
+    InstructionData,
 };
 
-pub fn task_new(owner: Pubkey, queue: Pubkey, schedule: String, task_pda: PDA) -> Instruction {
+pub fn task_new(
+    owner: Pubkey,
+    payer: Pubkey,
+    queue: Pubkey,
+    schedule: String,
+    task: Pubkey,
+) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(owner, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(task_pda.0, false),
+            AccountMeta::new(task, false),
         ],
-        data: cronos_scheduler::instruction::TaskNew {
-            bump: task_pda.1,
-            schedule,
-        }
-        .data(),
+        data: cronos_scheduler::instruction::TaskNew { schedule }.data(),
     }
 }
-
-// ixs
-// .iter()
-// .map(|ix| CronosInstructionData::from(ix.clone()))
-// .collect(),
