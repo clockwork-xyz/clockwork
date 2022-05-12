@@ -74,7 +74,7 @@ impl PoolAccount for Account<'_, Pool> {
         );
 
         // Sample the nonce value
-        let sample: u64 = self.nonce.checked_rem(snapshot.stake_amount_total).unwrap();
+        let sample: u64 = self.nonce.checked_rem(snapshot.stake_total).unwrap();
 
         // Verify the sample is within the snapshot entry's stake range
         require!(

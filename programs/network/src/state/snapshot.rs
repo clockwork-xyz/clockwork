@@ -17,7 +17,7 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 pub struct Snapshot {
     pub entry_count: u64,
     pub id: u64,
-    pub stake_amount_total: u64,
+    pub stake_total: u64,
     pub status: SnapshotStatus,
 }
 
@@ -82,7 +82,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         snapshot_entry.new(
             self.entry_count,
             node.identity,
-            self.stake_amount_total,
+            self.stake_total,
             stake.amount,
             self.key(),
         )?;
@@ -91,7 +91,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         self.entry_count = self.entry_count.checked_add(1).unwrap();
 
         // Update the sum stake amount
-        self.stake_amount_total = self.stake_amount_total.checked_add(stake.amount).unwrap();
+        self.stake_total = self.stake_total.checked_add(stake.amount).unwrap();
 
         Ok(())
     }
