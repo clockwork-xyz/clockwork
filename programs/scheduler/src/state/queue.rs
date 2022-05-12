@@ -42,7 +42,7 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
-    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
+    fn sign(&self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -53,7 +53,7 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
+    fn sign(&self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
         invoke_signed(
             ix,
             account_infos,

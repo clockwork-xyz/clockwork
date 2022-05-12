@@ -2,8 +2,13 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum CronosError {
+    #[msg("Delegate addresses cannot be initialized accounts")]
+    DelegateDataNotEmpty,
+
     #[msg("An action's inner ix failed to execute")]
     InnerIxFailed,
+    #[msg("An inner instructure wants to mutate state owned by this program")]
+    InnerIxReentrancy,
 
     #[msg("The task is current executing another action")]
     InvalidAction,

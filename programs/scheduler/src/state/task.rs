@@ -1,3 +1,5 @@
+use crate::state::{AccountMetaData, InstructionData};
+
 use {
     super::{Action, Config, Fee, Queue, QueueAccount},
     crate::{errors::CronosError, pda::PDA},
@@ -56,12 +58,12 @@ pub trait TaskAccount {
 
     fn exec(
         &mut self,
-        account_infos: &[AccountInfo],
-        action: &mut Account<Action>,
+        account_infos: &Vec<AccountInfo>,
+        action: &Account<Action>,
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        queue: &mut Account<Queue>,
+        queue: &Account<Queue>,
     ) -> Result<()>;
 
     fn start(&mut self) -> Result<()>;
@@ -113,12 +115,12 @@ impl TaskAccount for Account<'_, Task> {
 
     fn exec(
         &mut self,
-        account_infos: &[AccountInfo],
-        action: &mut Account<Action>,
+        account_infos: &Vec<AccountInfo>,
+        action: &Account<Action>,
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        queue: &mut Account<Queue>,
+        queue: &Account<Queue>,
     ) -> Result<()> {
         // Validate the action id matches the task's current execution state
         require!(
@@ -130,48 +132,74 @@ impl TaskAccount for Account<'_, Task> {
             CronosError::InvalidAction
         );
 
+        // Validate the delegate data is empty
+        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+
         // Record the delegate's lamports before invoking inner ixs
         let delegate_lamports_pre = delegate.lamports();
 
         // Process all of the action instructions
         for ix in &action.ixs {
-            // TODO Verify account_infos matches the metadata in ix.accounts
-            //      for account in ix.accounts {}
-
-            for account_info in account_infos {
-                // Attack vector: Consider actions where the ixs contain
-                //  mutable accounts owned by the scheduler program.
-                //  Inner ixs are signed by the queue PDA.
-                //  What accounts can these inner instructions mutate?
-                if *account_info.owner == crate::ID {
-                    // TODO Given the queue is a signer, should any mutable accounts
-                    //      owned by this program be passed into an inner ix –
-                    //      written by a presumably malicious 3rd party?
-                    //
-                    // If any this program's accounts are allowed into inner ixs –
-                    //  for example, to allow for updating a task or action –
-                    //  what verification checks are needed and what modifications will be allowed?
-                    //
-                    // DO allow any read-only accounts owned by this program into the inner ix.
-                    // DO NOT allow mutable accounts owned by this program into the inner ix.
-                    // The ONLY allowed mutable account should be *this* action account.
-                    // After the executing inner instructions, the only thing that is allowed
-                    //  to have changed is the set of inner ixs.
+            // TODO Create a unique payer address (eg CronPayer111111111111111111111)
+            //      If an account matches this address, then replace it with the delegate address.
+            //      This will provide a way to inject a "payer" into inner ixs.
+            //      This is necessary to allow for inner ixs to init new accounts.
+            //      Delegates will be re-imbursed for any SOL spent during inner ixs.
+            //
+            // Consider the security implications to delegates. They will be a signer
+            //  on arbitrary ixs written by malicious third parties. Delegates should not
+            //  hold any assets on these wallets other than SOL. We should verify no account data
+            //  has been initialized at the delegate address before and after the inner ix calls.
+            let accs: &mut Vec<AccountMetaData> = &mut vec![];
+            ix.accounts.iter().for_each(|acc| {
+                if acc.pubkey == crate::delegate::ID {
+                    accs.push(AccountMetaData {
+                        pubkey: delegate.key(),
+                        is_signer: acc.is_signer,
+                        is_writable: acc.is_writable,
+                    });
+                } else {
+                    accs.push(acc.clone());
                 }
+            });
 
-                // TODO Create a unique payer address (ie CronPayer111111111111111111111)
-                //      If an account matches this address, then replace it with the delegate address.
-                //      This will provide a way to inject a "payer" address into inner ixs.
-                //      This is necessary to allow inner ixs to init new accounts.
-                //
-                // Consider the security implications to delegates. They will be a signer
-                //  on arbitrary ixs written by malicious third parties. Delegates should not
-                //  hold *any* assets on these wallets other than SOL.
+            // Attack vector: Consider the case where an inner ix asks for
+            //  a mutable account owned by the scheduler program.
+            //  Inner ixs are signed by a queue PDA, so what accounts
+            //  do inner instructions have permission to mutate?
+            for account_info in account_infos {
+                if *account_info.owner == crate::ID {
+                    // TODO Given the queue PDA is a signer, DO NOT allow any mutable accounts
+                    //  owned by this program into an inner ix.
+
+                    // require!(
+                    //     account_info.is_writable == false,
+                    //     CronosError::InnerIxReentrancy
+                    // );
+
+                    // TODO Is it safe to pass *this* action account as mutable?
+                    //      After the executing inner instructions, we could verify the state
+                    //      changes fit within certain allowed bounds. This would give devs
+                    //      the ability to dynamically change the inner ixs of an action for
+                    //      the next invocation.
+                }
             }
-            queue.sign(&Instruction::from(ix), account_infos)?;
+
+            // Execute the inner ix
+            queue.sign(
+                &Instruction::from(&InstructionData {
+                    program_id: ix.program_id,
+                    accounts: accs.clone(),
+                    data: ix.data.clone(),
+                }),
+                account_infos,
+            )?;
         }
 
-        // Track how many lamports the delegate lost
+        // Verify that inner ixs have not initialized an account at the delegate address
+        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+
+        // Track how many lamports the delegate spent in the inner ixs
         let delegate_lamports_post = delegate.lamports();
         let delegate_reimbursement = delegate_lamports_pre
             .checked_sub(delegate_lamports_post)

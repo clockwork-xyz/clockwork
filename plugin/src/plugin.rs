@@ -319,9 +319,17 @@ impl CronosPlugin {
                     for acc in &inner_ix.accounts {
                         if !acc_dedupe.contains(&acc.pubkey) {
                             acc_dedupe.insert(acc.pubkey);
+
+                            // Override the injected pubkey for the Cronos delegate account
+                            let mut injected_pubkey = acc.pubkey;
+                            if acc.pubkey == cronos_sdk::scheduler::delegate::ID {
+                                injected_pubkey = delegate_pubkey;
+                            }
+
+                            // Push the account metadata into the ix as a "remaining account"
                             task_exec_ix.accounts.push(match acc.is_writable {
-                                true => AccountMeta::new(acc.pubkey, false),
-                                false => AccountMeta::new_readonly(acc.pubkey, false),
+                                true => AccountMeta::new(injected_pubkey, false),
+                                false => AccountMeta::new_readonly(injected_pubkey, false),
                             })
                         }
                     }

@@ -23,7 +23,7 @@ pub fn task_exec(
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(delegate, true),
             AccountMeta::new(fee, false),
-            AccountMeta::new(queue, false),
+            AccountMeta::new_readonly(queue, false),
             AccountMeta::new(task, false),
         ],
         data: cronos_scheduler::instruction::TaskExec {}.data(),

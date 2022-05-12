@@ -48,13 +48,15 @@ pub trait ActionAccount {
 
 impl ActionAccount for Account<'_, Action> {
     fn new(&mut self, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()> {
-        // Reject the instructions if they have signers other than the queue.
+        // Reject inner instructions if they have a signer other than the queue or delegate
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
-                require!(
-                    acc.pubkey == task.queue || !acc.is_signer,
-                    CronosError::InvalidSignatory
-                );
+                if acc.is_signer {
+                    require!(
+                        acc.pubkey == task.queue || acc.pubkey == crate::delegate::ID,
+                        CronosError::InvalidSignatory
+                    );
+                }
             }
         }
 

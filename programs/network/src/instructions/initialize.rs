@@ -137,7 +137,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     )?;
 
     // Create an action to start the snapshot
-    let d = sighash("global", "start_snapshot");
     let start_snapshot_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
@@ -151,25 +150,29 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 is_signer: true,
                 is_writable: false,
             },
+            AccountMeta {
+                pubkey: cronos_scheduler::delegate::ID,
+                is_signer: true,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: registry.key(),
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: Snapshot::pda(1).0,
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: system_program.key(),
+                is_signer: false,
+                is_writable: false,
+            }
         ],
-        data: d.into(),
+        data: sighash("global", "start_snapshot").into(),
     };
-
-    // let acc = crate::accounts::StartSnapshot {
-    //     config: config.key(),
-    //     queue: queue.key(),
-    // };
-
-    
-
-    // let disc = crate::instructions::StartSnapshot::discriminator();
-    // msg!("DISC: {:#?}", disc);
-    // crate::__client_accounts_start_snapshot::StartSnapshot
-    // let acc = crate::__cpi_client_accounts_start_snapshot::StartSnapshot {
-    //     config: config.key(),
-    //     queue: queue.key(),
-    // };
-
     cronos_scheduler::cpi::action_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),

@@ -1,7 +1,7 @@
 use {
     crate::{cli::CliError, utils::sign_and_submit},
     solana_client_helpers::Client,
-    solana_sdk::pubkey::Pubkey,
+    solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
     std::sync::Arc,
 };
 
@@ -41,7 +41,10 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
         action, admin, authority, config, fee, mint, pool, queue, registry, snapshot, task,
     );
 
+    // Fund the queue
+    let ix_d = cronos_sdk::scheduler::instruction::queue_fund(LAMPORTS_PER_SOL / 4, admin, queue);
+
     // Submit tx
-    sign_and_submit(client, &[ix_a, ix_b, ix_c]);
+    sign_and_submit(client, &[ix_a, ix_b, ix_c, ix_d]);
     Ok(())
 }

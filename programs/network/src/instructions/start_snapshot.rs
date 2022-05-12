@@ -1,6 +1,4 @@
-use cronos_scheduler::state::Queue;
-
-use {crate::state::*, anchor_lang::prelude::*};
+use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::state::Queue, std::mem::size_of};
 
 #[derive(Accounts)]
 pub struct StartSnapshot<'info> {
@@ -9,21 +7,36 @@ pub struct StartSnapshot<'info> {
 
     #[account(signer)]
     pub queue: Account<'info, Queue>,
-    // #[account(mut)]
-    // pub payer: Signer<'info>,
 
-    // #[account(
-    //     init,
-    //     space = 8,
-    //     payer = payer
-    // )]
-    // pub snapshot: Account<'info, Snapshot>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
-    // #[account()]
-    // pub system_program: Program<'info, System>,
+    #[account(mut, seeds = [SEED_REGISTRY], bump)]
+    pub registry: Account<'info, Registry>,
+
+    #[account(
+        init,
+        seeds = [
+            SEED_SNAPSHOT,
+            registry.snapshot_count.to_be_bytes().as_ref()
+        ],
+        bump,
+        space = 8 + size_of::<Snapshot>(),
+        payer = payer
+    )]
+    pub snapshot: Account<'info, Snapshot>,
+
+    #[account()]
+    pub system_program: Program<'info, System>,
 }
 
-pub fn handler(_ctx: Context<StartSnapshot>) -> Result<()> {
+pub fn handler(ctx: Context<StartSnapshot>) -> Result<()> {
     msg!("Starting snapshot!");
-    Ok(())
+
+    let registry = &mut ctx.accounts.registry;
+    let snapshot = &mut ctx.accounts.snapshot;
+
+    registry.new_snapshot(snapshot)
+
+    // Ok(())
 }

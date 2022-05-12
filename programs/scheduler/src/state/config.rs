@@ -55,8 +55,8 @@ pub trait ConfigAccount {
 impl ConfigAccount for Account<'_, Config> {
     fn new(&mut self, admin: Pubkey, pool_pubkey: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.delegate_fee = 0; // Lamports to pay node per task exec
-        self.program_fee = 0; // Lamports to pay to program per task exec
+        self.delegate_fee = 0; // Lamports to pay delegate
+        self.program_fee = 0; // Lamports to pay program
         self.pool_pubkey = pool_pubkey;
         Ok(())
     }

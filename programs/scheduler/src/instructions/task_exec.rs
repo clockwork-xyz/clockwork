@@ -1,12 +1,11 @@
 use {
-    crate::{events::*, state::*, errors::CronosError},
+    crate::{errors::CronosError, events::TaskExecuted, state::*},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]
 pub struct TaskExec<'info> {
     #[account(
-        mut,
         seeds = [
             SEED_ACTION,
             action.task.as_ref(),
@@ -19,10 +18,7 @@ pub struct TaskExec<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
-    #[account(
-        seeds = [SEED_CONFIG],
-        bump,
-    )]
+    #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
 
     #[account(mut)]
@@ -40,12 +36,11 @@ pub struct TaskExec<'info> {
     pub fee: Account<'info, Fee>,
 
     #[account(
-        mut,
         seeds = [
             SEED_QUEUE,
             queue.owner.as_ref()
         ],
-        bump = queue.bump,
+        bump,
     )]
     pub queue: Account<'info, Queue>,
 
@@ -68,15 +63,17 @@ pub struct TaskExec<'info> {
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
-    let action = &mut ctx.accounts.action;
+    let action = &ctx.accounts.action;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
-    let queue = &mut ctx.accounts.queue;
+    let queue = &ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.exec(&ctx.remaining_accounts.iter().as_slice(), action, delegate, config, fee, queue)?;
+    let remaining_accounts = &mut ctx.remaining_accounts.clone().to_vec();
+
+    task.exec(remaining_accounts, action, delegate, config, fee, queue)?;
 
     emit!(TaskExecuted {
         delegate: delegate.key(),

@@ -1,6 +1,7 @@
 extern crate chrono;
 extern crate cronos_cron;
 
+pub mod delegate;
 pub mod errors;
 pub mod events;
 pub mod id;
@@ -44,6 +45,10 @@ pub mod cronos_scheduler {
 
     pub fn admin_task_cancel(ctx: Context<AdminTaskCancel>) -> Result<()> {
         admin_task_cancel::handler(ctx)
+    }
+
+    pub fn queue_fund(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
+        queue_fund::handler(ctx, amount)
     }
 
     pub fn queue_new(ctx: Context<QueueNew>) -> Result<()> {

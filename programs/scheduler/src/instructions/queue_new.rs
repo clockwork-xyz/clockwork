@@ -49,5 +49,7 @@ pub fn handler(ctx: Context<QueueNew>) -> Result<()> {
     let queue_bump = *ctx.bumps.get("queue").unwrap();
 
     fee.new( queue.key())?;
-    queue.new(queue_bump, owner.key())
+    queue.new(queue_bump, owner.key())?;
+
+    Ok(())
 }
