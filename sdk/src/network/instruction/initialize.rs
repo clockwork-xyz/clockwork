@@ -8,6 +8,7 @@ use anchor_lang::{
 };
 
 pub fn initialize(
+    action: Pubkey,
     admin: Pubkey,
     authority: Pubkey,
     config: Pubkey,
@@ -33,6 +34,7 @@ pub fn initialize(
             AccountMeta::new(snapshot, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
+            AccountMeta::new(action, false),
             AccountMeta::new(fee, false),
             AccountMeta::new(queue, false),
             AccountMeta::new(task, false),

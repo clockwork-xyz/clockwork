@@ -9,6 +9,7 @@ mod queue_sign;
 mod task_cancel;
 mod task_exec;
 mod task_new;
+mod task_start;
 
 pub use action_new::*;
 pub use admin_config_update::*;
@@ -21,3 +22,4 @@ pub use queue_sign::*;
 pub use task_cancel::*;
 pub use task_exec::*;
 pub use task_new::*;
+pub use task_start::*;

@@ -59,6 +59,6 @@ impl QueueAccount for Account<'_, Queue> {
             account_infos,
             &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
         )
-        .map_err(|_err| CronosError::TaskFailed.into())
+        .map_err(|_err| CronosError::InnerIxFailed.into())
     }
 }

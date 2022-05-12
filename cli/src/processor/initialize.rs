@@ -35,9 +35,10 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     let queue = cronos_sdk::scheduler::state::Queue::pda(authority).0;
     let fee = cronos_sdk::scheduler::state::Fee::pda(queue).0;
     let task = cronos_sdk::scheduler::state::Task::pda(queue, 0).0;
+    let action = cronos_sdk::scheduler::state::Action::pda(task, 0).0;
 
     let ix_c = cronos_sdk::network::instruction::initialize(
-        admin, authority, config, fee, mint, pool, queue, registry, snapshot, task,
+        action, admin, authority, config, fee, mint, pool, queue, registry, snapshot, task,
     );
 
     // Submit tx

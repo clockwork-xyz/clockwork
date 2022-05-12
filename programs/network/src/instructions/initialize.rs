@@ -2,7 +2,7 @@ use {
     crate::state::*,
     anchor_lang::{
         prelude::*, 
-        solana_program::{system_program, sysvar}
+        solana_program::{instruction::Instruction, system_program, sysvar}
     },
     anchor_spl::token::Mint,
     std::mem::size_of,
@@ -88,9 +88,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let fee = ctx.remaining_accounts.get(0).unwrap();
-    let queue = ctx.remaining_accounts.get(1).unwrap();
-    let task = ctx.remaining_accounts.get(2).unwrap();
+    let action = ctx.remaining_accounts.get(0).unwrap();
+    let fee = ctx.remaining_accounts.get(1).unwrap();
+    let queue = ctx.remaining_accounts.get(2).unwrap();
+    let task = ctx.remaining_accounts.get(3).unwrap();
     
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
@@ -118,7 +119,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         )
     )?;
 
-    // Create a task
+    // Create a task to collect snapshots
     cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
@@ -132,8 +133,68 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]]
         ), 
-        "0 */10 * * * * *".into()
+        "0/20 * * * * * *".into()
+    )?;
+
+    // Create an action to start the snapshot
+    let d = sighash("global", "start_snapshot");
+    let start_snapshot_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta {
+                pubkey: config.key(),
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: queue.key(),
+                is_signer: true,
+                is_writable: false,
+            },
+        ],
+        data: d.into(),
+    };
+
+    // let acc = crate::accounts::StartSnapshot {
+    //     config: config.key(),
+    //     queue: queue.key(),
+    // };
+
+    
+
+    // let disc = crate::instructions::StartSnapshot::discriminator();
+    // msg!("DISC: {:#?}", disc);
+    // crate::__client_accounts_start_snapshot::StartSnapshot
+    // let acc = crate::__cpi_client_accounts_start_snapshot::StartSnapshot {
+    //     config: config.key(),
+    //     queue: queue.key(),
+    // };
+
+    cronos_scheduler::cpi::action_new(
+        CpiContext::new_with_signer(
+            scheduler_program.to_account_info(),
+            cronos_scheduler::cpi::accounts::ActionNew {
+                action: action.to_account_info(),
+                owner: authority.to_account_info(),
+                payer: admin.to_account_info(),
+                queue: queue.to_account_info(),
+                system_program: system_program.to_account_info(),
+                task: task.to_account_info(),
+            },
+            &[&[SEED_AUTHORITY, &[authority_bump]]],
+        ),
+        vec![start_snapshot_ix.into()],
     )?;
 
     Ok(())
+}
+
+pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
+    let preimage = format!("{}:{}", namespace, name);
+    let mut sighash = [0u8; 8];
+    sighash.copy_from_slice(
+        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()
+            [..8],
+    );
+    sighash
 }

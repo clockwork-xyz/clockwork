@@ -65,4 +65,8 @@ pub mod cronos_scheduler {
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
         task_exec::handler(ctx)
     }
+
+    pub fn task_start(ctx: Context<TaskStart>) -> Result<()> {
+        task_start::handler(ctx)
+    }
 }

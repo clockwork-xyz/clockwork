@@ -49,7 +49,7 @@ pub trait RegistryAccount {
         &mut self,
         identity: &mut Signer,
         node: &mut Account<Node>,
-        stake_tokens: &mut Account<TokenAccount>,
+        stake: &mut Account<TokenAccount>,
     ) -> Result<()>;
 
     fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()>;
@@ -78,10 +78,10 @@ impl RegistryAccount for Account<'_, Registry> {
         &mut self,
         identity: &mut Signer,
         node: &mut Account<Node>,
-        stake_tokens: &mut Account<TokenAccount>,
+        stake: &mut Account<TokenAccount>,
     ) -> Result<()> {
         require!(!self.is_locked, CronosError::RegistryLocked);
-        node.new(self.node_count, identity, stake_tokens)?;
+        node.new(self.node_count, identity, stake)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
         Ok(())
     }

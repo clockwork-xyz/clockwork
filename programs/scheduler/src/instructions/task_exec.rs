@@ -16,9 +16,6 @@ pub struct TaskExec<'info> {
     )]
     pub action: Account<'info, Action>,
 
-    #[account(mut)]
-    pub bot: Signer<'info>,
-
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -27,6 +24,9 @@ pub struct TaskExec<'info> {
         bump,
     )]
     pub config: Account<'info, Config>,
+
+    #[account(mut)]
+    pub delegate: Signer<'info>,
 
     #[account(
         mut,
@@ -61,8 +61,7 @@ pub struct TaskExec<'info> {
         constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
         constraint = match task.status {
             TaskStatus::Executing { action_id } => action_id == action.id,
-            TaskStatus::Paused => false,
-            TaskStatus::Pending => true,
+            _ => false,
         } @ CronosError::InvalidTaskStatus
     )]
     pub task: Account<'info, Task>,
@@ -70,17 +69,17 @@ pub struct TaskExec<'info> {
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let action = &mut ctx.accounts.action;
-    let bot = &mut ctx.accounts.bot;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
+    let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.exec(&ctx.remaining_accounts.iter().as_slice(), action, bot, config, fee, queue)?;
+    task.exec(&ctx.remaining_accounts.iter().as_slice(), action, delegate, config, fee, queue)?;
 
     emit!(TaskExecuted {
-        bot: bot.key(),
+        delegate: delegate.key(),
         task: task.key(),
         ts: clock.unix_timestamp,
     });

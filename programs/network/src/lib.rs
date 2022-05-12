@@ -18,11 +18,15 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
-    pub fn register(ctx: Context<Register>) -> Result<()> {
+    pub fn register<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Result<()> {
         register::handler(ctx)
     }
 
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
         stake::handler(ctx, amount)
+    }
+
+    pub fn start_snapshot(ctx: Context<StartSnapshot>) -> Result<()> {
+        start_snapshot::handler(ctx)
     }
 }
