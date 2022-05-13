@@ -7,7 +7,7 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn task_start(delegate: Pubkey, queue: Pubkey, task: Pubkey) -> Instruction {
+pub fn task_begin(delegate: Pubkey, queue: Pubkey, task: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
@@ -16,6 +16,6 @@ pub fn task_start(delegate: Pubkey, queue: Pubkey, task: Pubkey) -> Instruction 
             AccountMeta::new(queue, false),
             AccountMeta::new(task, false),
         ],
-        data: cronos_scheduler::instruction::TaskStart {}.data(),
+        data: cronos_scheduler::instruction::TaskBegin {}.data(),
     }
 }

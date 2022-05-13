@@ -86,9 +86,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Resul
     let _scheduler_program = &ctx.accounts.scheduler_program;
     let _system_program = &ctx.accounts.system_program;
     let stake = &mut ctx.accounts.stake;
-    let task = &mut ctx.accounts.task;
-
-    task.action_count = 3;
+    let _task = &mut ctx.accounts.task;
 
     // Get remaining accounts
     let _action = ctx.remaining_accounts.get(0).unwrap();
@@ -101,7 +99,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Resul
     // Add node to the registry
     registry.new_node(identity, node, stake)?;
 
-    // TODO Add an action to the snapshot task for this node
+    // TODO Add an action to the snapshot task to capture this node in the snapshot
+    // TODO add a rotate_snapshot ix to the action
+
+    
 
     Ok(())
 }

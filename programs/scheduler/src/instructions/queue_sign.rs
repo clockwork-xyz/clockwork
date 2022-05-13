@@ -27,5 +27,7 @@ pub fn handler(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {
     queue.sign(
         &Instruction::from(&ix),
         &ctx.remaining_accounts.iter().as_slice(),
-    )
+    )?;
+
+    Ok(())
 }

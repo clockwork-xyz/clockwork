@@ -1,4 +1,7 @@
-use crate::state::{AccountMetaData, InstructionData};
+use crate::{
+    response::CronosResponse,
+    state::{AccountMetaData, InstructionData},
+};
 
 use {
     super::{Action, Config, Fee, Queue, QueueAccount},
@@ -47,28 +50,28 @@ impl TryFrom<Vec<u8>> for Task {
  */
 
 pub trait TaskAccount {
-    fn new(
-        &mut self,
-        clock: &Sysvar<Clock>,
-        queue: &mut Account<Queue>,
-        schedule: String,
-    ) -> Result<()>;
+    fn begin(&mut self) -> Result<()>;
 
     fn cancel(&mut self, to: &mut Signer) -> Result<()>;
+
+    fn end(&mut self) -> Result<()>;
 
     fn exec(
         &mut self,
         account_infos: &Vec<AccountInfo>,
-        action: &Account<Action>,
+        action: &mut Account<Action>,
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
         queue: &Account<Queue>,
     ) -> Result<()>;
 
-    fn start(&mut self) -> Result<()>;
-
-    fn finish(&mut self) -> Result<()>;
+    fn new(
+        &mut self,
+        clock: &Sysvar<Clock>,
+        queue: &mut Account<Queue>,
+        schedule: String,
+    ) -> Result<()>;
 
     fn next_exec_at(&self, ts: i64) -> Option<i64>;
 
@@ -76,24 +79,20 @@ pub trait TaskAccount {
 }
 
 impl TaskAccount for Account<'_, Task> {
-    fn new(
-        &mut self,
-        clock: &Sysvar<Clock>,
-        queue: &mut Account<Queue>,
-        schedule: String,
-    ) -> Result<()> {
-        // Initialize task account
-        self.action_count = 0;
-        self.id = queue.task_count;
-        self.queue = queue.key();
-        self.schedule = schedule;
-        self.status = TaskStatus::Pending;
+    fn begin(&mut self) -> Result<()> {
+        // Validate the task is pending
+        require!(
+            self.status == TaskStatus::Pending,
+            CronosError::InvalidTaskStatus,
+        );
 
-        // Set exec_at (schedule must be set first)
-        self.exec_at = self.next_exec_at(clock.unix_timestamp);
-
-        // Increment queue task counter
-        queue.task_count = queue.task_count.checked_add(1).unwrap();
+        if self.action_count > 0 {
+            // If there are actions, change the task status to 'executing'
+            self.status = TaskStatus::Executing { action_id: 0 };
+        } else {
+            // Otherwise, just roll forward the exec_at timestamp
+            self.roll_forward()?;
+        }
 
         Ok(())
     }
@@ -113,10 +112,15 @@ impl TaskAccount for Account<'_, Task> {
         Ok(())
     }
 
+    fn end(&mut self) -> Result<()> {
+        self.status = TaskStatus::Pending;
+        self.roll_forward()
+    }
+
     fn exec(
         &mut self,
         account_infos: &Vec<AccountInfo>,
-        action: &Account<Action>,
+        action: &mut Account<Action>,
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
@@ -139,6 +143,7 @@ impl TaskAccount for Account<'_, Task> {
         let delegate_lamports_pre = delegate.lamports();
 
         // Process all of the action instructions
+        let mut response: Option<CronosResponse> = None;
         for ix in &action.ixs {
             // TODO Create a unique payer address (eg CronPayer111111111111111111111)
             //      If an account matches this address, then replace it with the delegate address.
@@ -163,30 +168,12 @@ impl TaskAccount for Account<'_, Task> {
                 }
             });
 
-            // Attack vector: Consider the case where an inner ix asks for
-            //  a mutable account owned by the scheduler program.
-            //  Inner ixs are signed by a queue PDA, so what accounts
-            //  do inner instructions have permission to mutate?
-            for account_info in account_infos {
-                if *account_info.owner == crate::ID {
-                    // TODO Given the queue PDA is a signer, DO NOT allow any mutable accounts
-                    //  owned by this program into an inner ix.
-
-                    // require!(
-                    //     account_info.is_writable == false,
-                    //     CronosError::InnerIxReentrancy
-                    // );
-
-                    // TODO Is it safe to pass *this* action account as mutable?
-                    //      After the executing inner instructions, we could verify the state
-                    //      changes fit within certain allowed bounds. This would give devs
-                    //      the ability to dynamically change the inner ixs of an action for
-                    //      the next invocation.
-                }
-            }
-
-            // Execute the inner ix
-            queue.sign(
+            // Execute the inner ix and save the latest response. Only the last ix response
+            //  will be used.
+            //
+            // NOTE Solana will not allow downstream programs to mutate accounts owned
+            //      by the scheduler program, and explicitly forbids CPI reentrancy.
+            response = queue.sign(
                 &Instruction::from(&InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
@@ -196,8 +183,14 @@ impl TaskAccount for Account<'_, Task> {
             )?;
         }
 
-        // Verify that inner ixs have not initialized an account at the delegate address
+        // Verify that inner ixs have not initialized data at the delegate address
         require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+
+        // Handle the response
+        match response {
+            None => (),
+            Some(response) => action.ixs = response.update_action_ixs,
+        }
 
         // Track how many lamports the delegate spent in the inner ixs
         let delegate_lamports_post = delegate.lamports();
@@ -239,7 +232,7 @@ impl TaskAccount for Account<'_, Task> {
         // Update the task status
         let next_action_id = action.id.checked_add(1).unwrap();
         if next_action_id == self.action_count {
-            self.finish()?;
+            self.end()?;
         } else {
             self.status = TaskStatus::Executing {
                 action_id: next_action_id,
@@ -249,27 +242,26 @@ impl TaskAccount for Account<'_, Task> {
         Ok(())
     }
 
-    fn start(&mut self) -> Result<()> {
-        // Validate the task is pending
-        require!(
-            self.status == TaskStatus::Pending,
-            CronosError::InvalidTaskStatus,
-        );
+    fn new(
+        &mut self,
+        clock: &Sysvar<Clock>,
+        queue: &mut Account<Queue>,
+        schedule: String,
+    ) -> Result<()> {
+        // Initialize task account
+        self.action_count = 0;
+        self.id = queue.task_count;
+        self.queue = queue.key();
+        self.schedule = schedule;
+        self.status = TaskStatus::Pending;
 
-        if self.action_count > 0 {
-            // If there are actions, change the task status to 'executing'
-            self.status = TaskStatus::Executing { action_id: 0 };
-        } else {
-            // Otherwise, just roll forward the exec_at timestamp
-            self.roll_forward()?;
-        }
+        // Set exec_at (schedule must be set first)
+        self.exec_at = self.next_exec_at(clock.unix_timestamp);
+
+        // Increment queue task counter
+        queue.task_count = queue.task_count.checked_add(1).unwrap();
 
         Ok(())
-    }
-
-    fn finish(&mut self) -> Result<()> {
-        self.status = TaskStatus::Pending;
-        self.roll_forward()
     }
 
     fn next_exec_at(&self, ts: i64) -> Option<i64> {

@@ -6,6 +6,7 @@ use {
 #[derive(Accounts)]
 pub struct TaskExec<'info> {
     #[account(
+        mut,
         seeds = [
             SEED_ACTION,
             action.task.as_ref(),
@@ -63,7 +64,7 @@ pub struct TaskExec<'info> {
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
-    let action = &ctx.accounts.action;
+    let action = &mut ctx.accounts.action;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let delegate = &mut ctx.accounts.delegate;

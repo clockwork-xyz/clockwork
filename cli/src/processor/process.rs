@@ -24,10 +24,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
+        CliCommand::ActionGet { address } => super::action::get(&client, &address),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::Config => super::config::get(&client),
         CliCommand::Health => super::health::get(&client),
+        CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::NodeRegister => super::node::register(&client),
         CliCommand::NodeStake { amount } => super::node::stake(&client, amount),
         CliCommand::QueueCreate => super::queue::create(&client),

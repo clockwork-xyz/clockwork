@@ -12,6 +12,8 @@ use instructions::*;
 
 #[program]
 pub mod cronos_network {
+    use cronos_scheduler::response::CronosResponse;
+
     use super::*;
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -20,6 +22,10 @@ pub mod cronos_network {
 
     pub fn register<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Result<()> {
         register::handler(ctx)
+    }
+
+    pub fn rotate_snapshot(ctx: Context<RotateSnapshot>) -> Result<CronosResponse> {
+        rotate_snapshot::handler(ctx)
     }
 
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {

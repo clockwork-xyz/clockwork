@@ -4,6 +4,9 @@ use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
+    // Action commands
+    ActionGet { address: Pubkey },
+
     // Admin commands
     Initialize { mint: Pubkey },
 
@@ -56,6 +59,20 @@ pub fn app() -> Command<'static> {
                         .takes_value(true)
                         .required(true)
                         .help("Mint address of network token"),
+                ),
+        )
+        .subcommand(
+            Command::new("action")
+                .about("Manage an action")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("get").about("Get an action").arg(
+                        Arg::new("address")
+                            .index(1)
+                            .takes_value(true)
+                            .required(true)
+                            .help("Public address of a action"),
+                    ),
                 ),
         )
         .subcommand(

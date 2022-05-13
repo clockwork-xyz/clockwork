@@ -4,7 +4,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct TaskStart<'info> {
+pub struct TaskBegin<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -35,7 +35,7 @@ pub struct TaskStart<'info> {
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<TaskStart>) -> Result<()> {
+pub fn handler(ctx: Context<TaskBegin>) -> Result<()> {
     let task = &mut ctx.accounts.task;
-    task.start()
+    task.begin()
 }

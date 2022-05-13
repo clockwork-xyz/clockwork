@@ -272,15 +272,15 @@ impl CronosPlugin {
             let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
             let fee_pubkey = Fee::pda(task.queue).0;
 
-            // Build task_start ix
-            let task_start_ix = cronos_sdk::scheduler::instruction::task_start(
+            // Build task_begin ix
+            let task_begin_ix = cronos_sdk::scheduler::instruction::task_begin(
                 delegate_pubkey,
                 task.queue,
                 task_pubkey,
             );
 
-            // Accumulate task_exec ixs here
-            let mut ixs: Vec<Instruction> = vec![task_start_ix];
+            // Accumulate task ixs here
+            let mut ixs: Vec<Instruction> = vec![task_begin_ix];
 
             // Build an ix for each action
             for i in 0..task.action_count {

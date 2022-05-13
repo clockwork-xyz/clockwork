@@ -6,6 +6,7 @@ pub mod errors;
 pub mod events;
 pub mod id;
 pub mod pda;
+pub mod response;
 pub mod state;
 
 mod instructions;
@@ -22,6 +23,10 @@ pub mod cronos_scheduler {
 
     pub fn action_new(ctx: Context<ActionNew>, ixs: Vec<InstructionData>) -> Result<()> {
         action_new::handler(ctx, ixs)
+    }
+
+    pub fn action_update(ctx: Context<ActionUpdate>, ixs: Vec<InstructionData>) -> Result<()> {
+        action_update::handler(ctx, ixs)
     }
 
     pub fn admin_config_update(
@@ -59,6 +64,10 @@ pub mod cronos_scheduler {
         queue_sign::handler(ctx, ix)
     }
 
+    pub fn task_begin(ctx: Context<TaskBegin>) -> Result<()> {
+        task_begin::handler(ctx)
+    }
+
     pub fn task_cancel(ctx: Context<TaskCancel>) -> Result<()> {
         task_cancel::handler(ctx)
     }
@@ -69,9 +78,5 @@ pub mod cronos_scheduler {
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
         task_exec::handler(ctx)
-    }
-
-    pub fn task_start(ctx: Context<TaskStart>) -> Result<()> {
-        task_start::handler(ctx)
     }
 }

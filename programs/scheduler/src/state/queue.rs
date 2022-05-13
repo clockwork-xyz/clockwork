@@ -1,8 +1,11 @@
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::{errors::CronosError, pda::PDA, response::CronosResponse},
     anchor_lang::{
         prelude::*,
-        solana_program::{instruction::Instruction, program::invoke_signed},
+        solana_program::{
+            instruction::Instruction,
+            program::{get_return_data, invoke_signed},
+        },
         AnchorDeserialize,
     },
     std::convert::TryFrom,
@@ -42,7 +45,11 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
-    fn sign(&self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
+    fn sign(
+        &self,
+        ix: &Instruction,
+        account_infos: &[AccountInfo],
+    ) -> Result<Option<CronosResponse>>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -53,12 +60,26 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn sign(&self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
+    fn sign(
+        &self,
+        ix: &Instruction,
+        account_infos: &[AccountInfo],
+    ) -> Result<Option<CronosResponse>> {
         invoke_signed(
             ix,
             account_infos,
             &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
         )
-        .map_err(|_err| CronosError::InnerIxFailed.into())
+        .map_err(|_err| CronosError::InnerIxFailed)?;
+
+        match get_return_data() {
+            None => Ok(None),
+            Some((program_id, return_data)) => {
+                require!(program_id == ix.program_id, CronosError::UnknownResponse);
+                Ok(Some(CronosResponse::try_from_slice(
+                    return_data.as_slice(),
+                )?))
+            }
+        }
     }
 }

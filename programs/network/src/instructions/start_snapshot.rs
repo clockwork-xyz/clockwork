@@ -5,11 +5,11 @@ pub struct StartSnapshot<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
 
-    #[account(signer)]
-    pub queue: Account<'info, Queue>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(signer)]
+    pub queue: Account<'info, Queue>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
@@ -36,7 +36,7 @@ pub fn handler(ctx: Context<StartSnapshot>) -> Result<()> {
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
 
-    registry.new_snapshot(snapshot)
+    registry.new_snapshot(snapshot)?;
 
-    // Ok(())
+    Ok(())
 }

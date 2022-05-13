@@ -137,6 +137,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     )?;
 
     // Create an action to start the snapshot
+    let next_snapshot_pubkey = Snapshot::pda(1).0;
     let start_snapshot_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
@@ -146,14 +147,14 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 is_writable: false,
             },
             AccountMeta {
-                pubkey: queue.key(),
-                is_signer: true,
-                is_writable: false,
-            },
-            AccountMeta {
                 pubkey: cronos_scheduler::delegate::ID,
                 is_signer: true,
                 is_writable: true,
+            },
+            AccountMeta {
+                pubkey: queue.key(),
+                is_signer: true,
+                is_writable: false,
             },
             AccountMeta {
                 pubkey: registry.key(),
@@ -161,7 +162,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 is_writable: true,
             },
             AccountMeta {
-                pubkey: Snapshot::pda(1).0,
+                pubkey: next_snapshot_pubkey,
                 is_signer: false,
                 is_writable: true,
             },
@@ -172,6 +173,57 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             }
         ],
         data: sighash("global", "start_snapshot").into(),
+    };
+    let rotate_snapshot_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta {
+                pubkey: action.key(),
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: authority.key(),
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: sysvar::clock::ID,
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: config.key(),
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: snapshot.key(),
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: next_snapshot_pubkey,
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: queue.key(),
+                is_signer: true,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: registry.key(),
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: task.key(),
+                is_signer: false,
+                is_writable: false,
+            }
+        ],
+        data: sighash("global", "rotate_snapshot").into(),
     };
     cronos_scheduler::cpi::action_new(
         CpiContext::new_with_signer(
@@ -186,13 +238,13 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]],
         ),
-        vec![start_snapshot_ix.into()],
+        vec![start_snapshot_ix.into(), rotate_snapshot_ix.into()],
     )?;
 
     Ok(())
 }
 
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
+fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     let preimage = format!("{}:{}", namespace, name);
     let mut sighash = [0u8; 8];
     sighash.copy_from_slice(

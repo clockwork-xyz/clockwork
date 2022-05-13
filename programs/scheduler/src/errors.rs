@@ -7,7 +7,7 @@ pub enum CronosError {
 
     #[msg("An action's inner ix failed to execute")]
     InnerIxFailed,
-    #[msg("An inner instructure wants to mutate state owned by this program")]
+    #[msg("An inner instructure wants to mutate state owned by the scheduler")]
     InnerIxReentrancy,
 
     #[msg("The task is current executing another action")]
@@ -26,4 +26,7 @@ pub enum CronosError {
 
     #[msg("The task is not due")]
     TaskNotDue,
+
+    #[msg("The CPI response value could not be parsed")]
+    UnknownResponse,
 }
