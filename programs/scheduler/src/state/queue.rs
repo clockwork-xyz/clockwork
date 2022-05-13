@@ -1,5 +1,7 @@
+use super::InstructionData;
+
 use {
-    crate::{errors::CronosError, pda::PDA, response::CronosResponse},
+    crate::{errors::CronosError, pda::PDA, responses::ExecResponse},
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -45,11 +47,7 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
-    fn sign(
-        &self,
-        ix: &Instruction,
-        account_infos: &[AccountInfo],
-    ) -> Result<Option<CronosResponse>>;
+    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -60,26 +58,26 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn sign(
-        &self,
-        ix: &Instruction,
-        account_infos: &[AccountInfo],
-    ) -> Result<Option<CronosResponse>> {
+    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse> {
         invoke_signed(
-            ix,
+            &Instruction::from(ix),
             account_infos,
             &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
         )
         .map_err(|_err| CronosError::InnerIxFailed)?;
 
-        match get_return_data() {
-            None => Ok(None),
-            Some((program_id, return_data)) => {
-                require!(program_id == ix.program_id, CronosError::UnknownResponse);
-                Ok(Some(CronosResponse::try_from_slice(
-                    return_data.as_slice(),
-                )?))
-            }
-        }
+        let exec_response = get_return_data()
+            .ok_or(CronosError::InvalidExecResponse)
+            .and_then(|(program_id, return_data)| {
+                (program_id == ix.program_id)
+                    .then(|| return_data)
+                    .ok_or(CronosError::InvalidExecResponse)
+            })
+            .map(|return_data| {
+                ExecResponse::try_from_slice(return_data.as_slice())
+                    .map_err(|_err| CronosError::InvalidExecResponse)
+            })?;
+
+        Ok(exec_response?)
     }
 }

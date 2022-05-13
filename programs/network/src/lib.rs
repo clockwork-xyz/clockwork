@@ -8,11 +8,11 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
+use cronos_scheduler::responses::ExecResponse;
 use instructions::*;
 
 #[program]
 pub mod cronos_network {
-    use cronos_scheduler::response::CronosResponse;
 
     use super::*;
 
@@ -24,7 +24,7 @@ pub mod cronos_network {
         register::handler(ctx)
     }
 
-    pub fn rotate_snapshot(ctx: Context<RotateSnapshot>) -> Result<CronosResponse> {
+    pub fn rotate_snapshot(ctx: Context<RotateSnapshot>) -> Result<ExecResponse> {
         rotate_snapshot::handler(ctx)
     }
 
@@ -32,7 +32,7 @@ pub mod cronos_network {
         stake::handler(ctx, amount)
     }
 
-    pub fn start_snapshot(ctx: Context<StartSnapshot>) -> Result<()> {
+    pub fn start_snapshot(ctx: Context<StartSnapshot>) -> Result<ExecResponse> {
         start_snapshot::handler(ctx)
     }
 }

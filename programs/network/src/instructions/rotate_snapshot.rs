@@ -1,8 +1,6 @@
-use anchor_lang::{solana_program::instruction::Instruction, system_program};
-use cronos_scheduler::{state::{Action, Task, Queue}, response::CronosResponse};
-
 use {
     crate::state::*,
+    cronos_scheduler::{state::{Action, Task, Queue}, responses::ExecResponse},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
@@ -55,19 +53,12 @@ pub struct RotateSnapshot<'info> {
 }
 
 
-pub fn handler(ctx: Context<RotateSnapshot>) -> Result<CronosResponse> {
-    msg!("Rotating snapshot!");
-
+pub fn handler(ctx: Context<RotateSnapshot>) -> Result<ExecResponse> {
     // Get accounts
-    let action = &mut ctx.accounts.action;
-    let authority = &ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
-    let config = &ctx.accounts.config;
     let current_snapshot = &mut ctx.accounts.current_snapshot;
     let next_snapshot = &mut ctx.accounts.next_snapshot;
-    let queue = &ctx.accounts.queue;
     let registry = &mut ctx.accounts.registry;
-    let task = &ctx.accounts.task;
 
     // Rotate the snapshot
     let res = registry.rotate_snapshot(clock, Some(current_snapshot), next_snapshot);
@@ -76,107 +67,20 @@ pub fn handler(ctx: Context<RotateSnapshot>) -> Result<CronosResponse> {
         msg!("Snapshot rotation failed: {:?}", res.err())
     }
 
-    // Update the action for the next task invocation
+    // Use dynamic accounts to run the next invocation with the new current snapshot
+    let snapshot_pubkey = current_snapshot.clone().key();
+    let next_snapshot_pubkey = next_snapshot.clone().key();
     let next_next_snapshot_pubkey = Snapshot::pda(next_snapshot.id.checked_add(1).unwrap()).0;
-    let start_snapshot_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta {
-                pubkey: config.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: cronos_scheduler::delegate::ID,
-                is_signer: true,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: queue.key(),
-                is_signer: true,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: registry.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: next_next_snapshot_pubkey,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: system_program::ID,
-                is_signer: false,
-                is_writable: false,
-            },
-        ],
-        data: sighash("global", "start_snapshot").into(),
-    };
-    let rotate_snapshot_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta {
-                pubkey: action.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: authority.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: sysvar::clock::ID,
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: config.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: next_snapshot.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: next_next_snapshot_pubkey,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: queue.key(),
-                is_signer: true,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: registry.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: task.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-        ],
-        data: sighash("global", "rotate_snapshot").into(),
-    };
-
-
-    Ok(CronosResponse {
-        update_action_ixs: vec![start_snapshot_ix.into(), rotate_snapshot_ix.into()]
+    Ok(ExecResponse {
+        dynamic_accounts: ctx
+            .accounts
+            .to_account_metas(None)
+            .iter()
+            .map(|acc| match acc.pubkey {
+                _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
+                _ if acc.pubkey == next_snapshot_pubkey => next_next_snapshot_pubkey,
+                _ => acc.pubkey
+            })
+            .collect(),
     })
-}
-
-fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8],
-    );
-    sighash
 }

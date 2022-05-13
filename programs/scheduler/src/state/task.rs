@@ -1,12 +1,7 @@
-use crate::{
-    response::CronosResponse,
-    state::{AccountMetaData, InstructionData},
-};
-
 use {
-    super::{Action, Config, Fee, Queue, QueueAccount},
+    super::{AccountMetaData, Action, Config, Fee, InstructionData, Queue, QueueAccount},
     crate::{errors::CronosError, pda::PDA},
-    anchor_lang::{prelude::*, solana_program::instruction::Instruction, AnchorDeserialize},
+    anchor_lang::{prelude::*, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
     std::{convert::TryFrom, str::FromStr},
@@ -142,19 +137,21 @@ impl TaskAccount for Account<'_, Task> {
         // Record the delegate's lamports before invoking inner ixs
         let delegate_lamports_pre = delegate.lamports();
 
+        // Create an array of dynamic ixs to update the action for the next invocation
+        let dyanmic_ixs: &mut Vec<InstructionData> = &mut vec![];
+
         // Process all of the action instructions
-        let mut response: Option<CronosResponse> = None;
         for ix in &action.ixs {
-            // TODO Create a unique payer address (eg CronPayer111111111111111111111)
-            //      If an account matches this address, then replace it with the delegate address.
-            //      This will provide a way to inject a "payer" into inner ixs.
-            //      This is necessary to allow for inner ixs to init new accounts.
-            //      Delegates will be re-imbursed for any SOL spent during inner ixs.
+            // If an inner ix account matches the Cronos delegate address (CronosDe1egate11111111111111111111111111111),
+            //  then inject the delegate account in its place. Dapp developers can use the delegate as a payer to initialize
+            //  new accouns in their tasks. Delegates will be reimbursed for all SOL spent during the inner ixs.
             //
-            // Consider the security implications to delegates. They will be a signer
-            //  on arbitrary ixs written by malicious third parties. Delegates should not
-            //  hold any assets on these wallets other than SOL. We should verify no account data
-            //  has been initialized at the delegate address before and after the inner ix calls.
+            // Because the delegate can be injected as the signer on inner ixs (written by presumed malicious parties),
+            //  node operators should not secure any assets or staking positions with their delegate wallets other than
+            //  an operational level of lamports needed to submit txns (~0.1 ⊚).
+            //
+            // TODO Update the network program to allow for split identity / delegate addresses so CRON stakes
+            //  are not secured by delegate signatures.
             let accs: &mut Vec<AccountMetaData> = &mut vec![];
             ix.accounts.iter().for_each(|acc| {
                 if acc.pubkey == crate::delegate::ID {
@@ -168,29 +165,47 @@ impl TaskAccount for Account<'_, Task> {
                 }
             });
 
-            // Execute the inner ix and save the latest response. Only the last ix response
-            //  will be used.
-            //
-            // NOTE Solana will not allow downstream programs to mutate accounts owned
-            //      by the scheduler program, and explicitly forbids CPI reentrancy.
-            response = queue.sign(
-                &Instruction::from(&InstructionData {
+            // Execute the inner ix and process the response. Note that even though the queue PDA is a signer
+            //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
+            //  and explicitly forbids CPI reentrancy.
+            let exec_response = queue.process(
+                &InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
                     data: ix.data.clone(),
-                }),
+                },
                 account_infos,
             )?;
+
+            // Verify the return dynamic accounts match the expected number of accounts
+            require!(
+                exec_response.dynamic_accounts.len() == ix.accounts.len(),
+                CronosError::InvalidExecResponse
+            );
+            dyanmic_ixs.push(InstructionData {
+                program_id: ix.program_id,
+                accounts: exec_response
+                    .dynamic_accounts
+                    .iter()
+                    .enumerate()
+                    .map(|(i, pubkey)| {
+                        let acc = ix.accounts.get(i).unwrap();
+                        AccountMetaData {
+                            pubkey: *pubkey,
+                            is_signer: acc.is_signer,
+                            is_writable: acc.is_writable,
+                        }
+                    })
+                    .collect::<Vec<AccountMetaData>>(),
+                data: ix.data.clone(),
+            });
         }
 
         // Verify that inner ixs have not initialized data at the delegate address
         require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
 
-        // Handle the response
-        match response {
-            None => (),
-            Some(response) => action.ixs = response.update_action_ixs,
-        }
+        // Update the actions's ixs for the next invocation
+        action.ixs = dyanmic_ixs.clone();
 
         // Track how many lamports the delegate spent in the inner ixs
         let delegate_lamports_post = delegate.lamports();

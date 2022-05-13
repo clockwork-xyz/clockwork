@@ -1,4 +1,9 @@
-use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::state::Queue, std::mem::size_of};
+use {
+    crate::state::*,
+    anchor_lang::prelude::*,
+    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    std::mem::size_of,
+};
 
 #[derive(Accounts)]
 pub struct StartSnapshot<'info> {
@@ -30,13 +35,26 @@ pub struct StartSnapshot<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<StartSnapshot>) -> Result<()> {
-    msg!("Starting snapshot!");
-
+pub fn handler(ctx: Context<StartSnapshot>) -> Result<ExecResponse> {
+    // Get accounts
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
 
+    // Start a new snapshot
     registry.new_snapshot(snapshot)?;
 
-    Ok(())
+    // Use dynamic accounts to run the next invocation with the new current snapshot
+    let snapshot_pubkey = snapshot.key();
+    let next_snapshot_pubkey = Snapshot::pda(snapshot.id.checked_add(1).unwrap()).0;
+    Ok(ExecResponse {
+        dynamic_accounts: ctx
+            .accounts
+            .to_account_metas(None)
+            .iter()
+            .map(|acc| match acc.pubkey {
+                _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
+                _ => acc.pubkey,
+            })
+            .collect(),
+    })
 }

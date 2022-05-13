@@ -12,6 +12,8 @@ pub enum CronosError {
 
     #[msg("The task is current executing another action")]
     InvalidAction,
+    #[msg("The exec response value could not be parsed")]
+    InvalidExecResponse,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
     #[msg("Your queue cannot provide all required signatures for this instruction")]
@@ -26,7 +28,4 @@ pub enum CronosError {
 
     #[msg("The task is not due")]
     TaskNotDue,
-
-    #[msg("The CPI response value could not be parsed")]
-    UnknownResponse,
 }
