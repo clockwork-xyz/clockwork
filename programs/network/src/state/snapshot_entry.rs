@@ -13,7 +13,7 @@ pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 #[derive(Debug)]
 pub struct SnapshotEntry {
     pub id: u64,
-    pub node_identity: Pubkey,
+    pub delegate: Pubkey,
     pub snapshot: Pubkey,
     pub stake_amount: u64,
     pub stake_offset: u64,
@@ -47,7 +47,7 @@ pub trait SnapshotEntryAccount {
     fn new(
         &mut self,
         id: u64,
-        node_identity: Pubkey,
+        delegate: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
         snapshot: Pubkey,
@@ -58,13 +58,13 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn new(
         &mut self,
         id: u64,
-        node_identity: Pubkey,
+        delegate: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
         snapshot: Pubkey,
     ) -> Result<()> {
         self.id = id;
-        self.node_identity = node_identity;
+        self.delegate = delegate;
         self.stake_offset = stake_offset;
         self.stake_amount = stake_amount;
         self.snapshot = snapshot;

@@ -49,7 +49,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("register", _)) => Ok(CliCommand::NodeRegister {}),
+        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
         }),

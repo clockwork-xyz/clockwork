@@ -29,7 +29,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::Config => super::config::get(&client),
         CliCommand::Health => super::health::get(&client),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
-        CliCommand::NodeRegister => super::node::register(&client),
+        CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
         CliCommand::NodeStake { amount } => super::node::stake(&client, amount),
         CliCommand::QueueCreate => super::queue::create(&client),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),

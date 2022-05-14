@@ -1,6 +1,6 @@
 use {
     super::{Node, SnapshotEntry},
-    crate::{errors::CronosError, pda::PDA, state::SnapshotEntryAccount},
+    crate::{pda::PDA, state::SnapshotEntryAccount},
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -41,10 +41,10 @@ impl TryFrom<Vec<u8>> for Snapshot {
 pub trait SnapshotAccount {
     fn new(&mut self, id: u64) -> Result<()>;
 
-    fn new_entry(
+    fn capture(
         &mut self,
+        entry: &mut Account<SnapshotEntry>,
         node: &Account<Node>,
-        snapshot_entry: &mut Account<SnapshotEntry>,
         stake: &Account<TokenAccount>,
     ) -> Result<()>;
 }
@@ -57,31 +57,16 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         Ok(())
     }
 
-    fn new_entry(
+    fn capture(
         &mut self,
+        entry: &mut Account<SnapshotEntry>,
         node: &Account<Node>,
-        snapshot_entry: &mut Account<SnapshotEntry>,
         stake: &Account<TokenAccount>,
     ) -> Result<()> {
-        // Validate the snapshot is in progress
-        require!(
-            self.status == SnapshotStatus::InProgress,
-            CronosError::SnapshotNotInProgress
-        );
-
-        // Validate this is the correct entry to capture
-        require!(
-            self.entry_count == snapshot_entry.id && node.id == snapshot_entry.id,
-            CronosError::InvalidSnapshotEntry
-        );
-
-        // Validate the node is the owner of the stake account
-        require!(stake.owner == node.key(), CronosError::InvalidStakeAccount);
-
         // Record the new snapshot entry
-        snapshot_entry.new(
+        entry.new(
             self.entry_count,
-            node.identity,
+            node.delegate,
             self.stake_total,
             stake.amount,
             self.key(),

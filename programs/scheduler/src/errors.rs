@@ -12,6 +12,8 @@ pub enum CronosError {
 
     #[msg("The task is current executing another action")]
     InvalidAction,
+    #[msg("The dynamic account list is not the expect size")]
+    InvalidDynamicAccounts,
     #[msg("The exec response value could not be parsed")]
     InvalidExecResponse,
     #[msg("The cron expression is invalid")]

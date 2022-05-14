@@ -1,11 +1,13 @@
 pub mod initialize;
 pub mod register;
-pub mod rotate_snapshot;
+pub mod snapshot_capture;
+pub mod snapshot_rotate;
+pub mod snapshot_start;
 pub mod stake;
-pub mod start_snapshot;
 
 pub use initialize::*;
 pub use register::*;
-pub use rotate_snapshot::*;
+pub use snapshot_capture::*;
+pub use snapshot_rotate::*;
+pub use snapshot_start::*;
 pub use stake::*;
-pub use start_snapshot::*;

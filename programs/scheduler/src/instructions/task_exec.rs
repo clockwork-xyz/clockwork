@@ -20,7 +20,7 @@ pub struct TaskExec<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(mut)]
     pub delegate: Signer<'info>,
@@ -43,7 +43,7 @@ pub struct TaskExec<'info> {
         ],
         bump,
     )]
-    pub queue: Account<'info, Queue>,
+    pub queue: Box<Account<'info, Queue>>,
 
     #[account(
         mut,

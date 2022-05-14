@@ -91,7 +91,7 @@ impl PoolAccount for Account<'_, Pool> {
         self.delegates.pop_front();
 
         // Push sampled node into the pool
-        self.delegates.push_back(snapshot_entry.node_identity);
+        self.delegates.push_back(snapshot_entry.delegate);
 
         // Drain pool to the configured size limit
         while self.delegates.len() > config.pool_size {

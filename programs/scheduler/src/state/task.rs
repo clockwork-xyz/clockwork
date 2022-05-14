@@ -177,35 +177,40 @@ impl TaskAccount for Account<'_, Task> {
                 account_infos,
             )?;
 
-            // Verify the return dynamic accounts match the expected number of accounts
-            require!(
-                exec_response.dynamic_accounts.len() == ix.accounts.len(),
-                CronosError::InvalidExecResponse
-            );
-            dyanmic_ixs.push(InstructionData {
-                program_id: ix.program_id,
-                accounts: exec_response
-                    .dynamic_accounts
-                    .iter()
-                    .enumerate()
-                    .map(|(i, pubkey)| {
-                        let acc = ix.accounts.get(i).unwrap();
-                        AccountMetaData {
-                            pubkey: *pubkey,
-                            is_signer: acc.is_signer,
-                            is_writable: acc.is_writable,
-                        }
-                    })
-                    .collect::<Vec<AccountMetaData>>(),
-                data: ix.data.clone(),
-            });
+            match exec_response.dynamic_accounts {
+                None => (), // Noop
+                Some(dynamic_accounts) => {
+                    require!(
+                        dynamic_accounts.len() == ix.accounts.len(),
+                        CronosError::InvalidDynamicAccounts
+                    );
+                    dyanmic_ixs.push(InstructionData {
+                        program_id: ix.program_id,
+                        accounts: dynamic_accounts
+                            .iter()
+                            .enumerate()
+                            .map(|(i, pubkey)| {
+                                let acc = ix.accounts.get(i).unwrap();
+                                AccountMetaData {
+                                    pubkey: *pubkey,
+                                    is_signer: acc.is_signer,
+                                    is_writable: acc.is_writable,
+                                }
+                            })
+                            .collect::<Vec<AccountMetaData>>(),
+                        data: ix.data.clone(),
+                    });
+                }
+            }
         }
 
         // Verify that inner ixs have not initialized data at the delegate address
         require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
 
         // Update the actions's ixs for the next invocation
-        action.ixs = dyanmic_ixs.clone();
+        if !dyanmic_ixs.is_empty() {
+            action.ixs = dyanmic_ixs.clone();
+        }
 
         // Track how many lamports the delegate spent in the inner ixs
         let delegate_lamports_post = delegate.lamports();

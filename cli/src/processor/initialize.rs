@@ -45,6 +45,6 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     let ix_d = cronos_sdk::scheduler::instruction::queue_fund(LAMPORTS_PER_SOL / 4, admin, queue);
 
     // Submit tx
-    sign_and_submit(client, &[ix_a, ix_b, ix_c, ix_d]);
+    sign_and_submit(client, &[ix_a, ix_b, ix_c, ix_d], &[client.payer()]);
     Ok(())
 }

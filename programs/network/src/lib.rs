@@ -24,15 +24,19 @@ pub mod cronos_network {
         register::handler(ctx)
     }
 
-    pub fn rotate_snapshot(ctx: Context<RotateSnapshot>) -> Result<ExecResponse> {
-        rotate_snapshot::handler(ctx)
+    pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
+        snapshot_capture::handler(ctx)
+    }
+
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
+        snapshot_rotate::handler(ctx)
+    }
+
+    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
+        snapshot_start::handler(ctx)
     }
 
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
         stake::handler(ctx, amount)
-    }
-
-    pub fn start_snapshot(ctx: Context<StartSnapshot>) -> Result<ExecResponse> {
-        start_snapshot::handler(ctx)
     }
 }

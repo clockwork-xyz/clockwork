@@ -172,16 +172,11 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 is_writable: false,
             }
         ],
-        data: sighash("global", "start_snapshot").into(),
+        data: sighash("global", "snapshot_start").into(),
     };
     let rotate_snapshot_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
-            AccountMeta {
-                pubkey: action.key(),
-                is_signer: false,
-                is_writable: true,
-            },
             AccountMeta {
                 pubkey: authority.key(),
                 is_signer: false,
@@ -217,13 +212,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 is_signer: false,
                 is_writable: true,
             },
-            AccountMeta {
-                pubkey: task.key(),
-                is_signer: false,
-                is_writable: false,
-            }
         ],
-        data: sighash("global", "rotate_snapshot").into(),
+        data: sighash("global", "snapshot_rotate").into(),
     };
     cronos_scheduler::cpi::action_new(
         CpiContext::new_with_signer(

@@ -6,15 +6,15 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct StartSnapshot<'info> {
+pub struct SnapshotStart<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
     #[account(signer)]
-    pub queue: Account<'info, Queue>,
+    pub queue: Box<Account<'info, Queue>>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
@@ -35,7 +35,7 @@ pub struct StartSnapshot<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<StartSnapshot>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
     // Get accounts
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
@@ -47,14 +47,15 @@ pub fn handler(ctx: Context<StartSnapshot>) -> Result<ExecResponse> {
     let snapshot_pubkey = snapshot.key();
     let next_snapshot_pubkey = Snapshot::pda(snapshot.id.checked_add(1).unwrap()).0;
     Ok(ExecResponse {
-        dynamic_accounts: ctx
-            .accounts
-            .to_account_metas(None)
-            .iter()
-            .map(|acc| match acc.pubkey {
-                _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
-                _ => acc.pubkey,
-            })
-            .collect(),
+        dynamic_accounts: Some(
+            ctx.accounts
+                .to_account_metas(None)
+                .iter()
+                .map(|acc| match acc.pubkey {
+                    _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
+                    _ => acc.pubkey,
+                })
+                .collect(),
+        ),
     })
 }

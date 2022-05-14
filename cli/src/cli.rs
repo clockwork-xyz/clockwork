@@ -11,7 +11,7 @@ pub enum CliCommand {
     Initialize { mint: Pubkey },
 
     // Node commands
-    NodeRegister,
+    NodeRegister { delegate: Pubkey },
     NodeStake { amount: u64 },
 
     // Queue commands
@@ -80,7 +80,15 @@ pub fn app() -> Command<'static> {
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
                 .subcommand(
-                    Command::new("register").about("Register a new node with the Cronos network"),
+                    Command::new("register")
+                        .about("Register a new node with the Cronos network")
+                        .arg(
+                            Arg::new("delegate")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("Filepath to the delegate wallet"),
+                        ),
                 )
                 .subcommand(
                     Command::new("stake")

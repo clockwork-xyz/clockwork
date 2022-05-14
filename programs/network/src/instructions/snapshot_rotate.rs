@@ -1,14 +1,11 @@
 use {
     crate::state::*,
-    cronos_scheduler::{state::{Action, Task, Queue}, responses::ExecResponse},
+    cronos_scheduler::{state::Queue, responses::ExecResponse},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]
-pub struct RotateSnapshot<'info> {
-    #[account(mut, has_one = task)]
-    pub action: Account<'info, Action>,
-
+pub struct SnapshotRotate<'info> {
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump,
@@ -47,13 +44,10 @@ pub struct RotateSnapshot<'info> {
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
-
-    #[account(has_one = queue)]
-    pub task: Account<'info, Task>,
 }
 
 
-pub fn handler(ctx: Context<RotateSnapshot>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     // Get accounts
     let clock = &ctx.accounts.clock;
     let current_snapshot = &mut ctx.accounts.current_snapshot;
@@ -72,15 +66,17 @@ pub fn handler(ctx: Context<RotateSnapshot>) -> Result<ExecResponse> {
     let next_snapshot_pubkey = next_snapshot.clone().key();
     let next_next_snapshot_pubkey = Snapshot::pda(next_snapshot.id.checked_add(1).unwrap()).0;
     Ok(ExecResponse {
-        dynamic_accounts: ctx
-            .accounts
-            .to_account_metas(None)
-            .iter()
-            .map(|acc| match acc.pubkey {
-                _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
-                _ if acc.pubkey == next_snapshot_pubkey => next_next_snapshot_pubkey,
-                _ => acc.pubkey
-            })
-            .collect(),
+        dynamic_accounts: Some(
+            ctx
+                .accounts
+                .to_account_metas(None)
+                .iter()
+                .map(|acc| match acc.pubkey {
+                    _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
+                    _ if acc.pubkey == next_snapshot_pubkey => next_next_snapshot_pubkey,
+                    _ => acc.pubkey
+                })
+                .collect()
+        ),
     })
 }

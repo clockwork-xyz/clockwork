@@ -1,9 +1,9 @@
-use cronos_sdk::scheduler::state::{Queue, Task};
-
-use crate::utils::{solana_explorer_url, SolanaExplorerAccountType};
-
 use {
-    crate::{cli::CliError, utils::sign_and_submit},
+    crate::{
+        cli::CliError,
+        utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
+    },
+    cronos_sdk::scheduler::state::{Queue, Task},
     solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
@@ -13,7 +13,7 @@ pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
     let queue = cronos_sdk::scheduler::state::Queue::pda(owner).0;
     let ix = cronos_sdk::scheduler::instruction::task_cancel(queue, *address, owner);
-    sign_and_submit(client, &[ix]);
+    sign_and_submit(client, &[ix], &[client.payer()]);
     get(client, address)
 }
 
@@ -38,7 +38,7 @@ pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
     );
 
     // Sign and submit
-    sign_and_submit(client, &[task_ix]);
+    sign_and_submit(client, &[task_ix], &[client.payer()]);
     get(client, &task_pubkey)
 }
 

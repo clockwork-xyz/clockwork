@@ -8,6 +8,9 @@ pub enum CronosError {
     #[msg("This instruction requires admin authority")]
     AdminAuthorityInvalid,
 
+    #[msg("The provided node is cannot be used for this operation")]
+    InvalidNode,
+
     #[msg("The provided snapshot entry cannot be used for this operation")]
     InvalidSnapshotEntry,
 
