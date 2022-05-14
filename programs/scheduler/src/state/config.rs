@@ -14,10 +14,9 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub bump: u8,
-    pub node_fee: u64,
+    pub delegate_fee: u64,
     pub program_fee: u64,
-    pub registry_pubkey: Pubkey,
+    pub pool_pubkey: Pubkey,
 }
 
 impl Config {
@@ -40,7 +39,7 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
-    pub node_fee: u64,
+    pub delegate_fee: u64,
     pub program_fee: u64,
 }
 /**
@@ -48,25 +47,24 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, bump: u8, registry_pubkey: Pubkey) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, pool_pubkey: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, bump: u8, registry_pubkey: Pubkey) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, pool_pubkey: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.bump = bump;
-        self.node_fee = 0; // Lamports to pay node per task exec
-        self.program_fee = 0; // Lamports to pay to program per task exec
-        self.registry_pubkey = registry_pubkey;
+        self.delegate_fee = 0; // Lamports to pay delegate
+        self.program_fee = 0; // Lamports to pay program
+        self.pool_pubkey = pool_pubkey;
         Ok(())
     }
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
         require!(self.admin == admin.key(), CronosError::NotAdmin);
         self.admin = settings.admin;
-        self.node_fee = settings.node_fee;
+        self.delegate_fee = settings.delegate_fee;
         self.program_fee = settings.program_fee;
         Ok(())
     }

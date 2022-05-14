@@ -8,24 +8,32 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
+use cronos_scheduler::responses::ExecResponse;
 use instructions::*;
 
 #[program]
 pub mod cronos_network {
+
     use super::*;
 
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        config_bump: u8,
-        pool_bump: u8,
-        registry_bump: u8,
-        snapshot_bump: u8,
-    ) -> Result<()> {
-        initialize::handler(ctx, config_bump, pool_bump, registry_bump, snapshot_bump)
+    pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
+        initialize::handler(ctx)
     }
 
-    pub fn register(ctx: Context<Register>, node_bump: u8) -> Result<()> {
-        register::handler(ctx, node_bump)
+    pub fn register<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Result<()> {
+        register::handler(ctx)
+    }
+
+    pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
+        snapshot_capture::handler(ctx)
+    }
+
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
+        snapshot_rotate::handler(ctx)
+    }
+
+    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
+        snapshot_start::handler(ctx)
     }
 
     pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {

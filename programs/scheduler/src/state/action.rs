@@ -17,7 +17,6 @@ pub const SEED_ACTION: &[u8] = b"action";
 #[account]
 #[derive(Debug)]
 pub struct Action {
-    pub bump: u8,
     pub id: u128,
     pub ixs: Vec<InstructionData>,
     pub task: Pubkey,
@@ -44,23 +43,24 @@ impl TryFrom<Vec<u8>> for Action {
  */
 
 pub trait ActionAccount {
-    fn new(&mut self, bump: u8, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()>;
+    fn new(&mut self, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()>;
 }
 
 impl ActionAccount for Account<'_, Action> {
-    fn new(&mut self, bump: u8, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()> {
-        // Reject the instructions if they have signers other than the queue.
+    fn new(&mut self, ixs: Vec<InstructionData>, task: &mut Account<Task>) -> Result<()> {
+        // Reject inner instructions if they have a signer other than the queue or delegate
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
-                require!(
-                    acc.pubkey == task.queue || !acc.is_signer,
-                    CronosError::InvalidSignatory
-                );
+                if acc.is_signer {
+                    require!(
+                        acc.pubkey == task.queue || acc.pubkey == crate::delegate::ID,
+                        CronosError::InvalidSignatory
+                    );
+                }
             }
         }
 
         // Save data
-        self.bump = bump;
         self.id = task.action_count;
         self.ixs = ixs;
         self.task = task.key();

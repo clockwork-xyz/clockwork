@@ -14,7 +14,7 @@ pub struct TaskCancel<'info> {
             SEED_QUEUE,
             queue.owner.as_ref()
         ],
-        bump = queue.bump,
+        bump,
         has_one = owner,
     )]
     pub queue: Account<'info, Queue>,
@@ -26,7 +26,7 @@ pub struct TaskCancel<'info> {
             task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
-        bump = task.bump,
+        bump,
         has_one = queue,
     )]
     pub task: Account<'info, Task>,

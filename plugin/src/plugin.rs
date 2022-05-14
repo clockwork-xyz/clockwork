@@ -207,6 +207,8 @@ impl CronosPlugin {
 
     fn replicate_task(&self, key: Pubkey, task: Task) {
         info!("Caching task {}", key);
+        info!("{:#?}", task);
+
         let mut w_cache = self.unwrap_cache().write().unwrap();
         match task.exec_at {
             Some(_t) => w_cache.insert(key, task),
@@ -266,11 +268,19 @@ impl CronosPlugin {
             let guard = guard.unwrap();
 
             // Common pubkeys
-            let config = Config::pda().0;
-            let fee = Fee::pda(task.queue).0;
+            let config_pubkey = Config::pda().0;
+            let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
+            let fee_pubkey = Fee::pda(task.queue).0;
 
-            // Accumulate task_exec ixs here
-            let mut ixs: Vec<Instruction> = vec![];
+            // Build task_begin ix
+            let task_begin_ix = cronos_sdk::scheduler::instruction::task_begin(
+                delegate_pubkey,
+                task.queue,
+                task_pubkey,
+            );
+
+            // Accumulate task ixs here
+            let mut ixs: Vec<Instruction> = vec![task_begin_ix];
 
             // Build an ix for each action
             for i in 0..task.action_count {
@@ -285,11 +295,11 @@ impl CronosPlugin {
                 .unwrap();
 
                 // Build ix
-                let mut ix = cronos_sdk::scheduler::instruction::task_exec(
+                let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(
                     action_pubkey,
+                    config_pubkey,
                     cp_clone.unwrap_client().payer_pubkey(),
-                    config,
-                    fee,
+                    fee_pubkey,
                     task.queue,
                     task_pubkey,
                 );
@@ -300,7 +310,8 @@ impl CronosPlugin {
                     // Program ids
                     if !acc_dedupe.contains(&inner_ix.program_id) {
                         acc_dedupe.insert(inner_ix.program_id);
-                        ix.accounts
+                        task_exec_ix
+                            .accounts
                             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
                     }
 
@@ -308,34 +319,38 @@ impl CronosPlugin {
                     for acc in &inner_ix.accounts {
                         if !acc_dedupe.contains(&acc.pubkey) {
                             acc_dedupe.insert(acc.pubkey);
-                            ix.accounts.push(match acc.is_writable {
-                                true => AccountMeta::new(acc.pubkey, false),
-                                false => AccountMeta::new_readonly(acc.pubkey, false),
+
+                            // Override the injected pubkey for the Cronos delegate account
+                            let mut injected_pubkey = acc.pubkey;
+                            if acc.pubkey == cronos_sdk::scheduler::delegate::ID {
+                                injected_pubkey = delegate_pubkey;
+                            }
+
+                            // Push the account metadata into the ix as a "remaining account"
+                            task_exec_ix.accounts.push(match acc.is_writable {
+                                true => AccountMeta::new(injected_pubkey, false),
+                                false => AccountMeta::new_readonly(injected_pubkey, false),
                             })
                         }
                     }
                 }
 
                 // Add to the list
-                ixs.push(ix)
+                ixs.push(task_exec_ix)
             }
 
             // Sign and submit
-            if ixs.is_empty() {
-                info!("📂 No actions for task {}", task_pubkey);
-            } else {
-                let res = cp_clone.unwrap_client().sign_and_submit(
-                    ixs.as_slice(),
-                    format!(
-                        "🤖 Executing task {} for timestamp {}",
-                        task_pubkey,
-                        task.exec_at.unwrap()
-                    )
-                    .as_str(),
-                );
-                if res.is_err() {
-                    info!("❌ Failed to execute task: {:#?}", res.err())
-                }
+            let res = cp_clone.unwrap_client().sign_and_submit(
+                ixs.as_slice(),
+                format!(
+                    "🤖 Executing task {} for timestamp {}",
+                    task_pubkey,
+                    task.exec_at.unwrap()
+                )
+                .as_str(),
+            );
+            if res.is_err() {
+                info!("❌ Failed to execute task: {:#?}", res.err())
             }
 
             // Drop the mutex

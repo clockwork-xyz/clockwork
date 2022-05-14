@@ -894,6 +894,7 @@ version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "cronos-scheduler",
 ]
 
 [[package]]

@@ -1,9 +1,9 @@
-use cronos_sdk::scheduler::state::{Queue, Task};
-
-use crate::utils::{solana_explorer_url, SolanaExplorerAccountType};
-
 use {
-    crate::{cli::CliError, utils::sign_and_submit},
+    crate::{
+        cli::CliError,
+        utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
+    },
+    cronos_sdk::scheduler::state::{Queue, Task},
     solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
@@ -13,7 +13,7 @@ pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
     let queue = cronos_sdk::scheduler::state::Queue::pda(owner).0;
     let ix = cronos_sdk::scheduler::instruction::task_cancel(queue, *address, owner);
-    sign_and_submit(client, &[ix]);
+    sign_and_submit(client, &[ix], &[client.payer()]);
     get(client, address)
 }
 
@@ -28,13 +28,18 @@ pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountDataNotParsable(queue_addr.to_string()))?;
 
     // Build task_create ix.
-    let task_pda = Task::pda(queue_addr, queue_data.task_count);
-    let task_ix =
-        cronos_sdk::scheduler::instruction::task_new(owner, queue_addr, schedule, task_pda);
+    let task_pubkey = Task::pda(queue_addr, queue_data.task_count).0;
+    let task_ix = cronos_sdk::scheduler::instruction::task_new(
+        owner,
+        owner,
+        queue_addr,
+        schedule,
+        task_pubkey,
+    );
 
     // Sign and submit
-    sign_and_submit(client, &[task_ix]);
-    get(client, &task_pda.0)
+    sign_and_submit(client, &[task_ix], &[client.payer()]);
+    get(client, &task_pubkey)
 }
 
 pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {

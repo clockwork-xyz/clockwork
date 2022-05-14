@@ -1,28 +1,21 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program,
     },
-    cronos_heartbeat::pda::PDA,
+    InstructionData,
 };
 
-pub fn initialize(admin: Pubkey, config_pda: PDA, heartbeat_pda: PDA) -> Instruction {
+pub fn initialize(admin: Pubkey, config: Pubkey, heartbeat: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_heartbeat::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
-            AccountMeta::new(config_pda.0, false),
-            AccountMeta::new(heartbeat_pda.0, false),
+            AccountMeta::new(config, false),
+            AccountMeta::new(heartbeat, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_heartbeat::instruction::Initialize {
-            config_bump: config_pda.1,
-            heartbeat_bump: heartbeat_pda.1,
-        }
-        .data(),
+        data: cronos_heartbeat::instruction::Initialize {}.data(),
     }
 }

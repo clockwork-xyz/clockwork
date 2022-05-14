@@ -1,8 +1,13 @@
+use super::InstructionData;
+
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::{errors::CronosError, pda::PDA, responses::ExecResponse},
     anchor_lang::{
         prelude::*,
-        solana_program::{instruction::Instruction, program::invoke_signed},
+        solana_program::{
+            instruction::Instruction,
+            program::{get_return_data, invoke_signed},
+        },
         AnchorDeserialize,
     },
     std::convert::TryFrom,
@@ -42,7 +47,7 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
-    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()>;
+    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -53,12 +58,26 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn sign(&mut self, ix: &Instruction, account_infos: &[AccountInfo]) -> Result<()> {
+    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse> {
         invoke_signed(
-            ix,
+            &Instruction::from(ix),
             account_infos,
             &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
         )
-        .map_err(|_err| CronosError::TaskFailed.into())
+        .map_err(|_err| CronosError::InnerIxFailed)?;
+
+        let exec_response = get_return_data()
+            .ok_or(CronosError::InvalidExecResponse)
+            .and_then(|(program_id, return_data)| {
+                (program_id == ix.program_id)
+                    .then(|| return_data)
+                    .ok_or(CronosError::InvalidExecResponse)
+            })
+            .map(|return_data| {
+                ExecResponse::try_from_slice(return_data.as_slice())
+                    .map_err(|_err| CronosError::InvalidExecResponse)
+            })?;
+
+        Ok(exec_response?)
     }
 }

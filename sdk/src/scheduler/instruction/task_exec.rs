@@ -9,8 +9,8 @@ use anchor_lang::{
 
 pub fn task_exec(
     action: Pubkey,
-    bot: Pubkey,
     config: Pubkey,
+    delegate: Pubkey,
     fee: Pubkey,
     queue: Pubkey,
     task: Pubkey,
@@ -19,11 +19,11 @@ pub fn task_exec(
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(action, false),
-            AccountMeta::new(bot, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),
+            AccountMeta::new(delegate, true),
             AccountMeta::new(fee, false),
-            AccountMeta::new(queue, false),
+            AccountMeta::new_readonly(queue, false),
             AccountMeta::new(task, false),
         ],
         data: cronos_scheduler::instruction::TaskExec {}.data(),

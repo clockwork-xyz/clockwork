@@ -1,10 +1,12 @@
 extern crate chrono;
 extern crate cronos_cron;
 
+pub mod delegate;
 pub mod errors;
 pub mod events;
 pub mod id;
 pub mod pda;
+pub mod responses;
 pub mod state;
 
 mod instructions;
@@ -19,8 +21,12 @@ use state::*;
 pub mod cronos_scheduler {
     use super::*;
 
-    pub fn action_new(ctx: Context<ActionNew>, bump: u8, ixs: Vec<InstructionData>) -> Result<()> {
-        action_new::handler(ctx, bump, ixs)
+    pub fn action_new(ctx: Context<ActionNew>, ixs: Vec<InstructionData>) -> Result<()> {
+        action_new::handler(ctx, ixs)
+    }
+
+    pub fn action_update(ctx: Context<ActionUpdate>, ixs: Vec<InstructionData>) -> Result<()> {
+        action_update::handler(ctx, ixs)
     }
 
     pub fn admin_config_update(
@@ -34,46 +40,40 @@ pub mod cronos_scheduler {
         admin_fee_collect::handler(ctx)
     }
 
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        authority_bump: u8,
-        config_bump: u8,
-        fee_bump: u8,
-        queue_bump: u8,
-        registry_pubkey: Pubkey,
-    ) -> Result<()> {
-        initialize::handler(
-            ctx,
-            authority_bump,
-            config_bump,
-            fee_bump,
-            queue_bump,
-            registry_pubkey,
-        )
+    pub fn initialize(ctx: Context<Initialize>, pool_pubkey: Pubkey) -> Result<()> {
+        initialize::handler(ctx, pool_pubkey)
     }
 
-    pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String, bump: u8) -> Result<()> {
-        admin_task_new::handler(ctx, schedule, bump)
+    pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String) -> Result<()> {
+        admin_task_new::handler(ctx, schedule)
     }
 
     pub fn admin_task_cancel(ctx: Context<AdminTaskCancel>) -> Result<()> {
         admin_task_cancel::handler(ctx)
     }
 
-    pub fn queue_new(ctx: Context<QueueNew>, fee_bump: u8, queue_bump: u8) -> Result<()> {
-        queue_new::handler(ctx, fee_bump, queue_bump)
+    pub fn queue_fund(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
+        queue_fund::handler(ctx, amount)
+    }
+
+    pub fn queue_new(ctx: Context<QueueNew>) -> Result<()> {
+        queue_new::handler(ctx)
     }
 
     pub fn queue_sign(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {
         queue_sign::handler(ctx, ix)
     }
 
+    pub fn task_begin(ctx: Context<TaskBegin>) -> Result<()> {
+        task_begin::handler(ctx)
+    }
+
     pub fn task_cancel(ctx: Context<TaskCancel>) -> Result<()> {
         task_cancel::handler(ctx)
     }
 
-    pub fn task_new(ctx: Context<TaskNew>, bump: u8, schedule: String) -> Result<()> {
-        task_new::handler(ctx, bump, schedule)
+    pub fn task_new(ctx: Context<TaskNew>, schedule: String) -> Result<()> {
+        task_new::handler(ctx, schedule)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {

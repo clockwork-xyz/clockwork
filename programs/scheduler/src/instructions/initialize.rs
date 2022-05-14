@@ -5,13 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(
-    authority_bump: u8,
-    config_bump: u8,
-    fee_bump: u8,
-    queue_bump: u8,
-    registry_pubkey: Pubkey
-)]
+#[instruction(pool_pubkey: Pubkey)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -62,24 +56,18 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<Initialize>,
-    authority_bump: u8,
-    config_bump: u8,
-    fee_bump: u8,
-    queue_bump: u8,
-    registry_pubkey: Pubkey
-) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>, pool_pubkey: Pubkey) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
     let config = &mut ctx.accounts.config;
     let queue = &mut ctx.accounts.queue;
     let fee = &mut ctx.accounts.fee;
 
-    authority.new(authority_bump)?;
-    config.new(admin.key(), config_bump, registry_pubkey)?;
+    let queue_bump = *ctx.bumps.get("queue").unwrap();
+
+    config.new(admin.key(), pool_pubkey)?;
     queue.new(queue_bump, authority.key())?;
-    fee.new(fee_bump, queue.key())?;
+    fee.new(queue.key())?;
 
     Ok(())
 }

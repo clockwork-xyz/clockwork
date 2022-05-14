@@ -15,7 +15,6 @@ pub const SEED_HEARTBEAT: &[u8] = b"heartbeat";
 pub struct Heartbeat {
     pub last_ping: i64,
     pub target_ping: i64,
-    pub bump: u8,
 }
 
 impl Heartbeat {
@@ -36,7 +35,7 @@ impl TryFrom<Vec<u8>> for Heartbeat {
  */
 
 pub trait HeartbeatAccount {
-    fn new(&mut self, bump: u8) -> Result<()>;
+    fn new(&mut self) -> Result<()>;
 
     fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
 
@@ -44,10 +43,9 @@ pub trait HeartbeatAccount {
 }
 
 impl HeartbeatAccount for Account<'_, Heartbeat> {
-    fn new(&mut self, bump: u8) -> Result<()> {
+    fn new(&mut self) -> Result<()> {
         self.last_ping = 0;
         self.target_ping = 0;
-        self.bump = bump;
         Ok(())
     }
 

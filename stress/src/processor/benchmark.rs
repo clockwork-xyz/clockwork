@@ -32,10 +32,14 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     // Create queues
     for _ in 0..(num_tasks_parallel + 1) {
         let owner = Keypair::new();
-        let queue_pda = Queue::pda(owner.pubkey());
-        let queue_addr = queue_pda.0;
-        let fee_pda = Fee::pda(queue_addr);
-        let ix = cronos_sdk::scheduler::instruction::queue_new(fee_pda, owner.pubkey(), queue_pda);
+        let queue_pubkey = Queue::pda(owner.pubkey()).0;
+        let fee_pubkey = Fee::pda(queue_pubkey).0;
+        let ix = cronos_sdk::scheduler::instruction::queue_new(
+            fee_pubkey,
+            owner.pubkey(),
+            owner.pubkey(),
+            queue_pubkey,
+        );
         client.airdrop(&owner.pubkey(), LAMPORTS_PER_SOL).unwrap();
         sign_and_submit(&client, &[ix], &owner);
         owners.push(owner);
@@ -150,7 +154,7 @@ fn schedule_memo_task(
         .unwrap();
 
     // Generate PDA for new task account
-    let task_pda = Task::pda(queue_pubkey, queue_data.task_count);
+    let task_pubkey = Task::pda(queue_pubkey, queue_data.task_count).0;
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -165,9 +169,10 @@ fn schedule_memo_task(
     );
     let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
         owner.pubkey(),
+        owner.pubkey(),
         queue_pubkey,
         schedule.clone(),
-        task_pda,
+        task_pubkey,
     );
 
     // Index expected exec_at times
@@ -176,20 +181,21 @@ fn schedule_memo_task(
         .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))
     {
         expected_exec
-            .entry(task_pda.0)
+            .entry(task_pubkey)
             .or_insert(Vec::new())
             .push(datetime.timestamp());
     }
 
     // Create an action
-    let action_pda = Action::pda(task_pda.0, 0);
+    let action_pubkey = Action::pda(task_pubkey, 0).0;
     let memo_ix = build_memo_ix(&queue_pubkey);
     let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
-        action_pda,
+        action_pubkey,
         vec![memo_ix],
         owner.pubkey(),
+        owner.pubkey(),
         queue_pubkey,
-        task_pda.0,
+        task_pubkey,
     );
 
     sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);

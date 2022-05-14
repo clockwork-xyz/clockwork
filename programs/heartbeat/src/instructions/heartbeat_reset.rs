@@ -16,14 +16,14 @@ pub struct HeartbeatReset<'info> {
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 
     #[account(
         mut,
         seeds = [SEED_HEARTBEAT],
-        bump = heartbeat.bump,
+        bump,
     )]
     pub heartbeat: Account<'info, Heartbeat>,
 }

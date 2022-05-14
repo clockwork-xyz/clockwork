@@ -1,22 +1,19 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program, sysvar,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program, sysvar,
     },
-    cronos_scheduler::pda::PDA,
+    InstructionData,
 };
 
 pub fn admin_task_new(
-    task_pda: PDA,
     admin: Pubkey,
     authority: Pubkey,
     config: Pubkey,
     queue: Pubkey,
     schedule: String,
+    task: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
@@ -27,12 +24,8 @@ pub fn admin_task_new(
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(task_pda.0, false),
+            AccountMeta::new(task, false),
         ],
-        data: cronos_scheduler::instruction::AdminTaskNew {
-            schedule,
-            bump: task_pda.1,
-        }
-        .data(),
+        data: cronos_scheduler::instruction::AdminTaskNew { schedule }.data(),
     }
 }

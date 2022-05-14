@@ -8,7 +8,6 @@ use {
 #[instruction(
     ixs: Vec<InstructionData>,
     schedule: String,
-    bump: u8
 )]
 pub struct AdminTaskNew<'info> {
     #[account(mut, address = config.admin)]
@@ -16,7 +15,7 @@ pub struct AdminTaskNew<'info> {
 
     #[account(
         seeds = [SEED_AUTHORITY], 
-        bump = authority.bump, 
+        bump, 
     )]
     pub authority: Account<'info, Authority>,
     
@@ -25,7 +24,7 @@ pub struct AdminTaskNew<'info> {
 
     #[account(
         seeds = [SEED_CONFIG],
-        bump = config.bump,
+        bump,
     )]
     pub config: Account<'info, Config>,
 
@@ -60,11 +59,10 @@ pub struct AdminTaskNew<'info> {
 pub fn handler(
     ctx: Context<AdminTaskNew>, 
     schedule: String,
-    bump: u8
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
     let queue = &mut ctx.accounts.queue;
     let task = &mut ctx.accounts.task;
 
-    task.new(bump, clock, queue, schedule)
+    task.new(clock, queue, schedule)
 }

@@ -1,5 +1,5 @@
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -14,15 +14,15 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
-    pub bump: u8,
+    pub delegate: Pubkey, // The node's delegate address used to sign task_exec ixs
     pub id: u64,
-    pub identity: Pubkey, // The node's address on the Solana gossip network
-    pub stake: Pubkey,    // The associated token account
+    pub owner: Pubkey, // The node's owner gossip network (controls the stake)
+    pub stake: Pubkey, // The associated token account
 }
 
 impl Node {
-    pub fn pda(identity: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_NODE, identity.as_ref()], &crate::ID)
+    pub fn pda(delegate: Pubkey) -> PDA {
+        Pubkey::find_program_address(&[SEED_NODE, delegate.as_ref()], &crate::ID)
     }
 }
 
@@ -40,9 +40,9 @@ impl TryFrom<Vec<u8>> for Node {
 pub trait NodeAccount {
     fn new(
         &mut self,
-        bump: u8,
+        delegate: &Signer,
         id: u64,
-        identity: &mut Signer,
+        owner: &mut Signer,
         stake: &mut Account<TokenAccount>,
     ) -> Result<()>;
 }
@@ -50,15 +50,14 @@ pub trait NodeAccount {
 impl NodeAccount for Account<'_, Node> {
     fn new(
         &mut self,
-        bump: u8,
+        delegate: &Signer,
         id: u64,
-        identity: &mut Signer,
+        owner: &mut Signer,
         stake: &mut Account<TokenAccount>,
     ) -> Result<()> {
-        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
-        self.bump = bump;
+        self.delegate = delegate.key();
         self.id = id;
-        self.identity = identity.key();
+        self.owner = owner.key();
         self.stake = stake.key();
         Ok(())
     }

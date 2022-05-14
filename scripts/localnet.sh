@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Build
+anchor build
+cargo build
+
 # Configure solana cli for localnet
 solana config set --url localhost
 

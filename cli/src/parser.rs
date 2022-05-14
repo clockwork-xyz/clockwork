@@ -13,6 +13,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
+            Some(("action", matches)) => parse_action_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", _)) => Ok(CliCommand::Config {}),
             Some(("health", _)) => Ok(CliCommand::Health {}),
@@ -29,6 +30,17 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
 // Command parsers
 
+fn parse_action_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::ActionGet {
+            address: parse_pubkey("address", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
 fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     Ok(CliCommand::Initialize {
         mint: parse_pubkey("mint", matches)?,
@@ -37,7 +49,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("register", _)) => Ok(CliCommand::NodeRegister {}),
+        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
         }),

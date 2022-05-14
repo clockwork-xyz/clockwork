@@ -20,7 +20,6 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 #[account]
 #[derive(Debug)]
 pub struct Registry {
-    pub bump: u8,
     pub is_locked: bool,
     pub node_count: u64,
     pub snapshot_count: u64,
@@ -44,17 +43,17 @@ impl TryFrom<Vec<u8>> for Registry {
  */
 
 pub trait RegistryAccount {
-    fn new(&mut self, bump: u8) -> Result<()>;
+    fn new(&mut self) -> Result<()>;
 
     fn new_node(
         &mut self,
-        identity: &mut Signer,
+        delegate: &Signer,
+        owner: &mut Signer,
         node: &mut Account<Node>,
-        node_bump: u8,
-        stake_tokens: &mut Account<TokenAccount>,
+        stake: &mut Account<TokenAccount>,
     ) -> Result<()>;
 
-    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>, snapshot_bump: u8) -> Result<()>;
+    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()>;
 
     fn rotate_snapshot(
         &mut self,
@@ -69,9 +68,7 @@ pub trait RegistryAccount {
 }
 
 impl RegistryAccount for Account<'_, Registry> {
-    fn new(&mut self, bump: u8) -> Result<()> {
-        require!(self.bump == 0, CronosError::AccountAlreadyInitialized);
-        self.bump = bump;
+    fn new(&mut self) -> Result<()> {
         self.is_locked = false;
         self.node_count = 0;
         self.snapshot_count = 0;
@@ -80,21 +77,21 @@ impl RegistryAccount for Account<'_, Registry> {
 
     fn new_node(
         &mut self,
-        identity: &mut Signer,
+        delegate: &Signer,
+        owner: &mut Signer,
         node: &mut Account<Node>,
-        node_bump: u8,
-        stake_tokens: &mut Account<TokenAccount>,
+        stake: &mut Account<TokenAccount>,
     ) -> Result<()> {
         require!(!self.is_locked, CronosError::RegistryLocked);
-        node.new(node_bump, self.node_count, identity, stake_tokens)?;
+        node.new(delegate, self.node_count, owner, stake)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
         Ok(())
     }
 
-    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>, snapshot_bump: u8) -> Result<()> {
+    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()> {
         require!(!self.is_locked, CronosError::RegistryLocked);
         self.lock()?;
-        snapshot.new(snapshot_bump, self.snapshot_count)?;
+        snapshot.new(self.snapshot_count)?;
         Ok(())
     }
 

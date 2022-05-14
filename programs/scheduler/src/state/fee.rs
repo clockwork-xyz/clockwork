@@ -14,7 +14,6 @@ pub const SEED_FEE: &[u8] = b"fee";
 #[derive(Debug)]
 pub struct Fee {
     pub balance: u64,
-    pub bump: u8,
     pub queue: Pubkey,
 }
 
@@ -36,15 +35,14 @@ impl Fee {
  */
 
 pub trait FeeAccount {
-    fn new(&mut self, bump: u8, queue: Pubkey) -> Result<()>;
+    fn new(&mut self, queue: Pubkey) -> Result<()>;
 
     fn collect(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
-    fn new(&mut self, bump: u8, queue: Pubkey) -> Result<()> {
+    fn new(&mut self, queue: Pubkey) -> Result<()> {
         self.balance = 0;
-        self.bump = bump;
         self.queue = queue;
         Ok(())
     }

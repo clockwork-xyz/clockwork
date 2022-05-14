@@ -1,10 +1,9 @@
 use {
-    crate::state::*, 
-    anchor_lang::{prelude::*, solana_program::sysvar}
+    crate::state::*,
+    anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]
-#[instruction()]
 pub struct HeartbeatPing<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
@@ -12,7 +11,7 @@ pub struct HeartbeatPing<'info> {
     #[account(
         mut,
         seeds = [SEED_HEARTBEAT],
-        bump = heartbeat.bump,
+        bump,
     )]
     pub heartbeat: Account<'info, Heartbeat>,
 

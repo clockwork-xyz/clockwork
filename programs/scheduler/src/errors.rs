@@ -2,6 +2,20 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum CronosError {
+    #[msg("Delegate addresses cannot be initialized accounts")]
+    DelegateDataNotEmpty,
+
+    #[msg("An action's inner ix failed to execute")]
+    InnerIxFailed,
+    #[msg("An inner instructure wants to mutate state owned by the scheduler")]
+    InnerIxReentrancy,
+
+    #[msg("The task is current executing another action")]
+    InvalidAction,
+    #[msg("The dynamic account list is not the expect size")]
+    InvalidDynamicAccounts,
+    #[msg("The exec response value could not be parsed")]
+    InvalidExecResponse,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
     #[msg("Your queue cannot provide all required signatures for this instruction")]
@@ -14,10 +28,6 @@ pub enum CronosError {
     #[msg("You are not the owner of this queue")]
     NotQueueOwner,
 
-    #[msg("Task is not queued and may not executed")]
-    TaskNotQueued,
-    #[msg("This task is not due and may not be executed yet")]
+    #[msg("The task is not due")]
     TaskNotDue,
-    #[msg("The task instruction invocation failed")]
-    TaskFailed,
 }
