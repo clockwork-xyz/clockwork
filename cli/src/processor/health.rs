@@ -5,7 +5,7 @@ use solana_client_helpers::Client;
 use crate::cli::CliError;
 
 pub fn get(_client: &Arc<Client>) -> Result<(), CliError> {
-    panic!("Not implemented – moving to heartbeat program")
+    panic!("Not implemented – moving to healthcheck program")
     // let health_addr = cronos_sdk::account::Health::pda().0;
     // let data = client
     //     .get_account_data(&health_addr)

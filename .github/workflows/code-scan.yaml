@@ -29,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - cmd: cd programs/heartbeat && soteria -analyzeAll .
-            path: programs/heartbeat
+          - cmd: cd programs/healthcheck && soteria -analyzeAll .
+            path: programs/healthcheck
           - cmd: cd programs/network && soteria -analyzeAll .
             path: programs/network
           - cmd: cd programs/scheduler && soteria -analyzeAll .

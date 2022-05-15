@@ -1,4 +1,4 @@
-pub mod heartbeat;
+pub mod healthcheck;
 pub mod network;
 pub mod pool;
 pub mod scheduler;

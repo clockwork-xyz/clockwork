@@ -15,7 +15,7 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 
 # Bump programs
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/delegate/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/heartbeat/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/healthcheck/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
 

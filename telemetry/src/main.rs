@@ -2,7 +2,7 @@ use {
     crate::{client::RPCClient, env::Envvar},
     bincode::deserialize,
     chrono::{TimeZone, Utc},
-    cronos_sdk::heartbeat::state::Heartbeat,
+    cronos_sdk::healthcheck::state::Health,
     dotenv::dotenv,
     elasticsearch::{
         auth::Credentials, http::transport::Transport, Elasticsearch, Error, IndexParts,
@@ -25,14 +25,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut interval = time::interval(Duration::from_millis(10_000));
         loop {
             interval.tick().await;
-            record_heartbeat().await;
+            record_health_data().await;
         }
     });
     let _ = forever.await;
     Ok(())
 }
 
-async fn record_heartbeat() {
+async fn record_health_data() {
     // Build clients
     let client = Client::new(Envvar::Keypath.get(), Envvar::RpcEndpoint.get());
     let es_client = elastic_client().unwrap();
@@ -43,26 +43,20 @@ async fn record_heartbeat() {
     let clock_data = deserialize::<Clock>(&clock_data).unwrap();
     let ts = clock_data.unix_timestamp;
 
-    // Get heartbeat data
-    let heartbeat_pubkey = Heartbeat::pda().0;
-    let heartbeat_data =
-        Heartbeat::try_from(client.get_account_data(&heartbeat_pubkey).unwrap()).unwrap();
-
-    // Compute telemetry data
-    let last_ping = ts - heartbeat_data.last_ping;
-    let drift = ts - heartbeat_data.target_ping;
+    // Get health data
+    let health_data = Health::try_from(client.get_account_data(&Health::pda().0).unwrap()).unwrap();
+    let last_ping = ts - health_data.last_ping;
     let ts = Utc.timestamp(ts, 0).naive_utc();
 
-    // Pipe telemetry data to elasticsearch
+    // Pipe data to elasticsearch
     es_client
         .index(IndexParts::IndexId(
             Envvar::EsIndex.get().as_str(),
             &ts.to_string(),
         ))
         .body(json!({
-            "drift": drift,
+            "clock": ts,
             "last_ping": last_ping,
-            "ts": ts,
         }))
         .send()
         .await

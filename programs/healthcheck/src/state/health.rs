@@ -4,37 +4,36 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_HEARTBEAT: &[u8] = b"heartbeat";
+pub const SEED_HEALTH: &[u8] = b"health";
 
 /**
- * Heartbeat
+ * Health
  */
 
 #[account]
 #[derive(Debug)]
-pub struct Heartbeat {
+pub struct Health {
     pub last_ping: i64,
-    pub target_ping: i64,
 }
 
-impl Heartbeat {
+impl Health {
     pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_HEARTBEAT], &crate::ID)
+        Pubkey::find_program_address(&[SEED_HEALTH], &crate::ID)
     }
 }
 
-impl TryFrom<Vec<u8>> for Heartbeat {
+impl TryFrom<Vec<u8>> for Health {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Heartbeat::try_deserialize(&mut data.as_slice())
+        Health::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * HeartbeatAccount
+ * HealthAccount
  */
 
-pub trait HeartbeatAccount {
+pub trait HealthAccount {
     fn new(&mut self) -> Result<()>;
 
     fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
@@ -42,22 +41,19 @@ pub trait HeartbeatAccount {
     fn reset(&mut self, clock: &Sysvar<Clock>) -> Result<()>;
 }
 
-impl HeartbeatAccount for Account<'_, Heartbeat> {
+impl HealthAccount for Account<'_, Health> {
     fn new(&mut self) -> Result<()> {
         self.last_ping = 0;
-        self.target_ping = 0;
         Ok(())
     }
 
     fn ping(&mut self, clock: &Sysvar<Clock>) -> Result<()> {
         self.last_ping = clock.unix_timestamp;
-        self.target_ping = self.target_ping.checked_add(1).unwrap();
         Ok(())
     }
 
     fn reset(&mut self, clock: &Sysvar<Clock>) -> Result<()> {
         self.last_ping = clock.unix_timestamp;
-        self.target_ping = clock.unix_timestamp;
         Ok(())
     }
 }

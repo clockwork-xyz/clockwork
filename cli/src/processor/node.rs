@@ -106,8 +106,6 @@ pub fn stake(client: &Arc<Client>, amount: u64, delegate: Pubkey) -> Result<(), 
         signer.pubkey(),
     );
 
-    println!("Stake ix: {:#?}", ix);
-
     sign_and_submit(client, &[ix], &[client.payer()]);
     get(client, &node_pubkey)
 }

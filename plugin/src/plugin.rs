@@ -286,13 +286,11 @@ impl CronosPlugin {
             for i in 0..task.action_count {
                 // Get the action account
                 let action_pubkey = Action::pda(task_pubkey, i).0;
-                let action_data = Action::try_from(
-                    cp_clone
-                        .unwrap_client()
-                        .get_account_data(&action_pubkey)
-                        .unwrap(),
-                )
-                .unwrap();
+                let action_data = cp_clone.unwrap_client().get_account_data(&action_pubkey);
+                if action_data.is_err() {
+                    return;
+                }
+                let action_data = Action::try_from(action_data.unwrap()).unwrap();
 
                 // Build ix
                 let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(

@@ -7,14 +7,15 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn ping(heartbeat: Pubkey, signer: Pubkey) -> Instruction {
+pub fn ping(signer: Pubkey) -> Instruction {
+    let health = cronos_healthcheck::state::Health::pda().0;
     Instruction {
-        program_id: cronos_heartbeat::ID,
+        program_id: cronos_healthcheck::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(heartbeat, false),
+            AccountMeta::new(health, false),
             AccountMeta::new(signer, true),
         ],
-        data: cronos_heartbeat::instruction::HeartbeatPing {}.data(),
+        data: cronos_healthcheck::instruction::Ping {}.data(),
     }
 }

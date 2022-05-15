@@ -11,15 +11,11 @@ use anchor_lang::prelude::*;
 use instructions::*;
 
 #[program]
-pub mod cronos_heartbeat {
+pub mod cronos_healthcheck {
     use super::*;
 
-    pub fn heartbeat_ping(ctx: Context<HeartbeatPing>) -> Result<()> {
-        heartbeat_ping::handler(ctx)
-    }
-
-    pub fn heartbeat_reset(ctx: Context<HeartbeatReset>) -> Result<()> {
-        heartbeat_reset::handler(ctx)
+    pub fn ping(ctx: Context<Ping>) -> Result<()> {
+        ping::handler(ctx)
     }
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
