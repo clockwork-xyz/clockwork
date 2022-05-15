@@ -141,77 +141,25 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let start_snapshot_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
-            AccountMeta {
-                pubkey: config.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: cronos_scheduler::delegate::ID,
-                is_signer: true,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: queue.key(),
-                is_signer: true,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: registry.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: next_snapshot_pubkey,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: system_program.key(),
-                is_signer: false,
-                is_writable: false,
-            }
+            AccountMeta::new_readonly(config.key(), false),
+            AccountMeta::new(cronos_scheduler::delegate::ID, true),
+            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new(registry.key(), false),
+            AccountMeta::new(next_snapshot_pubkey, false),
+            AccountMeta::new_readonly(system_program.key(), false),
         ],
         data: sighash("global", "snapshot_start").into(),
     };
     let rotate_snapshot_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
-            AccountMeta {
-                pubkey: authority.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: sysvar::clock::ID,
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: config.key(),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: snapshot.key(),
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: next_snapshot_pubkey,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: queue.key(),
-                is_signer: true,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: registry.key(),
-                is_signer: false,
-                is_writable: true,
-            },
+            AccountMeta::new_readonly(authority.key(), false),
+            AccountMeta::new_readonly(sysvar::clock::ID, false),
+            AccountMeta::new_readonly(config.key(), false),
+            AccountMeta::new(snapshot.key(), false),
+            AccountMeta::new(next_snapshot_pubkey, false),
+            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new(registry.key(), false),
         ],
         data: sighash("global", "snapshot_rotate").into(),
     };
