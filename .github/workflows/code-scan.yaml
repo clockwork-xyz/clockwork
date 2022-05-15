@@ -33,6 +33,8 @@ jobs:
             path: programs/healthcheck
           - cmd: cd programs/network && soteria -analyzeAll .
             path: programs/network
+          - cmd: cd programs/pool && soteria -analyzeAll .
+            path: programs/pool
           - cmd: cd programs/scheduler && soteria -analyzeAll .
             path: programs/scheduler
     steps:
