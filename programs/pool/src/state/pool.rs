@@ -15,8 +15,6 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[derive(Debug)]
 pub struct Pool {
     pub delegates: VecDeque<Pubkey>,
-    pub nonce: u64,
-    pub snapshot_ts: i64,
 }
 
 impl Pool {
@@ -39,7 +37,7 @@ impl TryFrom<Vec<u8>> for Pool {
 pub trait PoolAccount {
     fn new(&mut self) -> Result<()>;
 
-    fn cycle(&mut self, config: &Account<Config>, delegate: &Pubkey) -> Result<()>;
+    fn cycle(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()>;
 }
 
 impl PoolAccount for Account<'_, Pool> {
@@ -48,12 +46,12 @@ impl PoolAccount for Account<'_, Pool> {
         Ok(())
     }
 
-    fn cycle(&mut self, config: &Account<Config>, delegate: &Pubkey) -> Result<()> {
+    fn cycle(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()> {
         // Pop a delegate out of the pool
         self.delegates.pop_front();
 
         // Push provided delegate into the pool
-        self.delegates.push_back(*delegate);
+        self.delegates.push_back(delegate);
 
         // Drain pool to the configured size limit
         while self.delegates.len() > config.pool_size {

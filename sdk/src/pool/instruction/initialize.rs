@@ -7,15 +7,18 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn initialize(admin: Pubkey, config: Pubkey, authorized_cycler: Pubkey) -> Instruction {
+pub fn initialize(admin: Pubkey) -> Instruction {
+    let config = cronos_pool::state::Config::pda().0;
+    let cycler = cronos_network::state::Cycler::pda().0;
+    let pool = cronos_pool::state::Pool::pda().0;
     Instruction {
-        program_id: cronos_delegate::ID,
+        program_id: cronos_pool::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
-            // AccountMeta::new(heartbeat, false),
+            AccountMeta::new(pool, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_delegate::instruction::Initialize { authorized_cycler }.data(),
+        data: cronos_pool::instruction::Initialize { cycler }.data(),
     }
 }

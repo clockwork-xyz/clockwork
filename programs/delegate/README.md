@@ -1,1 +1,0 @@
-# Cronos Delegate

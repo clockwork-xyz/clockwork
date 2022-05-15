@@ -1,7 +1,7 @@
 mod initialize;
-mod register;
-mod stake;
+mod node_register;
+mod node_stake;
 
 pub use initialize::*;
-pub use register::*;
-pub use stake::*;
+pub use node_register::*;
+pub use node_stake::*;

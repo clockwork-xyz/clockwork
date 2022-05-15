@@ -4,6 +4,7 @@ use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
+    signature::{read_keypair_file, Keypair},
 };
 use std::str::FromStr;
 use std::{convert::TryFrom, fs};
@@ -17,6 +18,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", _)) => Ok(CliCommand::Config {}),
             Some(("health", _)) => Ok(CliCommand::Health {}),
+            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
@@ -50,10 +52,11 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
-            delegate: parse_pubkey("delegate", matches)?,
+            delegate: parse_keypair_file("delegate", matches)?,
         }),
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
+            delegate: parse_pubkey("delegate", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -91,6 +94,11 @@ fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 }
 
 // Arg parsers
+
+fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
+    Ok(read_keypair_file(parse_string(arg, matches)?)
+        .map_err(|_err| CliError::BadParameter(arg.into()))?)
+}
 
 fn parse_pubkey(arg: &str, matches: &ArgMatches) -> Result<Pubkey, CliError> {
     Ok(Pubkey::from_str(parse_string(arg, matches)?.as_str())

@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[account(authorized_cycler: Pubkey)]
+#[account(cycler: Pubkey)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -19,23 +19,26 @@ pub struct Initialize<'info> {
     )]
     pub config: Account<'info, Config>,
 
-    // #[account(
-    //     init,
-    //     seeds = [SEED_HEARTBEAT],
-    //     bump,
-    //     payer = admin,
-    //     space = 8 + size_of::<Heartbeat>(),
-    // )]
-    // pub heartbeat: Account<'info, Heartbeat>,
+    #[account(
+        init,
+        seeds = [SEED_POOL],
+        bump,
+        payer = admin,
+        space = 8 + size_of::<Pool>() + (size_of::<Pubkey>() * 10),
+    )]
+    pub pool: Account<'info, Pool>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Initialize>, authorized_cycler: Pubkey) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>, cycler: Pubkey) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
+    let pool = &mut ctx.accounts.pool;
 
-    config.new(admin.key(), authorized_cycler)?;
+    config.new(admin.key(), cycler)?;
+    pool.new()?;
 
     Ok(())
 }

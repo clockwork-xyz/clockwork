@@ -5,23 +5,24 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
-pub struct Stake<'info> {
+#[instruction(
+    amount: u64,
+    delegate: Pubkey
+)]
+pub struct NodeStake<'info> {
     #[account(
         seeds = [SEED_CONFIG],
         bump
     )]
     pub config: Account<'info, Config>,
 
-    #[account(mut)]
-    pub identity: Signer<'info>,
-
     #[account(
         seeds = [
             SEED_NODE,
-            identity.key().as_ref()
+            node.delegate.as_ref()
         ],
-        bump
+        bump,
+        constraint = node.delegate == delegate
     )]
     pub node: Account<'info, Node>,
 
@@ -35,20 +36,23 @@ pub struct Stake<'info> {
     #[account(address = config.mint)]
     pub mint: Account<'info, Mint>,
 
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 
     #[account(
         mut,
-        associated_token::authority = identity,
+        associated_token::authority = signer,
         associated_token::mint = mint,
     )]
     pub tokens: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<Stake>, amount: u64) -> Result<()> {
-    let identity = &mut ctx.accounts.identity;
+pub fn handler(ctx: Context<NodeStake>, amount: u64, _delegate: Pubkey) -> Result<()> {
     let node_stake = &mut ctx.accounts.node_stake;
+    let signer = &mut ctx.accounts.signer;
     let token_program = &ctx.accounts.token_program;
     let tokens = &mut ctx.accounts.tokens;
 
@@ -58,7 +62,7 @@ pub fn handler(ctx: Context<Stake>, amount: u64) -> Result<()> {
             Transfer {
                 from: tokens.to_account_info(),
                 to: node_stake.to_account_info(),
-                authority: identity.to_account_info(),
+                authority: signer.to_account_info(),
             },
         ),
         amount,

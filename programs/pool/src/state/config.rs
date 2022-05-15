@@ -14,7 +14,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub authorized_cycler: Pubkey,
+    pub cycler: Pubkey,
     pub pool_size: usize,
 }
 
@@ -38,8 +38,8 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
+    pub cycler: Pubkey,
     pub pool_size: usize,
-    pub authorized_cycler: Pubkey,
 }
 
 /**
@@ -47,15 +47,15 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, authorized_cycler: Pubkey) -> Result<()>;
+    fn new(&mut self, admin: Pubkey, cycler: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, authorized_cycler: Pubkey) -> Result<()> {
+    fn new(&mut self, admin: Pubkey, cycler: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.authorized_cycler = authorized_cycler;
+        self.cycler = cycler;
         self.pool_size = 1;
         Ok(())
     }
@@ -63,6 +63,7 @@ impl ConfigAccount for Account<'_, Config> {
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
         require!(self.admin == admin.key(), CronosError::NotAuthorizedAdmin);
         self.admin = settings.admin;
+        self.cycler = settings.cycler;
         self.pool_size = settings.pool_size;
         Ok(())
     }

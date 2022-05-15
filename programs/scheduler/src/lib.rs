@@ -40,8 +40,8 @@ pub mod cronos_scheduler {
         admin_fee_collect::handler(ctx)
     }
 
-    pub fn initialize(ctx: Context<Initialize>, pool_pubkey: Pubkey) -> Result<()> {
-        initialize::handler(ctx, pool_pubkey)
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        initialize::handler(ctx)
     }
 
     pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String) -> Result<()> {

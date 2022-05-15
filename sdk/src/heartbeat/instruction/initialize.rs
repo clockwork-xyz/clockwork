@@ -7,7 +7,9 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn initialize(admin: Pubkey, config: Pubkey, heartbeat: Pubkey) -> Instruction {
+pub fn initialize(admin: Pubkey) -> Instruction {
+    let config = cronos_heartbeat::state::Config::pda().0;
+    let heartbeat = cronos_heartbeat::state::Heartbeat::pda().0;
     Instruction {
         program_id: cronos_heartbeat::ID,
         accounts: vec![

@@ -3,7 +3,7 @@ use {
         cli::CliError,
         utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
     },
-    cronos_sdk::network::state::{Authority, Config, Node, Registry},
+    cronos_sdk::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
     solana_client_helpers::Client,
     solana_sdk::{
         pubkey::Pubkey,
@@ -26,7 +26,7 @@ pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn register(client: &Arc<Client>, _delegate: Pubkey) -> Result<(), CliError> {
+pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pda().0;
     let config_data = client
@@ -36,39 +36,56 @@ pub fn register(client: &Arc<Client>, _delegate: Pubkey) -> Result<(), CliError>
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Build ix
-    let delegate = &Keypair::new(); // TODO Load from keypair from filepath and make it a signer
     let owner = client.payer().clone();
     let authority_pubkey = Authority::pda().0;
     let node_pubkey = Node::pda(delegate.pubkey()).0;
     let registry_pubkey = Registry::pda().0;
-    let queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(authority_pubkey).0;
-    let task_pubkey = cronos_sdk::scheduler::state::Task::pda(queue_pubkey, 0).0;
-    let task_data = client
-        .get_account_data(&task_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(task_pubkey.to_string()))?;
-    let task_data = cronos_sdk::scheduler::state::Task::try_from(task_data)
-        .map_err(|_err| CliError::AccountDataNotParsable(task_pubkey.to_string()))?;
-    let action_pubkey =
-        cronos_sdk::scheduler::state::Action::pda(task_pubkey, task_data.action_count).0;
+    let registry_data = client
+        .get_account_data(&registry_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
+    let registry_data = Registry::try_from(registry_data)
+        .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
-    let ix = cronos_sdk::network::instruction::register(
+    let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
+    let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
+
+    let queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(authority_pubkey).0;
+    let cycler_task_pubkey = cronos_sdk::scheduler::state::Task::pda(queue_pubkey, 0).0;
+    let cycler_action_pubkey = cronos_sdk::scheduler::state::Action::pda(
+        cycler_task_pubkey,
+        registry_data.node_count.into(),
+    )
+    .0;
+
+    let snapshot_task_pubkey = cronos_sdk::scheduler::state::Task::pda(queue_pubkey, 1).0;
+    let snapshot_action_pubkey = cronos_sdk::scheduler::state::Action::pda(
+        snapshot_task_pubkey,
+        (registry_data.node_count + 1).into(),
+    )
+    .0;
+
+    let ix = cronos_sdk::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
         delegate.pubkey(),
+        entry_pubkey,
         config_data.mint,
         node_pubkey,
         owner.pubkey(),
         registry_pubkey,
-        action_pubkey,
+        snapshot_pubkey,
+        // Additional accounts
+        cycler_action_pubkey,
+        cycler_task_pubkey,
         queue_pubkey,
-        task_pubkey,
+        snapshot_action_pubkey,
+        snapshot_task_pubkey,
     );
-    // sign_and_submit(client, &[ix]);
-    sign_and_submit(client, &[ix], &[owner, delegate]);
+    sign_and_submit(client, &[ix], &[owner, &delegate]);
     get(client, &node_pubkey)
 }
 
-pub fn stake(client: &Arc<Client>, amount: u64) -> Result<(), CliError> {
+pub fn stake(client: &Arc<Client>, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pda().0;
     let config_data = client
@@ -78,15 +95,19 @@ pub fn stake(client: &Arc<Client>, amount: u64) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Build ix
-    let identity = client.payer_pubkey();
-    let node_pubkey = Node::pda(identity).0;
-    let ix = cronos_sdk::network::instruction::stake(
+    let signer = client.payer();
+    let node_pubkey = Node::pda(delegate).0;
+    let ix = cronos_sdk::network::instruction::node_stake(
         amount,
         config_pubkey,
-        identity,
-        config_data.mint,
+        delegate,
         node_pubkey,
+        config_data.mint,
+        signer.pubkey(),
     );
+
+    println!("Stake ix: {:#?}", ix);
+
     sign_and_submit(client, &[ix], &[client.payer()]);
     get(client, &node_pubkey)
 }

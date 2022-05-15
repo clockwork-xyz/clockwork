@@ -33,18 +33,18 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Config>(),
     )]
     pub config: Account<'info, Config>,
+    
+    #[account(
+        init,
+        seeds = [SEED_CYCLER],
+        bump,
+        payer = admin,
+        space = 8 + size_of::<Cycler>(),
+    )]
+    pub cycler: Account<'info, Cycler>,
 
     #[account()]
     pub mint: Account<'info, Mint>,
-
-    #[account(
-        init,
-        seeds = [SEED_POOL],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<Pool>(),
-    )]
-    pub pool: Account<'info, Pool>,
 
     #[account(
         init,
@@ -79,27 +79,28 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
+    let cycler = &mut ctx.accounts.cycler;
     let config = &mut ctx.accounts.config;
     let mint = &ctx.accounts.mint;
-    let pool = &mut ctx.accounts.pool;
     let registry = &mut ctx.accounts.registry;
     let scheduler_program = &ctx.accounts.scheduler_program;
     let snapshot = &mut ctx.accounts.snapshot;
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let action = ctx.remaining_accounts.get(0).unwrap();
+    let cycler_task = ctx.remaining_accounts.get(0).unwrap();
     let fee = ctx.remaining_accounts.get(1).unwrap();
     let queue = ctx.remaining_accounts.get(2).unwrap();
-    let task = ctx.remaining_accounts.get(3).unwrap();
-    
+    let snapshot_action = ctx.remaining_accounts.get(3).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(4).unwrap();
+
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
 
     // Initialize accounts
     authority.new(queue.key())?;
     config.new(admin.key(),  mint.key())?;
-    pool.new()?;
+    cycler.new()?;
     registry.new()?;
     registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
@@ -119,7 +120,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         )
     )?;
 
-    // Create a task to collect snapshots
+    // Create a recurring task to cycle the delegate pool
     cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
@@ -129,14 +130,31 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 payer: admin.to_account_info(),
                 queue: queue.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: task.to_account_info(),
+                task: cycler_task.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]]
         ), 
-        "0/20 * * * * * *".into()
+        "*/20 * * * * * *".into()
     )?;
 
-    // Create an action to start the snapshot
+    // Create a recurring task to take snapshots of the registry
+    cronos_scheduler::cpi::task_new(
+        CpiContext::new_with_signer(
+            scheduler_program.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                clock: clock.to_account_info(),
+                owner: authority.to_account_info(),
+                payer: admin.to_account_info(),
+                queue: queue.to_account_info(),
+                system_program: system_program.to_account_info(),
+                task: snapshot_task.to_account_info(),
+            },
+            &[&[SEED_AUTHORITY, &[authority_bump]]]
+        ), 
+        "0 */1 * * * * *".into()
+    )?;
+
+    // Add an action to the snapshot task to kick things off
     let next_snapshot_pubkey = Snapshot::pda(1).0;
     let start_snapshot_ix = Instruction {
         program_id: crate::ID,
@@ -167,12 +185,12 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
             cronos_scheduler::cpi::accounts::ActionNew {
-                action: action.to_account_info(),
+                action: snapshot_action.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: queue.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: task.to_account_info(),
+                task: snapshot_task.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]],
         ),

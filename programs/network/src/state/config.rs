@@ -15,7 +15,6 @@ pub const SEED_CONFIG: &[u8] = b"config";
 pub struct Config {
     pub admin: Pubkey,
     pub mint: Pubkey,
-    pub pool_size: usize,
 }
 
 impl Config {
@@ -38,7 +37,6 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
-    pub pool_size: usize,
     pub mint: Pubkey,
 }
 
@@ -56,7 +54,6 @@ impl ConfigAccount for Account<'_, Config> {
     fn new(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()> {
         self.admin = admin;
         self.mint = mint;
-        self.pool_size = 1;
         Ok(())
     }
 
@@ -66,7 +63,6 @@ impl ConfigAccount for Account<'_, Config> {
             CronosError::AdminAuthorityInvalid
         );
         self.admin = settings.admin;
-        self.pool_size = settings.pool_size;
         Ok(())
     }
 }

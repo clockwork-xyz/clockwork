@@ -1,5 +1,5 @@
 use clap::{Arg, Command};
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
@@ -11,8 +11,11 @@ pub enum CliCommand {
     Initialize { mint: Pubkey },
 
     // Node commands
-    NodeRegister { delegate: Pubkey },
-    NodeStake { amount: u64 },
+    NodeRegister { delegate: Keypair },
+    NodeStake { amount: u64, delegate: Pubkey },
+
+    // Pool commands
+    PoolGet,
 
     // Queue commands
     QueueCreate,
@@ -99,9 +102,17 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(true)
                                 .help("The number of tokens to stake"),
+                        )
+                        .arg(
+                            Arg::new("delegate")
+                                .index(2)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The delegate address to stake tokens with"),
                         ),
                 ),
         )
+        .subcommand(Command::new("pool").about("Get the delegate pool info"))
         .subcommand(
             Command::new("queue")
                 .about("Manage your queues")

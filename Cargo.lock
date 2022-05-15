@@ -882,13 +882,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-delegate"
-version = "0.1.8"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
 name = "cronos-heartbeat"
 version = "0.1.8"
 dependencies = [
@@ -901,7 +894,15 @@ version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "cronos-pool",
  "cronos-scheduler",
+]
+
+[[package]]
+name = "cronos-pool"
+version = "0.1.8"
+dependencies = [
+ "anchor-lang",
 ]
 
 [[package]]
@@ -919,9 +920,9 @@ version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "cronos-delegate",
  "cronos-heartbeat",
  "cronos-network",
+ "cronos-pool",
  "cronos-scheduler",
 ]
 

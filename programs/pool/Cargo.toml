@@ -1,7 +1,7 @@
 [package]
-name = "cronos-delegate"
+name = "cronos-pool"
 version = "0.1.8"
-description = "Cronos delegate protocol"
+description = "Cronos pool protocol"
 edition = "2021"
 license = "GNU AGPLv3"
 homepage = "https://cronos.so"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_delegate"
+name = "cronos_pool"
 
 [features]
 no-entrypoint = []

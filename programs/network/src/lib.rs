@@ -20,8 +20,18 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
-    pub fn register<'info>(ctx: Context<'_, '_, '_, 'info, Register<'info>>) -> Result<()> {
-        register::handler(ctx)
+    pub fn cycler_run(ctx: Context<CyclerRun>) -> Result<ExecResponse> {
+        cycler_run::handler(ctx)
+    }
+
+    pub fn node_register<'info>(
+        ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>,
+    ) -> Result<()> {
+        node_register::handler(ctx)
+    }
+
+    pub fn node_stake(ctx: Context<NodeStake>, amount: u64, delegate: Pubkey) -> Result<()> {
+        node_stake::handler(ctx, amount, delegate)
     }
 
     pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
@@ -34,9 +44,5 @@ pub mod cronos_network {
 
     pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
         snapshot_start::handler(ctx)
-    }
-
-    pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
-        stake::handler(ctx, amount)
     }
 }
