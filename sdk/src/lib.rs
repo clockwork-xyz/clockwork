@@ -1,3 +1,4 @@
+pub mod delegate;
 pub mod heartbeat;
 pub mod network;
 pub mod scheduler;

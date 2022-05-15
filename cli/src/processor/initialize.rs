@@ -41,10 +41,14 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
         action, admin, authority, config, fee, mint, pool, queue, registry, snapshot, task,
     );
 
+    // Initialize the delegate program
+    let config = cronos_sdk::delegate::state::Config::pda().0;
+    let ix_d = cronos_sdk::delegate::instruction::initialize(admin, config, authority);
+
     // Fund the queue
-    let ix_d = cronos_sdk::scheduler::instruction::queue_fund(LAMPORTS_PER_SOL / 4, admin, queue);
+    let ix_e = cronos_sdk::scheduler::instruction::queue_fund(LAMPORTS_PER_SOL / 4, admin, queue);
 
     // Submit tx
-    sign_and_submit(client, &[ix_a, ix_b, ix_c, ix_d], &[client.payer()]);
+    sign_and_submit(client, &[ix_a, ix_b, ix_c, ix_d, ix_e], &[client.payer()]);
     Ok(())
 }
