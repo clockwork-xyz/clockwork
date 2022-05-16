@@ -44,14 +44,6 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
-    pub fn admin_queue_new(ctx: Context<AdminQueueNew>, schedule: String) -> Result<()> {
-        admin_queue_new::handler(ctx, schedule)
-    }
-
-    pub fn admin_queue_cancel(ctx: Context<AdminQueueCancel>) -> Result<()> {
-        admin_queue_cancel::handler(ctx)
-    }
-
     pub fn yogi_fund(ctx: Context<YogiFund>, amount: u64) -> Result<()> {
         yogi_fund::handler(ctx, amount)
     }

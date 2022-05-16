@@ -1,7 +1,5 @@
 pub mod admin_config_update;
 pub mod admin_fee_collect;
-pub mod admin_queue_cancel;
-pub mod admin_queue_new;
 pub mod initialize;
 pub mod queue_begin;
 pub mod queue_cancel;
@@ -15,8 +13,6 @@ pub mod yogi_sign;
 
 pub use admin_config_update::*;
 pub use admin_fee_collect::*;
-pub use admin_queue_cancel::*;
-pub use admin_queue_new::*;
 pub use initialize::*;
 pub use queue_begin::*;
 pub use queue_cancel::*;
