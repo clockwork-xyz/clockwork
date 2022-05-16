@@ -1,21 +1,10 @@
 use {
-    crate::{errors::CronosError, events::QueueExecuted, state::*},
+    crate::{errors::CronosError, events::TaskExecuted, state::*},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]
-pub struct QueueExec<'info> {
-    #[account(
-        mut,
-        seeds = [
-            SEED_TASK,
-            task.queue.as_ref(),
-            task.id.to_be_bytes().as_ref()
-        ],
-        bump,
-    )]
-    pub task: Account<'info, Task>,
-
+pub struct TaskExec<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -29,21 +18,15 @@ pub struct QueueExec<'info> {
         mut,
         seeds = [
             SEED_FEE,
-            manager.key().as_ref()
+            queue.key().as_ref()
         ],
         bump,
-        has_one = manager
+        has_one = queue
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(
-        seeds = [
-            SEED_MANAGER,
-            manager.owner.as_ref()
-        ],
-        bump,
-    )]
-    pub manager: Box<Account<'info, Manager>>,
+    #[account(seeds = [SEED_MANAGER, manager.authority.as_ref()], bump)]
+    pub manager: Account<'info, Manager>,
 
     #[account(
         mut,
@@ -53,7 +36,6 @@ pub struct QueueExec<'info> {
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = manager,
         constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = match queue.status {
             QueueStatus::Executing { task_id } => task_id == task.id,
@@ -61,9 +43,20 @@ pub struct QueueExec<'info> {
         } @ CronosError::InvalidQueueStatus
     )]
     pub queue: Account<'info, Queue>,
+
+    #[account(
+        mut,
+        seeds = [
+            SEED_TASK,
+            task.queue.as_ref(),
+            task.id.to_be_bytes().as_ref()
+        ],
+        bump,
+    )]
+    pub task: Account<'info, Task>,
 }
 
-pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
+pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
@@ -72,13 +65,19 @@ pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
     let manager = &ctx.accounts.manager;
     let queue = &mut ctx.accounts.queue;
 
-    let remaining_accounts = &mut ctx.remaining_accounts.clone().to_vec();
+    let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
 
-    queue.exec(remaining_accounts, task, delegate, config, fee, manager)?;
+    msg!("Executing task with accounts: ");
+    for acc in account_infos.iter() {
+        msg!("{}", acc.key);
+    }
 
-    emit!(QueueExecuted {
+    let manager_bump = *ctx.bumps.get("manager").unwrap();
+    task.exec(account_infos, config, delegate, fee, manager, manager_bump, queue)?;
+
+    emit!(TaskExecuted {
         delegate: delegate.key(),
-        queue: queue.key(),
+        task: task.key(),
         ts: clock.unix_timestamp,
     });
 

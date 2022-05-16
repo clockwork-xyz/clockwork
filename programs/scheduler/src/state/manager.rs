@@ -22,14 +22,13 @@ pub const SEED_MANAGER: &[u8] = b"manager";
 #[account]
 #[derive(Debug)]
 pub struct Manager {
-    pub owner: Pubkey,
+    pub authority: Pubkey,
     pub queue_count: u128,
-    pub bump: u8,
 }
 
 impl Manager {
-    pub fn pda(owner: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_MANAGER, owner.as_ref()], &crate::ID)
+    pub fn pda(authority: Pubkey) -> PDA {
+        Pubkey::find_program_address(&[SEED_MANAGER, authority.as_ref()], &crate::ID)
     }
 }
 
@@ -45,24 +44,33 @@ impl TryFrom<Vec<u8>> for Manager {
  */
 
 pub trait ManagerAccount {
-    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
+    fn new(&mut self, authority: Pubkey) -> Result<()>;
 
-    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse>;
+    fn sign(
+        &self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        ix: &InstructionData,
+    ) -> Result<ExecResponse>;
 }
 
 impl ManagerAccount for Account<'_, Manager> {
-    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()> {
-        self.bump = bump;
-        self.owner = owner;
+    fn new(&mut self, authority: Pubkey) -> Result<()> {
+        self.authority = authority;
         self.queue_count = 0;
         Ok(())
     }
 
-    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse> {
+    fn sign(
+        &self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        ix: &InstructionData,
+    ) -> Result<ExecResponse> {
         invoke_signed(
             &Instruction::from(ix),
             account_infos,
-            &[&[SEED_MANAGER, self.owner.as_ref(), &[self.bump]]],
+            &[&[SEED_MANAGER, self.authority.as_ref(), &[bump]]],
         )
         .map_err(|_err| CronosError::InnerIxFailed)?;
 

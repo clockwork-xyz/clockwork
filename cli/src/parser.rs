@@ -78,9 +78,6 @@ fn parse_manager_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("cancel", matches)) => Ok(CliCommand::QueueCancel {
-            address: parse_pubkey("address", matches)?,
-        }),
         Some(("create", matches)) => Ok(CliCommand::QueueCreate {
             schedule: parse_string("schedule", matches)?,
         }),

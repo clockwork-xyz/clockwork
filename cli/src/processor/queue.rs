@@ -3,19 +3,11 @@ use {
         cli::CliError,
         utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
     },
-    cronos_sdk::scheduler::state::{Queue, Manager},
+    cronos_sdk::scheduler::state::{Manager, Queue},
     solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
 };
-
-pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
-    let owner = client.payer_pubkey();
-    let manager = cronos_sdk::scheduler::state::Manager::pda(owner).0;
-    let ix = cronos_sdk::scheduler::instruction::queue_cancel(manager, *address, owner);
-    sign_and_submit(client, &[ix], &[client.payer()]);
-    get(client, address)
-}
 
 pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
     // Fetch manager data.

@@ -22,7 +22,6 @@ pub enum CliCommand {
     ManagerGet { address: Pubkey },
 
     // Queue commands
-    QueueCancel { address: Pubkey },
     QueueCreate { schedule: String },
     QueueGet { address: Pubkey },
 
@@ -132,15 +131,6 @@ pub fn app() -> Command<'static> {
             Command::new("queue")
                 .about("Manage your queues")
                 .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("cancel").about("Cancel a queue").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a queue"),
-                    ),
-                )
                 .subcommand(
                     Command::new("create")
                         .about("Create a new queue")

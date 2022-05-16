@@ -1,16 +1,12 @@
 use {
     crate::state::*,
-    cronos_scheduler::{state::Manager, responses::ExecResponse},
     anchor_lang::{prelude::*, solana_program::sysvar},
+    cronos_scheduler::{responses::ExecResponse, state::Manager},
 };
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
-    #[account(
-        seeds = [SEED_AUTHORITY], 
-        bump,
-        has_one = manager
-    )]
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
     pub authority: Account<'info, Authority>,
 
     #[account(address = sysvar::clock::ID)]
@@ -39,13 +35,12 @@ pub struct SnapshotRotate<'info> {
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
-    #[account(signer, constraint = manager.owner == authority.key())]
+    #[account(signer, constraint = manager.authority == authority.key())]
     pub manager: Account<'info, Manager>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
 }
-
 
 pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     // Get accounts
@@ -67,16 +62,15 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     let next_next_snapshot_pubkey = Snapshot::pda(next_snapshot.id.checked_add(1).unwrap()).0;
     Ok(ExecResponse {
         dynamic_accounts: Some(
-            ctx
-                .accounts
+            ctx.accounts
                 .to_account_metas(None)
                 .iter()
                 .map(|acc| match acc.pubkey {
                     _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
                     _ if acc.pubkey == next_snapshot_pubkey => next_next_snapshot_pubkey,
-                    _ => acc.pubkey
+                    _ => acc.pubkey,
                 })
-                .collect()
+                .collect(),
         ),
     })
 }

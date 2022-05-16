@@ -4,7 +4,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct QueueBegin<'info> {
+pub struct QueueStart<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -14,9 +14,9 @@ pub struct QueueBegin<'info> {
     #[account(
         seeds = [
             SEED_MANAGER,
-            manager.owner.as_ref()
+            manager.authority.as_ref()
         ],
-        bump = manager.bump,
+        bump,
     )]
     pub manager: Account<'info, Manager>,
 
@@ -35,7 +35,7 @@ pub struct QueueBegin<'info> {
     pub queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<QueueBegin>) -> Result<()> {
+pub fn handler(ctx: Context<QueueStart>) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
-    queue.begin()
+    queue.start()
 }

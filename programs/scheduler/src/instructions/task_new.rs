@@ -7,37 +7,21 @@ use {
 #[derive(Accounts)]
 #[instruction(ixs: Vec<InstructionData>)]
 pub struct TaskNew<'info> {
-    #[account(
-        init,
-        seeds = [
-            SEED_TASK, 
-            queue.key().as_ref(),
-            queue.task_count.to_be_bytes().as_ref(),
-        ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
-    )]
-    pub task: Account<'info, Task>,
-    
     #[account()]
-    pub owner: Signer<'info>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    pub authority: Signer<'info>,
 
     #[account(
         seeds = [
             SEED_MANAGER, 
-            manager.owner.as_ref()
+            manager.authority.as_ref()
         ],
         bump,
-        has_one = owner,
+        has_one = authority,
     )]
     pub manager: Account<'info, Manager>,
 
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         mut,
@@ -50,6 +34,22 @@ pub struct TaskNew<'info> {
         has_one = manager,
     )]
     pub queue: Account<'info, Queue>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+
+    #[account(
+        init,
+        seeds = [
+            SEED_TASK, 
+            queue.key().as_ref(),
+            queue.task_count.to_be_bytes().as_ref(),
+        ],
+        bump,
+        payer = payer,
+        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
+    )]
+    pub task: Account<'info, Task>,
 }
 
 pub fn handler(
@@ -59,5 +59,5 @@ pub fn handler(
     let task = &mut ctx.accounts.task;
     let queue = &mut ctx.accounts.queue;
 
-    task.new( ixs, queue)
+    task.new(ixs, queue)
 }

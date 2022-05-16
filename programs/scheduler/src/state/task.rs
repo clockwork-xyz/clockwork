@@ -1,3 +1,7 @@
+use crate::state::{ManagerAccount, QueueAccount, QueueStatus};
+
+use super::{Config, Fee, Manager};
+
 use {
     super::Queue,
     crate::{errors::CronosError, pda::PDA},
@@ -44,6 +48,17 @@ impl TryFrom<Vec<u8>> for Task {
 
 pub trait TaskAccount {
     fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()>;
+
+    fn exec(
+        &mut self,
+        account_infos: &Vec<AccountInfo>,
+        config: &Account<Config>,
+        delegate: &mut Signer,
+        fee: &mut Account<Fee>,
+        manager: &Account<Manager>,
+        manager_bump: u8,
+        queue: &mut Account<Queue>,
+    ) -> Result<()>;
 }
 
 impl TaskAccount for Account<'_, Task> {
@@ -53,7 +68,7 @@ impl TaskAccount for Account<'_, Task> {
             for acc in ix.accounts.iter() {
                 if acc.is_signer {
                     require!(
-                        acc.pubkey == queue.manager || acc.pubkey == crate::delegate::ID,
+                        acc.pubkey == queue.manager || acc.pubkey == crate::payer::ID,
                         CronosError::InvalidSignatory
                     );
                 }
@@ -67,6 +82,166 @@ impl TaskAccount for Account<'_, Task> {
 
         // Increment the queue's task count
         queue.task_count = queue.task_count.checked_add(1).unwrap();
+
+        Ok(())
+    }
+
+    fn exec(
+        &mut self,
+        account_infos: &Vec<AccountInfo>,
+        config: &Account<Config>,
+        delegate: &mut Signer,
+        fee: &mut Account<Fee>,
+        manager: &Account<Manager>,
+        manager_bump: u8,
+        queue: &mut Account<Queue>,
+    ) -> Result<()> {
+        // Validate the task id matches the queue's current execution state
+        require!(
+            self.id
+                == match queue.status {
+                    QueueStatus::Executing { task_id } => task_id,
+                    _ => return Err(CronosError::InvalidQueueStatus.into()),
+                },
+            CronosError::InvalidTask
+        );
+
+        // Validate the delegate data is empty
+        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+
+        // Record the delegate's lamports before invoking inner ixs
+        let delegate_lamports_pre = delegate.lamports();
+
+        // Create an array of dynamic ixs to update the task for the next invocation
+        let dyanmic_ixs: &mut Vec<InstructionData> = &mut vec![];
+
+        // Process all of the task instructions
+        for ix in &self.ixs {
+            // If an inner ix account matches the Cronos delegate address (CronosDe1egate11111111111111111111111111111),
+            //  then inject the delegate account in its place. Dapp developers can use the delegate as a payer to initialize
+            //  new accouns in their queues. Delegates will be reimbursed for all SOL spent during the inner ixs.
+            //
+            // Because the delegate can be injected as the signer on inner ixs (written by presumed malicious parties),
+            //  node operators should not secure any assets or staking positions with their delegate wallets other than
+            //  an operational level of lamports needed to submit txns (~0.1 ⊚).
+            //
+            // TODO Update the network program to allow for split identity / delegate addresses so CRON stakes
+            //  are not secured by delegate signatures.
+            let accs: &mut Vec<AccountMetaData> = &mut vec![];
+            ix.accounts.iter().for_each(|acc| {
+                if acc.pubkey == crate::payer::ID {
+                    msg!(
+                        "Injecting delegate as payer: {} {}",
+                        acc.pubkey,
+                        delegate.key()
+                    );
+                    accs.push(AccountMetaData {
+                        pubkey: delegate.key(),
+                        is_signer: acc.is_signer,
+                        is_writable: acc.is_writable,
+                    });
+                } else {
+                    accs.push(acc.clone());
+                }
+            });
+
+            // Execute the inner ix and process the response. Note that even though the manager PDA is a signer
+            //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
+            //  and explicitly forbids CPI reentrancy.
+            //
+            // TODO Can downstream programs mutate the manager account data?
+            let exec_response = manager.sign(
+                &account_infos,
+                manager_bump,
+                &InstructionData {
+                    program_id: ix.program_id,
+                    accounts: accs.clone(),
+                    data: ix.data.clone(),
+                },
+            )?;
+
+            // Process the exec response
+            match exec_response.dynamic_accounts {
+                None => (), // Noop
+                Some(dynamic_accounts) => {
+                    require!(
+                        dynamic_accounts.len() == ix.accounts.len(),
+                        CronosError::InvalidDynamicAccounts
+                    );
+                    dyanmic_ixs.push(InstructionData {
+                        program_id: ix.program_id,
+                        accounts: dynamic_accounts
+                            .iter()
+                            .enumerate()
+                            .map(|(i, pubkey)| {
+                                let acc = ix.accounts.get(i).unwrap();
+                                AccountMetaData {
+                                    pubkey: *pubkey,
+                                    is_signer: acc.is_signer,
+                                    is_writable: acc.is_writable,
+                                }
+                            })
+                            .collect::<Vec<AccountMetaData>>(),
+                        data: ix.data.clone(),
+                    });
+                }
+            }
+        }
+
+        // Verify that inner ixs have not initialized data at the delegate address
+        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+
+        // Update the actions's ixs for the next invocation
+        if !dyanmic_ixs.is_empty() {
+            self.ixs = dyanmic_ixs.clone();
+        }
+
+        // Track how many lamports the delegate spent in the inner ixs
+        let delegate_lamports_post = delegate.lamports();
+        let delegate_reimbursement = delegate_lamports_pre
+            .checked_sub(delegate_lamports_post)
+            .unwrap();
+
+        // Pay delegate fees
+        let total_delegate_fee = config
+            .delegate_fee
+            .checked_add(delegate_reimbursement)
+            .unwrap();
+        **queue.to_account_info().try_borrow_mut_lamports()? = queue
+            .to_account_info()
+            .lamports()
+            .checked_sub(total_delegate_fee)
+            .unwrap();
+        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
+            .to_account_info()
+            .lamports()
+            .checked_add(total_delegate_fee)
+            .unwrap();
+
+        // Pay program fees
+        **queue.to_account_info().try_borrow_mut_lamports()? = queue
+            .to_account_info()
+            .lamports()
+            .checked_sub(config.program_fee)
+            .unwrap();
+        **fee.to_account_info().try_borrow_mut_lamports()? = fee
+            .to_account_info()
+            .lamports()
+            .checked_add(config.program_fee)
+            .unwrap();
+
+        // Increment collectable fee balance
+        fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
+
+        // Update the queue status
+        let next_task_id = self.id.checked_add(1).unwrap();
+        if next_task_id == queue.task_count {
+            queue.roll_forward()?;
+        } else {
+            queue.status = QueueStatus::Executing {
+                task_id: next_task_id,
+            };
+        }
 
         Ok(())
     }

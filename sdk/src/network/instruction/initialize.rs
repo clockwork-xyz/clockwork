@@ -15,9 +15,10 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let snapshot = cronos_network::state::Snapshot::pda(0).0;
 
     let manager = cronos_scheduler::state::Manager::pda(authority).0;
-    let fee = cronos_scheduler::state::Fee::pda(manager).0;
     let cycler_queue = cronos_scheduler::state::Queue::pda(manager, 0).0;
+    let cycler_fee = cronos_scheduler::state::Fee::pda(cycler_queue).0;
     let snapshot_queue = cronos_scheduler::state::Queue::pda(manager, 1).0;
+    let snapshot_fee = cronos_scheduler::state::Fee::pda(snapshot_queue).0;
     let snapshot_task = cronos_scheduler::state::Task::pda(snapshot_queue, 0).0;
 
     Instruction {
@@ -34,11 +35,12 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(snapshot, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
+            AccountMeta::new(cycler_fee, false),
             AccountMeta::new(cycler_queue, false),
-            AccountMeta::new(fee, false),
             AccountMeta::new(manager, false),
-            AccountMeta::new(snapshot_task, false),
+            AccountMeta::new(snapshot_fee, false),
             AccountMeta::new(snapshot_queue, false),
+            AccountMeta::new(snapshot_task, false),
         ],
         data: cronos_network::instruction::Initialize {}.data(),
     }

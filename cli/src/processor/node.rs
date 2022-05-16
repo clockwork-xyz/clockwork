@@ -67,19 +67,18 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
     let ix = cronos_sdk::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
+        cycler_queue_pubkey,
+        cycler_task_pubkey,
         delegate.pubkey(),
         entry_pubkey,
+        manager_pubkey,
         config_data.mint,
         node_pubkey,
         owner.pubkey(),
         registry_pubkey,
         snapshot_pubkey,
-        // Additional accounts
-        cycler_task_pubkey,
-        cycler_queue_pubkey,
-        manager_pubkey,
-        snapshot_task_pubkey,
         snapshot_queue_pubkey,
+        snapshot_task_pubkey,
     );
     sign_and_submit(client, &[ix], &[owner, &delegate]);
     get(client, &node_pubkey)

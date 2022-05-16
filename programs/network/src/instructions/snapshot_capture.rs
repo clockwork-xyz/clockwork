@@ -40,8 +40,8 @@ pub struct SnapshotCapture<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(signer, constraint = manager.owner == authority.key())]
-    pub manager: Box<Account<'info, Manager>>,
+    #[account(signer, constraint = manager.authority == authority.key())]
+    pub manager: Box<Account<'info, Manager>>, // TODO this should be the queue
 
     #[account(seeds = [SEED_REGISTRY], bump)]
     pub registry: Box<Account<'info, Registry>>,

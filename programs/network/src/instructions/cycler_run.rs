@@ -34,7 +34,7 @@ pub struct CyclerRun<'info> {
     #[account(address = cronos_pool::ID)]
     pub pool_program: Program<'info, cronos_pool::program::CronosPool>,
 
-    #[account(signer, constraint = manager.owner == authority.key())]
+    #[account(signer, constraint = manager.authority == authority.key())]
     pub manager: Account<'info, Manager>,
 
     #[account(seeds = [SEED_REGISTRY], bump)]

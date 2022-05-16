@@ -4,32 +4,16 @@ use {
     std::mem::size_of
 };
 
-
 #[derive(Accounts)]
 pub struct ManagerNew<'info> {
-    #[account(
-        init,
-        seeds = [
-            SEED_FEE, 
-            manager.key().as_ref()
-        ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<Fee>(),
-    )]
-    pub fee: Account<'info, Fee>,
-
     #[account()]
-    pub owner: Signer<'info>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    pub authority: Signer<'info>,
 
     #[account(
         init,
         seeds = [
             SEED_MANAGER, 
-            owner.key().as_ref()
+            authority.key().as_ref()
         ],
         bump,
         payer = payer,
@@ -37,19 +21,18 @@ pub struct ManagerNew<'info> {
     )]
     pub manager: Account<'info, Manager>,
 
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<ManagerNew>) -> Result<()> {
+    let authority = &ctx.accounts.authority;
     let manager = &mut ctx.accounts.manager;
-    let fee = &mut ctx.accounts.fee;
-    let owner = &ctx.accounts.owner;
 
-    let manager_bump = *ctx.bumps.get("manager").unwrap();
-
-    fee.new( manager.key())?;
-    manager.new(manager_bump, owner.key())?;
+    manager.new(authority.key())?;
 
     Ok(())
 }

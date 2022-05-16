@@ -34,7 +34,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::PoolGet => super::pool::get(&client),
         CliCommand::ManagerCreate => super::manager::create(&client),
         CliCommand::ManagerGet { address } => super::manager::get(&client, &address),
-        CliCommand::QueueCancel { address } => super::queue::cancel(&client, &address),
         CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
     }
