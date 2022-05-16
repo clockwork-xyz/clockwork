@@ -90,7 +90,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Get remaining accounts
     let cycler_queue = ctx.remaining_accounts.get(0).unwrap();
     let fee = ctx.remaining_accounts.get(1).unwrap();
-    let yogi = ctx.remaining_accounts.get(2).unwrap();
+    let manager = ctx.remaining_accounts.get(2).unwrap();
     let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
     let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
 
@@ -98,22 +98,22 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let authority_bump = *ctx.bumps.get("authority").unwrap();
 
     // Initialize accounts
-    authority.new(yogi.key())?;
+    authority.new(manager.key())?;
     config.new(admin.key(),  mint.key())?;
     cycler.new()?;
     registry.new()?;
     registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
 
-    // Create a yogi
-    cronos_scheduler::cpi::yogi_new(
+    // Create a manager
+    cronos_scheduler::cpi::manager_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(), 
-            cronos_scheduler::cpi::accounts::YogiNew {
+            cronos_scheduler::cpi::accounts::ManagerNew {
                 fee: fee.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: admin.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]]
@@ -128,7 +128,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 clock: clock.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: admin.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
                 queue: cycler_queue.to_account_info(),
             },
@@ -145,7 +145,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 clock: clock.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: admin.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
             },
@@ -161,7 +161,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         accounts: vec![
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(cronos_scheduler::delegate::ID, true),
-            AccountMeta::new_readonly(yogi.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program.key(), false),
@@ -176,7 +176,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(snapshot.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(yogi.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: sighash("global", "snapshot_rotate").into(),
@@ -188,7 +188,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 task: snapshot_task.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: admin.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
             },

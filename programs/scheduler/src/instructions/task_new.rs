@@ -28,13 +28,13 @@ pub struct TaskNew<'info> {
 
     #[account(
         seeds = [
-            SEED_YOGI, 
-            yogi.owner.as_ref()
+            SEED_MANAGER, 
+            manager.owner.as_ref()
         ],
         bump,
         has_one = owner,
     )]
-    pub yogi: Account<'info, Yogi>,
+    pub manager: Account<'info, Manager>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -43,11 +43,11 @@ pub struct TaskNew<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            yogi.key().as_ref(),
+            manager.key().as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = yogi,
+        has_one = manager,
     )]
     pub queue: Account<'info, Queue>,
 }

@@ -23,7 +23,7 @@ pub fn node_register(
     // Additional accounts
     cycler_task: Pubkey,
     cycler_queue: Pubkey,
-    yogi: Pubkey,
+    manager: Pubkey,
     snapshot_task: Pubkey,
     snapshot_queue: Pubkey,
 ) -> Instruction {
@@ -48,7 +48,7 @@ pub fn node_register(
             // Additional accounts
             AccountMeta::new(cycler_task, false),
             AccountMeta::new(cycler_queue, false),
-            AccountMeta::new(yogi, false),
+            AccountMeta::new(manager, false),
             AccountMeta::new(snapshot_task, false),
             AccountMeta::new(snapshot_queue, false),
         ],

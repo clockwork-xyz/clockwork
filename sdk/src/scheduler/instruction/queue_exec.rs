@@ -12,7 +12,7 @@ pub fn queue_exec(
     config: Pubkey,
     delegate: Pubkey,
     fee: Pubkey,
-    yogi: Pubkey,
+    manager: Pubkey,
     queue: Pubkey,
 ) -> Instruction {
     Instruction {
@@ -23,7 +23,7 @@ pub fn queue_exec(
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(delegate, true),
             AccountMeta::new(fee, false),
-            AccountMeta::new_readonly(yogi, false),
+            AccountMeta::new_readonly(manager, false),
             AccountMeta::new(queue, false),
         ],
         data: cronos_scheduler::instruction::QueueExec {}.data(),

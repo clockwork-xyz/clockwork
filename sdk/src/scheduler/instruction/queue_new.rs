@@ -10,7 +10,7 @@ use anchor_lang::{
 pub fn queue_new(
     owner: Pubkey,
     payer: Pubkey,
-    yogi: Pubkey,
+    manager: Pubkey,
     schedule: String,
     queue: Pubkey,
 ) -> Instruction {
@@ -20,7 +20,7 @@ pub fn queue_new(
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(owner, true),
             AccountMeta::new(payer, true),
-            AccountMeta::new(yogi, false),
+            AccountMeta::new(manager, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(queue, false),
         ],

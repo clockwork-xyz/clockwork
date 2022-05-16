@@ -22,22 +22,22 @@ pub struct TaskUpdate<'info> {
 
     #[account(
         seeds = [
-            SEED_YOGI, 
-            yogi.owner.as_ref()
+            SEED_MANAGER, 
+            manager.owner.as_ref()
         ],
         bump,
         has_one = owner,
     )]
-    pub yogi: Account<'info, Yogi>,
+    pub manager: Account<'info, Manager>,
 
     #[account(
         seeds = [
             SEED_QUEUE, 
-            queue.yogi.as_ref(),
+            queue.manager.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = yogi,
+        has_one = manager,
     )]
     pub queue: Account<'info, Queue>,
 }

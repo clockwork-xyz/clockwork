@@ -15,7 +15,7 @@ pub fn task_new(
     ixs: Vec<Instruction>,
     owner: Pubkey,
     payer: Pubkey,
-    yogi: Pubkey,
+    manager: Pubkey,
     queue: Pubkey,
 ) -> Instruction {
     Instruction {
@@ -24,7 +24,7 @@ pub fn task_new(
             AccountMeta::new(task, false),
             AccountMeta::new_readonly(owner, true),
             AccountMeta::new(payer, true),
-            AccountMeta::new_readonly(yogi, false),
+            AccountMeta::new_readonly(manager, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(queue, false),
         ],

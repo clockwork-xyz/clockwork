@@ -13,44 +13,44 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_YOGI: &[u8] = b"yogi";
+pub const SEED_MANAGER: &[u8] = b"manager";
 
 /**
- * Yogi
+ * Manager
  */
 
 #[account]
 #[derive(Debug)]
-pub struct Yogi {
+pub struct Manager {
     pub owner: Pubkey,
     pub queue_count: u128,
     pub bump: u8,
 }
 
-impl Yogi {
+impl Manager {
     pub fn pda(owner: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_YOGI, owner.as_ref()], &crate::ID)
+        Pubkey::find_program_address(&[SEED_MANAGER, owner.as_ref()], &crate::ID)
     }
 }
 
-impl TryFrom<Vec<u8>> for Yogi {
+impl TryFrom<Vec<u8>> for Manager {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Yogi::try_deserialize(&mut data.as_slice())
+        Manager::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * YogiAccount
+ * ManagerAccount
  */
 
-pub trait YogiAccount {
+pub trait ManagerAccount {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
 
     fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse>;
 }
 
-impl YogiAccount for Account<'_, Yogi> {
+impl ManagerAccount for Account<'_, Manager> {
     fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()> {
         self.bump = bump;
         self.owner = owner;
@@ -62,7 +62,7 @@ impl YogiAccount for Account<'_, Yogi> {
         invoke_signed(
             &Instruction::from(ix),
             account_infos,
-            &[&[SEED_YOGI, self.owner.as_ref(), &[self.bump]]],
+            &[&[SEED_MANAGER, self.owner.as_ref(), &[self.bump]]],
         )
         .map_err(|_err| CronosError::InnerIxFailed)?;
 

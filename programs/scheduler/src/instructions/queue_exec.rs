@@ -29,31 +29,31 @@ pub struct QueueExec<'info> {
         mut,
         seeds = [
             SEED_FEE,
-            yogi.key().as_ref()
+            manager.key().as_ref()
         ],
         bump,
-        has_one = yogi
+        has_one = manager
     )]
     pub fee: Account<'info, Fee>,
 
     #[account(
         seeds = [
-            SEED_YOGI,
-            yogi.owner.as_ref()
+            SEED_MANAGER,
+            manager.owner.as_ref()
         ],
         bump,
     )]
-    pub yogi: Box<Account<'info, Yogi>>,
+    pub manager: Box<Account<'info, Manager>>,
 
     #[account(
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.yogi.as_ref(),
+            queue.manager.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = yogi,
+        has_one = manager,
         constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = match queue.status {
             QueueStatus::Executing { task_id } => task_id == task.id,
@@ -69,12 +69,12 @@ pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
     let config = &ctx.accounts.config;
     let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
-    let yogi = &ctx.accounts.yogi;
+    let manager = &ctx.accounts.manager;
     let queue = &mut ctx.accounts.queue;
 
     let remaining_accounts = &mut ctx.remaining_accounts.clone().to_vec();
 
-    queue.exec(remaining_accounts, task, delegate, config, fee, yogi)?;
+    queue.exec(remaining_accounts, task, delegate, config, fee, manager)?;
 
     emit!(QueueExecuted {
         delegate: delegate.key(),

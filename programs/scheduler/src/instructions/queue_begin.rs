@@ -13,22 +13,22 @@ pub struct QueueBegin<'info> {
 
     #[account(
         seeds = [
-            SEED_YOGI,
-            yogi.owner.as_ref()
+            SEED_MANAGER,
+            manager.owner.as_ref()
         ],
-        bump = yogi.bump,
+        bump = manager.bump,
     )]
-    pub yogi: Account<'info, Yogi>,
+    pub manager: Account<'info, Manager>,
 
     #[account(
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.yogi.as_ref(),
+            queue.manager.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = yogi,
+        has_one = manager,
         constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
     )]

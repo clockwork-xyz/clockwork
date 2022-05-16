@@ -48,12 +48,12 @@ pub trait TaskAccount {
 
 impl TaskAccount for Account<'_, Task> {
     fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()> {
-        // Reject inner instructions if they have a signer other than the yogi or delegate
+        // Reject inner instructions if they have a signer other than the manager or delegate
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 if acc.is_signer {
                     require!(
-                        acc.pubkey == queue.yogi || acc.pubkey == crate::delegate::ID,
+                        acc.pubkey == queue.manager || acc.pubkey == crate::delegate::ID,
                         CronosError::InvalidSignatory
                     );
                 }

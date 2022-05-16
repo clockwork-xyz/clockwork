@@ -7,14 +7,14 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn yogi_fund(amount: u64, payer: Pubkey, yogi: Pubkey) -> Instruction {
+pub fn manager_fund(amount: u64, payer: Pubkey, manager: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new(payer, true),
-            AccountMeta::new(yogi, false),
+            AccountMeta::new(manager, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_scheduler::instruction::YogiFund { amount }.data(),
+        data: cronos_scheduler::instruction::ManagerFund { amount }.data(),
     }
 }

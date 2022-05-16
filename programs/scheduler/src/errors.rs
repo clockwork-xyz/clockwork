@@ -18,15 +18,15 @@ pub enum CronosError {
     InvalidExecResponse,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
-    #[msg("Your yogi cannot provide all required signatures for this instruction")]
+    #[msg("Your manager cannot provide all required signatures for this instruction")]
     InvalidSignatory,
     #[msg("The queue does not have the right status for this operation")]
     InvalidQueueStatus,
 
     #[msg("Your are not the admin authority")]
     NotAdmin,
-    #[msg("You are not the owner of this yogi")]
-    NotYogiOwner,
+    #[msg("You are not the owner of this manager")]
+    NotManagerOwner,
 
     #[msg("The queue is not due")]
     QueueNotDue,

@@ -49,15 +49,15 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
     let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
-    let yogi_pubkey = cronos_sdk::scheduler::state::Yogi::pda(authority_pubkey).0;
-    let cycler_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(yogi_pubkey, 0).0;
+    let manager_pubkey = cronos_sdk::scheduler::state::Manager::pda(authority_pubkey).0;
+    let cycler_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(manager_pubkey, 0).0;
     let cycler_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
         cycler_queue_pubkey,
         registry_data.node_count.into(),
     )
     .0;
 
-    let snapshot_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(yogi_pubkey, 1).0;
+    let snapshot_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(manager_pubkey, 1).0;
     let snapshot_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
@@ -77,7 +77,7 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
         // Additional accounts
         cycler_task_pubkey,
         cycler_queue_pubkey,
-        yogi_pubkey,
+        manager_pubkey,
         snapshot_task_pubkey,
         snapshot_queue_pubkey,
     );

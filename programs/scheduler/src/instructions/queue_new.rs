@@ -19,13 +19,13 @@ pub struct QueueNew<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_YOGI, 
-            yogi.owner.as_ref()
+            SEED_MANAGER, 
+            manager.owner.as_ref()
         ],
-        bump = yogi.bump,
+        bump = manager.bump,
         has_one = owner,
     )]
-    pub yogi: Account<'info, Yogi>,
+    pub manager: Account<'info, Manager>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -34,8 +34,8 @@ pub struct QueueNew<'info> {
         init,
         seeds = [
             SEED_QUEUE, 
-            yogi.key().as_ref(),
-            yogi.queue_count.to_be_bytes().as_ref(),
+            manager.key().as_ref(),
+            manager.queue_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = payer,
@@ -46,10 +46,10 @@ pub struct QueueNew<'info> {
 
 pub fn handler(ctx: Context<QueueNew>, schedule: String) -> Result<()> {
     let clock = &ctx.accounts.clock;
-    let yogi = &mut ctx.accounts.yogi;
+    let manager = &mut ctx.accounts.manager;
     let queue = &mut ctx.accounts.queue;
 
-    queue.new(clock, yogi, schedule)?;
+    queue.new(clock, manager, schedule)?;
 
     Ok(())
 }

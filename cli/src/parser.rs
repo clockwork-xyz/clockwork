@@ -21,7 +21,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
-            Some(("yogi", matches)) => parse_yogi_command(matches),
+            Some(("manager", matches)) => parse_manager_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -64,10 +64,10 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_yogi_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_manager_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("create", _)) => Ok(CliCommand::YogiCreate {}),
-        Some(("get", matches)) => Ok(CliCommand::YogiGet {
+        Some(("create", _)) => Ok(CliCommand::ManagerCreate {}),
+        Some(("get", matches)) => Ok(CliCommand::ManagerGet {
             address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(

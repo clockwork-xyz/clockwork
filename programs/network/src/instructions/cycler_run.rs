@@ -3,12 +3,12 @@ use cronos_pool::cpi::accounts::Cycle;
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Yogi},
+    cronos_scheduler::{responses::ExecResponse, state::Manager},
 };
 
 #[derive(Accounts)]
 pub struct CyclerRun<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = yogi)]
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
     pub authority: Account<'info, Authority>,
 
     #[account(mut, seeds = [SEED_CYCLER], bump)]
@@ -34,8 +34,8 @@ pub struct CyclerRun<'info> {
     #[account(address = cronos_pool::ID)]
     pub pool_program: Program<'info, cronos_pool::program::CronosPool>,
 
-    #[account(signer, constraint = yogi.owner == authority.key())]
-    pub yogi: Account<'info, Yogi>,
+    #[account(signer, constraint = manager.owner == authority.key())]
+    pub manager: Account<'info, Manager>,
 
     #[account(seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

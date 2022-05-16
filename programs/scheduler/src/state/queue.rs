@@ -1,5 +1,5 @@
 use {
-    super::{AccountMetaData, Config, Fee, InstructionData, Task, Yogi, YogiAccount},
+    super::{AccountMetaData, Config, Fee, InstructionData, Manager, ManagerAccount, Task},
     crate::{errors::CronosError, pda::PDA},
     anchor_lang::{prelude::*, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
@@ -19,15 +19,15 @@ pub struct Queue {
     pub task_count: u128,
     pub exec_at: Option<i64>,
     pub id: u128,
-    pub yogi: Pubkey,
+    pub manager: Pubkey,
     pub schedule: String,
     pub status: QueueStatus,
 }
 
 impl Queue {
-    pub fn pda(yogi: Pubkey, id: u128) -> PDA {
+    pub fn pda(manager: Pubkey, id: u128) -> PDA {
         Pubkey::find_program_address(
-            &[SEED_QUEUE, yogi.as_ref(), id.to_be_bytes().as_ref()],
+            &[SEED_QUEUE, manager.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
     }
@@ -58,13 +58,13 @@ pub trait QueueAccount {
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        yogi: &Account<Yogi>,
+        manager: &Account<Manager>,
     ) -> Result<()>;
 
     fn new(
         &mut self,
         clock: &Sysvar<Clock>,
-        yogi: &mut Account<Yogi>,
+        manager: &mut Account<Manager>,
         schedule: String,
     ) -> Result<()>;
 
@@ -119,7 +119,7 @@ impl QueueAccount for Account<'_, Queue> {
         delegate: &mut Signer,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        yogi: &Account<Yogi>,
+        manager: &Account<Manager>,
     ) -> Result<()> {
         // Validate the task id matches the queue's current execution state
         require!(
@@ -165,10 +165,10 @@ impl QueueAccount for Account<'_, Queue> {
                 }
             });
 
-            // Execute the inner ix and process the response. Note that even though the yogi PDA is a signer
+            // Execute the inner ix and process the response. Note that even though the manager PDA is a signer
             //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
             //  and explicitly forbids CPI reentrancy.
-            let exec_response = yogi.process(
+            let exec_response = manager.process(
                 &InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
@@ -223,7 +223,7 @@ impl QueueAccount for Account<'_, Queue> {
             .delegate_fee
             .checked_add(delegate_reimbursement)
             .unwrap();
-        **yogi.to_account_info().try_borrow_mut_lamports()? = yogi
+        **manager.to_account_info().try_borrow_mut_lamports()? = manager
             .to_account_info()
             .lamports()
             .checked_sub(total_delegate_fee)
@@ -235,7 +235,7 @@ impl QueueAccount for Account<'_, Queue> {
             .unwrap();
 
         // Pay program fees
-        **yogi.to_account_info().try_borrow_mut_lamports()? = yogi
+        **manager.to_account_info().try_borrow_mut_lamports()? = manager
             .to_account_info()
             .lamports()
             .checked_sub(config.program_fee)
@@ -265,21 +265,21 @@ impl QueueAccount for Account<'_, Queue> {
     fn new(
         &mut self,
         clock: &Sysvar<Clock>,
-        yogi: &mut Account<Yogi>,
+        manager: &mut Account<Manager>,
         schedule: String,
     ) -> Result<()> {
         // Initialize queue account
         self.task_count = 0;
-        self.id = yogi.queue_count;
-        self.yogi = yogi.key();
+        self.id = manager.queue_count;
+        self.manager = manager.key();
         self.schedule = schedule;
         self.status = QueueStatus::Pending;
 
         // Set exec_at (schedule must be set first)
         self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
-        // Increment yogi queue counter
-        yogi.queue_count = yogi.queue_count.checked_add(1).unwrap();
+        // Increment manager queue counter
+        manager.queue_count = manager.queue_count.checked_add(1).unwrap();
 
         Ok(())
     }

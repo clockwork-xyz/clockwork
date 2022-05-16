@@ -6,12 +6,12 @@ use {
 
 
 #[derive(Accounts)]
-pub struct YogiNew<'info> {
+pub struct ManagerNew<'info> {
     #[account(
         init,
         seeds = [
             SEED_FEE, 
-            yogi.key().as_ref()
+            manager.key().as_ref()
         ],
         bump,
         payer = payer,
@@ -28,28 +28,28 @@ pub struct YogiNew<'info> {
     #[account(
         init,
         seeds = [
-            SEED_YOGI, 
+            SEED_MANAGER, 
             owner.key().as_ref()
         ],
         bump,
         payer = payer,
-        space = 8 + size_of::<Yogi>(),
+        space = 8 + size_of::<Manager>(),
     )]
-    pub yogi: Account<'info, Yogi>,
+    pub manager: Account<'info, Manager>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<YogiNew>) -> Result<()> {
-    let yogi = &mut ctx.accounts.yogi;
+pub fn handler(ctx: Context<ManagerNew>) -> Result<()> {
+    let manager = &mut ctx.accounts.manager;
     let fee = &mut ctx.accounts.fee;
     let owner = &ctx.accounts.owner;
 
-    let yogi_bump = *ctx.bumps.get("yogi").unwrap();
+    let manager_bump = *ctx.bumps.get("manager").unwrap();
 
-    fee.new( yogi.key())?;
-    yogi.new(yogi_bump, owner.key())?;
+    fee.new( manager.key())?;
+    manager.new(manager_bump, owner.key())?;
 
     Ok(())
 }

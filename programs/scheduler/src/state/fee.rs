@@ -14,7 +14,7 @@ pub const SEED_FEE: &[u8] = b"fee";
 #[derive(Debug)]
 pub struct Fee {
     pub balance: u64,
-    pub yogi: Pubkey,
+    pub manager: Pubkey,
 }
 
 impl TryFrom<Vec<u8>> for Fee {
@@ -25,8 +25,8 @@ impl TryFrom<Vec<u8>> for Fee {
 }
 
 impl Fee {
-    pub fn pda(yogi: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_FEE, yogi.as_ref()], &crate::ID)
+    pub fn pda(manager: Pubkey) -> PDA {
+        Pubkey::find_program_address(&[SEED_FEE, manager.as_ref()], &crate::ID)
     }
 }
 
@@ -35,15 +35,15 @@ impl Fee {
  */
 
 pub trait FeeAccount {
-    fn new(&mut self, yogi: Pubkey) -> Result<()>;
+    fn new(&mut self, manager: Pubkey) -> Result<()>;
 
     fn collect(&mut self, to: &mut Signer) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
-    fn new(&mut self, yogi: Pubkey) -> Result<()> {
+    fn new(&mut self, manager: Pubkey) -> Result<()> {
         self.balance = 0;
-        self.yogi = yogi;
+        self.manager = manager;
         Ok(())
     }
 

@@ -271,12 +271,12 @@ impl CronosPlugin {
             // Common pubkeys
             let config_pubkey = Config::pda().0;
             let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
-            let fee_pubkey = Fee::pda(queue.yogi).0;
+            let fee_pubkey = Fee::pda(queue.manager).0;
 
             // Build queue_begin ix
             let queue_begin_ix = cronos_sdk::scheduler::instruction::queue_begin(
                 delegate_pubkey,
-                queue.yogi,
+                queue.manager,
                 queue_pubkey,
             );
 
@@ -299,7 +299,7 @@ impl CronosPlugin {
                     config_pubkey,
                     cp_clone.unwrap_client().payer_pubkey(),
                     fee_pubkey,
-                    queue.yogi,
+                    queue.manager,
                     queue_pubkey,
                 );
 

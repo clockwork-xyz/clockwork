@@ -114,7 +114,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Get remaining accounts
     let cycler_task = ctx.remaining_accounts.get(0).unwrap();
     let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
-    let yogi = ctx.remaining_accounts.get(2).unwrap();
+    let manager = ctx.remaining_accounts.get(2).unwrap();
     let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
     let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
 
@@ -137,7 +137,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new(cronos_pool::state::Pool::pda().0, false),
             AccountMeta::new_readonly(cronos_pool::state::Config::pda().0, false),
             AccountMeta::new_readonly(cronos_pool::ID, false),
-            AccountMeta::new_readonly(yogi.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new_readonly(snapshot.key(), false),
         ],
@@ -150,7 +150,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
                 task: cycler_task.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: owner.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
                 queue: cycler_queue.to_account_info(),
             },
@@ -172,7 +172,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new(next_entry_pubkey, false),
             AccountMeta::new_readonly(node.key(), false,),
             AccountMeta::new(cronos_scheduler::delegate::ID, true),
-            AccountMeta::new_readonly(yogi.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(stake_pubkey, false),
@@ -188,7 +188,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(current_snapshot_pubkey, false),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(yogi.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: sighash("global", "snapshot_rotate").into(),
@@ -200,7 +200,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
                 task: snapshot_task.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: owner.to_account_info(),
-                yogi: yogi.to_account_info(),
+                manager: manager.to_account_info(),
                 system_program: system_program.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
             },

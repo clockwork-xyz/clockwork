@@ -1,6 +1,6 @@
 use {
     crate::state::*,
-    cronos_scheduler::{state::Yogi, responses::ExecResponse},
+    cronos_scheduler::{state::Manager, responses::ExecResponse},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
@@ -9,7 +9,7 @@ pub struct SnapshotRotate<'info> {
     #[account(
         seeds = [SEED_AUTHORITY], 
         bump,
-        has_one = yogi
+        has_one = manager
     )]
     pub authority: Account<'info, Authority>,
 
@@ -39,8 +39,8 @@ pub struct SnapshotRotate<'info> {
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
-    #[account(signer, constraint = yogi.owner == authority.key())]
-    pub yogi: Account<'info, Yogi>,
+    #[account(signer, constraint = manager.owner == authority.key())]
+    pub manager: Account<'info, Manager>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

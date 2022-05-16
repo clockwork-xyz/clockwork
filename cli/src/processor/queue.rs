@@ -3,7 +3,7 @@ use {
         cli::CliError,
         utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
     },
-    cronos_sdk::scheduler::state::{Queue, Yogi},
+    cronos_sdk::scheduler::state::{Queue, Manager},
     solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
     std::sync::Arc,
@@ -11,28 +11,28 @@ use {
 
 pub fn cancel(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
     let owner = client.payer_pubkey();
-    let yogi = cronos_sdk::scheduler::state::Yogi::pda(owner).0;
-    let ix = cronos_sdk::scheduler::instruction::queue_cancel(yogi, *address, owner);
+    let manager = cronos_sdk::scheduler::state::Manager::pda(owner).0;
+    let ix = cronos_sdk::scheduler::instruction::queue_cancel(manager, *address, owner);
     sign_and_submit(client, &[ix], &[client.payer()]);
     get(client, address)
 }
 
 pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
-    // Fetch yogi data.
+    // Fetch manager data.
     let owner = client.payer_pubkey();
-    let yogi_addr = Yogi::pda(owner).0;
+    let manager_addr = Manager::pda(owner).0;
     let data = client
-        .get_account_data(&yogi_addr)
-        .map_err(|_err| CliError::AccountNotFound(yogi_addr.to_string()))?;
-    let yogi_data = Yogi::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(yogi_addr.to_string()))?;
+        .get_account_data(&manager_addr)
+        .map_err(|_err| CliError::AccountNotFound(manager_addr.to_string()))?;
+    let manager_data = Manager::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(manager_addr.to_string()))?;
 
     // Build queue_create ix.
-    let queue_pubkey = Queue::pda(yogi_addr, yogi_data.queue_count).0;
+    let queue_pubkey = Queue::pda(manager_addr, manager_data.queue_count).0;
     let queue_ix = cronos_sdk::scheduler::instruction::queue_new(
         owner,
         owner,
-        yogi_addr,
+        manager_addr,
         schedule,
         queue_pubkey,
     );

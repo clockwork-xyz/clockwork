@@ -44,16 +44,16 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
-    pub fn yogi_fund(ctx: Context<YogiFund>, amount: u64) -> Result<()> {
-        yogi_fund::handler(ctx, amount)
+    pub fn manager_fund(ctx: Context<ManagerFund>, amount: u64) -> Result<()> {
+        manager_fund::handler(ctx, amount)
     }
 
-    pub fn yogi_new(ctx: Context<YogiNew>) -> Result<()> {
-        yogi_new::handler(ctx)
+    pub fn manager_new(ctx: Context<ManagerNew>) -> Result<()> {
+        manager_new::handler(ctx)
     }
 
-    pub fn yogi_sign(ctx: Context<YogiSign>, ix: InstructionData) -> Result<()> {
-        yogi_sign::handler(ctx, ix)
+    pub fn manager_sign(ctx: Context<ManagerSign>, ix: InstructionData) -> Result<()> {
+        manager_sign::handler(ctx, ix)
     }
 
     pub fn queue_begin(ctx: Context<QueueBegin>) -> Result<()> {

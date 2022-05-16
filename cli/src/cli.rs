@@ -17,9 +17,9 @@ pub enum CliCommand {
     // Pool commands
     PoolGet,
 
-    // Yogi commands
-    YogiCreate,
-    YogiGet { address: Pubkey },
+    // Manager commands
+    ManagerCreate,
+    ManagerGet { address: Pubkey },
 
     // Queue commands
     QueueCancel { address: Pubkey },
@@ -114,17 +114,17 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(Command::new("pool").about("Get the delegate pool info"))
         .subcommand(
-            Command::new("yogi")
-                .about("Manage your yogis")
+            Command::new("manager")
+                .about("Manage your managers")
                 .arg_required_else_help(true)
-                .subcommand(Command::new("create").about("Create a new yogi"))
+                .subcommand(Command::new("create").about("Create a new manager"))
                 .subcommand(
-                    Command::new("get").about("Get a yogi").arg(
+                    Command::new("get").about("Get a manager").arg(
                         Arg::new("address")
                             .index(1)
                             .takes_value(true)
                             .required(true)
-                            .help("Public address of a yogi"),
+                            .help("Public address of a manager"),
                     ),
                 ),
         )
