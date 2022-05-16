@@ -19,17 +19,16 @@ use {
     std::{
         collections::HashSet,
         fmt::{Debug, Formatter},
-        sync::Mutex,
-        sync::{Arc, RwLock},
-        thread::{self, JoinHandle},
+        sync::Arc,
     },
     thiserror::Error,
+    tokio::sync::Mutex,
 };
 
 #[derive(Clone)]
 pub struct CronosPlugin {
     client: Option<Arc<Client>>,
-    cache: Option<Arc<RwLock<TaskCache>>>,
+    cache: Option<Arc<Mutex<TaskCache>>>,
     bucket: Option<Arc<Mutex<Bucket>>>,
     latest_clock_value: i64,
 }
@@ -64,7 +63,7 @@ impl GeyserPlugin for CronosPlugin {
 
         let config = PluginConfig::read_from(config_file)?;
         self.bucket = Some(Arc::new(Mutex::new(Bucket::new())));
-        self.cache = Some(Arc::new(RwLock::new(TaskCache::new())));
+        self.cache = Some(Arc::new(Mutex::new(TaskCache::new())));
         self.client = Some(Arc::new(Client::new(config.keypath, config.rpc_url)));
         self.latest_clock_value = 0;
         Ok(())
@@ -119,7 +118,16 @@ impl GeyserPlugin for CronosPlugin {
                         Ok(clock) => {
                             if self.latest_clock_value < clock.unix_timestamp {
                                 self.latest_clock_value = clock.unix_timestamp;
-                                self.execute_tasks_in_lookback_window();
+
+                                // cloning self because self needs to have a 'static lifetime
+                                let self_clone = self.clone();
+                                let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
+                                let cp_clone = cp_arc.clone();
+
+                                // concurrently spawn task for each lookback window
+                                tokio::spawn(async move {
+                                    cp_clone.execute_tasks_in_lookback_window().await;
+                                });
                             }
                         }
                     }
@@ -134,7 +142,12 @@ impl GeyserPlugin for CronosPlugin {
                             )))
                         }
                         Ok(task) => {
-                            self.replicate_task(key, task);
+                            // cloning self because self needs to have a 'static lifetime
+                            let self_clone = self.clone();
+                            let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
+                            let cp_clone = cp_arc.clone();
+
+                            tokio::spawn(async move { cp_clone.replicate_task(key, task).await });
                         }
                     }
                 }
@@ -147,7 +160,6 @@ impl GeyserPlugin for CronosPlugin {
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
         Ok(())
     }
-
     fn update_slot_status(
         &mut self,
         _slot: u64,
@@ -156,7 +168,6 @@ impl GeyserPlugin for CronosPlugin {
     ) -> PluginResult<()> {
         Ok(())
     }
-
     fn notify_transaction(
         &mut self,
         _transaction: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions,
@@ -164,18 +175,15 @@ impl GeyserPlugin for CronosPlugin {
     ) -> PluginResult<()> {
         Ok(())
     }
-
     fn notify_block_metadata(
         &mut self,
         _blockinfo: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaBlockInfoVersions,
     ) -> PluginResult<()> {
         Ok(())
     }
-
     fn account_data_notifications_enabled(&self) -> bool {
         true
     }
-
     fn transaction_notifications_enabled(&self) -> bool {
         false
     }
@@ -193,7 +201,7 @@ impl CronosPlugin {
     fn unwrap_bucket(&self) -> &Arc<Mutex<Bucket>> {
         self.bucket.as_ref().expect("client is unavailable")
     }
-    fn unwrap_cache(&self) -> &Arc<RwLock<TaskCache>> {
+    fn unwrap_cache(&self) -> &Arc<Mutex<TaskCache>> {
         self.cache.as_ref().expect("cache is unavailable")
     }
     fn unwrap_client(&self) -> &Arc<Client> {
@@ -205,62 +213,59 @@ impl CronosPlugin {
         }
     }
 
-    fn replicate_task(&self, key: Pubkey, task: Task) {
+    async fn replicate_task(&self, key: Pubkey, task: Task) {
         info!("Caching task {}", key);
         info!("{:#?}", task);
 
-        let mut w_cache = self.unwrap_cache().write().unwrap();
+        let mut cache = self.unwrap_cache().lock().await;
+
         match task.exec_at {
-            Some(_t) => w_cache.insert(key, task),
-            None => w_cache.delete(key),
+            Some(_t) => cache.insert(key, task),
+            None => cache.delete(key),
         }
     }
 
-    fn execute_tasks_in_lookback_window(&self) {
+    async fn execute_tasks_in_lookback_window(&self) {
         let self_clone = self.clone();
         let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
         let cp_clone = cp_arc.clone();
 
-        thread::spawn(move || {
+        tokio::spawn(async move {
             const LOOKBACK_WINDOW: i64 = 7; // Number of seconds to lookback
             info!("Executing tasks for ts {}", cp_clone.latest_clock_value);
 
-            // Spawn threads to execute tasks in lookback window
-            let mut handles = vec![];
+            // Spawn tokio tasks to execute cronos tasks in lookback window
             for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
-                let r_cache = cp_clone.unwrap_cache().read().unwrap();
-                r_cache.index.get(&t).and_then(|keys| {
+                let cache = cp_clone.unwrap_cache().lock().await;
+                cache.index.get(&t).and_then(|keys| {
                     for key in keys.iter() {
-                        r_cache.data.get(key).and_then(|task| {
-                            handles.push(cp_clone.execute_task(*key, task.clone()));
+                        cache.data.get(&key).and_then(|task| {
+                            let _ = async {
+                                cp_clone.execute_task(*key, task.clone()).await;
+                            };
+
                             Some(())
                         });
                     }
                     Some(())
                 });
             }
-
-            // Join threads
-            if !handles.is_empty() {
-                for h in handles {
-                    h.join().unwrap();
-                }
-            }
         });
     }
 
-    fn execute_task(&self, task_pubkey: Pubkey, task: Task) -> JoinHandle<()> {
+    async fn execute_task(&self, task_pubkey: Pubkey, task: Task) {
         let self_clone = self.clone();
         let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
         let cp_clone = cp_arc.clone();
 
-        thread::spawn(move || {
+        tokio::spawn(async move {
             // Lock the mutex for this task
             let mutex = cp_clone
                 .unwrap_bucket()
                 .lock()
-                .unwrap()
+                .await
                 .get_mutex((task_pubkey, task.exec_at.unwrap()));
+
             let guard = mutex.try_lock();
             if guard.is_err() {
                 return;
@@ -338,21 +343,25 @@ impl CronosPlugin {
             }
 
             // Sign and submit
-            let res = cp_clone.unwrap_client().sign_and_submit(
-                ixs.as_slice(),
-                format!(
-                    "🤖 Executing task {} for timestamp {}",
-                    task_pubkey,
-                    task.exec_at.unwrap()
+            let res = cp_clone
+                .unwrap_client()
+                .sign_and_submit(
+                    ixs.as_slice(),
+                    format!(
+                        "🤖 Executing task {} for timestamp {}",
+                        task_pubkey,
+                        task.exec_at.unwrap()
+                    )
+                    .as_str(),
                 )
-                .as_str(),
-            );
+                .await;
+
             if res.is_err() {
                 info!("❌ Failed to execute task: {:#?}", res.err())
             }
 
             // Drop the mutex
             drop(guard)
-        })
+        });
     }
 }
