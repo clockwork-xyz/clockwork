@@ -7,13 +7,13 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn admin_task_new(
+pub fn admin_queue_new(
     admin: Pubkey,
     authority: Pubkey,
     config: Pubkey,
-    queue: Pubkey,
+    yogi: Pubkey,
     schedule: String,
-    task: Pubkey,
+    queue: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
@@ -22,10 +22,10 @@ pub fn admin_task_new(
             AccountMeta::new_readonly(authority, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new(queue, false),
+            AccountMeta::new(yogi, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(task, false),
+            AccountMeta::new(queue, false),
         ],
-        data: cronos_scheduler::instruction::AdminTaskNew { schedule }.data(),
+        data: cronos_scheduler::instruction::AdminQueueNew { schedule }.data(),
     }
 }

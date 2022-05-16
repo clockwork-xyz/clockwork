@@ -7,15 +7,25 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn task_begin(delegate: Pubkey, queue: Pubkey, task: Pubkey) -> Instruction {
+pub fn queue_exec(
+    task: Pubkey,
+    config: Pubkey,
+    delegate: Pubkey,
+    fee: Pubkey,
+    yogi: Pubkey,
+    queue: Pubkey,
+) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(delegate, true),
-            AccountMeta::new(queue, false),
             AccountMeta::new(task, false),
+            AccountMeta::new_readonly(sysvar::clock::ID, false),
+            AccountMeta::new_readonly(config, false),
+            AccountMeta::new(delegate, true),
+            AccountMeta::new(fee, false),
+            AccountMeta::new_readonly(yogi, false),
+            AccountMeta::new(queue, false),
         ],
-        data: cronos_scheduler::instruction::TaskBegin {}.data(),
+        data: cronos_scheduler::instruction::QueueExec {}.data(),
     }
 }

@@ -1,30 +1,24 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of
+    anchor_lang::prelude::*,
 };
 
 #[derive(Accounts)]
 #[instruction(ixs: Vec<InstructionData>)]
-pub struct TaskNew<'info> {
+pub struct TaskUpdate<'info> {
     #[account(
-        init,
+        mut,
         seeds = [
             SEED_TASK, 
-            queue.key().as_ref(),
-            queue.task_count.to_be_bytes().as_ref(),
+            task.queue.as_ref(),
+            task.id.to_be_bytes().as_ref(),
         ],
         bump,
-        payer = payer,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
     pub task: Account<'info, Task>,
     
     #[account()]
     pub owner: Signer<'info>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
 
     #[account(
         seeds = [
@@ -36,14 +30,10 @@ pub struct TaskNew<'info> {
     )]
     pub yogi: Account<'info, Yogi>,
 
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
-
     #[account(
-        mut,
         seeds = [
             SEED_QUEUE, 
-            yogi.key().as_ref(),
+            queue.yogi.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
@@ -53,11 +43,13 @@ pub struct TaskNew<'info> {
 }
 
 pub fn handler(
-    ctx: Context<TaskNew>,
+    ctx: Context<TaskUpdate>,
     ixs: Vec<InstructionData>,
 ) -> Result<()> {
     let task = &mut ctx.accounts.task;
-    let queue = &mut ctx.accounts.queue;
 
-    task.new( ixs, queue)
+    // TODO verify ixs
+    task.ixs = ixs;
+
+    Ok(())
 }

@@ -31,7 +31,7 @@ pub struct Initialize<'info> {
         init,
         seeds = [
             SEED_FEE, 
-            queue.key().as_ref()
+            yogi.key().as_ref()
         ],
         bump,
         payer = admin,
@@ -44,14 +44,14 @@ pub struct Initialize<'info> {
     #[account(
         init,
         seeds = [
-            SEED_QUEUE,
+            SEED_YOGI,
             authority.key().as_ref()
         ],
         bump,
         payer = admin,
-        space = 8 + size_of::<Queue>(),
+        space = 8 + size_of::<Yogi>(),
     )]
-    pub queue: Account<'info, Queue>,
+    pub yogi: Account<'info, Yogi>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -61,14 +61,14 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
     let config = &mut ctx.accounts.config;
-    let queue = &mut ctx.accounts.queue;
+    let yogi = &mut ctx.accounts.yogi;
     let fee = &mut ctx.accounts.fee;
 
-    let queue_bump = *ctx.bumps.get("queue").unwrap();
+    let yogi_bump = *ctx.bumps.get("yogi").unwrap();
 
     config.new(admin.key(), admin.key())?; // TODO pool_pubkey = pool.key()
-    queue.new(queue_bump, authority.key())?;
-    fee.new(queue.key())?;
+    yogi.new(yogi_bump, authority.key())?;
+    fee.new(yogi.key())?;
 
     Ok(())
 }

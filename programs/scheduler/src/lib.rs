@@ -21,12 +21,12 @@ use state::*;
 pub mod cronos_scheduler {
     use super::*;
 
-    pub fn action_new(ctx: Context<ActionNew>, ixs: Vec<InstructionData>) -> Result<()> {
-        action_new::handler(ctx, ixs)
+    pub fn task_new(ctx: Context<TaskNew>, ixs: Vec<InstructionData>) -> Result<()> {
+        task_new::handler(ctx, ixs)
     }
 
-    pub fn action_update(ctx: Context<ActionUpdate>, ixs: Vec<InstructionData>) -> Result<()> {
-        action_update::handler(ctx, ixs)
+    pub fn task_update(ctx: Context<TaskUpdate>, ixs: Vec<InstructionData>) -> Result<()> {
+        task_update::handler(ctx, ixs)
     }
 
     pub fn admin_config_update(
@@ -44,39 +44,39 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
-    pub fn admin_task_new(ctx: Context<AdminTaskNew>, schedule: String) -> Result<()> {
-        admin_task_new::handler(ctx, schedule)
+    pub fn admin_queue_new(ctx: Context<AdminQueueNew>, schedule: String) -> Result<()> {
+        admin_queue_new::handler(ctx, schedule)
     }
 
-    pub fn admin_task_cancel(ctx: Context<AdminTaskCancel>) -> Result<()> {
-        admin_task_cancel::handler(ctx)
+    pub fn admin_queue_cancel(ctx: Context<AdminQueueCancel>) -> Result<()> {
+        admin_queue_cancel::handler(ctx)
     }
 
-    pub fn queue_fund(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
-        queue_fund::handler(ctx, amount)
+    pub fn yogi_fund(ctx: Context<YogiFund>, amount: u64) -> Result<()> {
+        yogi_fund::handler(ctx, amount)
     }
 
-    pub fn queue_new(ctx: Context<QueueNew>) -> Result<()> {
-        queue_new::handler(ctx)
+    pub fn yogi_new(ctx: Context<YogiNew>) -> Result<()> {
+        yogi_new::handler(ctx)
     }
 
-    pub fn queue_sign(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {
-        queue_sign::handler(ctx, ix)
+    pub fn yogi_sign(ctx: Context<YogiSign>, ix: InstructionData) -> Result<()> {
+        yogi_sign::handler(ctx, ix)
     }
 
-    pub fn task_begin(ctx: Context<TaskBegin>) -> Result<()> {
-        task_begin::handler(ctx)
+    pub fn queue_begin(ctx: Context<QueueBegin>) -> Result<()> {
+        queue_begin::handler(ctx)
     }
 
-    pub fn task_cancel(ctx: Context<TaskCancel>) -> Result<()> {
-        task_cancel::handler(ctx)
+    pub fn queue_cancel(ctx: Context<QueueCancel>) -> Result<()> {
+        queue_cancel::handler(ctx)
     }
 
-    pub fn task_new(ctx: Context<TaskNew>, schedule: String) -> Result<()> {
-        task_new::handler(ctx, schedule)
+    pub fn queue_new(ctx: Context<QueueNew>, schedule: String) -> Result<()> {
+        queue_new::handler(ctx, schedule)
     }
 
-    pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
-        task_exec::handler(ctx)
+    pub fn queue_exec(ctx: Context<QueueExec>) -> Result<()> {
+        queue_exec::handler(ctx)
     }
 }

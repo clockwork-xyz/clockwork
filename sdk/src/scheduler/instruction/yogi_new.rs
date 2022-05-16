@@ -2,28 +2,21 @@ use anchor_lang::{
     solana_program::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
-        system_program, sysvar,
+        system_program,
     },
     InstructionData,
 };
 
-pub fn queue_new(
-    owner: Pubkey,
-    payer: Pubkey,
-    yogi: Pubkey,
-    schedule: String,
-    queue: Pubkey,
-) -> Instruction {
+pub fn yogi_new(fee: Pubkey, owner: Pubkey, payer: Pubkey, yogi: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
+            AccountMeta::new(fee, false),
             AccountMeta::new_readonly(owner, true),
             AccountMeta::new(payer, true),
             AccountMeta::new(yogi, false),
             AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(queue, false),
         ],
-        data: cronos_scheduler::instruction::QueueNew { schedule }.data(),
+        data: cronos_scheduler::instruction::YogiNew {}.data(),
     }
 }

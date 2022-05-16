@@ -27,9 +27,9 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
 
     health.new()?;
 
+    // TODO create a yogi
     // TODO create a queue
-    // TODO create a task
-    // TODO create an action to call ping every X seconds
+    // TODO create an task to call ping every X seconds
 
     Ok(())
 }

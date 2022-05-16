@@ -6,27 +6,27 @@ use {
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
-pub struct QueueFund<'info> {
+pub struct YogiFund<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
     #[account(
         mut,
         seeds = [
-            SEED_QUEUE, 
-            queue.owner.as_ref()
+            SEED_YOGI, 
+            yogi.owner.as_ref()
         ],
         bump,
     )]
-    pub queue: Account<'info, Queue>,
+    pub yogi: Account<'info, Yogi>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<YogiFund>, amount: u64) -> Result<()> {
     let payer = &mut ctx.accounts.payer;
-    let queue = &mut ctx.accounts.queue;
+    let yogi = &mut ctx.accounts.yogi;
     let system_program = &ctx.accounts.system_program;
 
     transfer(
@@ -34,7 +34,7 @@ pub fn handler(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
             system_program.to_account_info(), 
             Transfer {
                 from: payer.to_account_info(),
-                to: queue.to_account_info(),
+                to: yogi.to_account_info(),
             }
         ), 
         amount

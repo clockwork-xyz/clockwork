@@ -14,7 +14,7 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
-    pub delegate: Pubkey, // The node's delegate address used to sign task_exec ixs
+    pub delegate: Pubkey, // The node's delegate address used to sign queue_exec ixs
     pub id: u64,
     pub owner: Pubkey, // The node's owner gossip network (controls the stake)
     pub stake: Pubkey, // The associated token account

@@ -5,26 +5,26 @@ use {
 
 #[derive(Accounts)]
 #[instruction(ix: InstructionData)]
-pub struct QueueSign<'info> {
+pub struct YogiSign<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
     #[account(
         mut,
         seeds = [
-            SEED_QUEUE, 
-            queue.owner.as_ref()
+            SEED_YOGI, 
+            yogi.owner.as_ref()
         ],
         bump,
         has_one = owner,
     )]
-    pub queue: Account<'info, Queue>,
+    pub yogi: Account<'info, Yogi>,
 }
 
-pub fn handler(ctx: Context<QueueSign>, ix: InstructionData) -> Result<()> {
-    let queue = &mut ctx.accounts.queue;
+pub fn handler(ctx: Context<YogiSign>, ix: InstructionData) -> Result<()> {
+    let yogi = &mut ctx.accounts.yogi;
 
-    let _exec_response = queue.process(
+    let _exec_response = yogi.process(
         &ix,
         &ctx.remaining_accounts.iter().as_slice(),
     )?;

@@ -21,11 +21,11 @@ pub fn node_register(
     registry: Pubkey,
     snapshot: Pubkey,
     // Additional accounts
-    cycler_action: Pubkey,
     cycler_task: Pubkey,
-    queue: Pubkey,
-    snapshot_action: Pubkey,
+    cycler_queue: Pubkey,
+    yogi: Pubkey,
     snapshot_task: Pubkey,
+    snapshot_queue: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
@@ -46,11 +46,11 @@ pub fn node_register(
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(token::ID, false),
             // Additional accounts
-            AccountMeta::new(cycler_action, false),
             AccountMeta::new(cycler_task, false),
-            AccountMeta::new(queue, false),
-            AccountMeta::new(snapshot_action, false),
+            AccountMeta::new(cycler_queue, false),
+            AccountMeta::new(yogi, false),
             AccountMeta::new(snapshot_task, false),
+            AccountMeta::new(snapshot_queue, false),
         ],
         data: cronos_network::instruction::NodeRegister {}.data(),
     }

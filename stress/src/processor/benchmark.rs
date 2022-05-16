@@ -4,8 +4,8 @@ use {
     },
     chrono::{prelude::*, Duration},
     cronos_cron::Schedule,
-    cronos_sdk::scheduler::events::TaskExecuted,
-    cronos_sdk::scheduler::state::{Action, Fee, Queue, Task},
+    cronos_sdk::scheduler::events::QueueExecuted,
+    cronos_sdk::scheduler::state::{Fee, Queue, Task, Yogi},
     serde_json::json,
     solana_client::{
         pubsub_client::PubsubClient,
@@ -22,39 +22,39 @@ use {
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
     // Setup test
     let client = new_client();
-    let num_tasks_parallel = (count as f32 * parallelism) as u32;
-    let num_tasks_serial = count - num_tasks_parallel;
+    let num_queues_parallel = (count as f32 * parallelism) as u32;
+    let num_queues_serial = count - num_queues_parallel;
 
     let mut owners: Vec<Keypair> = vec![];
     let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
     let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
-    // Create queues
-    for _ in 0..(num_tasks_parallel + 1) {
+    // Create yogis
+    for _ in 0..(num_queues_parallel + 1) {
         let owner = Keypair::new();
-        let queue_pubkey = Queue::pda(owner.pubkey()).0;
-        let fee_pubkey = Fee::pda(queue_pubkey).0;
-        let ix = cronos_sdk::scheduler::instruction::queue_new(
+        let yogi_pubkey = Yogi::pda(owner.pubkey()).0;
+        let fee_pubkey = Fee::pda(yogi_pubkey).0;
+        let ix = cronos_sdk::scheduler::instruction::yogi_new(
             fee_pubkey,
             owner.pubkey(),
             owner.pubkey(),
-            queue_pubkey,
+            yogi_pubkey,
         );
         client.airdrop(&owner.pubkey(), LAMPORTS_PER_SOL).unwrap();
         sign_and_submit(&client, &[ix], &owner);
         owners.push(owner);
     }
 
-    // Schedule parallel tasks
-    for i in 0..num_tasks_parallel {
+    // Schedule parallel queues
+    for i in 0..num_queues_parallel {
         let owner = owners.get(i as usize).unwrap();
-        schedule_memo_task(&client, owner, recurrence, &mut expected_exec_ats);
+        schedule_memo_queue(&client, owner, recurrence, &mut expected_exec_ats);
     }
 
-    // Schedule serial tasks
+    // Schedule serial queues
     let owner = owners.last().unwrap();
-    for _ in 0..num_tasks_serial {
-        schedule_memo_task(&client, owner, recurrence, &mut expected_exec_ats);
+    for _ in 0..num_queues_serial {
+        schedule_memo_queue(&client, owner, recurrence, &mut expected_exec_ats);
     }
 
     // Collect and report test results
@@ -78,7 +78,7 @@ fn listen_for_events(
     )
     .map_err(|_| CliError::WebsocketError)?;
 
-    // Watch for task exec events
+    // Watch for queue exec events
     let mut event_count = 0;
 
     for log_response in log_receiver {
@@ -90,9 +90,9 @@ fn listen_for_events(
                     let mut buffer = Vec::<u8>::new();
                     base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
                     let event =
-                        borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
+                        borsh::try_from_slice_unchecked::<QueueExecuted>(&buffer[8..]).unwrap();
                     actual_exec_ats
-                        .entry(event.task)
+                        .entry(event.queue)
                         .or_insert(Vec::new())
                         .push(event.ts);
                     event_count += 1;
@@ -118,12 +118,12 @@ fn listen_for_events(
     Ok(())
 }
 
-fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
+fn build_memo_ix(yogi_pubkey: &Pubkey) -> Instruction {
     let hello_world_memo = json!({
       "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
       "accounts": [
         {
-          "pubkey": queue_pubkey.to_string(),
+          "pubkey": yogi_pubkey.to_string(),
           "is_signer": true,
           "is_writable": false
         }
@@ -137,24 +137,24 @@ fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     .unwrap()
 }
 
-fn schedule_memo_task(
+fn schedule_memo_queue(
     client: &Arc<Client>,
     owner: &Keypair,
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
 ) {
-    // Get queue for owner
-    let queue_pubkey = Queue::pda(owner.pubkey()).0;
-    let queue = client
-        .get_account_data(&queue_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(queue_pubkey.to_string()))
+    // Get yogi for owner
+    let yogi_pubkey = Yogi::pda(owner.pubkey()).0;
+    let yogi = client
+        .get_account_data(&yogi_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(yogi_pubkey.to_string()))
         .unwrap();
-    let queue_data = Queue::try_from(queue)
-        .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))
+    let yogi_data = Yogi::try_from(yogi)
+        .map_err(|_err| CliError::AccountDataNotParsable(yogi_pubkey.to_string()))
         .unwrap();
 
-    // Generate PDA for new task account
-    let task_pubkey = Task::pda(queue_pubkey, queue_data.task_count).0;
+    // Generate PDA for new queue account
+    let queue_pubkey = Queue::pda(yogi_pubkey, yogi_data.queue_count).0;
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -167,12 +167,12 @@ fn schedule_memo_task(
         next_minute.weekday(),
         next_minute.year()
     );
-    let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
+    let create_queue_ix = cronos_sdk::scheduler::instruction::queue_new(
         owner.pubkey(),
         owner.pubkey(),
-        queue_pubkey,
+        yogi_pubkey,
         schedule.clone(),
-        task_pubkey,
+        queue_pubkey,
     );
 
     // Index expected exec_at times
@@ -181,24 +181,24 @@ fn schedule_memo_task(
         .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))
     {
         expected_exec
-            .entry(task_pubkey)
+            .entry(queue_pubkey)
             .or_insert(Vec::new())
             .push(datetime.timestamp());
     }
 
-    // Create an action
-    let action_pubkey = Action::pda(task_pubkey, 0).0;
-    let memo_ix = build_memo_ix(&queue_pubkey);
-    let create_action_ix = cronos_sdk::scheduler::instruction::action_new(
-        action_pubkey,
+    // Create an task
+    let task_pubkey = Task::pda(queue_pubkey, 0).0;
+    let memo_ix = build_memo_ix(&yogi_pubkey);
+    let create_task_ix = cronos_sdk::scheduler::instruction::task_new(
+        task_pubkey,
         vec![memo_ix],
         owner.pubkey(),
         owner.pubkey(),
+        yogi_pubkey,
         queue_pubkey,
-        task_pubkey,
     );
 
-    sign_and_submit(&client, &[create_task_ix, create_action_ix], owner);
+    sign_and_submit(&client, &[create_queue_ix, create_task_ix], owner);
 }
 
 fn calculate_and_report_stats(
@@ -209,10 +209,10 @@ fn calculate_and_report_stats(
     // Calculate delays
     let mut delays: Vec<i64> = vec![];
     let mut missing = 0;
-    for (task_pubkey, expecteds) in expecteds {
+    for (queue_pubkey, expecteds) in expecteds {
         for i in 0..expecteds.len() {
             let expected = expecteds.get(i).unwrap();
-            let actual = actuals.get(&task_pubkey).unwrap().get(i);
+            let actual = actuals.get(&queue_pubkey).unwrap().get(i);
             match actual {
                 None => missing += 1,
                 Some(actual) => {

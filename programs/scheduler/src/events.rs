@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 
 #[event]
-pub struct TaskExecuted {
+pub struct QueueExecuted {
     pub delegate: Pubkey,
-    pub task: Pubkey,
+    pub queue: Pubkey,
     pub ts: i64,
 }

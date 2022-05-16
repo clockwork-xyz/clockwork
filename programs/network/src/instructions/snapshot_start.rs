@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    cronos_scheduler::{responses::ExecResponse, state::Yogi},
     std::mem::size_of,
 };
 
@@ -14,7 +14,7 @@ pub struct SnapshotStart<'info> {
     pub payer: Signer<'info>,
 
     #[account(signer)]
-    pub queue: Box<Account<'info, Queue>>,
+    pub yogi: Box<Account<'info, Yogi>>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

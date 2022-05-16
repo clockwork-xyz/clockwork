@@ -112,11 +112,11 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let stake = &mut ctx.accounts.stake;
 
     // Get remaining accounts
-    let cycler_action = ctx.remaining_accounts.get(0).unwrap();
-    let cycler_task = ctx.remaining_accounts.get(1).unwrap();
-    let queue = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_action = ctx.remaining_accounts.get(3).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(4).unwrap();
+    let cycler_task = ctx.remaining_accounts.get(0).unwrap();
+    let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
+    let yogi = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
 
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
@@ -127,7 +127,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Add an empty entry to the current snapshot
     snapshot.capture(entry, node, stake)?;
 
-    // Add an action to the cycler task to check the snapshot entry for this node
+    // Add an task to the cycler queue to check the snapshot entry for this node
     let cycler_run_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
@@ -137,29 +137,29 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new(cronos_pool::state::Pool::pda().0, false),
             AccountMeta::new_readonly(cronos_pool::state::Config::pda().0, false),
             AccountMeta::new_readonly(cronos_pool::ID, false),
-            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new_readonly(yogi.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new_readonly(snapshot.key(), false),
         ],
         data: sighash("global", "cycler_run").into(),
     };
-    cronos_scheduler::cpi::action_new(
+    cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::ActionNew {
-                action: cycler_action.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                task: cycler_task.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: owner.to_account_info(),
-                queue: queue.to_account_info(),
+                yogi: yogi.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: cycler_task.to_account_info(),
+                queue: cycler_queue.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]],
         ),
         vec![cycler_run_ix.into()],
     )?;
 
-    // Add an action to the snapshot task to capture an entry for this node
+    // Add an task to the snapshot queue to capture an entry for this node
     let current_snapshot_pubkey = Snapshot::pda(registry.snapshot_count.checked_sub(1).unwrap()).0;
     let next_snapshot_pubkey = Snapshot::pda(registry.snapshot_count).0;
     let next_entry_pubkey = SnapshotEntry::pda(next_snapshot_pubkey, node.id).0;
@@ -172,7 +172,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new(next_entry_pubkey, false),
             AccountMeta::new_readonly(node.key(), false,),
             AccountMeta::new(cronos_scheduler::delegate::ID, true),
-            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new_readonly(yogi.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(stake_pubkey, false),
@@ -188,21 +188,21 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(current_snapshot_pubkey, false),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new_readonly(yogi.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: sighash("global", "snapshot_rotate").into(),
     };
-    cronos_scheduler::cpi::action_new(
+    cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::ActionNew {
-                action: snapshot_action.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                task: snapshot_task.to_account_info(),
                 owner: authority.to_account_info(),
                 payer: owner.to_account_info(),
-                queue: queue.to_account_info(),
+                yogi: yogi.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: snapshot_task.to_account_info(),
+                queue: snapshot_queue.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[authority_bump]]],
         ),

@@ -14,11 +14,11 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let registry = cronos_network::state::Registry::pda().0;
     let snapshot = cronos_network::state::Snapshot::pda(0).0;
 
-    let queue = cronos_scheduler::state::Queue::pda(authority).0;
-    let fee = cronos_scheduler::state::Fee::pda(queue).0;
-    let cycler_task = cronos_scheduler::state::Task::pda(queue, 0).0;
-    let snapshot_task = cronos_scheduler::state::Task::pda(queue, 1).0;
-    let snapshot_action = cronos_scheduler::state::Action::pda(snapshot_task, 0).0;
+    let yogi = cronos_scheduler::state::Yogi::pda(authority).0;
+    let fee = cronos_scheduler::state::Fee::pda(yogi).0;
+    let cycler_queue = cronos_scheduler::state::Queue::pda(yogi, 0).0;
+    let snapshot_queue = cronos_scheduler::state::Queue::pda(yogi, 1).0;
+    let snapshot_task = cronos_scheduler::state::Task::pda(snapshot_queue, 0).0;
 
     Instruction {
         program_id: cronos_network::ID,
@@ -34,11 +34,11 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(snapshot, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
-            AccountMeta::new(cycler_task, false),
+            AccountMeta::new(cycler_queue, false),
             AccountMeta::new(fee, false),
-            AccountMeta::new(queue, false),
-            AccountMeta::new(snapshot_action, false),
+            AccountMeta::new(yogi, false),
             AccountMeta::new(snapshot_task, false),
+            AccountMeta::new(snapshot_queue, false),
         ],
         data: cronos_network::instruction::Initialize {}.data(),
     }

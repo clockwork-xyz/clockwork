@@ -9,7 +9,7 @@ use {
     ixs: Vec<InstructionData>,
     schedule: String,
 )]
-pub struct AdminTaskNew<'info> {
+pub struct AdminQueueNew<'info> {
     #[account(mut, address = config.admin)]
     pub admin: Signer<'info>,
 
@@ -31,13 +31,13 @@ pub struct AdminTaskNew<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_QUEUE,
-            queue.owner.as_ref()
+            SEED_YOGI,
+            yogi.owner.as_ref()
         ],
-        bump = queue.bump,
-        constraint = queue.owner == authority.key(),
+        bump = yogi.bump,
+        constraint = yogi.owner == authority.key(),
     )]
-    pub queue: Account<'info, Queue>,
+    pub yogi: Account<'info, Yogi>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -45,24 +45,24 @@ pub struct AdminTaskNew<'info> {
     #[account(
         init,
         seeds = [
-            SEED_TASK, 
-            queue.key().as_ref(),
-            queue.task_count.to_be_bytes().as_ref(),
+            SEED_QUEUE, 
+            yogi.key().as_ref(),
+            yogi.queue_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = admin,
-        space = 8 + size_of::<Task>() + borsh::to_vec(&ixs).unwrap().len(),
+        space = 8 + size_of::<Queue>() + borsh::to_vec(&ixs).unwrap().len(),
     )]
-    pub task: Account<'info, Task>,
+    pub queue: Account<'info, Queue>,
 }
 
 pub fn handler(
-    ctx: Context<AdminTaskNew>, 
+    ctx: Context<AdminQueueNew>, 
     schedule: String,
 ) -> Result<()> {
     let clock = &ctx.accounts.clock;
+    let yogi = &mut ctx.accounts.yogi;
     let queue = &mut ctx.accounts.queue;
-    let task = &mut ctx.accounts.task;
 
-    task.new(clock, queue, schedule)
+    queue.new(clock, yogi, schedule)
 }

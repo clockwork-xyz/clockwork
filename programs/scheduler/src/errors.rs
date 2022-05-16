@@ -5,29 +5,29 @@ pub enum CronosError {
     #[msg("Delegate addresses cannot be initialized accounts")]
     DelegateDataNotEmpty,
 
-    #[msg("An action's inner ix failed to execute")]
+    #[msg("An task's inner ix failed to execute")]
     InnerIxFailed,
     #[msg("An inner instructure wants to mutate state owned by the scheduler")]
     InnerIxReentrancy,
 
-    #[msg("The task is current executing another action")]
-    InvalidAction,
+    #[msg("The queue is current executing another task")]
+    InvalidTask,
     #[msg("The dynamic account list is not the expect size")]
     InvalidDynamicAccounts,
     #[msg("The exec response value could not be parsed")]
     InvalidExecResponse,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
-    #[msg("Your queue cannot provide all required signatures for this instruction")]
+    #[msg("Your yogi cannot provide all required signatures for this instruction")]
     InvalidSignatory,
-    #[msg("The task does not have the right status for this operation")]
-    InvalidTaskStatus,
+    #[msg("The queue does not have the right status for this operation")]
+    InvalidQueueStatus,
 
     #[msg("Your are not the admin authority")]
     NotAdmin,
-    #[msg("You are not the owner of this queue")]
-    NotQueueOwner,
+    #[msg("You are not the owner of this yogi")]
+    NotYogiOwner,
 
-    #[msg("The task is not due")]
-    TaskNotDue,
+    #[msg("The queue is not due")]
+    QueueNotDue,
 }

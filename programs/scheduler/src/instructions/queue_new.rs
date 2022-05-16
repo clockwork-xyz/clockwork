@@ -1,23 +1,14 @@
 use {
-    crate::state::*, 
-    anchor_lang::{prelude::*, solana_program::system_program},
+    crate::state::*,
+    anchor_lang::{prelude::*, solana_program::{system_program, sysvar}},
     std::mem::size_of
 };
 
-
 #[derive(Accounts)]
+#[instruction(schedule: String)]
 pub struct QueueNew<'info> {
-    #[account(
-        init,
-        seeds = [
-            SEED_FEE, 
-            queue.key().as_ref()
-        ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<Fee>(),
-    )]
-    pub fee: Account<'info, Fee>,
+    #[account(address = sysvar::clock::ID)]
+    pub clock: Sysvar<'info, Clock>,
 
     #[account()]
     pub owner: Signer<'info>,
@@ -26,30 +17,39 @@ pub struct QueueNew<'info> {
     pub payer: Signer<'info>,
 
     #[account(
-        init,
+        mut,
         seeds = [
-            SEED_QUEUE, 
-            owner.key().as_ref()
+            SEED_YOGI, 
+            yogi.owner.as_ref()
         ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<Queue>(),
+        bump = yogi.bump,
+        has_one = owner,
     )]
-    pub queue: Account<'info, Queue>,
+    pub yogi: Account<'info, Yogi>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(
+        init,
+        seeds = [
+            SEED_QUEUE, 
+            yogi.key().as_ref(),
+            yogi.queue_count.to_be_bytes().as_ref(),
+        ],
+        bump,
+        payer = payer,
+        space = 8 + size_of::<Queue>(), // + borsh::to_vec(&ixs).unwrap().len(),
+    )]
+    pub queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<QueueNew>) -> Result<()> {
+pub fn handler(ctx: Context<QueueNew>, schedule: String) -> Result<()> {
+    let clock = &ctx.accounts.clock;
+    let yogi = &mut ctx.accounts.yogi;
     let queue = &mut ctx.accounts.queue;
-    let fee = &mut ctx.accounts.fee;
-    let owner = &ctx.accounts.owner;
 
-    let queue_bump = *ctx.bumps.get("queue").unwrap();
-
-    fee.new( queue.key())?;
-    queue.new(queue_bump, owner.key())?;
+    queue.new(clock, yogi, schedule)?;
 
     Ok(())
 }

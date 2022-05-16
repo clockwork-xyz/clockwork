@@ -8,7 +8,7 @@ pub fn wants_account(info: &ReplicaAccountInfo) -> bool {
         return true;
     }
 
-    // If the account is a cronos task, return true
+    // If the account is a cronos queue, return true
     if info.data.len() > 8 {
         let owner_pubkey = Pubkey::new(info.owner);
         if owner_pubkey == cronos_sdk::scheduler::ID {

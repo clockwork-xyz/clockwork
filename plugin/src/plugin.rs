@@ -1,9 +1,10 @@
 use {
     crate::{
-        bucket::Bucket, cache::TaskCache, client::RPCClient, config::Config as PluginConfig, filter,
+        bucket::Bucket, cache::QueueCache, client::RPCClient, config::Config as PluginConfig,
+        filter,
     },
     bincode::deserialize,
-    cronos_sdk::scheduler::state::{Action, Config, Fee, Task},
+    cronos_sdk::scheduler::state::{Config, Fee, Queue, Task},
     log::{debug, info},
     solana_client_helpers::Client,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -29,7 +30,7 @@ use {
 #[derive(Clone)]
 pub struct CronosPlugin {
     client: Option<Arc<Client>>,
-    cache: Option<Arc<RwLock<TaskCache>>>,
+    cache: Option<Arc<RwLock<QueueCache>>>,
     bucket: Option<Arc<Mutex<Bucket>>>,
     latest_clock_value: i64,
 }
@@ -45,8 +46,8 @@ pub enum CronosPluginError {
     #[error("Error reading and/or writing to local cache. Error message: ({msg})")]
     CacheError { msg: String },
 
-    #[error("Error deserializing task data")]
-    TaskAccountInfoError,
+    #[error("Error deserializing queue data")]
+    QueueAccountInfoError,
 
     #[error("Error deserializing sysvar clock data")]
     ClockAccountInfoError,
@@ -64,7 +65,7 @@ impl GeyserPlugin for CronosPlugin {
 
         let config = PluginConfig::read_from(config_file)?;
         self.bucket = Some(Arc::new(Mutex::new(Bucket::new())));
-        self.cache = Some(Arc::new(RwLock::new(TaskCache::new())));
+        self.cache = Some(Arc::new(RwLock::new(QueueCache::new())));
         self.client = Some(Arc::new(Client::new(config.keypath, config.rpc_url)));
         self.latest_clock_value = 0;
         Ok(())
@@ -119,22 +120,22 @@ impl GeyserPlugin for CronosPlugin {
                         Ok(clock) => {
                             if self.latest_clock_value < clock.unix_timestamp {
                                 self.latest_clock_value = clock.unix_timestamp;
-                                self.execute_tasks_in_lookback_window();
+                                self.execute_queues_in_lookback_window();
                             }
                         }
                     }
                 } else if &cronos_sdk::scheduler::ID.to_bytes() == info.owner {
-                    let task = Task::try_from(info.data.to_vec());
+                    let queue = Queue::try_from(info.data.to_vec());
                     let key = Pubkey::new(info.pubkey);
 
-                    match task {
+                    match queue {
                         Err(_err) => {
                             return Err(PluginError::Custom(Box::new(
-                                CronosPluginError::TaskAccountInfoError,
+                                CronosPluginError::QueueAccountInfoError,
                             )))
                         }
-                        Ok(task) => {
-                            self.replicate_task(key, task);
+                        Ok(queue) => {
+                            self.replicate_queue(key, queue);
                         }
                     }
                 }
@@ -193,7 +194,7 @@ impl CronosPlugin {
     fn unwrap_bucket(&self) -> &Arc<Mutex<Bucket>> {
         self.bucket.as_ref().expect("client is unavailable")
     }
-    fn unwrap_cache(&self) -> &Arc<RwLock<TaskCache>> {
+    fn unwrap_cache(&self) -> &Arc<RwLock<QueueCache>> {
         self.cache.as_ref().expect("cache is unavailable")
     }
     fn unwrap_client(&self) -> &Arc<Client> {
@@ -205,34 +206,34 @@ impl CronosPlugin {
         }
     }
 
-    fn replicate_task(&self, key: Pubkey, task: Task) {
-        info!("Caching task {}", key);
-        info!("{:#?}", task);
+    fn replicate_queue(&self, key: Pubkey, queue: Queue) {
+        info!("Caching queue {}", key);
+        info!("{:#?}", queue);
 
         let mut w_cache = self.unwrap_cache().write().unwrap();
-        match task.exec_at {
-            Some(_t) => w_cache.insert(key, task),
+        match queue.exec_at {
+            Some(_t) => w_cache.insert(key, queue),
             None => w_cache.delete(key),
         }
     }
 
-    fn execute_tasks_in_lookback_window(&self) {
+    fn execute_queues_in_lookback_window(&self) {
         let self_clone = self.clone();
         let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
         let cp_clone = cp_arc.clone();
 
         thread::spawn(move || {
             const LOOKBACK_WINDOW: i64 = 7; // Number of seconds to lookback
-            info!("Executing tasks for ts {}", cp_clone.latest_clock_value);
+            info!("Executing queues for ts {}", cp_clone.latest_clock_value);
 
-            // Spawn threads to execute tasks in lookback window
+            // Spawn threads to execute queues in lookback window
             let mut handles = vec![];
             for t in (cp_clone.latest_clock_value - LOOKBACK_WINDOW)..=cp_clone.latest_clock_value {
                 let r_cache = cp_clone.unwrap_cache().read().unwrap();
                 r_cache.index.get(&t).and_then(|keys| {
                     for key in keys.iter() {
-                        r_cache.data.get(key).and_then(|task| {
-                            handles.push(cp_clone.execute_task(*key, task.clone()));
+                        r_cache.data.get(key).and_then(|queue| {
+                            handles.push(cp_clone.execute_queue(*key, queue.clone()));
                             Some(())
                         });
                     }
@@ -249,18 +250,18 @@ impl CronosPlugin {
         });
     }
 
-    fn execute_task(&self, task_pubkey: Pubkey, task: Task) -> JoinHandle<()> {
+    fn execute_queue(&self, queue_pubkey: Pubkey, queue: Queue) -> JoinHandle<()> {
         let self_clone = self.clone();
         let cp_arc: Arc<CronosPlugin> = Arc::new(self_clone);
         let cp_clone = cp_arc.clone();
 
         thread::spawn(move || {
-            // Lock the mutex for this task
+            // Lock the mutex for this queue
             let mutex = cp_clone
                 .unwrap_bucket()
                 .lock()
                 .unwrap()
-                .get_mutex((task_pubkey, task.exec_at.unwrap()));
+                .get_mutex((queue_pubkey, queue.exec_at.unwrap()));
             let guard = mutex.try_lock();
             if guard.is_err() {
                 return;
@@ -270,45 +271,45 @@ impl CronosPlugin {
             // Common pubkeys
             let config_pubkey = Config::pda().0;
             let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
-            let fee_pubkey = Fee::pda(task.queue).0;
+            let fee_pubkey = Fee::pda(queue.yogi).0;
 
-            // Build task_begin ix
-            let task_begin_ix = cronos_sdk::scheduler::instruction::task_begin(
+            // Build queue_begin ix
+            let queue_begin_ix = cronos_sdk::scheduler::instruction::queue_begin(
                 delegate_pubkey,
-                task.queue,
-                task_pubkey,
+                queue.yogi,
+                queue_pubkey,
             );
 
-            // Accumulate task ixs here
-            let mut ixs: Vec<Instruction> = vec![task_begin_ix];
+            // Accumulate queue ixs here
+            let mut ixs: Vec<Instruction> = vec![queue_begin_ix];
 
-            // Build an ix for each action
-            for i in 0..task.action_count {
-                // Get the action account
-                let action_pubkey = Action::pda(task_pubkey, i).0;
-                let action_data = cp_clone.unwrap_client().get_account_data(&action_pubkey);
-                if action_data.is_err() {
+            // Build an ix for each task
+            for i in 0..queue.task_count {
+                // Get the task account
+                let task_pubkey = Task::pda(queue_pubkey, i).0;
+                let task_data = cp_clone.unwrap_client().get_account_data(&task_pubkey);
+                if task_data.is_err() {
                     return;
                 }
-                let action_data = Action::try_from(action_data.unwrap()).unwrap();
+                let task_data = Task::try_from(task_data.unwrap()).unwrap();
 
                 // Build ix
-                let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(
-                    action_pubkey,
+                let mut queue_exec_ix = cronos_sdk::scheduler::instruction::queue_exec(
+                    task_pubkey,
                     config_pubkey,
                     cp_clone.unwrap_client().payer_pubkey(),
                     fee_pubkey,
-                    task.queue,
-                    task_pubkey,
+                    queue.yogi,
+                    queue_pubkey,
                 );
 
                 // Inject accounts for inner ixs
                 let mut acc_dedupe = HashSet::<Pubkey>::new();
-                for inner_ix in &action_data.ixs {
+                for inner_ix in &task_data.ixs {
                     // Program ids
                     if !acc_dedupe.contains(&inner_ix.program_id) {
                         acc_dedupe.insert(inner_ix.program_id);
-                        task_exec_ix
+                        queue_exec_ix
                             .accounts
                             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
                     }
@@ -325,7 +326,7 @@ impl CronosPlugin {
                             }
 
                             // Push the account metadata into the ix as a "remaining account"
-                            task_exec_ix.accounts.push(match acc.is_writable {
+                            queue_exec_ix.accounts.push(match acc.is_writable {
                                 true => AccountMeta::new(injected_pubkey, false),
                                 false => AccountMeta::new_readonly(injected_pubkey, false),
                             })
@@ -334,21 +335,21 @@ impl CronosPlugin {
                 }
 
                 // Add to the list
-                ixs.push(task_exec_ix)
+                ixs.push(queue_exec_ix)
             }
 
             // Sign and submit
             let res = cp_clone.unwrap_client().sign_and_submit(
                 ixs.as_slice(),
                 format!(
-                    "🤖 Executing task {} for timestamp {}",
-                    task_pubkey,
-                    task.exec_at.unwrap()
+                    "🤖 Executing queue {} for timestamp {}",
+                    queue_pubkey,
+                    queue.exec_at.unwrap()
                 )
                 .as_str(),
             );
             if res.is_err() {
-                info!("❌ Failed to execute task: {:#?}", res.err())
+                info!("❌ Failed to execute queue: {:#?}", res.err())
             }
 
             // Drop the mutex

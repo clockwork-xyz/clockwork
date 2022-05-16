@@ -49,17 +49,17 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
     let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
-    let queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(authority_pubkey).0;
-    let cycler_task_pubkey = cronos_sdk::scheduler::state::Task::pda(queue_pubkey, 0).0;
-    let cycler_action_pubkey = cronos_sdk::scheduler::state::Action::pda(
-        cycler_task_pubkey,
+    let yogi_pubkey = cronos_sdk::scheduler::state::Yogi::pda(authority_pubkey).0;
+    let cycler_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(yogi_pubkey, 0).0;
+    let cycler_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
+        cycler_queue_pubkey,
         registry_data.node_count.into(),
     )
     .0;
 
-    let snapshot_task_pubkey = cronos_sdk::scheduler::state::Task::pda(queue_pubkey, 1).0;
-    let snapshot_action_pubkey = cronos_sdk::scheduler::state::Action::pda(
-        snapshot_task_pubkey,
+    let snapshot_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(yogi_pubkey, 1).0;
+    let snapshot_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
+        snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
     )
     .0;
@@ -75,11 +75,11 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
         registry_pubkey,
         snapshot_pubkey,
         // Additional accounts
-        cycler_action_pubkey,
         cycler_task_pubkey,
-        queue_pubkey,
-        snapshot_action_pubkey,
+        cycler_queue_pubkey,
+        yogi_pubkey,
         snapshot_task_pubkey,
+        snapshot_queue_pubkey,
     );
     sign_and_submit(client, &[ix], &[owner, &delegate]);
     get(client, &node_pubkey)

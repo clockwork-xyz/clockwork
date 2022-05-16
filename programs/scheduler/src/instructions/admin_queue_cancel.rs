@@ -5,7 +5,7 @@ use {
 
 #[derive(Accounts)]
 #[instruction()]
-pub struct AdminTaskCancel<'info> {
+pub struct AdminQueueCancel<'info> {
     #[account(
         mut, 
         address = config.admin
@@ -21,18 +21,18 @@ pub struct AdminTaskCancel<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_TASK, 
-            task.queue.as_ref(),
-            task.id.to_be_bytes().as_ref(),
+            SEED_QUEUE, 
+            queue.yogi.as_ref(),
+            queue.id.to_be_bytes().as_ref(),
         ],
         bump,
     )]
-    pub task: Account<'info, Task>,
+    pub queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<AdminTaskCancel>) -> Result<()> {
+pub fn handler(ctx: Context<AdminQueueCancel>) -> Result<()> {
     let admin = &mut ctx.accounts.admin;
-    let task = &mut ctx.accounts.task;
+    let queue = &mut ctx.accounts.queue;
     
-    task.cancel(admin)
+    queue.cancel(admin)
 }

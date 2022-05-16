@@ -21,7 +21,7 @@ pub struct AdminFeeCollect<'info> {
         mut,
         seeds = [
             SEED_FEE, 
-            fee.queue.as_ref()
+            fee.yogi.as_ref()
         ],
         bump,
     )]
