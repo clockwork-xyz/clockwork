@@ -52,10 +52,6 @@ pub mod cronos_scheduler {
         manager_new::handler(ctx)
     }
 
-    pub fn manager_sign(ctx: Context<ManagerSign>, ix: InstructionData) -> Result<()> {
-        manager_sign::handler(ctx, ix)
-    }
-
     pub fn queue_begin(ctx: Context<QueueBegin>) -> Result<()> {
         queue_begin::handler(ctx)
     }
