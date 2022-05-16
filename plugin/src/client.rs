@@ -1,4 +1,5 @@
 use {
+    async_trait::async_trait,
     log::info,
     solana_client_helpers::{Client, ClientResult, RpcClient},
     solana_sdk::{
@@ -8,11 +9,13 @@ use {
     std::fs::File,
 };
 
+#[async_trait]
 pub trait RPCClient {
     fn new(keypath: String, url: String) -> Client;
-    fn sign_and_submit(&self, ixs: &[Instruction], memo: &str) -> ClientResult<Signature>;
+    async fn sign_and_submit(&self, ixs: &[Instruction], memo: &str) -> ClientResult<Signature>;
 }
 
+#[async_trait]
 impl RPCClient for Client {
     fn new(keypath: String, url: String) -> Client {
         let payer = read_keypair(&mut File::open(keypath).unwrap()).unwrap();
@@ -20,7 +23,7 @@ impl RPCClient for Client {
         Client { client, payer }
     }
 
-    fn sign_and_submit(&self, ixs: &[Instruction], memo: &str) -> ClientResult<Signature> {
+    async fn sign_and_submit(&self, ixs: &[Instruction], memo: &str) -> ClientResult<Signature> {
         info!("{}", memo);
         let payer = self.payer_pubkey();
         let mut tx = Transaction::new_with_payer(ixs, Some(&payer));
