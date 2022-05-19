@@ -125,11 +125,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let system_program = &ctx.accounts.system_program;
     let stake = &mut ctx.accounts.stake;
 
-    // Get remaining accounts
-    // let cycler_queue = ctx.remaining_accounts.get(0).unwrap();
+    // Get remaining accountsgs
     let cycler_task = ctx.remaining_accounts.get(0).unwrap();
-    // let manager = ctx.remaining_accounts.get(2).unwrap();
-    // let snapshot_queue = ctx.remaining_accounts.get(3).unwrap();
     let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
     
     // Get bumps
