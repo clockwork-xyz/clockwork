@@ -1,20 +1,20 @@
 use {
     cronos_sdk::scheduler::state::Queue,
+    dashmap::{DashMap, DashSet},
     solana_sdk::pubkey::Pubkey,
-    std::collections::{HashMap, HashSet},
 };
 
 #[derive(Default)]
 pub struct QueueCache {
-    pub data: HashMap<Pubkey, Queue>,
-    pub index: HashMap<i64, HashSet<Pubkey>>,
+    pub data: DashMap<Pubkey, Queue>,
+    pub index: DashMap<i64, DashSet<Pubkey>>,
 }
 
 impl QueueCache {
     pub fn new() -> QueueCache {
         QueueCache {
-            data: HashMap::new(),
-            index: HashMap::new(),
+            data: DashMap::new(),
+            index: DashMap::new(),
         }
     }
 
@@ -27,7 +27,7 @@ impl QueueCache {
                 cached_set.insert(key);
             }
             None => {
-                let mut set = HashSet::new();
+                let set = DashSet::new();
                 set.insert(key);
                 self.index.insert(queue.exec_at.unwrap(), set);
             }
