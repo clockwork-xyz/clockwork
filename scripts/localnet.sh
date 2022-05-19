@@ -8,6 +8,7 @@ cargo build
 solana config set --url localhost
 
 # Start a Solana validator with the Cronos programs and plugin
+clear
 solana-test-validator -r \
     --bpf-program target/deploy/cronos_healthcheck-keypair.json target/deploy/cronos_healthcheck.so \
     --bpf-program target/deploy/cronos_network-keypair.json target/deploy/cronos_network.so \

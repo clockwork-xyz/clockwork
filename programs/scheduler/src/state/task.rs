@@ -161,30 +161,33 @@ impl TaskAccount for Account<'_, Task> {
             )?;
 
             // Process the exec response
-            match exec_response.dynamic_accounts {
-                None => (), // Noop
-                Some(dynamic_accounts) => {
-                    require!(
-                        dynamic_accounts.len() == ix.accounts.len(),
-                        CronosError::InvalidDynamicAccounts
-                    );
-                    dyanmic_ixs.push(InstructionData {
-                        program_id: ix.program_id,
-                        accounts: dynamic_accounts
-                            .iter()
-                            .enumerate()
-                            .map(|(i, pubkey)| {
-                                let acc = ix.accounts.get(i).unwrap();
-                                AccountMetaData {
-                                    pubkey: *pubkey,
-                                    is_signer: acc.is_signer,
-                                    is_writable: acc.is_writable,
-                                }
-                            })
-                            .collect::<Vec<AccountMetaData>>(),
-                        data: ix.data.clone(),
-                    });
-                }
+            match exec_response {
+                None => (),
+                Some(exec_response) => match exec_response.dynamic_accounts {
+                    None => (),
+                    Some(dynamic_accounts) => {
+                        require!(
+                            dynamic_accounts.len() == ix.accounts.len(),
+                            CronosError::InvalidDynamicAccounts
+                        );
+                        dyanmic_ixs.push(InstructionData {
+                            program_id: ix.program_id,
+                            accounts: dynamic_accounts
+                                .iter()
+                                .enumerate()
+                                .map(|(i, pubkey)| {
+                                    let acc = ix.accounts.get(i).unwrap();
+                                    AccountMetaData {
+                                        pubkey: *pubkey,
+                                        is_signer: acc.is_signer,
+                                        is_writable: acc.is_writable,
+                                    }
+                                })
+                                .collect::<Vec<AccountMetaData>>(),
+                            data: ix.data.clone(),
+                        });
+                    }
+                },
             }
         }
 

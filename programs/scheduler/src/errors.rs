@@ -16,6 +16,8 @@ pub enum CronosError {
     InvalidDynamicAccounts,
     #[msg("The exec response value could not be parsed")]
     InvalidExecResponse,
+    #[msg("The return data is intended for another program")]
+    InvalidReturnData,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
     #[msg("Your manager cannot provide all required signatures for this instruction")]

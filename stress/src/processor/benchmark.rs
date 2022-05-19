@@ -18,8 +18,6 @@ use {
     std::{collections::HashMap, ops::Div, str::FromStr},
 };
 
-// TODO Refactor this to work with the new Manager/Queue/Task scheduler model
-
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
     // Setup test
     let client = new_client();
@@ -46,6 +44,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         authorities.push(authority);
     }
 
+    // TODO Schedule tasks asynchronously
+
     // Create queues for the parallel tasks
     for i in 0..num_tasks_parallel {
         let authority = authorities.get(i as usize).unwrap();
@@ -55,17 +55,23 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     }
 
     // Create a queue for the serial tasks
-    let authority = authorities.last().unwrap();
-    let ix_a = create_queue_ix(authority, recurrence, &mut expected_exec_ats);
-    let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
-    for _ in 0..num_tasks_serial {
-        ixs.push(create_task_ix(authority))
+    if num_tasks_serial > 0 {
+        let authority = authorities.last().unwrap();
+        let ix_a = create_queue_ix(authority, recurrence, &mut expected_exec_ats);
+        let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
+        for _ in 0..num_tasks_serial {
+            ixs.push(create_task_ix(authority))
+        }
+        sign_and_submit(&client, &ixs.clone(), authority);
     }
-    sign_and_submit(&client, &ixs.clone(), authority);
 
     // Collect and report test results
     let num_expected_events = count * (recurrence + 1);
-    listen_for_events(num_expected_events, &mut actual_exec_ats)?;
+    listen_for_events(
+        num_expected_events,
+        &expected_exec_ats,
+        &mut actual_exec_ats,
+    )?;
     calculate_and_report_stats(num_expected_events, expected_exec_ats, actual_exec_ats)?;
 
     Ok(())
@@ -73,6 +79,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
 fn listen_for_events(
     num_expected_events: u32,
+    expected_exec_ats: &HashMap<Pubkey, Vec<i64>>,
     actual_exec_ats: &mut HashMap<Pubkey, Vec<i64>>,
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
@@ -97,11 +104,13 @@ fn listen_for_events(
                     base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
                     let event =
                         borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
-                    actual_exec_ats
-                        .entry(event.task)
-                        .or_insert(Vec::new())
-                        .push(event.ts);
-                    event_count += 1;
+                    if expected_exec_ats.contains_key(&event.queue) {
+                        actual_exec_ats
+                            .entry(event.queue)
+                            .or_insert(Vec::new())
+                            .push(event.ts);
+                        event_count += 1;
+                    }
                 }
                 _ => {}
             }
@@ -148,10 +157,10 @@ fn create_queue_ix(
     );
     let create_queue_ix = cronos_sdk::scheduler::instruction::queue_new(
         authority.pubkey(),
-        authority.pubkey(),
         manager_pubkey,
-        schedule.clone(),
+        authority.pubkey(),
         queue_pubkey,
+        schedule.clone(),
     );
 
     // Index expected exec_at times
@@ -188,66 +197,18 @@ fn build_memo_ix(manager_pubkey: &Pubkey) -> Instruction {
 }
 
 fn create_task_ix(authority: &Keypair) -> Instruction {
-    // Get manager for authority
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
     let queue_pubkey = Queue::pda(manager_pubkey, 0).0;
-
-    // let manager = client
-    //     .get_account_data(&manager_pubkey)
-    //     .map_err(|_err| CliError::AccountNotFound(manager_pubkey.to_string()))
-    //     .unwrap();
-    // let manager_data = Manager::try_from(manager)
-    //     .map_err(|_err| CliError::AccountDataNotParsable(manager_pubkey.to_string()))
-    //     .unwrap();
-
-    // Generate PDA for new queue account
-    // let queue_pubkey = Queue::pda(manager_pubkey, manager_data.queue_count).0;
-    // let now: DateTime<Utc> = Utc::now();
-    // let next_minute = now + Duration::minutes(1);
-    // let schedule = format!(
-    //     "0-{} {} {} {} {} {} {}",
-    //     recurrence,
-    //     next_minute.minute(),
-    //     next_minute.hour(),
-    //     next_minute.day(),
-    //     next_minute.month(),
-    //     next_minute.weekday(),
-    //     next_minute.year()
-    // );
-    // let create_queue_ix = cronos_sdk::scheduler::instruction::queue_new(
-    //     owner.pubkey(),
-    //     owner.pubkey(),
-    //     manager_pubkey,
-    //     schedule.clone(),
-    //     queue_pubkey,
-    // );
-
-    // // Index expected exec_at times
-    // for datetime in Schedule::from_str(&schedule)
-    //     .unwrap()
-    //     .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))
-    // {
-    //     expected_exec
-    //         .entry(queue_pubkey)
-    //         .or_insert(Vec::new())
-    //         .push(datetime.timestamp());
-    // }
-
-    // Create an task
     let task_pubkey = Task::pda(queue_pubkey, 0).0;
     let memo_ix = build_memo_ix(&manager_pubkey);
-    let ix = cronos_sdk::scheduler::instruction::task_new(
-        task_pubkey,
+    cronos_sdk::scheduler::instruction::task_new(
+        authority.pubkey(),
         vec![memo_ix],
-        authority.pubkey(),
-        authority.pubkey(),
         manager_pubkey,
+        authority.pubkey(),
         queue_pubkey,
-    );
-
-    ix
-
-    // sign_and_submit(&client, &[create_task_ix], authority);
+        task_pubkey,
+    )
 }
 
 fn calculate_and_report_stats(
@@ -259,16 +220,13 @@ fn calculate_and_report_stats(
     let mut delays: Vec<i64> = vec![];
     let mut missing = 0;
     for (queue_pubkey, expecteds) in expecteds {
-        for i in 0..expecteds.len() {
-            let expected = expecteds.get(i).unwrap();
-            let actual = actuals.get(&queue_pubkey).unwrap().get(i);
-            match actual {
-                None => missing += 1,
-                Some(actual) => {
-                    delays.push(actual - expected);
-                }
-            }
-        }
+        get_performance_data(queue_pubkey, expecteds, actuals.clone()).and_then(
+            |(missing_data, delay_data)| {
+                missing += missing_data;
+                delay_data.iter().for_each(|d| delays.push(*d));
+                Ok(())
+            },
+        )?;
     }
     delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
@@ -286,11 +244,29 @@ fn calculate_and_report_stats(
         .sqrt();
 
     // Stdout
-    println!("Expected execs: {}", num_expected_events);
-    println!("Missing execs: {}", missing);
-    println!("Delay (mean): {} sec", mean);
+    println!("Expected tasks: {}", num_expected_events);
+    println!("Missing tasks: {}", missing);
+    println!("Delay (avg): {} sec", mean);
     println!("Delay (median): {} sec", delays[mid]);
-    println!("Delay (stddev): {} sec", std_dev);
+    println!("Delay (std dev): {} sec", std_dev);
 
     Ok(())
+}
+
+fn get_performance_data(
+    queue_pubkey: Pubkey,
+    expecteds: Vec<i64>,
+    actuals: HashMap<Pubkey, Vec<i64>>,
+) -> Result<(i32, Vec<i64>), CliError> {
+    let mut delays: Vec<i64> = vec![];
+    let mut missing = 0;
+    let actuals = actuals.get(&queue_pubkey).ok_or(CliError::DataNotFound)?;
+    for i in 0..expecteds.len() {
+        let expected = expecteds.get(i).unwrap();
+        match actuals.get(i) {
+            None => missing += 1,
+            Some(actual) => delays.push(actual - expected),
+        }
+    }
+    Ok((missing, delays))
 }

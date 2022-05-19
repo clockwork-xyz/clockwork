@@ -1,6 +1,5 @@
-use super::InstructionData;
-
 use {
+    super::InstructionData,
     crate::{errors::CronosError, pda::PDA, responses::ExecResponse},
     anchor_lang::{
         prelude::*,
@@ -51,7 +50,7 @@ pub trait ManagerAccount {
         account_infos: &[AccountInfo],
         bump: u8,
         ix: &InstructionData,
-    ) -> Result<ExecResponse>;
+    ) -> Result<Option<ExecResponse>>;
 }
 
 impl ManagerAccount for Account<'_, Manager> {
@@ -66,7 +65,7 @@ impl ManagerAccount for Account<'_, Manager> {
         account_infos: &[AccountInfo],
         bump: u8,
         ix: &InstructionData,
-    ) -> Result<ExecResponse> {
+    ) -> Result<Option<ExecResponse>> {
         invoke_signed(
             &Instruction::from(ix),
             account_infos,
@@ -74,18 +73,18 @@ impl ManagerAccount for Account<'_, Manager> {
         )
         .map_err(|_err| CronosError::InnerIxFailed)?;
 
-        let exec_response = get_return_data()
-            .ok_or(CronosError::InvalidExecResponse)
-            .and_then(|(program_id, return_data)| {
-                (program_id == ix.program_id)
-                    .then(|| return_data)
-                    .ok_or(CronosError::InvalidExecResponse)
-            })
-            .map(|return_data| {
-                ExecResponse::try_from_slice(return_data.as_slice())
-                    .map_err(|_err| CronosError::InvalidExecResponse)
-            })?;
-
-        Ok(exec_response?)
+        match get_return_data() {
+            None => Ok(None),
+            Some((program_id, return_data)) => {
+                if program_id != ix.program_id {
+                    Err(CronosError::InvalidReturnData.into())
+                } else {
+                    Ok(Some(
+                        ExecResponse::try_from_slice(return_data.as_slice())
+                            .map_err(|_err| CronosError::InvalidExecResponse)?,
+                    ))
+                }
+            }
+        }
     }
 }

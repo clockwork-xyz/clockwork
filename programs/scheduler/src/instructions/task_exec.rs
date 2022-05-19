@@ -67,16 +67,12 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
 
     let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
 
-    msg!("Executing task with accounts: ");
-    for acc in account_infos.iter() {
-        msg!("{}", acc.key);
-    }
-
     let manager_bump = *ctx.bumps.get("manager").unwrap();
     task.exec(account_infos, config, delegate, fee, manager, manager_bump, queue)?;
 
     emit!(TaskExecuted {
         delegate: delegate.key(),
+        queue: queue.key(),
         task: task.key(),
         ts: clock.unix_timestamp,
     });

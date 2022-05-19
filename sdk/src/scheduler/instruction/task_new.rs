@@ -11,22 +11,22 @@ use {
 };
 
 pub fn task_new(
-    task: Pubkey,
+    authority: Pubkey,
     ixs: Vec<Instruction>,
-    owner: Pubkey,
-    payer: Pubkey,
     manager: Pubkey,
+    payer: Pubkey,
     queue: Pubkey,
+    task: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new(task, false),
-            AccountMeta::new_readonly(owner, true),
-            AccountMeta::new(payer, true),
+            AccountMeta::new_readonly(authority, true),
             AccountMeta::new_readonly(manager, false),
-            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(task, false),
         ],
         data: cronos_scheduler::instruction::TaskNew {
             ixs: ixs

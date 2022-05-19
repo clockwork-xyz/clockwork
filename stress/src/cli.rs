@@ -22,6 +22,8 @@ pub enum CliError {
     BadParameter(String),
     #[error("Command not recognized: {0}")]
     CommandNotRecognized(String),
+    #[error("Data point could not be found")]
+    DataNotFound,
     #[error("No signers were provided")]
     NoSigners,
     #[error("There was an error with the websocket client")]
