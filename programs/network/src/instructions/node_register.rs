@@ -1,5 +1,3 @@
-use cronos_scheduler::state::{Queue, Manager};
-
 use {
     crate::state::*,
     anchor_lang::{
@@ -10,7 +8,10 @@ use {
         associated_token::AssociatedToken,
         token::{Mint, Token, TokenAccount},
     },
-    cronos_scheduler::program::CronosScheduler,
+    cronos_scheduler::{
+        program::CronosScheduler,
+        state::{Queue, Manager}
+    },
     std::mem::size_of,
 };
 
