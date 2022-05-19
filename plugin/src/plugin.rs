@@ -132,49 +132,32 @@ impl GeyserPlugin for CronosPlugin {
             }
             Some(_cache) => {
                 if &sysvar::clock::id().to_bytes() == info.pubkey {
-                    let clock = deserialize::<Clock>(info.data);
-
-                    match clock {
-                        Err(_err) => {
-                            return Err(PluginError::Custom(Box::new(
-                                CronosPluginError::ClockAccountInfoError,
-                            )))
-                        }
-                        Ok(clock) => {
-                            if self.latest_clock_value < clock.unix_timestamp {
-                                self.latest_clock_value = clock.unix_timestamp;
-
-                                // NICK
-                                // self.process_queues_in_lookback_window();
-
-                                let cp_arc: Arc<CronosPlugin> = Arc::new(self.clone());
-                                let cp_clone = cp_arc.clone();
-
-                                // concurrently spawn task for each lookback window
-                                self.unwrap_rt().rt.spawn(async move {
-                                    cp_clone.process_queues_in_lookback_window().await;
-                                });
-                            }
-                        }
+                    // Spawn an async tokio task for each lookback window
+                    let clock = deserialize::<Clock>(info.data).map_err(|_| {
+                        PluginError::Custom(Box::new(CronosPluginError::ClockAccountInfoError))
+                    })?;
+                    if self.latest_clock_value < clock.unix_timestamp {
+                        self.latest_clock_value = clock.unix_timestamp;
+                        let cp_arc: Arc<CronosPlugin> = Arc::new(self.clone());
+                        let cp_clone = cp_arc.clone();
+                        self.unwrap_rt().rt.spawn(async move {
+                            cp_clone.process_queues_in_lookback_window().await;
+                        });
                     }
                 } else if &cronos_sdk::scheduler::ID.to_bytes() == info.owner {
-                    let queue = Queue::try_from(info.data.to_vec());
+                    // Cache the queue data
                     let key = Pubkey::new(info.pubkey);
-
-                    match queue {
-                        Err(_err) => {
-                            return Err(PluginError::Custom(Box::new(
-                                CronosPluginError::QueueAccountInfoError,
-                            )))
-                        }
-                        Ok(queue) => {
-                            let cp_arc: Arc<CronosPlugin> = Arc::new(self.clone());
-                            let cp_clone = cp_arc.clone();
-                            self.unwrap_rt()
-                                .rt
-                                .spawn(async move { cp_clone.replicate_queue(key, queue).await });
-                        }
-                    }
+                    let queue = Queue::try_from(info.data.to_vec()).map_err(|_| {
+                        // TODO To optimize parallelization, should the data deserializtion be put into a tokio task?
+                        //      Note, deserialization will will fail for all accounts that are not queues. How expensive
+                        //      are deserialization errors?
+                        PluginError::Custom(Box::new(CronosPluginError::QueueAccountInfoError))
+                    })?;
+                    let cp_arc: Arc<CronosPlugin> = Arc::new(self.clone());
+                    let cp_clone = cp_arc.clone();
+                    self.unwrap_rt()
+                        .rt
+                        .spawn(async move { cp_clone.write_to_cache(key, queue).await });
                 }
             }
         }
@@ -242,7 +225,7 @@ impl CronosPlugin {
         }
     }
 
-    async fn replicate_queue(&self, key: Pubkey, queue: Queue) {
+    async fn write_to_cache(&self, key: Pubkey, queue: Queue) {
         info!("Caching queue {}", key);
         info!("{:?}", queue);
 
@@ -260,7 +243,7 @@ impl CronosPlugin {
         const LOOKBACK_WINDOW: i64 = 7; // Number of seconds to lookback
         info!("Processing queues for ts {}", self.latest_clock_value);
 
-        // Spawn tokio tasks to execute cronos tasks in lookback window
+        // Spawn tokio tasks to submit txns for the lookback window
         for t in (self.latest_clock_value - LOOKBACK_WINDOW)..=self.latest_clock_value {
             let cache = self.unwrap_cache().lock().await;
             cache.index.get(&t).and_then(|keys| {
@@ -344,16 +327,14 @@ impl CronosPlugin {
                     if !acc_dedupe.contains(&acc.pubkey) {
                         acc_dedupe.insert(acc.pubkey);
 
-                        // Override the injected pubkey for the Cronos delegate account
-                        let mut injected_pubkey = acc.pubkey;
+                        // Inject the delegate pubkey as the Cronos "payer" account
+                        let mut payer_pubkey = acc.pubkey;
                         if acc.pubkey == cronos_sdk::scheduler::payer::ID {
-                            injected_pubkey = delegate_pubkey;
+                            payer_pubkey = delegate_pubkey;
                         }
-
-                        // Push the account metadata into the ix as a "remaining account"
                         task_exec_ix.accounts.push(match acc.is_writable {
-                            true => AccountMeta::new(injected_pubkey, false),
-                            false => AccountMeta::new_readonly(injected_pubkey, false),
+                            true => AccountMeta::new(payer_pubkey, false),
+                            false => AccountMeta::new_readonly(payer_pubkey, false),
                         })
                     }
                 }
