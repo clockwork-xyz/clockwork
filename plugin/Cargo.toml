@@ -29,6 +29,8 @@ solana-logger = "1.10.8"
 solana-program = "1.10.8"
 solana-sdk = "1.10.8"
 thiserror = "1.0.30"
+tokio = "1.18.2"
+dashmap = "5.3.3"
 
 [build-dependencies]
 prost-build = "0.10.0"

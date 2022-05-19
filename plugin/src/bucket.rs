@@ -1,9 +1,7 @@
 use {
     solana_sdk::pubkey::Pubkey,
-    std::{
-        collections::HashMap,
-        sync::{Arc, Mutex},
-    },
+    std::{collections::HashMap, sync::Arc},
+    tokio::sync::Mutex,
 };
 
 pub struct Bucket {
