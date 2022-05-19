@@ -1,20 +1,23 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    cronos_scheduler::{responses::ExecResponse, state::Manager},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotStart<'info> {
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
+    pub authority: Box<Account<'info, Authority>>,
+
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
+    #[account(signer, constraint = manager.authority == authority.key())]
+    pub manager: Box<Account<'info, Manager>>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
-
-    #[account(signer)]
-    pub queue: Box<Account<'info, Queue>>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

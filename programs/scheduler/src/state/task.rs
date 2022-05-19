@@ -1,10 +1,15 @@
+use crate::state::{ManagerAccount, QueueAccount, QueueStatus};
+
+use super::{Config, Fee, Manager};
+
 use {
-    super::{AccountMetaData, Action, Config, Fee, InstructionData, Queue, QueueAccount},
+    super::Queue,
     crate::{errors::CronosError, pda::PDA},
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    chrono::{DateTime, NaiveDateTime, Utc},
-    cronos_cron::Schedule,
-    std::{convert::TryFrom, str::FromStr},
+    anchor_lang::{
+        prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
+        AnchorDeserialize,
+    },
+    std::convert::TryFrom,
 };
 
 pub const SEED_TASK: &[u8] = b"task";
@@ -16,12 +21,9 @@ pub const SEED_TASK: &[u8] = b"task";
 #[account]
 #[derive(Debug)]
 pub struct Task {
-    pub action_count: u128,
-    pub exec_at: Option<i64>,
     pub id: u128,
+    pub ixs: Vec<InstructionData>,
     pub queue: Pubkey,
-    pub schedule: String,
-    pub status: TaskStatus,
 }
 
 impl Task {
@@ -45,90 +47,63 @@ impl TryFrom<Vec<u8>> for Task {
  */
 
 pub trait TaskAccount {
-    fn begin(&mut self) -> Result<()>;
-
-    fn cancel(&mut self, to: &mut Signer) -> Result<()>;
-
-    fn end(&mut self) -> Result<()>;
+    fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()>;
 
     fn exec(
         &mut self,
         account_infos: &Vec<AccountInfo>,
-        action: &mut Account<Action>,
-        delegate: &mut Signer,
         config: &Account<Config>,
+        delegate: &mut Signer,
         fee: &mut Account<Fee>,
-        queue: &Account<Queue>,
-    ) -> Result<()>;
-
-    fn new(
-        &mut self,
-        clock: &Sysvar<Clock>,
+        manager: &Account<Manager>,
+        manager_bump: u8,
         queue: &mut Account<Queue>,
-        schedule: String,
     ) -> Result<()>;
-
-    fn next_exec_at(&self, ts: i64) -> Option<i64>;
-
-    fn roll_forward(&mut self) -> Result<()>;
 }
 
 impl TaskAccount for Account<'_, Task> {
-    fn begin(&mut self) -> Result<()> {
-        // Validate the task is pending
-        require!(
-            self.status == TaskStatus::Pending,
-            CronosError::InvalidTaskStatus,
-        );
-
-        if self.action_count > 0 {
-            // If there are actions, change the task status to 'executing'
-            self.status = TaskStatus::Executing { action_id: 0 };
-        } else {
-            // Otherwise, just roll forward the exec_at timestamp
-            self.roll_forward()?;
+    fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()> {
+        // Reject inner instructions if they have a signer other than the manager or delegate
+        for ix in ixs.iter() {
+            for acc in ix.accounts.iter() {
+                if acc.is_signer {
+                    require!(
+                        acc.pubkey == queue.manager || acc.pubkey == crate::payer::ID,
+                        CronosError::InvalidSignatory
+                    );
+                }
+            }
         }
 
-        Ok(())
-    }
+        // Save data
+        self.id = queue.task_count;
+        self.ixs = ixs;
+        self.queue = queue.key();
 
-    fn cancel(&mut self, to: &mut Signer) -> Result<()> {
-        let lamports = self.to_account_info().lamports();
-        **self.to_account_info().try_borrow_mut_lamports()? = self
-            .to_account_info()
-            .lamports()
-            .checked_sub(lamports)
-            .unwrap();
-        **to.to_account_info().try_borrow_mut_lamports()? = to
-            .to_account_info()
-            .lamports()
-            .checked_add(lamports)
-            .unwrap();
-        Ok(())
-    }
+        // Increment the queue's task count
+        queue.task_count = queue.task_count.checked_add(1).unwrap();
 
-    fn end(&mut self) -> Result<()> {
-        self.status = TaskStatus::Pending;
-        self.roll_forward()
+        Ok(())
     }
 
     fn exec(
         &mut self,
         account_infos: &Vec<AccountInfo>,
-        action: &mut Account<Action>,
-        delegate: &mut Signer,
         config: &Account<Config>,
+        delegate: &mut Signer,
         fee: &mut Account<Fee>,
-        queue: &Account<Queue>,
+        manager: &Account<Manager>,
+        manager_bump: u8,
+        queue: &mut Account<Queue>,
     ) -> Result<()> {
-        // Validate the action id matches the task's current execution state
+        // Validate the task id matches the queue's current execution state
         require!(
-            action.id
-                == match self.status {
-                    TaskStatus::Executing { action_id } => action_id,
-                    _ => return Err(CronosError::InvalidTaskStatus.into()),
+            self.id
+                == match queue.status {
+                    QueueStatus::Executing { task_id } => task_id,
+                    _ => return Err(CronosError::InvalidQueueStatus.into()),
                 },
-            CronosError::InvalidAction
+            CronosError::InvalidTask
         );
 
         // Validate the delegate data is empty
@@ -137,14 +112,14 @@ impl TaskAccount for Account<'_, Task> {
         // Record the delegate's lamports before invoking inner ixs
         let delegate_lamports_pre = delegate.lamports();
 
-        // Create an array of dynamic ixs to update the action for the next invocation
+        // Create an array of dynamic ixs to update the task for the next invocation
         let dyanmic_ixs: &mut Vec<InstructionData> = &mut vec![];
 
-        // Process all of the action instructions
-        for ix in &action.ixs {
+        // Process all of the task instructions
+        for ix in &self.ixs {
             // If an inner ix account matches the Cronos delegate address (CronosDe1egate11111111111111111111111111111),
             //  then inject the delegate account in its place. Dapp developers can use the delegate as a payer to initialize
-            //  new accouns in their tasks. Delegates will be reimbursed for all SOL spent during the inner ixs.
+            //  new accouns in their queues. Delegates will be reimbursed for all SOL spent during the inner ixs.
             //
             // Because the delegate can be injected as the signer on inner ixs (written by presumed malicious parties),
             //  node operators should not secure any assets or staking positions with their delegate wallets other than
@@ -154,7 +129,12 @@ impl TaskAccount for Account<'_, Task> {
             //  are not secured by delegate signatures.
             let accs: &mut Vec<AccountMetaData> = &mut vec![];
             ix.accounts.iter().for_each(|acc| {
-                if acc.pubkey == crate::delegate::ID {
+                if acc.pubkey == crate::payer::ID {
+                    msg!(
+                        "Injecting delegate as payer: {} {}",
+                        acc.pubkey,
+                        delegate.key()
+                    );
                     accs.push(AccountMetaData {
                         pubkey: delegate.key(),
                         is_signer: acc.is_signer,
@@ -165,42 +145,49 @@ impl TaskAccount for Account<'_, Task> {
                 }
             });
 
-            // Execute the inner ix and process the response. Note that even though the queue PDA is a signer
+            // Execute the inner ix and process the response. Note that even though the manager PDA is a signer
             //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
             //  and explicitly forbids CPI reentrancy.
-            let exec_response = queue.process(
+            //
+            // TODO Can downstream programs mutate the manager account data?
+            let exec_response = manager.sign(
+                &account_infos,
+                manager_bump,
                 &InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
                     data: ix.data.clone(),
                 },
-                account_infos,
             )?;
 
-            match exec_response.dynamic_accounts {
-                None => (), // Noop
-                Some(dynamic_accounts) => {
-                    require!(
-                        dynamic_accounts.len() == ix.accounts.len(),
-                        CronosError::InvalidDynamicAccounts
-                    );
-                    dyanmic_ixs.push(InstructionData {
-                        program_id: ix.program_id,
-                        accounts: dynamic_accounts
-                            .iter()
-                            .enumerate()
-                            .map(|(i, pubkey)| {
-                                let acc = ix.accounts.get(i).unwrap();
-                                AccountMetaData {
-                                    pubkey: *pubkey,
-                                    is_signer: acc.is_signer,
-                                    is_writable: acc.is_writable,
-                                }
-                            })
-                            .collect::<Vec<AccountMetaData>>(),
-                        data: ix.data.clone(),
-                    });
-                }
+            // Process the exec response
+            match exec_response {
+                None => (),
+                Some(exec_response) => match exec_response.dynamic_accounts {
+                    None => (),
+                    Some(dynamic_accounts) => {
+                        require!(
+                            dynamic_accounts.len() == ix.accounts.len(),
+                            CronosError::InvalidDynamicAccounts
+                        );
+                        dyanmic_ixs.push(InstructionData {
+                            program_id: ix.program_id,
+                            accounts: dynamic_accounts
+                                .iter()
+                                .enumerate()
+                                .map(|(i, pubkey)| {
+                                    let acc = ix.accounts.get(i).unwrap();
+                                    AccountMetaData {
+                                        pubkey: *pubkey,
+                                        is_signer: acc.is_signer,
+                                        is_writable: acc.is_writable,
+                                    }
+                                })
+                                .collect::<Vec<AccountMetaData>>(),
+                            data: ix.data.clone(),
+                        });
+                    }
+                },
             }
         }
 
@@ -209,7 +196,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Update the actions's ixs for the next invocation
         if !dyanmic_ixs.is_empty() {
-            action.ixs = dyanmic_ixs.clone();
+            self.ixs = dyanmic_ixs.clone();
         }
 
         // Track how many lamports the delegate spent in the inner ixs
@@ -249,72 +236,90 @@ impl TaskAccount for Account<'_, Task> {
         // Increment collectable fee balance
         fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
 
-        // Update the task status
-        let next_action_id = action.id.checked_add(1).unwrap();
-        if next_action_id == self.action_count {
-            self.end()?;
+        // Update the queue status
+        let next_task_id = self.id.checked_add(1).unwrap();
+        if next_task_id == queue.task_count {
+            queue.roll_forward()?;
         } else {
-            self.status = TaskStatus::Executing {
-                action_id: next_action_id,
+            queue.status = QueueStatus::Executing {
+                task_id: next_task_id,
             };
         }
 
         Ok(())
     }
+}
 
-    fn new(
-        &mut self,
-        clock: &Sysvar<Clock>,
-        queue: &mut Account<Queue>,
-        schedule: String,
-    ) -> Result<()> {
-        // Initialize task account
-        self.action_count = 0;
-        self.id = queue.task_count;
-        self.queue = queue.key();
-        self.schedule = schedule;
-        self.status = TaskStatus::Pending;
+/**
+ * InstructionData
+ */
 
-        // Set exec_at (schedule must be set first)
-        self.exec_at = self.next_exec_at(clock.unix_timestamp);
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
+pub struct InstructionData {
+    /// Pubkey of the instruction processor that executes this instruction
+    pub program_id: Pubkey,
+    /// Metadata for what accounts should be passed to the instruction processor
+    pub accounts: Vec<AccountMetaData>,
+    /// Opaque data passed to the instruction processor
+    pub data: Vec<u8>,
+}
 
-        // Increment queue task counter
-        queue.task_count = queue.task_count.checked_add(1).unwrap();
-
-        Ok(())
-    }
-
-    fn next_exec_at(&self, ts: i64) -> Option<i64> {
-        match Schedule::from_str(&self.schedule)
-            .unwrap()
-            .after(&DateTime::<Utc>::from_utc(
-                NaiveDateTime::from_timestamp(ts, 0),
-                Utc,
-            ))
-            .take(1)
-            .next()
-        {
-            Some(datetime) => Some(datetime.timestamp()),
-            None => None,
+impl From<Instruction> for InstructionData {
+    fn from(instruction: Instruction) -> Self {
+        InstructionData {
+            program_id: instruction.program_id,
+            accounts: instruction
+                .accounts
+                .iter()
+                .map(|a| AccountMetaData {
+                    pubkey: a.pubkey,
+                    is_signer: a.is_signer,
+                    is_writable: a.is_writable,
+                })
+                .collect(),
+            data: instruction.data,
         }
     }
+}
 
-    fn roll_forward(&mut self) -> Result<()> {
-        match self.exec_at {
-            Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
-            None => (),
-        };
-        Ok(())
+impl From<&InstructionData> for Instruction {
+    fn from(instruction: &InstructionData) -> Self {
+        Instruction {
+            program_id: instruction.program_id,
+            accounts: instruction
+                .accounts
+                .iter()
+                .map(|a| AccountMeta {
+                    pubkey: a.pubkey,
+                    is_signer: a.is_signer,
+                    is_writable: a.is_writable,
+                })
+                .collect(),
+            data: instruction.data.clone(),
+        }
+    }
+}
+
+impl TryFrom<Vec<u8>> for InstructionData {
+    type Error = Error;
+    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        Ok(
+            borsh::try_from_slice_with_schema::<InstructionData>(data.as_slice())
+                .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
+        )
     }
 }
 
 /**
- * TaskStatus
+ * AccountMetaData
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TaskStatus {
-    Executing { action_id: u128 },
-    Paused,
-    Pending,
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
+pub struct AccountMetaData {
+    /// An account's public key
+    pub pubkey: Pubkey,
+    /// True if an Instruction requires a Transaction signature matching `pubkey`.
+    pub is_signer: bool,
+    /// True if the `pubkey` can be loaded as a read-write account.
+    pub is_writable: bool,
 }

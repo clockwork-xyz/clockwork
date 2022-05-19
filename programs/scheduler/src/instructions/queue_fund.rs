@@ -14,7 +14,8 @@ pub struct QueueFund<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.owner.as_ref()
+            queue.manager.as_ref(),
+            queue.id.to_be_bytes().as_ref(),
         ],
         bump,
     )]

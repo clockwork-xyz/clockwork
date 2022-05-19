@@ -14,15 +14,15 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("action", matches)) => parse_action_command(matches),
+            Some(("task", matches)) => parse_task_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", _)) => Ok(CliCommand::Config {}),
             Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
+            Some(("manager", matches)) => parse_manager_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
-            Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
@@ -32,9 +32,9 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
 // Command parsers
 
-fn parse_action_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::ActionGet {
+        Some(("get", matches)) => Ok(CliCommand::TaskGet {
             address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
@@ -64,10 +64,10 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_manager_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("create", _)) => Ok(CliCommand::QueueCreate {}),
-        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+        Some(("create", _)) => Ok(CliCommand::ManagerCreate {}),
+        Some(("get", matches)) => Ok(CliCommand::ManagerGet {
             address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
@@ -76,15 +76,12 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("cancel", matches)) => Ok(CliCommand::TaskCancel {
-            address: parse_pubkey("address", matches)?,
-        }),
-        Some(("create", matches)) => Ok(CliCommand::TaskCreate {
+        Some(("create", matches)) => Ok(CliCommand::QueueCreate {
             schedule: parse_string("schedule", matches)?,
         }),
-        Some(("get", matches)) => Ok(CliCommand::TaskGet {
+        Some(("get", matches)) => Ok(CliCommand::QueueGet {
             address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(

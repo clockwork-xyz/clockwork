@@ -88,87 +88,88 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let cycler_task = ctx.remaining_accounts.get(0).unwrap();
-    let fee = ctx.remaining_accounts.get(1).unwrap();
-    let queue = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_action = ctx.remaining_accounts.get(3).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(4).unwrap();
-
-    // Get bumps
-    let authority_bump = *ctx.bumps.get("authority").unwrap();
+    let cycler_fee = ctx.remaining_accounts.get(0).unwrap();
+    let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
+    let manager = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_fee = ctx.remaining_accounts.get(3).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(5).unwrap();
 
     // Initialize accounts
-    authority.new(queue.key())?;
+    authority.new(manager.key())?;
     config.new(admin.key(),  mint.key())?;
     cycler.new()?;
     registry.new()?;
     registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
 
-    // Create a queue
-    cronos_scheduler::cpi::queue_new(
+    // Create a manager
+    let bump = *ctx.bumps.get("authority").unwrap();
+    cronos_scheduler::cpi::manager_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(), 
-            cronos_scheduler::cpi::accounts::QueueNew {
-                fee: fee.to_account_info(),
-                owner: authority.to_account_info(),
+            cronos_scheduler::cpi::accounts::ManagerNew {
+                authority: authority.to_account_info(),
+                manager: manager.to_account_info(),
                 payer: admin.to_account_info(),
-                queue: queue.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[authority_bump]]]
+            &[&[SEED_AUTHORITY, &[bump]]]
         )
     )?;
 
-    // Create a recurring task to cycle the delegate pool
-    cronos_scheduler::cpi::task_new(
+    // Create a queue to cycle the delegate pool
+    cronos_scheduler::cpi::queue_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::TaskNew {
+            cronos_scheduler::cpi::accounts::QueueNew {
+                authority: authority.to_account_info(),
                 clock: clock.to_account_info(),
-                owner: authority.to_account_info(),
+                fee: cycler_fee.to_account_info(),
+                manager: manager.to_account_info(),
                 payer: admin.to_account_info(),
-                queue: queue.to_account_info(),
+                queue: cycler_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: cycler_task.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[authority_bump]]]
+            &[&[SEED_AUTHORITY, &[bump]]]
         ), 
-        "*/20 * * * * * *".into()
+        "*/15 * * * * * *".into()
     )?;
 
-    // Create a recurring task to take snapshots of the registry
-    cronos_scheduler::cpi::task_new(
+    // Create a queue to take snapshots of the registry
+    cronos_scheduler::cpi::queue_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::TaskNew {
+            cronos_scheduler::cpi::accounts::QueueNew {
+                authority: authority.to_account_info(),
                 clock: clock.to_account_info(),
-                owner: authority.to_account_info(),
+                fee: snapshot_fee.to_account_info(),
+                manager: manager.to_account_info(),
                 payer: admin.to_account_info(),
-                queue: queue.to_account_info(),
+                queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
-                task: snapshot_task.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[authority_bump]]]
+            &[&[SEED_AUTHORITY, &[bump]]]
         ), 
-        "0 */1 * * * * *".into()
+        "0 * * * * * *".into()
     )?;
 
-    // Add an action to the snapshot task to kick things off
+    // Add an task to the snapshot queue to kick things off
     let next_snapshot_pubkey = Snapshot::pda(1).0;
-    let start_snapshot_ix = Instruction {
+    let snapshot_start_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
+            AccountMeta::new_readonly(authority.key(), false),
             AccountMeta::new_readonly(config.key(), false),
-            AccountMeta::new(cronos_scheduler::delegate::ID, true),
-            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
+            AccountMeta::new(cronos_scheduler::payer::ID, true),
             AccountMeta::new(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program.key(), false),
         ],
         data: sighash("global", "snapshot_start").into(),
     };
-    let rotate_snapshot_ix = Instruction {
+    let snapshot_rotate_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
@@ -176,25 +177,25 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(snapshot.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(queue.key(), true),
+            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: sighash("global", "snapshot_rotate").into(),
     };
-    cronos_scheduler::cpi::action_new(
+    cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::ActionNew {
-                action: snapshot_action.to_account_info(),
-                owner: authority.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                authority: authority.to_account_info(),
+                manager: manager.to_account_info(),
                 payer: admin.to_account_info(),
-                queue: queue.to_account_info(),
+                queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
                 task: snapshot_task.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[authority_bump]]],
+            &[&[SEED_AUTHORITY, &[bump]]],
         ),
-        vec![start_snapshot_ix.into(), rotate_snapshot_ix.into()],
+        vec![snapshot_start_ix.into(), snapshot_rotate_ix.into()],
     )?;
 
     Ok(())

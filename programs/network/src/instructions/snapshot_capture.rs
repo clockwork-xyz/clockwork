@@ -2,13 +2,13 @@ use {
     crate::{errors::CronosError, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::TokenAccount,
-    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    cronos_scheduler::{responses::ExecResponse, state::Manager},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotCapture<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = queue)]
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
     pub authority: Box<Account<'info, Authority>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
@@ -40,8 +40,8 @@ pub struct SnapshotCapture<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(signer, constraint = queue.owner == authority.key())]
-    pub queue: Box<Account<'info, Queue>>,
+    #[account(signer, constraint = manager.authority == authority.key())]
+    pub manager: Box<Account<'info, Manager>>, // TODO this should be the queue
 
     #[account(seeds = [SEED_REGISTRY], bump)]
     pub registry: Box<Account<'info, Registry>>,

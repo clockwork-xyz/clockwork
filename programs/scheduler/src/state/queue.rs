@@ -1,16 +1,10 @@
-use super::InstructionData;
-
 use {
-    crate::{errors::CronosError, pda::PDA, responses::ExecResponse},
-    anchor_lang::{
-        prelude::*,
-        solana_program::{
-            instruction::Instruction,
-            program::{get_return_data, invoke_signed},
-        },
-        AnchorDeserialize,
-    },
-    std::convert::TryFrom,
+    super::Manager,
+    crate::{errors::CronosError, pda::PDA},
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    chrono::{DateTime, NaiveDateTime, Utc},
+    cronos_cron::Schedule,
+    std::{convert::TryFrom, str::FromStr},
 };
 
 pub const SEED_QUEUE: &[u8] = b"queue";
@@ -22,14 +16,20 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[account]
 #[derive(Debug)]
 pub struct Queue {
-    pub owner: Pubkey,
+    pub exec_at: Option<i64>,
+    pub id: u128,
+    pub manager: Pubkey,
+    pub schedule: String,
+    pub status: QueueStatus,
     pub task_count: u128,
-    pub bump: u8,
 }
 
 impl Queue {
-    pub fn pda(owner: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_QUEUE, owner.as_ref()], &crate::ID)
+    pub fn pda(manager: Pubkey, id: u128) -> PDA {
+        Pubkey::find_program_address(
+            &[SEED_QUEUE, manager.as_ref(), id.to_be_bytes().as_ref()],
+            &crate::ID,
+        )
     }
 }
 
@@ -45,39 +45,93 @@ impl TryFrom<Vec<u8>> for Queue {
  */
 
 pub trait QueueAccount {
-    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()>;
+    fn start(&mut self) -> Result<()>;
 
-    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse>;
+    fn new(
+        &mut self,
+        clock: &Sysvar<Clock>,
+        manager: &mut Account<Manager>,
+        schedule: String,
+    ) -> Result<()>;
+
+    fn next_exec_at(&self, ts: i64) -> Option<i64>;
+
+    fn roll_forward(&mut self) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
-    fn new(&mut self, bump: u8, owner: Pubkey) -> Result<()> {
-        self.bump = bump;
-        self.owner = owner;
-        self.task_count = 0;
+    fn start(&mut self) -> Result<()> {
+        // Validate the queue is pending
+        require!(
+            self.status == QueueStatus::Pending,
+            CronosError::InvalidQueueStatus,
+        );
+
+        if self.task_count > 0 {
+            // If there are actions, change the queue status to 'executing'
+            self.status = QueueStatus::Executing { task_id: 0 };
+        } else {
+            // Otherwise, just roll forward the exec_at timestamp
+            self.roll_forward()?;
+        }
+
         Ok(())
     }
 
-    fn process(&self, ix: &InstructionData, account_infos: &[AccountInfo]) -> Result<ExecResponse> {
-        invoke_signed(
-            &Instruction::from(ix),
-            account_infos,
-            &[&[SEED_QUEUE, self.owner.as_ref(), &[self.bump]]],
-        )
-        .map_err(|_err| CronosError::InnerIxFailed)?;
+    fn new(
+        &mut self,
+        clock: &Sysvar<Clock>,
+        manager: &mut Account<Manager>,
+        schedule: String,
+    ) -> Result<()> {
+        // Initialize queue account
+        self.id = manager.queue_count;
+        self.manager = manager.key();
+        self.schedule = schedule;
+        self.status = QueueStatus::Pending;
+        self.task_count = 0;
 
-        let exec_response = get_return_data()
-            .ok_or(CronosError::InvalidExecResponse)
-            .and_then(|(program_id, return_data)| {
-                (program_id == ix.program_id)
-                    .then(|| return_data)
-                    .ok_or(CronosError::InvalidExecResponse)
-            })
-            .map(|return_data| {
-                ExecResponse::try_from_slice(return_data.as_slice())
-                    .map_err(|_err| CronosError::InvalidExecResponse)
-            })?;
+        // Set exec_at (schedule must be set first)
+        self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
-        Ok(exec_response?)
+        // Increment manager queue counter
+        manager.queue_count = manager.queue_count.checked_add(1).unwrap();
+
+        Ok(())
     }
+
+    fn next_exec_at(&self, ts: i64) -> Option<i64> {
+        match Schedule::from_str(&self.schedule)
+            .unwrap()
+            .after(&DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp(ts, 0),
+                Utc,
+            ))
+            .take(1)
+            .next()
+        {
+            Some(datetime) => Some(datetime.timestamp()),
+            None => None,
+        }
+    }
+
+    fn roll_forward(&mut self) -> Result<()> {
+        self.status = QueueStatus::Pending;
+        match self.exec_at {
+            Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
+            None => (),
+        };
+        Ok(())
+    }
+}
+
+/**
+ * QueueStatus
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum QueueStatus {
+    Executing { task_id: u128 },
+    Paused,
+    Pending,
 }

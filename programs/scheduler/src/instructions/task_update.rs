@@ -3,53 +3,54 @@ use {
     anchor_lang::prelude::*,
 };
 
+
 #[derive(Accounts)]
 #[instruction(ixs: Vec<InstructionData>)]
-pub struct ActionUpdate<'info> {
+pub struct TaskUpdate<'info> {
+    #[account()]
+    pub authority: Signer<'info>,
+
     #[account(
-        mut,
         seeds = [
-            SEED_ACTION, 
-            action.task.as_ref(),
-            action.id.to_be_bytes().as_ref(),
+            SEED_MANAGER, 
+            manager.authority.as_ref()
         ],
         bump,
+        has_one = authority,
     )]
-    pub action: Account<'info, Action>,
-    
-    #[account()]
-    pub owner: Signer<'info>,
+    pub manager: Account<'info, Manager>,
 
     #[account(
         seeds = [
             SEED_QUEUE, 
-            queue.owner.as_ref()
+            queue.manager.as_ref(),
+            queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = owner,
+        has_one = manager,
     )]
     pub queue: Account<'info, Queue>,
 
     #[account(
+        mut,
         seeds = [
             SEED_TASK, 
             task.queue.as_ref(),
             task.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = queue,
     )]
     pub task: Account<'info, Task>,
 }
 
 pub fn handler(
-    ctx: Context<ActionUpdate>,
+    ctx: Context<TaskUpdate>,
     ixs: Vec<InstructionData>,
 ) -> Result<()> {
-    let action = &mut ctx.accounts.action;
+    let task = &mut ctx.accounts.task;
 
     // TODO verify ixs
-    action.ixs = ixs;
+    task.ixs = ixs;
 
     Ok(())
 }

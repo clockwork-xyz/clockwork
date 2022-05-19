@@ -4,8 +4,8 @@ use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
-    // Action commands
-    ActionGet { address: Pubkey },
+    // Task commands
+    TaskGet { address: Pubkey },
 
     // Admin commands
     Initialize { mint: Pubkey },
@@ -17,14 +17,13 @@ pub enum CliCommand {
     // Pool commands
     PoolGet,
 
-    // Queue commands
-    QueueCreate,
-    QueueGet { address: Pubkey },
+    // Manager commands
+    ManagerCreate,
+    ManagerGet { address: Pubkey },
 
-    // Task commands
-    TaskCancel { address: Pubkey },
-    TaskCreate { schedule: String },
-    TaskGet { address: Pubkey },
+    // Queue commands
+    QueueCreate { schedule: String },
+    QueueGet { address: Pubkey },
 
     // Utility commands
     Clock,
@@ -65,16 +64,16 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
-            Command::new("action")
-                .about("Manage an action")
+            Command::new("task")
+                .about("Manage an task")
                 .arg_required_else_help(true)
                 .subcommand(
-                    Command::new("get").about("Get an action").arg(
+                    Command::new("get").about("Get an task").arg(
                         Arg::new("address")
                             .index(1)
                             .takes_value(true)
                             .required(true)
-                            .help("Public address of a action"),
+                            .help("Public address of a task"),
                     ),
                 ),
         )
@@ -114,36 +113,27 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(Command::new("pool").about("Get the delegate pool info"))
         .subcommand(
-            Command::new("queue")
-                .about("Manage your queues")
+            Command::new("manager")
+                .about("Manage your managers")
                 .arg_required_else_help(true)
-                .subcommand(Command::new("create").about("Create a new queue"))
+                .subcommand(Command::new("create").about("Create a new manager"))
                 .subcommand(
-                    Command::new("get").about("Get a queue").arg(
+                    Command::new("get").about("Get a manager").arg(
                         Arg::new("address")
                             .index(1)
                             .takes_value(true)
                             .required(true)
-                            .help("Public address of a queue"),
+                            .help("Public address of a manager"),
                     ),
                 ),
         )
         .subcommand(
-            Command::new("task")
-                .about("Manage your tasks")
+            Command::new("queue")
+                .about("Manage your queues")
                 .arg_required_else_help(true)
                 .subcommand(
-                    Command::new("cancel").about("Cancel a task").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a task"),
-                    ),
-                )
-                .subcommand(
                     Command::new("create")
-                        .about("Create a new task")
+                        .about("Create a new queue")
                         .arg(
                             Arg::new("filepath")
                                 .long("filepath")
@@ -162,12 +152,12 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("get").about("Get a task").arg(
+                    Command::new("get").about("Get a queue").arg(
                         Arg::new("address")
                             .index(1)
                             .takes_value(true)
                             .required(true)
-                            .help("Public address of a task"),
+                            .help("Public address of a queue"),
                     ),
                 ),
         )

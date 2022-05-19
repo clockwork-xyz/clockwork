@@ -1,29 +1,39 @@
-use anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        system_program, sysvar,
+use {
+    anchor_lang::{
+        solana_program::{
+            instruction::{AccountMeta, Instruction},
+            pubkey::Pubkey,
+            system_program,
+        },
+        InstructionData,
     },
-    InstructionData,
+    cronos_scheduler::state::InstructionData as CronosInstructionData,
 };
 
 pub fn task_new(
-    owner: Pubkey,
+    authority: Pubkey,
+    ixs: Vec<Instruction>,
+    manager: Pubkey,
     payer: Pubkey,
     queue: Pubkey,
-    schedule: String,
     task: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new_readonly(owner, true),
+            AccountMeta::new_readonly(authority, true),
+            AccountMeta::new_readonly(manager, false),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task, false),
         ],
-        data: cronos_scheduler::instruction::TaskNew { schedule }.data(),
+        data: cronos_scheduler::instruction::TaskNew {
+            ixs: ixs
+                .iter()
+                .map(|ix| CronosInstructionData::from(ix.clone()))
+                .collect(),
+        }
+        .data(),
     }
 }

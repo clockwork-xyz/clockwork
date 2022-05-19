@@ -24,7 +24,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        CliCommand::ActionGet { address } => super::action::get(&client, &address),
+        CliCommand::TaskGet { address } => super::task::get(&client, &address),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::Config => super::config::get(&client),
         CliCommand::Health => super::health::get(&client),
@@ -32,10 +32,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
         CliCommand::NodeStake { amount, delegate } => super::node::stake(&client, amount, delegate),
         CliCommand::PoolGet => super::pool::get(&client),
-        CliCommand::QueueCreate => super::queue::create(&client),
+        CliCommand::ManagerCreate => super::manager::create(&client),
+        CliCommand::ManagerGet { address } => super::manager::get(&client, &address),
+        CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
-        CliCommand::TaskCancel { address } => super::task::cancel(&client, &address),
-        CliCommand::TaskCreate { schedule } => super::task::create(&client, schedule),
-        CliCommand::TaskGet { address } => super::task::get(&client, &address),
     }
 }

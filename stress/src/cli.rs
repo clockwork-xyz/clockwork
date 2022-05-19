@@ -22,6 +22,8 @@ pub enum CliError {
     BadParameter(String),
     #[error("Command not recognized: {0}")]
     CommandNotRecognized(String),
+    #[error("Data point could not be found")]
+    DataNotFound,
     #[error("No signers were provided")]
     NoSigners,
     #[error("There was an error with the websocket client")]
@@ -40,20 +42,20 @@ pub fn app() -> Command<'static> {
                 .short('c')
                 .takes_value(true)
                 .required(true)
-                .help("Number of tasks to schedule in this test"),
+                .help("Number of queues to schedule in this test"),
         )
         .arg(
             Arg::new("parallelism")
                 .long("parallelism")
                 .short('p')
                 .takes_value(true)
-                .help("Percentage of tasks to execute in parallel"),
+                .help("Percentage of queues to execute in parallel"),
         )
         .arg(
             Arg::new("recurrence")
                 .long("recurrence")
                 .short('r')
                 .takes_value(true)
-                .help("Repeat tasks every second this many times"),
+                .help("Repeat queues every second this many times"),
         )
 }

@@ -5,17 +5,6 @@ use {
 
 #[derive(Accounts)]
 pub struct TaskExec<'info> {
-    #[account(
-        mut,
-        seeds = [
-            SEED_ACTION,
-            action.task.as_ref(),
-            action.id.to_be_bytes().as_ref()
-        ],
-        bump,
-    )]
-    pub action: Account<'info, Action>,
-
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -36,48 +25,54 @@ pub struct TaskExec<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(
-        seeds = [
-            SEED_QUEUE,
-            queue.owner.as_ref()
-        ],
-        bump,
-    )]
-    pub queue: Box<Account<'info, Queue>>,
+    #[account(seeds = [SEED_MANAGER, manager.authority.as_ref()], bump)]
+    pub manager: Account<'info, Manager>,
 
     #[account(
         mut,
         seeds = [
-            SEED_TASK, 
-            task.queue.as_ref(),
-            task.id.to_be_bytes().as_ref(),
+            SEED_QUEUE, 
+            queue.manager.as_ref(),
+            queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = queue,
-        constraint = task.exec_at.is_some() && task.exec_at <= Some(clock.unix_timestamp) @ CronosError::TaskNotDue,
-        constraint = match task.status {
-            TaskStatus::Executing { action_id } => action_id == action.id,
+        constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
+        constraint = match queue.status {
+            QueueStatus::Executing { task_id } => task_id == task.id,
             _ => false,
-        } @ CronosError::InvalidTaskStatus
+        } @ CronosError::InvalidQueueStatus
+    )]
+    pub queue: Account<'info, Queue>,
+
+    #[account(
+        mut,
+        seeds = [
+            SEED_TASK,
+            task.queue.as_ref(),
+            task.id.to_be_bytes().as_ref()
+        ],
+        bump,
     )]
     pub task: Account<'info, Task>,
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
-    let action = &mut ctx.accounts.action;
+    let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
-    let queue = &ctx.accounts.queue;
-    let task = &mut ctx.accounts.task;
+    let manager = &ctx.accounts.manager;
+    let queue = &mut ctx.accounts.queue;
 
-    let remaining_accounts = &mut ctx.remaining_accounts.clone().to_vec();
+    let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
 
-    task.exec(remaining_accounts, action, delegate, config, fee, queue)?;
+    let manager_bump = *ctx.bumps.get("manager").unwrap();
+    task.exec(account_infos, config, delegate, fee, manager, manager_bump, queue)?;
 
     emit!(TaskExecuted {
         delegate: delegate.key(),
+        queue: queue.key(),
         task: task.key(),
         ts: clock.unix_timestamp,
     });
