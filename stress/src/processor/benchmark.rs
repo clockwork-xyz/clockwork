@@ -21,8 +21,8 @@ use {
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
     // Setup test
     let client = new_client();
-    let num_tasks_parallel = (count as f32 * parallelism) as u32; // 4
-    let num_tasks_serial = count - num_tasks_parallel; // 10 - 4 = 6
+    let num_tasks_parallel = (count as f32 * parallelism) as u32;
+    let num_tasks_serial = count - num_tasks_parallel;
 
     let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
     let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
