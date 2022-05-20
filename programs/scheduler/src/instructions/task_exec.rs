@@ -40,9 +40,8 @@ pub struct TaskExec<'info> {
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = match queue.status {
-            QueueStatus::Executing { task_id } => task_id == task.id,
+            QueueStatus::Processing { task_id } => task_id == task.id,
             _ => false,
         } @ CronosError::InvalidQueueStatus
     )]
