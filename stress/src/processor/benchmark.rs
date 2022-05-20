@@ -142,13 +142,13 @@ fn create_queue_ix(
     authority: &Keypair,
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
-    queue_count: u128,
+    queue_id: u128,
 ) -> Instruction {
     // Get manager for authority
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
 
     // Generate ix for new queue account
-    let queue_pubkey = Queue::pda(manager_pubkey, queue_count).0;
+    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -202,10 +202,10 @@ fn build_memo_ix(manager_pubkey: &Pubkey) -> Instruction {
     .unwrap()
 }
 
-fn create_task_ix(authority: &Keypair, queue_count: u128, task_count: u128) -> Instruction {
+fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruction {
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
-    let queue_pubkey = Queue::pda(manager_pubkey, queue_count).0;
-    let task_pubkey = Task::pda(queue_pubkey, task_count).0;
+    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
+    let task_pubkey = Task::pda(queue_pubkey, task_id).0;
     let memo_ix = build_memo_ix(&manager_pubkey);
     cronos_sdk::scheduler::instruction::task_new(
         authority.pubkey(),
