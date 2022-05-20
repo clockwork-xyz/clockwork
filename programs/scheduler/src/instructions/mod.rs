@@ -9,6 +9,8 @@ pub mod task_exec;
 pub mod task_new;
 pub mod task_update;
 
+mod utils;
+
 pub use admin_config_update::*;
 pub use admin_fee_collect::*;
 pub use initialize::*;

@@ -18,8 +18,6 @@ pub struct AdminConfigUpdate<'info> {
 }
 
 pub fn handler(ctx: Context<AdminConfigUpdate>, settings: ConfigSettings) -> Result<()> {
-    let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
-
-    config.update(admin, settings)
+    config.update(settings)
 }

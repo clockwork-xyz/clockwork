@@ -912,6 +912,7 @@ dependencies = [
  "anchor-lang",
  "chrono",
  "cronos-cron 0.1.8",
+ "cronos-pool",
 ]
 
 [[package]]
