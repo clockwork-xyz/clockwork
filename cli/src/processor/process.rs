@@ -26,7 +26,21 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     match command {
         CliCommand::TaskGet { address } => super::task::get(&client, &address),
         CliCommand::Clock => super::clock::get(&client),
-        CliCommand::Config => super::config::get(&client),
+        CliCommand::ConfigGet => super::config::get(&client),
+        CliCommand::ConfigSet {
+            admin,
+            delegate_fee,
+            delegate_holdout_period,
+            delegate_spam_penalty,
+            program_fee,
+        } => super::config::set(
+            &client,
+            admin,
+            delegate_fee,
+            delegate_holdout_period,
+            delegate_spam_penalty,
+            program_fee,
+        ),
         CliCommand::Health => super::health::get(&client),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),

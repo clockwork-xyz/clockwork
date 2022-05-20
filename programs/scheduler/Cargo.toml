@@ -25,3 +25,4 @@ default = []
 anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 cronos-cron = { path = "../../cron", version = "0.1.8" }
+cronos-pool = { path = "../pool", features = ["cpi"], version = "0.1.8" }

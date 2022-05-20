@@ -69,7 +69,7 @@ impl QueueAccount for Account<'_, Queue> {
 
         if self.task_count > 0 {
             // If there are actions, change the queue status to 'executing'
-            self.status = QueueStatus::Executing { task_id: 0 };
+            self.status = QueueStatus::Processing { task_id: 0 };
         } else {
             // Otherwise, just roll forward the exec_at timestamp
             self.roll_forward()?;
@@ -131,7 +131,7 @@ impl QueueAccount for Account<'_, Queue> {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum QueueStatus {
-    Executing { task_id: u128 },
     Paused,
     Pending,
+    Processing { task_id: u128 },
 }

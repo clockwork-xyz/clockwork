@@ -100,7 +100,7 @@ impl TaskAccount for Account<'_, Task> {
         require!(
             self.id
                 == match queue.status {
-                    QueueStatus::Executing { task_id } => task_id,
+                    QueueStatus::Processing { task_id } => task_id,
                     _ => return Err(CronosError::InvalidQueueStatus.into()),
                 },
             CronosError::InvalidTask
@@ -241,7 +241,7 @@ impl TaskAccount for Account<'_, Task> {
         if next_task_id == queue.task_count {
             queue.roll_forward()?;
         } else {
-            queue.status = QueueStatus::Executing {
+            queue.status = QueueStatus::Processing {
                 task_id: next_task_id,
             };
         }

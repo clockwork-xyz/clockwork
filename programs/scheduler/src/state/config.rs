@@ -1,5 +1,5 @@
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -15,8 +15,9 @@ pub const SEED_CONFIG: &[u8] = b"config";
 pub struct Config {
     pub admin: Pubkey,
     pub delegate_fee: u64,
+    pub delegate_holdout_period: i64,
+    pub delegate_spam_penalty: u64,
     pub program_fee: u64,
-    pub pool_pubkey: Pubkey,
 }
 
 impl Config {
@@ -40,6 +41,8 @@ impl TryFrom<Vec<u8>> for Config {
 pub struct ConfigSettings {
     pub admin: Pubkey,
     pub delegate_fee: u64,
+    pub delegate_holdout_period: i64,
+    pub delegate_spam_penalty: u64,
     pub program_fee: u64,
 }
 /**
@@ -47,24 +50,26 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, pool_pubkey: Pubkey) -> Result<()>;
+    fn new(&mut self, admin: Pubkey) -> Result<()>;
 
-    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
+    fn update(&mut self, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, pool_pubkey: Pubkey) -> Result<()> {
+    fn new(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.delegate_fee = 0; // Lamports to pay delegate
-        self.program_fee = 0; // Lamports to pay program
-        self.pool_pubkey = pool_pubkey;
+        self.delegate_fee = 0;
+        self.delegate_holdout_period = 0;
+        self.delegate_spam_penalty = 0;
+        self.program_fee = 0;
         Ok(())
     }
 
-    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(self.admin == admin.key(), CronosError::NotAdmin);
+    fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
         self.delegate_fee = settings.delegate_fee;
+        self.delegate_holdout_period = settings.delegate_holdout_period;
+        self.delegate_spam_penalty = settings.delegate_spam_penalty;
         self.program_fee = settings.program_fee;
         Ok(())
     }
