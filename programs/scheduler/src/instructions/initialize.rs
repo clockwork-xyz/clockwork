@@ -26,7 +26,7 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
 
-    config.new(admin.key(), admin.key())?; // TODO pool_pubkey = pool.key()
+    config.new(admin.key())?;
 
     Ok(())
 }

@@ -1,33 +1,57 @@
-use clap::{Arg, Command};
+use clap::{Arg, ArgGroup, Command};
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
+    // Config commands
+    ConfigGet,
+    ConfigSet {
+        admin: Option<Pubkey>,
+        delegate_fee: Option<u64>,
+        delegate_holdout_period: Option<i64>,
+        delegate_spam_penalty: Option<u64>,
+        program_fee: Option<u64>,
+    },
+
     // Task commands
-    TaskGet { address: Pubkey },
+    TaskGet {
+        address: Pubkey,
+    },
 
     // Admin commands
-    Initialize { mint: Pubkey },
+    Initialize {
+        mint: Pubkey,
+    },
 
     // Node commands
-    NodeRegister { delegate: Keypair },
-    NodeStake { amount: u64, delegate: Pubkey },
+    NodeRegister {
+        delegate: Keypair,
+    },
+    NodeStake {
+        amount: u64,
+        delegate: Pubkey,
+    },
 
     // Pool commands
     PoolGet,
 
     // Manager commands
     ManagerCreate,
-    ManagerGet { address: Pubkey },
+    ManagerGet {
+        address: Pubkey,
+    },
 
     // Queue commands
-    QueueCreate { schedule: String },
-    QueueGet { address: Pubkey },
+    QueueCreate {
+        schedule: String,
+    },
+    QueueGet {
+        address: Pubkey,
+    },
 
     // Utility commands
     Clock,
-    Config,
     Health,
 }
 
@@ -51,6 +75,59 @@ pub fn app() -> Command<'static> {
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
+        .subcommand(Command::new("clock").about("Display the current Solana clock time"))
+        .subcommand(
+            Command::new("config")
+                .about("Manage the Cronos configs")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("get").about("Get a config value"))
+                .subcommand(
+                    Command::new("set")
+                        .about("Set a config value")
+                        .arg(
+                            Arg::new("admin")
+                                .long("admin")
+                                .value_name("PUBKEY")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("delegate_fee")
+                                .long("delegate_fee")
+                                .value_name("NUM_LAMPORTS")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("delegate_holdout_period")
+                                .long("delegate_holdout_period")
+                                .value_name("NUM_SECONDS")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("delegate_spam_penalty")
+                                .long("delegate_spam_penalty")
+                                .value_name("NUM_LAMPORTS")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("program_fee")
+                                .long("program_fee")
+                                .value_name("NUM_LAMPORTS")
+                                .takes_value(true),
+                        )
+                        .group(
+                            ArgGroup::new("config_settings")
+                                .args(&[
+                                    "admin",
+                                    "delegate_fee",
+                                    "delegate_holdout_period",
+                                    "delegate_spam_penalty",
+                                    "program_fee",
+                                ])
+                                .multiple(true),
+                        ),
+                ),
+        )
+        .subcommand(Command::new("health").about("Get the current system health"))
         .subcommand(
             Command::new("initialize")
                 .about("Initialize the Cronos programs")
@@ -161,7 +238,4 @@ pub fn app() -> Command<'static> {
                     ),
                 ),
         )
-        .subcommand(Command::new("clock").about("Display the current Solana clock time"))
-        .subcommand(Command::new("config").about("Manage the Cronos configs"))
-        .subcommand(Command::new("health").about("Get the current system health"))
 }

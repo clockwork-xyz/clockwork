@@ -16,12 +16,12 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("task", matches)) => parse_task_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
-            Some(("config", _)) => Ok(CliCommand::Config {}),
+            Some(("config", matches)) => parse_config_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
-            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("initialize", matches)) => parse_initialize_command(matches),
-            Some(("node", matches)) => parse_node_command(matches),
             Some(("manager", matches)) => parse_manager_command(matches),
+            Some(("node", matches)) => parse_node_command(matches),
+            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -31,6 +31,24 @@ impl TryFrom<&ArgMatches> for CliCommand {
 }
 
 // Command parsers
+
+fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
+        Some(("set", matches)) => Ok(CliCommand::ConfigSet {
+            admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
+            delegate_fee: parse_u64("delegate_fee", matches).map_or(None, |v| Some(v)),
+            delegate_holdout_period: parse_i64("delegate_holdout_period", matches)
+                .map_or(None, |v| Some(v)),
+            delegate_spam_penalty: parse_u64("delegate_spam_penalty", matches)
+                .map_or(None, |v| Some(v)),
+            program_fee: parse_u64("program_fee", matches).map_or(None, |v| Some(v)),
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
 
 fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
@@ -107,6 +125,13 @@ fn parse_string(arg: &str, matches: &ArgMatches) -> Result<String, CliError> {
         .value_of(arg)
         .ok_or(CliError::BadParameter(arg.into()))?
         .to_string())
+}
+
+pub fn parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
+    Ok(parse_string(arg, matches)?
+        .parse::<i64>()
+        .map_err(|_err| CliError::BadParameter(arg.into()))
+        .unwrap())
 }
 
 pub fn parse_u64(arg: &str, matches: &ArgMatches) -> Result<u64, CliError> {
