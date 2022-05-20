@@ -91,9 +91,8 @@ fn listen_for_events(
     )
     .map_err(|_| CliError::WebsocketError)?;
 
-    // Watch for queue exec events
+    // Watch for task exec events
     let mut event_count = 0;
-
     for log_response in log_receiver {
         let logs = log_response.value.logs.into_iter();
         for log in logs {
