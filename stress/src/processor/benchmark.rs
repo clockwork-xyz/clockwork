@@ -24,45 +24,50 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
     let num_tasks_serial = count - num_tasks_parallel;
 
-    let mut authorities: Vec<Keypair> = vec![];
     let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
     let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
-    // Create managers
-    for _ in 0..(num_tasks_parallel + 1) {
-        let authority = Keypair::new();
-        let manager_pubkey = Manager::pda(authority.pubkey()).0;
-        let ix = cronos_sdk::scheduler::instruction::manager_new(
-            authority.pubkey(),
-            authority.pubkey(),
-            manager_pubkey,
-        );
-        client
-            .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
-            .unwrap();
-        sign_and_submit(&client, &[ix], &authority);
-        authorities.push(authority);
-    }
+    // Create manager
+    let authority = Keypair::new();
+    let manager_pubkey = Manager::pda(authority.pubkey()).0;
+    let ix = cronos_sdk::scheduler::instruction::manager_new(
+        authority.pubkey(),
+        authority.pubkey(),
+        manager_pubkey,
+    );
+    client
+        .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
+        .unwrap();
+    sign_and_submit(&client, &[ix], &authority);
 
     // TODO Schedule tasks asynchronously
 
     // Create queues for the parallel tasks
     for i in 0..num_tasks_parallel {
-        let authority = authorities.get(i as usize).unwrap();
-        let ix_a = create_queue_ix(authority, recurrence, &mut expected_exec_ats);
-        let ix_b = create_task_ix(authority);
-        sign_and_submit(&client, &[ix_a, ix_b], authority);
+        let ix_a = create_queue_ix(&authority, recurrence, &mut expected_exec_ats, i.into());
+        let ix_b = create_task_ix(&authority, i.into(), 0);
+        sign_and_submit(&client, &[ix_a, ix_b], &authority);
     }
 
     // Create a queue for the serial tasks
     if num_tasks_serial > 0 {
-        let authority = authorities.last().unwrap();
-        let ix_a = create_queue_ix(authority, recurrence, &mut expected_exec_ats);
+        let ix_a = create_queue_ix(
+            &authority,
+            recurrence,
+            &mut expected_exec_ats,
+            num_tasks_parallel.into(),
+        );
+
         let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
-        for _ in 0..num_tasks_serial {
-            ixs.push(create_task_ix(authority))
+
+        for i in 0..num_tasks_serial {
+            ixs.push(create_task_ix(
+                &authority,
+                num_tasks_parallel.into(),
+                i.into(),
+            ));
         }
-        sign_and_submit(&client, &ixs.clone(), authority);
+        sign_and_submit(&client, ixs, &authority);
     }
 
     // Collect and report test results
@@ -136,12 +141,13 @@ fn create_queue_ix(
     authority: &Keypair,
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
+    queue_id: u128,
 ) -> Instruction {
     // Get manager for authority
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
 
     // Generate ix for new queue account
-    let queue_pubkey = Queue::pda(manager_pubkey, 0).0;
+    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -195,10 +201,10 @@ fn build_memo_ix(manager_pubkey: &Pubkey) -> Instruction {
     .unwrap()
 }
 
-fn create_task_ix(authority: &Keypair) -> Instruction {
+fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruction {
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
-    let queue_pubkey = Queue::pda(manager_pubkey, 0).0;
-    let task_pubkey = Task::pda(queue_pubkey, 0).0;
+    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
+    let task_pubkey = Task::pda(queue_pubkey, task_id).0;
     let memo_ix = build_memo_ix(&manager_pubkey);
     cronos_sdk::scheduler::instruction::task_new(
         authority.pubkey(),
