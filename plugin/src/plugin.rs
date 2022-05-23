@@ -1,14 +1,21 @@
 use {
     crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
-    cronos_sdk::{scheduler::state::Queue, Client},
+    cronos_sdk::{
+        scheduler::state::{Queue, Task},
+        Client,
+    },
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError, ReplicaAccountInfoVersions, Result as PluginResult,
         SlotStatus,
     },
-    solana_program::{clock::Clock, pubkey::Pubkey},
-    std::{fmt::Debug, sync::Arc},
+    solana_program::{
+        clock::Clock,
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+    },
+    std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
 
@@ -70,8 +77,6 @@ impl GeyserPlugin for CronosPlugin {
             Ok(account_update) => {
                 self.with_inner(|this| {
                     info!("Queues: {:#?}", this.queues);
-                    info!("Unix timestamps: {:#?}", this.unix_timestamps);
-
                     this.spawn(|this| async move {
                         match account_update {
                             CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
@@ -200,27 +205,82 @@ impl Inner {
     }
 
     fn process_queue(self: Arc<Self>, queue_pubkey: Pubkey) -> PluginResult<()> {
-        // TODO
+        info!("Processing queue {}", queue_pubkey);
 
-        info!("Should process queue!!!! {}", queue_pubkey);
-        info!("Payer pubkey {}", self.client.payer_pubkey());
+        // Get the queue
+        let queue = self.client.get::<Queue>(&queue_pubkey).unwrap();
 
-        let config_pubkey = cronos_sdk::scheduler::state::Config::pda().0;
-        let config = self
+        // Build queue_start ix
+        let delegate_pubkey = self.client.payer_pubkey();
+        let queue_start_ix = cronos_sdk::scheduler::instruction::queue_start(
+            delegate_pubkey,
+            queue.manager,
+            queue_pubkey,
+        );
+
+        // Accumulate task ixs here
+        let mut ixs: Vec<Instruction> = vec![queue_start_ix];
+
+        // Build an ix for each task
+        for i in 0..queue.task_count {
+            // Get the action account
+            let task_pubkey = Task::pda(queue_pubkey, i).0;
+            let task = self.client.get::<Task>(&task_pubkey).unwrap();
+
+            // Build ix
+            let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(
+                delegate_pubkey,
+                queue.manager,
+                queue_pubkey,
+                task_pubkey,
+            );
+
+            // Inject accounts for inner ixs
+            let mut acc_dedupe = HashSet::<Pubkey>::new();
+            for inner_ix in &task.ixs {
+                // Program ids
+                if !acc_dedupe.contains(&inner_ix.program_id) {
+                    acc_dedupe.insert(inner_ix.program_id);
+                    task_exec_ix
+                        .accounts
+                        .push(AccountMeta::new_readonly(inner_ix.program_id, false));
+                }
+
+                // Other accounts
+                for acc in &inner_ix.accounts {
+                    if !acc_dedupe.contains(&acc.pubkey) {
+                        acc_dedupe.insert(acc.pubkey);
+
+                        // Inject the delegate pubkey as the Cronos "payer" account
+                        let mut payer_pubkey = acc.pubkey;
+                        if acc.pubkey == cronos_sdk::scheduler::payer::ID {
+                            payer_pubkey = delegate_pubkey;
+                        }
+                        task_exec_ix.accounts.push(match acc.is_writable {
+                            true => AccountMeta::new(payer_pubkey, false),
+                            false => AccountMeta::new_readonly(payer_pubkey, false),
+                        })
+                    }
+                }
+            }
+
+            // Add to the list
+            ixs.push(task_exec_ix)
+        }
+
+        // Pack all ixs into a single tx
+        match self
             .client
-            .get::<cronos_sdk::scheduler::state::Config>(&config_pubkey)
-            .unwrap();
-
-        info!("Got the config: {:#?}", config);
-
-        // Build queue_starat ix
-
-        // let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
-        // let queue_start_ix = cronos_sdk::scheduler::instruction::queue_start(
-        //     delegate_pubkey,
-        //     queue.manager,
-        //     queue_pubkey,
-        // );
+            .sign_and_submit(ixs.as_slice(), &[self.client.payer()])
+        {
+            Ok(sig) => {
+                info!("✅ {}", sig);
+                self.queues.entry(queue.exec_at.unwrap()).and_modify(|v| {
+                    v.remove(&queue_pubkey);
+                });
+            }
+            Err(err) => info!("❌ {:#?}", err),
+        }
 
         Ok(())
     }
