@@ -1,15 +1,13 @@
 use {
-    crate::{
-        cli::CliError,
-        utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
+    crate::cli::CliError,
+    cronos_sdk::{
+        scheduler::state::{Manager, Queue},
+        Client,
     },
-    cronos_sdk::scheduler::state::{Manager, Queue},
-    solana_client_helpers::Client,
     solana_sdk::pubkey::Pubkey,
-    std::sync::Arc,
 };
 
-pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
+pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
     // Fetch manager data.
     let authority_pubkey = client.payer_pubkey();
     let manager_pubkey = Manager::pda(authority_pubkey).0;
@@ -30,20 +28,16 @@ pub fn create(client: &Arc<Client>, schedule: String) -> Result<(), CliError> {
     );
 
     // Sign and submit
-    sign_and_submit(client, &[queue_ix], &[client.payer()]);
+    client
+        .sign_and_submit(&[queue_ix], &[client.payer()])
+        .unwrap();
     get(client, &queue_pubkey)
 }
 
-pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
-    let data = client
-        .get_account_data(address)
-        .map_err(|_err| CliError::AccountNotFound(address.to_string()))?;
-    let queue_data = Queue::try_from(data)
+pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+    let queue = client
+        .get::<Queue>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-    println!(
-        "Explorer: {}",
-        solana_explorer_url(SolanaExplorerAccountType::Account, address.to_string())
-    );
-    println!("{:#?}", queue_data);
+    println!("{:#?}", queue);
     Ok(())
 }

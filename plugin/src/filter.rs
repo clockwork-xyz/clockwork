@@ -1,21 +1,44 @@
-use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_program::{pubkey::Pubkey, sysvar};
+use bincode::deserialize;
+use cronos_sdk::scheduler::state::Queue;
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, ReplicaAccountInfo,
+};
+use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
-pub fn wants_account(info: &ReplicaAccountInfo) -> bool {
-    // If the account is the sysvar clock, return true
-    let account_pubkey = Pubkey::new(info.pubkey);
-    if account_pubkey.eq(&sysvar::clock::ID) {
-        return true;
-    }
+pub enum CronosAccountUpdate {
+    Clock { clock: Clock },
+    Queue { queue: Queue },
+}
 
-    // If the account is a cronos queue, return true
-    if info.data.len() > 8 {
-        let owner_pubkey = Pubkey::new(info.owner);
-        if owner_pubkey == cronos_sdk::scheduler::ID {
-            return true;
+impl TryFrom<ReplicaAccountInfo<'_>> for CronosAccountUpdate {
+    type Error = GeyserPluginError;
+    fn try_from(account_info: ReplicaAccountInfo) -> Result<Self, Self::Error> {
+        // If the account is the sysvar clock, return it
+        if Pubkey::new(account_info.pubkey).eq(&sysvar::clock::ID) {
+            return Ok(CronosAccountUpdate::Clock {
+                clock: deserialize::<Clock>(account_info.data).map_err(|_e| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parsed sysvar clock account".into(),
+                    }
+                })?,
+            });
         }
-    }
 
-    // Ignore everything else
-    return false;
+        // If the account is a Cronos queue, return it
+        if Pubkey::new(account_info.owner).eq(&cronos_sdk::scheduler::ID)
+            && account_info.data.len() > 8
+        {
+            return Ok(CronosAccountUpdate::Queue {
+                queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parse cronos queue account".into(),
+                    }
+                })?,
+            });
+        }
+
+        Err(GeyserPluginError::AccountsUpdateError {
+            msg: "Account is not relevant to cronos plugin".into(),
+        })
+    }
 }

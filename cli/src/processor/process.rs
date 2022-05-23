@@ -1,11 +1,9 @@
 use crate::{
     cli::{CliCommand, CliError},
     config::CliConfig,
-    utils::load_keypair,
 };
 use clap::ArgMatches;
-use solana_client_helpers::{Client, RpcClient};
-use std::sync::Arc;
+use cronos_sdk::Client;
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     // Parse command and config
@@ -13,14 +11,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let config = CliConfig::load();
 
     // Build the RPC client
-    let payer = load_keypair(&config);
-    let client = RpcClient::new_with_timeouts_and_commitment(
-        config.json_rpc_url.to_string(),
-        config.rpc_timeout,
-        config.commitment,
-        config.confirm_transaction_initial_timeout,
-    );
-    let client = Arc::new(Client { client, payer });
+    let client = Client::new(config.keypair_path, config.json_rpc_url);
 
     // Process the command
     match command {

@@ -21,3 +21,9 @@ cronos-healthcheck = { path = "../programs/healthcheck", features = ["no-entrypo
 cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.1.8" }
 cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.1.8" }
 cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.1.8" }
+solana-client = "1.10.8"
+solana-sdk = "1.10.8"
+thiserror = "1.0.31"
+
+[features]
+client = []

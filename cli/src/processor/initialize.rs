@@ -1,11 +1,10 @@
 use {
-    crate::{cli::CliError, utils::sign_and_submit},
-    solana_client_helpers::Client,
+    crate::cli::CliError,
+    cronos_sdk::Client,
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
-    std::sync::Arc,
 };
 
-pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
+pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     // Initialize the programs
     let admin = client.payer_pubkey();
     let ix_a = cronos_sdk::healthcheck::instruction::initialize(admin);
@@ -22,10 +21,8 @@ pub fn initialize(client: &Arc<Client>, mint: Pubkey) -> Result<(), CliError> {
     let ix_f = cronos_sdk::scheduler::instruction::queue_fund(LAMPORTS_PER_SOL, admin, queue_1);
 
     // Submit tx
-    sign_and_submit(
-        client,
-        &[ix_a, ix_b, ix_c, ix_d, ix_e, ix_f],
-        &[client.payer()],
-    );
+    client
+        .sign_and_submit(&[ix_a, ix_b, ix_c, ix_d, ix_e, ix_f], &[client.payer()])
+        .unwrap();
     Ok(())
 }

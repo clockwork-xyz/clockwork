@@ -1,21 +1,20 @@
 use {
-    crate::{client::RPCClient, env::Envvar},
+    crate::env::Envvar,
     bincode::deserialize,
     chrono::{TimeZone, Utc},
     cronos_sdk::healthcheck::state::Health,
+    cronos_sdk::Client,
     dotenv::dotenv,
     elasticsearch::{
         auth::Credentials, http::transport::Transport, Elasticsearch, Error, IndexParts,
     },
     serde_json::json,
-    solana_client_helpers::Client,
     solana_program::clock::Clock,
     solana_sdk::pubkey::Pubkey,
     std::{result::Result, str::FromStr, time::Duration},
     tokio::{task, time},
 };
 
-mod client;
 mod env;
 
 #[tokio::main]

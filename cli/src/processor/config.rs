@@ -1,11 +1,6 @@
-use {
-    crate::{cli::CliError, utils::sign_and_submit},
-    solana_client_helpers::Client,
-    solana_sdk::pubkey::Pubkey,
-    std::sync::Arc,
-};
+use {crate::cli::CliError, cronos_sdk::Client, solana_sdk::pubkey::Pubkey};
 
-pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
+pub fn get(client: &Client) -> Result<(), CliError> {
     // Get network config
     let config_pubkey = cronos_sdk::network::state::Config::pda().0;
     let data = client
@@ -39,7 +34,7 @@ pub fn get(client: &Arc<Client>) -> Result<(), CliError> {
 }
 
 pub fn set(
-    client: &Arc<Client>,
+    client: &Client,
     admin: Option<Pubkey>,
     delegate_fee: Option<u64>,
     delegate_holdout_period: Option<i64>,
@@ -82,7 +77,7 @@ pub fn set(
         settings,
     );
 
-    sign_and_submit(client, &[ix], &[client.payer()]);
+    client.sign_and_submit(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
 }

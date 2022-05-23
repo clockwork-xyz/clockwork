@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
-use solana_client_helpers::Client;
+use cronos_sdk::Client;
 
 use crate::cli::CliError;
 
-pub fn get(_client: &Arc<Client>) -> Result<(), CliError> {
+pub fn get(_client: &Client) -> Result<(), CliError> {
     panic!("Not implemented – moving to healthcheck program")
     // let health_addr = cronos_sdk::account::Health::pda().0;
     // let data = client

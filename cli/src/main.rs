@@ -5,7 +5,6 @@ mod cli;
 mod config;
 mod parser;
 mod processor;
-mod utils;
 
 use cli::{app, CliError};
 use processor::process;
