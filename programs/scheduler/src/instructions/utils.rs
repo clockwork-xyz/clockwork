@@ -23,7 +23,7 @@ pub fn is_spam<'info>(
         .contains(&delegate.key());
 
     let is_holdout_period = clock.unix_timestamp
-        <= queue
+        < queue
             .exec_at
             .unwrap()
             .checked_add(config.delegate_holdout_period)

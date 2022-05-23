@@ -130,11 +130,6 @@ impl TaskAccount for Account<'_, Task> {
             let accs: &mut Vec<AccountMetaData> = &mut vec![];
             ix.accounts.iter().for_each(|acc| {
                 if acc.pubkey == crate::payer::ID {
-                    msg!(
-                        "Injecting delegate as payer: {} {}",
-                        acc.pubkey,
-                        delegate.key()
-                    );
                     accs.push(AccountMetaData {
                         pubkey: delegate.key(),
                         is_signer: acc.is_signer,

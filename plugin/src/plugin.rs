@@ -76,7 +76,6 @@ impl GeyserPlugin for CronosPlugin {
         match CronosAccountUpdate::try_from(account_info) {
             Ok(account_update) => {
                 self.with_inner(|this| {
-                    info!("Queues: {:#?}", this.queues);
                     this.spawn(|this| async move {
                         match account_update {
                             CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
