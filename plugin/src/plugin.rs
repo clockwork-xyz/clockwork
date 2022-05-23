@@ -1,9 +1,8 @@
 use {
-    crate::{client::RPCClient, config::Config as PluginConfig, filter::CronosAccountUpdate},
-    cronos_sdk::scheduler::state::Queue,
+    crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
+    cronos_sdk::{client::Client, scheduler::state::Queue},
     dashmap::{DashMap, DashSet},
     log::info,
-    solana_client_helpers::Client,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError, ReplicaAccountInfoVersions, Result as PluginResult,
         SlotStatus,
@@ -37,7 +36,7 @@ impl GeyserPlugin for CronosPlugin {
         solana_logger::setup_with_default("info");
         let config = PluginConfig::read_from(config_file)?;
         self.inner = Some(Arc::new(Inner {
-            // client: Client::new(config.keypath, config.rpc_url),
+            client: Client::new(config.keypath, config.rpc_url),
             runtime: Builder::new_multi_thread()
                 .enable_all()
                 .thread_name("cronos-plugin")
@@ -133,28 +132,11 @@ impl GeyserPlugin for CronosPlugin {
 
 #[derive(Debug)]
 pub struct Inner {
-    // pub client: Client,
+    pub client: Client,
     pub runtime: Runtime,
     pub queues: DashMap<i64, DashSet<Pubkey>>,
     pub unix_timestamps: DashMap<u64, i64>,
 }
-
-// impl Default for Inner {
-//     fn default() -> Self {
-//         Inner {
-//             client:
-//             runtime: Builder::new_multi_thread()
-//                 .enable_all()
-//                 .thread_name("cronos-plugin")
-//                 .worker_threads(10) // TODO add to config
-//                 .max_blocking_threads(10) // TODO add to config
-//                 .build()
-//                 .unwrap(),
-//             queues: DashMap::new(),
-//             unix_timestamps: DashMap::new(),
-//         }
-//     }
-// }
 
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
@@ -221,8 +203,18 @@ impl Inner {
         // TODO
 
         info!("Should process queue!!!! {}", queue_pubkey);
+        info!("Payer pubkey {}", self.client.payer_pubkey());
+
+        let config_pubkey = cronos_sdk::scheduler::state::Config::pda().0;
+        let config = self
+            .client
+            .get::<cronos_sdk::scheduler::state::Config>(&config_pubkey)
+            .unwrap();
+
+        info!("Got the config: {:#?}", config);
 
         // Build queue_starat ix
+
         // let delegate_pubkey = cp_clone.unwrap_client().payer_pubkey();
         // let queue_start_ix = cronos_sdk::scheduler::instruction::queue_start(
         //     delegate_pubkey,
