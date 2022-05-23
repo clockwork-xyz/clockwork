@@ -1,11 +1,10 @@
 use {
-    crate::{
-        cli::CliError, parser::JsonInstructionData, utils::new_client, utils::sign_and_submit,
-    },
+    crate::{cli::CliError, parser::JsonInstructionData},
     chrono::{prelude::*, Duration},
     cronos_cron::Schedule,
     cronos_sdk::scheduler::events::TaskExecuted,
     cronos_sdk::scheduler::state::{Manager, Queue, Task},
+    cronos_sdk::Client,
     serde_json::json,
     solana_client::{
         pubsub_client::PubsubClient,
@@ -20,7 +19,9 @@ use {
 
 pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
     // Setup test
-    let client = new_client();
+    let config_file = solana_cli_config::CONFIG_FILE.as_ref().unwrap().as_str();
+    let solana_config = solana_cli_config::Config::load(config_file).unwrap();
+    let client = Client::new(solana_config.keypair_path, solana_config.json_rpc_url);
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
     let num_tasks_serial = count - num_tasks_parallel;
 
@@ -28,7 +29,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
     // Create manager
-    let authority = Keypair::new();
+    let authority = &Keypair::new();
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
     let ix = cronos_sdk::scheduler::instruction::manager_new(
         authority.pubkey(),
@@ -38,7 +39,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     client
         .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
         .unwrap();
-    sign_and_submit(&client, &[ix], &authority);
+    client.sign_and_submit(&[ix], &[authority]);
 
     // TODO Schedule tasks asynchronously
 
@@ -46,7 +47,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     for i in 0..num_tasks_parallel {
         let ix_a = create_queue_ix(&authority, recurrence, &mut expected_exec_ats, i.into());
         let ix_b = create_task_ix(&authority, i.into(), 0);
-        sign_and_submit(&client, &[ix_a, ix_b], &authority);
+        client.sign_and_submit(&[ix_a, ix_b], &[authority]);
     }
 
     // Create a queue for the serial tasks
@@ -67,7 +68,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
                 i.into(),
             ));
         }
-        sign_and_submit(&client, ixs, &authority);
+        client.sign_and_submit(ixs, &[authority]);
     }
 
     // Collect and report test results

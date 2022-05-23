@@ -943,7 +943,6 @@ dependencies = [
  "solana-clap-utils",
  "solana-cli-config",
  "solana-client",
- "solana-client-helpers",
  "solana-sdk",
  "thiserror",
  "version",
