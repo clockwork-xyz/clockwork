@@ -148,11 +148,17 @@ impl Inner {
 
         // Remove cached timestamp for the prev slot
         let prev_slot = slot - 1;
+        let last_ts = *self.unix_timestamps.get(&prev_slot).unwrap().value();
         self.unix_timestamps.remove(&prev_slot);
 
         // Process queues
         match self.clone().unix_timestamps.get(&slot) {
-            Some(entry) => self.process_queues_in_lookback_window(*entry.value()),
+            Some(entry) => {
+                if last_ts < *entry.value() {
+                    self.process_queues_in_lookback_window(*entry.value())?;
+                }
+                Ok(())
+            }
             None => Ok(()),
         }
     }
