@@ -1,11 +1,6 @@
 use crate::cli::CliError;
-use solana_client_helpers::Client;
-use std::sync::Arc;
+use cronos_sdk::Client;
 
-pub fn get(_client: &Arc<Client>) -> Result<(), CliError> {
+pub fn get(_client: &Client) -> Result<(), CliError> {
     panic!("Not implemented")
-    // let time =
-    //     cronos_sdk::clock::get_time(client).map_err(|err| CliError::BadClient(err.to_string()))?;
-    // println!("Clock: {}", time);
-    // Ok(())
 }

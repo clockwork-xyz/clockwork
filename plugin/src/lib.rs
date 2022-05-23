@@ -1,7 +1,5 @@
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
-mod bucket;
-mod cache;
 mod config;
 mod filter;
 mod plugin;

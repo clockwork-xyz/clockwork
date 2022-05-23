@@ -1,32 +1,22 @@
 use {
-    crate::{
-        cli::CliError,
-        utils::{sign_and_submit, solana_explorer_url, SolanaExplorerAccountType},
-    },
+    crate::cli::CliError,
     cronos_sdk::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
-    solana_client_helpers::Client,
+    cronos_sdk::Client,
     solana_sdk::{
         pubkey::Pubkey,
         signature::{Keypair, Signer},
     },
-    std::sync::Arc,
 };
 
-pub fn get(client: &Arc<Client>, address: &Pubkey) -> Result<(), CliError> {
-    let data = client
-        .get_account_data(&address)
-        .map_err(|_err| CliError::AccountNotFound(address.to_string()))?;
-    let data = Node::try_from(data)
+pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+    let node = client
+        .get::<cronos_sdk::network::state::Node>(address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-    println!(
-        "Explorer: {}",
-        solana_explorer_url(SolanaExplorerAccountType::Account, address.to_string())
-    );
-    println!("{:#?}", data);
+    println!("{:#?}", node);
     Ok(())
 }
 
-pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError> {
+pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pda().0;
     let config_data = client
@@ -80,11 +70,11 @@ pub fn register(client: &Arc<Client>, delegate: Keypair) -> Result<(), CliError>
         snapshot_queue_pubkey,
         snapshot_task_pubkey,
     );
-    sign_and_submit(client, &[ix], &[owner, &delegate]);
+    client.sign_and_submit(&[ix], &[owner, &delegate]).unwrap();
     get(client, &node_pubkey)
 }
 
-pub fn stake(client: &Arc<Client>, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
+pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pda().0;
     let config_data = client
@@ -105,6 +95,6 @@ pub fn stake(client: &Arc<Client>, amount: u64, delegate: Pubkey) -> Result<(), 
         signer.pubkey(),
     );
 
-    sign_and_submit(client, &[ix], &[client.payer()]);
+    client.sign_and_submit(&[ix], &[client.payer()]).unwrap();
     get(client, &node_pubkey)
 }

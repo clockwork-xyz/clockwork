@@ -1,6 +1,6 @@
 use {
     crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
-    cronos_sdk::{client::Client, scheduler::state::Queue},
+    cronos_sdk::{scheduler::state::Queue, Client},
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
