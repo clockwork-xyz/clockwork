@@ -12,3 +12,8 @@ cargo_tomls=($(find . -type f -name "Cargo.toml"))
 for cargo_toml in "${cargo_tomls[@]}"; do
     sed -i '' -e "/^solana-/s/=.*/= \"$new_version\"/g" $cargo_toml
 done
+
+# Find and replace version in dockerfile
+sed -i '' -e "/^ENV SOLANA_VERSION=v/s/v.*/v"$new_version"/g" './Dockerfile'
+
+
