@@ -1,6 +1,6 @@
 [package]
 name = "cronos-sdk"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 edition = "2021"
 description = "Cronos SDK"
 license = "GNU AGPLv3"
@@ -18,10 +18,10 @@ name = "cronos_sdk"
 anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
 anchor-spl = { features = ["mint", "token"], git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
 bincode = "1.3.3"
-cronos-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.1.8" }
-cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.1.8" }
-cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.1.8" }
-cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.1.8" }
+cronos-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0-alpha1" }
+cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0-alpha1" }
+cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0-alpha1" }
+cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0-alpha1" }
 solana-client = "1.10.8"
 solana-sdk = "1.10.8"
 thiserror = "1.0.31"

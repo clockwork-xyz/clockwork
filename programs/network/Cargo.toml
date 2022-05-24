@@ -1,6 +1,6 @@
 [package]
 name = "cronos-network"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 description = "Cronos networking protocol"
 edition = "2021"
 license = "GNU AGPLv3"
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
 anchor-spl = { features = ["mint", "token"], git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
-cronos-pool = { path = "../pool", features = ["cpi"], version = "0.1.8" }
-cronos-scheduler = { path = "../scheduler", features = ["cpi"], version = "0.1.8" }
+cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0-alpha1" }
+cronos-scheduler = { path = "../scheduler", features = ["cpi"], version = "0.2.0-alpha1" }

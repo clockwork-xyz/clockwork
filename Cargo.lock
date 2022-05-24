@@ -764,7 +764,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cli"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "clap 3.1.12",
  "cronos-sdk",
@@ -783,7 +783,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cron"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -792,26 +792,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-cron"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5705f0b5af06899f76cd800265a5541739743d92b6ded2b39349965aaaa741f"
-dependencies = [
- "chrono",
- "nom",
- "once_cell",
-]
-
-[[package]]
 name = "cronos-health"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "cronos-metrics"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "chrono",
  "cronos-sdk",
@@ -826,7 +815,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-network"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -836,24 +825,24 @@ dependencies = [
 
 [[package]]
 name = "cronos-pool"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "cronos-scheduler"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "anchor-lang",
  "chrono",
- "cronos-cron 0.1.8",
+ "cronos-cron",
  "cronos-pool",
 ]
 
 [[package]]
 name = "cronos-sdk"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -869,12 +858,12 @@ dependencies = [
 
 [[package]]
 name = "cronos-stress"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "base64 0.13.0",
  "chrono",
  "clap 3.1.12",
- "cronos-cron 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cronos-cron",
  "cronos-sdk",
  "serde",
  "serde_json",
@@ -888,7 +877,7 @@ dependencies = [
 
 [[package]]
 name = "cronos_plugin"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 dependencies = [
  "bincode",
  "bs58 0.4.0",

@@ -19,6 +19,13 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/pool/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
 
+# Bump inter-program dependencies
+sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
+sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/programs\/scheduler", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
+sed -i '' -e 's/^cronos-cron =.*/cronos-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
+sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
+
+
 # Bump cronos-sdk
 sed -i '' -e 's/^cronos-health =.*/cronos-health = { path = "..\/programs\/health", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e 's/^cronos-network =.*/cronos-network = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
@@ -27,19 +34,20 @@ sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/programs\
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
 
 # Bump cronos-cli
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' cli/Cargo.toml
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", features = ["client"], version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
 
 # Bump cronos-metrics
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' metrics/Cargo.toml
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", features = ["client"], version = "'${new_version}'" }/g' metrics/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' metrics/Cargo.toml
 
 # Bump cronos-plugin
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", features = ["client"], version = "'${new_version}'" }/g' plugin/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
 
 # Bump cronos-stress
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' stress/Cargo.toml
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", features = ["client"], version = "'${new_version}'" }/g' stress/Cargo.toml
+sed -i '' -e 's/^cronos-cron =.*/cronos-cron = { path = "..\/cron", version = "'${new_version}'" }/g' stress/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' stress/Cargo.toml
 
 # Update version

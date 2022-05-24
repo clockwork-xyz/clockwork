@@ -1,6 +1,6 @@
 [package]
 name = "cronos-cli"
-version = "0.1.8"
+version = "0.2.0-alpha1"
 description = "Command line instruction scheduler for Solana"
 edition = "2021"
 license = "GNU AGPLv3"
@@ -14,7 +14,7 @@ keywords = ["solana", "cronos", "cli"]
 
 [dependencies]
 clap = { version = "3.1.2", features = ["derive"] }
-cronos-sdk = { path = "../sdk", features = ["client"], version = "0.1.8" }
+cronos-sdk = { path = "../sdk", features = ["client"], version = "0.2.0-alpha1" }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 solana-account-decoder = "1.10.8"
