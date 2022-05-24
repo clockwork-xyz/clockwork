@@ -1,29 +1,30 @@
-use {crate::cli::CliError, cronos_sdk::Client, solana_sdk::pubkey::Pubkey};
+use {
+    crate::cli::CliError,
+    cronos_sdk::{
+        network::state::Config as NetworkConfig, pool::state::Config as PoolConfig,
+        scheduler::state::Config as SchedulerConfig, Client,
+    },
+    solana_sdk::pubkey::Pubkey,
+};
 
 pub fn get(client: &Client) -> Result<(), CliError> {
     // Get network config
-    let config_pubkey = cronos_sdk::network::state::Config::pda().0;
-    let data = client
-        .get_account_data(&config_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let network_config = cronos_sdk::network::state::Config::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+    let network_config_pubkey = NetworkConfig::pda().0;
+    let network_config = client
+        .get::<NetworkConfig>(&network_config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(network_config_pubkey.to_string()))?;
 
     // Get pool config
-    let config_pubkey = cronos_sdk::pool::state::Config::pda().0;
-    let data = client
-        .get_account_data(&config_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let pool_config = cronos_sdk::pool::state::Config::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+    let pool_config_pubkey = PoolConfig::pda().0;
+    let pool_config = client
+        .get::<PoolConfig>(&pool_config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(pool_config_pubkey.to_string()))?;
 
     // Get scheduler config
-    let config_pubkey = cronos_sdk::scheduler::state::Config::pda().0;
-    let data = client
-        .get_account_data(&config_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let scheduler_config = cronos_sdk::scheduler::state::Config::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+    let scheduler_config_pubkey = SchedulerConfig::pda().0;
+    let scheduler_config = client
+        .get::<SchedulerConfig>(&scheduler_config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(scheduler_config_pubkey.to_string()))?;
 
     // Print configs
     println!("Network {:#?}", network_config);
@@ -41,12 +42,10 @@ pub fn set(
     delegate_spam_penalty: Option<u64>,
     program_fee: Option<u64>,
 ) -> Result<(), CliError> {
-    let config_pubkey = cronos_sdk::scheduler::state::Config::pda().0;
-    let data = client
-        .get_account_data(&config_pubkey)
+    let config_pubkey = SchedulerConfig::pda().0;
+    let config = client
+        .get::<SchedulerConfig>(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = cronos_sdk::scheduler::state::Config::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     let settings = cronos_sdk::scheduler::state::ConfigSettings {
         admin: match admin {
