@@ -20,7 +20,10 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
 
 # Bump cronos-sdk
-sed -i '' -e 's/^cronos-program =.*/cronos-program = { path = "..\/programs\/cronos", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^cronos-health =.*/cronos-health = { path = "..\/programs\/health", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^cronos-network =.*/cronos-network = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/programs\/scheduler", features = ["no-entrypoint"], version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
 
 # Bump cronos-cli
@@ -47,7 +50,6 @@ sleep 25
 
 # Git commit 
 echo "$(git diff --stat | tail -n1)"
-git checkout -b release/${new_version}
 git add .
 git commit -m "Bump from $current_version to $new_version"
 git tag "v$new_version"
