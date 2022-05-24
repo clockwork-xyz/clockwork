@@ -810,6 +810,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "cronos-metrics"
+version = "0.1.8"
+dependencies = [
+ "chrono",
+ "cronos-sdk",
+ "dotenv",
+ "elasticsearch",
+ "serde_json",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "cronos-network"
 version = "0.1.8"
 dependencies = [
@@ -842,6 +857,7 @@ version = "0.1.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "bincode",
  "cronos-healthcheck",
  "cronos-network",
  "cronos-pool",
@@ -868,23 +884,6 @@ dependencies = [
  "solana-sdk",
  "thiserror",
  "version",
-]
-
-[[package]]
-name = "cronos-telemetry"
-version = "0.1.8"
-dependencies = [
- "bincode",
- "chrono",
- "cronos-sdk",
- "dotenv",
- "elasticsearch",
- "serde_json",
- "solana-account-decoder",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "tokio",
 ]
 
 [[package]]

@@ -2,9 +2,9 @@
 members = [
     "cli",
     "cron",
+    "metrics",
     "plugin",
     "programs/*",
     "sdk",
-    "telemetry",
     "stress"
 ]

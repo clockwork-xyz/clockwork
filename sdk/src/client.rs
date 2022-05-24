@@ -1,8 +1,9 @@
-use anchor_lang::AccountDeserialize;
+use anchor_lang::{prelude::Clock, AccountDeserialize};
 use std::{
     fmt::Debug,
     fs::File,
     ops::{Deref, DerefMut},
+    str::FromStr,
 };
 
 pub use solana_client::{client_error, rpc_client::RpcClient};
@@ -47,6 +48,13 @@ impl Client {
     pub fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
         let data = self.client.get_account_data(pubkey)?;
         Ok(T::try_deserialize(&mut data.as_slice())
+            .map_err(|_| ClientError::DeserializationError)?)
+    }
+
+    pub fn get_clock(&self) -> ClientResult<Clock> {
+        let clock_pubkey = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
+        let clock_data = self.client.get_account_data(&clock_pubkey)?;
+        Ok(bincode::deserialize::<Clock>(&clock_data)
             .map_err(|_| ClientError::DeserializationError)?)
     }
 

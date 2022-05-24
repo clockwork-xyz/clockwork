@@ -1,6 +1,5 @@
 use {
     crate::env::Envvar,
-    bincode::deserialize,
     chrono::{TimeZone, Utc},
     cronos_sdk::healthcheck::state::Health,
     cronos_sdk::Client,
@@ -9,9 +8,7 @@ use {
         auth::Credentials, http::transport::Transport, Elasticsearch, Error, IndexParts,
     },
     serde_json::json,
-    solana_program::clock::Clock,
-    solana_sdk::pubkey::Pubkey,
-    std::{result::Result, str::FromStr, time::Duration},
+    std::{result::Result, time::Duration},
     tokio::{task, time},
 };
 
@@ -36,18 +33,13 @@ async fn record_health_data() {
     let client = Client::new(Envvar::Keypath.get(), Envvar::RpcEndpoint.get());
     let es_client = elastic_client().unwrap();
 
-    // Get clock data
-    let clock_pubkey = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
-    let clock_data = client.get_account_data(&clock_pubkey).unwrap();
-    let clock_data = deserialize::<Clock>(&clock_data).unwrap();
-    let ts = clock_data.unix_timestamp;
-
-    // Get health data
-    let health_data = Health::try_from(client.get_account_data(&Health::pda().0).unwrap()).unwrap();
-    let last_ping = ts - health_data.last_ping;
-    let ts = Utc.timestamp(ts, 0).naive_utc();
+    // Get data
+    let clock = client.get_clock().unwrap();
+    let health = client.get::<Health>(&Health::pda().0).unwrap();
 
     // Pipe data to elasticsearch
+    let last_ping = clock.unix_timestamp - health.last_ping;
+    let ts = Utc.timestamp(clock.unix_timestamp, 0).naive_utc();
     es_client
         .index(IndexParts::IndexId(
             Envvar::EsIndex.get().as_str(),
