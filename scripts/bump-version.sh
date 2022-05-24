@@ -30,17 +30,17 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
 
+# Bump cronos-metrics
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' metrics/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' metrics/Cargo.toml
+
 # Bump cronos-plugin
 sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' plugin/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
 
-# Bump cronos-telemetry
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' telemetry/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' telemetry/Cargo.toml
-
-# Bump cronos-tests
-sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' tests/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' tests/Cargo.toml
+# Bump cronos-stress
+sed -i '' -e 's/^cronos-sdk =.*/cronos-sdk = { path = "..\/sdk", version = "'${new_version}'" }/g' stress/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' stress/Cargo.toml
 
 # Update version
 echo $new_version > VERSION
