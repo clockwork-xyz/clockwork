@@ -11,7 +11,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 
 #[program]
-pub mod cronos_healthcheck {
+pub mod cronos_health {
     use super::*;
 
     pub fn ping(ctx: Context<Ping>) -> Result<()> {

@@ -1,7 +1,7 @@
 use {
     crate::env::Envvar,
     chrono::{TimeZone, Utc},
-    cronos_sdk::healthcheck::state::Health,
+    cronos_sdk::health::state::Health,
     cronos_sdk::Client,
     dotenv::dotenv,
     elasticsearch::{

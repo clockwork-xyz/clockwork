@@ -1,7 +1,7 @@
 [package]
-name = "cronos-healthcheck"
+name = "cronos-health"
 version = "0.1.8"
-description = "Cronos healthcheck protocol"
+description = "Cronos health protocol"
 edition = "2021"
 license = "GNU AGPLv3"
 homepage = "https://cronos.so"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_healthcheck"
+name = "cronos_health"
 
 [features]
 no-entrypoint = []

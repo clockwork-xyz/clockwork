@@ -3,7 +3,7 @@ use cronos_sdk::Client;
 use crate::cli::CliError;
 
 pub fn get(_client: &Client) -> Result<(), CliError> {
-    panic!("Not implemented – moving to healthcheck program")
+    panic!("Not implemented – moving to health program")
     // let health_addr = cronos_sdk::account::Health::pda().0;
     // let data = client
     //     .get_account_data(&health_addr)

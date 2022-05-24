@@ -803,7 +803,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-healthcheck"
+name = "cronos-health"
 version = "0.1.8"
 dependencies = [
  "anchor-lang",
@@ -858,7 +858,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bincode",
- "cronos-healthcheck",
+ "cronos-health",
  "cronos-network",
  "cronos-pool",
  "cronos-scheduler",

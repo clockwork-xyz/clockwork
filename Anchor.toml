@@ -3,19 +3,19 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-healthcheck = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
+health = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
 network = "7mfkXQdkr6yvUkqDryqTN6a8qfq3RNDiqBHRm6mfPYA"
 pool = "Ba7anP53Sujeyiotpd38SfZFYekgWkjq7jnmeizrcnDo"
 scheduler = "J7eoLz22CMdK3dEfGay8xeCAN82CSg7vXaW3Qn4rL1pa"
 
 [programs.testnet]
-healthcheck = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
+health = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
 network = "7mfkXQdkr6yvUkqDryqTN6a8qfq3RNDiqBHRm6mfPYA"
 pool = "Ba7anP53Sujeyiotpd38SfZFYekgWkjq7jnmeizrcnDo"
 scheduler = "J7eoLz22CMdK3dEfGay8xeCAN82CSg7vXaW3Qn4rL1pa"
 
 [programs.mainnet]
-healthcheck = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
+health = "F9tHbkhgehFYwiQCnKpswmk21zgW2RuQfEFhBPPgKbev"
 network = "7mfkXQdkr6yvUkqDryqTN6a8qfq3RNDiqBHRm6mfPYA"
 pool = "Ba7anP53Sujeyiotpd38SfZFYekgWkjq7jnmeizrcnDo"
 scheduler = "J7eoLz22CMdK3dEfGay8xeCAN82CSg7vXaW3Qn4rL1pa"
