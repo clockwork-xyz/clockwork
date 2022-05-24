@@ -1,0 +1,60 @@
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set env vars
+        run: |
+          source scripts/ci/rust-version.sh
+          echo "RUST_STABLE=$rust_stable" | tee -a $GITHUB_ENV
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_STABLE }}
+          override: true
+          profile: minimal
+          components: rustfmt
+
+      - name: Check Solana version
+        run: |
+          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+          echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
+
+          SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
+          SOLANA_VERSION="v${SOLANA_VERSION#=}"
+          echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"
+
+      - name: Grant permissions to create-tarball.sh
+        run: chmod +x ./scripts/ci/create-tarball.sh
+
+      - name: Grant permissions to cargo-install-all.sh
+        run: chmod +x ./scripts/ci/cargo-install-all.sh
+
+      - name: install libudev-dev
+        run: sudo apt-get install libudev-dev
+
+      - name: Build release tarball
+        run: ./scripts/ci/create-tarball.sh
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: |
+            cronos-geyser-plugin ${{ env.CI_TAG }}
+            solana ${{ env.SOLANA_VERSION }}
+            rust ${{ env.RUST_STABLE }}
+          files: |
+            cronos-geyser-plugin-release-*
