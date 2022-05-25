@@ -8,3 +8,7 @@ members = [
     "sdk",
     "stress"
 ]
+
+[patch.crates-io]
+anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
+anchor-spl = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }

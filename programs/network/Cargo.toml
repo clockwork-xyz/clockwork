@@ -22,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
-anchor-spl = { features = ["mint", "token"], git = "https://github.com/cronos-so/anchor", branch = "v0.24.2-solana.1.10.8" }
+anchor-lang = "0.24.2"
+anchor-spl = { features = ["mint", "token"], version = "0.24.2" }
 cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0-alpha1" }
 cronos-scheduler = { path = "../scheduler", features = ["cpi"], version = "0.2.0-alpha1" }
