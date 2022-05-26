@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Get new version
-current_version=$(cat ./VERSION)
-echo "Current version: $current_version"
 read -r -p "    New version: " new_version
 
 # Find all Cargo.toml files
