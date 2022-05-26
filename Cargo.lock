@@ -770,11 +770,8 @@ dependencies = [
  "cronos-sdk",
  "serde",
  "serde_json",
- "solana-account-decoder",
  "solana-clap-utils",
  "solana-cli-config",
- "solana-client",
- "solana-remote-wallet",
  "solana-sdk",
  "spl-memo",
  "thiserror",
@@ -807,9 +804,6 @@ dependencies = [
  "dotenv",
  "elasticsearch",
  "serde_json",
- "solana-client",
- "solana-program",
- "solana-sdk",
  "tokio",
 ]
 
@@ -889,7 +883,6 @@ dependencies = [
  "serde",
  "serde_json",
  "simple-error",
- "solana-account-decoder",
  "solana-geyser-plugin-interface",
  "solana-logger",
  "solana-program",
@@ -1571,17 +1564,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "hidapi"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b1717343691998deb81766bfcd1dce6df0d5d6c37070b5a3de2bb6d39f7822"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
 ]
 
 [[package]]
@@ -3623,7 +3605,6 @@ checksum = "ce759ad4f2b3ee2c1536cf47b8af1330ff2a288308fb0b860fe0a7b6d54aeeaa"
 dependencies = [
  "console",
  "dialoguer",
- "hidapi",
  "log",
  "num-derive",
  "num-traits",
