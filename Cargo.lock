@@ -83,7 +83,7 @@ checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -96,7 +96,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -110,7 +110,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.39",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.39",
@@ -131,7 +131,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -156,7 +156,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -168,7 +168,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -192,7 +192,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.24.2"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#22619239058b191ea40ce49f5971d77710770c5a"
+source = "git+https://github.com/cronos-so/anchor?branch=v0.24.2-solana.1.10.19#dc1cb02a6bafcebc679622459b65b7fbbf26be0f"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -573,7 +573,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time 0.1.43",
+ "time 0.1.44",
  "winapi",
 ]
 
@@ -876,7 +876,7 @@ dependencies = [
  "bincode",
  "bs58 0.4.0",
  "cronos-sdk",
- "dashmap 5.3.3",
+ "dashmap 5.3.4",
  "log",
  "prost",
  "prost-build",
@@ -1033,13 +1033,14 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "5.3.3"
+version = "5.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "391b56fbd302e585b7a9494fb70e40949567b1cf9003a8e4a6041a1687c26573"
+checksum = "3495912c9c1ccf2e18976439f4443f3fee0fd61f424ff99fde6a66b15ecb448f"
 dependencies = [
  "cfg-if",
  "hashbrown 0.12.1",
  "lock_api",
+ "parking_lot_core 0.9.3",
 ]
 
 [[package]]
@@ -1324,13 +1325,11 @@ checksum = "279fb028e20b3c4c320317955b77c5e0c9701f05a1d309905d6fc702cdc5053e"
 
 [[package]]
 name = "flate2"
-version = "1.0.23"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b39522e96686d38f4bc984b9198e3a0613264abaebaff2c5c918bfa6b6da09af"
+checksum = "f82b0f4c27ad9f8bfd1f3208d882da2b09c301bc1c828fd3a00d0216d2fbbff6"
 dependencies = [
- "cfg-if",
  "crc32fast",
- "libc",
  "miniz_oxide",
 ]
 
@@ -1505,7 +1504,7 @@ checksum = "9be70c98951c83b8d2f8f60d7065fa6d5146873094452a1008da8c2f1e4205ad"
 dependencies = [
  "cfg-if",
  "libc",
- "wasi 0.10.2+wasi-snapshot-preview1",
+ "wasi 0.10.0+wasi-snapshot-preview1",
 ]
 
 [[package]]
@@ -1644,9 +1643,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "0.14.18"
+version = "0.14.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b26ae0a80afebe130861d90abf98e3814a4f28a4c6ffeb5ab8ebb2be311e0ef2"
+checksum = "42dc3c131584288d375f2d07f822b0cb012d8c6fb899a5b9fdb3cb7eb9b6004f"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1733,9 +1732,9 @@ checksum = "5a9d968042a4902e08810946fc7cd5851eb75e80301342305af755ca06cb82ce"
 
 [[package]]
 name = "indexmap"
-version = "1.8.1"
+version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f647032dfaa1f8b6dc29bd3edb7bbef4861b8b8007ebb118d6db284fd59f6ee"
+checksum = "e6012d540c5baa3589337a98ce73408de9b5a25ec9fc2c6fd6be8f0d39e0ca5a"
 dependencies = [
  "autocfg",
  "hashbrown 0.11.2",
@@ -2252,9 +2251,9 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "6.0.1"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "029d8d0b2f198229de29dca79676f2738ff952edf3fde542eb8bf94d8c21b435"
+checksum = "21326818e99cfe6ce1e524c2a805c189a99b5ae555a35d19f9a284b427d86afa"
 
 [[package]]
 name = "ouroboros"
@@ -2372,9 +2371,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "petgraph"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a13a2fa9d0b63e5f22328828741e523766fff0ee9e779316902290dff3f824f"
+checksum = "e6d5014253a1331579ce62aa67443b4a658c5e7dd03d4bc6d302b94474888143"
 dependencies = [
  "fixedbitset",
  "indexmap",
@@ -3127,11 +3126,10 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "1.13.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b827f2113224f3f19a665136f006709194bdfdcb1fdc1e4b2b5cbac8e0cced54"
+checksum = "678b5a069e50bf00ecd22d0cd8ddf7c236f68581b03db652061ed5eb13a312ff"
 dependencies = [
- "rustversion",
  "serde",
  "serde_with_macros",
 ]
@@ -4250,11 +4248,12 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.1.43"
+version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
+checksum = "6db9e6914ab8b1ae1c260a4ae7a49b6c5611b40328a735b21862567685e73255"
 dependencies = [
  "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
  "winapi",
 ]
 
@@ -4647,9 +4646,9 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "wasi"
-version = "0.10.2+wasi-snapshot-preview1"
+version = "0.10.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasm-bindgen"
