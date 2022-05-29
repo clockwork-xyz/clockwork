@@ -61,4 +61,4 @@ echo "$(git diff --stat | tail -n1)"
 git add .
 git commit -m "Bump from $current_version to $new_version"
 git tag "v$new_version"
-git push --tags
+git push && git push --tags

@@ -1,6 +1,6 @@
 [package]
 name = "cronos-health"
-version = "0.2.0-alpha1"
+version = "0.2.0-alpha2"
 description = "Cronos health protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
