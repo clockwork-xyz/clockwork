@@ -20,10 +20,10 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
 
 # Bump inter-program dependencies
-sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/programs\/scheduler", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
+sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
+sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/scheduler", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
 sed -i '' -e 's/^cronos-cron =.*/cronos-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
-sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
+sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
 
 
 # Bump cronos-sdk
