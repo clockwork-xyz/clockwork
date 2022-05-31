@@ -51,7 +51,8 @@ impl GeyserPlugin for CronosPlugin {
                 .max_blocking_threads(10) // TODO add to config
                 .build()
                 .unwrap(),
-            queues: DashMap::new(),
+            due_queues: DashSet::new(),
+            upcoming_queues: DashMap::new(),
             unix_timestamps: DashMap::new(),
         }));
         Ok(())
@@ -74,15 +75,15 @@ impl GeyserPlugin for CronosPlugin {
 
         match CronosAccountUpdate::try_from(account_info) {
             Ok(account_update) => {
-                info!(
-                    "Account {:#?} updated. Is startup: {}",
-                    account_pubkey, is_startup
-                );
                 self.with_inner(|this| {
                     this.spawn(|this| async move {
                         match account_update {
                             CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
                             CronosAccountUpdate::Queue { queue } => {
+                                info!(
+                                    "Queue {:#?} updated. Is startup: {}",
+                                    account_pubkey, is_startup
+                                );
                                 this.handle_queue_update(queue, account_pubkey)
                             }
                         }
@@ -141,30 +142,45 @@ impl GeyserPlugin for CronosPlugin {
 pub struct Inner {
     pub client: Client,
     pub runtime: Runtime,
-    pub queues: DashMap<i64, DashSet<Pubkey>>,
+    pub due_queues: DashSet<Pubkey>,
+    pub upcoming_queues: DashMap<i64, DashSet<Pubkey>>,
     pub unix_timestamps: DashMap<u64, i64>,
 }
 
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         info!("Confirmed slot: {}", slot);
-        info!("Queues: {:#?}", self.queues);
 
-        // Remove cached timestamp for the prev slot
-        let prev_slot = slot - 1;
-        let last_ts = *self.unix_timestamps.get(&prev_slot).unwrap().value();
-        self.unix_timestamps.remove(&prev_slot);
+        // Use the confirmed slot number to move queue pubkeys from the indexed set of
+        //  upcoming_queues to the combined set of due_queues.
+        let mut slots_to_delete = vec![];
+        for unix_timestamp_entry in self.unix_timestamps.iter() {
+            let slot_number = *unix_timestamp_entry.key();
+            if slot > slot_number {
+                let unix_timestamp = unix_timestamp_entry.value().clone();
+                match self.upcoming_queues.get(&unix_timestamp) {
+                    Some(queue_pubkeys) => {
+                        for queue_pubkey in queue_pubkeys.value().iter() {
+                            self.due_queues.insert(queue_pubkey.clone());
+                        }
+                    }
+                    None => (),
+                }
+                self.upcoming_queues.remove(&unix_timestamp);
+                slots_to_delete.push(slot_number);
+            }
+        }
+
+        // Delete all older slots and unix timestamps
+        for slot in slots_to_delete {
+            self.unix_timestamps.remove(&slot);
+        }
 
         // Process queues
-        match self.clone().unix_timestamps.get(&slot) {
-            Some(entry) => {
-                if last_ts < *entry.value() {
-                    self.process_queues_in_lookback_window(*entry.value())?;
-                }
-                Ok(())
-            }
-            None => Ok(()),
-        }
+        self.clone()
+            .spawn(|this| async move { this.process_due_queues() })?;
+
+        Ok(())
     }
 
     fn handle_clock_update(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
@@ -180,7 +196,7 @@ impl Inner {
     ) -> PluginResult<()> {
         match queue.exec_at {
             Some(exec_at) => {
-                self.queues
+                self.upcoming_queues
                     .entry(exec_at)
                     .and_modify(|v| {
                         v.insert(queue_pubkey);
@@ -196,19 +212,12 @@ impl Inner {
         Ok(())
     }
 
-    fn process_queues_in_lookback_window(self: Arc<Self>, unix_timestamp: i64) -> PluginResult<()> {
-        const LOOKBACK_WINDOW: i64 = 7; // Number of seconds to lookback
-        for t in (unix_timestamp - LOOKBACK_WINDOW)..=unix_timestamp {
-            match self.queues.get(&t) {
-                Some(entry) => {
-                    for queue_pubkey in entry.value().iter() {
-                        let pk = queue_pubkey.clone();
-                        self.clone()
-                            .spawn(|this| async move { this.process_queue(pk) })?;
-                    }
-                }
-                None => (),
-            }
+    fn process_due_queues(self: Arc<Self>) -> PluginResult<()> {
+        let due_queues = self.due_queues.iter();
+        for queue_pubkey_ref in due_queues {
+            let queue_pubkey = queue_pubkey_ref.clone();
+            self.clone()
+                .spawn(|this| async move { this.process_queue(queue_pubkey) })?;
         }
         Ok(())
     }
@@ -284,9 +293,7 @@ impl Inner {
         {
             Ok(sig) => {
                 info!("✅ {}", sig);
-                self.queues.entry(queue.exec_at.unwrap()).and_modify(|v| {
-                    v.remove(&queue_pubkey);
-                });
+                self.due_queues.remove(&queue_pubkey);
             }
             Err(err) => info!("❌ {:#?}", err),
         }
