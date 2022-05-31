@@ -150,16 +150,23 @@ pub struct Inner {
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         info!("Confirmed slot: {}", slot);
+        info!("Upcoming queues: {:#?}", self.upcoming_queues);
+        info!("Due queues: {:#?}", self.due_queues);
 
         // Use the confirmed slot number to move queue pubkeys from the indexed set of
         //  upcoming_queues to the combined set of due_queues.
         let mut slots_to_delete = vec![];
         for unix_timestamp_entry in self.unix_timestamps.iter() {
             let slot_number = *unix_timestamp_entry.key();
+            info!("Unix ts entry for slot {}", slot_number);
             if slot > slot_number {
                 let unix_timestamp = unix_timestamp_entry.value().clone();
                 match self.upcoming_queues.get(&unix_timestamp) {
                     Some(queue_pubkeys) => {
+                        info!(
+                            "Pushing queue pubkeys into due set for ts {}",
+                            unix_timestamp
+                        );
                         for queue_pubkey in queue_pubkeys.value().iter() {
                             self.due_queues.insert(queue_pubkey.clone());
                         }
