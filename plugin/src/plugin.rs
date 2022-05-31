@@ -65,16 +65,19 @@ impl GeyserPlugin for CronosPlugin {
         &mut self,
         account: ReplicaAccountInfoVersions,
         _slot: u64,
-        _is_startup: bool,
+        is_startup: bool,
     ) -> PluginResult<()> {
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
         };
-
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
         match CronosAccountUpdate::try_from(account_info) {
             Ok(account_update) => {
+                info!(
+                    "Account {:#?} updated. Is startup: {}",
+                    account_pubkey, is_startup
+                );
                 self.with_inner(|this| {
                     this.spawn(|this| async move {
                         match account_update {
@@ -145,6 +148,7 @@ pub struct Inner {
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         info!("Confirmed slot: {}", slot);
+        info!("Queues: {:#?}", self.queues);
 
         // Remove cached timestamp for the prev slot
         let prev_slot = slot - 1;
