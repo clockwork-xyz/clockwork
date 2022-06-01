@@ -1,3 +1,4 @@
+use cronos_sdk::ClientError;
 use solana_sdk::signature::Signature;
 
 use {
@@ -154,8 +155,6 @@ pub struct Inner {
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         info!("Confirmed slot: {}", confirmed_slot);
-        info!("Upcoming queues: {:#?}", self.pending_queues);
-        info!("Due queues: {:#?}", self.actionable_queues);
 
         // Look for the latest confirmed sysvar unix timestamp
         let mut confirmed_unix_timestamp = None;
@@ -322,6 +321,7 @@ impl Inner {
             }
             Err(err) => {
                 info!("❌ {:#?}", err);
+                self.actionable_queues.remove(&queue_pubkey);
 
                 // TODO Track failed attempts and purge the queue if
                 //      it fails too many times.
@@ -347,12 +347,10 @@ impl Inner {
     fn confirm_signature(
         self: Arc<Self>,
         signature: Signature,
-        _queue_pubkey: Pubkey,
-        _confirmed_slot: u64,
-        _attempted_slot: u64,
+        queue_pubkey: Pubkey,
+        confirmed_slot: u64,
+        attempted_slot: u64,
     ) -> PluginResult<()> {
-        info!("Confirming signature {}", signature);
-
         match self
             .client
             .get_signature_status(&signature)
@@ -365,35 +363,21 @@ impl Inner {
                         self.signatures.remove(&signature);
                     }
                     Err(err) => {
-                        // TODO
+                        // TODO Check the error. Should this be retried?
                         info!("Transaction {} failed with error {}", signature, err);
                     }
                 }
             }
             None => {
-                info!("Transaction {} has not been confirmed", signature);
+                // If many slots have passed since the tx was sent, then assume failure
+                //  and move the pubkey back into the set of actionable queues.
+                let timeout_threshold = 150;
+                if confirmed_slot > attempted_slot + timeout_threshold {
+                    self.signatures.remove(&signature);
+                    self.actionable_queues.insert(queue_pubkey);
+                }
             }
         }
-
-        // match self
-        //     .client
-        //     .confirm_transaction(&signature)
-        //     .map_err(|_| GeyserPluginError::Custom("Failed to get confirmation status".into()))?
-        // {
-        //     true => {
-        //         // This signature doesn't need to be checked again
-        //         self.signatures.remove(&signature);
-        //     }
-        //     false => {
-        //         // Noop for now
-        //         // TODO If this signature hasn't been confirmed for x slots, then it should be retried.
-        //         // let SLOT_TIMEOUT_THRESHOLD = 50;
-        //         // if confirmed_slot > attempted_slot + SLOT_TIMEOUT_THRESHOLD {
-        //         //     self.signatures.remove(signa)
-        //         // }
-        //     }
-        // }
-
         Ok(())
     }
 
