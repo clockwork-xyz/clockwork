@@ -192,7 +192,9 @@ impl Inner {
         self.clone()
             .spawn(|this| async move { this.process_actionable_queues() })?;
 
-        // TODO confirm signatures
+        // Confirm signatures
+        self.clone()
+            .spawn(|this| async move { this.confirm_signatures() })?;
 
         Ok(())
     }
@@ -244,19 +246,6 @@ impl Inner {
 
     fn process_queue(self: Arc<Self>, queue_pubkey: Pubkey) -> PluginResult<()> {
         info!("Processing queue {}", queue_pubkey);
-
-        // Check basic locking mechanism to prevent
-        // match self.actionable_queues.get(&queue_pubkey) {
-        //     Some(lock) => {
-        //         info!("Lock value {} {}", *lock.value(), queue_pubkey);
-        //         if *lock.value() {
-        //             return Ok(());
-        //         } else {
-        //             self.actionable_queues.insert(queue_pubkey, true);
-        //         }
-        //     }
-        //     None => return Ok(()),
-        // }
 
         // Get the queue
         let queue = self.client.get::<Queue>(&queue_pubkey).unwrap();
@@ -328,9 +317,37 @@ impl Inner {
             }
             Err(err) => {
                 info!("❌ {:#?}", err);
-                // self.actionable_queues.insert(queue_pubkey, false);
+
                 // TODO Track failed attempts and purge the queue if
                 //      it fails too many times.
+            }
+        }
+
+        Ok(())
+    }
+
+    fn confirm_signatures(self: Arc<Self>) -> PluginResult<()> {
+        for signature_ref in self.signatures.iter() {
+            let signature = signature_ref.clone();
+            self.clone()
+                .spawn(|this| async move { this.confirm_signature(signature) })?
+        }
+        Ok(())
+    }
+
+    fn confirm_signature(self: Arc<Self>, signature: Signature) -> PluginResult<()> {
+        info!("Confirming signature {}", signature);
+        match self
+            .client
+            .confirm_transaction(&signature)
+            .map_err(|_| GeyserPluginError::Custom("Failed to get confirmation status".into()))?
+        {
+            true => {
+                // This signature doesn't need to be checked again
+                self.signatures.remove(&signature);
+            }
+            false => {
+                // Noop for now
             }
         }
 
