@@ -51,7 +51,7 @@ impl GeyserPlugin for CronosPlugin {
                 .max_blocking_threads(10) // TODO add to config
                 .build()
                 .unwrap(),
-            actionable_queues: DashSet::new(),
+            actionable_queues: DashMap::new(),
             pending_queues: DashMap::new(),
             timestamps: DashMap::new(),
         }));
@@ -142,7 +142,7 @@ impl GeyserPlugin for CronosPlugin {
 pub struct Inner {
     pub client: Client,
     pub runtime: Runtime,
-    pub actionable_queues: DashSet<Pubkey>, // The set of queues that can be processed
+    pub actionable_queues: DashMap<Pubkey, bool>, // The set of queues that can be processed
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map of exec_at timestamps to the list of queues actionable at that moment
     pub timestamps: DashMap<u64, i64>, // Map of slot numbers to sysvar clock unix_timestamps
 }
@@ -174,7 +174,7 @@ impl Inner {
                 self.pending_queues.retain(|exec_at_i, queue_pubkeys_i| {
                     if *exec_at_i <= confirmed_unix_timestamp {
                         for queue_pubkey in queue_pubkeys_i.iter() {
-                            self.actionable_queues.insert(queue_pubkey.clone());
+                            self.actionable_queues.insert(queue_pubkey.clone(), false);
                         }
                         return false;
                     }
@@ -229,7 +229,7 @@ impl Inner {
         // Async process each queue
         let actionable_queues = self.actionable_queues.iter();
         for queue_pubkey_ref in actionable_queues {
-            let queue_pubkey = queue_pubkey_ref.clone();
+            let queue_pubkey = *queue_pubkey_ref.key();
             self.clone()
                 .spawn(|this| async move { this.process_queue(queue_pubkey) })?;
         }
@@ -238,6 +238,18 @@ impl Inner {
 
     fn process_queue(self: Arc<Self>, queue_pubkey: Pubkey) -> PluginResult<()> {
         info!("Processing queue {}", queue_pubkey);
+
+        // Check basic locking mechanism to prevent
+        match self.actionable_queues.get(&queue_pubkey) {
+            Some(lock) => {
+                if *lock.value() {
+                    return Ok(());
+                } else {
+                    self.actionable_queues.insert(queue_pubkey, true);
+                }
+            }
+            None => return Ok(()),
+        }
 
         // Get the queue
         let queue = self.client.get::<Queue>(&queue_pubkey).unwrap();
@@ -309,7 +321,12 @@ impl Inner {
                 info!("✅ {}", sig);
                 self.actionable_queues.remove(&queue_pubkey);
             }
-            Err(err) => info!("❌ {:#?}", err),
+            Err(err) => {
+                info!("❌ {:#?}", err);
+                self.actionable_queues.insert(queue_pubkey, false);
+
+                // TODO Track failed attempts and purge queue if it fails too many times
+            }
         }
 
         Ok(())
