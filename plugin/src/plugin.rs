@@ -242,6 +242,7 @@ impl Inner {
         // Check basic locking mechanism to prevent
         match self.actionable_queues.get(&queue_pubkey) {
             Some(lock) => {
+                info!("Lock value {} {}", *lock.value(), queue_pubkey);
                 if *lock.value() {
                     return Ok(());
                 } else {
@@ -267,11 +268,11 @@ impl Inner {
 
         // Build an ix for each task
         for i in 0..queue.task_count {
-            // Get the action account
+            // Get the task account
             let task_pubkey = Task::pda(queue_pubkey, i).0;
             let task = self.client.get::<Task>(&task_pubkey).unwrap();
 
-            // Build ix
+            // Build task_exec ix
             let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(
                 delegate_pubkey,
                 queue.manager,
@@ -308,7 +309,7 @@ impl Inner {
                 }
             }
 
-            // Add to the list
+            // Add ix to the list
             ixs.push(task_exec_ix)
         }
 
@@ -325,7 +326,8 @@ impl Inner {
                 info!("❌ {:#?}", err);
                 self.actionable_queues.insert(queue_pubkey, false);
 
-                // TODO Track failed attempts and purge queue if it fails too many times
+                // TODO Track failed attempts and purge the queue if
+                //      it fails too many times.
             }
         }
 
