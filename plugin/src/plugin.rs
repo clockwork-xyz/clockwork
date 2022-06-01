@@ -1,3 +1,5 @@
+use solana_sdk::signature::Signature;
+
 use {
     crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
     cronos_sdk::{
@@ -53,6 +55,7 @@ impl GeyserPlugin for CronosPlugin {
                 .unwrap(),
             actionable_queues: DashSet::new(),
             pending_queues: DashMap::new(),
+            signatures: DashSet::new(),
             timestamps: DashMap::new(),
         }));
         Ok(())
@@ -144,7 +147,8 @@ pub struct Inner {
     pub runtime: Runtime,
     pub actionable_queues: DashSet<Pubkey>, // The set of queues that can be processed
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map of exec_at timestamps to the list of queues actionable at that moment
-    pub timestamps: DashMap<u64, i64>, // Map of slot numbers to sysvar clock unix_timestamps
+    pub signatures: DashSet<Signature>, // The set of unconfirmed transaction signatures
+    pub timestamps: DashMap<u64, i64>,  // Map of slot numbers to sysvar clock unix_timestamps
 }
 
 impl Inner {
@@ -187,6 +191,8 @@ impl Inner {
         // Process queues
         self.clone()
             .spawn(|this| async move { this.process_actionable_queues() })?;
+
+        // TODO confirm signatures
 
         Ok(())
     }
@@ -314,13 +320,11 @@ impl Inner {
         }
 
         // Pack all ixs into a single tx
-        match self
-            .client
-            .sign_and_submit(ixs.as_slice(), &[self.client.payer()])
-        {
-            Ok(sig) => {
-                info!("✅ {}", sig);
+        match self.client.send(ixs.as_slice(), &[self.client.payer()]) {
+            Ok(signature) => {
+                info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);
+                self.signatures.insert(signature);
             }
             Err(err) => {
                 info!("❌ {:#?}", err);

@@ -29,7 +29,7 @@ pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
 
     // Sign and submit
     client
-        .sign_and_submit(&[queue_ix], &[client.payer()])
+        .send_and_confirm(&[queue_ix], &[client.payer()])
         .unwrap();
     get(client, &queue_pubkey)
 }

@@ -76,7 +76,7 @@ pub fn set(
         settings,
     );
 
-    client.sign_and_submit(&[ix], &[client.payer()]).unwrap();
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
 }

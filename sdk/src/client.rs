@@ -77,7 +77,7 @@ impl Client {
         Ok(signature)
     }
 
-    pub fn sign_and_submit<T: Signers>(
+    pub fn send_and_confirm<T: Signers>(
         &self,
         ixs: &[Instruction],
         signers: &T,
@@ -85,6 +85,12 @@ impl Client {
         let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.latest_blockhash()?);
         Ok(self.send_and_confirm_transaction(&tx)?)
+    }
+
+    pub fn send<T: Signers>(&self, ixs: &[Instruction], signers: &T) -> ClientResult<Signature> {
+        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
+        tx.sign(signers, self.latest_blockhash()?);
+        Ok(self.send_transaction(&tx)?)
     }
 }
 

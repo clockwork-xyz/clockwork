@@ -22,7 +22,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
 
     // Submit tx
     client
-        .sign_and_submit(&[ix_a, ix_b, ix_c, ix_d, ix_e, ix_f], &[client.payer()])
+        .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d, ix_e, ix_f], &[client.payer()])
         .unwrap();
     Ok(())
 }
