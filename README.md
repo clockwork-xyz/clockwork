@@ -30,7 +30,11 @@
 
 ## Deployments
 
-| Program                                                           | Devnet                                         | Mainnet Beta                                   |
-| ----------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
-| [v0.1.8](https://github.com/cronos-so/cronos/releases/tag/v0.1.8) | `CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW` | `CronpZj5NbHj2Nb6WwEtf6A9anty9JfEQ1RnGoshQBaW` |
+| Program                                          | Devnet                                         | Mainnet Beta                     |
+| ------------------------------------------------ | ---------------------------------------------- | ---------------------------------|
+| Health                                           | `Ad3QowCe3o6oPTw4RHYVcEuuj2Cdmz64VR4gmjXJQAdk` |                                  |
+| Network                                          | `tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z`  |                                  |
+| Pool                                             | `DuThutjVqp1a3BDxG78anLUVf6Q6r2cCrtWfNhvy5j25` |                                  |
+| Scheduler                                        | `6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx` |                                  |
+
 
