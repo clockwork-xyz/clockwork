@@ -55,7 +55,7 @@ impl GeyserPlugin for CronosPlugin {
                 .unwrap(),
             actionable_queues: DashSet::new(),
             pending_queues: DashMap::new(),
-            signatures: DashSet::new(),
+            signatures: DashMap::new(),
             timestamps: DashMap::new(),
         }));
         Ok(())
@@ -146,25 +146,25 @@ pub struct Inner {
     pub client: Client,
     pub runtime: Runtime,
     pub actionable_queues: DashSet<Pubkey>, // The set of queues that can be processed
-    pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map of exec_at timestamps to the list of queues actionable at that moment
-    pub signatures: DashSet<Signature>, // The set of unconfirmed transaction signatures
-    pub timestamps: DashMap<u64, i64>,  // Map of slot numbers to sysvar clock unix_timestamps
+    pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map from exec_at timestamps to the list of queues actionable at that moment
+    pub signatures: DashMap<Signature, (Pubkey, u64)>, // Map from tx signatures to a (queue pubkey, slot) tuple. The slot represents when the tx was sent.
+    pub timestamps: DashMap<u64, i64>, // Map of slot numbers to sysvar clock unix_timestamps
 }
 
 impl Inner {
-    fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        info!("Confirmed slot: {}", slot);
+    fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+        info!("Confirmed slot: {}", confirmed_slot);
         info!("Upcoming queues: {:#?}", self.pending_queues);
         info!("Due queues: {:#?}", self.actionable_queues);
 
         // Look for the latest confirmed sysvar unix timestamp
         let mut confirmed_unix_timestamp = None;
-        self.timestamps.retain(|slot_i, unix_timestamp_i| {
-            if *slot_i == slot {
-                confirmed_unix_timestamp = Some(unix_timestamp_i.clone());
+        self.timestamps.retain(|slot, unix_timestamp| {
+            if *slot == confirmed_slot {
+                confirmed_unix_timestamp = Some(unix_timestamp.clone());
                 return true;
             }
-            *slot_i > slot
+            *slot > confirmed_slot
         });
 
         // Move all pending queues that are due to the set of actionable queues.
@@ -175,9 +175,9 @@ impl Inner {
         //      However before doing this, consider if retain() can be processed in parallel...
         match confirmed_unix_timestamp {
             Some(confirmed_unix_timestamp) => {
-                self.pending_queues.retain(|exec_at_i, queue_pubkeys_i| {
-                    if *exec_at_i <= confirmed_unix_timestamp {
-                        for queue_pubkey in queue_pubkeys_i.iter() {
+                self.pending_queues.retain(|exec_at, queue_pubkeys| {
+                    if *exec_at <= confirmed_unix_timestamp {
+                        for queue_pubkey in queue_pubkeys.iter() {
                             self.actionable_queues.insert(queue_pubkey.clone());
                         }
                         return false;
@@ -190,11 +190,11 @@ impl Inner {
 
         // Process queues
         self.clone()
-            .spawn(|this| async move { this.process_actionable_queues() })?;
+            .spawn(|this| async move { this.process_actionable_queues(confirmed_slot) })?;
 
         // Confirm signatures
         self.clone()
-            .spawn(|this| async move { this.confirm_signatures() })?;
+            .spawn(|this| async move { this.confirm_signatures(confirmed_slot) })?;
 
         Ok(())
     }
@@ -227,7 +227,7 @@ impl Inner {
         Ok(())
     }
 
-    fn process_actionable_queues(self: Arc<Self>) -> PluginResult<()> {
+    fn process_actionable_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         // Error early if the node is not healthy
         self.client.get_health().map_err(|_| {
             info!("Node is not healthy");
@@ -239,12 +239,16 @@ impl Inner {
         for queue_pubkey_ref in actionable_queues {
             let queue_pubkey = *queue_pubkey_ref.key();
             self.clone()
-                .spawn(|this| async move { this.process_queue(queue_pubkey) })?;
+                .spawn(|this| async move { this.process_queue(queue_pubkey, confirmed_slot) })?;
         }
         Ok(())
     }
 
-    fn process_queue(self: Arc<Self>, queue_pubkey: Pubkey) -> PluginResult<()> {
+    fn process_queue(
+        self: Arc<Self>,
+        queue_pubkey: Pubkey,
+        confirmed_slot: u64,
+    ) -> PluginResult<()> {
         info!("Processing queue {}", queue_pubkey);
 
         // Get the queue
@@ -313,7 +317,8 @@ impl Inner {
             Ok(signature) => {
                 info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);
-                self.signatures.insert(signature);
+                self.signatures
+                    .insert(signature, (queue_pubkey, confirmed_slot));
             }
             Err(err) => {
                 info!("❌ {:#?}", err);
@@ -326,30 +331,68 @@ impl Inner {
         Ok(())
     }
 
-    fn confirm_signatures(self: Arc<Self>) -> PluginResult<()> {
+    fn confirm_signatures(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         for signature_ref in self.signatures.iter() {
-            let signature = signature_ref.clone();
-            self.clone()
-                .spawn(|this| async move { this.confirm_signature(signature) })?
+            let signature = *signature_ref.key();
+            let tuple = signature_ref.value();
+            let queue_pubkey = tuple.0;
+            let attempted_slot = tuple.1;
+            self.clone().spawn(|this| async move {
+                this.confirm_signature(signature, queue_pubkey, confirmed_slot, attempted_slot)
+            })?
         }
         Ok(())
     }
 
-    fn confirm_signature(self: Arc<Self>, signature: Signature) -> PluginResult<()> {
+    fn confirm_signature(
+        self: Arc<Self>,
+        signature: Signature,
+        _queue_pubkey: Pubkey,
+        _confirmed_slot: u64,
+        _attempted_slot: u64,
+    ) -> PluginResult<()> {
         info!("Confirming signature {}", signature);
+
         match self
             .client
-            .confirm_transaction(&signature)
+            .get_signature_status(&signature)
             .map_err(|_| GeyserPluginError::Custom("Failed to get confirmation status".into()))?
         {
-            true => {
-                // This signature doesn't need to be checked again
-                self.signatures.remove(&signature);
+            Some(res) => {
+                match res {
+                    Ok(()) => {
+                        // This signature doesn't need to be checked again
+                        self.signatures.remove(&signature);
+                    }
+                    Err(err) => {
+                        // TODO
+                        info!("Transaction {} failed with error {}", signature, err);
+                    }
+                }
             }
-            false => {
-                // Noop for now
+            None => {
+                info!("Transaction {} has not been confirmed", signature);
             }
         }
+
+        // match self
+        //     .client
+        //     .confirm_transaction(&signature)
+        //     .map_err(|_| GeyserPluginError::Custom("Failed to get confirmation status".into()))?
+        // {
+        //     true => {
+        //         // This signature doesn't need to be checked again
+        //         self.signatures.remove(&signature);
+        //     }
+        //     false => {
+        //         // Noop for now
+        //         // TODO If this signature hasn't been confirmed for x slots, then it should be retried.
+        //         // let SLOT_TIMEOUT_THRESHOLD = 50;
+        //         // if confirmed_slot > attempted_slot + SLOT_TIMEOUT_THRESHOLD {
+        //         //     self.signatures.remove(signa)
+        //         // }
+        //     }
+        // }
 
         Ok(())
     }
