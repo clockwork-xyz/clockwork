@@ -1,6 +1,3 @@
-use cronos_sdk::ClientError;
-use solana_sdk::signature::Signature;
-
 use {
     crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
     cronos_sdk::{
@@ -18,6 +15,7 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
+    solana_sdk::signature::Signature,
     std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
