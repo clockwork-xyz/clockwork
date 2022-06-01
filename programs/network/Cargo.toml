@@ -1,6 +1,6 @@
 [package]
 name = "cronos-network"
-version = "0.2.0-alpha4"
+version = "0.2.0-alpha5"
 description = "Cronos networking protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = { features = ["mint", "token"], version = "0.24.2" }
-cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0-alpha4" }
-cronos-scheduler = { path = "../scheduler", features = ["cpi"], version = "0.2.0-alpha4" }
+cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0-alpha5" }
+cronos-scheduler = { path = "../scheduler", features = ["cpi"], version = "0.2.0-alpha5" }
