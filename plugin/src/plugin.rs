@@ -51,9 +51,9 @@ impl GeyserPlugin for CronosPlugin {
                 .max_blocking_threads(10) // TODO add to config
                 .build()
                 .unwrap(),
-            due_queues: DashSet::new(),
-            upcoming_queues: DashMap::new(),
-            unix_timestamps: DashMap::new(),
+            actionable_queues: DashSet::new(),
+            pending_queues: DashMap::new(),
+            timestamps: DashMap::new(),
         }));
         Ok(())
     }
@@ -81,7 +81,7 @@ impl GeyserPlugin for CronosPlugin {
                             CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
                             CronosAccountUpdate::Queue { queue } => {
                                 info!(
-                                    "Queue {:#?} updated. Is startup: {}",
+                                    "Caching queue {:#?}. Is startup: {}",
                                     account_pubkey, is_startup
                                 );
                                 this.handle_queue_update(queue, account_pubkey)
@@ -142,57 +142,57 @@ impl GeyserPlugin for CronosPlugin {
 pub struct Inner {
     pub client: Client,
     pub runtime: Runtime,
-    pub due_queues: DashSet<Pubkey>,
-    pub upcoming_queues: DashMap<i64, DashSet<Pubkey>>,
-    pub unix_timestamps: DashMap<u64, i64>,
+    pub actionable_queues: DashSet<Pubkey>, // The set of queues that can be processed
+    pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map of exec_at timestamps to the list of queues actionable at that moment
+    pub timestamps: DashMap<u64, i64>, // Map of slot numbers to sysvar clock unix_timestamps
 }
 
 impl Inner {
     fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         info!("Confirmed slot: {}", slot);
-        info!("Upcoming queues: {:#?}", self.upcoming_queues);
-        info!("Due queues: {:#?}", self.due_queues);
+        info!("Upcoming queues: {:#?}", self.pending_queues);
+        info!("Due queues: {:#?}", self.actionable_queues);
 
-        // Use the confirmed slot number to move queue pubkeys from the indexed set of
-        //  upcoming_queues to the combined set of due_queues.
-        let mut slots_to_delete = vec![];
-        for unix_timestamp_entry in self.unix_timestamps.iter() {
-            let slot_number = *unix_timestamp_entry.key();
-            info!("Unix ts entry for slot {}", slot_number);
-            if slot > slot_number {
-                let unix_timestamp = unix_timestamp_entry.value().clone();
-                match self.upcoming_queues.get(&unix_timestamp) {
-                    Some(queue_pubkeys) => {
-                        info!(
-                            "Pushing queue pubkeys into due set for ts {}",
-                            unix_timestamp
-                        );
-                        for queue_pubkey in queue_pubkeys.value().iter() {
-                            self.due_queues.insert(queue_pubkey.clone());
-                        }
-                    }
-                    None => (),
-                }
-                self.upcoming_queues.remove(&unix_timestamp);
-                slots_to_delete.push(slot_number);
+        // Look for the latest confirmed sysvar unix timestamp
+        let mut confirmed_unix_timestamp = None;
+        self.timestamps.retain(|slot_i, unix_timestamp_i| {
+            if *slot_i == slot {
+                confirmed_unix_timestamp = Some(unix_timestamp_i.clone());
+                return true;
             }
-        }
+            *slot_i > slot
+        });
 
-        // Delete all older slots and unix timestamps
-        for slot in slots_to_delete {
-            self.unix_timestamps.remove(&slot);
+        // Move all pending queues that are due to the set of actionable queues.
+        // TODO By maintaining a sorted list of the pending_queue's keys,
+        //      this operation can possibly be made much cheaper. By iterating
+        //      through the sorted list up to the confirmed unix timestamp, we
+        //      save compute cycles by not iterating over future exec_at timestamps.
+        //      However before doing this, consider if retain() can be processed in parallel...
+        match confirmed_unix_timestamp {
+            Some(confirmed_unix_timestamp) => {
+                self.pending_queues.retain(|exec_at_i, queue_pubkeys_i| {
+                    if *exec_at_i <= confirmed_unix_timestamp {
+                        for queue_pubkey in queue_pubkeys_i.iter() {
+                            self.actionable_queues.insert(queue_pubkey.clone());
+                        }
+                        return false;
+                    }
+                    true
+                });
+            }
+            None => (),
         }
 
         // Process queues
         self.clone()
-            .spawn(|this| async move { this.process_due_queues() })?;
+            .spawn(|this| async move { this.process_actionable_queues() })?;
 
         Ok(())
     }
 
     fn handle_clock_update(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
-        self.unix_timestamps
-            .insert(clock.slot, clock.unix_timestamp);
+        self.timestamps.insert(clock.slot, clock.unix_timestamp);
         Ok(())
     }
 
@@ -203,7 +203,7 @@ impl Inner {
     ) -> PluginResult<()> {
         match queue.exec_at {
             Some(exec_at) => {
-                self.upcoming_queues
+                self.pending_queues
                     .entry(exec_at)
                     .and_modify(|v| {
                         v.insert(queue_pubkey);
@@ -219,9 +219,9 @@ impl Inner {
         Ok(())
     }
 
-    fn process_due_queues(self: Arc<Self>) -> PluginResult<()> {
-        let due_queues = self.due_queues.iter();
-        for queue_pubkey_ref in due_queues {
+    fn process_actionable_queues(self: Arc<Self>) -> PluginResult<()> {
+        let actionable_queues = self.actionable_queues.iter();
+        for queue_pubkey_ref in actionable_queues {
             let queue_pubkey = queue_pubkey_ref.clone();
             self.clone()
                 .spawn(|this| async move { this.process_queue(queue_pubkey) })?;
@@ -300,7 +300,7 @@ impl Inner {
         {
             Ok(sig) => {
                 info!("✅ {}", sig);
-                self.due_queues.remove(&queue_pubkey);
+                self.actionable_queues.remove(&queue_pubkey);
             }
             Err(err) => info!("❌ {:#?}", err),
         }
