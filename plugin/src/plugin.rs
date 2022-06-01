@@ -327,8 +327,6 @@ impl Inner {
             Err(err) => {
                 info!("❌ {:#?}", err);
                 self.actionable_queues.remove(&queue_pubkey);
-
-                // TODO Track failed attempts and purge the queue if it fails too many times.
             }
         }
 
