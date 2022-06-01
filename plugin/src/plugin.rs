@@ -220,6 +220,13 @@ impl Inner {
     }
 
     fn process_actionable_queues(self: Arc<Self>) -> PluginResult<()> {
+        // Error early if the node is not healthy
+        self.client.get_health().map_err(|_| {
+            info!("Node is not healthy");
+            return GeyserPluginError::Custom("Node is not healthy".into());
+        })?;
+
+        // Async process each queue
         let actionable_queues = self.actionable_queues.iter();
         for queue_pubkey_ref in actionable_queues {
             let queue_pubkey = queue_pubkey_ref.clone();
