@@ -767,7 +767,7 @@ name = "cronos-cli"
 version = "0.2.0-alpha4"
 dependencies = [
  "clap 3.1.18",
- "cronos-sdk",
+ "cronos-client",
  "serde",
  "serde_json",
  "solana-clap-utils",
@@ -776,6 +776,22 @@ dependencies = [
  "spl-memo",
  "thiserror",
  "version",
+]
+
+[[package]]
+name = "cronos-client"
+version = "0.2.0-alpha4"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bincode",
+ "cronos-health",
+ "cronos-network",
+ "cronos-pool",
+ "cronos-scheduler",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]
@@ -800,7 +816,7 @@ name = "cronos-metrics"
 version = "0.2.0-alpha4"
 dependencies = [
  "chrono",
- "cronos-sdk",
+ "cronos-client",
  "dotenv",
  "elasticsearch",
  "serde_json",
@@ -835,30 +851,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "cronos-sdk"
-version = "0.2.0-alpha4"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bincode",
- "cronos-health",
- "cronos-network",
- "cronos-pool",
- "cronos-scheduler",
- "solana-client",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
 name = "cronos-stress"
 version = "0.2.0-alpha4"
 dependencies = [
  "base64 0.13.0",
  "chrono",
  "clap 3.1.18",
+ "cronos-client",
  "cronos-cron",
- "cronos-sdk",
  "serde",
  "serde_json",
  "solana-clap-utils",
@@ -875,7 +875,7 @@ version = "0.2.0-alpha4"
 dependencies = [
  "bincode",
  "bs58 0.4.0",
- "cronos-sdk",
+ "cronos-client",
  "dashmap 5.3.4",
  "log",
  "prost",

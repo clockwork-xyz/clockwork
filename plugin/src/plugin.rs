@@ -1,6 +1,6 @@
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
-    cronos_sdk::{
+    cronos_client::{
         scheduler::state::{Queue, Task},
         Client,
     },
@@ -262,7 +262,7 @@ impl Inner {
 
         // Build queue_start ix
         let delegate_pubkey = self.client.payer_pubkey();
-        let queue_start_ix = cronos_sdk::scheduler::instruction::queue_start(
+        let queue_start_ix = cronos_client::scheduler::instruction::queue_start(
             delegate_pubkey,
             queue.manager,
             queue_pubkey,
@@ -278,7 +278,7 @@ impl Inner {
             let task = self.client.get::<Task>(&task_pubkey).unwrap();
 
             // Build task_exec ix
-            let mut task_exec_ix = cronos_sdk::scheduler::instruction::task_exec(
+            let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
                 delegate_pubkey,
                 queue.manager,
                 queue_pubkey,
@@ -303,7 +303,7 @@ impl Inner {
 
                         // Inject the delegate pubkey as the Cronos "payer" account
                         let mut payer_pubkey = acc.pubkey;
-                        if acc.pubkey == cronos_sdk::scheduler::payer::ID {
+                        if acc.pubkey == cronos_client::scheduler::payer::ID {
                             payer_pubkey = delegate_pubkey;
                         }
                         task_exec_ix.accounts.push(match acc.is_writable {

@@ -1,7 +1,7 @@
 use {
     crate::cli::CliError,
-    cronos_sdk::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
-    cronos_sdk::Client,
+    cronos_client::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
+    cronos_client::Client,
     solana_sdk::{
         pubkey::Pubkey,
         signature::{Keypair, Signer},
@@ -10,7 +10,7 @@ use {
 
 pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
     let node = client
-        .get::<cronos_sdk::network::state::Node>(address)
+        .get::<cronos_client::network::state::Node>(address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("{:#?}", node);
     Ok(())
@@ -39,22 +39,22 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
-    let manager_pubkey = cronos_sdk::scheduler::state::Manager::pda(authority_pubkey).0;
-    let cycler_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(manager_pubkey, 0).0;
-    let cycler_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
+    let manager_pubkey = cronos_client::scheduler::state::Manager::pda(authority_pubkey).0;
+    let cycler_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
+    let cycler_task_pubkey = cronos_client::scheduler::state::Task::pda(
         cycler_queue_pubkey,
         registry_data.node_count.into(),
     )
     .0;
 
-    let snapshot_queue_pubkey = cronos_sdk::scheduler::state::Queue::pda(manager_pubkey, 1).0;
-    let snapshot_task_pubkey = cronos_sdk::scheduler::state::Task::pda(
+    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 1).0;
+    let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pda(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
     )
     .0;
 
-    let ix = cronos_sdk::network::instruction::node_register(
+    let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
         cycler_queue_pubkey,
@@ -86,7 +86,7 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
     // Build ix
     let signer = client.payer();
     let node_pubkey = Node::pda(delegate).0;
-    let ix = cronos_sdk::network::instruction::node_stake(
+    let ix = cronos_client::network::instruction::node_stake(
         amount,
         config_pubkey,
         delegate,

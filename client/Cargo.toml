@@ -1,18 +1,18 @@
 [package]
-name = "cronos-sdk"
+name = "cronos-client"
 version = "0.2.0-alpha4"
 edition = "2021"
-description = "Cronos SDK"
+description = "Cronos client"
 license = "AGPL-3.0-or-later"
 homepage = "https://cronos.so"
-repository = "https://github.com/cronos-so/sdk"
-documentation = "https://docs.rs/cronos-sdk"
+repository = "https://github.com/cronos-so/client"
+documentation = "https://docs.rs/cronos-client"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_sdk"
+name = "cronos_client"
 
 [dependencies]
 anchor-lang = "0.24.2"
@@ -26,5 +26,3 @@ solana-client = "1.10.19"
 solana-sdk = "1.10.19"
 thiserror = "1.0.31"
 
-[features]
-client = []

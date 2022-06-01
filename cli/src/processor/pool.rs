@@ -1,6 +1,6 @@
 use {
     crate::cli::CliError,
-    cronos_sdk::{pool::state::Pool, Client},
+    cronos_client::{pool::state::Pool, Client},
 };
 
 pub fn get(client: &Client) -> Result<(), CliError> {

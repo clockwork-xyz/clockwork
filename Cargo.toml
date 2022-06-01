@@ -1,11 +1,11 @@
 [workspace]
 members = [
     "cli",
+    "client",
     "cron",
     "metrics",
     "plugin",
     "programs/*",
-    "sdk",
     "stress"
 ]
 

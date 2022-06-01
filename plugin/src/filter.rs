@@ -1,5 +1,5 @@
 use bincode::deserialize;
-use cronos_sdk::scheduler::state::Queue;
+use cronos_client::scheduler::state::Queue;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
@@ -25,7 +25,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for CronosAccountUpdate {
         }
 
         // If the account is a Cronos queue, return it
-        if Pubkey::new(account_info.owner).eq(&cronos_sdk::scheduler::ID)
+        if Pubkey::new(account_info.owner).eq(&cronos_client::scheduler::ID)
             && account_info.data.len() > 8
         {
             return Ok(CronosAccountUpdate::Queue {

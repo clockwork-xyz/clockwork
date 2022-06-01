@@ -3,7 +3,7 @@ use crate::{
     config::CliConfig,
 };
 use clap::ArgMatches;
-use cronos_sdk::Client;
+use cronos_client::Client;
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     // Parse command and config

@@ -1,6 +1,6 @@
 use {
     crate::cli::CliError,
-    cronos_sdk::{
+    cronos_client::{
         scheduler::state::{Manager, Queue},
         Client,
     },
@@ -19,7 +19,7 @@ pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
 
     // Build queue_create ix.
     let queue_pubkey = Queue::pda(manager_pubkey, manager_data.queue_count).0;
-    let queue_ix = cronos_sdk::scheduler::instruction::queue_new(
+    let queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority_pubkey,
         manager_pubkey,
         authority_pubkey,

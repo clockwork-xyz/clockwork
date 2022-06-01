@@ -1,10 +1,10 @@
 use {
     crate::{cli::CliError, parser::JsonInstructionData},
     chrono::{prelude::*, Duration},
+    cronos_client::scheduler::events::TaskExecuted,
+    cronos_client::scheduler::state::{Manager, Queue, Task},
+    cronos_client::Client,
     cronos_cron::Schedule,
-    cronos_sdk::scheduler::events::TaskExecuted,
-    cronos_sdk::scheduler::state::{Manager, Queue, Task},
-    cronos_sdk::Client,
     serde_json::json,
     solana_client::{
         pubsub_client::PubsubClient,
@@ -31,7 +31,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     // Create manager
     let authority = &Keypair::new();
     let manager_pubkey = Manager::pda(authority.pubkey()).0;
-    let ix = cronos_sdk::scheduler::instruction::manager_new(
+    let ix = cronos_client::scheduler::instruction::manager_new(
         authority.pubkey(),
         authority.pubkey(),
         manager_pubkey,
@@ -92,7 +92,7 @@ fn listen_for_events(
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
-        RpcTransactionLogsFilter::Mentions(vec![cronos_sdk::scheduler::ID.to_string()]),
+        RpcTransactionLogsFilter::Mentions(vec![cronos_client::scheduler::ID.to_string()]),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
@@ -163,7 +163,7 @@ fn create_queue_ix(
         next_minute.weekday(),
         next_minute.year()
     );
-    let create_queue_ix = cronos_sdk::scheduler::instruction::queue_new(
+    let create_queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority.pubkey(),
         manager_pubkey,
         authority.pubkey(),
@@ -209,7 +209,7 @@ fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruc
     let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
     let task_pubkey = Task::pda(queue_pubkey, task_id).0;
     let memo_ix = build_memo_ix(&manager_pubkey);
-    cronos_sdk::scheduler::instruction::task_new(
+    cronos_client::scheduler::instruction::task_new(
         authority.pubkey(),
         vec![memo_ix],
         manager_pubkey,
