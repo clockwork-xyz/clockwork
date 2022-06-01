@@ -39,7 +39,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     client
         .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
         .unwrap();
-    client.sign_and_submit(&[ix], &[authority]).unwrap();
+    client.send_and_confirm(&[ix], &[authority]).unwrap();
 
     // TODO Schedule tasks asynchronously
 
@@ -47,7 +47,9 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     for i in 0..num_tasks_parallel {
         let ix_a = create_queue_ix(&authority, recurrence, &mut expected_exec_ats, i.into());
         let ix_b = create_task_ix(&authority, i.into(), 0);
-        client.sign_and_submit(&[ix_a, ix_b], &[authority]).unwrap();
+        client
+            .send_and_confirm(&[ix_a, ix_b], &[authority])
+            .unwrap();
     }
 
     // Create a queue for the serial tasks
@@ -68,7 +70,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
                 i.into(),
             ));
         }
-        client.sign_and_submit(ixs, &[authority]).unwrap();
+        client.send_and_confirm(ixs, &[authority]).unwrap();
     }
 
     // Collect and report test results

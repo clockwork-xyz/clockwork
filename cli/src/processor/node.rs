@@ -70,7 +70,7 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
         snapshot_queue_pubkey,
         snapshot_task_pubkey,
     );
-    client.sign_and_submit(&[ix], &[owner, &delegate]).unwrap();
+    client.send_and_confirm(&[ix], &[owner, &delegate]).unwrap();
     get(client, &node_pubkey)
 }
 
@@ -95,6 +95,6 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
         signer.pubkey(),
     );
 
-    client.sign_and_submit(&[ix], &[client.payer()]).unwrap();
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, &node_pubkey)
 }

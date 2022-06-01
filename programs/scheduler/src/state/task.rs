@@ -205,7 +205,7 @@ impl TaskAccount for Account<'_, Task> {
             .delegate_fee
             .checked_add(delegate_reimbursement)
             .unwrap();
-        **queue.to_account_info().try_borrow_mut_lamports()? = queue
+        **manager.to_account_info().try_borrow_mut_lamports()? = manager
             .to_account_info()
             .lamports()
             .checked_sub(total_delegate_fee)
@@ -217,7 +217,7 @@ impl TaskAccount for Account<'_, Task> {
             .unwrap();
 
         // Pay program fees
-        **queue.to_account_info().try_borrow_mut_lamports()? = queue
+        **manager.to_account_info().try_borrow_mut_lamports()? = manager
             .to_account_info()
             .lamports()
             .checked_sub(config.program_fee)

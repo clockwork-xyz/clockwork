@@ -17,3 +17,4 @@ docker-target
 **/tsconfig.tsbuildinfo
 *.diff
 **/keypair.json
+**/*.log

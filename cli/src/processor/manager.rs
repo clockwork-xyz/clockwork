@@ -7,7 +7,7 @@ pub fn create(client: &Client) -> Result<(), CliError> {
     let authority = client.payer_pubkey();
     let manager_pubkey = cronos_sdk::scheduler::state::Manager::pda(authority).0;
     let ix = cronos_sdk::scheduler::instruction::manager_new(authority, authority, manager_pubkey);
-    client.sign_and_submit(&[ix], &[client.payer()]).unwrap();
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, &manager_pubkey)
 }
 
