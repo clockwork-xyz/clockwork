@@ -1,5 +1,5 @@
 use {
-    crate::{config::Config as PluginConfig, filter::CronosAccountUpdate},
+    crate::{config::PluginConfig, filter::CronosAccountUpdate},
     cronos_sdk::{
         scheduler::state::{Queue, Task},
         Client,
@@ -44,12 +44,13 @@ impl GeyserPlugin for CronosPlugin {
         solana_logger::setup_with_default("info");
         let config = PluginConfig::read_from(config_file)?;
         self.inner = Some(Arc::new(Inner {
+            config: config.clone(),
             client: Client::new(config.keypath, config.rpc_url),
             runtime: Builder::new_multi_thread()
                 .enable_all()
                 .thread_name("cronos-plugin")
-                .worker_threads(10) // TODO add to config
-                .max_blocking_threads(10) // TODO add to config
+                .worker_threads(config.worker_threads)
+                .max_blocking_threads(config.worker_threads)
                 .build()
                 .unwrap(),
             actionable_queues: DashSet::new(),
@@ -140,6 +141,7 @@ impl GeyserPlugin for CronosPlugin {
 #[derive(Debug)]
 pub struct Inner {
     pub client: Client,
+    pub config: PluginConfig,
     pub runtime: Runtime,
 
     // The set of queues that can be processed
@@ -373,8 +375,7 @@ impl Inner {
             None => {
                 // If many slots have passed since the tx was sent, then assume failure
                 //  and move the pubkey back into the set of actionable queues.
-                let timeout_threshold = 150;
-                if confirmed_slot > attempted_slot + timeout_threshold {
+                if confirmed_slot > attempted_slot + self.config.slot_timeout_threshold {
                     self.signatures.remove(&signature);
                     self.actionable_queues.insert(queue_pubkey);
                 }

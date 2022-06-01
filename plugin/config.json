@@ -1,5 +1,7 @@
 {
   "libpath": "../target/debug/libcronos_plugin.dylib",
   "keypath": "./test-ledger/validator-keypair.json",
-  "rpc_url": "http://127.0.0.1:8899"
+  "rpc_url": "http://127.0.0.1:8899",
+  "slot_timeout_threshold": 150,
+  "worker_threads": 10
 }

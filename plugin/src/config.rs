@@ -7,22 +7,26 @@ use {
 };
 
 /// Plugin config.
-#[derive(Deserialize)]
-pub struct Config {
+#[derive(Clone, Debug, Deserialize)]
+pub struct PluginConfig {
     pub keypath: String,
     pub rpc_url: String,
+    pub slot_timeout_threshold: u64,
+    pub worker_threads: usize,
 }
 
-impl Default for Config {
+impl Default for PluginConfig {
     fn default() -> Self {
         Self {
             keypath: "".to_string(),
             rpc_url: "http://127.0.0.1:8899".to_string(),
+            slot_timeout_threshold: 150,
+            worker_threads: 10,
         }
     }
 }
 
-impl Config {
+impl PluginConfig {
     /// Read plugin from JSON file.
     pub fn read_from<P: AsRef<Path>>(config_path: P) -> PluginResult<Self> {
         let file = File::open(config_path)?;
