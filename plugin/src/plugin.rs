@@ -68,7 +68,7 @@ impl GeyserPlugin for CronosPlugin {
         &mut self,
         account: ReplicaAccountInfoVersions,
         _slot: u64,
-        is_startup: bool,
+        _is_startup: bool,
     ) -> PluginResult<()> {
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
@@ -82,10 +82,7 @@ impl GeyserPlugin for CronosPlugin {
                         match account_update {
                             CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
                             CronosAccountUpdate::Queue { queue } => {
-                                info!(
-                                    "Caching queue {:#?}. Is startup: {}",
-                                    account_pubkey, is_startup
-                                );
+                                info!("Caching queue {:#?}", account_pubkey);
                                 this.handle_queue_update(queue, account_pubkey)
                             }
                         }
@@ -144,10 +141,20 @@ impl GeyserPlugin for CronosPlugin {
 pub struct Inner {
     pub client: Client,
     pub runtime: Runtime,
-    pub actionable_queues: DashSet<Pubkey>, // The set of queues that can be processed
-    pub pending_queues: DashMap<i64, DashSet<Pubkey>>, // Map from exec_at timestamps to the list of queues actionable at that moment
-    pub signatures: DashMap<Signature, (Pubkey, u64)>, // Map from tx signatures to a (queue pubkey, slot) tuple. The slot represents when the tx was sent.
-    pub timestamps: DashMap<u64, i64>, // Map of slot numbers to sysvar clock unix_timestamps
+
+    // The set of queues that can be processed
+    pub actionable_queues: DashSet<Pubkey>,
+
+    // Map from exec_at timestamps to the list of queues scheduled
+    //  for that moment.
+    pub pending_queues: DashMap<i64, DashSet<Pubkey>>,
+
+    // Map from tx signatures to a (queue pubkey, slot) tuple. The slot
+    //  represents the latest confirmed slot at the time the tx was sent.
+    pub signatures: DashMap<Signature, (Pubkey, u64)>,
+
+    // Map from slot numbers to sysvar clock unix_timestamps
+    pub timestamps: DashMap<u64, i64>,
 }
 
 impl Inner {
@@ -321,8 +328,7 @@ impl Inner {
                 info!("❌ {:#?}", err);
                 self.actionable_queues.remove(&queue_pubkey);
 
-                // TODO Track failed attempts and purge the queue if
-                //      it fails too many times.
+                // TODO Track failed attempts and purge the queue if it fails too many times.
             }
         }
 
@@ -336,7 +342,7 @@ impl Inner {
             let queue_pubkey = tuple.0;
             let attempted_slot = tuple.1;
             self.clone().spawn(|this| async move {
-                this.confirm_signature(signature, queue_pubkey, confirmed_slot, attempted_slot)
+                this.confirm_signature(attempted_slot, confirmed_slot, queue_pubkey, signature)
             })?
         }
         Ok(())
@@ -344,10 +350,10 @@ impl Inner {
 
     fn confirm_signature(
         self: Arc<Self>,
-        signature: Signature,
-        queue_pubkey: Pubkey,
-        confirmed_slot: u64,
         attempted_slot: u64,
+        confirmed_slot: u64,
+        queue_pubkey: Pubkey,
+        signature: Signature,
     ) -> PluginResult<()> {
         match self
             .client
@@ -361,7 +367,7 @@ impl Inner {
                         self.signatures.remove(&signature);
                     }
                     Err(err) => {
-                        // TODO Check the error. Should this be retried?
+                        // TODO Check the error. Should this request be retried?
                         info!("Transaction {} failed with error {}", signature, err);
                     }
                 }
