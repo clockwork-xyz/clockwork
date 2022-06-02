@@ -167,7 +167,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program.key(), false),
         ],
-        data: sighash("global", "snapshot_start").into(),
+        data: cronos_scheduler::anchor::sighash("snapshot_start").into(),
     };
     let snapshot_rotate_ix = Instruction {
         program_id: crate::ID,
@@ -180,7 +180,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
-        data: sighash("global", "snapshot_rotate").into(),
+        data: cronos_scheduler::anchor::sighash("snapshot_rotate").into(),
     };
     cronos_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
@@ -201,12 +201,3 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     Ok(())
 }
 
-fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()
-            [..8],
-    );
-    sighash
-}
