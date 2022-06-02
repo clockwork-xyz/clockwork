@@ -319,13 +319,6 @@ impl Inner {
             ixs.push(task_exec_ix)
         }
 
-        // Debubugging...
-        let broken_queue_pubkey =
-            &Pubkey::from_str("GfXLusxy2CKfXtUAJ4CRvZf2m7mwakXSZAzCF81zEgUC").unwrap();
-        if queue_pubkey.eq(broken_queue_pubkey) {
-            info!("Sending ixs {:#?}", ixs)
-        }
-
         // Pack all ixs into a single tx
         match self.client.send(ixs.as_slice(), &[self.client.payer()]) {
             Ok(signature) => {
