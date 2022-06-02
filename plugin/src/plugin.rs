@@ -17,7 +17,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::signature::Signature,
-    std::{collections::HashSet, fmt::Debug, str::FromStr, sync::Arc},
+    std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
 
