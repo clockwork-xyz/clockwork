@@ -39,5 +39,14 @@ pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
         .get::<Queue>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("{:#?}", queue);
+
+    let mut task_pubkeys = vec![];
+    for i in 0..queue.task_count.min(10) {
+        let task_pubkey = cronos_client::scheduler::state::Task::pda(*address, i).0;
+        task_pubkeys.push(task_pubkey);
+    }
+
+    println!("Tasks: {:#?}", task_pubkeys);
+
     Ok(())
 }

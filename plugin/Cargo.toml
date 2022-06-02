@@ -29,6 +29,7 @@ solana-sdk = "1.10.19"
 thiserror = "1.0.30"
 tokio = "~1.14.1"
 dashmap = "5.3.3"
+bugsnag = "0.2.1"
 
 [build-dependencies]
 prost-build = "0.10.0"

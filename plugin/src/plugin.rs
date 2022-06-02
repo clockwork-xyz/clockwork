@@ -1,5 +1,6 @@
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
+    bugsnag::Bugsnag,
     cronos_client::{
         scheduler::state::{Queue, Task},
         Client,
@@ -16,7 +17,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::signature::Signature,
-    std::{collections::HashSet, fmt::Debug, sync::Arc},
+    std::{collections::HashSet, fmt::Debug, str::FromStr, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
 
@@ -329,6 +330,7 @@ impl Inner {
             Err(err) => {
                 info!("❌ {:#?}", err);
                 self.actionable_queues.remove(&queue_pubkey);
+                self.record_error(err.to_string())
             }
         }
 
@@ -390,5 +392,22 @@ impl Inner {
     ) -> PluginResult<()> {
         self.runtime.spawn(f(Arc::clone(self)));
         Ok(())
+    }
+
+    fn record_error(self: Arc<Self>, err_msg: String) {
+        match self.config.bugsnag_api_key.clone() {
+            Some(api_key) => {
+                let mut bugsnag_client = Bugsnag::new(&api_key, env!("CARGO_MANIFEST_DIR"));
+                bugsnag_client.set_app_info(
+                    Some(env!("CARGO_PKG_VERSION")),
+                    Some("development"),
+                    Some("rust"),
+                );
+                bugsnag_client
+                    .notify("Error", &err_msg)
+                    .severity(bugsnag::Severity::Error);
+            }
+            None => (),
+        }
     }
 }
