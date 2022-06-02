@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
     cronos_client::{
@@ -316,6 +318,13 @@ impl Inner {
 
             // Add ix to the list
             ixs.push(task_exec_ix)
+        }
+
+        // Debubugging...
+        let broken_queue_pubkey =
+            &Pubkey::from_str("GfXLusxy2CKfXtUAJ4CRvZf2m7mwakXSZAzCF81zEgUC").unwrap();
+        if queue_pubkey.eq(broken_queue_pubkey) {
+            info!("Sending ixs {:#?}", ixs)
         }
 
         // Pack all ixs into a single tx
