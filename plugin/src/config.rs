@@ -9,6 +9,7 @@ use {
 /// Plugin config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
+    pub bugsnag_api_key: Option<String>,
     pub keypath: String,
     pub rpc_url: String,
     pub slot_timeout_threshold: u64,
@@ -18,6 +19,7 @@ pub struct PluginConfig {
 impl Default for PluginConfig {
     fn default() -> Self {
         Self {
+            bugsnag_api_key: None,
             keypath: "".to_string(),
             rpc_url: "http://127.0.0.1:8899".to_string(),
             slot_timeout_threshold: 150,
