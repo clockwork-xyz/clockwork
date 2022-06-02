@@ -82,10 +82,12 @@ impl GeyserPlugin for CronosPlugin {
                 self.with_inner(|this| {
                     this.spawn(|this| async move {
                         match account_update {
-                            CronosAccountUpdate::Clock { clock } => this.handle_clock_update(clock),
+                            CronosAccountUpdate::Clock { clock } => {
+                                this.handle_updated_clock(clock)
+                            }
                             CronosAccountUpdate::Queue { queue } => {
                                 info!("Caching queue {:#?}", account_pubkey);
-                                this.handle_queue_update(queue, account_pubkey)
+                                this.handle_updated_queue(queue, account_pubkey)
                             }
                         }
                     })
@@ -175,13 +177,13 @@ impl Inner {
         });
 
         // Move all pending queues that are due to the set of actionable queues.
-        // TODO By maintaining a sorted list of the pending_queue's keys,
-        //      this operation can possibly be made much cheaper. By iterating
-        //      through the sorted list up to the confirmed unix timestamp, we
-        //      save compute cycles by not iterating over future exec_at timestamps.
-        //      However before doing this, consider if retain() can be processed in parallel...
         match confirmed_unix_timestamp {
             Some(confirmed_unix_timestamp) => {
+                // TODO By maintaining a sorted list of the pending_queue's keys,
+                //      this operation can possibly be made much cheaper. By iterating
+                //      through the sorted list up to the confirmed unix timestamp, we
+                //      save compute cycles by not iterating over future exec_at timestamps.
+                //      However before doing this, consider if retain() is processed in parallel...
                 self.pending_queues.retain(|exec_at, queue_pubkeys| {
                     if *exec_at <= confirmed_unix_timestamp {
                         for queue_pubkey in queue_pubkeys.iter() {
@@ -195,7 +197,7 @@ impl Inner {
             None => (),
         }
 
-        // Process queues
+        // Process actionable queues
         self.clone()
             .spawn(|this| async move { this.process_actionable_queues(confirmed_slot) })?;
 
@@ -206,12 +208,12 @@ impl Inner {
         Ok(())
     }
 
-    fn handle_clock_update(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
+    fn handle_updated_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
         self.timestamps.insert(clock.slot, clock.unix_timestamp);
         Ok(())
     }
 
-    fn handle_queue_update(
+    fn handle_updated_queue(
         self: Arc<Self>,
         queue: Queue,
         queue_pubkey: Pubkey,
@@ -289,7 +291,7 @@ impl Inner {
             // Inject accounts for inner ixs
             let mut acc_dedupe = HashSet::<Pubkey>::new();
             for inner_ix in &task.ixs {
-                // Program ids
+                // Program accounts
                 if !acc_dedupe.contains(&inner_ix.program_id) {
                     acc_dedupe.insert(inner_ix.program_id);
                     task_exec_ix
@@ -331,6 +333,8 @@ impl Inner {
                 info!("❌ {:#?}", err);
                 self.actionable_queues.remove(&queue_pubkey);
                 self.record_error(err.to_string())
+
+                // TODO Which set of errors are retriable? What should the retry strategy by?
             }
         }
 
