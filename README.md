@@ -25,14 +25,14 @@
 ## Notes
 
 - Cronos is under active development. All interfaces and implementations are subject to change.
-- Smart contracts are automatically scanned by Soteria's [auditing software](https://www.soteria.dev/software), but have not been reviewed by a paid auditing firm.
+- Smart contracts are automatically scanned by [Sec3](https://www.sec3.dev/)'s auto-auditing software, but have not been reviewed by a paid auditing firm.
 - Use at your own risk.
 
 ## Deployments
 
-| Program                                          | Devnet                                         | Mainnet Beta                     |
-| ------------------------------------------------ | ---------------------------------------------- | ---------------------------------|
-| Network                                          | `tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z`  |                                  |
-| Scheduler                                        | `6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx` |                                  |
+| Program | Address| Devnet | Testnet | Mainnet Beta |
+| ------- | ------ | ------ | ------- | ------------ |
+| Network | `tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z` | [v0.2.0-alpha5](https://explorer.solana.com/address/tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z?cluster=devnet) | TBA | TBA |
+| Scheduler | `6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx` | [v0.2.0-alpha5](https://explorer.solana.com/address/6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx?cluster=devnet) | TBA | TBA |
 
 
