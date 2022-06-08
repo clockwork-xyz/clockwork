@@ -1,3 +1,5 @@
+use solana_sdk::transaction::TransactionError;
+
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
     bugsnag::Bugsnag,
@@ -385,7 +387,11 @@ impl Inner {
                     }
                     Err(err) => {
                         // TODO Check the error. Should this request be retried?
-                        info!("Transaction {} failed with error {}", signature, err);
+                        info!("Transaction {} failed with error: {}", signature, err);
+
+                        // Naively move the pubkey back into the set of actionable queues.
+                        self.signatures.remove(&signature);
+                        self.actionable_queues.insert(queue_pubkey);
                     }
                 }
             }
