@@ -932,6 +932,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple-error",
+ "solana-client",
  "solana-geyser-plugin-interface",
  "solana-logger",
  "solana-program",
