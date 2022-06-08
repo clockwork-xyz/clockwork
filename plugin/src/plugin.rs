@@ -1,5 +1,3 @@
-use solana_sdk::transaction::TransactionError;
-
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
     bugsnag::Bugsnag,
@@ -325,17 +323,14 @@ impl Inner {
         }
 
         // Pack all ixs into a single tx
-        match self.client.send_with_config(
-            ixs.as_slice(),
-            &[self.client.payer()],
-            RpcSendTransactionConfig {
-                skip_preflight: false,
-                preflight_commitment: Some(CommitmentLevel::Finalized),
-                encoding: None,
-                max_retries: None,
-                min_context_slot: None,
-            },
-        ) {
+        // RpcSendTransactionConfig {
+        //     skip_preflight: false,
+        //     preflight_commitment: Some(CommitmentLevel::Confirmed),
+        //     encoding: None,
+        //     max_retries: None,
+        //     min_context_slot: None,
+        // },
+        match self.client.send(ixs.as_slice(), &[self.client.payer()]) {
             Ok(signature) => {
                 info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);
