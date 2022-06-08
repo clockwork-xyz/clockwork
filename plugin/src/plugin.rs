@@ -1,6 +1,3 @@
-use solana_client::rpc_config::RpcSendTransactionConfig;
-use solana_sdk::commitment_config::CommitmentLevel;
-
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
     bugsnag::Bugsnag,
@@ -10,6 +7,7 @@ use {
     },
     dashmap::{DashMap, DashSet},
     log::info,
+    solana_client::rpc_config::RpcSendTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError, ReplicaAccountInfoVersions, Result as PluginResult,
         SlotStatus,
@@ -19,7 +17,7 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
-    solana_sdk::signature::Signature,
+    solana_sdk::{commitment_config::CommitmentLevel, signature::Signature},
     std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
