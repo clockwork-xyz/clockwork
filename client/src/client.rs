@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::Clock, AccountDeserialize};
 use solana_client::{
     rpc_config::RpcSendTransactionConfig,
-    tpu_client::{TpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS},
+    tpu_client::{TpuClient, TpuClientConfig, TpuSenderError, DEFAULT_FANOUT_SLOTS},
 };
 use std::{
     fmt::Debug,
@@ -36,7 +36,7 @@ pub enum ClientError {
     DeserializationError,
 
     #[error("Failed to create the tpu client")]
-    BadTpuClient,
+    BadTpuClient(#[from] TpuSenderError),
 }
 
 pub type ClientResult<T> = Result<T, ClientError>;
@@ -106,12 +106,12 @@ impl Client {
         ));
         let tpu_client = TpuClient::new(
             c,
-            "ws://root@145.40.64.193:8899",
+            "ws://145.40.64.193:8899",
             TpuClientConfig {
                 fanout_slots: DEFAULT_FANOUT_SLOTS,
             },
         )
-        .map_err(|_err| ClientError::BadTpuClient)?;
+        .map_err(|err| ClientError::BadTpuClient(err))?;
 
         tpu_client.send_transaction(&tx);
 
