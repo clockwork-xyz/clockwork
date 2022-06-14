@@ -106,7 +106,7 @@ impl Client {
         ));
         let tpu_client = TpuClient::new(
             c,
-            "ws://145.40.64.193:8899",
+            "ws://145.40.64.193:8900",
             TpuClientConfig {
                 fanout_slots: DEFAULT_FANOUT_SLOTS,
             },
