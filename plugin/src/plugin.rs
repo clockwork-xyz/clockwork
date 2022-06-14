@@ -1,9 +1,11 @@
+use crate::client::Client as TpuClient;
+
 use {
     crate::{config::PluginConfig, filter::CronosAccountUpdate},
     bugsnag::Bugsnag,
     cronos_client::{
         scheduler::state::{Queue, Task},
-        Client,
+        Client as RpcClient,
     },
     dashmap::{DashMap, DashSet},
     log::info,
@@ -46,11 +48,7 @@ impl GeyserPlugin for CronosPlugin {
         let config = PluginConfig::read_from(config_file)?;
         self.inner = Some(Arc::new(Inner {
             config: config.clone(),
-            rpc_client: Client::new(
-                config.keypath,
-                "http://127.0.0.1:8899".into(),
-                "ws://127.0.0.1:8900".into(),
-            ),
+            rpc_client: RpcClient::new(config.keypath, "http://0.0.0.0:8899".into()),
             runtime: Builder::new_multi_thread()
                 .enable_all()
                 .thread_name("cronos-plugin")
@@ -147,7 +145,7 @@ impl GeyserPlugin for CronosPlugin {
 
 #[derive(Debug)]
 pub struct Inner {
-    pub rpc_client: Client,
+    pub rpc_client: RpcClient,
     pub config: PluginConfig,
     pub runtime: Runtime,
 
@@ -325,11 +323,15 @@ impl Inner {
             ixs.push(task_exec_ix)
         }
 
+        // Build TPU client
+        let tpu_client = TpuClient::new(
+            self.config.keypath.clone(),
+            "http://0.0.0.0:8899".into(),
+            "ws://0.0.0.0:8900".into(),
+        );
+
         // Pack all ixs into a single tx
-        match self
-            .rpc_client
-            .send_via_tpu(ixs.as_slice(), &[self.rpc_client.payer()])
-        {
+        match tpu_client.send(ixs.as_slice(), &[self.rpc_client.payer()]) {
             Ok(signature) => {
                 info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);

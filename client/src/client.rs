@@ -1,14 +1,10 @@
 use anchor_lang::{prelude::Clock, AccountDeserialize};
-use solana_client::{
-    rpc_config::RpcSendTransactionConfig,
-    tpu_client::{TpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS},
-};
+use solana_client::rpc_config::RpcSendTransactionConfig;
 use std::{
     fmt::Debug,
     fs::File,
     ops::{Deref, DerefMut},
     str::FromStr,
-    sync::Arc,
 };
 
 use solana_client::{client_error, rpc_client::RpcClient};
@@ -39,44 +35,26 @@ pub enum ClientError {
 pub type ClientResult<T> = Result<T, ClientError>;
 
 pub struct Client {
-    pub rpc_client: Arc<RpcClient>,
-    pub tpu_client: Arc<TpuClient>,
+    pub client: RpcClient,
     pub payer: Keypair,
 }
 
 impl Client {
-    pub fn new(keypath: String, rpc_url: String, websocket_url: String) -> Self {
+    pub fn new(keypath: String, url: String) -> Self {
         let payer = read_keypair(&mut File::open(keypath).unwrap()).unwrap();
-        let rpc_client = Arc::new(RpcClient::new_with_commitment::<String>(
-            rpc_url,
-            CommitmentConfig::confirmed(),
-        ));
-        let tpu_client = Arc::new(
-            TpuClient::new(
-                rpc_client.clone(),
-                &websocket_url,
-                TpuClientConfig {
-                    fanout_slots: DEFAULT_FANOUT_SLOTS,
-                },
-            )
-            .unwrap(),
-        );
-        Self {
-            rpc_client,
-            tpu_client,
-            payer,
-        }
+        let client = RpcClient::new_with_commitment::<String>(url, CommitmentConfig::confirmed());
+        Self { client, payer }
     }
 
     pub fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
-        let data = self.rpc_client.get_account_data(pubkey)?;
+        let data = self.client.get_account_data(pubkey)?;
         Ok(T::try_deserialize(&mut data.as_slice())
             .map_err(|_| ClientError::DeserializationError)?)
     }
 
     pub fn get_clock(&self) -> ClientResult<Clock> {
         let clock_pubkey = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
-        let clock_data = self.rpc_client.get_account_data(&clock_pubkey)?;
+        let clock_data = self.client.get_account_data(&clock_pubkey)?;
         Ok(bincode::deserialize::<Clock>(&clock_data)
             .map_err(|_| ClientError::DeserializationError)?)
     }
@@ -90,11 +68,11 @@ impl Client {
     }
 
     pub fn latest_blockhash(&self) -> ClientResult<Hash> {
-        Ok(self.rpc_client.get_latest_blockhash()?)
+        Ok(self.client.get_latest_blockhash()?)
     }
 
     pub fn airdrop(&self, to_pubkey: &Pubkey, lamports: u64) -> ClientResult<Signature> {
-        let blockhash = self.rpc_client.get_latest_blockhash()?;
+        let blockhash = self.client.get_latest_blockhash()?;
         let signature = self.request_airdrop_with_blockhash(to_pubkey, lamports, &blockhash)?;
         self.confirm_transaction_with_spinner(&signature, &blockhash, self.commitment())?;
         Ok(signature)
@@ -114,7 +92,7 @@ impl Client {
     ) -> ClientResult<Signature> {
         let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.latest_blockhash()?);
-        Ok(self.rpc_client.send_transaction_with_config(&tx, config)?)
+        Ok(self.client.send_transaction_with_config(&tx, config)?)
     }
 
     pub fn send_and_confirm<T: Signers>(
@@ -126,17 +104,6 @@ impl Client {
         tx.sign(signers, self.latest_blockhash()?);
         Ok(self.send_and_confirm_transaction(&tx)?)
     }
-
-    pub fn send_via_tpu<T: Signers>(
-        &self,
-        ixs: &[Instruction],
-        signers: &T,
-    ) -> ClientResult<Signature> {
-        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
-        tx.sign(signers, self.latest_blockhash()?);
-        self.tpu_client.send_transaction(&tx);
-        Ok(tx.signatures[0])
-    }
 }
 
 impl Debug for Client {
@@ -146,15 +113,15 @@ impl Debug for Client {
 }
 
 impl Deref for Client {
-    type Target = Arc<RpcClient>;
+    type Target = RpcClient;
 
     fn deref(&self) -> &Self::Target {
-        &self.rpc_client
+        &self.client
     }
 }
 
 impl DerefMut for Client {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.rpc_client
+        &mut self.client
     }
 }

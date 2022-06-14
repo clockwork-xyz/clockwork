@@ -11,11 +11,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let config = CliConfig::load();
 
     // Build the RPC client
-    let client = Client::new(
-        config.keypair_path,
-        config.json_rpc_url,
-        config.websocket_url,
-    );
+    let client = Client::new(config.keypair_path, config.json_rpc_url);
 
     // Process the command
     match command {

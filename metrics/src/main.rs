@@ -30,11 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn record_health_data() {
     // Build clients
-    let client = Client::new(
-        Envvar::Keypath.get(),
-        Envvar::RpcEndpoint.get(),
-        Envvar::WsEndpoint.get(),
-    );
+    let client = Client::new(Envvar::Keypath.get(), Envvar::RpcEndpoint.get());
     let es_client = elastic_client().unwrap();
 
     // Get data
