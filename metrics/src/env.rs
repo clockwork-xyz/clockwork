@@ -4,6 +4,7 @@ use std::{env, fmt};
 pub enum Envvar {
     Keypath,
     RpcEndpoint,
+    WsEndpoint,
     EsCloudId,
     EsUser,
     EsPassword,
@@ -15,6 +16,7 @@ impl fmt::Display for Envvar {
         match *self {
             Envvar::Keypath => write!(f, "KEYPATH"),
             Envvar::RpcEndpoint => write!(f, "RPC_ENDPOINT"),
+            Envvar::WsEndpoint => write!(f, "WS_ENDPOINT"),
             Envvar::EsCloudId => write!(f, "ES_CLOUD_ID"),
             Envvar::EsUser => write!(f, "ES_USER"),
             Envvar::EsPassword => write!(f, "ES_PASSWORD"),
