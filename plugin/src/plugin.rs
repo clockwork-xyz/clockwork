@@ -7,7 +7,6 @@ use {
     },
     dashmap::{DashMap, DashSet},
     log::info,
-    solana_client::rpc_config::RpcSendTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, GeyserPluginError, ReplicaAccountInfoVersions, Result as PluginResult,
         SlotStatus,
@@ -17,7 +16,7 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
-    solana_sdk::{commitment_config::CommitmentLevel, signature::Signature},
+    solana_sdk::signature::Signature,
     std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
@@ -47,7 +46,7 @@ impl GeyserPlugin for CronosPlugin {
         let config = PluginConfig::read_from(config_file)?;
         self.inner = Some(Arc::new(Inner {
             config: config.clone(),
-            client: Client::new(config.keypath, config.rpc_url),
+            rpc_client: Client::new(config.keypath, config.rpc_url),
             runtime: Builder::new_multi_thread()
                 .enable_all()
                 .thread_name("cronos-plugin")
@@ -144,7 +143,7 @@ impl GeyserPlugin for CronosPlugin {
 
 #[derive(Debug)]
 pub struct Inner {
-    pub client: Client,
+    pub rpc_client: Client,
     pub config: PluginConfig,
     pub runtime: Runtime,
 
@@ -239,7 +238,7 @@ impl Inner {
 
     fn process_actionable_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         // Error early if the node is not healthy
-        self.client.get_health().map_err(|_| {
+        self.rpc_client.get_health().map_err(|_| {
             info!("Node is not healthy");
             return GeyserPluginError::Custom("Node is not healthy".into());
         })?;
@@ -262,10 +261,10 @@ impl Inner {
         info!("Processing queue {}", queue_pubkey);
 
         // Get the queue
-        let queue = self.client.get::<Queue>(&queue_pubkey).unwrap();
+        let queue = self.rpc_client.get::<Queue>(&queue_pubkey).unwrap();
 
         // Build queue_start ix
-        let delegate_pubkey = self.client.payer_pubkey();
+        let delegate_pubkey = self.rpc_client.payer_pubkey();
         let queue_start_ix = cronos_client::scheduler::instruction::queue_start(
             delegate_pubkey,
             queue.manager,
@@ -279,7 +278,7 @@ impl Inner {
         for i in 0..queue.task_count {
             // Get the task account
             let task_pubkey = Task::pda(queue_pubkey, i).0;
-            let task = self.client.get::<Task>(&task_pubkey).unwrap();
+            let task = self.rpc_client.get::<Task>(&task_pubkey).unwrap();
 
             // Build task_exec ix
             let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
@@ -323,14 +322,10 @@ impl Inner {
         }
 
         // Pack all ixs into a single tx
-        // RpcSendTransactionConfig {
-        //     skip_preflight: false,
-        //     preflight_commitment: Some(CommitmentLevel::Confirmed),
-        //     encoding: None,
-        //     max_retries: None,
-        //     min_context_slot: None,
-        // },
-        match self.client.send(ixs.as_slice(), &[self.client.payer()]) {
+        match self
+            .rpc_client
+            .send_via_tpu(ixs.as_slice(), &[self.rpc_client.payer()])
+        {
             Ok(signature) => {
                 info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);
@@ -370,7 +365,7 @@ impl Inner {
         signature: Signature,
     ) -> PluginResult<()> {
         match self
-            .client
+            .rpc_client
             .get_signature_status(&signature)
             .map_err(|_| GeyserPluginError::Custom("Failed to get confirmation status".into()))?
         {

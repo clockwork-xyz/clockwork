@@ -1,13 +1,17 @@
 use anchor_lang::{prelude::Clock, AccountDeserialize};
-use solana_client::rpc_config::RpcSendTransactionConfig;
+use solana_client::{
+    rpc_config::RpcSendTransactionConfig,
+    tpu_client::{TpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS},
+};
 use std::{
     fmt::Debug,
     fs::File,
     ops::{Deref, DerefMut},
     str::FromStr,
+    sync::Arc,
 };
 
-pub use solana_client::{client_error, rpc_client::RpcClient};
+use solana_client::{client_error, rpc_client::RpcClient};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     hash::Hash,
@@ -30,6 +34,9 @@ pub enum ClientError {
 
     #[error("Failed to deserialize account data")]
     DeserializationError,
+
+    #[error("Failed to create the tpu client")]
+    BadTpuClient,
 }
 
 pub type ClientResult<T> = Result<T, ClientError>;
@@ -82,6 +89,33 @@ impl Client {
         let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.latest_blockhash()?);
         Ok(self.send_transaction(&tx)?)
+    }
+
+    pub fn send_via_tpu<T: Signers>(
+        &self,
+        ixs: &[Instruction],
+        signers: &T,
+    ) -> ClientResult<Signature> {
+        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
+        tx.sign(signers, self.latest_blockhash()?);
+
+        // let c = Arc::new(self.client);
+        let c = Arc::new(RpcClient::new_with_commitment::<String>(
+            self.client.url(),
+            CommitmentConfig::confirmed(),
+        ));
+        let tpu_client = TpuClient::new(
+            c,
+            "ws://root@145.40.64.193:8899",
+            TpuClientConfig {
+                fanout_slots: DEFAULT_FANOUT_SLOTS,
+            },
+        )
+        .map_err(|_err| ClientError::BadTpuClient)?;
+
+        tpu_client.send_transaction(&tx);
+
+        Ok(tx.signatures[0])
     }
 
     pub fn send_with_config<T: Signers>(
