@@ -46,7 +46,11 @@ impl GeyserPlugin for CronosPlugin {
         let config = PluginConfig::read_from(config_file)?;
         self.inner = Some(Arc::new(Inner {
             config: config.clone(),
-            rpc_client: Client::new(config.keypath, "0.0.0.0:8899".into(), "0.0.0.0:8900".into()),
+            rpc_client: Client::new(
+                config.keypath,
+                "http://127.0.0.1:8899".into(),
+                "ws://127.0.0.1:8900".into(),
+            ),
             runtime: Builder::new_multi_thread()
                 .enable_all()
                 .thread_name("cronos-plugin")
