@@ -1,6 +1,6 @@
 [package]
 name = "cronos-client"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 edition = "2021"
 description = "Cronos client"
 license = "AGPL-3.0-or-later"
@@ -18,10 +18,10 @@ name = "cronos_client"
 anchor-lang = "0.24.2"
 anchor-spl = { features = ["mint", "token"], version = "0.24.2" }
 bincode = "1.3.3"
-cronos-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0-alpha5" }
-cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0-alpha5" }
-cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0-alpha5" }
-cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0-alpha5" }
+cronos-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0-alpha6" }
+cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0-alpha6" }
+cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0-alpha6" }
+cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0-alpha6" }
 solana-client = "1.10.19"
 solana-sdk = "1.10.19"
 thiserror = "1.0.31"

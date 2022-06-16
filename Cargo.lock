@@ -812,7 +812,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cli"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "clap 3.1.18",
  "cronos-client",
@@ -828,7 +828,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-client"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-cron"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -854,14 +854,14 @@ dependencies = [
 
 [[package]]
 name = "cronos-health"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "cronos-metrics"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "chrono",
  "cronos-client",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-network"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -883,14 +883,14 @@ dependencies = [
 
 [[package]]
 name = "cronos-pool"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "cronos-scheduler"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -900,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "cronos-stress"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "base64 0.13.0",
  "chrono",
@@ -919,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "cronos_plugin"
-version = "0.2.0-alpha5"
+version = "0.2.0-alpha6"
 dependencies = [
  "bincode",
  "bs58 0.4.0",
