@@ -40,7 +40,6 @@ pub struct SnapshotStart<'info> {
 
 pub fn handler(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
     // Get accounts
-    let payer = &ctx.accounts.payer;
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
 
@@ -57,7 +56,6 @@ pub fn handler(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
                 .iter()
                 .map(|acc| match acc.pubkey {
                     _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
-                    _ if acc.pubkey == payer.key() => cronos_scheduler::payer::ID,
                     _ => acc.pubkey,
                 })
                 .collect(),

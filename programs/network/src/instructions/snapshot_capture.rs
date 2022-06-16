@@ -72,7 +72,6 @@ pub fn handler(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
     // Get accounts
     let entry = &mut ctx.accounts.entry;
     let node = &ctx.accounts.node;
-    let payer = &ctx.accounts.payer;
     let stake = &ctx.accounts.stake;
     let snapshot = &mut ctx.accounts.snapshot;
 
@@ -92,7 +91,6 @@ pub fn handler(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
                 .map(|acc| match acc.pubkey {
                     _ if acc.pubkey == entry_pubkey => next_entry_pubkey,
                     _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
-                    _ if acc.pubkey == payer.key() => cronos_scheduler::payer::ID,
                     _ => acc.pubkey,
                 })
                 .collect(),
