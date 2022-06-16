@@ -62,8 +62,7 @@ impl Client {
     ) -> Result<Signature, ClientError> {
         let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.rpc_client().get_latest_blockhash()?);
-        let b = self.send_transaction(&tx);
-        info!("Submitted tx: {} {}", tx.signatures[0], b);
+        self.send_transaction(&tx);
         Ok(tx.signatures[0])
     }
 }
