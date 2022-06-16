@@ -50,6 +50,9 @@ pub enum CliCommand {
         address: Pubkey,
     },
 
+    // Registry
+    RegistryGet,
+
     // Utility commands
     Clock,
     Health,
@@ -238,4 +241,5 @@ pub fn app() -> Command<'static> {
                     ),
                 ),
         )
+        .subcommand(Command::new("registry"))
 }

@@ -23,6 +23,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("node", matches)) => parse_node_command(matches),
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
+            Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
