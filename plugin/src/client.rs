@@ -1,4 +1,3 @@
-use log::info;
 use solana_client::tpu_client::{TpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS};
 use std::{
     fmt::Debug,
