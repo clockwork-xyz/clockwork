@@ -7,7 +7,7 @@ use std::{
     str::FromStr,
 };
 
-pub use solana_client::{client_error, rpc_client::RpcClient};
+use solana_client::{client_error, rpc_client::RpcClient};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     hash::Hash,

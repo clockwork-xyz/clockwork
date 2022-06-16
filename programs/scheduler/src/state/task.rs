@@ -173,7 +173,10 @@ impl TaskAccount for Account<'_, Task> {
                                 .map(|(i, pubkey)| {
                                     let acc = ix.accounts.get(i).unwrap();
                                     AccountMetaData {
-                                        pubkey: *pubkey,
+                                        pubkey: match pubkey {
+                                            _ if *pubkey == delegate.key() => crate::payer::ID,
+                                            _ => *pubkey,
+                                        },
                                         is_signer: acc.is_signer,
                                         is_writable: acc.is_writable,
                                     }
