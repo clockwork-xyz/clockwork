@@ -1,3 +1,4 @@
+use log::info;
 use solana_client::tpu_client::{TpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS};
 use std::{
     fmt::Debug,
@@ -50,10 +51,6 @@ impl Client {
         Self { client, payer }
     }
 
-    // pub fn payer(&self) -> &Keypair {
-    //     &self.payer
-    // }
-
     pub fn payer_pubkey(&self) -> Pubkey {
         self.payer.pubkey()
     }
@@ -65,7 +62,8 @@ impl Client {
     ) -> Result<Signature, ClientError> {
         let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.rpc_client().get_latest_blockhash()?);
-        self.send_transaction(&tx);
+        let b = self.send_transaction(&tx);
+        info!("Submitted tx: {} {}", tx.signatures[0], b);
         Ok(tx.signatures[0])
     }
 }
