@@ -324,14 +324,17 @@ impl Inner {
         }
 
         // Build TPU client
-        let tpu_client = TpuClient::new(
-            self.config.keypath.clone(),
-            "http://0.0.0.0:8899".into(),
-            "ws://0.0.0.0:8900".into(),
-        );
+        // let tpu_client = TpuClient::new(
+        //     self.config.keypath.clone(),
+        //     "http://0.0.0.0:8899".into(),
+        //     "ws://0.0.0.0:8900".into(),
+        // );
 
         // Pack all ixs into a single tx
-        match tpu_client.send(ixs.as_slice(), &[self.rpc_client.payer()]) {
+        match self
+            .rpc_client
+            .send(ixs.as_slice(), &[self.rpc_client.payer()])
+        {
             Ok(signature) => {
                 info!("✅ {}", signature);
                 self.actionable_queues.remove(&queue_pubkey);
