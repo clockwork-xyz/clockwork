@@ -32,7 +32,7 @@
 
 | Program | Address| Devnet | Testnet | Mainnet Beta |
 | ------- | ------ | ------ | ------- | ------------ |
-| Network | `tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z` | [v0.2.0-alpha5](https://explorer.solana.com/address/tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z?cluster=devnet) | TBA | TBA |
-| Scheduler | `6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx` | [v0.2.0-alpha5](https://explorer.solana.com/address/6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx?cluster=devnet) | TBA | TBA |
+| Network | `9mhezQMbB7CCvvraseATy83myrDVDiMdnQhZwM9d7fAJ` | [v0.2.0-alpha6](https://explorer.solana.com/address/9mhezQMbB7CCvvraseATy83myrDVDiMdnQhZwM9d7fAJ?cluster=devnet) | TBA | TBA |
+| Scheduler | `9obFzxDKQqheYsZ2SdAHiJA7asbjwajkFULUidiXShE8` | [v0.2.0-alpha6](https://explorer.solana.com/address/9obFzxDKQqheYsZ2SdAHiJA7asbjwajkFULUidiXShE8?cluster=devnet) | TBA | TBA |
 
 
