@@ -1,7 +1,4 @@
-use crate::{
-    payer,
-    state::{ManagerAccount, QueueAccount, QueueStatus},
-};
+use crate::state::{ManagerAccount, QueueAccount, QueueStatus};
 
 use super::{Config, Fee, Manager};
 
