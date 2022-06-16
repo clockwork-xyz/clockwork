@@ -3,22 +3,22 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-health = "Ad3QowCe3o6oPTw4RHYVcEuuj2Cdmz64VR4gmjXJQAdk"
-network = "tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z"
-pool = "DuThutjVqp1a3BDxG78anLUVf6Q6r2cCrtWfNhvy5j25"
-scheduler = "6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx"
+health = "HEdNLbxtEHbqyWHjExEyzyZQFFzQEkcFsZNiSmTrDUE3"
+network = "9mhezQMbB7CCvvraseATy83myrDVDiMdnQhZwM9d7fAJ"
+pool = "CQMz2LcjzDoiJc5Xu2nMbf7nqep5kZwnj3CCarXN8Xp7"
+scheduler = "9obFzxDKQqheYsZ2SdAHiJA7asbjwajkFULUidiXShE8"
 
 [programs.testnet]
-health = "Ad3QowCe3o6oPTw4RHYVcEuuj2Cdmz64VR4gmjXJQAdk"
-network = "tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z"
-pool = "DuThutjVqp1a3BDxG78anLUVf6Q6r2cCrtWfNhvy5j25"
-scheduler = "6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx"
+health = "HEdNLbxtEHbqyWHjExEyzyZQFFzQEkcFsZNiSmTrDUE3"
+network = "9mhezQMbB7CCvvraseATy83myrDVDiMdnQhZwM9d7fAJ"
+pool = "CQMz2LcjzDoiJc5Xu2nMbf7nqep5kZwnj3CCarXN8Xp7"
+scheduler = "9obFzxDKQqheYsZ2SdAHiJA7asbjwajkFULUidiXShE8"
 
 [programs.mainnet]
-health = "Ad3QowCe3o6oPTw4RHYVcEuuj2Cdmz64VR4gmjXJQAdk"
-network = "tWPS21VQNakkr6BQpF6aZGqq9XJfdSN4gQSx5DrGs6z"
-pool = "DuThutjVqp1a3BDxG78anLUVf6Q6r2cCrtWfNhvy5j25"
-scheduler = "6FoQJ1cwnEt5pcNYBXAgYTrTnMr9eoJ4jYkBsc6hYKxx"
+health = "HEdNLbxtEHbqyWHjExEyzyZQFFzQEkcFsZNiSmTrDUE3"
+network = "9mhezQMbB7CCvvraseATy83myrDVDiMdnQhZwM9d7fAJ"
+pool = "CQMz2LcjzDoiJc5Xu2nMbf7nqep5kZwnj3CCarXN8Xp7"
+scheduler = "9obFzxDKQqheYsZ2SdAHiJA7asbjwajkFULUidiXShE8"
 
 [registry]
 url = "https://anchor.projectserum.com"
