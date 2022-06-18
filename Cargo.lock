@@ -937,6 +937,7 @@ dependencies = [
  "solana-logger",
  "solana-program",
  "solana-sdk",
+ "solana-transaction-status",
  "thiserror",
  "tokio",
 ]
