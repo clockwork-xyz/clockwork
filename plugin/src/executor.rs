@@ -35,6 +35,9 @@ pub struct Executor {
     // Plugin config values.
     pub config: PluginConfig,
 
+    // The active delegates
+    pub delegates: DashMap<usize, Pubkey>,
+
     // Map from slot numbers to delegate pools.
     pub delegate_pools: DashMap<u64, Pool>,
 
@@ -58,6 +61,7 @@ impl Executor {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
+            delegates: DashMap::new(),
             delegate_pools: DashMap::new(),
             pending_queues: DashMap::new(),
             runtime: Builder::new_multi_thread()
@@ -87,11 +91,18 @@ impl Executor {
             });
 
             // Get the confirmed delegate pool
-            let mut delegates = None;
+            // let mut confirmed_delegates = None;
             this.delegate_pools.retain(|slot, delegate_pool| {
                 if *slot == confirmed_slot {
-                    delegates = Some(delegate_pool.delegates.make_contiguous().to_vec());
-                    return true;
+                    this.delegates.clear();
+                    delegate_pool
+                        .delegates
+                        .make_contiguous()
+                        .iter()
+                        .enumerate()
+                        .for_each(|(i, pubkey)| {
+                            this.delegates.insert(i, *pubkey);
+                        });
                 }
                 *slot > confirmed_slot
             });
@@ -99,8 +110,6 @@ impl Executor {
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
                 Some(confirmed_unix_timestamp) => {
-                    // TODO If there are multiple nodes in the delegate pool, can they efficiently
-                    //  split up work w/o sending messages to one another?
                     this.pending_queues.retain(|exec_at, queue_pubkeys| {
                         if *exec_at <= confirmed_unix_timestamp {
                             for queue_pubkey in queue_pubkeys.iter() {
@@ -116,7 +125,7 @@ impl Executor {
 
             // Process actionable queues
             this.clone()
-                .spawn(|this| async move { this.process_queues(confirmed_slot, delegates) })?;
+                .spawn(|this| async move { this.process_queues(confirmed_slot) })?;
 
             // Confirm signatures
             this.clone()
@@ -167,11 +176,7 @@ impl Executor {
         })
     }
 
-    fn process_queues(
-        self: Arc<Self>,
-        confirmed_slot: u64,
-        delegates: Option<Vec<Pubkey>>,
-    ) -> PluginResult<()> {
+    fn process_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Create a new tpu client
             let tpu_client = Arc::new(TpuClient::new(
@@ -191,31 +196,60 @@ impl Executor {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
 
+            let delegate_pubkey = cronos_client.payer_pubkey();
+            let delegate_positions = this
+                .delegates
+                .iter()
+                // .enumerate()
+                .filter_map(|entry| {
+                    if entry.value().eq(&delegate_pubkey) {
+                        Some(*entry.key())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<usize>>();
+
+            // Return early if the node is not a confirmed delegate
+            if !this.delegates.is_empty() && delegate_positions.is_empty() {
+                return Ok(());
+            }
+
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
-            let delegate_pubkey = cronos_client.payer_pubkey();
-            if delegates.is_none()
-                || delegates.clone().unwrap().is_empty()
-                || delegates.unwrap().contains(&delegate_pubkey)
-            {
-                this.actionable_queues
-                    .iter()
-                    .filter_map(|queue_pubkey_ref| {
-                        let queue_pubkey = *queue_pubkey_ref.key();
+            this.actionable_queues
+                .iter()
+                .filter_map(|queue_pubkey_ref| {
+                    // TODO If there are multiple nodes in the delegate pool, can they efficiently
+                    //  split up work w/o sending messages to one another?
+                    let queue_pubkey = *queue_pubkey_ref.key();
+
+                    // Hash the trailing bytes of the queue pubkey to an number between 0 and the delegate pool size.
+                    let b = queue_pubkey.to_bytes();
+                    let idx = u64::from_le_bytes([
+                        b[31], b[30], b[29], b[28], b[27], b[26], b[25], b[24],
+                    ])
+                    .checked_rem(this.delegates.len() as u64)
+                    .unwrap_or(0) as usize;
+
+                    // If this number matches delegate's position in the pool, then attempt to process it.
+                    if this.delegates.is_empty() || delegate_positions.contains(&idx) {
                         this.clone()
                             .build_tx(cronos_client.clone(), queue_pubkey)
                             .map_or(None, |tx| Some((queue_pubkey, tx)))
-                    })
-                    .collect::<Vec<(Pubkey, Transaction)>>()
-                    .iter()
-                    .for_each(|(queue_pubkey, tx)| {
-                        if tpu_client.clone().send_transaction(tx) {
-                            this.actionable_queues.remove(queue_pubkey);
-                            this.tx_signatures
-                                .insert(tx.signatures[0], (*queue_pubkey, confirmed_slot));
-                        }
-                    });
-            }
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<(Pubkey, Transaction)>>()
+                .iter()
+                .for_each(|(queue_pubkey, tx)| {
+                    if tpu_client.clone().send_transaction(tx) {
+                        this.actionable_queues.remove(queue_pubkey);
+                        this.tx_signatures
+                            .insert(tx.signatures[0], (*queue_pubkey, confirmed_slot));
+                    }
+                });
 
             Ok(())
         })
