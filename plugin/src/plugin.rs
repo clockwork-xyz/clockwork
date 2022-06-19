@@ -29,7 +29,7 @@ impl GeyserPlugin for CronosPlugin {
     fn update_account(
         &mut self,
         account: ReplicaAccountInfoVersions,
-        _slot: u64,
+        slot: u64,
         _is_startup: bool,
     ) -> PluginResult<()> {
         let account_info = match account {
@@ -41,6 +41,9 @@ impl GeyserPlugin for CronosPlugin {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
                     self.executor.clone().handle_updated_clock(clock)
+                }
+                AccountUpdateEvent::Pool { pool } => {
+                    self.executor.clone().handle_updated_pool(pool, slot)
                 }
                 AccountUpdateEvent::Queue { queue } => self
                     .executor

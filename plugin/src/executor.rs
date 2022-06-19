@@ -2,6 +2,7 @@ use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
     cronos_client::{
+        pool::state::Pool,
         scheduler::state::{Queue, Task},
         Client as CronosClient,
     },
@@ -34,6 +35,9 @@ pub struct Executor {
     // Plugin config values.
     pub config: PluginConfig,
 
+    // Map from slot numbers to delegate pools.
+    pub delegate_pools: DashMap<u64, Pool>,
+
     // Map from exec_at timestamps to the list of queues scheduled
     //  for that moment.
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>,
@@ -54,6 +58,7 @@ impl Executor {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
+            delegate_pools: DashMap::new(),
             pending_queues: DashMap::new(),
             runtime: Builder::new_multi_thread()
                 .enable_all()
@@ -81,6 +86,16 @@ impl Executor {
                 *slot > confirmed_slot
             });
 
+            // Get the confirmed delegate pool
+            let mut delegates = None;
+            this.delegate_pools.retain(|slot, delegate_pool| {
+                if *slot == confirmed_slot {
+                    delegates = Some(delegate_pool.delegates.make_contiguous().to_vec());
+                    return true;
+                }
+                *slot > confirmed_slot
+            });
+
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
                 Some(confirmed_unix_timestamp) => {
@@ -101,7 +116,7 @@ impl Executor {
 
             // Process actionable queues
             this.clone()
-                .spawn(|this| async move { this.process_queues(confirmed_slot) })?;
+                .spawn(|this| async move { this.process_queues(confirmed_slot, delegates) })?;
 
             // Confirm signatures
             this.clone()
@@ -115,6 +130,13 @@ impl Executor {
         self.spawn(|this| async move {
             this.unix_timestamps
                 .insert(clock.slot, clock.unix_timestamp);
+            Ok(())
+        })
+    }
+
+    pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
+        self.spawn(|this| async move {
+            this.delegate_pools.insert(slot, pool);
             Ok(())
         })
     }
@@ -145,7 +167,11 @@ impl Executor {
         })
     }
 
-    fn process_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+    fn process_queues(
+        self: Arc<Self>,
+        confirmed_slot: u64,
+        delegates: Option<Vec<Pubkey>>,
+    ) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Create a new tpu client
             let tpu_client = Arc::new(TpuClient::new(
@@ -165,24 +191,31 @@ impl Executor {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
 
-            // Build a tx for each queue and submit batch via TPU client
-            this.actionable_queues
-                .iter()
-                .filter_map(|queue_pubkey_ref| {
-                    let queue_pubkey = *queue_pubkey_ref.key();
-                    this.clone()
-                        .build_tx(cronos_client.clone(), queue_pubkey)
-                        .map_or(None, |tx| Some((queue_pubkey, tx)))
-                })
-                .collect::<Vec<(Pubkey, Transaction)>>()
-                .iter()
-                .for_each(|(queue_pubkey, tx)| {
-                    if tpu_client.clone().send_transaction(tx) {
-                        this.actionable_queues.remove(queue_pubkey);
-                        this.tx_signatures
-                            .insert(tx.signatures[0], (*queue_pubkey, confirmed_slot));
-                    }
-                });
+            // Build a tx for each queue and submit batch via TPU client,
+            //  only if the delegate pool is a empty or if the node is a valid delegate.
+            let delegate_pubkey = cronos_client.payer_pubkey();
+            if delegates.is_none()
+                || delegates.clone().unwrap().is_empty()
+                || delegates.unwrap().contains(&delegate_pubkey)
+            {
+                this.actionable_queues
+                    .iter()
+                    .filter_map(|queue_pubkey_ref| {
+                        let queue_pubkey = *queue_pubkey_ref.key();
+                        this.clone()
+                            .build_tx(cronos_client.clone(), queue_pubkey)
+                            .map_or(None, |tx| Some((queue_pubkey, tx)))
+                    })
+                    .collect::<Vec<(Pubkey, Transaction)>>()
+                    .iter()
+                    .for_each(|(queue_pubkey, tx)| {
+                        if tpu_client.clone().send_transaction(tx) {
+                            this.actionable_queues.remove(queue_pubkey);
+                            this.tx_signatures
+                                .insert(tx.signatures[0], (*queue_pubkey, confirmed_slot));
+                        }
+                    });
+            }
 
             Ok(())
         })
