@@ -91,24 +91,6 @@ impl GeyserPlugin for CronosPlugin {
     }
 }
 
-// impl CronosPlugin {
-//     pub fn handle_updated_account(
-//         self: &Self,
-//         account_pubkey: Pubkey,
-//         account_info: ReplicaAccountInfo,
-//     ) -> PluginResult<()> {
-//         AccountUpdateEvent::try_from(account_info).and_then(|event| match event {
-//             AccountUpdateEvent::Clock { clock } => {
-//                 self.executor.clone().handle_updated_clock(clock)
-//             }
-//             AccountUpdateEvent::Queue { queue } => self
-//                 .executor
-//                 .clone()
-//                 .handle_updated_queue(queue, account_pubkey),
-//         })
-//     }
-// }
-
 impl Default for CronosPlugin {
     fn default() -> Self {
         CronosPlugin {

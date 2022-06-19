@@ -171,7 +171,7 @@ impl Executor {
                 .filter_map(|queue_pubkey_ref| {
                     let queue_pubkey = *queue_pubkey_ref.key();
                     this.clone()
-                        .build_queue_tx(cronos_client.clone(), queue_pubkey)
+                        .build_tx(cronos_client.clone(), queue_pubkey)
                         .map_or(None, |tx| Some((queue_pubkey, tx)))
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
@@ -188,7 +188,7 @@ impl Executor {
         })
     }
 
-    fn build_queue_tx(
+    fn build_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
         queue_pubkey: Pubkey,
