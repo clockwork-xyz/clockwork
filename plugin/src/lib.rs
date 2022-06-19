@@ -1,8 +1,8 @@
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
 mod config;
+mod events;
 mod executor;
-mod filter;
 mod plugin;
 mod tpu_client;
 

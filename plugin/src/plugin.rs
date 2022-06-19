@@ -1,5 +1,5 @@
 use {
-    crate::{config::PluginConfig, executor::Executor, filter::CronosAccountUpdate},
+    crate::{config::PluginConfig, events::AccountUpdateEvent, executor::Executor},
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
     },
@@ -37,22 +37,18 @@ impl GeyserPlugin for CronosPlugin {
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
-        match CronosAccountUpdate::try_from(account_info) {
-            Ok(account_update) => match account_update {
-                CronosAccountUpdate::Clock { clock } => {
-                    return self.executor.clone().handle_updated_clock(clock)
+        match AccountUpdateEvent::try_from(account_info) {
+            Ok(event) => match event {
+                AccountUpdateEvent::Clock { clock } => {
+                    self.executor.clone().handle_updated_clock(clock)
                 }
-                CronosAccountUpdate::Queue { queue } => {
-                    return self
-                        .executor
-                        .clone()
-                        .handle_updated_queue(queue, account_pubkey);
-                }
+                AccountUpdateEvent::Queue { queue } => self
+                    .executor
+                    .clone()
+                    .handle_updated_queue(queue, account_pubkey),
             },
-            Err(_) => (),
-        };
-
-        Ok(())
+            Err(_err) => Ok(()),
+        }
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
@@ -94,6 +90,24 @@ impl GeyserPlugin for CronosPlugin {
         false
     }
 }
+
+// impl CronosPlugin {
+//     pub fn handle_updated_account(
+//         self: &Self,
+//         account_pubkey: Pubkey,
+//         account_info: ReplicaAccountInfo,
+//     ) -> PluginResult<()> {
+//         AccountUpdateEvent::try_from(account_info).and_then(|event| match event {
+//             AccountUpdateEvent::Clock { clock } => {
+//                 self.executor.clone().handle_updated_clock(clock)
+//             }
+//             AccountUpdateEvent::Queue { queue } => self
+//                 .executor
+//                 .clone()
+//                 .handle_updated_queue(queue, account_pubkey),
+//         })
+//     }
+// }
 
 impl Default for CronosPlugin {
     fn default() -> Self {

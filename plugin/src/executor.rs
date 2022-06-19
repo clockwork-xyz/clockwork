@@ -28,9 +28,10 @@ static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 pub struct Executor {
-    // The set of queues that can be processed
+    // The set of queue pubkeys that can be processed.
     pub actionable_queues: DashSet<Pubkey>,
 
+    // Plugin config values.
     pub config: PluginConfig,
 
     // Map from exec_at timestamps to the list of queues scheduled
@@ -41,17 +42,11 @@ pub struct Executor {
     pub runtime: Runtime,
 
     // Map from tx signatures to a (queue pubkey, slot) tuple. The slot
-    //  value records the last confirmed slot at the time the tx was sent.
+    //  records the confirmed slot at the time the tx was sent.
     pub tx_signatures: DashMap<Signature, (Pubkey, u64)>,
 
     // Map from slot numbers to the sysvar clock unix_timestamp at that slot.
     pub unix_timestamps: DashMap<u64, i64>,
-}
-
-impl Default for Executor {
-    fn default() -> Self {
-        Self::new(PluginConfig::default())
-    }
 }
 
 impl Executor {
@@ -89,11 +84,8 @@ impl Executor {
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
                 Some(confirmed_unix_timestamp) => {
-                    // TODO By maintaining a sorted list of the pending_queue's keys,
-                    //      this operation can possibly be made much cheaper. By iterating
-                    //      through the sorted list up to the confirmed unix timestamp, we
-                    //      save compute cycles by not iterating over future exec_at timestamps.
-                    //      However before doing this, consider if retain() is processed in parallel...
+                    // TODO If there are multiple nodes in the delegate pool, can they efficiently
+                    //  split up work w/o sending messages to one another?
                     this.pending_queues.retain(|exec_at, queue_pubkeys| {
                         if *exec_at <= confirmed_unix_timestamp {
                             for queue_pubkey in queue_pubkeys.iter() {
@@ -109,11 +101,11 @@ impl Executor {
 
             // Process actionable queues
             this.clone()
-                .spawn(|this| async move { this.process_actionable_queues(confirmed_slot) })?;
+                .spawn(|this| async move { this.process_queues(confirmed_slot) })?;
 
             // Confirm signatures
             this.clone()
-                .spawn(|this| async move { this.confirm_signatures(confirmed_slot) })?;
+                .spawn(|this| async move { this.process_tx_signatures(confirmed_slot) })?;
 
             Ok(())
         })
@@ -153,7 +145,7 @@ impl Executor {
         })
     }
 
-    fn process_actionable_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+    fn process_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Create a new tpu client
             let tpu_client = Arc::new(TpuClient::new(
@@ -173,12 +165,13 @@ impl Executor {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
 
+            // Build a tx for each queue and submit batch via TPU client
             this.actionable_queues
                 .iter()
                 .filter_map(|queue_pubkey_ref| {
                     let queue_pubkey = *queue_pubkey_ref.key();
                     this.clone()
-                        .build_tx_for_queue(cronos_client.clone(), queue_pubkey)
+                        .build_queue_tx(cronos_client.clone(), queue_pubkey)
                         .map_or(None, |tx| Some((queue_pubkey, tx)))
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
@@ -195,7 +188,7 @@ impl Executor {
         })
     }
 
-    fn build_tx_for_queue(
+    fn build_queue_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
         queue_pubkey: Pubkey,
@@ -211,16 +204,14 @@ impl Executor {
             queue_pubkey,
         );
 
-        // Accumulate task ixs here
+        // Build task_exec ixs
         let mut ixs: Vec<Instruction> = vec![queue_start_ix];
-
-        // Build an ix for each task
         for i in 0..queue.task_count {
             // Get the task account
             let task_pubkey = Task::pda(queue_pubkey, i).0;
             let task = cronos_client.get::<Task>(&task_pubkey).unwrap();
 
-            // Build task_exec ix
+            // Build ix
             let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
                 delegate_pubkey,
                 queue.manager,
@@ -257,10 +248,12 @@ impl Executor {
                 }
             }
 
-            // Add ix to the list
+            // Collect ixs
             ixs.push(task_exec_ix)
         }
 
+        // Pack into tx
+        // TODO At what scale must ixs be chunked into separate txs?
         let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&delegate_pubkey));
         tx.sign(
             &[cronos_client.payer()],
@@ -271,7 +264,7 @@ impl Executor {
         Ok(tx)
     }
 
-    fn confirm_signatures(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+    fn process_tx_signatures(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             let rpc_client = RpcClient::new_with_commitment::<String>(
                 LOCAL_RPC_URL.into(),
@@ -364,7 +357,7 @@ impl Executor {
         self: &Arc<Self>,
         f: impl FnOnce(Arc<Self>) -> F,
     ) -> PluginResult<()> {
-        self.runtime.spawn(f(Arc::clone(self)));
+        self.runtime.spawn(f(self.clone()));
         Ok(())
     }
 
@@ -389,5 +382,11 @@ impl Executor {
 impl Debug for Executor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Cronos executor")
+    }
+}
+
+impl Default for Executor {
+    fn default() -> Self {
+        Self::new(PluginConfig::default())
     }
 }
