@@ -85,7 +85,6 @@ impl Executor {
             this.unix_timestamps.retain(|slot, unix_timestamp| {
                 if *slot == confirmed_slot {
                     confirmed_unix_timestamp = Some(unix_timestamp.clone());
-                    return true;
                 }
                 *slot > confirmed_slot
             });
