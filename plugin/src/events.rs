@@ -45,15 +45,16 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // if account_pubkey.eq(&pool_pubkey()) {
-        //     return Ok(AccountUpdateEvent::Pool {
-        //         pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
-        //             GeyserPluginError::AccountsUpdateError {
-        //                 msg: "Failed to parse Cronos pool account".into(),
-        //             }
-        //         })?,
-        //     });
-        // }
+        // If the account is the Cronos delegate pool, return it
+        if account_pubkey.eq(&pool_pubkey()) {
+            return Ok(AccountUpdateEvent::Pool {
+                pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parse Cronos pool account".into(),
+                    }
+                })?,
+            });
+        }
 
         Err(GeyserPluginError::AccountsUpdateError {
             msg: "Account is not relevant to cronos plugin".into(),

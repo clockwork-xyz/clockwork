@@ -90,20 +90,20 @@ impl Executor {
             });
 
             // Get the confirmed delegate pool
-            // this.delegate_pools.retain(|slot, delegate_pool| {
-            //     if *slot == confirmed_slot {
-            //         this.delegates.clear();
-            //         delegate_pool
-            //             .delegates
-            //             .make_contiguous()
-            //             .iter()
-            //             .enumerate()
-            //             .for_each(|(i, pubkey)| {
-            //                 this.delegates.insert(i, *pubkey);
-            //             });
-            //     }
-            //     *slot > confirmed_slot
-            // });
+            this.delegate_pools.retain(|slot, delegate_pool| {
+                if *slot == confirmed_slot {
+                    this.delegates.clear();
+                    delegate_pool
+                        .delegates
+                        .make_contiguous()
+                        .iter()
+                        .enumerate()
+                        .for_each(|(i, pubkey)| {
+                            this.delegates.insert(i, *pubkey);
+                        });
+                }
+                *slot > confirmed_slot
+            });
 
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
