@@ -8,12 +8,17 @@ use {
     },
 };
 
-pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     let node = client
-        .get::<cronos_client::network::state::Node>(address)
+        .get::<cronos_client::network::state::Node>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("{:#?}", node);
     Ok(())
+}
+
+pub fn get_by_delegate(client: &Client, delegate: Pubkey) -> Result<(), CliError> {
+    let node_pubkey = Node::pda(delegate).0;
+    get(client, node_pubkey)
 }
 
 pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
@@ -71,7 +76,7 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
         snapshot_task_pubkey,
     );
     client.send_and_confirm(&[ix], &[owner, &delegate]).unwrap();
-    get(client, &node_pubkey)
+    get(client, node_pubkey)
 }
 
 pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
@@ -96,5 +101,5 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
     );
 
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, &node_pubkey)
+    get(client, node_pubkey)
 }

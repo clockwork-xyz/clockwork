@@ -70,6 +70,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::NodeGet {
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             delegate: parse_keypair_file("delegate", matches)?,
         }),

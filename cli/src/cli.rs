@@ -25,6 +25,9 @@ pub enum CliCommand {
     },
 
     // Node commands
+    NodeGet {
+        delegate: Pubkey,
+    },
     NodeRegister {
         delegate: Keypair,
     },
@@ -162,6 +165,17 @@ pub fn app() -> Command<'static> {
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
                 .subcommand(
+                    Command::new("get")
+                        .about("Get a node by delegate address")
+                        .arg(
+                            Arg::new("delegate")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The delegate address to stake tokens with"),
+                        ),
+                )
+                .subcommand(
                     Command::new("register")
                         .about("Register a new node with the Cronos network")
                         .arg(
@@ -241,5 +255,5 @@ pub fn app() -> Command<'static> {
                     ),
                 ),
         )
-        .subcommand(Command::new("registry"))
+        .subcommand(Command::new("registry").about("Get the registry account"))
 }

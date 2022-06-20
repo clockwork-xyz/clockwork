@@ -1,3 +1,5 @@
+use solana_sdk::transaction::TransactionError;
+
 use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
@@ -220,17 +222,12 @@ impl Executor {
                     // TODO If there are multiple nodes in the delegate pool, can they efficiently
                     //  split up work w/o sending messages to one another?
                     let queue_pubkey = *queue_pubkey_ref.key();
-                    this.clone()
-                        .build_tx(cronos_client.clone(), queue_pubkey)
-                        .map_or(None, |tx| Some((queue_pubkey, tx)))
 
                     // Hash the trailing bytes of the queue pubkey to an number between 0 and the delegate pool size.
                     // let b = queue_pubkey.to_bytes();
-                    // let idx = u64::from_le_bytes([
-                    //     b[31], b[30], b[29], b[28], b[27], b[26], b[25], b[24],
-                    // ])
-                    // .checked_rem(this.delegates.len() as u64)
-                    // .unwrap_or(0) as usize;
+                    // let idx = u32::from_le_bytes([b[31], b[30], b[29], b[28]])
+                    //     .checked_rem(this.delegates.len() as u32)
+                    //     .unwrap_or(0) as usize;
 
                     // If this number matches delegate's position in the pool, then attempt to process it.
                     // if this.delegates.is_empty() || delegate_positions.contains(&idx) {
@@ -240,6 +237,10 @@ impl Executor {
                     // } else {
                     //     None
                     // }
+
+                    this.clone()
+                        .build_tx(cronos_client.clone(), queue_pubkey)
+                        .map_or(None, |tx| Some((queue_pubkey, tx)))
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
                 .iter()
@@ -368,7 +369,7 @@ impl Executor {
 
                                     // Naively move the queue pubkey back into the set of actionable queues.
                                     this.tx_signatures.remove(&signature);
-                                    this.actionable_queues.insert(*queue_pubkey);
+                                    // this.actionable_queues.insert(*queue_pubkey);
                                 }
                                 None => {
                                     match status.confirmation_status.clone() {

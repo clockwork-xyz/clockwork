@@ -34,6 +34,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         ),
         CliCommand::Health => super::health::get(&client),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
+        CliCommand::NodeGet { delegate } => super::node::get_by_delegate(&client, delegate),
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
         CliCommand::NodeStake { amount, delegate } => super::node::stake(&client, amount, delegate),
         CliCommand::PoolGet => super::pool::get(&client),
