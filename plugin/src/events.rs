@@ -7,7 +7,7 @@ use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
-    Pool { pool: Pool },
+    // Pool { pool: Pool },
     Queue { queue: Queue },
 }
 
@@ -39,15 +39,15 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        if account_pubkey.eq(&Pool::pda().0) {
-            return Ok(AccountUpdateEvent::Pool {
-                pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
-                    GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos pool account".into(),
-                    }
-                })?,
-            });
-        }
+        // if account_pubkey.eq(&Pool::pda().0) {
+        //     return Ok(AccountUpdateEvent::Pool {
+        //         pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
+        //             GeyserPluginError::AccountsUpdateError {
+        //                 msg: "Failed to parse Cronos pool account".into(),
+        //             }
+        //         })?,
+        //     });
+        // }
 
         Err(GeyserPluginError::AccountsUpdateError {
             msg: "Account is not relevant to cronos plugin".into(),

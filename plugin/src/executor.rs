@@ -35,11 +35,11 @@ pub struct Executor {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // The active delegates
-    pub delegates: DashMap<usize, Pubkey>,
+    // // The active delegates
+    // pub delegates: DashMap<usize, Pubkey>,
 
-    // Map from slot numbers to delegate pools.
-    pub delegate_pools: DashMap<u64, Pool>,
+    // // Map from slot numbers to delegate pools.
+    // pub delegate_pools: DashMap<u64, Pool>,
 
     // Map from exec_at timestamps to the list of queues scheduled
     //  for that moment.
@@ -61,8 +61,8 @@ impl Executor {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
-            delegates: DashMap::new(),
-            delegate_pools: DashMap::new(),
+            // delegates: DashMap::new(),
+            // delegate_pools: DashMap::new(),
             pending_queues: DashMap::new(),
             runtime: Builder::new_multi_thread()
                 .enable_all()
@@ -91,20 +91,20 @@ impl Executor {
 
             // Get the confirmed delegate pool
             // let mut confirmed_delegates = None;
-            this.delegate_pools.retain(|slot, delegate_pool| {
-                if *slot == confirmed_slot {
-                    this.delegates.clear();
-                    delegate_pool
-                        .delegates
-                        .make_contiguous()
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, pubkey)| {
-                            this.delegates.insert(i, *pubkey);
-                        });
-                }
-                *slot > confirmed_slot
-            });
+            // this.delegate_pools.retain(|slot, delegate_pool| {
+            //     if *slot == confirmed_slot {
+            //         this.delegates.clear();
+            //         delegate_pool
+            //             .delegates
+            //             .make_contiguous()
+            //             .iter()
+            //             .enumerate()
+            //             .for_each(|(i, pubkey)| {
+            //                 this.delegates.insert(i, *pubkey);
+            //             });
+            //     }
+            //     *slot > confirmed_slot
+            // });
 
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
@@ -142,12 +142,12 @@ impl Executor {
         })
     }
 
-    pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            this.delegate_pools.insert(slot, pool);
-            Ok(())
-        })
-    }
+    // pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
+    //     self.spawn(|this| async move {
+    //         this.delegate_pools.insert(slot, pool);
+    //         Ok(())
+    //     })
+    // }
 
     pub fn handle_updated_queue(
         self: Arc<Self>,
@@ -196,23 +196,23 @@ impl Executor {
             })?;
 
             let delegate_pubkey = cronos_client.payer_pubkey();
-            let delegate_positions = this
-                .delegates
-                .iter()
-                // .enumerate()
-                .filter_map(|entry| {
-                    if entry.value().eq(&delegate_pubkey) {
-                        Some(*entry.key())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<usize>>();
+            // let delegate_positions = this
+            //     .delegates
+            //     .iter()
+            //     // .enumerate()
+            //     .filter_map(|entry| {
+            //         if entry.value().eq(&delegate_pubkey) {
+            //             Some(*entry.key())
+            //         } else {
+            //             None
+            //         }
+            //     })
+            //     .collect::<Vec<usize>>();
 
             // Return early if the node is not a confirmed delegate
-            if !this.delegates.is_empty() && delegate_positions.is_empty() {
-                return Ok(());
-            }
+            // if !this.delegates.is_empty() && delegate_positions.is_empty() {
+            //     return Ok(());
+            // }
 
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
@@ -222,23 +222,26 @@ impl Executor {
                     // TODO If there are multiple nodes in the delegate pool, can they efficiently
                     //  split up work w/o sending messages to one another?
                     let queue_pubkey = *queue_pubkey_ref.key();
+                    this.clone()
+                        .build_tx(cronos_client.clone(), queue_pubkey)
+                        .map_or(None, |tx| Some((queue_pubkey, tx)))
 
                     // Hash the trailing bytes of the queue pubkey to an number between 0 and the delegate pool size.
-                    let b = queue_pubkey.to_bytes();
-                    let idx = u64::from_le_bytes([
-                        b[31], b[30], b[29], b[28], b[27], b[26], b[25], b[24],
-                    ])
-                    .checked_rem(this.delegates.len() as u64)
-                    .unwrap_or(0) as usize;
+                    // let b = queue_pubkey.to_bytes();
+                    // let idx = u64::from_le_bytes([
+                    //     b[31], b[30], b[29], b[28], b[27], b[26], b[25], b[24],
+                    // ])
+                    // .checked_rem(this.delegates.len() as u64)
+                    // .unwrap_or(0) as usize;
 
                     // If this number matches delegate's position in the pool, then attempt to process it.
-                    if this.delegates.is_empty() || delegate_positions.contains(&idx) {
-                        this.clone()
-                            .build_tx(cronos_client.clone(), queue_pubkey)
-                            .map_or(None, |tx| Some((queue_pubkey, tx)))
-                    } else {
-                        None
-                    }
+                    // if this.delegates.is_empty() || delegate_positions.contains(&idx) {
+                    //     this.clone()
+                    //         .build_tx(cronos_client.clone(), queue_pubkey)
+                    //         .map_or(None, |tx| Some((queue_pubkey, tx)))
+                    // } else {
+                    //     None
+                    // }
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
                 .iter()
