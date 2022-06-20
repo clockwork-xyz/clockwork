@@ -90,20 +90,20 @@ impl Executor {
             });
 
             // Get the confirmed delegate pool
-            this.delegate_pools.retain(|slot, delegate_pool| {
-                if *slot == confirmed_slot {
-                    this.delegates.clear();
-                    delegate_pool
-                        .delegates
-                        .make_contiguous()
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, pubkey)| {
-                            this.delegates.insert(i, *pubkey);
-                        });
-                }
-                *slot > confirmed_slot
-            });
+            // this.delegate_pools.retain(|slot, delegate_pool| {
+            //     if *slot == confirmed_slot {
+            //         this.delegates.clear();
+            //         delegate_pool
+            //             .delegates
+            //             .make_contiguous()
+            //             .iter()
+            //             .enumerate()
+            //             .for_each(|(i, pubkey)| {
+            //                 this.delegates.insert(i, *pubkey);
+            //             });
+            //     }
+            //     *slot > confirmed_slot
+            // });
 
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
@@ -194,23 +194,23 @@ impl Executor {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
 
-            let delegate_pubkey = cronos_client.payer_pubkey();
-            let delegate_positions = this
-                .delegates
-                .iter()
-                .filter_map(|entry| {
-                    if entry.value().eq(&delegate_pubkey) {
-                        Some(*entry.key())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<usize>>();
+            // let delegate_pubkey = cronos_client.payer_pubkey();
+            // let delegate_positions = this
+            //     .delegates
+            //     .iter()
+            //     .filter_map(|entry| {
+            //         if entry.value().eq(&delegate_pubkey) {
+            //             Some(*entry.key())
+            //         } else {
+            //             None
+            //         }
+            //     })
+            //     .collect::<Vec<usize>>();
 
             // Return early if the node is not a confirmed delegate
-            if !this.delegates.is_empty() && delegate_positions.is_empty() {
-                return Ok(());
-            }
+            // if !this.delegates.is_empty() && delegate_positions.is_empty() {
+            //     return Ok(());
+            // }
 
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
