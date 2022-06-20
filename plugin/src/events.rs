@@ -1,4 +1,5 @@
 use bincode::deserialize;
+use cached::proc_macro::cached;
 use cronos_client::{pool::state::Pool, scheduler::state::Queue};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
@@ -7,8 +8,13 @@ use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
-    // Pool { pool: Pool },
+    Pool { pool: Pool },
     Queue { queue: Queue },
+}
+
+#[cached]
+fn pool_pubkey() -> Pubkey {
+    Pool::pda().0
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -39,15 +45,15 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // if account_pubkey.eq(&Pool::pda().0) {
-        //     return Ok(AccountUpdateEvent::Pool {
-        //         pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
-        //             GeyserPluginError::AccountsUpdateError {
-        //                 msg: "Failed to parse Cronos pool account".into(),
-        //             }
-        //         })?,
-        //     });
-        // }
+        if account_pubkey.eq(&pool_pubkey()) {
+            return Ok(AccountUpdateEvent::Pool {
+                pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parse Cronos pool account".into(),
+                    }
+                })?,
+            });
+        }
 
         Err(GeyserPluginError::AccountsUpdateError {
             msg: "Account is not relevant to cronos plugin".into(),
