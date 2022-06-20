@@ -242,6 +242,12 @@ impl Executor {
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
                 .iter()
+                .filter(|(_queue_pubkey, tx)| {
+                    tpu_client
+                        .rpc_client()
+                        .simulate_transaction(tx)
+                        .map_or(false, |res| res.value.err.is_none())
+                })
                 .for_each(|(queue_pubkey, tx)| {
                     if tpu_client.clone().send_transaction(tx) {
                         this.actionable_queues.remove(queue_pubkey);
