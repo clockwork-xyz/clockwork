@@ -1,5 +1,3 @@
-use solana_sdk::transaction::TransactionError;
-
 use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
