@@ -242,11 +242,15 @@ impl Executor {
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
                 .iter()
-                .filter(|(_queue_pubkey, tx)| {
-                    tpu_client
+                .filter(|(queue_pubkey, tx)| {
+                    let b = tpu_client
                         .rpc_client()
                         .simulate_transaction(tx)
-                        .map_or(false, |res| res.value.err.is_none())
+                        .map_or(false, |res| res.value.err.is_none());
+                    if !b {
+                        this.actionable_queues.remove(queue_pubkey);
+                    }
+                    b
                 })
                 .for_each(|(queue_pubkey, tx)| {
                     if tpu_client.clone().send_transaction(tx) {
@@ -373,7 +377,7 @@ impl Executor {
 
                                     // Naively move the queue pubkey back into the set of actionable queues.
                                     this.tx_signatures.remove(&signature);
-                                    // this.actionable_queues.insert(*queue_pubkey);
+                                    this.actionable_queues.insert(*queue_pubkey);
                                 }
                                 None => {
                                     match status.confirmation_status.clone() {
