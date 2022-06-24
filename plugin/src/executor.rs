@@ -294,21 +294,24 @@ impl Executor {
         // Get the queue
         let queue = cronos_client.get::<Queue>(&queue_pubkey).unwrap();
 
-        // Build queue_start ix
+        // Setup ixs based on queue's current status
         let delegate_pubkey = cronos_client.payer_pubkey();
-        let queue_start_ix = cronos_client::scheduler::instruction::queue_start(
-            delegate_pubkey,
-            queue.manager,
-            queue_pubkey,
-        );
+        let mut ixs: Vec<Instruction> = vec![];
+        let mut starting_task_id = 0;
+        match queue.status {
+            QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
+            QueueStatus::Pending => {
+                ixs.push(cronos_client::scheduler::instruction::queue_start(
+                    delegate_pubkey,
+                    queue.manager,
+                    queue_pubkey,
+                ));
+            }
+            QueueStatus::Processing { task_id } => starting_task_id = task_id,
+        };
 
         // Build task_exec ixs
-        let mut ixs: Vec<Instruction> = vec![queue_start_ix];
-        let initial_task_id = match queue.status {
-            QueueStatus::Processing { task_id } => task_id,
-            _ => 0,
-        };
-        for i in initial_task_id..queue.task_count {
+        for i in starting_task_id..queue.task_count {
             // Get the task account
             let task_pubkey = Task::pda(queue_pubkey, i).0;
             let task = cronos_client.get::<Task>(&task_pubkey).unwrap();
