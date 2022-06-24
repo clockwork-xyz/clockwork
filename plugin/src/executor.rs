@@ -256,7 +256,16 @@ impl Executor {
                     let b = tpu_client
                         .rpc_client()
                         .simulate_transaction(tx)
-                        .map_or(false, |res| res.value.err.is_none());
+                        .map_or(false, |res| {
+                            if res.value.err.is_some() {
+                                info!(
+                                    "Dropping queue with error: {} logs: {:?}",
+                                    res.value.err.clone().unwrap(),
+                                    res.value.logs
+                                )
+                            }
+                            res.value.err.is_none()
+                        });
                     if !b {
                         this.actionable_queues.remove(queue_pubkey);
                         this.dropped_counter.fetch_add(1, Ordering::Relaxed);
