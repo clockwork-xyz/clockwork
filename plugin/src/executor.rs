@@ -1,5 +1,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use cronos_client::scheduler::state::QueueStatus;
+
 use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
@@ -302,7 +304,11 @@ impl Executor {
 
         // Build task_exec ixs
         let mut ixs: Vec<Instruction> = vec![queue_start_ix];
-        for i in 0..queue.task_count {
+        let initial_task_id = match queue.status {
+            QueueStatus::Processing { task_id } => task_id,
+            _ => 0,
+        };
+        for i in initial_task_id..queue.task_count {
             // Get the task account
             let task_pubkey = Task::pda(queue_pubkey, i).0;
             let task = cronos_client.get::<Task>(&task_pubkey).unwrap();
