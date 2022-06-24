@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
@@ -54,6 +56,9 @@ pub struct Executor {
 
     // Map from slot numbers to the sysvar clock unix_timestamp at that slot.
     pub unix_timestamps: DashMap<u64, i64>,
+
+    // Counters
+    pub dropped_counter: AtomicU64,
 }
 
 impl Executor {
@@ -73,12 +78,17 @@ impl Executor {
                 .unwrap(),
             tx_signatures: DashMap::new(),
             unix_timestamps: DashMap::new(),
+            dropped_counter: AtomicU64::new(0),
         }
     }
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Confirmed slot: {}", confirmed_slot);
+            info!(
+                "Confirmed slot: {} dropped: {}",
+                confirmed_slot,
+                this.dropped_counter.load(Ordering::Relaxed)
+            );
 
             // Look for the latest confirmed sysvar unix timestamp
             let mut confirmed_unix_timestamp = None;
@@ -249,6 +259,7 @@ impl Executor {
                         .map_or(false, |res| res.value.err.is_none());
                     if !b {
                         this.actionable_queues.remove(queue_pubkey);
+                        this.dropped_counter.fetch_add(1, Ordering::Relaxed);
                     }
                     b
                 })
