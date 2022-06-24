@@ -242,16 +242,16 @@ impl Executor {
                 })
                 .collect::<Vec<(Pubkey, Transaction)>>()
                 .iter()
-                // .filter(|(queue_pubkey, tx)| {
-                //     let b = tpu_client
-                //         .rpc_client()
-                //         .simulate_transaction(tx)
-                //         .map_or(false, |res| res.value.err.is_none());
-                //     if !b {
-                //         this.actionable_queues.remove(queue_pubkey);
-                //     }
-                //     b
-                // })
+                .filter(|(queue_pubkey, tx)| {
+                    let b = tpu_client
+                        .rpc_client()
+                        .simulate_transaction(tx)
+                        .map_or(false, |res| res.value.err.is_none());
+                    if !b {
+                        this.actionable_queues.remove(queue_pubkey);
+                    }
+                    b
+                })
                 .for_each(|(queue_pubkey, tx)| {
                     if tpu_client.clone().send_transaction(tx) {
                         this.actionable_queues.remove(queue_pubkey);
