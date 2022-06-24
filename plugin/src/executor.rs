@@ -206,6 +206,7 @@ impl Executor {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
 
+            // Return early if the node is not a confirmed delegate
             let delegate_pubkey = cronos_client.payer_pubkey();
             let delegate_positions = this
                 .delegates
@@ -218,11 +219,11 @@ impl Executor {
                     }
                 })
                 .collect::<Vec<usize>>();
-
-            // Return early if the node is not a confirmed delegate
             if !this.delegates.is_empty() && delegate_positions.is_empty() {
                 return Ok(());
             }
+
+            info!("Node {} is a delegate", delegate_pubkey);
 
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
