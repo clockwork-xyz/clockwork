@@ -3,9 +3,6 @@
 # Get the current keypair
 current_keypair=$(solana config get | grep "Keypair Path:" | cut -c 15-)
 
-# Switch to local validator keypair
-# solana config set -k $(pwd)/test-ledger/validator-keypair.json
-
 # Stake local node with the cronos network
 cd cli
 cargo run -- node register ../test-ledger/validator-keypair.json

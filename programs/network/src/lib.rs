@@ -20,7 +20,7 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
-    pub fn cycler_run(ctx: Context<CyclerRun>) -> Result<ExecResponse> {
+    pub fn cycler_run(ctx: Context<CyclerRun>) -> Result<()> {
         cycler_run::handler(ctx)
     }
 

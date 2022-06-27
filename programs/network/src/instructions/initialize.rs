@@ -88,16 +88,16 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let cycler_fee = ctx.remaining_accounts.get(0).unwrap();
-    let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
-    let manager = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_fee = ctx.remaining_accounts.get(3).unwrap();
-    let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(5).unwrap();
+    // let cycler_fee = ctx.remaining_accounts.get(0).unwrap();
+    // let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
+    let manager = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_fee = ctx.remaining_accounts.get(1).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
 
     // Initialize accounts
     authority.new(manager.key())?;
-    config.new(admin.key(),  mint.key())?;
+    config.new(admin.key(), mint.key())?;
     cycler.new()?;
     registry.new()?;
     registry.new_snapshot(snapshot)?;
@@ -119,22 +119,22 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     )?;
 
     // Create a queue to cycle the delegate pool
-    cronos_scheduler::cpi::queue_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::QueueNew {
-                authority: authority.to_account_info(),
-                clock: clock.to_account_info(),
-                fee: cycler_fee.to_account_info(),
-                manager: manager.to_account_info(),
-                payer: admin.to_account_info(),
-                queue: cycler_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]]
-        ), 
-        "*/15 * * * * * *".into()
-    )?;
+    // cronos_scheduler::cpi::queue_new(
+    //     CpiContext::new_with_signer(
+    //         scheduler_program.to_account_info(),
+    //         cronos_scheduler::cpi::accounts::QueueNew {
+    //             authority: authority.to_account_info(),
+    //             clock: clock.to_account_info(),
+    //             fee: cycler_fee.to_account_info(),
+    //             manager: manager.to_account_info(),
+    //             payer: admin.to_account_info(),
+    //             queue: cycler_queue.to_account_info(),
+    //             system_program: system_program.to_account_info(),
+    //         },
+    //         &[&[SEED_AUTHORITY, &[bump]]]
+    //     ), 
+    //     "*/15 * * * * * *".into()
+    // )?;
 
     // Create a queue to take snapshots of the registry
     cronos_scheduler::cpi::queue_new(

@@ -33,6 +33,7 @@ tokio = "~1.14.1"
 dashmap = "5.3.3"
 bugsnag = "0.2.1"
 cached = "0.34.1"
+crossbeam = "0.8.1"
 
 [build-dependencies]
 prost-build = "0.10.0"

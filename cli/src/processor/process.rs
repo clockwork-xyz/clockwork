@@ -43,5 +43,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
         CliCommand::RegistryGet => super::registry::get(&client),
+        CliCommand::SnapshotGet => super::snapshot::get(&client),
     }
 }

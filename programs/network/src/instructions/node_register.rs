@@ -26,8 +26,8 @@ pub struct NodeRegister<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(has_one = manager)]
-    pub cycler_queue: Box<Account<'info, Queue>>,
+    // #[account(has_one = manager)]
+    // pub cycler_queue: Box<Account<'info, Queue>>,
 
     #[account()]
     pub delegate: Signer<'info>,
@@ -113,7 +113,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Get accounts
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
-    let cycler_queue = &ctx.accounts.cycler_queue;
+    // let cycler_queue = &ctx.accounts.cycler_queue;
     let delegate = &ctx.accounts.delegate;
     let entry = &mut ctx.accounts.entry;
     let manager = &ctx.accounts.manager;
@@ -127,8 +127,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let stake = &mut ctx.accounts.stake;
 
     // Get remaining accountsgs
-    let cycler_task = ctx.remaining_accounts.get(0).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
+    // let cycler_task = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(0).unwrap();
     
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
@@ -140,36 +140,36 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     snapshot.capture(entry, node, stake)?;
 
     // Add an task to the cycler queue to check the snapshot entry for this node
-    let cycler_run_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new(Cycler::pda().0, false),
-            AccountMeta::new_readonly(entry.key(), false),
-            AccountMeta::new(cronos_pool::state::Pool::pda().0, false),
-            AccountMeta::new_readonly(cronos_pool::state::Config::pda().0, false),
-            AccountMeta::new_readonly(cronos_pool::ID, false),
-            AccountMeta::new_readonly(manager.key(), true),
-            AccountMeta::new_readonly(registry.key(), false),
-            AccountMeta::new_readonly(snapshot.key(), false),
-        ],
-        data: cronos_scheduler::anchor::sighash("cycler_run").into(),
-    };
-    cronos_scheduler::cpi::task_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::TaskNew {
-                authority: authority.to_account_info(),
-                manager: manager.to_account_info(),
-                payer: owner.to_account_info(),
-                queue: cycler_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-                task: cycler_task.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[authority_bump]]],
-        ),
-        vec![cycler_run_ix.into()],
-    )?;
+    // let cycler_run_ix = Instruction {
+    //     program_id: crate::ID,
+    //     accounts: vec![
+    //         AccountMeta::new_readonly(authority.key(), false),
+    //         AccountMeta::new(Cycler::pda().0, false),
+    //         AccountMeta::new_readonly(entry.key(), false),
+    //         AccountMeta::new(cronos_pool::state::Pool::pda().0, false),
+    //         AccountMeta::new_readonly(cronos_pool::state::Config::pda().0, false),
+    //         AccountMeta::new_readonly(cronos_pool::ID, false),
+    //         AccountMeta::new_readonly(manager.key(), true),
+    //         AccountMeta::new_readonly(registry.key(), false),
+    //         AccountMeta::new_readonly(snapshot.key(), false),
+    //     ],
+    //     data: cronos_scheduler::anchor::sighash("cycler_run").into(),
+    // };
+    // cronos_scheduler::cpi::task_new(
+    //     CpiContext::new_with_signer(
+    //         scheduler_program.to_account_info(),
+    //         cronos_scheduler::cpi::accounts::TaskNew {
+    //             authority: authority.to_account_info(),
+    //             manager: manager.to_account_info(),
+    //             payer: owner.to_account_info(),
+    //             queue: cycler_queue.to_account_info(),
+    //             system_program: system_program.to_account_info(),
+    //             task: cycler_task.to_account_info(),
+    //         },
+    //         &[&[SEED_AUTHORITY, &[authority_bump]]],
+    //     ),
+    //     vec![cycler_run_ix.into()],
+    // )?;
 
     // Add an task to the snapshot queue to capture an entry for this node
     let current_snapshot_pubkey = Snapshot::pda(registry.snapshot_count.checked_sub(1).unwrap()).0;

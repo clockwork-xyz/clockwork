@@ -1,13 +1,8 @@
-use std::sync::atomic::{AtomicU64, Ordering};
-
-use cronos_client::scheduler::state::QueueStatus;
-
 use {
     crate::{config::PluginConfig, tpu_client::TpuClient},
     bugsnag::Bugsnag,
     cronos_client::{
-        pool::state::Pool,
-        scheduler::state::{Queue, Task},
+        scheduler::state::{Queue, QueueStatus, Task},
         Client as CronosClient,
     },
     dashmap::{DashMap, DashSet},
@@ -25,25 +20,32 @@ use {
         commitment_config::CommitmentConfig, signature::Signature, transaction::Transaction,
     },
     solana_transaction_status::{TransactionConfirmationStatus, TransactionStatus},
-    std::{collections::HashSet, fmt::Debug, sync::Arc},
+    std::{
+        collections::HashSet,
+        fmt::Debug,
+        sync::{
+            atomic::{AtomicU64, Ordering},
+            Arc,
+        },
+    },
     tokio::runtime::{Builder, Runtime},
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
-pub struct Executor {
+pub struct TaskExecutor {
     // The set of queue pubkeys that can be processed.
     pub actionable_queues: DashSet<Pubkey>,
 
     // Plugin config values.
     pub config: PluginConfig,
 
-    // The active delegates
-    pub delegates: DashMap<usize, Pubkey>,
+    // // The active delegates
+    // pub delegates: DashMap<usize, Pubkey>,
 
-    // Map from slot numbers to delegate pools.
-    pub delegate_pools: DashMap<u64, Pool>,
+    // // Map from slot numbers to delegate pools.
+    // pub delegate_pools: DashMap<u64, Pool>,
 
     // Map from exec_at timestamps to the list of queues scheduled
     //  for that moment.
@@ -63,13 +65,13 @@ pub struct Executor {
     pub dropped_counter: AtomicU64,
 }
 
-impl Executor {
+impl TaskExecutor {
     pub fn new(config: PluginConfig) -> Self {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
-            delegates: DashMap::new(),
-            delegate_pools: DashMap::new(),
+            // delegates: DashMap::new(),
+            // delegate_pools: DashMap::new(),
             pending_queues: DashMap::new(),
             runtime: Builder::new_multi_thread()
                 .enable_all()
@@ -102,20 +104,20 @@ impl Executor {
             });
 
             // Get the confirmed delegate pool
-            this.delegate_pools.retain(|slot, delegate_pool| {
-                if *slot == confirmed_slot {
-                    this.delegates.clear();
-                    delegate_pool
-                        .delegates
-                        .make_contiguous()
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, pubkey)| {
-                            this.delegates.insert(i, *pubkey);
-                        });
-                }
-                *slot > confirmed_slot
-            });
+            // this.delegate_pools.retain(|slot, delegate_pool| {
+            //     if *slot == confirmed_slot {
+            //         this.delegates.clear();
+            //         delegate_pool
+            //             .delegates
+            //             .make_contiguous()
+            //             .iter()
+            //             .enumerate()
+            //             .for_each(|(i, pubkey)| {
+            //                 this.delegates.insert(i, *pubkey);
+            //             });
+            //     }
+            //     *slot > confirmed_slot
+            // });
 
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
@@ -153,12 +155,12 @@ impl Executor {
         })
     }
 
-    pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            this.delegate_pools.insert(slot, pool);
-            Ok(())
-        })
-    }
+    // pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
+    //     self.spawn(|this| async move {
+    //         this.delegate_pools.insert(slot, pool);
+    //         Ok(())
+    //     })
+    // }
 
     pub fn handle_updated_queue(
         self: Arc<Self>,
@@ -207,23 +209,23 @@ impl Executor {
             })?;
 
             // Return early if the node is not a confirmed delegate
-            let delegate_pubkey = cronos_client.payer_pubkey();
-            let delegate_positions = this
-                .delegates
-                .iter()
-                .filter_map(|entry| {
-                    if entry.value().eq(&delegate_pubkey) {
-                        Some(*entry.key())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<usize>>();
-            if !this.delegates.is_empty() && delegate_positions.is_empty() {
-                return Ok(());
-            }
+            // let delegate_pubkey = cronos_client.payer_pubkey();
+            // let delegate_positions = this
+            //     .delegates
+            //     .iter()
+            //     .filter_map(|entry| {
+            //         if entry.value().eq(&delegate_pubkey) {
+            //             Some(*entry.key())
+            //         } else {
+            //             None
+            //         }
+            //     })
+            //     .collect::<Vec<usize>>();
+            // if !this.delegates.is_empty() && delegate_positions.is_empty() {
+            //     return Ok(());
+            // }
 
-            info!("Node {} is a delegate", delegate_pubkey);
+            // info!("Node {} is a delegate. {} {} {}", delegate_pubkey);
 
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
@@ -445,7 +447,7 @@ impl Executor {
     }
 
     fn retry_if_timeout(
-        self: Arc<Executor>,
+        self: Arc<TaskExecutor>,
         confirmed_slot: u64,
         attempted_slot: u64,
         queue_pubkey: Pubkey,
@@ -485,13 +487,13 @@ impl Executor {
     }
 }
 
-impl Debug for Executor {
+impl Debug for TaskExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Cronos executor")
+        write!(f, "Task executor")
     }
 }
 
-impl Default for Executor {
+impl Default for TaskExecutor {
     fn default() -> Self {
         Self::new(PluginConfig::default())
     }

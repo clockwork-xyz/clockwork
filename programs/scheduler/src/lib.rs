@@ -37,16 +37,16 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
+    pub fn manager_fund(ctx: Context<ManagerFund>, amount: u64) -> Result<()> {
+        manager_fund::handler(ctx, amount)
+    }
+
     pub fn manager_new(ctx: Context<ManagerNew>) -> Result<()> {
         manager_new::handler(ctx)
     }
 
     pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
         queue_start::handler(ctx)
-    }
-
-    pub fn queue_fund(ctx: Context<QueueFund>, amount: u64) -> Result<()> {
-        queue_fund::handler(ctx, amount)
     }
 
     pub fn queue_new(ctx: Context<QueueNew>, schedule: String) -> Result<()> {

@@ -56,6 +56,9 @@ pub enum CliCommand {
     // Registry
     RegistryGet,
 
+    // Snapshot
+    SnapshotGet,
+
     // Utility commands
     Clock,
     Health,
@@ -256,4 +259,5 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(Command::new("registry").about("Get the registry account"))
+        .subcommand(Command::new("snapshot").about("Get the current snapshot account"))
 }

@@ -18,7 +18,7 @@ pub const SEED_CYCLER: &[u8] = b"cycler";
 #[account]
 #[derive(Debug)]
 pub struct Cycler {
-    pub entry_id: u64,
+    pub last_cycle_at: u64, // Slot of the last cycle
     pub nonce: u64,
 }
 
@@ -42,48 +42,43 @@ impl TryFrom<Vec<u8>> for Cycler {
 pub trait CyclerAccount {
     fn new(&mut self) -> Result<()>;
 
-    fn is_valid_delegate(
+    fn is_valid_entry(
         &mut self,
         entry: &Account<SnapshotEntry>,
         snapshot: &Account<Snapshot>,
     ) -> Result<bool>;
 
-    fn hash_nonce(&mut self) -> Result<()>;
+    fn hash_nonce(&mut self, slot: u64) -> Result<()>;
 }
 
 impl CyclerAccount for Account<'_, Cycler> {
     fn new(&mut self) -> Result<()> {
-        self.entry_id = 0;
-
-        // Start the nonce on a hash of the cycler's pubkey. Note, this
-        //  is an arbitrary value.
+        // Start the nonce on a hash of the cycler's pubkey. This is an arbitrary value.
         let mut hasher = DefaultHasher::new();
         self.key().hash(&mut hasher);
         self.nonce = hasher.finish();
-
+        self.last_cycle_at = 0;
         Ok(())
     }
 
-    fn is_valid_delegate(
+    fn is_valid_entry(
         &mut self,
         entry: &Account<SnapshotEntry>,
         snapshot: &Account<Snapshot>,
     ) -> Result<bool> {
         // Return true if the sample is within the entry's stake range
         match self.nonce.checked_rem(snapshot.stake_total) {
-            None => {
-                msg!("Bad sample!");
-                Ok(false)
-            }
+            None => Ok(false),
             Some(sample) => Ok(sample >= entry.stake_offset
                 && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),
         }
     }
 
-    fn hash_nonce(&mut self) -> Result<()> {
+    fn hash_nonce(&mut self, slot: u64) -> Result<()> {
         let mut hasher = DefaultHasher::new();
         self.nonce.hash(&mut hasher);
         self.nonce = hasher.finish();
+        self.last_cycle_at = slot;
         Ok(())
     }
 }
