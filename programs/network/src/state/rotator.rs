@@ -9,37 +9,37 @@ use {
     },
 };
 
-pub const SEED_CYCLER: &[u8] = b"cycler";
+pub const SEED_ROTATOR: &[u8] = b"rotator";
 
 /**
- * Cycler
+ * Rotator
  */
 
 #[account]
 #[derive(Debug)]
-pub struct Cycler {
-    pub last_cycle_at: u64, // Slot of the last cycle
+pub struct Rotator {
+    pub last_slot: u64, // Slot of the last cycle
     pub nonce: u64,
 }
 
-impl Cycler {
+impl Rotator {
     pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_CYCLER], &crate::ID)
+        Pubkey::find_program_address(&[SEED_ROTATOR], &crate::ID)
     }
 }
 
-impl TryFrom<Vec<u8>> for Cycler {
+impl TryFrom<Vec<u8>> for Rotator {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Cycler::try_deserialize(&mut data.as_slice())
+        Rotator::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * CyclerAccount
+ * RotatorAccount
  */
 
-pub trait CyclerAccount {
+pub trait RotatorAccount {
     fn new(&mut self) -> Result<()>;
 
     fn is_valid_entry(
@@ -51,13 +51,13 @@ pub trait CyclerAccount {
     fn hash_nonce(&mut self, slot: u64) -> Result<()>;
 }
 
-impl CyclerAccount for Account<'_, Cycler> {
+impl RotatorAccount for Account<'_, Rotator> {
     fn new(&mut self) -> Result<()> {
-        // Start the nonce on a hash of the cycler's pubkey. This is an arbitrary value.
+        // Start the nonce on a hash of the rotator's pubkey. This is an arbitrary value.
         let mut hasher = DefaultHasher::new();
         self.key().hash(&mut hasher);
         self.nonce = hasher.finish();
-        self.last_cycle_at = 0;
+        self.last_slot = 0;
         Ok(())
     }
 
@@ -75,10 +75,13 @@ impl CyclerAccount for Account<'_, Cycler> {
     }
 
     fn hash_nonce(&mut self, slot: u64) -> Result<()> {
+        // Hash the nonce
         let mut hasher = DefaultHasher::new();
         self.nonce.hash(&mut hasher);
         self.nonce = hasher.finish();
-        self.last_cycle_at = slot;
+
+        // Record the slot value
+        self.last_slot = slot;
         Ok(())
     }
 }

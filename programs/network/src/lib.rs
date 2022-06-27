@@ -20,8 +20,8 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
-    pub fn cycler_run(ctx: Context<CyclerRun>) -> Result<()> {
-        cycler_run::handler(ctx)
+    pub fn rotator_turn(ctx: Context<RotatorTurn>) -> Result<()> {
+        rotator_turn::handler(ctx)
     }
 
     pub fn node_register<'info>(

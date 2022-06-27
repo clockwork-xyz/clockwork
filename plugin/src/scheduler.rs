@@ -34,7 +34,7 @@ use {
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
-pub struct TaskExecutor {
+pub struct Scheduler {
     // The set of queue pubkeys that can be processed.
     pub actionable_queues: DashSet<Pubkey>,
 
@@ -65,7 +65,7 @@ pub struct TaskExecutor {
     pub dropped_counter: AtomicU64,
 }
 
-impl TaskExecutor {
+impl Scheduler {
     pub fn new(config: PluginConfig) -> Self {
         Self {
             actionable_queues: DashSet::new(),
@@ -89,7 +89,7 @@ impl TaskExecutor {
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!(
-                "Confirmed slot: {} dropped: {}",
+                "Scheduler slot: {} dropped: {}",
                 confirmed_slot,
                 this.dropped_counter.load(Ordering::Relaxed)
             );
@@ -447,7 +447,7 @@ impl TaskExecutor {
     }
 
     fn retry_if_timeout(
-        self: Arc<TaskExecutor>,
+        self: Arc<Scheduler>,
         confirmed_slot: u64,
         attempted_slot: u64,
         queue_pubkey: Pubkey,
@@ -487,13 +487,13 @@ impl TaskExecutor {
     }
 }
 
-impl Debug for TaskExecutor {
+impl Debug for Scheduler {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Task executor")
     }
 }
 
-impl Default for TaskExecutor {
+impl Default for Scheduler {
     fn default() -> Self {
         Self::new(PluginConfig::default())
     }

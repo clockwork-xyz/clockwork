@@ -9,7 +9,7 @@ use anchor_lang::{
 
 pub fn initialize(admin: Pubkey) -> Instruction {
     let config = cronos_pool::state::Config::pda().0;
-    let cycler = cronos_network::state::Cycler::pda().0;
+    let rotator = cronos_network::state::Rotator::pda().0;
     let pool = cronos_pool::state::Pool::pda().0;
     Instruction {
         program_id: cronos_pool::ID,
@@ -19,6 +19,6 @@ pub fn initialize(admin: Pubkey) -> Instruction {
             AccountMeta::new(pool, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_pool::instruction::Initialize { cycler }.data(),
+        data: cronos_pool::instruction::Initialize { rotator }.data(),
     }
 }

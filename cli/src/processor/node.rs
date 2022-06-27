@@ -45,9 +45,9 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
     let manager_pubkey = cronos_client::scheduler::state::Manager::pda(authority_pubkey).0;
-    // let cycler_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
-    // let cycler_task_pubkey = cronos_client::scheduler::state::Task::pda(
-    //     cycler_queue_pubkey,
+    // let rotator_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
+    // let rotator_task_pubkey = cronos_client::scheduler::state::Task::pda(
+    //     rotator_queue_pubkey,
     //     registry_data.node_count.into(),
     // )
     // .0;
@@ -62,8 +62,8 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
-        // cycler_queue_pubkey,
-        // cycler_task_pubkey,
+        // rotator_queue_pubkey,
+        // rotator_task_pubkey,
         delegate.pubkey(),
         entry_pubkey,
         manager_pubkey,

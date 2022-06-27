@@ -112,7 +112,7 @@ impl RegistryAccount for Account<'_, Registry> {
 
         // Validate the snapshot has captured the entire registry
         require!(
-            next_snapshot.entry_count == self.node_count,
+            next_snapshot.node_count == self.node_count,
             CronosError::SnapshotIncomplete
         );
 

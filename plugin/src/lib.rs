@@ -1,10 +1,10 @@
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
 mod config;
-mod cycle_executor;
+mod delegator;
 mod events;
 mod plugin;
-mod task_executor;
+mod scheduler;
 mod tpu_client;
 
 pub use plugin::CronosPlugin;

@@ -48,9 +48,9 @@ pub trait SnapshotEntryAccount {
         &mut self,
         id: u64,
         delegate: Pubkey,
+        snapshot: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
-        snapshot: Pubkey,
     ) -> Result<()>;
 }
 
@@ -59,15 +59,15 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
         &mut self,
         id: u64,
         delegate: Pubkey,
+        snapshot: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
-        snapshot: Pubkey,
     ) -> Result<()> {
         self.id = id;
         self.delegate = delegate;
+        self.snapshot = snapshot;
         self.stake_offset = stake_offset;
         self.stake_amount = stake_amount;
-        self.snapshot = snapshot;
         Ok(())
     }
 }

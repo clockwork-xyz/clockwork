@@ -1,18 +1,18 @@
 use bincode::deserialize;
 use cached::proc_macro::cached;
 use cronos_client::{
-    network::state::{Cycler, Snapshot},
+    network::state::{Rotator, Snapshot},
     pool::state::Pool,
     scheduler::state::Queue,
 };
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
-use solana_program::{account_info::Account, clock::Clock, pubkey::Pubkey, sysvar};
+use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
-    Cycler { cycler: Cycler },
+    Rotator { rotator: Rotator },
     Pool { pool: Pool },
     Queue { queue: Queue },
     Snapshot { snapshot: Snapshot },
@@ -35,12 +35,12 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account is the Cronos cycler, return it
-        if account_pubkey.eq(&cycler_pubkey()) {
-            return Ok(AccountUpdateEvent::Cycler {
-                cycler: Cycler::try_from(account_info.data.to_vec()).map_err(|_| {
+        // If the account is the Cronos rotator, return it
+        if account_pubkey.eq(&rotator_pubkey()) {
+            return Ok(AccountUpdateEvent::Rotator {
+                rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos cycler account".into(),
+                        msg: "Failed to parse Cronos rotator account".into(),
                     }
                 })?,
             });
@@ -85,8 +85,8 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
 }
 
 #[cached]
-fn cycler_pubkey() -> Pubkey {
-    Cycler::pda().0
+fn rotator_pubkey() -> Pubkey {
+    Rotator::pda().0
 }
 
 #[cached]

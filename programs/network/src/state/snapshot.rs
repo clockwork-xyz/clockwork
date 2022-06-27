@@ -15,8 +15,8 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
-    pub entry_count: u64,
     pub id: u64,
+    pub node_count: u64,
     pub stake_total: u64,
     pub status: SnapshotStatus,
 }
@@ -51,8 +51,8 @@ pub trait SnapshotAccount {
 
 impl SnapshotAccount for Account<'_, Snapshot> {
     fn new(&mut self, id: u64) -> Result<()> {
-        self.entry_count = 0;
         self.id = id;
+        self.node_count = 0;
         self.status = SnapshotStatus::InProgress;
         Ok(())
     }
@@ -65,15 +65,15 @@ impl SnapshotAccount for Account<'_, Snapshot> {
     ) -> Result<()> {
         // Record the new snapshot entry
         entry.new(
-            self.entry_count,
+            self.node_count,
             node.delegate,
+            self.key(),
             self.stake_total,
             stake.amount,
-            self.key(),
         )?;
 
         // Update the snapshot's entry count
-        self.entry_count = self.entry_count.checked_add(1).unwrap();
+        self.node_count = self.node_count.checked_add(1).unwrap();
 
         // Update the sum stake amount
         self.stake_total = self.stake_total.checked_add(stake.amount).unwrap();

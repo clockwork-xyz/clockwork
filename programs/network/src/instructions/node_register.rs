@@ -27,7 +27,7 @@ pub struct NodeRegister<'info> {
     pub config: Box<Account<'info, Config>>,
 
     // #[account(has_one = manager)]
-    // pub cycler_queue: Box<Account<'info, Queue>>,
+    // pub rotator_queue: Box<Account<'info, Queue>>,
 
     #[account()]
     pub delegate: Signer<'info>,
@@ -37,7 +37,7 @@ pub struct NodeRegister<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.entry_count.to_be_bytes().as_ref(),
+            snapshot.node_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = owner,
@@ -113,7 +113,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Get accounts
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
-    // let cycler_queue = &ctx.accounts.cycler_queue;
+    // let rotator_queue = &ctx.accounts.rotator_queue;
     let delegate = &ctx.accounts.delegate;
     let entry = &mut ctx.accounts.entry;
     let manager = &ctx.accounts.manager;
@@ -127,7 +127,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let stake = &mut ctx.accounts.stake;
 
     // Get remaining accountsgs
-    // let cycler_task = ctx.remaining_accounts.get(0).unwrap();
+    // let rotator_task = ctx.remaining_accounts.get(0).unwrap();
     let snapshot_task = ctx.remaining_accounts.get(0).unwrap();
     
     // Get bumps
@@ -139,12 +139,12 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Add an empty entry to the current snapshot
     snapshot.capture(entry, node, stake)?;
 
-    // Add an task to the cycler queue to check the snapshot entry for this node
-    // let cycler_run_ix = Instruction {
+    // Add an task to the rotator queue to check the snapshot entry for this node
+    // let rotator_run_ix = Instruction {
     //     program_id: crate::ID,
     //     accounts: vec![
     //         AccountMeta::new_readonly(authority.key(), false),
-    //         AccountMeta::new(Cycler::pda().0, false),
+    //         AccountMeta::new(Rotator::pda().0, false),
     //         AccountMeta::new_readonly(entry.key(), false),
     //         AccountMeta::new(cronos_pool::state::Pool::pda().0, false),
     //         AccountMeta::new_readonly(cronos_pool::state::Config::pda().0, false),
@@ -153,7 +153,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     //         AccountMeta::new_readonly(registry.key(), false),
     //         AccountMeta::new_readonly(snapshot.key(), false),
     //     ],
-    //     data: cronos_scheduler::anchor::sighash("cycler_run").into(),
+    //     data: cronos_scheduler::anchor::sighash("rotator_run").into(),
     // };
     // cronos_scheduler::cpi::task_new(
     //     CpiContext::new_with_signer(
@@ -162,13 +162,13 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     //             authority: authority.to_account_info(),
     //             manager: manager.to_account_info(),
     //             payer: owner.to_account_info(),
-    //             queue: cycler_queue.to_account_info(),
+    //             queue: rotator_queue.to_account_info(),
     //             system_program: system_program.to_account_info(),
-    //             task: cycler_task.to_account_info(),
+    //             task: rotator_task.to_account_info(),
     //         },
     //         &[&[SEED_AUTHORITY, &[authority_bump]]],
     //     ),
-    //     vec![cycler_run_ix.into()],
+    //     vec![rotator_run_ix.into()],
     // )?;
 
     // Add an task to the snapshot queue to capture an entry for this node
