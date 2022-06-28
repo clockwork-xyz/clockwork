@@ -8,6 +8,7 @@ mod pool;
 mod process;
 mod queue;
 mod registry;
+mod snapshot;
 mod task;
 
 pub use process::*;

@@ -14,7 +14,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("task", matches)) => parse_task_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => parse_config_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
@@ -24,6 +23,8 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
+            Some(("snapshot", _matcher)) => Ok(CliCommand::SnapshotGet {}),
+            Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
@@ -70,6 +71,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::NodeGet {
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             delegate: parse_keypair_file("delegate", matches)?,
         }),

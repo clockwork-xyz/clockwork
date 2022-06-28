@@ -2,7 +2,6 @@ use anchor_lang::{prelude::Clock, AccountDeserialize};
 use solana_client::rpc_config::RpcSendTransactionConfig;
 use std::{
     fmt::Debug,
-    fs::File,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -14,7 +13,7 @@ use solana_sdk::{
     instruction::Instruction,
     program_error::ProgramError,
     pubkey::Pubkey,
-    signature::{read_keypair, Keypair, Signature, Signer},
+    signature::{Keypair, Signature, Signer},
     signers::Signers,
     transaction::Transaction,
 };
@@ -40,8 +39,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(keypath: String, url: String) -> Self {
-        let payer = read_keypair(&mut File::open(keypath).unwrap()).unwrap();
+    pub fn new(payer: Keypair, url: String) -> Self {
         let client = RpcClient::new_with_commitment::<String>(url, CommitmentConfig::confirmed());
         Self { client, payer }
     }

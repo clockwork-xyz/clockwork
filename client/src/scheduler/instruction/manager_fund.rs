@@ -7,14 +7,14 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn queue_fund(amount: u64, payer: Pubkey, queue: Pubkey) -> Instruction {
+pub fn manager_fund(amount: u64, manager: Pubkey, payer: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
+            AccountMeta::new(manager, false),
             AccountMeta::new(payer, true),
-            AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_scheduler::instruction::QueueFund { amount }.data(),
+        data: cronos_scheduler::instruction::ManagerFund { amount }.data(),
     }
 }

@@ -6,12 +6,14 @@ use {
     std::{fs::File, path::Path},
 };
 
+static DEFAULT_SLOT_TIMEOUT_THRESHOLD: u64 = 150;
+static DEFAULT_WORKER_THREADS: usize = 10;
+
 /// Plugin config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
     pub bugsnag_api_key: Option<String>,
-    pub keypath: String,
-    pub rpc_url: String,
+    pub delegate_keypath: Option<String>,
     pub slot_timeout_threshold: u64,
     pub worker_threads: usize,
 }
@@ -20,10 +22,9 @@ impl Default for PluginConfig {
     fn default() -> Self {
         Self {
             bugsnag_api_key: None,
-            keypath: "".to_string(),
-            rpc_url: "http://127.0.0.1:8899".to_string(),
-            slot_timeout_threshold: 150,
-            worker_threads: 10,
+            delegate_keypath: None,
+            slot_timeout_threshold: DEFAULT_SLOT_TIMEOUT_THRESHOLD,
+            worker_threads: DEFAULT_WORKER_THREADS,
         }
     }
 }

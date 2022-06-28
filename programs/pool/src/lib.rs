@@ -14,11 +14,11 @@ use instructions::*;
 pub mod cronos_pool {
     use super::*;
 
-    pub fn cycle(ctx: Context<Cycle>, delegate: Pubkey) -> Result<()> {
-        cycle::handler(ctx, delegate)
+    pub fn rotate(ctx: Context<Rotate>, delegate: Pubkey) -> Result<()> {
+        rotate::handler(ctx, delegate)
     }
 
-    pub fn initialize(ctx: Context<Initialize>, cycler: Pubkey) -> Result<()> {
-        initialize::handler(ctx, cycler)
+    pub fn initialize(ctx: Context<Initialize>, rotator: Pubkey) -> Result<()> {
+        initialize::handler(ctx, rotator)
     }
 }

@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[account(cycler: Pubkey)]
+#[account(rotator: Pubkey)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -32,12 +32,12 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Initialize>, cycler: Pubkey) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>, rotator: Pubkey) -> Result<()> {
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
     let pool = &mut ctx.accounts.pool;
 
-    config.new(admin.key(), cycler)?;
+    config.new(admin.key(), rotator)?;
     pool.new()?;
 
     Ok(())

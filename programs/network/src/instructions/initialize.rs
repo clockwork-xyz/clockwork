@@ -36,12 +36,12 @@ pub struct Initialize<'info> {
     
     #[account(
         init,
-        seeds = [SEED_CYCLER],
+        seeds = [SEED_ROTATOR],
         bump,
         payer = admin,
-        space = 8 + size_of::<Cycler>(),
+        space = 8 + size_of::<Rotator>(),
     )]
-    pub cycler: Account<'info, Cycler>,
+    pub rotator: Account<'info, Rotator>,
 
     #[account()]
     pub mint: Account<'info, Mint>,
@@ -79,7 +79,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
-    let cycler = &mut ctx.accounts.cycler;
+    let rotator = &mut ctx.accounts.rotator;
     let config = &mut ctx.accounts.config;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
@@ -88,17 +88,17 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let cycler_fee = ctx.remaining_accounts.get(0).unwrap();
-    let cycler_queue = ctx.remaining_accounts.get(1).unwrap();
-    let manager = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_fee = ctx.remaining_accounts.get(3).unwrap();
-    let snapshot_queue = ctx.remaining_accounts.get(4).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(5).unwrap();
+    // let rotator_fee = ctx.remaining_accounts.get(0).unwrap();
+    // let rotator_queue = ctx.remaining_accounts.get(1).unwrap();
+    let manager = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_fee = ctx.remaining_accounts.get(1).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
 
     // Initialize accounts
     authority.new(manager.key())?;
-    config.new(admin.key(),  mint.key())?;
-    cycler.new()?;
+    config.new(admin.key(), mint.key())?;
+    rotator.new()?;
     registry.new()?;
     registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
@@ -119,22 +119,22 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     )?;
 
     // Create a queue to cycle the delegate pool
-    cronos_scheduler::cpi::queue_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::QueueNew {
-                authority: authority.to_account_info(),
-                clock: clock.to_account_info(),
-                fee: cycler_fee.to_account_info(),
-                manager: manager.to_account_info(),
-                payer: admin.to_account_info(),
-                queue: cycler_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]]
-        ), 
-        "*/15 * * * * * *".into()
-    )?;
+    // cronos_scheduler::cpi::queue_new(
+    //     CpiContext::new_with_signer(
+    //         scheduler_program.to_account_info(),
+    //         cronos_scheduler::cpi::accounts::QueueNew {
+    //             authority: authority.to_account_info(),
+    //             clock: clock.to_account_info(),
+    //             fee: rotator_fee.to_account_info(),
+    //             manager: manager.to_account_info(),
+    //             payer: admin.to_account_info(),
+    //             queue: rotator_queue.to_account_info(),
+    //             system_program: system_program.to_account_info(),
+    //         },
+    //         &[&[SEED_AUTHORITY, &[bump]]]
+    //     ), 
+    //     "*/15 * * * * * *".into()
+    // )?;
 
     // Create a queue to take snapshots of the registry
     cronos_scheduler::cpi::queue_new(

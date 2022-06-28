@@ -37,7 +37,7 @@ impl TryFrom<Vec<u8>> for Pool {
 pub trait PoolAccount {
     fn new(&mut self) -> Result<()>;
 
-    fn cycle(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()>;
+    fn rotate(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()>;
 }
 
 impl PoolAccount for Account<'_, Pool> {
@@ -46,7 +46,7 @@ impl PoolAccount for Account<'_, Pool> {
         Ok(())
     }
 
-    fn cycle(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()> {
+    fn rotate(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()> {
         // Pop a delegate out of the pool
         self.delegates.pop_front();
 

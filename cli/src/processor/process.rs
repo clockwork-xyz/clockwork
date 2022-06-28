@@ -4,6 +4,7 @@ use crate::{
 };
 use clap::ArgMatches;
 use cronos_client::Client;
+use solana_sdk::signature::read_keypair_file;
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     // Parse command and config
@@ -11,7 +12,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let config = CliConfig::load();
 
     // Build the RPC client
-    let client = Client::new(config.keypair_path, config.json_rpc_url);
+    let payer = read_keypair_file(config.keypair_path).unwrap();
+    let client = Client::new(payer, config.json_rpc_url);
 
     // Process the command
     match command {
@@ -34,6 +36,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         ),
         CliCommand::Health => super::health::get(&client),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
+        CliCommand::NodeGet { delegate } => super::node::get_by_delegate(&client, delegate),
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
         CliCommand::NodeStake { amount, delegate } => super::node::stake(&client, amount, delegate),
         CliCommand::PoolGet => super::pool::get(&client),
@@ -42,5 +45,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
         CliCommand::RegistryGet => super::registry::get(&client),
+        CliCommand::SnapshotGet => super::snapshot::get(&client),
     }
 }

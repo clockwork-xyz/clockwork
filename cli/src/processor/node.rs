@@ -8,12 +8,17 @@ use {
     },
 };
 
-pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     let node = client
-        .get::<cronos_client::network::state::Node>(address)
+        .get::<cronos_client::network::state::Node>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("{:#?}", node);
     Ok(())
+}
+
+pub fn get_by_delegate(client: &Client, delegate: Pubkey) -> Result<(), CliError> {
+    let node_pubkey = Node::pda(delegate).0;
+    get(client, node_pubkey)
 }
 
 pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
@@ -40,14 +45,14 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
     let manager_pubkey = cronos_client::scheduler::state::Manager::pda(authority_pubkey).0;
-    let cycler_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
-    let cycler_task_pubkey = cronos_client::scheduler::state::Task::pda(
-        cycler_queue_pubkey,
-        registry_data.node_count.into(),
-    )
-    .0;
+    // let rotator_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
+    // let rotator_task_pubkey = cronos_client::scheduler::state::Task::pda(
+    //     rotator_queue_pubkey,
+    //     registry_data.node_count.into(),
+    // )
+    // .0;
 
-    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 1).0;
+    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
     let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pda(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
@@ -57,8 +62,8 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
-        cycler_queue_pubkey,
-        cycler_task_pubkey,
+        // rotator_queue_pubkey,
+        // rotator_task_pubkey,
         delegate.pubkey(),
         entry_pubkey,
         manager_pubkey,
@@ -71,7 +76,7 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
         snapshot_task_pubkey,
     );
     client.send_and_confirm(&[ix], &[owner, &delegate]).unwrap();
-    get(client, &node_pubkey)
+    get(client, node_pubkey)
 }
 
 pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
@@ -96,5 +101,5 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
     );
 
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, &node_pubkey)
+    get(client, node_pubkey)
 }

@@ -19,7 +19,7 @@ pub struct SnapshotCapture<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.entry_count.to_be_bytes().as_ref()
+            snapshot.node_count.to_be_bytes().as_ref()
         ],
         bump,
         payer = payer,
@@ -33,7 +33,7 @@ pub struct SnapshotCapture<'info> {
             node.delegate.as_ref(),
         ],
         bump,
-        constraint = node.id == snapshot.entry_count @ CronosError::InvalidNode
+        constraint = node.id == snapshot.node_count @ CronosError::InvalidNode
     )]
     pub node: Box<Account<'info, Node>>,
 
@@ -54,7 +54,7 @@ pub struct SnapshotCapture<'info> {
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::InProgress @ CronosError::SnapshotNotInProgress,
-        constraint = snapshot.entry_count < registry.node_count,
+        constraint = snapshot.node_count < registry.node_count,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
