@@ -4,6 +4,7 @@ use crate::{
 };
 use clap::ArgMatches;
 use cronos_client::Client;
+use solana_sdk::signature::read_keypair_file;
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     // Parse command and config
@@ -11,7 +12,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let config = CliConfig::load();
 
     // Build the RPC client
-    let client = Client::new(config.keypair_path, config.json_rpc_url);
+    let payer = read_keypair_file(config.keypair_path).unwrap();
+    let client = Client::new(payer, config.json_rpc_url);
 
     // Process the command
     match command {

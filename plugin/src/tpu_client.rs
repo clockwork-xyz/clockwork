@@ -8,11 +8,10 @@ use {
         commitment_config::CommitmentConfig,
         program_error::ProgramError,
         pubkey::Pubkey,
-        signature::{read_keypair, Keypair, Signer},
+        signature::{Keypair, Signer},
     },
     std::{
         fmt::Debug,
-        fs::File,
         ops::{Deref, DerefMut},
         sync::Arc,
     },
@@ -34,8 +33,7 @@ pub struct TpuClient {
 }
 
 impl TpuClient {
-    pub fn new(keypath: String, rpc_url: String, websocket_url: String) -> Self {
-        let payer = read_keypair(&mut File::open(keypath).unwrap()).unwrap();
+    pub fn new(payer: Keypair, rpc_url: String, websocket_url: String) -> Self {
         let rpc_client = Arc::new(RpcClient::new_with_commitment::<String>(
             rpc_url,
             CommitmentConfig::confirmed(),

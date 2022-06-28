@@ -11,8 +11,13 @@ use {
         rpc_config::{RpcTransactionLogsConfig, RpcTransactionLogsFilter},
     },
     solana_sdk::{
-        borsh, commitment_config::CommitmentConfig, instruction::Instruction,
-        native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Keypair, signer::Signer,
+        borsh,
+        commitment_config::CommitmentConfig,
+        instruction::Instruction,
+        native_token::LAMPORTS_PER_SOL,
+        pubkey::Pubkey,
+        signature::{read_keypair_file, Keypair},
+        signer::Signer,
     },
     std::{collections::HashMap, ops::Div, str::FromStr},
 };
@@ -21,7 +26,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     // Setup test
     let config_file = solana_cli_config::CONFIG_FILE.as_ref().unwrap().as_str();
     let solana_config = solana_cli_config::Config::load(config_file).unwrap();
-    let client = Client::new(solana_config.keypair_path, solana_config.json_rpc_url);
+    let payer = read_keypair_file(solana_config.keypair_path).unwrap();
+    let client = Client::new(payer, solana_config.json_rpc_url);
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
     let num_tasks_serial = count - num_tasks_parallel;
 

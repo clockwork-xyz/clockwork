@@ -1,15 +1,10 @@
-use std::cmp::Ordering;
-
-use cronos_client::network::state::SnapshotEntry;
-
 use {
-    crate::{config::PluginConfig, tpu_client::TpuClient},
+    crate::{config::PluginConfig, tpu_client::TpuClient, utils::read_or_new_keypair},
     cronos_client::{
-        network::state::{Rotator, Snapshot, SnapshotStatus},
+        network::state::{Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
         pool::state::Pool,
         Client as CronosClient,
     },
-    crossbeam::channel::Sender,
     dashmap::DashMap,
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -17,21 +12,14 @@ use {
     },
     solana_program::pubkey::Pubkey,
     solana_sdk::{signature::Signature, transaction::Transaction},
-    std::{
-        fmt::Debug,
-        sync::{Arc, RwLock},
-    },
-    tokio::runtime::Runtime,
+    std::{cmp::Ordering, fmt::Debug, sync::Arc},
+    tokio::{runtime::Runtime, sync::RwLock},
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
-pub struct DelegateStatus {
-    pub scheduler_pool_position: Option<u64>,
-}
-
-pub struct Delegator {
+pub struct Delegate {
     // Plugin config values.
     pub config: PluginConfig,
 
@@ -54,18 +42,14 @@ pub struct Delegator {
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 
     // Crossbeam channel for this node's delegate status.
-    pub status: Sender<DelegateStatus>,
+    pub status: Arc<RwLock<DelegateStatus>>,
 
     // Map from tx signatures to slot when the tx was submitted.
     pub tx_signatures: DashMap<Signature, u64>,
 }
 
-impl Delegator {
-    pub fn new(
-        config: PluginConfig,
-        runtime: Arc<Runtime>,
-        status: Sender<DelegateStatus>,
-    ) -> Self {
+impl Delegate {
+    pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
             rotator: RwLock::new(Rotator {
@@ -82,14 +66,14 @@ impl Delegator {
                 status: SnapshotStatus::Current,
             }),
             snapshot_entries: RwLock::new(vec![]),
-            status,
+            status: Arc::new(RwLock::new(DelegateStatus::default())),
             tx_signatures: DashMap::new(),
         }
     }
 
     pub fn handle_updated_rotator(self: Arc<Self>, rotator: Rotator) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let mut w = this.rotator.write().unwrap();
+            let mut w = this.rotator.write().await;
             *w = rotator;
             Ok(())
         })
@@ -102,30 +86,12 @@ impl Delegator {
         })
     }
 
-    pub fn handle_updated_snapshot(
-        self: Arc<Self>,
-        snapshot: Snapshot,
-        snapshot_pubkey: Pubkey,
-    ) -> PluginResult<()> {
+    pub fn handle_updated_snapshot(self: Arc<Self>, snapshot: Snapshot) -> PluginResult<()> {
         self.spawn(|this| async move {
             if snapshot.status == SnapshotStatus::Current {
-                // Create a cronos client
-                let cronos_client =
-                    CronosClient::new(this.config.delegate_keypath.clone(), LOCAL_RPC_URL.into());
-
-                // Get all the entries of the new snapshot
-                // let snapshot_entries = (0..snapshot.clone().entry_count)
-                //     .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
-                //     .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
-                //     .collect::<Vec<SnapshotEntry>>();
-
-                // Write the new snapshot and entries
-                let mut w_snapshot = this.snapshot.write().unwrap();
-                let mut w_snapshot_entries = this.snapshot_entries.write().unwrap();
+                let mut w_snapshot = this.snapshot.write().await;
                 *w_snapshot = snapshot;
-                // *w_snapshot_entries = snapshot_entries;
                 drop(w_snapshot);
-                drop(w_snapshot_entries);
             }
             Ok(())
         })
@@ -133,9 +99,9 @@ impl Delegator {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let r_rotator = this.rotator.read().unwrap();
+            let r_rotator = this.rotator.read().await;
             info!(
-                "Delegator slot: {} last_rotation: {} nonce: {}",
+                "slot: {} last_rotation: {} nonce: {}",
                 confirmed_slot, r_rotator.last_slot, r_rotator.nonce
             );
 
@@ -155,7 +121,7 @@ impl Delegator {
             });
 
             // Rotate the pool
-            // TODO Fetch the slots_per_rotation from the config account rather than using the default value
+            // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
             if confirmed_slot >= r_rotator.last_slot + 10 {
                 this.clone().rotate_pool()?;
             }
@@ -166,48 +132,46 @@ impl Delegator {
 
     fn rotate_pool(self: Arc<Self>) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let r_rotator = this.rotator.read().unwrap();
-            let r_snapshot = this.snapshot.read().unwrap();
-            let r_snapshot_entries = this.snapshot_entries.read().unwrap();
+            // Acquire read locks
+            let r_rotator = this.rotator.read().await;
+            let r_snapshot = this.snapshot.read().await;
+
+            // Fetch the snapshot entries
+            let cronos_client = CronosClient::new(
+                read_or_new_keypair(this.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+            );
+            let snapshot_pubkey = Snapshot::pda(r_snapshot.id).0;
+            let snapshot_entries = (0..r_snapshot.clone().node_count)
+                .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
+                .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
+                .collect::<Vec<SnapshotEntry>>();
 
             // Exit early if cycle will fail
             if r_rotator.nonce == 0 || r_snapshot.stake_total == 0 {
                 return Ok(());
             }
 
-            info!("Attempting to cycle the pool");
-
-            // Create a new tpu client
-            let tpu_client = TpuClient::new(
-                this.config.delegate_keypath.clone(),
-                LOCAL_RPC_URL.into(),
-                LOCAL_WEBSOCKET_URL.into(),
-            );
-
-            // Create a cronos client
-            let cronos_client =
-                CronosClient::new(this.config.delegate_keypath.clone(), LOCAL_RPC_URL.into());
-
             // Build cycle ix
-
             let sample = r_rotator
                 .nonce
                 .checked_rem(r_snapshot.stake_total)
                 .unwrap_or(0);
-            let entry_id = 0;
-            // r_snapshot_entries
-            //     .binary_search_by(|e| {
-            //         if sample < e.stake_offset {
-            //             return Ordering::Less;
-            //         } else if sample >= e.stake_offset && sample < (e.stake_offset + e.stake_amount)
-            //         {
-            //             return Ordering::Equal;
-            //         } else {
-            //             return Ordering::Greater;
-            //         }
-            //     })
-            //     .unwrap() as u64;
+            let entry_id = snapshot_entries
+                .binary_search_by(|entry| {
+                    if sample < entry.stake_offset {
+                        Ordering::Less
+                    } else if sample >= entry.stake_offset
+                        && sample < (entry.stake_offset + entry.stake_amount)
+                    {
+                        Ordering::Equal
+                    } else {
+                        Ordering::Greater
+                    }
+                })
+                .unwrap() as u64;
 
+            // Build the pool rotation ix
             let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
             let entry_pubkey =
                 cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0; // TODO Get correct entry
@@ -225,9 +189,13 @@ impl Delegator {
                     GeyserPluginError::Custom("Failed to get latest blockhash".into())
                 })?,
             );
-
-            info!("Tx: {}", tx.signatures[0]);
-            tpu_client.send_transaction(&tx);
+            TpuClient::new(
+                read_or_new_keypair(this.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+                LOCAL_WEBSOCKET_URL.into(),
+            )
+            .send_transaction(&tx);
+            info!("Pool rotation: {}", tx.signatures[0]);
 
             Ok(())
         })
@@ -242,8 +210,20 @@ impl Delegator {
     }
 }
 
-impl Debug for Delegator {
+impl Debug for Delegate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Rotator")
+        write!(f, "Delegate")
+    }
+}
+
+pub struct DelegateStatus {
+    pub scheduler_pool_position: Option<u64>,
+}
+
+impl Default for DelegateStatus {
+    fn default() -> Self {
+        DelegateStatus {
+            scheduler_pool_position: None,
+        }
     }
 }

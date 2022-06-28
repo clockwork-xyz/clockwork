@@ -910,6 +910,7 @@ dependencies = [
  "dotenv",
  "elasticsearch",
  "serde_json",
+ "solana-sdk",
  "tokio",
 ]
 

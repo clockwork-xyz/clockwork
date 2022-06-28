@@ -1,5 +1,8 @@
 use {
-    crate::{config::PluginConfig, tpu_client::TpuClient},
+    crate::{
+        config::PluginConfig, delegate::DelegateStatus, tpu_client::TpuClient,
+        utils::read_or_new_keypair,
+    },
     bugsnag::Bugsnag,
     cronos_client::{
         scheduler::state::{Queue, QueueStatus, Task},
@@ -28,7 +31,7 @@ use {
             Arc,
         },
     },
-    tokio::runtime::{Builder, Runtime},
+    tokio::{runtime::Runtime, sync::RwLock},
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
@@ -41,18 +44,18 @@ pub struct Scheduler {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // // The active delegates
-    // pub delegates: DashMap<usize, Pubkey>,
+    // The delegate status of this node.
+    pub delegate_status: Arc<RwLock<DelegateStatus>>,
 
-    // // Map from slot numbers to delegate pools.
-    // pub delegate_pools: DashMap<u64, Pool>,
+    // Count of how many tasks have been dropped.
+    pub dropped_tasks: AtomicU64,
 
     // Map from exec_at timestamps to the list of queues scheduled
     //  for that moment.
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>,
 
     // Tokio runtime for processing async tasks.
-    pub runtime: Runtime,
+    pub runtime: Arc<Runtime>,
 
     // Map from tx signatures to a (queue pubkey, slot) tuple. The slot
     //  records the confirmed slot at the time the tx was sent.
@@ -60,38 +63,32 @@ pub struct Scheduler {
 
     // Map from slot numbers to the sysvar clock unix_timestamp at that slot.
     pub unix_timestamps: DashMap<u64, i64>,
-
-    // Counters
-    pub dropped_counter: AtomicU64,
 }
 
 impl Scheduler {
-    pub fn new(config: PluginConfig) -> Self {
+    pub fn new(
+        config: PluginConfig,
+        delegate_status: Arc<RwLock<DelegateStatus>>,
+        runtime: Arc<Runtime>,
+    ) -> Self {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
-            // delegates: DashMap::new(),
-            // delegate_pools: DashMap::new(),
+            delegate_status,
+            dropped_tasks: AtomicU64::new(0),
             pending_queues: DashMap::new(),
-            runtime: Builder::new_multi_thread()
-                .enable_all()
-                .thread_name("cronos-executor")
-                .worker_threads(config.worker_threads)
-                .max_blocking_threads(config.worker_threads)
-                .build()
-                .unwrap(),
+            runtime,
             tx_signatures: DashMap::new(),
             unix_timestamps: DashMap::new(),
-            dropped_counter: AtomicU64::new(0),
         }
     }
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!(
-                "Scheduler slot: {} dropped: {}",
+                "slot: {} dropped: {}",
                 confirmed_slot,
-                this.dropped_counter.load(Ordering::Relaxed)
+                this.dropped_tasks.load(Ordering::Relaxed)
             );
 
             // Look for the latest confirmed sysvar unix timestamp
@@ -192,14 +189,14 @@ impl Scheduler {
         self.spawn(|this| async move {
             // Create a new tpu client
             let tpu_client = Arc::new(TpuClient::new(
-                this.config.delegate_keypath.clone(),
+                read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
             ));
 
             // Create a cronos client
             let cronos_client = Arc::new(CronosClient::new(
-                this.config.delegate_keypath.clone(),
+                read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
             ));
 
@@ -273,7 +270,7 @@ impl Scheduler {
                         });
                     if !b {
                         this.actionable_queues.remove(queue_pubkey);
-                        this.dropped_counter.fetch_add(1, Ordering::Relaxed);
+                        this.dropped_tasks.fetch_add(1, Ordering::Relaxed);
                     }
                     b
                 })
@@ -489,12 +486,6 @@ impl Scheduler {
 
 impl Debug for Scheduler {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Task executor")
-    }
-}
-
-impl Default for Scheduler {
-    fn default() -> Self {
-        Self::new(PluginConfig::default())
+        write!(f, "Scheduler")
     }
 }

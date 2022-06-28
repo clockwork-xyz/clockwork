@@ -8,6 +8,7 @@ use {
         auth::Credentials, http::transport::Transport, Elasticsearch, Error, IndexParts,
     },
     serde_json::json,
+    solana_sdk::signature::read_keypair_file,
     std::{result::Result, time::Duration},
     tokio::{task, time},
 };
@@ -30,7 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn record_health_data() {
     // Build clients
-    let client = Client::new(Envvar::Keypath.get(), Envvar::RpcEndpoint.get());
+    let payer = read_keypair_file(Envvar::Keypath.get()).unwrap();
+    let client = Client::new(payer, Envvar::RpcEndpoint.get());
     let es_client = elastic_client().unwrap();
 
     // Get data

@@ -1,9 +1,6 @@
 use {
     crate::{
-        config::PluginConfig,
-        delegator::{DelegateStatus, Delegator},
-        events::AccountUpdateEvent,
-        scheduler::Scheduler,
+        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, scheduler::Scheduler,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
@@ -15,8 +12,8 @@ use {
 
 #[derive(Debug)]
 pub struct CronosPlugin {
-    pub cycle_executor: Arc<Delegator>,
-    pub task_executor: Arc<Scheduler>,
+    pub delegate: Arc<Delegate>,
+    pub scheduler: Arc<Scheduler>,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -29,18 +26,13 @@ impl GeyserPlugin for CronosPlugin {
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
         let config = PluginConfig::read_from(config_file)?;
-        let runtime = Arc::new(
-            Builder::new_multi_thread()
-                .enable_all()
-                .thread_name("cronos-executor")
-                .worker_threads(config.worker_threads)
-                .max_blocking_threads(config.worker_threads)
-                .build()
-                .unwrap(),
-        );
-        let (sender, _receiver) = crossbeam::channel::unbounded::<DelegateStatus>();
-        self.cycle_executor = Arc::new(Delegator::new(config.clone(), runtime.clone(), sender));
-        self.task_executor = Arc::new(Scheduler::new(config));
+        self.runtime = build_runtime(config.clone());
+        self.delegate = Arc::new(Delegate::new(config.clone(), self.runtime.clone()));
+        self.scheduler = Arc::new(Scheduler::new(
+            config,
+            self.delegate.status.clone(),
+            self.runtime.clone(),
+        ));
         Ok(())
     }
 
@@ -60,22 +52,21 @@ impl GeyserPlugin for CronosPlugin {
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.task_executor.clone().handle_updated_clock(clock)
-                }
-                AccountUpdateEvent::Rotator { rotator } => {
-                    self.cycle_executor.clone().handle_updated_rotator(rotator)
+                    self.scheduler.clone().handle_updated_clock(clock)
                 }
                 AccountUpdateEvent::Pool { pool } => {
-                    self.cycle_executor.clone().handle_updated_pool(pool, slot)
+                    self.delegate.clone().handle_updated_pool(pool, slot)
                 }
                 AccountUpdateEvent::Queue { queue } => self
-                    .task_executor
+                    .scheduler
                     .clone()
                     .handle_updated_queue(queue, account_pubkey),
-                AccountUpdateEvent::Snapshot { snapshot } => self
-                    .cycle_executor
-                    .clone()
-                    .handle_updated_snapshot(snapshot, account_pubkey),
+                AccountUpdateEvent::Rotator { rotator } => {
+                    self.delegate.clone().handle_updated_rotator(rotator)
+                }
+                AccountUpdateEvent::Snapshot { snapshot } => {
+                    self.delegate.clone().handle_updated_snapshot(snapshot)
+                }
             },
             Err(_err) => Ok(()),
         }
@@ -93,8 +84,8 @@ impl GeyserPlugin for CronosPlugin {
     ) -> PluginResult<()> {
         match status {
             SlotStatus::Confirmed => {
-                self.cycle_executor.clone().handle_confirmed_slot(slot)?;
-                self.task_executor.clone().handle_confirmed_slot(slot)?;
+                self.delegate.clone().handle_confirmed_slot(slot)?;
+                self.scheduler.clone().handle_confirmed_slot(slot)?;
             }
             _ => (),
         }
@@ -128,21 +119,29 @@ impl GeyserPlugin for CronosPlugin {
 impl Default for CronosPlugin {
     fn default() -> Self {
         let config = PluginConfig::default();
-        let runtime = Arc::new(
-            Builder::new_multi_thread()
-                .enable_all()
-                .thread_name("cronos-executor")
-                .worker_threads(config.worker_threads)
-                .max_blocking_threads(config.worker_threads)
-                .build()
-                .unwrap(),
-        );
-        let (sender, _receiver) = crossbeam::channel::unbounded::<DelegateStatus>();
+        let runtime = build_runtime(config.clone());
+        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
+        let scheduler = Arc::new(Scheduler::new(
+            config.clone(),
+            delegate.status.clone(),
+            runtime.clone(),
+        ));
         CronosPlugin {
-            cycle_executor: Arc::new(Delegator::new(config, runtime.clone(), sender)),
-            task_executor: Arc::new(Scheduler::default()),
+            delegate,
+            scheduler,
             runtime,
-            // rotator:
         }
     }
+}
+
+fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
+    Arc::new(
+        Builder::new_multi_thread()
+            .enable_all()
+            .thread_name("cronos-executor")
+            .worker_threads(config.worker_threads)
+            .max_blocking_threads(config.worker_threads)
+            .build()
+            .unwrap(),
+    )
 }
