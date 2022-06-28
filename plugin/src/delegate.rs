@@ -11,7 +11,7 @@ use {
         GeyserPluginError, Result as PluginResult,
     },
     solana_program::pubkey::Pubkey,
-    solana_sdk::{signature::Signature, transaction::Transaction},
+    solana_sdk::{signature::Signature, signer::Signer, transaction::Transaction},
     std::{cmp::Ordering, fmt::Debug, sync::Arc},
     tokio::{runtime::Runtime, sync::RwLock},
 };
@@ -23,14 +23,17 @@ pub struct Delegate {
     // Plugin config values.
     pub config: PluginConfig,
 
+    // Pub delegate keypiar
+    pub delegate_pubkey: Pubkey,
+
+    // Map from unconfirmed slot numbers to the expected delegate pool for that moment.
+    pub pool_forecasts: DashMap<u64, Pool>,
+
+    // RwLock for this node's delegate status.
+    pub pool_positions: Arc<RwLock<PoolPositions>>,
+
     // A copy of the current rotator account data.
     pub rotator: RwLock<Rotator>,
-
-    // The current scheduler delegates.
-    pub scheduler_delegates: DashMap<usize, Pubkey>,
-
-    // Map from unconfirmed slot numbers to the delegate pool for that moment.
-    pub pool_forecast: DashMap<u64, Pool>,
 
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
@@ -41,23 +44,21 @@ pub struct Delegate {
     // Sorted entries of the snapshot.
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 
-    // Crossbeam channel for this node's delegate status.
-    pub status: Arc<RwLock<DelegateStatus>>,
-
-    // Map from tx signatures to slot when the tx was submitted.
-    pub tx_signatures: DashMap<Signature, u64>,
+    // Map from target slot numbers to signatures for rotation txs.
+    pub tx_signatures: DashMap<u64, Signature>,
 }
 
 impl Delegate {
     pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
+            delegate_pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
+            pool_forecasts: DashMap::new(),
+            pool_positions: Arc::new(RwLock::new(PoolPositions::default())),
             rotator: RwLock::new(Rotator {
                 last_slot: 0,
                 nonce: 0,
             }),
-            scheduler_delegates: DashMap::new(),
-            pool_forecast: DashMap::new(),
             runtime,
             snapshot: RwLock::new(Snapshot {
                 id: 0,
@@ -66,7 +67,6 @@ impl Delegate {
                 status: SnapshotStatus::Current,
             }),
             snapshot_entries: RwLock::new(vec![]),
-            status: Arc::new(RwLock::new(DelegateStatus::default())),
             tx_signatures: DashMap::new(),
         }
     }
@@ -81,7 +81,7 @@ impl Delegate {
 
     pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            this.pool_forecast.insert(slot, pool);
+            this.pool_forecasts.insert(slot, pool);
             Ok(())
         })
     }
@@ -99,42 +99,64 @@ impl Delegate {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
+            // Aquire read locks
             let r_rotator = this.rotator.read().await;
             info!(
                 "slot: {} last_rotation: {} nonce: {}",
                 confirmed_slot, r_rotator.last_slot, r_rotator.nonce
             );
 
-            // Update the set of executor delegates.
-            this.pool_forecast.retain(|slot, pool| {
+            // Update the set delegate status
+            let mut w_pool_positions = this.pool_positions.write().await;
+            this.pool_forecasts.retain(|slot, pool| {
                 if *slot == confirmed_slot {
-                    this.scheduler_delegates.clear();
-                    pool.delegates
-                        .make_contiguous()
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, pubkey)| {
-                            this.scheduler_delegates.insert(i, *pubkey);
-                        });
+                    *w_pool_positions = PoolPositions {
+                        scheduler_pool_position: PoolPosition {
+                            current_position: pool
+                                .delegates
+                                .iter()
+                                .position(|k| k.eq(&this.delegate_pubkey))
+                                .map(|i| i as u64),
+                            delegates: pool.delegates.make_contiguous().to_vec().clone(),
+                        },
+                    }
                 }
                 *slot > confirmed_slot
             });
+            drop(w_pool_positions);
 
             // Rotate the pool
-            // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
-            if confirmed_slot >= r_rotator.last_slot + 10 {
-                this.clone().rotate_pool()?;
-            }
+            this.clone().rotate_pool(confirmed_slot)?;
+
+            // Drop read locks
+            drop(r_rotator);
 
             Ok(())
         })
     }
 
-    fn rotate_pool(self: Arc<Self>) -> PluginResult<()> {
+    fn rotate_pool(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Acquire read locks
+            let r_pool_positions = this.pool_positions.read().await;
             let r_rotator = this.rotator.read().await;
             let r_snapshot = this.snapshot.read().await;
+
+            // Exit early this this node is not in the scheduler
+            // TODO Should rotations fall to another pool?
+            if r_pool_positions
+                .scheduler_pool_position
+                .current_position
+                .is_none()
+            {
+                return Ok(());
+            }
+
+            // Exit early if it's not time to rotate the pool
+            let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
+            if slot < target_slot {
+                return Ok(());
+            }
 
             // Fetch the snapshot entries
             let cronos_client = CronosClient::new(
@@ -181,7 +203,7 @@ impl Delegate {
                 snapshot_pubkey,
             );
 
-            // Submit tx
+            // Sign tx
             let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
             tx.sign(
                 &[cronos_client.payer()],
@@ -189,13 +211,24 @@ impl Delegate {
                     GeyserPluginError::Custom("Failed to get latest blockhash".into())
                 })?,
             );
+
+            // Exit early if this node has already submitted a rotation tx for this target slot.
+            let sig = tx.signatures[0];
+            if this.tx_signatures.contains_key(&target_slot) {
+                return Ok(());
+            }
+            this.tx_signatures.insert(target_slot, sig);
+
+            // Submit tx
             TpuClient::new(
                 read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
             )
             .send_transaction(&tx);
-            info!("Pool rotation: {}", tx.signatures[0]);
+            info!("Pool rotation: {}", sig);
+
+            // TODO Confirm sigs and retry logic
 
             Ok(())
         })
@@ -216,14 +249,22 @@ impl Debug for Delegate {
     }
 }
 
-pub struct DelegateStatus {
-    pub scheduler_pool_position: Option<u64>,
+pub struct PoolPosition {
+    pub current_position: Option<u64>,
+    pub delegates: Vec<Pubkey>,
 }
 
-impl Default for DelegateStatus {
+pub struct PoolPositions {
+    pub scheduler_pool_position: PoolPosition,
+}
+
+impl Default for PoolPositions {
     fn default() -> Self {
-        DelegateStatus {
-            scheduler_pool_position: None,
+        PoolPositions {
+            scheduler_pool_position: PoolPosition {
+                current_position: None,
+                delegates: vec![],
+            },
         }
     }
 }

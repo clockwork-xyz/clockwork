@@ -30,7 +30,7 @@ impl GeyserPlugin for CronosPlugin {
         self.delegate = Arc::new(Delegate::new(config.clone(), self.runtime.clone()));
         self.scheduler = Arc::new(Scheduler::new(
             config,
-            self.delegate.status.clone(),
+            self.delegate.pool_positions.clone(),
             self.runtime.clone(),
         ));
         Ok(())
@@ -123,7 +123,7 @@ impl Default for CronosPlugin {
         let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
         let scheduler = Arc::new(Scheduler::new(
             config.clone(),
-            delegate.status.clone(),
+            delegate.pool_positions.clone(),
             runtime.clone(),
         ));
         CronosPlugin {

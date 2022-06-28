@@ -1,6 +1,6 @@
 use {
     crate::{
-        config::PluginConfig, delegate::DelegateStatus, tpu_client::TpuClient,
+        config::PluginConfig, delegate::PoolPositions, tpu_client::TpuClient,
         utils::read_or_new_keypair,
     },
     bugsnag::Bugsnag,
@@ -44,8 +44,8 @@ pub struct Scheduler {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // The delegate status of this node.
-    pub delegate_status: Arc<RwLock<DelegateStatus>>,
+    // The pool positions of this node.
+    pub pool_positions: Arc<RwLock<PoolPositions>>,
 
     // Count of how many tasks have been dropped.
     pub dropped_tasks: AtomicU64,
@@ -68,13 +68,13 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new(
         config: PluginConfig,
-        delegate_status: Arc<RwLock<DelegateStatus>>,
+        pool_positions: Arc<RwLock<PoolPositions>>,
         runtime: Arc<Runtime>,
     ) -> Self {
         Self {
             actionable_queues: DashSet::new(),
             config: config.clone(),
-            delegate_status,
+            pool_positions,
             dropped_tasks: AtomicU64::new(0),
             pending_queues: DashMap::new(),
             runtime,
@@ -99,22 +99,6 @@ impl Scheduler {
                 }
                 *slot > confirmed_slot
             });
-
-            // Get the confirmed delegate pool
-            // this.delegate_pools.retain(|slot, delegate_pool| {
-            //     if *slot == confirmed_slot {
-            //         this.delegates.clear();
-            //         delegate_pool
-            //             .delegates
-            //             .make_contiguous()
-            //             .iter()
-            //             .enumerate()
-            //             .for_each(|(i, pubkey)| {
-            //                 this.delegates.insert(i, *pubkey);
-            //             });
-            //     }
-            //     *slot > confirmed_slot
-            // });
 
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
@@ -152,13 +136,6 @@ impl Scheduler {
         })
     }
 
-    // pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
-    //     self.spawn(|this| async move {
-    //         this.delegate_pools.insert(slot, pool);
-    //         Ok(())
-    //     })
-    // }
-
     pub fn handle_updated_queue(
         self: Arc<Self>,
         queue: Queue,
@@ -187,42 +164,33 @@ impl Scheduler {
 
     fn process_queues(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Create a new tpu client
+            // Acquire read locks
+            let r_pool_positions = this.pool_positions.read().await;
+
+            // Return early if this node is not in the scheduler delegate pool
+            if r_pool_positions
+                .scheduler_pool_position
+                .current_position
+                .is_none()
+            {
+                return Ok(());
+            }
+
+            // Create clients
+            let cronos_client = Arc::new(CronosClient::new(
+                read_or_new_keypair(this.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+            ));
             let tpu_client = Arc::new(TpuClient::new(
                 read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
             ));
 
-            // Create a cronos client
-            let cronos_client = Arc::new(CronosClient::new(
-                read_or_new_keypair(this.config.clone().delegate_keypath),
-                LOCAL_RPC_URL.into(),
-            ));
-
-            // Error early if the node is not healthy
+            // Return early if the node is not healthy
             tpu_client.rpc_client().get_health().map_err(|_| {
                 return GeyserPluginError::Custom("Node is not healthy".into());
             })?;
-
-            // Return early if the node is not a confirmed delegate
-            // let delegate_pubkey = cronos_client.payer_pubkey();
-            // let delegate_positions = this
-            //     .delegates
-            //     .iter()
-            //     .filter_map(|entry| {
-            //         if entry.value().eq(&delegate_pubkey) {
-            //             Some(*entry.key())
-            //         } else {
-            //             None
-            //         }
-            //     })
-            //     .collect::<Vec<usize>>();
-            // if !this.delegates.is_empty() && delegate_positions.is_empty() {
-            //     return Ok(());
-            // }
-
-            // info!("Node {} is a delegate. {} {} {}", delegate_pubkey);
 
             // Build a tx for each queue and submit batch via TPU client,
             //  only if the delegate pool is a empty or if the node is a valid delegate.
@@ -230,7 +198,9 @@ impl Scheduler {
                 .iter()
                 .filter_map(|queue_pubkey_ref| {
                     // TODO If there are multiple nodes in the delegate pool, can they efficiently
-                    //  split up work w/o sending messages to one another?
+                    //  split up work w/o attempting to submit messages for the same queues?
+                    //
+                    // With this work-split algorithm, are faster rotations needed to guarantee that all queues are processed on time?
                     let queue_pubkey = *queue_pubkey_ref.key();
 
                     // Hash the trailing bytes of the queue pubkey to an number between 0 and the delegate pool size.
