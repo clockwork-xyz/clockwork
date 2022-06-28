@@ -8,7 +8,7 @@ use {crate::state::*, anchor_lang::{prelude::*, solana_program::sysvar}};
 pub struct RotatorTurn<'info> {
     #[account(
         address = sysvar::clock::ID, 
-        constraint = clock.slot >= rotator.last_slot + config.slots_per_rotation
+        constraint = clock.slot >= rotator.last_slot.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub clock: Sysvar<'info, Clock>,
 
