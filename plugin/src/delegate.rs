@@ -99,12 +99,13 @@ impl Delegate {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Aquire read locks
+            // Log rotator stats
             let r_rotator = this.rotator.read().await;
             info!(
                 "slot: {} last_rotation: {} nonce: {}",
                 confirmed_slot, r_rotator.last_slot, r_rotator.nonce
             );
+            drop(r_rotator);
 
             // Update the set delegate status
             let mut w_pool_positions = this.pool_positions.write().await;
@@ -127,9 +128,6 @@ impl Delegate {
 
             // Rotate the pool
             this.clone().rotate_pool(confirmed_slot)?;
-
-            // Drop read locks
-            drop(r_rotator);
 
             Ok(())
         })
