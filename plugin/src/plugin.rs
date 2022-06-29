@@ -85,7 +85,7 @@ impl GeyserPlugin for CronosPlugin {
         match status {
             SlotStatus::Confirmed => {
                 self.delegate.clone().handle_confirmed_slot(slot)?;
-                self.scheduler.clone().handle_confirmed_slot(slot)?;
+                // self.scheduler.clone().handle_confirmed_slot(slot)?;
             }
             _ => (),
         }
