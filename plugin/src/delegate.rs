@@ -73,8 +73,9 @@ impl Delegate {
 
     pub fn handle_updated_rotator(self: Arc<Self>, rotator: Rotator) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let mut w = this.rotator.write().await;
-            *w = rotator;
+            let mut w_rotator = this.rotator.write().await;
+            *w_rotator = rotator;
+            drop(w_rotator);
             Ok(())
         })
     }
