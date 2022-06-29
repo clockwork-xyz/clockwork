@@ -10,10 +10,12 @@ use {
         config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, scheduler::Scheduler,
         tpu_client::TpuClient,
     },
+    solana_client::rpc_client::RpcClient,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
     },
     solana_program::pubkey::Pubkey,
+    solana_sdk::commitment_config::CommitmentConfig,
     std::{fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
@@ -28,7 +30,7 @@ pub struct CronosPlugin {
     pub delegate: Arc<Delegate>,
     pub executor: Option<Arc<Executor>>,
     pub scheduler: Arc<Scheduler>,
-    pub is_startup: AtomicBool,
+    pub is_healthy: AtomicBool,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -43,7 +45,7 @@ impl GeyserPlugin for CronosPlugin {
         info!("Loading...");
         self.config = PluginConfig::read_from(config_file)?;
         self.runtime = build_runtime(self.config.clone());
-        self.is_startup = AtomicBool::new(true);
+        self.is_healthy = AtomicBool::new(false);
         self.delegate = Arc::new(Delegate::new(self.config.clone(), self.runtime.clone()));
         self.scheduler = Arc::new(Scheduler::new(
             self.config.clone(),
@@ -98,11 +100,6 @@ impl GeyserPlugin for CronosPlugin {
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
         info!("Snapshot loaded");
-
-        // Load the executor once this node has caught up
-        if !is_startup && self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
-            self.load_executor()
-        }
         Ok(())
     }
 
@@ -113,14 +110,19 @@ impl GeyserPlugin for CronosPlugin {
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
         // Return early if plugin is starting up
-        let is_startup = self.is_startup.load(std::sync::atomic::Ordering::Relaxed);
-        info!("slot: {} is_startup: {}", slot, is_startup);
+        let is_healthy = self.is_healthy.load(std::sync::atomic::Ordering::Relaxed);
+        info!("slot: {} is_healthy: {}", slot, is_healthy);
+
+        // Re-check health and attempt to build the executor if we're still not caught up
+        if !is_healthy {
+            self.try_build_executor()
+        }
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
             SlotStatus::Confirmed => {
                 self.delegate.clone().handle_confirmed_slot(slot)?;
-                if !is_startup {
+                if !is_healthy {
                     match &self.executor {
                         Some(executor) => {
                             executor.clone().handle_confirmed_slot(slot)?;
@@ -159,7 +161,18 @@ impl GeyserPlugin for CronosPlugin {
 }
 
 impl CronosPlugin {
-    fn load_executor(&mut self) {
+    fn try_build_executor(&mut self) {
+        // Return early if not healthy
+        if RpcClient::new_with_commitment::<String>(
+            LOCAL_RPC_URL.into(),
+            CommitmentConfig::confirmed(),
+        )
+        .get_health()
+        .is_err()
+        {
+            return;
+        }
+
         // Build clients
         let cronos_client = Arc::new(CronosClient::new(
             read_or_new_keypair(self.config.clone().delegate_keypath),
@@ -184,8 +197,8 @@ impl CronosPlugin {
             tpu_client.clone(),
         )));
 
-        // Update the is_startup flag
-        self.is_startup
+        // Update the is_healthy flag
+        self.is_healthy
             .store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
@@ -204,7 +217,7 @@ impl Default for CronosPlugin {
             config,
             delegate,
             executor: None,
-            is_startup: AtomicBool::new(true),
+            is_healthy: AtomicBool::new(true),
             scheduler,
             runtime,
         }
