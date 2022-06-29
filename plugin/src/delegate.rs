@@ -183,13 +183,25 @@ impl Delegate {
 
             info!("G");
 
-            // Exit early if cycle will fail
+            // Exit early if the node is not healthy
+            let tpu_client = TpuClient::new(
+                read_or_new_keypair(this.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+                LOCAL_WEBSOCKET_URL.into(),
+            );
+            tpu_client.rpc_client().get_health().map_err(|_| {
+                return GeyserPluginError::Custom("Node is not healthy".into());
+            })?;
+
+            info!("H");
+
+            // Exit early if rotator is not intialized
             if r_rotator.nonce == 0 || r_snapshot.stake_total == 0 {
-                info!("H");
+                info!("I");
                 return Ok(());
             }
 
-            info!("I");
+            info!("J");
 
             // Build cycle ix
             let sample = r_rotator
@@ -210,7 +222,7 @@ impl Delegate {
                 })
                 .unwrap() as u64;
 
-            info!("J");
+            info!("K");
 
             // Build the pool rotation ix
             let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
@@ -227,7 +239,7 @@ impl Delegate {
             drop(r_rotator);
             drop(r_snapshot);
 
-            info!("K");
+            info!("L");
 
             // Build and sign tx
             let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
@@ -238,25 +250,20 @@ impl Delegate {
                 })?,
             );
 
-            info!("L");
+            info!("M");
 
             // Exit early if this node has already submitted a rotation tx for this target slot.
             let sig = tx.signatures[0];
             if this.tx_signatures.contains_key(&target_slot) {
-                info!("M");
+                info!("N");
                 return Ok(());
             }
             this.tx_signatures.insert(target_slot, sig);
 
-            info!("N");
+            info!("O");
 
             // Submit tx
-            let is_ok = TpuClient::new(
-                read_or_new_keypair(this.config.clone().delegate_keypath),
-                LOCAL_RPC_URL.into(),
-                LOCAL_WEBSOCKET_URL.into(),
-            )
-            .send_transaction(&tx);
+            let is_ok = tpu_client.send_transaction(&tx);
             info!("Pool rotation: {} {}", sig, is_ok);
 
             // TODO Confirm sigs and retry logic
