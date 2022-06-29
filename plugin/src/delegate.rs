@@ -135,26 +135,39 @@ impl Delegate {
 
     fn rotate_pool(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
+            info!("A");
+
             // Acquire read locks
             let r_pool_positions = this.pool_positions.read().await;
             let r_rotator = this.rotator.read().await;
             let r_snapshot = this.snapshot.read().await;
 
-            // Exit early this this node is not in the scheduler
-            // TODO Should rotations fall to another pool?
-            if r_pool_positions
-                .scheduler_pool_position
-                .current_position
-                .is_none()
-            {
-                return Ok(());
-            }
+            info!("B");
 
             // Exit early if it's not time to rotate the pool
             let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
             if slot < target_slot {
+                info!("C");
                 return Ok(());
             }
+
+            info!("D");
+
+            // Exit early this this node is not in the scheduler and
+            //  we are still within the grace period of the rotation.
+            // TODO Should rotations fall to another pool?
+            let grace_period_slot = target_slot + 10;
+            if r_pool_positions
+                .scheduler_pool_position
+                .current_position
+                .is_none()
+                && slot < grace_period_slot
+            {
+                info!("E");
+                return Ok(());
+            }
+
+            info!("F");
 
             // Fetch the snapshot entries
             let cronos_client = CronosClient::new(
@@ -167,10 +180,15 @@ impl Delegate {
                 .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
                 .collect::<Vec<SnapshotEntry>>();
 
+            info!("G");
+
             // Exit early if cycle will fail
             if r_rotator.nonce == 0 || r_snapshot.stake_total == 0 {
+                info!("H");
                 return Ok(());
             }
+
+            info!("I");
 
             // Build cycle ix
             let sample = r_rotator
@@ -191,6 +209,8 @@ impl Delegate {
                 })
                 .unwrap() as u64;
 
+            info!("J");
+
             // Build the pool rotation ix
             let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
             let entry_pubkey =
@@ -201,6 +221,8 @@ impl Delegate {
                 snapshot_pubkey,
             );
 
+            info!("K");
+
             // Sign tx
             let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
             tx.sign(
@@ -210,12 +232,17 @@ impl Delegate {
                 })?,
             );
 
+            info!("L");
+
             // Exit early if this node has already submitted a rotation tx for this target slot.
             let sig = tx.signatures[0];
             if this.tx_signatures.contains_key(&target_slot) {
+                info!("M");
                 return Ok(());
             }
             this.tx_signatures.insert(target_slot, sig);
+
+            info!("N");
 
             // Submit tx
             TpuClient::new(
