@@ -236,11 +236,11 @@ impl Delegate {
 
             // Exit early if this node has already submitted a rotation tx for this target slot.
             let sig = tx.signatures[0];
-            if this.tx_signatures.contains_key(&target_slot) {
-                info!("M");
-                return Ok(());
-            }
-            this.tx_signatures.insert(target_slot, sig);
+            // if this.tx_signatures.contains_key(&target_slot) {
+            //     info!("M");
+            //     return Ok(());
+            // }
+            // this.tx_signatures.insert(target_slot, sig);
 
             info!("N");
 
