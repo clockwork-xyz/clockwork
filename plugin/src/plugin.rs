@@ -59,13 +59,20 @@ impl GeyserPlugin for CronosPlugin {
         &mut self,
         account: ReplicaAccountInfoVersions,
         slot: u64,
-        _is_startup: bool,
+        is_startup: bool,
     ) -> PluginResult<()> {
+        // Fetch account info
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
+        info!(
+            "account: {} slot: {} is_startup: {}",
+            account_pubkey, slot, is_startup
+        );
+
+        // Parse and process the account update
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
@@ -90,46 +97,12 @@ impl GeyserPlugin for CronosPlugin {
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
-        info!("End of startup... building executor");
+        info!("Snapshot loaded");
 
-        // Build cronos client
-        // let cronos_client = Arc::new(CronosClient::new(
-        //     read_or_new_keypair(self.config.clone().delegate_keypath),
-        //     LOCAL_RPC_URL.into(),
-        // ));
-
-        // // Attempt to build tpu client until success
-        // while self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
-        //     match TpuClient::new(
-        //         read_or_new_keypair(self.config.clone().delegate_keypath),
-        //         LOCAL_RPC_URL.into(),
-        //         LOCAL_WEBSOCKET_URL.into(),
-        //     )
-        //     .map_or(None, |c| Some(c))
-        //     {
-        //         Some(tpu_client) => {
-        //             // Build executor with tpu_client
-        //             self.executor = Some(Arc::new(Executor::new(
-        //                 self.config.clone(),
-        //                 cronos_client.clone(),
-        //                 self.delegate.clone(),
-        //                 self.runtime.clone(),
-        //                 self.scheduler.clone(),
-        //                 Arc::new(tpu_client),
-        //             )));
-
-        //             // Update the is_startup flag
-        //             self.is_startup
-        //                 .store(false, std::sync::atomic::Ordering::Relaxed);
-        //         }
-        //         None => {
-        //             // TODO sleep
-        //             info!("Sleeping until node is caught up");
-        //             // std::thread::sleep(std::time::Duration::from_millis(1000));
-        //         }
-        //     }
-        // }
-
+        // Load the executor once this node has caught up
+        if !is_startup && self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
+            self.load_executor()
+        }
         Ok(())
     }
 
@@ -182,6 +155,38 @@ impl GeyserPlugin for CronosPlugin {
 
     fn transaction_notifications_enabled(&self) -> bool {
         false
+    }
+}
+
+impl CronosPlugin {
+    fn load_executor(&mut self) {
+        // Build clients
+        let cronos_client = Arc::new(CronosClient::new(
+            read_or_new_keypair(self.config.clone().delegate_keypath),
+            LOCAL_RPC_URL.into(),
+        ));
+        let tpu_client = Arc::new(
+            TpuClient::new(
+                read_or_new_keypair(self.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+                LOCAL_WEBSOCKET_URL.into(),
+            )
+            .unwrap(),
+        );
+
+        // Build executor
+        self.executor = Some(Arc::new(Executor::new(
+            self.config.clone(),
+            cronos_client.clone(),
+            self.delegate.clone(),
+            self.runtime.clone(),
+            self.scheduler.clone(),
+            tpu_client.clone(),
+        )));
+
+        // Update the is_startup flag
+        self.is_startup
+            .store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
