@@ -2,7 +2,7 @@ use std::sync::atomic::AtomicBool;
 
 use log::info;
 
-use crate::{executor::Executor, tpu_client, utils::read_or_new_keypair};
+use crate::{executor::Executor, utils::read_or_new_keypair};
 use cronos_client::Client as CronosClient;
 
 use {
@@ -93,42 +93,42 @@ impl GeyserPlugin for CronosPlugin {
         info!("End of startup... building executor");
 
         // Build cronos client
-        let cronos_client = Arc::new(CronosClient::new(
-            read_or_new_keypair(self.config.clone().delegate_keypath),
-            LOCAL_RPC_URL.into(),
-        ));
+        // let cronos_client = Arc::new(CronosClient::new(
+        //     read_or_new_keypair(self.config.clone().delegate_keypath),
+        //     LOCAL_RPC_URL.into(),
+        // ));
 
-        // Attempt to build tpu client until success
-        while self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
-            match TpuClient::new(
-                read_or_new_keypair(self.config.clone().delegate_keypath),
-                LOCAL_RPC_URL.into(),
-                LOCAL_WEBSOCKET_URL.into(),
-            )
-            .map_or(None, |c| Some(c))
-            {
-                Some(tpu_client) => {
-                    // Build executor with tpu_client
-                    self.executor = Some(Arc::new(Executor::new(
-                        self.config.clone(),
-                        cronos_client.clone(),
-                        self.delegate.clone(),
-                        self.runtime.clone(),
-                        self.scheduler.clone(),
-                        Arc::new(tpu_client),
-                    )));
+        // // Attempt to build tpu client until success
+        // while self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
+        //     match TpuClient::new(
+        //         read_or_new_keypair(self.config.clone().delegate_keypath),
+        //         LOCAL_RPC_URL.into(),
+        //         LOCAL_WEBSOCKET_URL.into(),
+        //     )
+        //     .map_or(None, |c| Some(c))
+        //     {
+        //         Some(tpu_client) => {
+        //             // Build executor with tpu_client
+        //             self.executor = Some(Arc::new(Executor::new(
+        //                 self.config.clone(),
+        //                 cronos_client.clone(),
+        //                 self.delegate.clone(),
+        //                 self.runtime.clone(),
+        //                 self.scheduler.clone(),
+        //                 Arc::new(tpu_client),
+        //             )));
 
-                    // Update the is_startup flag
-                    self.is_startup
-                        .store(false, std::sync::atomic::Ordering::Relaxed);
-                }
-                None => {
-                    // TODO sleep
-                    info!("Sleeping until node is caught up");
-                    std::thread::sleep(std::time::Duration::from_millis(1000));
-                }
-            }
-        }
+        //             // Update the is_startup flag
+        //             self.is_startup
+        //                 .store(false, std::sync::atomic::Ordering::Relaxed);
+        //         }
+        //         None => {
+        //             // TODO sleep
+        //             info!("Sleeping until node is caught up");
+        //             // std::thread::sleep(std::time::Duration::from_millis(1000));
+        //         }
+        //     }
+        // }
 
         Ok(())
     }
