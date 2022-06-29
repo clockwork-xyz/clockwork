@@ -147,7 +147,7 @@ impl Delegate {
             // Exit early if it's not time to rotate the pool
             let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
             if slot < target_slot {
-                info!("C");
+                info!("C {} {}", slot, target_slot);
                 return Ok(());
             }
 
