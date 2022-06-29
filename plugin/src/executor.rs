@@ -47,7 +47,7 @@ impl Executor {
             // Send transactions given the current state
             info!("slot: {}", confirmed_slot);
 
-            this.delegate.clone().rotate_pool(
+            this.delegate.clone().try_rotate_pool(
                 this.cronos_client.clone(),
                 confirmed_slot,
                 this.tpu_client.clone(),

@@ -135,7 +135,8 @@ impl Delegate {
         })
     }
 
-    pub fn rotate_pool(
+    // TODO: Maybe just build the tx in this fn and return to the executor for execution
+    pub fn try_rotate_pool(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
         slot: u64,

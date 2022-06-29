@@ -19,7 +19,7 @@ use {
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+// static LOCAL_WEBSOCKET_URL: &str = "";
 
 #[derive(Debug)]
 pub struct CronosPlugin {
@@ -99,7 +99,7 @@ impl GeyserPlugin for CronosPlugin {
         let tpu_client = Arc::new(TpuClient::new(
             read_or_new_keypair(self.config.clone().delegate_keypath),
             LOCAL_RPC_URL.into(),
-            LOCAL_WEBSOCKET_URL.into(),
+            "".into(),
         ));
 
         // Initialize the executor
