@@ -222,9 +222,14 @@ impl Delegate {
                 snapshot_pubkey,
             );
 
+            // Drop read locks
+            drop(r_pool_positions);
+            drop(r_rotator);
+            drop(r_snapshot);
+
             info!("K");
 
-            // Sign tx
+            // Build and sign tx
             let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
             tx.sign(
                 &[cronos_client.payer()],
@@ -246,13 +251,13 @@ impl Delegate {
             info!("N");
 
             // Submit tx
-            TpuClient::new(
+            let is_ok = TpuClient::new(
                 read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
             )
             .send_transaction(&tx);
-            info!("Pool rotation: {}", sig);
+            info!("Pool rotation: {} {}", sig, is_ok);
 
             // TODO Confirm sigs and retry logic
 
