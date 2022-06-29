@@ -11,12 +11,12 @@ use {
         GeyserPluginError, Result as PluginResult,
     },
     solana_program::pubkey::Pubkey,
-    solana_sdk::{signature::Signature, signer::Signer, transaction::Transaction},
+    solana_sdk::{signer::Signer, transaction::Transaction},
     std::{cmp::Ordering, fmt::Debug, sync::Arc},
     tokio::{runtime::Runtime, sync::RwLock},
 };
 
-static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
+// static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 // static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 pub struct Delegate {
@@ -43,15 +43,14 @@ pub struct Delegate {
 
     // Sorted entries of the snapshot.
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
-
-    pub tpu_client: Option<TpuClient>,
+    // pub tpu_client: Option<TpuClient>,
 
     // Map from target slot numbers to signatures for rotation txs.
-    pub tx_signatures: DashMap<u64, Signature>,
+    // pub tx_signatures: DashMap<u64, Signature>,
 }
 
 impl Delegate {
-    pub fn new(config: PluginConfig, runtime: Arc<Runtime>, tpu_client: Option<TpuClient>) -> Self {
+    pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
             delegate_pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
@@ -69,8 +68,7 @@ impl Delegate {
                 status: SnapshotStatus::Current,
             }),
             snapshot_entries: RwLock::new(vec![]),
-            tpu_client,
-            tx_signatures: DashMap::new(),
+            // tx_signatures: DashMap::new(),
         }
     }
 
@@ -131,13 +129,18 @@ impl Delegate {
             drop(w_pool_positions);
 
             // Rotate the pool
-            this.clone().rotate_pool(confirmed_slot)?;
+            // this.clone().rotate_pool(confirmed_slot)?;
 
             Ok(())
         })
     }
 
-    fn rotate_pool(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    pub fn rotate_pool(
+        self: Arc<Self>,
+        cronos_client: Arc<CronosClient>,
+        slot: u64,
+        tpu_client: Arc<TpuClient>,
+    ) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!("A");
 
@@ -174,10 +177,10 @@ impl Delegate {
             info!("F");
 
             // Fetch the snapshot entries
-            let cronos_client = CronosClient::new(
-                read_or_new_keypair(this.config.clone().delegate_keypath),
-                LOCAL_RPC_URL.into(),
-            );
+            // let cronos_client = CronosClient::new(
+            //     read_or_new_keypair(this.config.clone().delegate_keypath),
+            //     LOCAL_RPC_URL.into(),
+            // );
             let snapshot_pubkey = Snapshot::pda(r_snapshot.id).0;
             let snapshot_entries = (0..r_snapshot.clone().node_count)
                 .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
@@ -266,16 +269,11 @@ impl Delegate {
             info!("O");
 
             // Submit tx
-            match &this.tpu_client {
-                Some(tpu_client) => {
-                    tpu_client.rpc_client().get_health().map_err(|_| {
-                        return GeyserPluginError::Custom("Node is not healthy".into());
-                    })?;
-                    let is_ok = tpu_client.send_transaction(&tx);
-                    info!("Pool rotation: {} {}", sig, is_ok);
-                }
-                None => (),
-            }
+            tpu_client.rpc_client().get_health().map_err(|_| {
+                return GeyserPluginError::Custom("Node is not healthy".into());
+            })?;
+            let is_ok = tpu_client.send_transaction(&tx);
+            info!("Pool rotation: {} {}", sig, is_ok);
 
             // TODO Confirm sigs and retry logic
 

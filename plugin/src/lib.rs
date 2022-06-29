@@ -3,6 +3,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 mod config;
 mod delegate;
 mod events;
+mod executor;
 mod plugin;
 mod scheduler;
 mod tpu_client;

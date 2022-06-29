@@ -1,6 +1,9 @@
+use std::sync::atomic::AtomicBool;
+
 use log::info;
 
-use crate::utils::read_or_new_keypair;
+use crate::{executor::Executor, utils::read_or_new_keypair};
+use cronos_client::Client as CronosClient;
 
 use {
     crate::{
@@ -20,8 +23,12 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 #[derive(Debug)]
 pub struct CronosPlugin {
+    // Plugin config values.
+    pub config: PluginConfig,
     pub delegate: Arc<Delegate>,
+    pub executor: Option<Arc<Executor>>,
     pub scheduler: Arc<Scheduler>,
+    pub is_startup: AtomicBool,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -33,23 +40,12 @@ impl GeyserPlugin for CronosPlugin {
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
-        let config = PluginConfig::read_from(config_file)?;
-        self.runtime = build_runtime(config.clone());
-
-        info!("On load... building tpu client");
-        let tpu_client = TpuClient::new(
-            read_or_new_keypair(config.clone().delegate_keypath),
-            LOCAL_RPC_URL.into(),
-            LOCAL_WEBSOCKET_URL.into(),
-        );
-
-        self.delegate = Arc::new(Delegate::new(
-            config.clone(),
-            self.runtime.clone(),
-            Some(tpu_client),
-        ));
+        self.config = PluginConfig::read_from(config_file)?;
+        self.runtime = build_runtime(self.config.clone());
+        self.is_startup = AtomicBool::new(true);
+        self.delegate = Arc::new(Delegate::new(self.config.clone(), self.runtime.clone()));
         self.scheduler = Arc::new(Scheduler::new(
-            config,
+            self.config.clone(),
             self.delegate.pool_positions.clone(),
             self.runtime.clone(),
         ));
@@ -93,23 +89,33 @@ impl GeyserPlugin for CronosPlugin {
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
-        info!("On end of startup... building tpu client");
-        // let tpu_client = TpuClient::new(
-        //     read_or_new_keypair(self.config.clone().delegate_keypath),
-        //     LOCAL_RPC_URL.into(),
-        //     LOCAL_WEBSOCKET_URL.into(),
-        // );
+        info!("End of startup... building executor");
 
-        // self.delegate = Arc::new(Delegate::new(
-        //     config.clone(),
-        //     self.runtime.clone(),
-        //     Some(tpu_client),
-        // ));
-        // self.scheduler = Arc::new(Scheduler::new(
-        //     config,
-        //     self.delegate.pool_positions.clone(),
-        //     self.runtime.clone(),
-        // ));
+        // Build clients
+        let cronos_client = Arc::new(CronosClient::new(
+            read_or_new_keypair(self.config.clone().delegate_keypath),
+            LOCAL_RPC_URL.into(),
+        ));
+        let tpu_client = Arc::new(TpuClient::new(
+            read_or_new_keypair(self.config.clone().delegate_keypath),
+            LOCAL_RPC_URL.into(),
+            LOCAL_WEBSOCKET_URL.into(),
+        ));
+
+        // Initialize the executor
+        self.executor = Some(Arc::new(Executor::new(
+            self.config.clone(),
+            cronos_client,
+            self.delegate.clone(),
+            self.runtime.clone(),
+            self.scheduler.clone(),
+            tpu_client,
+        )));
+
+        // Update the is_startup flag
+        self.is_startup
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+
         Ok(())
     }
 
@@ -119,10 +125,22 @@ impl GeyserPlugin for CronosPlugin {
         _parent: Option<u64>,
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
+        // Return early if plugin is starting up
+        let is_startup = self.is_startup.load(std::sync::atomic::Ordering::Relaxed);
+        info!("slot: {} is_startup: {}", slot, is_startup);
+
+        // Update the plugin state and execute transactions with the confirmed slot number
         match status {
             SlotStatus::Confirmed => {
                 self.delegate.clone().handle_confirmed_slot(slot)?;
-                // self.scheduler.clone().handle_confirmed_slot(slot)?;
+                if !is_startup {
+                    match &self.executor {
+                        Some(executor) => {
+                            executor.clone().handle_confirmed_slot(slot)?;
+                        }
+                        None => (),
+                    }
+                }
             }
             _ => (),
         }
@@ -157,14 +175,17 @@ impl Default for CronosPlugin {
     fn default() -> Self {
         let config = PluginConfig::default();
         let runtime = build_runtime(config.clone());
-        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone(), None));
+        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
         let scheduler = Arc::new(Scheduler::new(
             config.clone(),
             delegate.pool_positions.clone(),
             runtime.clone(),
         ));
         CronosPlugin {
+            config,
             delegate,
+            executor: None,
+            is_startup: AtomicBool::new(true),
             scheduler,
             runtime,
         }
