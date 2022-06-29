@@ -1,6 +1,11 @@
+use log::info;
+
+use crate::utils::read_or_new_keypair;
+
 use {
     crate::{
         config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, scheduler::Scheduler,
+        tpu_client::TpuClient,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
@@ -9,6 +14,9 @@ use {
     std::{fmt::Debug, sync::Arc},
     tokio::runtime::{Builder, Runtime},
 };
+
+static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
+static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 #[derive(Debug)]
 pub struct CronosPlugin {
@@ -27,7 +35,19 @@ impl GeyserPlugin for CronosPlugin {
         solana_logger::setup_with_default("info");
         let config = PluginConfig::read_from(config_file)?;
         self.runtime = build_runtime(config.clone());
-        self.delegate = Arc::new(Delegate::new(config.clone(), self.runtime.clone()));
+
+        info!("On load... building tpu client");
+        let tpu_client = TpuClient::new(
+            read_or_new_keypair(config.clone().delegate_keypath),
+            LOCAL_RPC_URL.into(),
+            LOCAL_WEBSOCKET_URL.into(),
+        );
+
+        self.delegate = Arc::new(Delegate::new(
+            config.clone(),
+            self.runtime.clone(),
+            Some(tpu_client),
+        ));
         self.scheduler = Arc::new(Scheduler::new(
             config,
             self.delegate.pool_positions.clone(),
@@ -73,6 +93,23 @@ impl GeyserPlugin for CronosPlugin {
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
+        info!("On end of startup... building tpu client");
+        // let tpu_client = TpuClient::new(
+        //     read_or_new_keypair(self.config.clone().delegate_keypath),
+        //     LOCAL_RPC_URL.into(),
+        //     LOCAL_WEBSOCKET_URL.into(),
+        // );
+
+        // self.delegate = Arc::new(Delegate::new(
+        //     config.clone(),
+        //     self.runtime.clone(),
+        //     Some(tpu_client),
+        // ));
+        // self.scheduler = Arc::new(Scheduler::new(
+        //     config,
+        //     self.delegate.pool_positions.clone(),
+        //     self.runtime.clone(),
+        // ));
         Ok(())
     }
 
@@ -120,7 +157,7 @@ impl Default for CronosPlugin {
     fn default() -> Self {
         let config = PluginConfig::default();
         let runtime = build_runtime(config.clone());
-        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
+        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone(), None));
         let scheduler = Arc::new(Scheduler::new(
             config.clone(),
             delegate.pool_positions.clone(),

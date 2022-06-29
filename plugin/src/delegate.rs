@@ -17,7 +17,7 @@ use {
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+// static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 pub struct Delegate {
     // Plugin config values.
@@ -44,12 +44,14 @@ pub struct Delegate {
     // Sorted entries of the snapshot.
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 
+    pub tpu_client: Option<TpuClient>,
+
     // Map from target slot numbers to signatures for rotation txs.
     pub tx_signatures: DashMap<u64, Signature>,
 }
 
 impl Delegate {
-    pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
+    pub fn new(config: PluginConfig, runtime: Arc<Runtime>, tpu_client: Option<TpuClient>) -> Self {
         Self {
             config: config.clone(),
             delegate_pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
@@ -67,6 +69,7 @@ impl Delegate {
                 status: SnapshotStatus::Current,
             }),
             snapshot_entries: RwLock::new(vec![]),
+            tpu_client,
             tx_signatures: DashMap::new(),
         }
     }
@@ -184,14 +187,14 @@ impl Delegate {
             info!("G");
 
             // Exit early if the node is not healthy
-            let tpu_client = TpuClient::new(
-                read_or_new_keypair(this.config.clone().delegate_keypath),
-                LOCAL_RPC_URL.into(),
-                LOCAL_WEBSOCKET_URL.into(),
-            );
-            tpu_client.rpc_client().get_health().map_err(|_| {
-                return GeyserPluginError::Custom("Node is not healthy".into());
-            })?;
+            // let tpu_client = TpuClient::new(
+            //     read_or_new_keypair(this.config.clone().delegate_keypath),
+            //     LOCAL_RPC_URL.into(),
+            //     LOCAL_WEBSOCKET_URL.into(),
+            // );
+            // tpu_client.rpc_client().get_health().map_err(|_| {
+            //     return GeyserPluginError::Custom("Node is not healthy".into());
+            // })?;
 
             info!("H");
 
@@ -263,8 +266,16 @@ impl Delegate {
             info!("O");
 
             // Submit tx
-            let is_ok = tpu_client.send_transaction(&tx);
-            info!("Pool rotation: {} {}", sig, is_ok);
+            match &this.tpu_client {
+                Some(tpu_client) => {
+                    tpu_client.rpc_client().get_health().map_err(|_| {
+                        return GeyserPluginError::Custom("Node is not healthy".into());
+                    })?;
+                    let is_ok = tpu_client.send_transaction(&tx);
+                    info!("Pool rotation: {} {}", sig, is_ok);
+                }
+                None => (),
+            }
 
             // TODO Confirm sigs and retry logic
 
