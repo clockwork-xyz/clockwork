@@ -2,7 +2,7 @@ use std::sync::atomic::AtomicBool;
 
 use log::info;
 
-use crate::{executor::Executor, utils::read_or_new_keypair};
+use crate::{executor::Executor, tpu_client, utils::read_or_new_keypair};
 use cronos_client::Client as CronosClient;
 
 use {
@@ -19,7 +19,7 @@ use {
 };
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-// static LOCAL_WEBSOCKET_URL: &str = "";
+static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 #[derive(Debug)]
 pub struct CronosPlugin {
@@ -40,6 +40,7 @@ impl GeyserPlugin for CronosPlugin {
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
+        info!("Loading...");
         self.config = PluginConfig::read_from(config_file)?;
         self.runtime = build_runtime(self.config.clone());
         self.is_startup = AtomicBool::new(true);
@@ -91,30 +92,43 @@ impl GeyserPlugin for CronosPlugin {
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
         info!("End of startup... building executor");
 
-        // Build clients
+        // Build cronos client
         let cronos_client = Arc::new(CronosClient::new(
             read_or_new_keypair(self.config.clone().delegate_keypath),
             LOCAL_RPC_URL.into(),
         ));
-        let tpu_client = Arc::new(TpuClient::new(
-            read_or_new_keypair(self.config.clone().delegate_keypath),
-            LOCAL_RPC_URL.into(),
-            "".into(),
-        ));
 
-        // Initialize the executor
-        self.executor = Some(Arc::new(Executor::new(
-            self.config.clone(),
-            cronos_client,
-            self.delegate.clone(),
-            self.runtime.clone(),
-            self.scheduler.clone(),
-            tpu_client,
-        )));
+        // Attempt to build tpu client until success
+        while self.is_startup.load(std::sync::atomic::Ordering::Relaxed) {
+            match TpuClient::new(
+                read_or_new_keypair(self.config.clone().delegate_keypath),
+                LOCAL_RPC_URL.into(),
+                LOCAL_WEBSOCKET_URL.into(),
+            )
+            .map_or(None, |c| Some(c))
+            {
+                Some(tpu_client) => {
+                    // Build executor with tpu_client
+                    self.executor = Some(Arc::new(Executor::new(
+                        self.config.clone(),
+                        cronos_client.clone(),
+                        self.delegate.clone(),
+                        self.runtime.clone(),
+                        self.scheduler.clone(),
+                        Arc::new(tpu_client),
+                    )));
 
-        // Update the is_startup flag
-        self.is_startup
-            .store(false, std::sync::atomic::Ordering::Relaxed);
+                    // Update the is_startup flag
+                    self.is_startup
+                        .store(false, std::sync::atomic::Ordering::Relaxed);
+                }
+                None => {
+                    // TODO sleep
+                    info!("Sleeping until node is caught up");
+                    std::thread::sleep(std::time::Duration::from_millis(1000));
+                }
+            }
+        }
 
         Ok(())
     }

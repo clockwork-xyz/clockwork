@@ -181,11 +181,12 @@ impl Scheduler {
                 read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
             ));
-            let tpu_client = Arc::new(TpuClient::new(
+            let tpu_client = TpuClient::new(
                 read_or_new_keypair(this.config.clone().delegate_keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
-            ));
+            )
+            .unwrap();
 
             // Return early if the node is not healthy
             tpu_client.rpc_client().get_health().map_err(|_| {
@@ -245,7 +246,7 @@ impl Scheduler {
                     b
                 })
                 .for_each(|(queue_pubkey, tx)| {
-                    if tpu_client.clone().send_transaction(tx) {
+                    if tpu_client.send_transaction(tx) {
                         this.actionable_queues.remove(queue_pubkey);
                         this.tx_signatures
                             .insert(tx.signatures[0], (*queue_pubkey, confirmed_slot));
