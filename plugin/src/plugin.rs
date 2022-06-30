@@ -39,7 +39,7 @@ impl GeyserPlugin for CronosPlugin {
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
-        info!("Loading...");
+        info!("Loading snapshot...");
         *self = CronosPlugin::new_from_config(PluginConfig::read_from(config_file)?);
         Ok(())
     }
