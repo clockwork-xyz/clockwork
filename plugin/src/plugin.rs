@@ -1,5 +1,3 @@
-use std::sync::atomic::AtomicBool;
-
 use log::info;
 
 use crate::{executor::Executor, utils::read_or_new_keypair};
@@ -42,14 +40,7 @@ impl GeyserPlugin for CronosPlugin {
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
         info!("Loading...");
-        self.config = PluginConfig::read_from(config_file)?;
-        self.runtime = build_runtime(self.config.clone());
-        self.delegate = Arc::new(Delegate::new(self.config.clone(), self.runtime.clone()));
-        self.scheduler = Arc::new(Scheduler::new(
-            self.config.clone(),
-            self.delegate.pool_positions.clone(),
-            self.runtime.clone(),
-        ));
+        *self = CronosPlugin::new_from_config(PluginConfig::read_from(config_file)?);
         Ok(())
     }
 
@@ -102,10 +93,6 @@ impl GeyserPlugin for CronosPlugin {
         _parent: Option<u64>,
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
-        // Return early if plugin is starting up
-        // let is_healthy = self.is_healthy.load(std::sync::atomic::Ordering::Relaxed);
-        info!("slot: {} executor: {:#?}", slot, self.executor);
-
         // Re-check health and attempt to build the executor if we're still not caught up
         if self.executor.is_none() {
             self.try_build_executor()
@@ -113,15 +100,12 @@ impl GeyserPlugin for CronosPlugin {
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
-            SlotStatus::Confirmed => {
-                self.delegate.clone().handle_confirmed_slot(slot)?;
-                match &self.executor {
-                    Some(executor) => {
-                        executor.clone().handle_confirmed_slot(slot)?;
-                    }
-                    None => (),
+            SlotStatus::Confirmed => match &self.executor {
+                Some(executor) => {
+                    executor.clone().handle_confirmed_slot(slot)?;
                 }
-            }
+                None => (),
+            },
             _ => (),
         }
         Ok(())
@@ -152,6 +136,23 @@ impl GeyserPlugin for CronosPlugin {
 }
 
 impl CronosPlugin {
+    fn new_from_config(config: PluginConfig) -> Self {
+        let runtime = build_runtime(config.clone());
+        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
+        let scheduler = Arc::new(Scheduler::new(
+            config.clone(),
+            delegate.pool_positions.clone(),
+            runtime.clone(),
+        ));
+        Self {
+            config,
+            delegate,
+            executor: None,
+            scheduler,
+            runtime,
+        }
+    }
+
     fn try_build_executor(&mut self) {
         // Return early if not healthy
         if RpcClient::new_with_commitment::<String>(
@@ -192,21 +193,7 @@ impl CronosPlugin {
 
 impl Default for CronosPlugin {
     fn default() -> Self {
-        let config = PluginConfig::default();
-        let runtime = build_runtime(config.clone());
-        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
-        let scheduler = Arc::new(Scheduler::new(
-            config.clone(),
-            delegate.pool_positions.clone(),
-            runtime.clone(),
-        ));
-        CronosPlugin {
-            config,
-            delegate,
-            executor: None,
-            scheduler,
-            runtime,
-        }
+        Self::new_from_config(PluginConfig::default())
     }
 }
 
@@ -214,7 +201,7 @@ fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
     Arc::new(
         Builder::new_multi_thread()
             .enable_all()
-            .thread_name("cronos-executor")
+            .thread_name("cronos-plugin")
             .worker_threads(config.worker_threads)
             .max_blocking_threads(config.worker_threads)
             .build()

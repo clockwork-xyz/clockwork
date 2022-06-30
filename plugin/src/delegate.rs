@@ -1,5 +1,5 @@
 use {
-    crate::{config::PluginConfig, tpu_client::TpuClient, utils::read_or_new_keypair},
+    crate::{config::PluginConfig, utils::read_or_new_keypair},
     cronos_client::{
         network::state::{Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
         pool::state::Pool,
@@ -16,21 +16,20 @@ use {
     tokio::{runtime::Runtime, sync::RwLock},
 };
 
-// static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-// static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+static GRACE_PERIOD: u64 = 10;
 
 pub struct Delegate {
     // Plugin config values.
     pub config: PluginConfig,
-
-    // Pub delegate keypiar
-    pub delegate_pubkey: Pubkey,
 
     // Map from unconfirmed slot numbers to the expected delegate pool for that moment.
     pub pool_forecasts: DashMap<u64, Pool>,
 
     // RwLock for this node's delegate status.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
+
+    // Pub delegate address
+    pub pubkey: Pubkey,
 
     // A copy of the current rotator account data.
     pub rotator: RwLock<Rotator>,
@@ -43,19 +42,15 @@ pub struct Delegate {
 
     // Sorted entries of the snapshot.
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
-    // pub tpu_client: Option<TpuClient>,
-
-    // Map from target slot numbers to signatures for rotation txs.
-    // pub tx_signatures: DashMap<u64, Signature>,
 }
 
 impl Delegate {
     pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
-            delegate_pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
             pool_forecasts: DashMap::new(),
             pool_positions: Arc::new(RwLock::new(PoolPositions::default())),
+            pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
             rotator: RwLock::new(Rotator {
                 last_slot: 0,
                 nonce: 0,
@@ -68,7 +63,6 @@ impl Delegate {
                 status: SnapshotStatus::Current,
             }),
             snapshot_entries: RwLock::new(vec![]),
-            // tx_signatures: DashMap::new(),
         }
     }
 
@@ -101,7 +95,7 @@ impl Delegate {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Log rotator stats
+            // Log rotator data
             let r_rotator = this.rotator.read().await;
             info!(
                 "slot: {} last_rotation: {} nonce: {}",
@@ -118,7 +112,7 @@ impl Delegate {
                             current_position: pool
                                 .delegates
                                 .iter()
-                                .position(|k| k.eq(&this.delegate_pubkey))
+                                .position(|k| k.eq(&this.pubkey))
                                 .map(|i| i as u64),
                             delegates: pool.delegates.make_contiguous().to_vec().clone(),
                         },
@@ -128,158 +122,101 @@ impl Delegate {
             });
             drop(w_pool_positions);
 
-            // Rotate the pool
-            // this.clone().rotate_pool(confirmed_slot)?;
-
             Ok(())
         })
     }
 
     // TODO: Maybe just build the tx in this fn and return to the executor for execution
-    pub fn try_rotate_pool(
+    pub async fn build_rotation_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
         slot: u64,
-        tpu_client: Arc<TpuClient>,
-    ) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            info!("A");
+    ) -> PluginResult<Transaction> {
+        // Acquire read locks
+        let r_pool_positions = self.pool_positions.read().await;
+        let r_rotator = self.rotator.read().await;
+        let r_snapshot = self.snapshot.read().await;
 
-            // Acquire read locks
-            let r_pool_positions = this.pool_positions.read().await;
-            let r_rotator = this.rotator.read().await;
-            let r_snapshot = this.snapshot.read().await;
+        // Exit early if the rotator is not intialized
+        if r_rotator.nonce == 0 {
+            return Err(GeyserPluginError::Custom("Rotator is uninitialized".into()));
+        }
 
-            info!("B");
+        // Exit early if there is no stake in the snapshot
+        if r_snapshot.stake_total == 0 {
+            return Err(GeyserPluginError::Custom("No stake in snapshot".into()));
+        }
 
-            // Exit early if it's not time to rotate the pool
-            let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
-            if slot < target_slot {
-                info!("C {} {}", slot, target_slot);
-                return Ok(());
-            }
+        // Exit early if the pool cannot be rotated yet
+        let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
+        if slot < target_slot {
+            return Err(GeyserPluginError::Custom(
+                "Rotator cannot be turned yet".into(),
+            ));
+        }
 
-            info!("D");
+        // Exit early this this node is not in the scheduler pool AND
+        //  we are still within the pool's grace period.
+        if r_pool_positions
+            .scheduler_pool_position
+            .current_position
+            .is_none()
+            && slot < target_slot + GRACE_PERIOD
+        {
+            return Err(GeyserPluginError::Custom(
+                "This node is not a delegate, and it is not within the grace period".into(),
+            ));
+        }
 
-            // Exit early this this node is not in the scheduler and
-            //  we are still within the grace period of the rotation.
-            // TODO Should rotations fall to another pool?
-            let grace_period_slot = target_slot + 10;
-            if r_pool_positions
-                .scheduler_pool_position
-                .current_position
-                .is_none()
-                && slot < grace_period_slot
-            {
-                info!("E");
-                return Ok(());
-            }
+        // Fetch the snapshot entries
+        let snapshot_pubkey = Snapshot::pda(r_snapshot.id).0;
+        let snapshot_entries = (0..r_snapshot.clone().node_count)
+            .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
+            .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
+            .collect::<Vec<SnapshotEntry>>();
 
-            info!("F");
+        // Build the rotation ix
+        let sample = r_rotator
+            .nonce
+            .checked_rem(r_snapshot.stake_total)
+            .unwrap_or(0);
+        let entry_id = snapshot_entries
+            .binary_search_by(|entry| {
+                if sample < entry.stake_offset {
+                    Ordering::Less
+                } else if sample >= entry.stake_offset
+                    && sample < (entry.stake_offset + entry.stake_amount)
+                {
+                    Ordering::Equal
+                } else {
+                    Ordering::Greater
+                }
+            })
+            .unwrap() as u64;
+        let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
+        let entry_pubkey =
+            cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0; // TODO Get correct entry
+        let ix = cronos_client::network::instruction::rotator_turn(
+            entry_pubkey,
+            cronos_client.payer_pubkey(),
+            snapshot_pubkey,
+        );
 
-            // Fetch the snapshot entries
-            // let cronos_client = CronosClient::new(
-            //     read_or_new_keypair(this.config.clone().delegate_keypath),
-            //     LOCAL_RPC_URL.into(),
-            // );
-            let snapshot_pubkey = Snapshot::pda(r_snapshot.id).0;
-            let snapshot_entries = (0..r_snapshot.clone().node_count)
-                .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
-                .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
-                .collect::<Vec<SnapshotEntry>>();
+        // Drop read locks
+        drop(r_pool_positions);
+        drop(r_rotator);
+        drop(r_snapshot);
 
-            info!("G");
+        // Build and sign tx
+        let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
+        tx.sign(
+            &[cronos_client.payer()],
+            cronos_client.get_latest_blockhash().map_err(|_err| {
+                GeyserPluginError::Custom("Failed to get latest blockhash".into())
+            })?,
+        );
 
-            // Exit early if the node is not healthy
-            // let tpu_client = TpuClient::new(
-            //     read_or_new_keypair(this.config.clone().delegate_keypath),
-            //     LOCAL_RPC_URL.into(),
-            //     LOCAL_WEBSOCKET_URL.into(),
-            // );
-            // tpu_client.rpc_client().get_health().map_err(|_| {
-            //     return GeyserPluginError::Custom("Node is not healthy".into());
-            // })?;
-
-            info!("H");
-
-            // Exit early if rotator is not intialized
-            if r_rotator.nonce == 0 || r_snapshot.stake_total == 0 {
-                info!("I");
-                return Ok(());
-            }
-
-            info!("J");
-
-            // Build cycle ix
-            let sample = r_rotator
-                .nonce
-                .checked_rem(r_snapshot.stake_total)
-                .unwrap_or(0);
-            let entry_id = snapshot_entries
-                .binary_search_by(|entry| {
-                    if sample < entry.stake_offset {
-                        Ordering::Less
-                    } else if sample >= entry.stake_offset
-                        && sample < (entry.stake_offset + entry.stake_amount)
-                    {
-                        Ordering::Equal
-                    } else {
-                        Ordering::Greater
-                    }
-                })
-                .unwrap() as u64;
-
-            info!("K");
-
-            // Build the pool rotation ix
-            let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
-            let entry_pubkey =
-                cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0; // TODO Get correct entry
-            let ix = cronos_client::network::instruction::rotator_turn(
-                entry_pubkey,
-                cronos_client.payer_pubkey(),
-                snapshot_pubkey,
-            );
-
-            // Drop read locks
-            drop(r_pool_positions);
-            drop(r_rotator);
-            drop(r_snapshot);
-
-            info!("L");
-
-            // Build and sign tx
-            let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
-            tx.sign(
-                &[cronos_client.payer()],
-                cronos_client.get_latest_blockhash().map_err(|_err| {
-                    GeyserPluginError::Custom("Failed to get latest blockhash".into())
-                })?,
-            );
-
-            info!("M");
-
-            // Exit early if this node has already submitted a rotation tx for this target slot.
-            let sig = tx.signatures[0];
-            // if this.tx_signatures.contains_key(&target_slot) {
-            //     info!("N");
-            //     return Ok(());
-            // }
-            // this.tx_signatures.insert(target_slot, sig);
-
-            info!("O");
-
-            // Submit tx
-            tpu_client.rpc_client().get_health().map_err(|_| {
-                return GeyserPluginError::Custom("Node is not healthy".into());
-            })?;
-            let is_ok = tpu_client.send_transaction(&tx);
-            info!("Pool rotation: {} {}", sig, is_ok);
-
-            // TODO Confirm sigs and retry logic
-
-            Ok(())
-        })
+        Ok(tx)
     }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
