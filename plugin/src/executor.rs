@@ -1,6 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use cronos_client::Client as CronosClient;
+use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
@@ -97,7 +98,9 @@ impl Executor {
         Ok(sig)
     }
 
-    fn cache_signature(self: Arc<Self>, _slot: u64, _sig: Signature) -> PluginResult<()> {
+    fn cache_signature(self: Arc<Self>, slot: u64, sig: Signature) -> PluginResult<()> {
+        info!("slot: {} sig: {}", slot, sig);
+
         // TODO Index this signature against it's slot
 
         // TODO Check on all the signatures in the last X slots
