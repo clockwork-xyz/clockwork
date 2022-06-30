@@ -1,5 +1,5 @@
 use {
-    crate::{config::PluginConfig, delegate::PoolPositions},
+    crate::delegate::PoolPositions,
     // bugsnag::Bugsnag,
     cronos_client::{
         scheduler::state::{Queue, QueueStatus, Task},
@@ -16,14 +16,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::transaction::Transaction,
-    std::{
-        collections::HashSet,
-        fmt::Debug,
-        sync::{
-            atomic::{AtomicU64, Ordering},
-            Arc,
-        },
-    },
+    std::{collections::HashSet, fmt::Debug, sync::Arc},
     tokio::{runtime::Runtime, sync::RwLock},
 };
 
@@ -31,14 +24,8 @@ pub struct Scheduler {
     // The set of queue pubkeys that can be processed.
     pub actionable_queues: DashSet<Pubkey>,
 
-    // Plugin config values.
-    pub config: PluginConfig,
-
     // The pool positions of this node.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
-
-    // Count of how many tasks have been dropped.
-    pub dropped_tasks: AtomicU64,
 
     // Map from exec_at timestamps to the list of queues scheduled
     //  for that moment.
@@ -47,25 +34,15 @@ pub struct Scheduler {
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 
-    // Map from tx signatures to a (queue pubkey, slot) tuple. The slot
-    //  records the confirmed slot at the time the tx was sent.
-    // pub tx_signatures: DashMap<Signature, (Pubkey, u64)>,
-
     // Map from slot numbers to the sysvar clock unix_timestamp at that slot.
     pub unix_timestamps: DashMap<u64, i64>,
 }
 
 impl Scheduler {
-    pub fn new(
-        config: PluginConfig,
-        pool_positions: Arc<RwLock<PoolPositions>>,
-        runtime: Arc<Runtime>,
-    ) -> Self {
+    pub fn new(pool_positions: Arc<RwLock<PoolPositions>>, runtime: Arc<Runtime>) -> Self {
         Self {
             actionable_queues: DashSet::new(),
-            config: config.clone(),
             pool_positions,
-            dropped_tasks: AtomicU64::new(0),
             pending_queues: DashMap::new(),
             runtime,
             unix_timestamps: DashMap::new(),
@@ -74,12 +51,6 @@ impl Scheduler {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!(
-                "slot: {} dropped: {}",
-                confirmed_slot,
-                this.dropped_tasks.load(Ordering::Relaxed)
-            );
-
             // Lookup the confirmed sysvar unix timestamp
             let mut confirmed_unix_timestamp = None;
             this.unix_timestamps.retain(|slot, unix_timestamp| {
@@ -253,23 +224,6 @@ impl Scheduler {
         self.runtime.spawn(f(self.clone()));
         Ok(())
     }
-
-    // fn log_error(self: Arc<Self>, err_msg: String) {
-    //     match self.config.bugsnag_api_key.clone() {
-    //         Some(api_key) => {
-    //             let mut bugsnag_client = Bugsnag::new(&api_key, env!("CARGO_MANIFEST_DIR"));
-    //             bugsnag_client.set_app_info(
-    //                 Some(env!("CARGO_PKG_VERSION")),
-    //                 Some("development"),
-    //                 Some("rust"),
-    //             );
-    //             bugsnag_client
-    //                 .notify("Error", &err_msg)
-    //                 .severity(bugsnag::Severity::Error);
-    //         }
-    //         None => (),
-    //     }
-    // }
 }
 
 impl Debug for Scheduler {

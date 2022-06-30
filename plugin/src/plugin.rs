@@ -140,7 +140,6 @@ impl CronosPlugin {
         let runtime = build_runtime(config.clone());
         let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
         let scheduler = Arc::new(Scheduler::new(
-            config.clone(),
             delegate.pool_positions.clone(),
             runtime.clone(),
         ));

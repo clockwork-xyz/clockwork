@@ -47,7 +47,7 @@ impl PartialEq for TransactionAttempt {
 
 impl Eq for TransactionAttempt {}
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum TransactionType {
     Queue { pubkey: Pubkey },
     Rotation { slot: u64 },
@@ -60,6 +60,7 @@ pub struct Executor {
     pub runtime: Arc<Runtime>,
     pub scheduler: Arc<Scheduler>,
     pub tpu_client: Arc<TpuClient>,
+    pub tx_dedupe: DashSet<TransactionType>,
     pub tx_history: DashMap<u64, DashSet<TransactionAttempt>>,
 }
 
@@ -79,6 +80,7 @@ impl Executor {
             runtime,
             scheduler,
             tpu_client,
+            tx_dedupe: DashSet::new(),
             tx_history: DashMap::new(),
         }
     }
@@ -142,6 +144,11 @@ impl Executor {
         tx: &Transaction,
         tx_type: TransactionType,
     ) -> PluginResult<()> {
+        // Check for dedupes
+        if self.tx_dedupe.contains(&tx_type) {
+            return Ok(());
+        }
+
         self.clone()
             .simulate_tx(tx)
             .and_then(|tx| self.clone().submit_tx(&tx))
@@ -183,11 +190,13 @@ impl Executor {
                                     // Retry txs that have passed the timeout period and do not have a confirmed status
                                     if confirmed_slot > attempt_slot + TIMEOUT_PERIOD {
                                         tx_attempts.remove(&tx_attempt.clone());
+                                        this.tx_dedupe.remove(&tx_attempt.tx_type);
                                         retry_attempts.insert(tx_attempt.clone());
                                     }
                                 }
                                 Some(res) => {
                                     tx_attempts.remove(&tx_attempt.clone()); // If a tx has a status, remove it from the history
+                                    this.tx_dedupe.remove(&tx_attempt.tx_type);
                                     match res {
                                         Err(_err) => {
                                             // Flag failed txs for retry. Are there any errors that should not be retried?
@@ -243,12 +252,6 @@ impl Executor {
                     }
                 }
             }
-
-            // TODO rebuild tx from arguments
-            // TODO simulate tx. drop if simulation fails
-            // TODO send tx.
-            // TODO log into tx history
-
             Ok(())
         })
     }
@@ -290,6 +293,7 @@ impl Executor {
             signature: sig,
             tx_type,
         };
+        self.tx_dedupe.insert(tx_type);
         self.tx_history
             .entry(slot)
             .and_modify(|tx_attempts| {
