@@ -50,7 +50,7 @@ impl Eq for TransactionAttempt {}
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum TransactionType {
     Queue { pubkey: Pubkey },
-    Rotation { slot: u64 },
+    Rotation { target_slot: u64 },
 }
 
 pub struct Executor {
@@ -118,8 +118,13 @@ impl Executor {
             .clone()
             .build_rotation_tx(self.cronos_client.clone(), slot)
             .await
-            .and_then(|tx| {
-                self.execute_tx(prior_attempt, slot, &tx, TransactionType::Rotation { slot })
+            .and_then(|(target_slot, tx)| {
+                self.execute_tx(
+                    prior_attempt,
+                    slot,
+                    &tx,
+                    TransactionType::Rotation { target_slot },
+                )
             })
     }
 
@@ -129,9 +134,16 @@ impl Executor {
             .build_queue_txs(self.cronos_client.clone())
             .await
             .iter()
-            .for_each(|queue_tx| {
+            .for_each(|(queue_pubkey, tx)| {
                 self.clone()
-                    .execute_tx(None, slot, &queue_tx.1, TransactionType::Rotation { slot })
+                    .execute_tx(
+                        None,
+                        slot,
+                        tx,
+                        TransactionType::Queue {
+                            pubkey: *queue_pubkey,
+                        },
+                    )
                     .ok();
             });
         Ok(())
@@ -244,9 +256,9 @@ impl Executor {
                             })
                             .ok();
                     }
-                    TransactionType::Rotation { slot } => {
+                    TransactionType::Rotation { target_slot } => {
                         this.clone()
-                            .rotate_pools(Some(tx_attempt.clone()), slot)
+                            .rotate_pools(Some(tx_attempt.clone()), target_slot)
                             .await
                             .ok();
                     }

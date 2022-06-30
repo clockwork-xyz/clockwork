@@ -131,7 +131,7 @@ impl Delegate {
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
         slot: u64,
-    ) -> PluginResult<Transaction> {
+    ) -> PluginResult<(u64, Transaction)> {
         // Acquire read locks
         let r_pool_positions = self.pool_positions.read().await;
         let r_rotator = self.rotator.read().await;
@@ -216,7 +216,7 @@ impl Delegate {
             })?,
         );
 
-        Ok(tx)
+        Ok((target_slot, tx))
     }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
