@@ -129,16 +129,12 @@ impl Executor {
     }
 
     async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        info!("Actionable queues: {:#?}", self.scheduler.actionable_queues);
-        info!("Pending queues: {:#?}", self.scheduler.pending_queues);
-
         self.scheduler
             .clone()
             .build_queue_txs(self.cronos_client.clone(), slot)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
-                info!("Will execute tx for queue {}", queue_pubkey);
                 self.clone()
                     .execute_tx(
                         None,
