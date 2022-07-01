@@ -163,7 +163,7 @@ impl Delegate {
             && slot < target_slot + GRACE_PERIOD
         {
             return Err(GeyserPluginError::Custom(
-                "This node is not a delegate, and it is not within the grace period".into(),
+                "This node is not a delegate, and it is within the rotation grace period".into(),
             ));
         }
 
@@ -173,13 +173,6 @@ impl Delegate {
             .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
             .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
             .collect::<Vec<SnapshotEntry>>();
-
-        snapshot_entries.iter().for_each(|e| {
-            info!(
-                "Fetched snapshot entry id: {} stake_offset: {} stake_amount: {}",
-                e.id, e.stake_offset, e.stake_amount
-            )
-        });
 
         // Build the rotation ix
         let sample = r_rotator

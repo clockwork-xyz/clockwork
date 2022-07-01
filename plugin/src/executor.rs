@@ -87,12 +87,7 @@ impl Executor {
         self.spawn(|this| async move {
             // Rotate the pools
             this.delegate.clone().handle_confirmed_slot(slot)?;
-            match this.clone().rotate_pools(None, slot).await {
-                Err(err) => {
-                    info!("Failed to rotate pools: {}", err)
-                }
-                Ok(()) => (),
-            };
+            this.clone().rotate_pools(None, slot).await.ok();
 
             // Proces actionable queues
             this.scheduler.clone().handle_confirmed_slot(slot)?;
