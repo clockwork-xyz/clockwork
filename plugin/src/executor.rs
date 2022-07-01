@@ -287,12 +287,11 @@ impl Executor {
             .map_err(|err| {
                 GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
             })
-            .map(|response| {
-                if response.value.err.is_some() {
-                    Err(GeyserPluginError::Custom("Tx failed simulation".into()))
-                } else {
-                    Ok(tx.clone())
-                }
+            .map(|response| match response.value.err {
+                None => Ok(tx.clone()),
+                Some(err) => Err(GeyserPluginError::Custom(
+                    format!("Tx failed simulation: {}", err).into(),
+                )),
             })?
     }
 
