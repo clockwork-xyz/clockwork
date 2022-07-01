@@ -135,6 +135,7 @@ impl Executor {
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
+                info!("Will execute tx for queue {}", queue_pubkey);
                 self.clone()
                     .execute_tx(
                         None,
