@@ -1,7 +1,4 @@
-use crate::{
-    cli::{CliCommand, CliError},
-    config::CliConfig,
-};
+use crate::{cli::CliCommand, config::CliConfig, errors::CliError};
 use clap::ArgMatches;
 use cronos_client::Client;
 use solana_sdk::signature::read_keypair_file;
@@ -43,8 +40,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ManagerCreate => super::manager::create(&client),
         CliCommand::ManagerGet { address } => super::manager::get(&client, &address),
         CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
-        CliCommand::QueueGet { address } => super::queue::get(&client, &address),
+        CliCommand::QueueGet { address, task_id } => super::queue::get(&client, &address, task_id),
         CliCommand::RegistryGet => super::registry::get(&client),
-        CliCommand::SnapshotGet => super::snapshot::get(&client),
+        CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),
     }
 }

@@ -1,7 +1,7 @@
 use cronos_client::Client;
 use solana_sdk::pubkey::Pubkey;
 
-use crate::cli::CliError;
+use crate::errors::CliError;
 
 pub fn create(client: &Client) -> Result<(), CliError> {
     let authority = client.payer_pubkey();

@@ -1,5 +1,5 @@
 use {
-    crate::cli::CliError,
+    crate::errors::CliError,
     cronos_client::{pool::state::Pool, Client},
 };
 

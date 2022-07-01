@@ -1,5 +1,5 @@
 use {
-    crate::cli::CliError,
+    crate::errors::CliError,
     cronos_client::Client,
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };

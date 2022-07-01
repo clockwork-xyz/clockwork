@@ -1,5 +1,5 @@
 use {
-    crate::cli::CliError,
+    crate::errors::CliError,
     cronos_client::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
     cronos_client::Client,
     solana_sdk::{

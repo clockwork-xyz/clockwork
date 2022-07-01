@@ -1,6 +1,5 @@
 use clap::{Arg, ArgGroup, Command};
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
-use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
@@ -51,31 +50,20 @@ pub enum CliCommand {
     },
     QueueGet {
         address: Pubkey,
+        task_id: Option<u128>,
     },
 
     // Registry
     RegistryGet,
 
     // Snapshot
-    SnapshotGet,
+    SnapshotGet {
+        entry_id: Option<u64>,
+    },
 
     // Utility commands
     Clock,
     Health,
-}
-
-#[derive(Debug, Error)]
-pub enum CliError {
-    #[error("Account not found: {0}")]
-    AccountNotFound(String),
-    #[error("Account data could not be parsed: {0}")]
-    AccountDataNotParsable(String),
-    #[error("Bad client: {0}")]
-    BadClient(String),
-    #[error("Bad parameter: {0}")]
-    BadParameter(String),
-    #[error("Command not recognized: {0}")]
-    CommandNotRecognized(String),
 }
 
 pub fn app() -> Command<'static> {
@@ -249,15 +237,46 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("get").about("Get a queue").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a queue"),
-                    ),
+                    Command::new("get")
+                        .about("Get a queue")
+                        .arg(
+                            Arg::new("address")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("Public address of a queue"),
+                        )
+                        .subcommand(
+                            Command::new("task")
+                                .about("Lookup a task in the queue")
+                                .arg(
+                                    Arg::new("id")
+                                        .index(1)
+                                        .takes_value(true)
+                                        .required(true)
+                                        .help("The id of a task in the queue"),
+                                ),
+                        ),
                 ),
         )
         .subcommand(Command::new("registry").about("Get the registry account"))
-        .subcommand(Command::new("snapshot").about("Get the current snapshot account"))
+        .subcommand(
+            Command::new("snapshot")
+                .about("Lookup the current snapshot")
+                .subcommand(
+                    Command::new("get")
+                        .about("Get the snapshot account data")
+                        .subcommand(
+                            Command::new("entry")
+                                .about("Lookup an entry in the snapshot")
+                                .arg(
+                                    Arg::new("id")
+                                        .index(1)
+                                        .takes_value(true)
+                                        .required(true)
+                                        .help("The id of an entry in the snapshot"),
+                                ),
+                        ),
+                ),
+        )
 }
