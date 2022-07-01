@@ -92,8 +92,14 @@ fn is_valid_entry(
 ) -> Result<bool> {
     // Return true if the sample is within the entry's stake range
     match rotator.nonce.checked_rem(snapshot.stake_total) {
-        None => Ok(false),
-        Some(sample) => Ok(sample >= entry.stake_offset
-            && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),
+        None => {
+            msg!("Invalid sample with snapshot: {} stake_total: {}", snapshot.key(), snapshot.stake_total);
+            Ok(false)
+        },
+        Some(sample) => {
+            let entry = entry.clone();
+            msg!("entry_id: {} stake_offset: {} stake_amount: {} sample: {} ", entry.id, entry.stake_offset, entry.stake_amount, sample);
+            Ok(sample >= entry.stake_offset
+            && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap())},
     }
 }

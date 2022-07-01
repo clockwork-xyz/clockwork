@@ -174,6 +174,13 @@ impl Delegate {
             .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
             .collect::<Vec<SnapshotEntry>>();
 
+        snapshot_entries.iter().for_each(|e| {
+            info!(
+                "Fetched snapshot entry id: {} stake_offset: {} stake_amount: {}",
+                e.id, e.stake_offset, e.stake_amount
+            )
+        });
+
         // Build the rotation ix
         let sample = r_rotator
             .nonce
