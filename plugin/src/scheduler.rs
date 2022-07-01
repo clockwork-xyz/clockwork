@@ -165,7 +165,12 @@ impl Scheduler {
 
         // Exit early this this node is not in the scheduler pool AND
         //  we are still within the queue's grace period.
-        if pool_position.current_position.is_none() && slot < queue.exec_at.unwrap() as u64 + 10 {
+        let unix_timestamp = match self.unix_timestamps.get(&slot) {
+            Some(entry) => *entry.value(),
+            None => cronos_client.get_clock().unwrap().unix_timestamp,
+        };
+        if pool_position.current_position.is_none() && unix_timestamp < queue.exec_at.unwrap() + 10
+        {
             return Err(GeyserPluginError::Custom(
                 "This node is not a delegate, and the queue is not within the grace period".into(),
             ));
