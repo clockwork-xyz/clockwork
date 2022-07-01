@@ -194,12 +194,6 @@ impl Delegate {
             Err(i) => i - 1,
             Ok(i) => i,
         } as u64;
-
-        info!(
-            "Rotation sample: {} stake_total: {} entry_id: {}",
-            sample, r_snapshot.stake_total, entry_id
-        );
-
         let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
         let entry_pubkey =
             cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0;
