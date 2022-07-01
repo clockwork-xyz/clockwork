@@ -49,7 +49,7 @@ impl Eq for TransactionAttempt {}
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum TransactionType {
-    Queue { pubkey: Pubkey },
+    Queue { queue_pubkey: Pubkey },
     Rotation { target_slot: u64 },
 }
 
@@ -131,7 +131,7 @@ impl Executor {
     async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.scheduler
             .clone()
-            .build_queue_txs(self.cronos_client.clone())
+            .build_queue_txs(self.cronos_client.clone(), slot)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
@@ -141,7 +141,7 @@ impl Executor {
                         slot,
                         tx,
                         TransactionType::Queue {
-                            pubkey: *queue_pubkey,
+                            queue_pubkey: *queue_pubkey,
                         },
                     )
                     .ok();
@@ -237,21 +237,32 @@ impl Executor {
         slot: u64,
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
+            // Get this node's current position in the scheduler pool
+            let r_pool_positions = this.delegate.pool_positions.read().await;
+            let pool_position = r_pool_positions.scheduler_pool_position.clone();
+            drop(r_pool_positions);
+
+            // Process all attempts in the retry queue
             for tx_attempt in retry_attempts
                 .iter()
                 .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
             {
                 match tx_attempt.tx_type {
-                    TransactionType::Queue { pubkey } => {
+                    TransactionType::Queue { queue_pubkey } => {
                         this.scheduler
                             .clone()
-                            .build_queue_tx(this.cronos_client.clone(), pubkey)
+                            .build_queue_tx(
+                                this.cronos_client.clone(),
+                                pool_position.clone(),
+                                queue_pubkey,
+                                slot,
+                            )
                             .and_then(|tx| {
                                 this.clone().execute_tx(
                                     Some(tx_attempt.clone()),
                                     slot,
                                     &tx,
-                                    TransactionType::Queue { pubkey },
+                                    TransactionType::Queue { queue_pubkey },
                                 )
                             })
                             .ok();

@@ -234,11 +234,13 @@ impl Debug for Delegate {
     }
 }
 
+#[derive(Clone)]
 pub struct PoolPosition {
     pub current_position: Option<u64>,
     pub delegates: Vec<Pubkey>,
 }
 
+#[derive(Clone)]
 pub struct PoolPositions {
     pub scheduler_pool_position: PoolPosition,
 }

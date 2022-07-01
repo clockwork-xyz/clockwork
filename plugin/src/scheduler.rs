@@ -1,3 +1,5 @@
+use crate::delegate::PoolPosition;
+
 use {
     crate::delegate::PoolPositions,
     // bugsnag::Bugsnag,
@@ -96,6 +98,7 @@ impl Scheduler {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!("Caching queue {:#?}", queue_pubkey);
+            this.actionable_queues.remove(&queue_pubkey);
             match queue.exec_at {
                 Some(exec_at) => {
                     this.pending_queues
@@ -118,14 +121,23 @@ impl Scheduler {
     pub async fn build_queue_txs(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
+        slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
+        // Get this node's current pool position
+        let r_pool_positions = self.pool_positions.read().await;
+        let pool_position = r_pool_positions.scheduler_pool_position.clone();
+        drop(r_pool_positions);
+
+        // Build the set of txs from the actionable queues
         self.actionable_queues
             .iter()
             .filter_map(|queue_pubkey| {
-                match self
-                    .clone()
-                    .build_queue_tx(cronos_client.clone(), queue_pubkey.clone())
-                {
+                match self.clone().build_queue_tx(
+                    cronos_client.clone(),
+                    pool_position.clone(),
+                    queue_pubkey.clone(),
+                    slot,
+                ) {
                     Err(_) => None,
                     Ok(tx) => Some((queue_pubkey.clone(), tx)),
                 }
@@ -137,10 +149,27 @@ impl Scheduler {
     pub fn build_queue_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
+        pool_position: PoolPosition,
         queue_pubkey: Pubkey,
+        slot: u64,
     ) -> PluginResult<Transaction> {
         // Get the queue
         let queue = cronos_client.get::<Queue>(&queue_pubkey).unwrap();
+
+        // Return none if this queue has no exec_at
+        if queue.exec_at.is_none() {
+            return Err(GeyserPluginError::Custom(
+                "Queue does not have an exec_at timestamp".into(),
+            ));
+        }
+
+        // Exit early this this node is not in the scheduler pool AND
+        //  we are still within the queue's grace period.
+        if pool_position.current_position.is_none() && slot < queue.exec_at.unwrap() as u64 + 10 {
+            return Err(GeyserPluginError::Custom(
+                "This node is not a delegate, and the queue is not within the grace period".into(),
+            ));
+        }
 
         // Setup ixs based on queue's current status
         let delegate_pubkey = cronos_client.payer_pubkey();
