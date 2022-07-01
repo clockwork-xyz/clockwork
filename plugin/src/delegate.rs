@@ -179,19 +179,20 @@ impl Delegate {
             .nonce
             .checked_rem(r_snapshot.stake_total)
             .unwrap_or(0);
-        let entry_id = snapshot_entries
-            .binary_search_by(|entry| {
-                if sample < entry.stake_offset {
-                    Ordering::Less
-                } else if sample >= entry.stake_offset
-                    && sample < (entry.stake_offset + entry.stake_amount)
-                {
-                    Ordering::Equal
-                } else {
-                    Ordering::Greater
-                }
-            })
-            .unwrap() as u64;
+        let entry_id = match snapshot_entries.binary_search_by(|entry| {
+            if sample < entry.stake_offset {
+                Ordering::Less
+            } else if sample >= entry.stake_offset
+                && sample < (entry.stake_offset + entry.stake_amount)
+            {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
+        }) {
+            Err(i) => i - 1,
+            Ok(i) => i,
+        } as u64;
         let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
         let entry_pubkey =
             cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0;
