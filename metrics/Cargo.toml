@@ -1,6 +1,6 @@
 [package]
 name = "cronos-metrics"
-version = "0.2.0-alpha6"
+version = "0.2.0"
 description = "Performance monitoring for Cronos clusters"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [dependencies]
 chrono = "0.4.19"
-cronos-client = { path = "../client", version = "0.2.0-alpha6" }
+cronos-client = { path = "../client", version = "0.2.0" }
 dotenv = "0.15.0"
 elasticsearch = "7.14.0-alpha.1"
 serde_json = "~1"
