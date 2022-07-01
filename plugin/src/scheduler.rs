@@ -164,7 +164,7 @@ impl Scheduler {
             Some(entry) => *entry.value(),
             None => cronos_client.get_clock().unwrap().unix_timestamp,
         };
-        if pool_position.current_position.is_none() && unix_timestamp > queue.exec_at.unwrap() + 10
+        if pool_position.current_position.is_none() && unix_timestamp < queue.exec_at.unwrap() + 10
         {
             return Err(GeyserPluginError::Custom(
                 "This node is not a delegate, and the queue is not within the grace period".into(),
