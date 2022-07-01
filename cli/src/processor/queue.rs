@@ -1,5 +1,5 @@
 use {
-    crate::cli::CliError,
+    crate::errors::CliError,
     cronos_client::{
         scheduler::state::{Manager, Queue},
         Client,
@@ -31,10 +31,10 @@ pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
     client
         .send_and_confirm(&[queue_ix], &[client.payer()])
         .unwrap();
-    get(client, &queue_pubkey)
+    get(client, &queue_pubkey, None)
 }
 
-pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+pub fn get(client: &Client, address: &Pubkey, task_id: Option<u128>) -> Result<(), CliError> {
     let queue = client
         .get::<Queue>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
@@ -47,6 +47,14 @@ pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
     }
 
     println!("Tasks: {:#?}", task_pubkeys);
+
+    match task_id {
+        None => (),
+        Some(task_id) => {
+            let task_pubkey = cronos_client::scheduler::state::Task::pda(*address, task_id).0;
+            super::task::get(client, &task_pubkey).ok();
+        }
+    }
 
     Ok(())
 }

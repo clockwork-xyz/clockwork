@@ -13,7 +13,7 @@
 FROM ubuntu:18.04
 
 # Set dependency versions.
-ENV SOLANA_VERSION=v1.10.19
+ENV SOLANA_VERSION=v1.10.25
 
 # Configure path.
 ENV HOME="/root"

@@ -2,7 +2,9 @@ use {
     solana_client::{
         client_error,
         rpc_client::RpcClient,
-        tpu_client::{TpuClient as SolanaTpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS},
+        tpu_client::{
+            TpuClient as SolanaTpuClient, TpuClientConfig, TpuSenderError, DEFAULT_FANOUT_SLOTS,
+        },
     },
     solana_sdk::{
         commitment_config::CommitmentConfig,
@@ -33,7 +35,11 @@ pub struct TpuClient {
 }
 
 impl TpuClient {
-    pub fn new(payer: Keypair, rpc_url: String, websocket_url: String) -> Self {
+    pub fn new(
+        payer: Keypair,
+        rpc_url: String,
+        websocket_url: String,
+    ) -> Result<Self, TpuSenderError> {
         let rpc_client = Arc::new(RpcClient::new_with_commitment::<String>(
             rpc_url,
             CommitmentConfig::confirmed(),
@@ -44,9 +50,8 @@ impl TpuClient {
             TpuClientConfig {
                 fanout_slots: DEFAULT_FANOUT_SLOTS,
             },
-        )
-        .unwrap();
-        Self { client, payer }
+        )?;
+        Ok(Self { client, payer })
     }
 
     pub fn payer_pubkey(&self) -> Pubkey {

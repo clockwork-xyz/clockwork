@@ -118,24 +118,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         )
     )?;
 
-    // Create a queue to cycle the delegate pool
-    // cronos_scheduler::cpi::queue_new(
-    //     CpiContext::new_with_signer(
-    //         scheduler_program.to_account_info(),
-    //         cronos_scheduler::cpi::accounts::QueueNew {
-    //             authority: authority.to_account_info(),
-    //             clock: clock.to_account_info(),
-    //             fee: rotator_fee.to_account_info(),
-    //             manager: manager.to_account_info(),
-    //             payer: admin.to_account_info(),
-    //             queue: rotator_queue.to_account_info(),
-    //             system_program: system_program.to_account_info(),
-    //         },
-    //         &[&[SEED_AUTHORITY, &[bump]]]
-    //     ), 
-    //     "*/15 * * * * * *".into()
-    // )?;
-
     // Create a queue to take snapshots of the registry
     cronos_scheduler::cpi::queue_new(
         CpiContext::new_with_signer(
@@ -153,6 +135,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         ), 
         "0 * * * * * *".into()
     )?;
+
+    // TOOD Create a queue to cleanup snapshots and snapshot entries
+    // TODO Return the lamports to the manager account
 
     // Add an task to the snapshot queue to kick things off
     let next_snapshot_pubkey = Snapshot::pda(1).0;

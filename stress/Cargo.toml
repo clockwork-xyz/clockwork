@@ -18,10 +18,10 @@ cronos-client = { path = "../client", version = "0.2.0-alpha6" }
 cronos-cron = { path = "../cron", version = "0.2.0-alpha6" }
 serde_json = "1.0.79"
 serde = { version = "1.0.136", features = ["derive"] }
-solana-clap-utils = "1.10.19"
-solana-client = "1.10.19"
-solana-cli-config = "1.10.19"
-solana-sdk = "1.10.19"
+solana-clap-utils = "1.10.25"
+solana-client = "1.10.25"
+solana-cli-config = "1.10.25"
+solana-sdk = "1.10.25"
 thiserror = "1.0.30"
 version = "3.0.0"
 

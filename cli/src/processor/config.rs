@@ -1,5 +1,5 @@
 use {
-    crate::cli::CliError,
+    crate::errors::CliError,
     cronos_client::{
         network::state::Config as NetworkConfig, pool::state::Config as PoolConfig,
         scheduler::state::Config as SchedulerConfig, Client,

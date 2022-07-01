@@ -1,14 +1,16 @@
-use bincode::deserialize;
-use cached::proc_macro::cached;
-use cronos_client::{
-    network::state::{Rotator, Snapshot},
-    pool::state::Pool,
-    scheduler::state::Queue,
+use {
+    bincode::deserialize,
+    cached::proc_macro::cached,
+    cronos_client::{
+        network::state::{Rotator, Snapshot},
+        pool::state::Pool,
+        scheduler::state::Queue,
+    },
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPluginError, ReplicaAccountInfo,
+    },
+    solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
 };
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, ReplicaAccountInfo,
-};
-use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },

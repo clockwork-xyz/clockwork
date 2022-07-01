@@ -3,10 +3,12 @@ extern crate version;
 
 mod cli;
 mod config;
+mod errors;
 mod parser;
 mod processor;
 
-use cli::{app, CliError};
+use cli::app;
+use errors::CliError;
 use processor::process;
 
 fn main() -> Result<(), CliError> {

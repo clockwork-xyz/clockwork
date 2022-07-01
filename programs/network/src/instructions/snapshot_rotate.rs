@@ -57,8 +57,8 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     }
 
     // Use dynamic accounts to run the next invocation with the new current snapshot
-    let snapshot_pubkey = current_snapshot.clone().key();
-    let next_snapshot_pubkey = next_snapshot.clone().key();
+    let snapshot_pubkey = current_snapshot.key();
+    let next_snapshot_pubkey = next_snapshot.key();
     let next_next_snapshot_pubkey = Snapshot::pda(next_snapshot.id.checked_add(1).unwrap()).0;
     Ok(ExecResponse {
         dynamic_accounts: Some(

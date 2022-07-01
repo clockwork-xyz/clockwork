@@ -1,6 +1,6 @@
 use cronos_client::network::state::Registry;
 
-use {crate::cli::CliError, cronos_client::Client};
+use {crate::errors::CliError, cronos_client::Client};
 
 pub fn get(client: &Client) -> Result<(), CliError> {
     let registry_pubkey = cronos_client::network::state::Registry::pda().0;

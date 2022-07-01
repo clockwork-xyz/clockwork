@@ -1,6 +1,6 @@
 use cronos_client::Client;
 
-use crate::cli::CliError;
+use crate::errors::CliError;
 
 pub fn get(_client: &Client) -> Result<(), CliError> {
     panic!("Not implemented – moving to health program")

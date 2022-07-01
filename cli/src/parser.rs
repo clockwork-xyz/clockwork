@@ -1,4 +1,4 @@
-use crate::cli::{CliCommand, CliError};
+use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
@@ -23,7 +23,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
-            Some(("snapshot", _matcher)) => Ok(CliCommand::SnapshotGet {}),
+            Some(("snapshot", matches)) => parse_snapshot_command(matches),
             Some(("task", matches)) => parse_task_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -106,6 +106,24 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         }),
         Some(("get", matches)) => Ok(CliCommand::QueueGet {
             address: parse_pubkey("address", matches)?,
+            task_id: match matches.subcommand() {
+                Some(("task", matches)) => Some(parse_u128("id", matches)?),
+                _ => None,
+            },
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::SnapshotGet {
+            entry_id: match matches.subcommand() {
+                Some(("entry", matches)) => Some(parse_u64("id", matches)?),
+                _ => None,
+            },
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -142,6 +160,13 @@ pub fn parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
 pub fn parse_u64(arg: &str, matches: &ArgMatches) -> Result<u64, CliError> {
     Ok(parse_string(arg, matches)?
         .parse::<u64>()
+        .map_err(|_err| CliError::BadParameter(arg.into()))
+        .unwrap())
+}
+
+pub fn parse_u128(arg: &str, matches: &ArgMatches) -> Result<u128, CliError> {
+    Ok(parse_string(arg, matches)?
+        .parse::<u128>()
         .map_err(|_err| CliError::BadParameter(arg.into()))
         .unwrap())
 }
