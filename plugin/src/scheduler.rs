@@ -1,8 +1,5 @@
-use crate::delegate::PoolPosition;
-
 use {
-    crate::delegate::PoolPositions,
-    // bugsnag::Bugsnag,
+    crate::delegate::{PoolPosition, PoolPositions},
     cronos_client::{
         scheduler::state::{Queue, QueueStatus, Task},
         Client as CronosClient,
@@ -29,8 +26,7 @@ pub struct Scheduler {
     // The pool positions of this node.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
 
-    // Map from exec_at timestamps to the list of queues scheduled
-    //  for that moment.
+    // Map from exec_at timestamps to the list of queues scheduled for that moment.
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>,
 
     // Tokio runtime for processing async tasks.
@@ -44,8 +40,8 @@ impl Scheduler {
     pub fn new(pool_positions: Arc<RwLock<PoolPositions>>, runtime: Arc<Runtime>) -> Self {
         Self {
             actionable_queues: DashSet::new(),
-            pool_positions,
             pending_queues: DashMap::new(),
+            pool_positions,
             runtime,
             unix_timestamps: DashMap::new(),
         }
@@ -145,7 +141,6 @@ impl Scheduler {
             .collect::<Vec<(Pubkey, Transaction)>>()
     }
 
-    // TODO Is it more efficient to make this fn async?
     pub fn build_queue_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,

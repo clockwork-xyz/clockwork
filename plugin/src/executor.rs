@@ -1,23 +1,23 @@
-use std::{
-    fmt::Debug,
-    hash::{Hash, Hasher},
-    sync::Arc,
-};
-
-use cronos_client::Client as CronosClient;
-use dashmap::{DashMap, DashSet};
-use log::info;
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, Result as PluginResult,
-};
-use solana_program::pubkey::Pubkey;
-use solana_sdk::{
-    commitment_config::CommitmentConfig, signature::Signature, transaction::Transaction,
-};
-use tokio::runtime::Runtime;
-
-use crate::{
-    config::PluginConfig, delegate::Delegate, scheduler::Scheduler, tpu_client::TpuClient,
+use {
+    crate::{
+        config::PluginConfig, delegate::Delegate, scheduler::Scheduler, tpu_client::TpuClient,
+    },
+    cronos_client::Client as CronosClient,
+    dashmap::{DashMap, DashSet},
+    log::info,
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPluginError, Result as PluginResult,
+    },
+    solana_program::pubkey::Pubkey,
+    solana_sdk::{
+        commitment_config::CommitmentConfig, signature::Signature, transaction::Transaction,
+    },
+    std::{
+        fmt::Debug,
+        hash::{Hash, Hasher},
+        sync::Arc,
+    },
+    tokio::runtime::Runtime,
 };
 
 static MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be retries before dropping
@@ -29,8 +29,6 @@ pub struct TransactionAttempt {
     pub attempt_count: u64,   // The number of times this tx has been attempted
     pub signature: Signature, // The signature of the last attempt
     pub tx_type: TransactionType,
-    // TODO Create an abstract representation of each tx. (What args are needed to rebuild the tx?)
-    // TODO When retrying, rebuild the tx, simulate, and sign again with a recent blockhash.
 }
 
 impl Hash for TransactionAttempt {
@@ -95,9 +93,7 @@ impl Executor {
             this.scheduler.clone().handle_confirmed_slot(slot)?;
             this.clone().process_actionable_queues(slot).await.ok();
 
-            // TODO Check on all the signatures in the last X slots
-            // TODO For txs that haven't been confirmed in X slots, consider them as "timed out" and retry with a linear backoff
-            // TODO Log metrics around tx pending/success/failed counts
+            // Lookup statuses of submitted txs, and retry txs that have timed out or failed
             let retry_attempts = DashSet::new();
             this.clone()
                 .process_tx_history(slot, retry_attempts.clone())

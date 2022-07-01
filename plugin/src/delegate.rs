@@ -126,7 +126,6 @@ impl Delegate {
         })
     }
 
-    // TODO: Maybe just build the tx in this fn and return to the executor for execution
     pub async fn build_rotation_tx(
         self: Arc<Self>,
         cronos_client: Arc<CronosClient>,
@@ -195,7 +194,7 @@ impl Delegate {
             .unwrap() as u64;
         let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
         let entry_pubkey =
-            cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0; // TODO Get correct entry
+            cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0;
         let ix = cronos_client::network::instruction::rotator_turn(
             entry_pubkey,
             cronos_client.payer_pubkey(),

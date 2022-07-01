@@ -1,10 +1,10 @@
-use solana_client::tpu_client::TpuSenderError;
-
 use {
     solana_client::{
         client_error,
         rpc_client::RpcClient,
-        tpu_client::{TpuClient as SolanaTpuClient, TpuClientConfig, DEFAULT_FANOUT_SLOTS},
+        tpu_client::{
+            TpuClient as SolanaTpuClient, TpuClientConfig, TpuSenderError, DEFAULT_FANOUT_SLOTS,
+        },
     },
     solana_sdk::{
         commitment_config::CommitmentConfig,

@@ -1,13 +1,10 @@
-use log::info;
-
-use crate::{executor::Executor, utils::read_or_new_keypair};
-use cronos_client::Client as CronosClient;
-
 use {
     crate::{
-        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, scheduler::Scheduler,
-        tpu_client::TpuClient,
+        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, executor::Executor,
+        scheduler::Scheduler, tpu_client::TpuClient, utils::read_or_new_keypair,
     },
+    cronos_client::Client as CronosClient,
+    log::info,
     solana_client::rpc_client::RpcClient,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
