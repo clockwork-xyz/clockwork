@@ -284,7 +284,9 @@ impl Executor {
         self.tpu_client
             .rpc_client()
             .simulate_transaction(tx)
-            .map_err(|_| GeyserPluginError::Custom("Tx failed simulation".into()))
+            .map_err(|err| {
+                GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
+            })
             .map(|response| {
                 if response.value.err.is_some() {
                     Err(GeyserPluginError::Custom("Tx failed simulation".into()))
