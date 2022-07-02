@@ -1,0 +1,25 @@
+[package]
+name = "cronos-http"
+version = "0.2.0"
+description = "Cronos http protocol"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://cronos.so"
+repository = "https://github.com/cronos-so/cronos"
+documentation = "https://docs.cronos.so"
+readme = "./README.md"
+keywords = ["solana"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cronos_http"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.24.2"
