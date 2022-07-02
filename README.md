@@ -47,12 +47,12 @@ rm cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
 
-Now, create a new keypair for signing Cronos delegate txs. The responsbilities of being a delegate currently include the processing of scheduled tasks and the rotating the delegate pool. Cronos delegates may be expected to perform other kinds of work in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). For many txs, you will be compensated for lamports spent by the programs they invoke. Automation fees (rewards) are implemented and will be enabled soon.
+Next, create a new keypair for signing Cronos delegate txs. The responsbilities of being a delegate currently include the processing of scheduled tasks and the rotating the delegate pool. Cronos delegates may be expected to perform other kinds of work in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). For many txs, you will be compensated for lamports spent by the programs they invoke. Automation fees (rewards) are implemented and will be enabled soon.
 ```sh
 solana-keygen new -o cronos-delegate-keypair.json
 ```
 
-Setup the plugin config in a folder where your startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
+Then, setup the plugin config file in a folder where your startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
 ```js
 {
   "libpath": "/home/sol/cronos-geyser-plugin-release/lib/libcronos_plugin.so",
@@ -63,7 +63,7 @@ Setup the plugin config in a folder where your startup script can reference it. 
 }
 ```
 
-Now, add an additional line to your startup script to run your validator with the Cronos plugin (often located at `/home/sol/bin/validator.sh`):
+Finally, add an additional line to your startup script to run your validator with the Cronos plugin (often located at `/home/sol/bin/validator.sh`):
 ```sh
 #!/bin/bash
 
