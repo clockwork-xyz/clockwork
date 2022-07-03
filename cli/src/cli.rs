@@ -1,4 +1,5 @@
 use clap::{Arg, ArgGroup, Command};
+use cronos_client::http::state::HttpMethod;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
@@ -16,6 +17,12 @@ pub enum CliCommand {
     // Task commands
     TaskGet {
         address: Pubkey,
+    },
+
+    // Http
+    HttpRequestNew {
+        method: HttpMethod,
+        url: String,
     },
 
     // Admin commands
@@ -125,6 +132,26 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(Command::new("health").about("Get the current system health"))
+        .subcommand(
+            Command::new("http")
+                .about("Trigger HTTP requests from Solana")
+                .arg(
+                    Arg::new("method")
+                        .long("method")
+                        .short('m')
+                        .takes_value(true)
+                        .required(true)
+                        .help("The method to invoke the HTTP request with (GET, POST, PATCH)"),
+                )
+                .arg(
+                    Arg::new("url")
+                        .long("url")
+                        .short('u')
+                        .takes_value(true)
+                        .required(true)
+                        .help("The url to send the HTTP request to"),
+                ),
+        )
         .subcommand(
             Command::new("initialize")
                 .about("Initialize the Cronos programs")

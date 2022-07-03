@@ -1,3 +1,5 @@
+use cronos_client::http::state::Request;
+
 use {
     bincode::deserialize,
     cached::proc_macro::cached,
@@ -14,6 +16,7 @@ use {
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
+    HttpRequest { request: Request },
     Pool { pool: Pool },
     Queue { queue: Queue },
     Rotator { rotator: Rotator },
@@ -76,6 +79,17 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                 snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
                         msg: "Failed to parse Cronos snapshot account".into(),
+                    }
+                })?,
+            });
+        }
+
+        // If the account is an http request, return in
+        if owner_pubkey.eq(&cronos_client::http::ID) && account_info.data.len() > 8 {
+            return Ok(AccountUpdateEvent::HttpRequest {
+                request: Request::try_from(account_info.data.to_vec()).map_err(|_| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parse Cronos http request".into(),
                     }
                 })?,
             });

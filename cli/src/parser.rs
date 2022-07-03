@@ -1,5 +1,6 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
+use cronos_client::http::state::HttpMethod;
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
@@ -17,6 +18,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => parse_config_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
+            Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("manager", matches)) => parse_manager_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
@@ -61,6 +63,13 @@ fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             matches.subcommand().unwrap().0.into(),
         )),
     }
+}
+
+fn parse_http_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::HttpRequestNew {
+        method: parse_http_method("method", matches)?,
+        url: parse_string("url", matches)?,
+    })
 }
 
 fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
@@ -135,6 +144,11 @@ fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> 
 
 fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
     Ok(read_keypair_file(parse_string(arg, matches)?)
+        .map_err(|_err| CliError::BadParameter(arg.into()))?)
+}
+
+fn parse_http_method(arg: &str, matches: &ArgMatches) -> Result<HttpMethod, CliError> {
+    Ok(HttpMethod::from_str(parse_string(arg, matches)?.as_str())
         .map_err(|_err| CliError::BadParameter(arg.into()))?)
 }
 

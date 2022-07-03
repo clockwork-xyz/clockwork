@@ -1,8 +1,12 @@
-use std::collections::HashMap;
-
 use {
+    crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
+    std::{
+        collections::HashMap,
+        convert::TryFrom,
+        fmt::{Display, Formatter},
+        str::FromStr,
+    },
 };
 
 pub const SEED_REQUEST: &[u8] = b"request";
@@ -18,6 +22,9 @@ pub struct Request {
     pub method: HttpMethod,
     pub owner: Pubkey,
     pub url: String,
+    // TODO Track when this request created (to be used for timeouts)
+    // TODO Hold onto lamport funds for the reward
+    // TODO Track who this reward can be released to
 }
 
 // TODO Seeds
@@ -73,4 +80,25 @@ impl RequestAccount for Account<'_, Request> {
 pub enum HttpMethod {
     Get,
     Post,
+}
+
+impl Display for HttpMethod {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match *self {
+            HttpMethod::Get => write!(f, "GET"),
+            HttpMethod::Post => write!(f, "POST"),
+        }
+    }
+}
+
+impl FromStr for HttpMethod {
+    type Err = Error;
+
+    fn from_str(input: &str) -> std::result::Result<HttpMethod, Self::Err> {
+        match input.to_uppercase().as_str() {
+            "GET" => Ok(HttpMethod::Get),
+            "POST" => Ok(HttpMethod::Post),
+            _ => Err(CronosError::InvalidHttpMethod.into()),
+        }
+    }
 }

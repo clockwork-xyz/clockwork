@@ -6,7 +6,7 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler<'info>(_ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
+pub fn handler<'info>(_ctx: Context<Initialize>) -> Result<()> {
     // TODO
     Ok(())
 }

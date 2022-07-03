@@ -3,10 +3,11 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 mod config;
 mod delegate;
 mod events;
-mod executor;
+mod http_executor;
 mod plugin;
 mod scheduler;
 mod tpu_client;
+mod tx_executor;
 mod utils;
 
 pub use plugin::CronosPlugin;

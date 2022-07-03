@@ -1,7 +1,8 @@
 use {
     crate::{
-        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, executor::Executor,
-        scheduler::Scheduler, tpu_client::TpuClient, utils::read_or_new_keypair,
+        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent,
+        http_executor::HttpExecutor, scheduler::Scheduler, tpu_client::TpuClient,
+        tx_executor::TxExecutor, utils::read_or_new_keypair,
     },
     cronos_client::Client as CronosClient,
     log::info,
@@ -23,8 +24,9 @@ pub struct CronosPlugin {
     // Plugin config values.
     pub config: PluginConfig,
     pub delegate: Arc<Delegate>,
-    pub executor: Option<Arc<Executor>>,
     pub scheduler: Arc<Scheduler>,
+    pub http_executor: Arc<HttpExecutor>,
+    pub tx_executor: Option<Arc<TxExecutor>>,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -61,6 +63,9 @@ impl GeyserPlugin for CronosPlugin {
                 AccountUpdateEvent::Clock { clock } => {
                     self.scheduler.clone().handle_updated_clock(clock)
                 }
+                AccountUpdateEvent::HttpRequest { request } => {
+                    self.http_executor.clone().handle_updated_request(request)
+                }
                 AccountUpdateEvent::Pool { pool } => {
                     self.delegate.clone().handle_updated_pool(pool, slot)
                 }
@@ -91,15 +96,15 @@ impl GeyserPlugin for CronosPlugin {
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
         // Re-check health and attempt to build the executor if we're still not caught up
-        if self.executor.is_none() {
+        if self.tx_executor.is_none() {
             self.try_build_executor()
         }
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
-            SlotStatus::Confirmed => match &self.executor {
-                Some(executor) => {
-                    executor.clone().handle_confirmed_slot(slot)?;
+            SlotStatus::Confirmed => match &self.tx_executor {
+                Some(tx_executor) => {
+                    tx_executor.clone().handle_confirmed_slot(slot)?;
                 }
                 None => (),
             },
@@ -136,6 +141,7 @@ impl CronosPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
         let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
+        let http_executor = Arc::new(HttpExecutor::new(config.clone(), runtime.clone()));
         let scheduler = Arc::new(Scheduler::new(
             delegate.pool_positions.clone(),
             runtime.clone(),
@@ -143,7 +149,8 @@ impl CronosPlugin {
         Self {
             config,
             delegate,
-            executor: None,
+            tx_executor: None,
+            http_executor,
             scheduler,
             runtime,
         }
@@ -176,7 +183,7 @@ impl CronosPlugin {
         );
 
         // Build executor
-        self.executor = Some(Arc::new(Executor::new(
+        self.tx_executor = Some(Arc::new(TxExecutor::new(
             self.config.clone(),
             cronos_client.clone(),
             self.delegate.clone(),

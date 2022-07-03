@@ -1,8 +1,12 @@
-use crate::state::{Request, RequestAccount, SEED_REQUEST};
+use crate::state::{HttpMethod, Request, RequestAccount, SEED_REQUEST};
 use anchor_lang::{prelude::*, solana_program::system_program};
 use std::{collections::HashMap, mem::size_of};
 
 #[derive(Accounts)]
+#[instruction(
+    method: HttpMethod, 
+    url: String
+)]
 pub struct RequestNew<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -20,7 +24,7 @@ pub struct RequestNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, RequestNew<'info>>) -> Result<()> {
+pub fn handler<'info>(ctx: Context<RequestNew>, method: HttpMethod, url: String) -> Result<()> {
     // Fetch accounts
     let payer = &mut ctx.accounts.payer;
     let request = &mut ctx.accounts.request;
@@ -29,9 +33,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, RequestNew<'info>>) -> Res
     let headers = HashMap::new();
     request.new(
         headers,
-        crate::state::HttpMethod::Get,
+        method,
         payer.key(),
-        "http://google.com".into(),
+        url,
     )?;
 
     Ok(())

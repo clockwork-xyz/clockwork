@@ -4,18 +4,21 @@ wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
 health = "6chEwh4WPk85uD9Z6SxfmBgjywwFhF6q3mP1Vp6s9bWE"
+http = "EfRV9Cb1FNaYizTr7ZryRiia9xzyFYxyTDbAvvESrgRU"
 network = "7dgApA7ixgamh8TRJDVqhsPVDxn4RVQgW93xgcSqpzWQ"
 pool = "6DAy7xoDMkoCsvXiVqHw7mXWL2a9Nv6TMykL5QkX7Jiu"
 scheduler = "7XgnJEERdx6SXiXbv1TqSe1XCYCa81BVC5UYRA1mnN1o"
 
 [programs.testnet]
 health = "6chEwh4WPk85uD9Z6SxfmBgjywwFhF6q3mP1Vp6s9bWE"
+http = "EfRV9Cb1FNaYizTr7ZryRiia9xzyFYxyTDbAvvESrgRU"
 network = "7dgApA7ixgamh8TRJDVqhsPVDxn4RVQgW93xgcSqpzWQ"
 pool = "6DAy7xoDMkoCsvXiVqHw7mXWL2a9Nv6TMykL5QkX7Jiu"
 scheduler = "7XgnJEERdx6SXiXbv1TqSe1XCYCa81BVC5UYRA1mnN1o"
 
 [programs.mainnet]
 health = "6chEwh4WPk85uD9Z6SxfmBgjywwFhF6q3mP1Vp6s9bWE"
+http = "EfRV9Cb1FNaYizTr7ZryRiia9xzyFYxyTDbAvvESrgRU"
 network = "7dgApA7ixgamh8TRJDVqhsPVDxn4RVQgW93xgcSqpzWQ"
 pool = "6DAy7xoDMkoCsvXiVqHw7mXWL2a9Nv6TMykL5QkX7Jiu"
 scheduler = "7XgnJEERdx6SXiXbv1TqSe1XCYCa81BVC5UYRA1mnN1o"
