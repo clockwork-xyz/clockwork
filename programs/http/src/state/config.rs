@@ -40,6 +40,7 @@ impl TryFrom<Vec<u8>> for Config {
 pub struct ConfigSettings {
     pub admin: Pubkey,
     pub request_fee: u64,
+    // TODO timeout_threshold (duration of time to wait before funds can be released to the worker pool)
 }
 
 /**

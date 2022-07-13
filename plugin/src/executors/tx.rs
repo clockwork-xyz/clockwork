@@ -1,7 +1,5 @@
 use {
-    crate::{
-        config::PluginConfig, delegate::Delegate, scheduler::Scheduler, tpu_client::TpuClient,
-    },
+    crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     cronos_client::Client as CronosClient,
     dashmap::{DashMap, DashSet},
     log::info,
@@ -30,9 +28,8 @@ static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot int
 pub struct TxExecutor {
     pub config: PluginConfig,
     pub cronos_client: Arc<CronosClient>, // TODO CronosClient and TPUClient can be unified into a single interface
-    pub delegate: Arc<Delegate>,
+    pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
-    pub scheduler: Arc<Scheduler>,
     pub tpu_client: Arc<TpuClient>,
     pub tx_dedupe: DashSet<TxType>,
     pub tx_history: DashMap<u64, DashSet<TxAttempt>>,
@@ -42,31 +39,27 @@ impl TxExecutor {
     pub fn new(
         config: PluginConfig,
         cronos_client: Arc<CronosClient>,
-        delegate: Arc<Delegate>,
+        observers: Arc<Observers>,
         runtime: Arc<Runtime>,
-        scheduler: Arc<Scheduler>,
         tpu_client: Arc<TpuClient>,
     ) -> Self {
         Self {
             config: config.clone(),
             cronos_client,
-            delegate,
+            observers,
             runtime,
-            scheduler,
             tpu_client,
             tx_dedupe: DashSet::new(),
             tx_history: DashMap::new(),
         }
     }
 
-    pub fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Rotate the pools
-            this.delegate.clone().handle_confirmed_slot(slot)?;
             this.clone().rotate_pools(None, slot).await.ok();
 
             // Proces actionable queues
-            this.scheduler.clone().handle_confirmed_slot(slot)?;
             this.clone().process_actionable_queues(slot).await.ok();
 
             // Lookup statuses of submitted txs, and retry txs that have timed out or failed
@@ -86,7 +79,8 @@ impl TxExecutor {
         prior_attempt: Option<TxAttempt>,
         slot: u64,
     ) -> PluginResult<()> {
-        self.delegate
+        self.observers
+            .pool
             .clone()
             .build_rotation_tx(self.cronos_client.clone(), slot)
             .await
@@ -96,7 +90,8 @@ impl TxExecutor {
     }
 
     async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.scheduler
+        self.observers
+            .queue
             .clone()
             .build_queue_txs(self.cronos_client.clone(), slot)
             .await
@@ -187,7 +182,7 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Get this node's current position in the scheduler pool
-            let r_pool_positions = this.delegate.pool_positions.read().await;
+            let r_pool_positions = this.observers.pool.pool_positions.read().await;
             let pool_position = r_pool_positions.scheduler_pool_position.clone();
             drop(r_pool_positions);
 
@@ -198,7 +193,8 @@ impl TxExecutor {
             {
                 match tx_attempt.tx_type {
                     TxType::Queue { queue_pubkey } => {
-                        this.scheduler
+                        this.observers
+                            .queue
                             .clone()
                             .build_queue_tx(
                                 this.cronos_client.clone(),
@@ -309,7 +305,7 @@ impl TxExecutor {
 
 impl Debug for TxExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Executor")
+        write!(f, "tx-executor")
     }
 }
 

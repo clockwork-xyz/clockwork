@@ -1,15 +1,23 @@
+use anchor_lang::solana_program::instruction;
+
 use {
     crate::state::{Request, SEED_REQUEST},
     anchor_lang::{prelude::*, solana_program::sysvar},
 };
 
 #[derive(Accounts)]
+#[instruction(
+    
+)]
 pub struct RequestAck<'info> {
     #[account(mut)]
     pub ack_authority: Signer<'info>,
 
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
+
+    #[account(mut)]
+    pub close_to: AccountInfo<'info>,
 
     #[account(
         mut,
@@ -19,7 +27,8 @@ pub struct RequestAck<'info> {
             request.id.to_be_bytes().as_ref()
         ],
         bump,
-        has_one = ack_authority
+        has_one = ack_authority,
+        close = close_to, 
     )]
     pub request: Account<'info, Request>,
 }

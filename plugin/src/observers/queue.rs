@@ -1,5 +1,5 @@
 use {
-    crate::delegate::{PoolPosition, PoolPositions},
+    super::pool::{PoolPosition, PoolPositions},
     cronos_client::{
         scheduler::state::{Queue, QueueStatus, Task},
         Client as CronosClient,
@@ -19,7 +19,7 @@ use {
     tokio::{runtime::Runtime, sync::RwLock},
 };
 
-pub struct Scheduler {
+pub struct QueueObserver {
     // The set of queue pubkeys that can be processed.
     pub actionable_queues: DashSet<Pubkey>,
 
@@ -36,7 +36,7 @@ pub struct Scheduler {
     pub unix_timestamps: DashMap<u64, i64>,
 }
 
-impl Scheduler {
+impl QueueObserver {
     pub fn new(pool_positions: Arc<RwLock<PoolPositions>>, runtime: Arc<Runtime>) -> Self {
         Self {
             actionable_queues: DashSet::new(),
@@ -255,8 +255,8 @@ impl Scheduler {
     }
 }
 
-impl Debug for Scheduler {
+impl Debug for QueueObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Scheduler")
+        write!(f, "queue-observer")
     }
 }

@@ -1,9 +1,8 @@
-use cronos_client::http::state::Request;
-
 use {
     bincode::deserialize,
     cached::proc_macro::cached,
     cronos_client::{
+        http::state::Request,
         network::state::{Rotator, Snapshot},
         pool::state::Pool,
         scheduler::state::Queue,
