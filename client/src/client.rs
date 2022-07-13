@@ -1,12 +1,5 @@
 use anchor_lang::{prelude::Clock, AccountDeserialize};
-use solana_client::rpc_config::RpcSendTransactionConfig;
-use std::{
-    fmt::Debug,
-    ops::{Deref, DerefMut},
-    str::FromStr,
-};
-
-use solana_client::{client_error, rpc_client::RpcClient};
+use solana_client::{client_error, rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     hash::Hash,
@@ -16,6 +9,11 @@ use solana_sdk::{
     signature::{Keypair, Signature, Signer},
     signers::Signers,
     transaction::Transaction,
+};
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+    str::FromStr,
 };
 use thiserror::Error;
 
