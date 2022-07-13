@@ -1,5 +1,3 @@
-use anchor_lang::solana_program::instruction;
-
 use {
     crate::state::{Request, SEED_REQUEST},
     anchor_lang::{prelude::*, solana_program::sysvar},
@@ -17,7 +15,7 @@ pub struct RequestAck<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(mut)]
-    pub close_to: AccountInfo<'info>,
+    pub close_to: SystemAccount<'info>,
 
     #[account(
         mut,
