@@ -24,33 +24,9 @@ static MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be 
 static TIMEOUT_PERIOD: u64 = 20; // If a signature does not have a status within this many slots, assume failure and retry
 static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
-#[derive(Clone, Copy)]
-pub struct TxAttempt {
-    pub attempt_count: u64,   // The number of times this tx has been attempted
-    pub signature: Signature, // The signature of the last attempt
-    pub tx_type: TxType,
-}
-
-impl Hash for TxAttempt {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.signature.hash(state);
-    }
-}
-
-impl PartialEq for TxAttempt {
-    fn eq(&self, other: &Self) -> bool {
-        self.signature == other.signature
-    }
-}
-
-impl Eq for TxAttempt {}
-
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
-pub enum TxType {
-    Queue { queue_pubkey: Pubkey },
-    Rotation { target_slot: u64 },
-}
-
+/**
+ * TxExecutor
+ */
 pub struct TxExecutor {
     pub config: PluginConfig,
     pub cronos_client: Arc<CronosClient>, // TODO CronosClient and TPUClient can be unified into a single interface
@@ -138,24 +114,6 @@ impl TxExecutor {
                     .ok();
             });
         Ok(())
-    }
-
-    fn execute_tx(
-        self: Arc<Self>,
-        prior_attempt: Option<TxAttempt>,
-        slot: u64,
-        tx: &Transaction,
-        tx_type: TxType,
-    ) -> PluginResult<()> {
-        // Check for dedupes
-        if self.tx_dedupe.contains(&tx_type) {
-            return Ok(());
-        }
-
-        self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
-            .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 
     async fn process_tx_history(
@@ -270,6 +228,24 @@ impl TxExecutor {
         })
     }
 
+    fn execute_tx(
+        self: Arc<Self>,
+        prior_attempt: Option<TxAttempt>,
+        slot: u64,
+        tx: &Transaction,
+        tx_type: TxType,
+    ) -> PluginResult<()> {
+        // Check for dedupes
+        if self.tx_dedupe.contains(&tx_type) {
+            return Ok(());
+        }
+
+        self.clone()
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
+            .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
+    }
+
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         self.tpu_client
             .rpc_client()
@@ -335,4 +311,39 @@ impl Debug for TxExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Executor")
     }
+}
+
+/**
+ * TxAttempt
+ */
+
+#[derive(Clone, Copy)]
+pub struct TxAttempt {
+    pub attempt_count: u64,   // The number of times this tx has been attempted
+    pub signature: Signature, // The signature of the last attempt
+    pub tx_type: TxType,
+}
+
+impl Hash for TxAttempt {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.signature.hash(state);
+    }
+}
+
+impl PartialEq for TxAttempt {
+    fn eq(&self, other: &Self) -> bool {
+        self.signature == other.signature
+    }
+}
+
+impl Eq for TxAttempt {}
+
+/**
+ * TxType
+ */
+
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+pub enum TxType {
+    Queue { queue_pubkey: Pubkey },
+    Rotation { target_slot: u64 },
 }
