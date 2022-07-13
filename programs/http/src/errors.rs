@@ -2,6 +2,9 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum CronosError {
-    #[msg("This http method is unrecognized")]
+    #[msg("This instruction requires admin authority")]
+    AdminAuthorityInvalid,
+
+    #[msg("Http method is not recognized")]
     InvalidHttpMethod,
 }

@@ -1,4 +1,5 @@
 use {
+    super::Manager,
     crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
@@ -18,20 +19,29 @@ pub const SEED_REQUEST: &[u8] = b"request";
 #[account]
 #[derive(Debug)]
 pub struct Request {
+    pub ack_authority: Pubkey,
+    pub created_at: u64,
+    pub fee_amount: u64,
     pub headers: HashMap<String, String>,
+    pub id: u128,
+    pub manager: Pubkey,
     pub method: HttpMethod,
-    pub owner: Pubkey,
     pub url: String,
-    // TODO Track when this request created (to be used for timeouts)
     // TODO Hold onto lamport funds for the reward
     // TODO Track who this reward can be released to
 }
 
-// TODO Seeds
-
 impl Request {
-    pub fn pubkey() -> Pubkey {
-        Pubkey::find_program_address(&[SEED_REQUEST], &crate::ID).0
+    pub fn pubkey(manager: Pubkey, id: u128) -> Pubkey {
+        Pubkey::find_program_address(
+            &[
+                SEED_REQUEST,
+                manager.key().as_ref(),
+                id.to_be_bytes().as_ref(),
+            ],
+            &crate::ID,
+        )
+        .0
     }
 }
 
@@ -49,9 +59,12 @@ impl TryFrom<Vec<u8>> for Request {
 pub trait RequestAccount {
     fn new(
         &mut self,
+        ack_authority: Pubkey,
+        created_at: u64,
+        fee_amount: u64,
         headers: HashMap<String, String>,
+        manager: &mut Account<Manager>,
         method: HttpMethod,
-        owner: Pubkey,
         url: String,
     ) -> Result<()>;
 }
@@ -59,15 +72,32 @@ pub trait RequestAccount {
 impl RequestAccount for Account<'_, Request> {
     fn new(
         &mut self,
+        ack_authority: Pubkey,
+        created_at: u64,
+        fee_amount: u64,
         headers: HashMap<String, String>,
+        manager: &mut Account<Manager>,
         method: HttpMethod,
-        owner: Pubkey,
         url: String,
     ) -> Result<()> {
+        // Initialize the request data
+        self.ack_authority = ack_authority;
+        self.created_at = created_at;
+        self.fee_amount = fee_amount;
         self.headers = headers;
+        self.id = manager.clone().into_inner().request_count;
+        self.manager = manager.key();
         self.method = method;
-        self.owner = owner;
         self.url = url;
+
+        // Increment the manager's request count
+        manager.request_count = manager
+            .clone()
+            .into_inner()
+            .request_count
+            .checked_add(1)
+            .unwrap();
+
         Ok(())
     }
 }

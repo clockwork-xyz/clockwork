@@ -19,11 +19,16 @@ pub mod cronos_network {
         initialize::handler(ctx)
     }
 
+    pub fn request_ack<'info>(ctx: Context<RequestAck>) -> Result<()> {
+        request_ack::handler(ctx)
+    }
+
     pub fn request_new<'info>(
         ctx: Context<RequestNew>,
+        ack_authority: Pubkey,
         method: HttpMethod,
         url: String,
     ) -> Result<()> {
-        request_new::handler(ctx, method, url)
+        request_new::handler(ctx, ack_authority, method, url)
     }
 }

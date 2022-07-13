@@ -21,6 +21,7 @@ pub enum CliCommand {
 
     // Http
     HttpRequestNew {
+        ack_authority: Pubkey,
         method: HttpMethod,
         url: String,
     },
@@ -135,6 +136,14 @@ pub fn app() -> Command<'static> {
         .subcommand(
             Command::new("http")
                 .about("Trigger HTTP requests from Solana")
+                .arg(
+                    Arg::new("ack_authority")
+                        .long("ack_authority")
+                        .short('a')
+                        .takes_value(true)
+                        .required(true)
+                        .help("The authority which is expected to acknowledge this request"),
+                )
                 .arg(
                     Arg::new("method")
                         .long("method")

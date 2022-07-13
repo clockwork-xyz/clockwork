@@ -67,6 +67,7 @@ fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_http_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     Ok(CliCommand::HttpRequestNew {
+        ack_authority: parse_pubkey("ack_authority", matches)?,
         method: parse_http_method("method", matches)?,
         url: parse_string("url", matches)?,
     })

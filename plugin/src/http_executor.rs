@@ -1,3 +1,5 @@
+use log::info;
+
 use {
     crate::config::PluginConfig,
     cronos_client::http::state::{HttpMethod, Request},
@@ -24,13 +26,14 @@ impl HttpExecutor {
     pub fn handle_updated_request(self: Arc<Self>, request: Request) -> PluginResult<()> {
         self.spawn(|_this| async move {
             let client = reqwest::Client::new();
-            let _ = match request.method {
+            let response = match request.method {
                 HttpMethod::Get => client.get(request.clone().url),
                 HttpMethod::Post => client.post(request.clone().url),
             }
             .send()
             .await
             .map_err(|err| GeyserPluginError::Custom(err.into()))?;
+            info!("Http response: {:#?}", response);
             Ok(())
         })
     }

@@ -32,9 +32,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             program_fee,
         ),
         CliCommand::Health => super::health::get(&client),
-        CliCommand::HttpRequestNew { method, url } => {
-            super::http::request_new(&client, method, url)
-        }
+        CliCommand::HttpRequestNew {
+            ack_authority,
+            method,
+            url,
+        } => super::http::request_new(&client, ack_authority, method, url),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::NodeGet { delegate } => super::node::get_by_delegate(&client, delegate),
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
