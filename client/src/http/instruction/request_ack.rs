@@ -9,8 +9,8 @@ use anchor_lang::{
 
 pub fn request_ack(
     ack_authority: Pubkey,
+    caller: Pubkey,
     request: Pubkey,
-    owner: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
     let config_pubkey = cronos_http::state::Config::pubkey();
@@ -19,10 +19,10 @@ pub fn request_ack(
         program_id: cronos_http::ID,
         accounts: vec![
             AccountMeta::new(ack_authority, true),
+            AccountMeta::new(caller, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config_pubkey, false),
             AccountMeta::new(fee_pubkey, false),
-            AccountMeta::new(owner, false),
             AccountMeta::new(request, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(worker, false),
