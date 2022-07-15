@@ -12,6 +12,7 @@ pub fn request_new(
 ) -> Result<(), CliError> {
     let ix = cronos_client::http::instruction::request_new(
         api,
+        client.payer_pubkey(),
         id,
         method,
         client.payer_pubkey(),

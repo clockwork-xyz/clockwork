@@ -39,7 +39,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
 fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("api", matches)) => Ok(CliCommand::ApiNew {
+        Some(("new", matches)) => Ok(CliCommand::ApiNew {
             ack_authority: parse_pubkey("ack_authority", matches)?,
             base_url: parse_string("base_url", matches)?,
         }),

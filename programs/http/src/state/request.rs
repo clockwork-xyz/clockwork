@@ -21,12 +21,12 @@ pub const SEED_REQUEST: &[u8] = b"request";
 #[derive(Debug)]
 pub struct Request {
     pub api: Pubkey,
+    pub caller: Pubkey,
     pub created_at: u64,
     pub fee_amount: u64,
     pub headers: HashMap<String, String>,
     pub id: String,
     pub method: HttpMethod,
-    pub owner: Pubkey,
     pub route: String,
     pub timeout_fee_amount: u64,
     pub url: String,
@@ -34,13 +34,13 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn pubkey(api: Pubkey, id: String, owner: Pubkey) -> Pubkey {
+    pub fn pubkey(api: Pubkey, caller: Pubkey, id: String) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_REQUEST,
                 api.as_ref(),
+                caller.as_ref(),
                 id.as_bytes().as_ref(),
-                owner.as_ref(),
             ],
             &crate::ID,
         )
@@ -63,12 +63,12 @@ pub trait RequestAccount {
     fn new(
         &mut self,
         api: &Account<Api>,
+        caller: Pubkey,
         created_at: u64,
         fee_amount: u64,
         headers: HashMap<String, String>,
         id: String,
         method: HttpMethod,
-        owner: Pubkey,
         route: String,
         timeout_fee_amount: u64,
         workers: Vec<Pubkey>,
@@ -79,23 +79,23 @@ impl RequestAccount for Account<'_, Request> {
     fn new(
         &mut self,
         api: &Account<Api>,
+        caller: Pubkey,
         created_at: u64,
         fee_amount: u64,
         headers: HashMap<String, String>,
         id: String,
         method: HttpMethod,
-        owner: Pubkey,
         route: String,
         timeout_fee_amount: u64,
         workers: Vec<Pubkey>,
     ) -> Result<()> {
         self.api = api.key();
+        self.caller = caller;
         self.created_at = created_at;
         self.fee_amount = fee_amount;
         self.headers = headers;
         self.id = id;
         self.method = method;
-        self.owner = owner;
         self.route = route.clone();
         self.timeout_fee_amount = timeout_fee_amount;
         self.url = api.clone().base_url.to_owned() + route.as_str();

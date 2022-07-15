@@ -49,6 +49,7 @@ impl HttpExecutor {
                 HttpMethod::Get => this.client.get(url),
                 HttpMethod::Post => this.client.post(url),
             }
+            .header("x-caller-id", http_request.request.caller.to_string())
             .header("x-request-id", http_request.pubkey.to_string())
             .header("x-worker-id", this.worker_id.to_string())
             .send()

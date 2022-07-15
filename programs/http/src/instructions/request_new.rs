@@ -28,6 +28,9 @@ pub struct RequestNew<'info> {
     )]
     pub api: Account<'info, Api>,
 
+    #[account()]
+    pub caller: Signer<'info>,
+
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -45,8 +48,8 @@ pub struct RequestNew<'info> {
         seeds = [
             SEED_REQUEST,
             api.key().as_ref(),
+            caller.key().as_ref(),
             id.as_bytes().as_ref(),
-            payer.key().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Request>(),
@@ -66,6 +69,7 @@ pub fn handler<'info>(
 ) -> Result<()> {
     // Fetch accounts
     let api = &ctx.accounts.api;
+    let caller = &ctx.accounts.caller;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let payer = &mut ctx.accounts.payer;
@@ -89,12 +93,12 @@ pub fn handler<'info>(
         .collect::<Vec<Pubkey>>();
     request.new(
         api,
+        caller.key(),
         created_at,
         fee_amount,
         headers,
         id,
         method,
-        payer.key(),
         route,
         timeout_fee_amount,
         workers,

@@ -10,11 +10,11 @@ pub struct RequestAck<'info> {
     #[account(mut)]
     pub ack_authority: Signer<'info>,
 
+    #[account(mut)]
+    pub caller: SystemAccount<'info>,
+
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
-
-    #[account(mut)]
-    pub close_to: SystemAccount<'info>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
@@ -36,11 +36,12 @@ pub struct RequestAck<'info> {
         seeds = [
             SEED_REQUEST,
             request.api.as_ref(),
-            request.owner.as_ref(),
-            request.route.as_bytes().as_ref()
+            request.caller.as_ref(),
+            request.id.as_bytes().as_ref()
         ],
         bump,
-        close = close_to,
+        close = caller,
+        has_one = caller
     )]
     pub request: Account<'info, Request>,
 

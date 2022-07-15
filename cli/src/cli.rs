@@ -87,6 +87,30 @@ pub fn app() -> Command<'static> {
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
+        .subcommand(
+            Command::new("api")
+                .about("Manage APIs registered with the HTTP program")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("new")
+                    .about("Register a new api")
+                    .arg(
+                        Arg::new("ack_authority")
+                            .long("ack_authority")
+                            .short('a')
+                            .takes_value(true)
+                            .required(true)
+                            .help("The authority which will acknowledge requests sent to this API"),
+                    )
+                    .arg(
+                        Arg::new("base_url")
+                            .long("base_url")
+                            .short('b')
+                            .takes_value(true)
+                            .required(true)
+                            .help("The base url of the API"),
+                    )
+                )
+        )
         .subcommand(Command::new("clock").about("Display the current Solana clock time"))
         .subcommand(
             Command::new("config")

@@ -10,6 +10,7 @@ use cronos_http::state::HttpMethod;
 
 pub fn request_new(
     api: Pubkey,
+    caller: Pubkey,
     id: String,
     method: HttpMethod,
     payer: Pubkey,
@@ -17,11 +18,12 @@ pub fn request_new(
 ) -> Instruction {
     let config_pubkey = cronos_http::state::Config::pubkey();
     let pool_pubkey = cronos_pool::state::Pool::pda().0;
-    let request_pubkey = cronos_http::state::Request::pubkey(api, id.clone(), payer);
+    let request_pubkey = cronos_http::state::Request::pubkey(api, caller, id.clone());
     Instruction {
         program_id: cronos_http::ID,
         accounts: vec![
             AccountMeta::new_readonly(api, false),
+            AccountMeta::new_readonly(caller, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config_pubkey, false),
             AccountMeta::new(payer, true),
