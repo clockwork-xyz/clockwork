@@ -1,5 +1,6 @@
+use super::Api;
+
 use {
-    super::Manager,
     crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
@@ -19,25 +20,27 @@ pub const SEED_REQUEST: &[u8] = b"request";
 #[account]
 #[derive(Debug)]
 pub struct Request {
-    pub ack_authority: Pubkey,
+    pub api: Pubkey,
     pub created_at: u64,
     pub fee_amount: u64,
     pub headers: HashMap<String, String>,
-    pub id: u128,
-    pub manager: Pubkey,
+    pub id: String,
     pub method: HttpMethod,
+    pub owner: Pubkey,
+    pub route: String,
+    pub timeout_fee_amount: u64,
     pub url: String,
-    // TODO Hold onto lamport funds for the reward
-    // TODO Track who this reward can be released to
+    pub workers: Vec<Pubkey>,
 }
 
 impl Request {
-    pub fn pubkey(manager: Pubkey, id: u128) -> Pubkey {
+    pub fn pubkey(api: Pubkey, id: String, owner: Pubkey) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_REQUEST,
-                manager.key().as_ref(),
-                id.to_be_bytes().as_ref(),
+                api.as_ref(),
+                id.as_bytes().as_ref(),
+                owner.as_ref(),
             ],
             &crate::ID,
         )
@@ -59,45 +62,44 @@ impl TryFrom<Vec<u8>> for Request {
 pub trait RequestAccount {
     fn new(
         &mut self,
-        ack_authority: Pubkey,
+        api: &Account<Api>,
         created_at: u64,
         fee_amount: u64,
         headers: HashMap<String, String>,
-        manager: &mut Account<Manager>,
+        id: String,
         method: HttpMethod,
-        url: String,
+        owner: Pubkey,
+        route: String,
+        timeout_fee_amount: u64,
+        workers: Vec<Pubkey>,
     ) -> Result<()>;
 }
 
 impl RequestAccount for Account<'_, Request> {
     fn new(
         &mut self,
-        ack_authority: Pubkey,
+        api: &Account<Api>,
         created_at: u64,
         fee_amount: u64,
         headers: HashMap<String, String>,
-        manager: &mut Account<Manager>,
+        id: String,
         method: HttpMethod,
-        url: String,
+        owner: Pubkey,
+        route: String,
+        timeout_fee_amount: u64,
+        workers: Vec<Pubkey>,
     ) -> Result<()> {
-        // Initialize the request data
-        self.ack_authority = ack_authority;
+        self.api = api.key();
         self.created_at = created_at;
         self.fee_amount = fee_amount;
         self.headers = headers;
-        self.id = manager.clone().into_inner().request_count;
-        self.manager = manager.key();
+        self.id = id;
         self.method = method;
-        self.url = url;
-
-        // Increment the manager's request count
-        manager.request_count = manager
-            .clone()
-            .into_inner()
-            .request_count
-            .checked_add(1)
-            .unwrap();
-
+        self.owner = owner;
+        self.route = route.clone();
+        self.timeout_fee_amount = timeout_fee_amount;
+        self.url = api.clone().base_url.to_owned() + route.as_str();
+        self.workers = workers;
         Ok(())
     }
 }

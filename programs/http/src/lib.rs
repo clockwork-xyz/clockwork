@@ -11,9 +11,20 @@ use instructions::*;
 use state::HttpMethod;
 
 #[program]
-pub mod cronos_network {
-
+pub mod cronos_http {
     use super::*;
+
+    pub fn admin_fee_claim<'info>(ctx: Context<AdminFeeClaim>, amount: u64) -> Result<()> {
+        admin_fee_claim::handler(ctx, amount)
+    }
+
+    pub fn api_new<'info>(ctx: Context<ApiNew>, base_url: String) -> Result<()> {
+        api_new::handler(ctx, base_url)
+    }
+
+    pub fn fee_claim<'info>(ctx: Context<FeeClaim>, amount: u64) -> Result<()> {
+        fee_claim::handler(ctx, amount)
+    }
 
     pub fn initialize<'info>(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
@@ -25,10 +36,10 @@ pub mod cronos_network {
 
     pub fn request_new<'info>(
         ctx: Context<RequestNew>,
-        ack_authority: Pubkey,
+        id: String,
         method: HttpMethod,
-        url: String,
+        route: String,
     ) -> Result<()> {
-        request_new::handler(ctx, ack_authority, method, url)
+        request_new::handler(ctx, id, method, route)
     }
 }

@@ -1,7 +1,9 @@
+mod api;
 mod config;
-mod manager;
+mod fee;
 mod request;
 
+pub use api::*;
 pub use config::*;
-pub use manager::*;
+pub use fee::*;
 pub use request::*;

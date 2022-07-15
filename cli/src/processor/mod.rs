@@ -1,3 +1,4 @@
+mod api;
 mod clock;
 mod config;
 mod health;

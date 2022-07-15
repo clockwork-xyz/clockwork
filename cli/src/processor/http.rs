@@ -5,19 +5,18 @@ use crate::errors::CliError;
 
 pub fn request_new(
     client: &Client,
-    ack_authority: Pubkey,
+    api: Pubkey,
+    id: String,
     method: HttpMethod,
-    url: String,
+    route: String,
 ) -> Result<(), CliError> {
-    // Get the request id
-    let payer = client.payer_pubkey();
-    let manager_pubkey = cronos_client::http::state::Manager::pubkey(payer);
-    let id = client
-        .get::<cronos_client::http::state::Manager>(&manager_pubkey)
-        .map_or(0, |manager| manager.request_count);
-
-    // Build the instruction
-    let ix = cronos_client::http::instruction::request_new(ack_authority, id, method, payer, url);
+    let ix = cronos_client::http::instruction::request_new(
+        api,
+        id,
+        method,
+        client.payer_pubkey(),
+        route,
+    );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     Ok(())
 }

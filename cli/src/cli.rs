@@ -4,6 +4,12 @@ use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
+    // API commands
+    ApiNew {
+        ack_authority: Pubkey,
+        base_url: String,
+    },
+
     // Config commands
     ConfigGet,
     ConfigSet {
@@ -21,9 +27,10 @@ pub enum CliCommand {
 
     // Http
     HttpRequestNew {
-        ack_authority: Pubkey,
+        api: Pubkey,
+        id: String,
         method: HttpMethod,
-        url: String,
+        route: String,
     },
 
     // Admin commands
@@ -137,12 +144,20 @@ pub fn app() -> Command<'static> {
             Command::new("http")
                 .about("Trigger HTTP requests from Solana")
                 .arg(
-                    Arg::new("ack_authority")
-                        .long("ack_authority")
+                    Arg::new("api")
+                        .long("api")
                         .short('a')
                         .takes_value(true)
                         .required(true)
-                        .help("The authority which is expected to acknowledge this request"),
+                        .help("The address of the API to send this request to"),
+                )
+                .arg(
+                    Arg::new("id")
+                        .long("id")
+                        .short('i')
+                        .takes_value(true)
+                        .required(true)
+                        .help("A deduplication id for the request"),
                 )
                 .arg(
                     Arg::new("method")
@@ -153,12 +168,12 @@ pub fn app() -> Command<'static> {
                         .help("The method to invoke the HTTP request with (GET, POST, PATCH)"),
                 )
                 .arg(
-                    Arg::new("url")
-                        .long("url")
-                        .short('u')
+                    Arg::new("route")
+                        .long("route")
+                        .short('r')
                         .takes_value(true)
                         .required(true)
-                        .help("The url to send the HTTP request to"),
+                        .help("The relative route to send the HTTP request to"),
                 ),
         )
         .subcommand(

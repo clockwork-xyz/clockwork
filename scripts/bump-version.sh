@@ -15,6 +15,7 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 
 # Bump programs
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/health/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/http/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/pool/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
@@ -25,9 +26,9 @@ sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/scheduler
 sed -i '' -e 's/^cronos-cron =.*/cronos-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
 sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
 
-
 # Bump cronos-client
 sed -i '' -e 's/^cronos-health =.*/cronos-health = { path = "..\/programs\/health", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^cronos-http =.*/cronos-http = { path = "..\/programs\/http", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^cronos-network =.*/cronos-network = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^cronos-pool =.*/cronos-pool = { path = "..\/programs\/pool", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^cronos-scheduler =.*/cronos-scheduler = { path = "..\/programs\/scheduler", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
