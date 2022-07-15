@@ -15,16 +15,16 @@ pub struct ApiNew<'info> {
         seeds = [
             SEED_API,
             base_url.as_bytes().as_ref(),
-            payer.key().as_ref(),
+            owner.key().as_ref(),
         ],
         bump,
-        payer = payer,
-        space = 8 + size_of::<Api>(),
+        payer = owner,
+        space = 8 + size_of::<Api>() + base_url.len(),
     )]
     pub api: Account<'info, Api>,
 
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub owner: Signer<'info>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -34,12 +34,12 @@ pub fn handler<'info>(ctx: Context<ApiNew>, base_url: String) -> Result<()> {
     // Get accounts
     let ack_authority = &ctx.accounts.ack_authority;
     let api = &mut ctx.accounts.api;
-    let payer = &mut ctx.accounts.payer;
+    let owner = &mut ctx.accounts.owner;
 
     // TODO Validate base_url
 
     // Initialize the api account
-    api.new(ack_authority.key(), base_url, payer.key())?;
+    api.new(ack_authority.key(), base_url, owner.key())?;
 
     Ok(())
 }
