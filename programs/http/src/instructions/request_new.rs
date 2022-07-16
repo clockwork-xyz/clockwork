@@ -21,8 +21,8 @@ pub struct RequestNew<'info> {
     #[account(
         seeds = [
             SEED_API,
+            api.authority.as_ref(),
             api.base_url.as_bytes().as_ref(),
-            api.owner.as_ref()
         ],
         bump,
     )]

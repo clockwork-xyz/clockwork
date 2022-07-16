@@ -13,15 +13,15 @@ pub const SEED_API: &[u8] = b"api";
 #[derive(Debug)]
 pub struct Api {
     pub ack_authority: Pubkey,
+    pub authority: Pubkey,
     pub base_url: String,
-    pub owner: Pubkey,
     pub request_count: u128,
 }
 
 impl Api {
-    pub fn pubkey(base_url: String, owner: Pubkey) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, base_url: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_API, base_url.as_bytes().as_ref(), owner.as_ref()],
+            &[SEED_API, authority.as_ref(), base_url.as_bytes().as_ref()],
             &crate::ID,
         )
         .0
@@ -40,14 +40,14 @@ impl TryFrom<Vec<u8>> for Api {
  */
 
 pub trait ApiAccount {
-    fn new(&mut self, ack_authority: Pubkey, base_url: String, owner: Pubkey) -> Result<()>;
+    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
 }
 
 impl ApiAccount for Account<'_, Api> {
-    fn new(&mut self, ack_authority: Pubkey, base_url: String, owner: Pubkey) -> Result<()> {
+    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
         self.ack_authority = ack_authority;
+        self.authority = authority;
         self.base_url = base_url;
-        self.owner = owner;
         self.request_count = 0;
         Ok(())
     }
