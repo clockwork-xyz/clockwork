@@ -10,22 +10,22 @@ pub struct QueueStart<'info> {
 
     #[account(
         seeds = [
-            SEED_MANAGER,
-            manager.authority.as_ref()
+            SEED_DELEGATE,
+            delegate.authority.as_ref()
         ],
         bump,
     )]
-    pub manager: Account<'info, Manager>,
+    pub delegate: Account<'info, Delegate>,
 
     #[account(
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.manager.as_ref(),
+            queue.delegate.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = manager,
+        has_one = delegate,
         constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
     )]

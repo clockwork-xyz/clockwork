@@ -12,37 +12,37 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_MANAGER: &[u8] = b"manager";
+pub const SEED_DELEGATE: &[u8] = b"delegate";
 
 /**
- * Manager
+ * Delegate
  */
 
 #[account]
 #[derive(Debug)]
-pub struct Manager {
+pub struct Delegate {
     pub authority: Pubkey,
     pub queue_count: u128,
 }
 
-impl Manager {
+impl Delegate {
     pub fn pubkey(authority: Pubkey) -> Pubkey {
-        Pubkey::find_program_address(&[SEED_MANAGER, authority.as_ref()], &crate::ID).0
+        Pubkey::find_program_address(&[SEED_DELEGATE, authority.as_ref()], &crate::ID).0
     }
 }
 
-impl TryFrom<Vec<u8>> for Manager {
+impl TryFrom<Vec<u8>> for Delegate {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Manager::try_deserialize(&mut data.as_slice())
+        Delegate::try_deserialize(&mut data.as_slice())
     }
 }
 
 /**
- * ManagerAccount
+ * DelegateAccount
  */
 
-pub trait ManagerAccount {
+pub trait DelegateAccount {
     fn new(&mut self, authority: Pubkey) -> Result<()>;
 
     fn sign(
@@ -53,7 +53,7 @@ pub trait ManagerAccount {
     ) -> Result<Option<ExecResponse>>;
 }
 
-impl ManagerAccount for Account<'_, Manager> {
+impl DelegateAccount for Account<'_, Delegate> {
     fn new(&mut self, authority: Pubkey) -> Result<()> {
         self.authority = authority;
         self.queue_count = 0;
@@ -69,7 +69,7 @@ impl ManagerAccount for Account<'_, Manager> {
         invoke_signed(
             &Instruction::from(ix),
             account_infos,
-            &[&[SEED_MANAGER, self.authority.as_ref(), &[bump]]],
+            &[&[SEED_DELEGATE, self.authority.as_ref(), &[bump]]],
         )
         .map_err(|_err| CronosError::InnerIxFailed)?;
 

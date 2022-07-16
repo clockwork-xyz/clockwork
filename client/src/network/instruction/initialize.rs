@@ -14,8 +14,8 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let registry_pubkey = cronos_network::state::Registry::pubkey();
     let snapshot_pubkey = cronos_network::state::Snapshot::pubkey(0);
 
-    let manager_pubkey = cronos_scheduler::state::Manager::pubkey(authority_pubkey);
-    let snapshot_queue = cronos_scheduler::state::Queue::pubkey(manager_pubkey, 0);
+    let delegate_pubkey = cronos_scheduler::state::Delegate::pubkey(authority_pubkey);
+    let snapshot_queue = cronos_scheduler::state::Queue::pubkey(delegate_pubkey, 0);
     let snapshot_fee = cronos_scheduler::state::Fee::pubkey(snapshot_queue);
     let snapshot_task = cronos_scheduler::state::Task::pubkey(snapshot_queue, 0);
 
@@ -33,7 +33,7 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
-            AccountMeta::new(manager_pubkey, false),
+            AccountMeta::new(delegate_pubkey, false),
             AccountMeta::new(snapshot_fee, false),
             AccountMeta::new(snapshot_queue, false),
             AccountMeta::new(snapshot_task, false),

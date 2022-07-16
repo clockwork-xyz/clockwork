@@ -1,6 +1,6 @@
-use crate::state::{ManagerAccount, QueueAccount, QueueStatus};
+use crate::state::{DelegateAccount, QueueAccount, QueueStatus};
 
-use super::{Config, Fee, Manager};
+use super::{Config, Delegate, Fee};
 
 use {
     super::Queue,
@@ -55,8 +55,8 @@ pub trait TaskAccount {
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        manager: &Account<Manager>,
-        manager_bump: u8,
+        delegate: &Account<Delegate>,
+        delegate_bump: u8,
         queue: &mut Account<Queue>,
         worker: &mut Signer,
     ) -> Result<()>;
@@ -64,12 +64,12 @@ pub trait TaskAccount {
 
 impl TaskAccount for Account<'_, Task> {
     fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()> {
-        // Reject inner instructions if they have a signer other than the manager or worker
+        // Reject inner instructions if they have a signer other than the delegate or worker
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 if acc.is_signer {
                     require!(
-                        acc.pubkey == queue.manager || acc.pubkey == crate::payer::ID,
+                        acc.pubkey == queue.delegate || acc.pubkey == crate::payer::ID,
                         CronosError::InvalidSignatory
                     );
                 }
@@ -92,8 +92,8 @@ impl TaskAccount for Account<'_, Task> {
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        manager: &Account<Manager>,
-        manager_bump: u8,
+        delegate: &Account<Delegate>,
+        delegate_bump: u8,
         queue: &mut Account<Queue>,
         worker: &mut Signer,
     ) -> Result<()> {
@@ -141,14 +141,14 @@ impl TaskAccount for Account<'_, Task> {
                 }
             });
 
-            // Execute the inner ix and process the response. Note that even though the manager PDA is a signer
+            // Execute the inner ix and process the response. Note that even though the delegate PDA is a signer
             //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
             //  and explicitly forbids CPI reentrancy.
             //
-            // TODO Can downstream programs mutate the manager account data?
-            let exec_response = manager.sign(
+            // TODO Can downstream programs mutate the delegate account data?
+            let exec_response = delegate.sign(
                 &account_infos,
-                manager_bump,
+                delegate_bump,
                 &InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
@@ -206,7 +206,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Pay worker fees
         let total_worker_fee = config.worker_fee.checked_add(worker_reimbursement).unwrap();
-        **manager.to_account_info().try_borrow_mut_lamports()? = manager
+        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
             .to_account_info()
             .lamports()
             .checked_sub(total_worker_fee)
@@ -218,7 +218,7 @@ impl TaskAccount for Account<'_, Task> {
             .unwrap();
 
         // Pay program fees
-        **manager.to_account_info().try_borrow_mut_lamports()? = manager
+        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
             .to_account_info()
             .lamports()
             .checked_sub(config.program_fee)

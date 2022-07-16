@@ -18,10 +18,10 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => parse_config_command(matches),
+            Some(("delegate", matches)) => parse_delegate_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
-            Some(("manager", matches)) => parse_manager_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
@@ -67,6 +67,18 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
+fn parse_delegate_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("create", _)) => Ok(CliCommand::DelegateCreate {}),
+        Some(("get", matches)) => Ok(CliCommand::DelegateGet {
+            address: parse_pubkey("address", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
 fn parse_task_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", matches)) => Ok(CliCommand::TaskGet {
@@ -104,18 +116,6 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
             worker: parse_pubkey("worker", matches)?,
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
-}
-
-fn parse_manager_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("create", _)) => Ok(CliCommand::ManagerCreate {}),
-        Some(("get", matches)) => Ok(CliCommand::ManagerGet {
-            address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

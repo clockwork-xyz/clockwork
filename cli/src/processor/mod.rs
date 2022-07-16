@@ -1,10 +1,10 @@
 mod api;
 mod clock;
 mod config;
+mod delegate;
 mod health;
 mod http;
 mod initialize;
-mod manager;
 mod node;
 mod pool;
 mod process;

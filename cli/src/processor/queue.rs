@@ -1,27 +1,26 @@
 use {
     crate::errors::CliError,
     cronos_client::{
-        scheduler::state::{Manager, Queue},
+        scheduler::state::{Delegate, Queue},
         Client,
     },
     solana_sdk::pubkey::Pubkey,
 };
 
 pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
-    // Fetch manager data.
+    // Fetch delegate data.
     let authority_pubkey = client.payer_pubkey();
-    let manager_pubkey = Manager::pubkey(authority_pubkey);
+    let delegate_pubkey = Delegate::pubkey(authority_pubkey);
     let data = client
-        .get_account_data(&manager_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(manager_pubkey.to_string()))?;
-    let manager_data = Manager::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(manager_pubkey.to_string()))?;
+        .get_account_data(&delegate_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(delegate_pubkey.to_string()))?;
+    let delegate_data = Delegate::try_from(data)
+        .map_err(|_err| CliError::AccountDataNotParsable(delegate_pubkey.to_string()))?;
 
     // Build queue_create ix.
-    let queue_pubkey = Queue::pubkey(manager_pubkey, manager_data.queue_count);
+    let queue_pubkey = Queue::pubkey(delegate_pubkey, delegate_data.queue_count);
     let queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority_pubkey,
-        manager_pubkey,
         authority_pubkey,
         queue_pubkey,
         schedule,

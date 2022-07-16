@@ -5,21 +5,21 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct ManagerNew<'info> {
+pub struct DelegateNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
     #[account(
         init,
         seeds = [
-            SEED_MANAGER, 
+            SEED_DELEGATE, 
             authority.key().as_ref()
         ],
         bump,
         payer = payer,
-        space = 8 + size_of::<Manager>(),
+        space = 8 + size_of::<Delegate>(),
     )]
-    pub manager: Account<'info, Manager>,
+    pub delegate: Account<'info, Delegate>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -28,11 +28,11 @@ pub struct ManagerNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<ManagerNew>) -> Result<()> {
+pub fn handler(ctx: Context<DelegateNew>) -> Result<()> {
     let authority = &ctx.accounts.authority;
-    let manager = &mut ctx.accounts.manager;
+    let delegate = &mut ctx.accounts.delegate;
 
-    manager.new(authority.key())?;
+    delegate.new(authority.key())?;
 
     Ok(())
 }

@@ -7,15 +7,16 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn manager_new(authority: Pubkey, payer: Pubkey, manager: Pubkey) -> Instruction {
+pub fn delegate_new(authority: Pubkey, payer: Pubkey) -> Instruction {
+    let delegate_pubkey = cronos_scheduler::state::Delegate::pubkey(authority);
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
-            AccountMeta::new(manager, false),
+            AccountMeta::new(delegate_pubkey, false),
             AccountMeta::new(payer, true),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_scheduler::instruction::ManagerNew {}.data(),
+        data: cronos_scheduler::instruction::DelegateNew {}.data(),
     }
 }

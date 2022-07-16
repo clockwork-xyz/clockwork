@@ -31,16 +31,16 @@ pub mod cronos_scheduler {
         admin_fee_collect::handler(ctx)
     }
 
+    pub fn delegate_fund(ctx: Context<DelegateFund>, amount: u64) -> Result<()> {
+        delegate_fund::handler(ctx, amount)
+    }
+
+    pub fn delegate_new(ctx: Context<DelegateNew>) -> Result<()> {
+        delegate_new::handler(ctx)
+    }
+
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
-    }
-
-    pub fn manager_fund(ctx: Context<ManagerFund>, amount: u64) -> Result<()> {
-        manager_fund::handler(ctx, amount)
-    }
-
-    pub fn manager_new(ctx: Context<ManagerNew>) -> Result<()> {
-        manager_new::handler(ctx)
     }
 
     pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {

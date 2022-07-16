@@ -1,11 +1,11 @@
 mod config;
+mod delegate;
 mod fee;
-mod manager;
 mod queue;
 mod task;
 
 pub use config::*;
+pub use delegate::*;
 pub use fee::*;
-pub use manager::*;
 pub use queue::*;
 pub use task::*;

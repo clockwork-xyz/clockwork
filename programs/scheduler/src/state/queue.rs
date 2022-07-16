@@ -1,5 +1,5 @@
 use {
-    super::Manager,
+    super::Delegate,
     crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
@@ -27,9 +27,9 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[account]
 #[derive(Debug)]
 pub struct Queue {
+    pub delegate: Pubkey,
     pub exec_at: Option<i64>,
     pub id: u128,
-    pub manager: Pubkey,
     pub schedule: String,
     pub status: QueueStatus,
     pub task_count: u128,
@@ -37,9 +37,9 @@ pub struct Queue {
 }
 
 impl Queue {
-    pub fn pubkey(manager: Pubkey, id: u128) -> Pubkey {
+    pub fn pubkey(delegate: Pubkey, id: u128) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_QUEUE, manager.as_ref(), id.to_be_bytes().as_ref()],
+            &[SEED_QUEUE, delegate.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
         .0
@@ -63,7 +63,7 @@ pub trait QueueAccount {
     fn new(
         &mut self,
         clock: &Sysvar<Clock>,
-        manager: &mut Account<Manager>,
+        delegate: &mut Account<Delegate>,
         schedule: String,
     ) -> Result<()>;
 
@@ -94,12 +94,12 @@ impl QueueAccount for Account<'_, Queue> {
     fn new(
         &mut self,
         clock: &Sysvar<Clock>,
-        manager: &mut Account<Manager>,
+        delegate: &mut Account<Delegate>,
         schedule: String,
     ) -> Result<()> {
         // Initialize queue account
-        self.id = manager.queue_count;
-        self.manager = manager.key();
+        self.id = delegate.queue_count;
+        self.delegate = delegate.key();
         self.schedule = schedule;
         self.status = QueueStatus::Pending;
         self.task_count = 0;
@@ -107,8 +107,8 @@ impl QueueAccount for Account<'_, Queue> {
         // Set exec_at (schedule must be set first)
         self.exec_at = self.next_exec_at(clock.unix_timestamp);
 
-        // Increment manager queue counter
-        manager.queue_count = manager.queue_count.checked_add(1).unwrap();
+        // Increment delegate queue counter
+        delegate.queue_count = delegate.queue_count.checked_add(1).unwrap();
 
         Ok(())
     }

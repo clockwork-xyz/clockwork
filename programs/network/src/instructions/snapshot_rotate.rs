@@ -1,12 +1,12 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::sysvar},
-    cronos_scheduler::{responses::ExecResponse, state::Manager},
+    cronos_scheduler::{responses::ExecResponse, state::Delegate},
 };
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = delegate)]
     pub authority: Account<'info, Authority>,
 
     #[account(address = sysvar::clock::ID)]
@@ -25,6 +25,9 @@ pub struct SnapshotRotate<'info> {
     )]
     pub current_snapshot: Account<'info, Snapshot>,
 
+    #[account(signer, constraint = delegate.authority == authority.key())]
+    pub delegate: Account<'info, Delegate>,
+
     #[account(
         mut,
         seeds = [
@@ -34,9 +37,6 @@ pub struct SnapshotRotate<'info> {
         bump,
     )]
     pub next_snapshot: Account<'info, Snapshot>,
-
-    #[account(signer, constraint = manager.authority == authority.key())]
-    pub manager: Account<'info, Manager>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

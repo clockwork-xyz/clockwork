@@ -15,9 +15,9 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
 
     // Fund the network program's queues
     let authority = cronos_client::network::state::Authority::pubkey();
-    let manager = cronos_client::scheduler::state::Manager::pubkey(authority);
+    let delegate = cronos_client::scheduler::state::Delegate::pubkey(authority);
     let ix_f =
-        cronos_client::scheduler::instruction::manager_fund(LAMPORTS_PER_SOL, manager, admin);
+        cronos_client::scheduler::instruction::delegate_fund(LAMPORTS_PER_SOL, delegate, admin);
 
     // Submit tx
     client

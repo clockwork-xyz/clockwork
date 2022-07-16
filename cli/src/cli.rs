@@ -20,6 +20,12 @@ pub enum CliCommand {
         worker_spam_penalty: Option<u64>,
     },
 
+    // Delegate commands
+    DelegateCreate,
+    DelegateGet {
+        address: Pubkey,
+    },
+
     // Task commands
     TaskGet {
         address: Pubkey,
@@ -52,12 +58,6 @@ pub enum CliCommand {
 
     // Pool commands
     PoolGet,
-
-    // Manager commands
-    ManagerCreate,
-    ManagerGet {
-        address: Pubkey,
-    },
 
     // Queue commands
     QueueCreate {
@@ -161,6 +161,21 @@ pub fn app() -> Command<'static> {
                                 ])
                                 .multiple(true),
                         ),
+                ),
+        )
+        .subcommand(
+            Command::new("delegate")
+                .about("Manage your delegates")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("create").about("Create a new delegate"))
+                .subcommand(
+                    Command::new("get").about("Get a delegate").arg(
+                        Arg::new("address")
+                            .index(1)
+                            .takes_value(true)
+                            .required(true)
+                            .help("Public address of a delegate"),
+                    ),
                 ),
         )
         .subcommand(Command::new("health").about("Get the current system health"))
@@ -272,21 +287,6 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(Command::new("pool").about("Get the worker pool info"))
-        .subcommand(
-            Command::new("manager")
-                .about("Manage your managers")
-                .arg_required_else_help(true)
-                .subcommand(Command::new("create").about("Create a new manager"))
-                .subcommand(
-                    Command::new("get").about("Get a manager").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a manager"),
-                    ),
-                ),
-        )
         .subcommand(
             Command::new("queue")
                 .about("Manage your queues")

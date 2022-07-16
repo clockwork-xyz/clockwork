@@ -6,16 +6,16 @@ use {
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
-pub struct ManagerFund<'info> {
+pub struct DelegateFund<'info> {
     #[account(
         mut,
         seeds = [
-            SEED_MANAGER, 
-            manager.authority.as_ref(),
+            SEED_DELEGATE, 
+            delegate.authority.as_ref(),
         ],
         bump,
     )]
-    pub manager: Account<'info, Manager>,
+    pub delegate: Account<'info, Delegate>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -24,8 +24,8 @@ pub struct ManagerFund<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<ManagerFund>, amount: u64) -> Result<()> {
-    let manager = &mut ctx.accounts.manager;
+pub fn handler(ctx: Context<DelegateFund>, amount: u64) -> Result<()> {
+    let delegate = &mut ctx.accounts.delegate;
     let payer = &mut ctx.accounts.payer;
     let system_program = &ctx.accounts.system_program;
 
@@ -34,7 +34,7 @@ pub fn handler(ctx: Context<ManagerFund>, amount: u64) -> Result<()> {
             system_program.to_account_info(), 
             Transfer {
                 from: payer.to_account_info(),
-                to: manager.to_account_info(),
+                to: delegate.to_account_info(),
             }
         ), 
         amount

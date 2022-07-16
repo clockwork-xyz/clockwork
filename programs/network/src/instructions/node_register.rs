@@ -10,7 +10,7 @@ use {
     },
     cronos_scheduler::{
         program::CronosScheduler,
-        state::{Queue, Manager}
+        state::{Queue, Delegate}
     },
     std::mem::size_of,
 };
@@ -20,11 +20,14 @@ pub struct NodeRegister<'info> {
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = manager)]
+    #[account(seeds = [SEED_AUTHORITY], bump, has_one = delegate)]
     pub authority: Box<Account<'info, Authority>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
+
+    #[account(constraint = delegate.authority == authority.key())]
+    pub delegate: Box<Account<'info, Delegate>>,
 
     #[account(
         init,
@@ -38,9 +41,6 @@ pub struct NodeRegister<'info> {
         space = 8 + size_of::<SnapshotEntry>(),
     )]
     pub entry: Account<'info, SnapshotEntry>,
-
-    #[account(constraint = manager.authority == authority.key())]
-    pub manager: Box<Account<'info, Manager>>,
 
     #[account(address = config.mint)]
     pub mint: Box<Account<'info, Mint>>,
@@ -85,7 +85,7 @@ pub struct NodeRegister<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(has_one = manager)]
+    #[account(has_one = delegate)]
     pub snapshot_queue: Box<Account<'info, Queue>>,
 
     #[account(
@@ -111,7 +111,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
     let entry = &mut ctx.accounts.entry;
-    let manager = &ctx.accounts.manager;
+    let delegate = &ctx.accounts.delegate;
     let node = &mut ctx.accounts.node;
     let owner = &mut ctx.accounts.owner;
     let registry = &mut ctx.accounts.registry;
@@ -144,10 +144,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
             AccountMeta::new_readonly(config.key(), false),
+            AccountMeta::new_readonly(delegate.key(), true),
             AccountMeta::new(next_entry_pubkey, false),
             AccountMeta::new_readonly(node.key(), false,),
             AccountMeta::new(cronos_scheduler::payer::ID, true),
-            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(stake_pubkey, false),
@@ -162,8 +162,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(current_snapshot_pubkey, false),
+            AccountMeta::new_readonly(delegate.key(), true),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(manager.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: cronos_scheduler::anchor::sighash("snapshot_rotate").into(),
@@ -173,7 +173,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             scheduler_program.to_account_info(),
             cronos_scheduler::cpi::accounts::TaskNew {
                 authority: authority.to_account_info(),
-                manager: manager.to_account_info(),
+                delegate: delegate.to_account_info(),
                 payer: owner.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),

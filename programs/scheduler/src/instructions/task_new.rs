@@ -12,13 +12,13 @@ pub struct TaskNew<'info> {
 
     #[account(
         seeds = [
-            SEED_MANAGER, 
-            manager.authority.as_ref()
+            SEED_DELEGATE, 
+            delegate.authority.as_ref()
         ],
         bump,
         has_one = authority,
     )]
-    pub manager: Account<'info, Manager>,
+    pub delegate: Account<'info, Delegate>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -27,11 +27,11 @@ pub struct TaskNew<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            manager.key().as_ref(),
+            delegate.key().as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = manager,
+        has_one = delegate,
     )]
     pub queue: Account<'info, Queue>,
 

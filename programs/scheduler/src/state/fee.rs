@@ -3,8 +3,9 @@ use {
     std::convert::TryFrom,
 };
 
-// TODO is fee account necessary?
-// TODO can this just be an extra field on the manager account?
+// TODO Is fee account necessary?
+// TODO Can this just be an extra field on the delegate account?
+// TODO Should fees be paid into the pool program?
 
 pub const SEED_FEE: &[u8] = b"fee";
 

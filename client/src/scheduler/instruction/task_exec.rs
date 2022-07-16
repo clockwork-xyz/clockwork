@@ -7,7 +7,7 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn task_exec(manager: Pubkey, queue: Pubkey, task: Pubkey, worker: Pubkey) -> Instruction {
+pub fn task_exec(delegate: Pubkey, queue: Pubkey, task: Pubkey, worker: Pubkey) -> Instruction {
     let config_pubkey = cronos_scheduler::state::Config::pubkey();
     let fee_pubkey = cronos_scheduler::state::Fee::pubkey(queue);
     let pool_pubkey = cronos_pool::state::Pool::pubkey();
@@ -16,8 +16,8 @@ pub fn task_exec(manager: Pubkey, queue: Pubkey, task: Pubkey, worker: Pubkey) -
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config_pubkey, false),
+            AccountMeta::new_readonly(delegate, false),
             AccountMeta::new(fee_pubkey, false),
-            AccountMeta::new_readonly(manager, false),
             AccountMeta::new_readonly(pool_pubkey, false),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),

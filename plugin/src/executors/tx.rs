@@ -106,6 +106,10 @@ impl TxExecutor {
                             queue_pubkey: *queue_pubkey,
                         },
                     )
+                    .map_err(|err| {
+                        info!("Error: {}", err);
+                        err
+                    })
                     .ok();
             });
         Ok(())
@@ -237,12 +241,13 @@ impl TxExecutor {
         }
 
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            .submit_tx(tx)
+            // .simulate_tx(tx)
+            // .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 
-    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         self.tpu_client
             .rpc_client()
             .simulate_transaction(tx)

@@ -12,6 +12,9 @@ pub struct TaskExec<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
+    #[account(seeds = [SEED_DELEGATE, delegate.authority.as_ref()], bump)]
+    pub delegate: Account<'info, Delegate>,
+
     #[account(
         mut,
         seeds = [
@@ -23,9 +26,6 @@ pub struct TaskExec<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(seeds = [SEED_MANAGER, manager.authority.as_ref()], bump)]
-    pub manager: Account<'info, Manager>,
-
     #[account()]
     pub pool: Account<'info, Pool>,
 
@@ -33,7 +33,7 @@ pub struct TaskExec<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.manager.as_ref(),
+            queue.delegate.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
@@ -66,8 +66,8 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
+    let delegate = &ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
-    let manager = &ctx.accounts.manager;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
@@ -80,7 +80,7 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
 
     let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
 
-    let manager_bump = *ctx.bumps.get("manager").unwrap();
-    task.exec(account_infos, config, fee, manager, manager_bump, queue, worker)?;
+    let delegate_bump = *ctx.bumps.get("delegate").unwrap();
+    task.exec(account_infos, config, fee, delegate, delegate_bump, queue, worker)?;
     Ok(())
 }

@@ -179,7 +179,7 @@ impl QueueObserver {
             QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
             QueueStatus::Pending => {
                 ixs.push(cronos_client::scheduler::instruction::queue_start(
-                    queue.manager,
+                    queue.delegate,
                     queue_pubkey,
                     worker_pubkey,
                 ));
@@ -195,7 +195,7 @@ impl QueueObserver {
 
             // Build ix
             let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
-                queue.manager,
+                queue.delegate,
                 queue_pubkey,
                 task_pubkey,
                 worker_pubkey,
@@ -243,6 +243,7 @@ impl QueueObserver {
                 GeyserPluginError::Custom("Failed to get latest blockhash".into())
             })?,
         );
+
         Ok(tx)
     }
 

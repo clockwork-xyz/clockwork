@@ -43,9 +43,8 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
 
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
-
-    let manager_pubkey = cronos_client::scheduler::state::Manager::pubkey(authority_pubkey);
-    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(manager_pubkey, 0);
+    let delegate_pubkey = cronos_client::scheduler::state::Delegate::pubkey(authority_pubkey);
+    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(delegate_pubkey, 0);
     let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
@@ -54,8 +53,8 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
+        delegate_pubkey,
         entry_pubkey,
-        manager_pubkey,
         config_data.mint,
         node_pubkey,
         owner.pubkey(),
