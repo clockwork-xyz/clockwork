@@ -37,7 +37,7 @@ async fn record_health_data() {
 
     // Get data
     let clock = client.get_clock().unwrap();
-    let health = client.get::<Health>(&Health::pda().0).unwrap();
+    let health = client.get::<Health>(&Health::pubkey()).unwrap();
 
     // Pipe data to elasticsearch
     let last_ping = clock.unix_timestamp - health.last_ping;

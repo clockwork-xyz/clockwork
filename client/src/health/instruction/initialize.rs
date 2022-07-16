@@ -8,11 +8,11 @@ use anchor_lang::{
 };
 
 pub fn initialize(signer: Pubkey) -> Instruction {
-    let health = cronos_health::state::Health::pda().0;
+    let health_pubkey = cronos_health::state::Health::pubkey();
     Instruction {
         program_id: cronos_health::ID,
         accounts: vec![
-            AccountMeta::new(health, false),
+            AccountMeta::new(health_pubkey, false),
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
