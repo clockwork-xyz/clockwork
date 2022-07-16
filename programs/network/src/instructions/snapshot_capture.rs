@@ -14,7 +14,7 @@ pub struct SnapshotCapture<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(signer, constraint = delegate.authority == authority.key())]
+    #[account(signer, has_one = authority)]
     pub delegate: Box<Account<'info, Delegate>>,
 
     #[account(
