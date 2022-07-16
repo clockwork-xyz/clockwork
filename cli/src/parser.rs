@@ -18,7 +18,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => parse_config_command(matches),
-            Some(("delegate", matches)) => parse_delegate_command(matches),
             Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
@@ -60,18 +59,6 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
                 .map_or(None, |v| Some(v)),
             worker_spam_penalty: parse_u64("worker_spam_penalty", matches)
                 .map_or(None, |v| Some(v)),
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
-}
-
-fn parse_delegate_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("create", _)) => Ok(CliCommand::DelegateCreate {}),
-        Some(("get", matches)) => Ok(CliCommand::DelegateGet {
-            address: parse_pubkey("address", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -126,6 +113,7 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("create", matches)) => Ok(CliCommand::QueueCreate {
+            id: parse_u128("id", matches)?,
             schedule: parse_string("schedule", matches)?,
         }),
         Some(("get", matches)) => Ok(CliCommand::QueueGet {

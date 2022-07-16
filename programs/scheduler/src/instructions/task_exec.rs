@@ -12,9 +12,6 @@ pub struct TaskExec<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(seeds = [SEED_DELEGATE, delegate.authority.as_ref()], bump)]
-    pub delegate: Account<'info, Delegate>,
-
     #[account(
         mut,
         seeds = [
@@ -33,7 +30,7 @@ pub struct TaskExec<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.delegate.as_ref(),
+            queue.authority.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
@@ -67,7 +64,6 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
-    let delegate = &ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
@@ -81,6 +77,6 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
 
     // Execute the task
     let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
-    let delegate_bump = *ctx.bumps.get("delegate").unwrap();
-    task.exec(account_infos, config, fee, delegate, delegate_bump, queue, worker)
+    let queue_bump = *ctx.bumps.get("queue").unwrap();
+    task.exec(account_infos, config, fee, queue, queue_bump, worker)
 }

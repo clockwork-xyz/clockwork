@@ -240,6 +240,7 @@ impl TxExecutor {
             return Ok(());
         }
 
+        // TODO Re-insert simulation
         self.clone()
             .submit_tx(tx)
             // .simulate_tx(tx)

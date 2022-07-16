@@ -1,21 +1,20 @@
+use cronos_scheduler::state::Queue;
+
 use {
     crate::{errors::CronosError, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::TokenAccount,
-    cronos_scheduler::{responses::ExecResponse, state::Delegate},
+    cronos_scheduler::responses::ExecResponse,
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotCapture<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = delegate)]
+    #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
-
-    #[account(signer, has_one = authority)]
-    pub delegate: Box<Account<'info, Delegate>>,
 
     #[account(
         init,
@@ -42,6 +41,9 @@ pub struct SnapshotCapture<'info> {
 
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(constraint = queue.authority == authority.key())]
+    pub queue: Account<'info, Queue>,
 
     #[account(seeds = [SEED_REGISTRY], bump)]
     pub registry: Box<Account<'info, Registry>>,

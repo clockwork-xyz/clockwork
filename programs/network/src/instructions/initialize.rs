@@ -1,3 +1,5 @@
+use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
+
 use {
     crate::state::*,
     anchor_lang::{
@@ -88,13 +90,11 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let delegate = ctx.remaining_accounts.get(0).unwrap();
-    let snapshot_fee = ctx.remaining_accounts.get(1).unwrap();
-    let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
+    let snapshot_fee = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(1).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(2).unwrap();
 
     // Initialize accounts
-    authority.new(delegate.key())?;
     config.new(admin.key(), mint.key())?;
     registry.new()?;
     rotator.new()?;
@@ -111,7 +111,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             cronos_scheduler::cpi::accounts::QueueNew {
                 authority: authority.to_account_info(),
                 clock: clock.to_account_info(),
-                delegate: delegate.to_account_info(),
                 fee: snapshot_fee.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
@@ -119,11 +118,13 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[bump]]]
         ), 
+        0,
+        LAMPORTS_PER_SOL,
         "0 * * * * * *".into()
     )?;
 
     // TOOD Create a queue to cleanup snapshots and snapshot entries
-    // TODO Return the lamports to the delegate account
+    // TODO Return the lamports to the authority
 
     // Add an task to the snapshot queue to kick things off
     let next_snapshot_pubkey = Snapshot::pubkey(1);
@@ -132,8 +133,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
             AccountMeta::new_readonly(config.key(), false),
-            AccountMeta::new_readonly(delegate.key(), true),
             AccountMeta::new(cronos_scheduler::payer::ID, true),
+            AccountMeta::new_readonly(snapshot_queue.key(), true),
             AccountMeta::new(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program.key(), false),
@@ -147,8 +148,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(snapshot.key(), false),
-            AccountMeta::new_readonly(delegate.key(), true),
             AccountMeta::new(next_snapshot_pubkey, false),
+            AccountMeta::new_readonly(snapshot_queue.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
         data: cronos_scheduler::anchor::sighash("snapshot_rotate").into(),
@@ -158,7 +159,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             scheduler_program.to_account_info(),
             cronos_scheduler::cpi::accounts::TaskNew {
                 authority: authority.to_account_info(),
-                delegate: delegate.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),

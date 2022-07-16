@@ -34,8 +34,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             worker_holdout_period,
             worker_spam_penalty,
         ),
-        CliCommand::DelegateCreate => super::delegate::create(&client),
-        CliCommand::DelegateGet { address } => super::delegate::get(&client, &address),
         CliCommand::Health => super::health::get(&client),
         CliCommand::HttpRequestNew {
             api,
@@ -48,7 +46,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { amount, worker } => super::node::stake(&client, amount, worker),
         CliCommand::PoolGet => super::pool::get(&client),
-        CliCommand::QueueCreate { schedule } => super::queue::create(&client, schedule),
+        CliCommand::QueueCreate { id, schedule } => super::queue::create(&client, id, schedule),
         CliCommand::QueueGet { address, task_id } => super::queue::get(&client, &address, task_id),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),

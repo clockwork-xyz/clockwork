@@ -1,7 +1,14 @@
 use {
-    super::Delegate,
-    crate::errors::CronosError,
-    anchor_lang::{prelude::*, AnchorDeserialize},
+    super::InstructionData,
+    crate::{errors::CronosError, responses::ExecResponse},
+    anchor_lang::{
+        prelude::*,
+        solana_program::{
+            instruction::Instruction,
+            program::{get_return_data, invoke_signed},
+        },
+        AnchorDeserialize,
+    },
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
     std::{convert::TryFrom, str::FromStr},
@@ -27,7 +34,7 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[account]
 #[derive(Debug)]
 pub struct Queue {
-    pub delegate: Pubkey,
+    pub authority: Pubkey,
     pub exec_at: Option<i64>,
     pub id: u128,
     pub schedule: String,
@@ -37,9 +44,9 @@ pub struct Queue {
 }
 
 impl Queue {
-    pub fn pubkey(delegate: Pubkey, id: u128) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, id: u128) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_QUEUE, delegate.as_ref(), id.to_be_bytes().as_ref()],
+            &[SEED_QUEUE, authority.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
         .0
@@ -62,14 +69,22 @@ pub trait QueueAccount {
 
     fn new(
         &mut self,
+        authority: Pubkey,
         clock: &Sysvar<Clock>,
-        delegate: &mut Account<Delegate>,
+        id: u128,
         schedule: String,
     ) -> Result<()>;
 
     fn next_exec_at(&self, ts: i64) -> Option<i64>;
 
     fn roll_forward(&mut self) -> Result<()>;
+
+    fn sign(
+        &self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        ix: &InstructionData,
+    ) -> Result<Option<ExecResponse>>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -93,22 +108,20 @@ impl QueueAccount for Account<'_, Queue> {
 
     fn new(
         &mut self,
+        authority: Pubkey,
         clock: &Sysvar<Clock>,
-        delegate: &mut Account<Delegate>,
+        id: u128,
         schedule: String,
     ) -> Result<()> {
         // Initialize queue account
-        self.id = delegate.queue_count;
-        self.delegate = delegate.key();
+        self.authority = authority.key();
+        self.id = id;
         self.schedule = schedule;
         self.status = QueueStatus::Pending;
         self.task_count = 0;
 
         // Set exec_at (schedule must be set first)
         self.exec_at = self.next_exec_at(clock.unix_timestamp);
-
-        // Increment delegate queue counter
-        delegate.queue_count = delegate.queue_count.checked_add(1).unwrap();
 
         Ok(())
     }
@@ -135,6 +148,39 @@ impl QueueAccount for Account<'_, Queue> {
             None => (),
         };
         Ok(())
+    }
+
+    fn sign(
+        &self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        ix: &InstructionData,
+    ) -> Result<Option<ExecResponse>> {
+        invoke_signed(
+            &Instruction::from(ix),
+            account_infos,
+            &[&[
+                SEED_QUEUE,
+                self.authority.as_ref(),
+                self.id.to_be_bytes().as_ref(),
+                &[bump],
+            ]],
+        )
+        .map_err(|_err| CronosError::InnerIxFailed)?;
+
+        match get_return_data() {
+            None => Ok(None),
+            Some((program_id, return_data)) => {
+                if program_id != ix.program_id {
+                    Err(CronosError::InvalidReturnData.into())
+                } else {
+                    Ok(Some(
+                        ExecResponse::try_from_slice(return_data.as_slice())
+                            .map_err(|_err| CronosError::InvalidExecResponse)?,
+                    ))
+                }
+            }
+        }
     }
 }
 

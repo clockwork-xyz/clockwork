@@ -179,7 +179,6 @@ impl QueueObserver {
             QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
             QueueStatus::Pending => {
                 ixs.push(cronos_client::scheduler::instruction::queue_start(
-                    queue.delegate,
                     queue_pubkey,
                     worker_pubkey,
                 ));
@@ -195,7 +194,6 @@ impl QueueObserver {
 
             // Build ix
             let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
-                queue.delegate,
                 queue_pubkey,
                 task_pubkey,
                 worker_pubkey,

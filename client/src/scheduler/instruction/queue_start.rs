@@ -7,12 +7,11 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn queue_start(delegate: Pubkey, queue: Pubkey, worker: Pubkey) -> Instruction {
+pub fn queue_start(queue: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(delegate, false),
             AccountMeta::new(queue, false),
             AccountMeta::new(worker, true),
         ],

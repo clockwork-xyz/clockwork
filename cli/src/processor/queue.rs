@@ -1,26 +1,17 @@
 use {
     crate::errors::CliError,
-    cronos_client::{
-        scheduler::state::{Delegate, Queue},
-        Client,
-    },
-    solana_sdk::pubkey::Pubkey,
+    cronos_client::{scheduler::state::Queue, Client},
+    solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };
 
-pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
-    // Fetch delegate data.
-    let authority_pubkey = client.payer_pubkey();
-    let delegate_pubkey = Delegate::pubkey(authority_pubkey);
-    let data = client
-        .get_account_data(&delegate_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(delegate_pubkey.to_string()))?;
-    let delegate_data = Delegate::try_from(data)
-        .map_err(|_err| CliError::AccountDataNotParsable(delegate_pubkey.to_string()))?;
-
+pub fn create(client: &Client, id: u128, schedule: String) -> Result<(), CliError> {
     // Build queue_create ix.
-    let queue_pubkey = Queue::pubkey(delegate_pubkey, delegate_data.queue_count);
+    let authority_pubkey = client.payer_pubkey();
+    let queue_pubkey = Queue::pubkey(authority_pubkey, id);
     let queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority_pubkey,
+        LAMPORTS_PER_SOL,
+        id,
         authority_pubkey,
         queue_pubkey,
         schedule,

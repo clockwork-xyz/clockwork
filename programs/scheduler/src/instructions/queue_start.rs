@@ -9,23 +9,13 @@ pub struct QueueStart<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
-        seeds = [
-            SEED_DELEGATE,
-            delegate.authority.as_ref()
-        ],
-        bump,
-    )]
-    pub delegate: Account<'info, Delegate>,
-
-    #[account(
         mut,
         seeds = [
             SEED_QUEUE, 
-            queue.delegate.as_ref(),
+            queue.authority.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = delegate,
         constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
     )]

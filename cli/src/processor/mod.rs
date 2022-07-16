@@ -1,7 +1,6 @@
 mod api;
 mod clock;
 mod config;
-mod delegate;
 mod health;
 mod http;
 mod initialize;

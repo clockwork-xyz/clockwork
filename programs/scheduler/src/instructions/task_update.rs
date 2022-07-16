@@ -12,22 +12,12 @@ pub struct TaskUpdate<'info> {
 
     #[account(
         seeds = [
-            SEED_DELEGATE, 
-            delegate.authority.as_ref()
-        ],
-        bump,
-        has_one = authority,
-    )]
-    pub delegate: Account<'info, Delegate>,
-
-    #[account(
-        seeds = [
             SEED_QUEUE, 
-            queue.delegate.as_ref(),
+            queue.authority.as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = delegate,
+        has_one = authority,
     )]
     pub queue: Account<'info, Queue>,
 
@@ -50,6 +40,8 @@ pub fn handler(
     let task = &mut ctx.accounts.task;
 
     // TODO verify ixs
+    // TODO suport new schedule
+    // TODO re-allocate aaccount space
     task.ixs = ixs;
 
     Ok(())

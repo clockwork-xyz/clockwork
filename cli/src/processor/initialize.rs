@@ -1,8 +1,4 @@
-use {
-    crate::errors::CliError,
-    cronos_client::Client,
-    solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
-};
+use {crate::errors::CliError, cronos_client::Client, solana_sdk::pubkey::Pubkey};
 
 pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     // Initialize the programs
@@ -13,15 +9,9 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     let ix_d = cronos_client::network::instruction::initialize(admin, mint);
     let ix_e = cronos_client::pool::instruction::initialize(admin);
 
-    // Fund the network program's queues
-    let authority = cronos_client::network::state::Authority::pubkey();
-    let delegate = cronos_client::scheduler::state::Delegate::pubkey(authority);
-    let ix_f =
-        cronos_client::scheduler::instruction::delegate_fund(LAMPORTS_PER_SOL, delegate, admin);
-
     // Submit tx
     client
-        .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d, ix_e, ix_f], &[client.payer()])
+        .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d, ix_e], &[client.payer()])
         .unwrap();
     Ok(())
 }

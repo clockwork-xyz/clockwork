@@ -1,12 +1,14 @@
+use cronos_scheduler::state::Queue;
+
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::sysvar},
-    cronos_scheduler::{responses::ExecResponse, state::Delegate},
+    cronos_scheduler::responses::ExecResponse,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = delegate)]
+    #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
 
     #[account(address = sysvar::clock::ID)]
@@ -25,9 +27,6 @@ pub struct SnapshotRotate<'info> {
     )]
     pub current_snapshot: Account<'info, Snapshot>,
 
-    #[account(signer, constraint = delegate.authority == authority.key())]
-    pub delegate: Account<'info, Delegate>,
-
     #[account(
         mut,
         seeds = [
@@ -37,6 +36,9 @@ pub struct SnapshotRotate<'info> {
         bump,
     )]
     pub next_snapshot: Account<'info, Snapshot>,
+
+    #[account(constraint = queue.authority == authority.key())]
+    pub queue: Account<'info, Queue>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

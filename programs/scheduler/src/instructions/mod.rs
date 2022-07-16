@@ -1,7 +1,5 @@
 pub mod admin_config_update;
 pub mod admin_fee_collect;
-pub mod delegate_fund;
-pub mod delegate_new;
 pub mod initialize;
 pub mod queue_new;
 pub mod queue_start;
@@ -13,8 +11,6 @@ mod utils;
 
 pub use admin_config_update::*;
 pub use admin_fee_collect::*;
-pub use delegate_fund::*;
-pub use delegate_new::*;
 pub use initialize::*;
 pub use queue_new::*;
 pub use queue_start::*;

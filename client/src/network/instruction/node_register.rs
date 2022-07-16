@@ -13,7 +13,6 @@ use {
 pub fn node_register(
     authority: Pubkey,
     config: Pubkey,
-    delegate: Pubkey,
     entry: Pubkey,
     mint: Pubkey,
     node: Pubkey,
@@ -30,7 +29,6 @@ pub fn node_register(
             AccountMeta::new_readonly(associated_token::ID, false),
             AccountMeta::new_readonly(authority, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new(delegate, false),
             AccountMeta::new(entry, false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new(node, false),

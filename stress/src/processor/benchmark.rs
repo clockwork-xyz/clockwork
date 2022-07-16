@@ -1,7 +1,7 @@
 use {
     crate::{cli::CliError, parser::JsonInstructionData},
     chrono::{prelude::*, Duration},
-    cronos_client::scheduler::state::{Delegate, Queue, Task},
+    cronos_client::scheduler::state::{Queue, Task},
     cronos_client::Client,
     cronos_cron::Schedule,
     serde_json::json,
@@ -32,14 +32,11 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
     let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
-    // Create delegate
+    // Fund authority account
     let authority = &Keypair::new();
-    let ix =
-        cronos_client::scheduler::instruction::delegate_new(authority.pubkey(), authority.pubkey());
     client
         .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
         .unwrap();
-    client.send_and_confirm(&[ix], &[authority]).unwrap();
 
     // TODO Schedule tasks asynchronously
 
@@ -146,11 +143,8 @@ fn create_queue_ix(
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
     queue_id: u128,
 ) -> Instruction {
-    // Get delegate for authority
-    let delegate_pubkey = Delegate::pubkey(authority.pubkey());
-
     // Generate ix for new queue account
-    let queue_pubkey = Queue::pubkey(delegate_pubkey, queue_id);
+    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_id);
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -165,6 +159,8 @@ fn create_queue_ix(
     );
     let create_queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority.pubkey(),
+        LAMPORTS_PER_SOL,
+        0,
         authority.pubkey(),
         queue_pubkey,
         schedule.clone(),
@@ -184,12 +180,12 @@ fn create_queue_ix(
     create_queue_ix
 }
 
-fn build_memo_ix(delegate_pubkey: &Pubkey) -> Instruction {
+fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     let hello_world_memo = json!({
       "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
       "accounts": [
         {
-          "pubkey": delegate_pubkey.to_string(),
+          "pubkey": queue_pubkey.to_string(),
           "is_signer": true,
           "is_writable": false
         }
@@ -204,10 +200,9 @@ fn build_memo_ix(delegate_pubkey: &Pubkey) -> Instruction {
 }
 
 fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruction {
-    let delegate_pubkey = Delegate::pubkey(authority.pubkey());
-    let queue_pubkey = Queue::pubkey(delegate_pubkey, queue_id);
+    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_id);
     let task_pubkey = Task::pubkey(queue_pubkey, task_id);
-    let memo_ix = build_memo_ix(&delegate_pubkey);
+    let memo_ix = build_memo_ix(&authority.pubkey());
     cronos_client::scheduler::instruction::task_new(
         authority.pubkey(),
         vec![memo_ix],

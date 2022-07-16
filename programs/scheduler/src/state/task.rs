@@ -1,10 +1,9 @@
-use crate::state::{DelegateAccount, QueueAccount, QueueStatus};
-
-use super::{Config, Delegate, Fee};
-
 use {
-    super::Queue,
-    crate::errors::CronosError,
+    super::{Config, Fee, Queue},
+    crate::{
+        errors::CronosError,
+        state::{QueueAccount, QueueStatus},
+    },
     anchor_lang::{
         prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
@@ -55,21 +54,20 @@ pub trait TaskAccount {
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        delegate: &Account<Delegate>,
-        delegate_bump: u8,
         queue: &mut Account<Queue>,
+        queue_bump: u8,
         worker: &mut Signer,
     ) -> Result<()>;
 }
 
 impl TaskAccount for Account<'_, Task> {
     fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()> {
-        // Reject inner instructions if they have a signer other than the delegate or worker
+        // Reject inner instructions if they have a signer other than the queue or payer
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 if acc.is_signer {
                     require!(
-                        acc.pubkey == queue.delegate || acc.pubkey == crate::payer::ID,
+                        acc.pubkey == queue.key() || acc.pubkey == crate::payer::ID,
                         CronosError::InvalidSignatory
                     );
                 }
@@ -92,9 +90,8 @@ impl TaskAccount for Account<'_, Task> {
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
         fee: &mut Account<Fee>,
-        delegate: &Account<Delegate>,
-        delegate_bump: u8,
         queue: &mut Account<Queue>,
+        queue_bump: u8,
         worker: &mut Signer,
     ) -> Result<()> {
         // Validate the task id matches the queue's current execution state
@@ -118,16 +115,13 @@ impl TaskAccount for Account<'_, Task> {
 
         // Process all of the task instructions
         for ix in &self.ixs {
-            // If an inner ix account matches the Cronos worker address (CronosDe1egate11111111111111111111111111111),
-            //  then inject the worker account in its place. Dapp developers can use the worker as a payer to initialize
-            //  new accouns in their queues. Workers will be reimbursed for all SOL spent during the inner ixs.
+            // If an inner ix account matches the Cronos payer address (CronosPayer11111111111111111111111111111111),
+            //  then inject the worker in its place. Dapp developers can use the worker as a payer to initialize
+            //  new accounts in their tasks. Workers will be reimbursed for all SOL spent during the inner ixs.
             //
             // Because the worker can be injected as the signer on inner ixs (written by presumed malicious parties),
             //  node operators should not secure any assets or staking positions with their worker wallets other than
-            //  an operational level of lamports needed to submit txns (~0.1 ⊚).
-            //
-            // TODO Update the network program to allow for split identity / worker addresses so CRON stakes
-            //  are not secured by worker signatures.
+            //  an operational level of lamports needed to submit txns (~0.01 ⊚).
             let accs: &mut Vec<AccountMetaData> = &mut vec![];
             ix.accounts.iter().for_each(|acc| {
                 if acc.pubkey == crate::payer::ID {
@@ -141,14 +135,12 @@ impl TaskAccount for Account<'_, Task> {
                 }
             });
 
-            // Execute the inner ix and process the response. Note that even though the delegate PDA is a signer
+            // Execute the inner ix and process the response. Note that even though the queue PDA is a signer
             //  on this ix, Solana will not allow downstream programs to mutate accounts owned by this program
             //  and explicitly forbids CPI reentrancy.
-            //
-            // TODO Can downstream programs mutate the delegate account data?
-            let exec_response = delegate.sign(
+            let exec_response = queue.sign(
                 &account_infos,
-                delegate_bump,
+                queue_bump,
                 &InstructionData {
                     program_id: ix.program_id,
                     accounts: accs.clone(),
@@ -206,7 +198,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Pay worker fees
         let total_worker_fee = config.worker_fee.checked_add(worker_reimbursement).unwrap();
-        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
+        **queue.to_account_info().try_borrow_mut_lamports()? = queue
             .to_account_info()
             .lamports()
             .checked_sub(total_worker_fee)
@@ -218,16 +210,16 @@ impl TaskAccount for Account<'_, Task> {
             .unwrap();
 
         // Pay program fees
-        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
-            .to_account_info()
-            .lamports()
-            .checked_sub(config.program_fee)
-            .unwrap();
-        **fee.to_account_info().try_borrow_mut_lamports()? = fee
-            .to_account_info()
-            .lamports()
-            .checked_add(config.program_fee)
-            .unwrap();
+        // **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
+        //     .to_account_info()
+        //     .lamports()
+        //     .checked_sub(config.program_fee)
+        //     .unwrap();
+        // **fee.to_account_info().try_borrow_mut_lamports()? = fee
+        //     .to_account_info()
+        //     .lamports()
+        //     .checked_add(config.program_fee)
+        //     .unwrap();
 
         // Increment collectable fee balance
         fee.balance = fee.balance.checked_add(config.program_fee).unwrap();

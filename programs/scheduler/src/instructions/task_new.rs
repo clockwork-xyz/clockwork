@@ -10,16 +10,6 @@ pub struct TaskNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
-    #[account(
-        seeds = [
-            SEED_DELEGATE, 
-            delegate.authority.as_ref()
-        ],
-        bump,
-        has_one = authority,
-    )]
-    pub delegate: Account<'info, Delegate>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -27,11 +17,11 @@ pub struct TaskNew<'info> {
         mut,
         seeds = [
             SEED_QUEUE, 
-            delegate.key().as_ref(),
+            queue.authority.key().as_ref(),
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = delegate,
+        has_one = authority,
     )]
     pub queue: Account<'info, Queue>,
 

@@ -20,15 +20,15 @@ pub enum CronosError {
     InvalidReturnData,
     #[msg("The cron expression is invalid")]
     InvalidSchedule,
-    #[msg("Your delegate cannot provide all required signatures for this instruction")]
+    #[msg("Your queue cannot sign for all required signatures for this instruction")]
     InvalidSignatory,
     #[msg("The queue does not have the right status for this operation")]
     InvalidQueueStatus,
 
     #[msg("Your are not the admin authority")]
     NotAdmin,
-    #[msg("You are not the authority of this delegate")]
-    NotDelegateAuthority,
+    #[msg("You are not the authority of this queue")]
+    NotQueueAuthority,
 
     #[msg("The queue is not due")]
     QueueNotDue,

@@ -1,29 +1,19 @@
+
+
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::{system_program, sysvar}},
+    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::{system_program, sysvar}},
     std::mem::size_of
 };
 
 #[derive(Accounts)]
-#[instruction(schedule: String)]
+#[instruction(id: u128, balance: u64, schedule: String)]
 pub struct QueueNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
-
-    #[account(
-        init_if_needed,
-        seeds = [
-            SEED_DELEGATE, 
-            authority.key().as_ref()
-        ],
-        bump,
-        space = 8 + size_of::<Delegate>(),
-        payer = payer,
-    )]
-    pub delegate: Account<'info, Delegate>,
 
     #[account(
         init,
@@ -44,8 +34,8 @@ pub struct QueueNew<'info> {
         init,
         seeds = [
             SEED_QUEUE, 
-            delegate.key().as_ref(),
-            delegate.queue_count.to_be_bytes().as_ref(),
+            authority.key().as_ref(),
+            id.to_be_bytes().as_ref(),
         ],
         bump,
         payer = payer,
@@ -57,20 +47,30 @@ pub struct QueueNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueNew>, schedule: String) -> Result<()> {
+pub fn handler(ctx: Context<QueueNew>, id: u128, balance: u64, schedule: String) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
-    let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
+    let payer = &mut ctx.accounts.payer;
     let queue = &mut ctx.accounts.queue;
+    let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
-    if !delegate.is_initialized {
-        delegate.new(authority.key())?;
-    }
     fee.new(queue.key())?;
-    queue.new(clock, delegate, schedule)?;
+    queue.new(authority.key(), clock, id, schedule)?;
+
+    // Transfer balance into the queue
+    transfer(
+        CpiContext::new(
+            system_program.to_account_info(),
+            Transfer {
+                from: payer.to_account_info(),
+                to: queue.to_account_info(),
+            },
+        ),
+        balance,
+    )?;
 
     Ok(())
 }

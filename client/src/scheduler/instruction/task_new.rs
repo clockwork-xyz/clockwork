@@ -17,12 +17,10 @@ pub fn task_new(
     queue: Pubkey,
     task: Pubkey,
 ) -> Instruction {
-    let delegate_pubkey = cronos_scheduler::state::Delegate::pubkey(authority);
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
-            AccountMeta::new_readonly(delegate_pubkey, false),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),

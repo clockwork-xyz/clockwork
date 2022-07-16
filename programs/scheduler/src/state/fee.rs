@@ -4,7 +4,7 @@ use {
 };
 
 // TODO Is fee account necessary?
-// TODO Can this just be an extra field on the delegate account?
+// TODO Can this just be an extra field on the queue account?
 // TODO Should fees be paid into the pool program?
 
 pub const SEED_FEE: &[u8] = b"fee";

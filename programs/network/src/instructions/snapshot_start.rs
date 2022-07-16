@@ -1,23 +1,23 @@
+use cronos_scheduler::state::Queue;
+
 use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Delegate},
+    crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::ExecResponse,
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotStart<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump, has_one = delegate)]
+    #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(signer, constraint = delegate.authority == authority.key())]
-    pub delegate: Box<Account<'info, Delegate>>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(constraint = queue.authority == authority.key())]
+    pub queue: Account<'info, Queue>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,

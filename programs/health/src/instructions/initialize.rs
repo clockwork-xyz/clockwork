@@ -27,7 +27,6 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
 
     health.new()?;
 
-    // TODO create a delegate
     // TODO create a queue
     // TODO create an task to call ping every X seconds
 
