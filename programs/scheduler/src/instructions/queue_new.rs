@@ -14,13 +14,14 @@ pub struct QueueNew<'info> {
     pub clock: Sysvar<'info, Clock>,
 
     #[account(
-        mut,
+        init_if_needed,
         seeds = [
             SEED_DELEGATE, 
-            delegate.authority.as_ref()
+            authority.key().as_ref()
         ],
         bump,
-        has_one = authority,
+        space = 8 + size_of::<Delegate>(),
+        payer = payer,
     )]
     pub delegate: Account<'info, Delegate>,
 
@@ -57,11 +58,17 @@ pub struct QueueNew<'info> {
 }
 
 pub fn handler(ctx: Context<QueueNew>, schedule: String) -> Result<()> {
+    // Get accounts
+    let authority = &ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
     let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
     let queue = &mut ctx.accounts.queue;
 
+    // Initialize accounts
+    if !delegate.is_initialized {
+        delegate.new(authority.key())?;
+    }
     fee.new(queue.key())?;
     queue.new(clock, delegate, schedule)?;
 

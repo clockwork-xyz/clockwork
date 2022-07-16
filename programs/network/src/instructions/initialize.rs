@@ -96,27 +96,15 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Initialize accounts
     authority.new(delegate.key())?;
     config.new(admin.key(), mint.key())?;
-    rotator.new()?;
     registry.new()?;
+    rotator.new()?;
+
+    // Setup the first snapshot
     registry.new_snapshot(snapshot)?;
     registry.rotate_snapshot(clock, None, snapshot)?;
 
-    // Create a delegate
-    let bump = *ctx.bumps.get("authority").unwrap();
-    cronos_scheduler::cpi::delegate_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(), 
-            cronos_scheduler::cpi::accounts::DelegateNew {
-                authority: authority.to_account_info(),
-                delegate: delegate.to_account_info(),
-                payer: admin.to_account_info(),
-                system_program: system_program.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]]
-        )
-    )?;
-
     // Create a queue to take snapshots of the registry
+    let bump = *ctx.bumps.get("authority").unwrap();
     cronos_scheduler::cpi::queue_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),

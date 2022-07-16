@@ -22,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.24.2"
+anchor-lang = { features = ["init-if-needed"], version = "0.24.2" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 cronos-cron = { path = "../../cron", version = "0.2.0" }
 cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0" }

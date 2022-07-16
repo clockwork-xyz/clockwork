@@ -63,6 +63,7 @@ pub struct TaskExec<'info> {
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
+    // Load accounts
     let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
@@ -78,9 +79,8 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
         return Ok(());
     }
 
+    // Execute the task
     let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
-
     let delegate_bump = *ctx.bumps.get("delegate").unwrap();
-    task.exec(account_infos, config, fee, delegate, delegate_bump, queue, worker)?;
-    Ok(())
+    task.exec(account_infos, config, fee, delegate, delegate_bump, queue, worker)
 }

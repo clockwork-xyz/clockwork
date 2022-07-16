@@ -22,6 +22,7 @@ pub const SEED_DELEGATE: &[u8] = b"delegate";
 #[derive(Debug)]
 pub struct Delegate {
     pub authority: Pubkey,
+    pub is_initialized: bool,
     pub queue_count: u128,
 }
 
@@ -56,6 +57,7 @@ pub trait DelegateAccount {
 impl DelegateAccount for Account<'_, Delegate> {
     fn new(&mut self, authority: Pubkey) -> Result<()> {
         self.authority = authority;
+        self.is_initialized = true;
         self.queue_count = 0;
         Ok(())
     }
