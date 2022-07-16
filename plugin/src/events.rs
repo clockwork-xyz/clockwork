@@ -107,5 +107,5 @@ fn rotator_pubkey() -> Pubkey {
 
 #[cached]
 fn pool_pubkey() -> Pubkey {
-    Pool::pda().0
+    Pool::pubkey()
 }

@@ -4,10 +4,10 @@ use {
 };
 
 pub fn get(client: &Client) -> Result<(), CliError> {
-    let address = Pool::pda().0;
+    let pool_pubkey = Pool::pubkey();
     let pool = client
-        .get::<Pool>(&address)
-        .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
+        .get::<Pool>(&pool_pubkey)
+        .map_err(|_err| CliError::AccountDataNotParsable(pool_pubkey.to_string()))?;
     println!("{:#?}", pool);
     Ok(())
 }

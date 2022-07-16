@@ -15,7 +15,7 @@ pub fn get(client: &Client) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountNotFound(network_config_pubkey.to_string()))?;
 
     // Get pool config
-    let pool_config_pubkey = PoolConfig::pda().0;
+    let pool_config_pubkey = PoolConfig::pubkey();
     let pool_config = client
         .get::<PoolConfig>(&pool_config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(pool_config_pubkey.to_string()))?;

@@ -17,7 +17,7 @@ pub fn request_new(
     route: String,
 ) -> Instruction {
     let config_pubkey = cronos_http::state::Config::pubkey();
-    let pool_pubkey = cronos_pool::state::Pool::pda().0;
+    let pool_pubkey = cronos_pool::state::Pool::pubkey();
     let request_pubkey = cronos_http::state::Request::pubkey(api, caller, id.clone());
     Instruction {
         program_id: cronos_http::ID,

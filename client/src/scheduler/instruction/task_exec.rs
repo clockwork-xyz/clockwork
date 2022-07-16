@@ -10,7 +10,7 @@ use anchor_lang::{
 pub fn task_exec(manager: Pubkey, queue: Pubkey, task: Pubkey, worker: Pubkey) -> Instruction {
     let config_pubkey = cronos_scheduler::state::Config::pubkey();
     let fee_pubkey = cronos_scheduler::state::Fee::pubkey(queue);
-    let pool = cronos_pool::state::Pool::pda().0;
+    let pool_pubkey = cronos_pool::state::Pool::pubkey();
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
@@ -18,7 +18,7 @@ pub fn task_exec(manager: Pubkey, queue: Pubkey, task: Pubkey, worker: Pubkey) -
             AccountMeta::new_readonly(config_pubkey, false),
             AccountMeta::new(fee_pubkey, false),
             AccountMeta::new_readonly(manager, false),
-            AccountMeta::new_readonly(pool, false),
+            AccountMeta::new_readonly(pool_pubkey, false),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task, false),

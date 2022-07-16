@@ -1,6 +1,5 @@
 use {
     super::Config,
-    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{collections::VecDeque, convert::TryFrom},
 };
@@ -18,8 +17,8 @@ pub struct Pool {
 }
 
 impl Pool {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_POOL], &crate::ID)
+    pub fn pubkey() -> Pubkey {
+        Pubkey::find_program_address(&[SEED_POOL], &crate::ID).0
     }
 }
 

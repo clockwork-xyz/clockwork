@@ -1,6 +1,5 @@
 pub mod errors;
 pub mod id;
-pub mod pda;
 pub mod state;
 
 mod instructions;

@@ -27,10 +27,10 @@ pub struct RotatorTurn<'info> {
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(mut, address = cronos_pool::state::Pool::pda().0)]
+    #[account(mut, address = cronos_pool::state::Pool::pubkey())]
     pub pool: Account<'info, cronos_pool::state::Pool>,
 
-    #[account(address = cronos_pool::state::Config::pda().0)]
+    #[account(address = cronos_pool::state::Config::pubkey())]
     pub pool_config: Account<'info, cronos_pool::state::Config>,
 
     #[account(address = cronos_pool::ID)]
