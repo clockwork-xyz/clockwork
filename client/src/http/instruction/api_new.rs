@@ -18,8 +18,8 @@ pub fn api_new(
         program_id: cronos_http::ID,
         accounts: vec![
             AccountMeta::new_readonly(ack_authority, false),
-            AccountMeta::new_readonly(authority, true),
             AccountMeta::new(api_pubkey, false),
+            AccountMeta::new_readonly(authority, true),
             AccountMeta::new(payer, true),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
