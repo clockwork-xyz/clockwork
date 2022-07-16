@@ -22,13 +22,13 @@ pub struct PoolObserver {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // Map from unconfirmed slot numbers to the expected delegate pool for that moment.
+    // Map from unconfirmed slot numbers to the expected worker pool for that moment.
     pub pool_forecasts: DashMap<u64, Pool>,
 
-    // RwLock for this node's delegate status.
+    // RwLock for this node's worker status.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
 
-    // Pub delegate address
+    // Pub worker address
     pub pubkey: Pubkey,
 
     // A copy of the current rotator account data.
@@ -50,7 +50,7 @@ impl PoolObserver {
             config: config.clone(),
             pool_forecasts: DashMap::new(),
             pool_positions: Arc::new(RwLock::new(PoolPositions::default())),
-            pubkey: read_or_new_keypair(config.delegate_keypath).pubkey(),
+            pubkey: read_or_new_keypair(config.keypath).pubkey(),
             rotator: RwLock::new(Rotator {
                 last_slot: 0,
                 nonce: 0,
@@ -103,18 +103,18 @@ impl PoolObserver {
             );
             drop(r_rotator);
 
-            // Update the set delegate status
+            // Update the set worker status
             let mut w_pool_positions = this.pool_positions.write().await;
             this.pool_forecasts.retain(|slot, pool| {
                 if *slot == confirmed_slot {
                     *w_pool_positions = PoolPositions {
                         scheduler_pool_position: PoolPosition {
                             current_position: pool
-                                .delegates
+                                .workers
                                 .iter()
                                 .position(|k| k.eq(&this.pubkey))
                                 .map(|i| i as u64),
-                            delegates: pool.delegates.make_contiguous().to_vec().clone(),
+                            workers: pool.workers.make_contiguous().to_vec().clone(),
                         },
                     }
                 }
@@ -163,7 +163,7 @@ impl PoolObserver {
             && slot < target_slot + GRACE_PERIOD
         {
             return Err(GeyserPluginError::Custom(
-                "This node is not a delegate, and it is within the rotation grace period".into(),
+                "This node is not a worker, and it is within the rotation grace period".into(),
             ));
         }
 
@@ -238,7 +238,7 @@ impl Debug for PoolObserver {
 #[derive(Clone)]
 pub struct PoolPosition {
     pub current_position: Option<u64>,
-    pub delegates: Vec<Pubkey>,
+    pub workers: Vec<Pubkey>,
 }
 
 #[derive(Clone)]
@@ -251,7 +251,7 @@ impl Default for PoolPositions {
         PoolPositions {
             scheduler_pool_position: PoolPosition {
                 current_position: None,
-                delegates: vec![],
+                workers: vec![],
             },
         }
     }

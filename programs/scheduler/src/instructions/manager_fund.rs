@@ -20,7 +20,6 @@ pub struct ManagerFund<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }

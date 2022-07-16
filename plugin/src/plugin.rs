@@ -191,12 +191,12 @@ impl CronosPlugin {
 
         // Build clients
         let cronos_client = Arc::new(CronosClient::new(
-            read_or_new_keypair(self.config.clone().delegate_keypath),
+            read_or_new_keypair(self.config.clone().keypath),
             LOCAL_RPC_URL.into(),
         ));
         let tpu_client = Arc::new(
             TpuClient::new(
-                read_or_new_keypair(self.config.clone().delegate_keypath),
+                read_or_new_keypair(self.config.clone().keypath),
                 LOCAL_RPC_URL.into(),
                 LOCAL_WEBSOCKET_URL.into(),
             )

@@ -13,7 +13,7 @@ static DEFAULT_WORKER_THREADS: usize = 10;
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
     pub bugsnag_api_key: Option<String>,
-    pub delegate_keypath: Option<String>,
+    pub keypath: Option<String>,
     pub slot_timeout_threshold: u64,
     pub worker_threads: usize,
 }
@@ -22,7 +22,7 @@ impl Default for PluginConfig {
     fn default() -> Self {
         Self {
             bugsnag_api_key: None,
-            delegate_keypath: None,
+            keypath: None,
             slot_timeout_threshold: DEFAULT_SLOT_TIMEOUT_THRESHOLD,
             worker_threads: DEFAULT_WORKER_THREADS,
         }

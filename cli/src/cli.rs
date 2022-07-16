@@ -14,10 +14,10 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        delegate_fee: Option<u64>,
-        delegate_holdout_period: Option<i64>,
-        delegate_spam_penalty: Option<u64>,
         program_fee: Option<u64>,
+        worker_fee: Option<u64>,
+        worker_holdout_period: Option<i64>,
+        worker_spam_penalty: Option<u64>,
     },
 
     // Task commands
@@ -127,26 +127,26 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("delegate_fee")
-                                .long("delegate_fee")
+                            Arg::new("program_fee")
+                                .long("program_fee")
                                 .value_name("NUM_LAMPORTS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("delegate_holdout_period")
-                                .long("delegate_holdout_period")
+                            Arg::new("worker_fee")
+                                .long("worker_fee")
+                                .value_name("NUM_LAMPORTS")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("worker_holdout_period")
+                                .long("worker_holdout_period")
                                 .value_name("NUM_SECONDS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("delegate_spam_penalty")
-                                .long("delegate_spam_penalty")
-                                .value_name("NUM_LAMPORTS")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("program_fee")
-                                .long("program_fee")
+                            Arg::new("worker_spam_penalty")
+                                .long("worker_spam_penalty")
                                 .value_name("NUM_LAMPORTS")
                                 .takes_value(true),
                         )
@@ -154,9 +154,9 @@ pub fn app() -> Command<'static> {
                             ArgGroup::new("config_settings")
                                 .args(&[
                                     "admin",
-                                    "delegate_fee",
-                                    "delegate_holdout_period",
-                                    "delegate_spam_penalty",
+                                    "worker_fee",
+                                    "worker_holdout_period",
+                                    "worker_spam_penalty",
                                     "program_fee",
                                 ])
                                 .multiple(true),

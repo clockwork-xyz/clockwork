@@ -54,12 +54,12 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
-            delegate_fee: parse_u64("delegate_fee", matches).map_or(None, |v| Some(v)),
-            delegate_holdout_period: parse_i64("delegate_holdout_period", matches)
-                .map_or(None, |v| Some(v)),
-            delegate_spam_penalty: parse_u64("delegate_spam_penalty", matches)
-                .map_or(None, |v| Some(v)),
             program_fee: parse_u64("program_fee", matches).map_or(None, |v| Some(v)),
+            worker_fee: parse_u64("worker_fee", matches).map_or(None, |v| Some(v)),
+            worker_holdout_period: parse_i64("worker_holdout_period", matches)
+                .map_or(None, |v| Some(v)),
+            worker_spam_penalty: parse_u64("worker_spam_penalty", matches)
+                .map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

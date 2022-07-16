@@ -37,10 +37,10 @@ pub fn get(client: &Client) -> Result<(), CliError> {
 pub fn set(
     client: &Client,
     admin: Option<Pubkey>,
-    delegate_fee: Option<u64>,
-    delegate_holdout_period: Option<i64>,
-    delegate_spam_penalty: Option<u64>,
     program_fee: Option<u64>,
+    worker_fee: Option<u64>,
+    worker_holdout_period: Option<i64>,
+    worker_spam_penalty: Option<u64>,
 ) -> Result<(), CliError> {
     let config_pubkey = SchedulerConfig::pubkey();
     let config = client
@@ -52,21 +52,21 @@ pub fn set(
             Some(admin) => admin,
             None => config.admin,
         },
-        delegate_fee: match delegate_fee {
-            Some(delegate_fee) => delegate_fee,
-            None => config.delegate_fee,
-        },
-        delegate_holdout_period: match delegate_holdout_period {
-            Some(delegate_holdout_period) => delegate_holdout_period,
-            None => config.delegate_holdout_period,
-        },
-        delegate_spam_penalty: match delegate_spam_penalty {
-            Some(delegate_spam_penalty) => delegate_spam_penalty,
-            None => config.delegate_spam_penalty,
-        },
         program_fee: match program_fee {
             Some(program_fee) => program_fee,
             None => config.program_fee,
+        },
+        worker_fee: match worker_fee {
+            Some(worker_fee) => worker_fee,
+            None => config.worker_fee,
+        },
+        worker_holdout_period: match worker_holdout_period {
+            Some(worker_holdout_period) => worker_holdout_period,
+            None => config.worker_holdout_period,
+        },
+        worker_spam_penalty: match worker_spam_penalty {
+            Some(worker_spam_penalty) => worker_spam_penalty,
+            None => config.worker_spam_penalty,
         },
     };
 

@@ -14,7 +14,7 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[account]
 #[derive(Debug)]
 pub struct Pool {
-    pub delegates: VecDeque<Pubkey>,
+    pub workers: VecDeque<Pubkey>,
 }
 
 impl Pool {
@@ -37,25 +37,25 @@ impl TryFrom<Vec<u8>> for Pool {
 pub trait PoolAccount {
     fn new(&mut self) -> Result<()>;
 
-    fn rotate(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()>;
+    fn rotate(&mut self, config: &Account<Config>, worker: Pubkey) -> Result<()>;
 }
 
 impl PoolAccount for Account<'_, Pool> {
     fn new(&mut self) -> Result<()> {
-        self.delegates = VecDeque::new();
+        self.workers = VecDeque::new();
         Ok(())
     }
 
-    fn rotate(&mut self, config: &Account<Config>, delegate: Pubkey) -> Result<()> {
-        // Pop a delegate out of the pool
-        self.delegates.pop_front();
+    fn rotate(&mut self, config: &Account<Config>, worker: Pubkey) -> Result<()> {
+        // Pop a worker out of the pool
+        self.workers.pop_front();
 
-        // Push provided delegate into the pool
-        self.delegates.push_back(delegate);
+        // Push provided worker into the pool
+        self.workers.push_back(worker);
 
         // Drain pool to the configured size limit
-        while self.delegates.len() > config.pool_size {
-            self.delegates.pop_front();
+        while self.workers.len() > config.pool_size {
+            self.workers.pop_front();
         }
 
         Ok(())

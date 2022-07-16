@@ -54,17 +54,17 @@ pub trait TaskAccount {
         &mut self,
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
-        delegate: &mut Signer,
         fee: &mut Account<Fee>,
         manager: &Account<Manager>,
         manager_bump: u8,
         queue: &mut Account<Queue>,
+        worker: &mut Signer,
     ) -> Result<()>;
 }
 
 impl TaskAccount for Account<'_, Task> {
     fn new(&mut self, ixs: Vec<InstructionData>, queue: &mut Account<Queue>) -> Result<()> {
-        // Reject inner instructions if they have a signer other than the manager or delegate
+        // Reject inner instructions if they have a signer other than the manager or worker
         for ix in ixs.iter() {
             for acc in ix.accounts.iter() {
                 if acc.is_signer {
@@ -91,11 +91,11 @@ impl TaskAccount for Account<'_, Task> {
         &mut self,
         account_infos: &Vec<AccountInfo>,
         config: &Account<Config>,
-        delegate: &mut Signer,
         fee: &mut Account<Fee>,
         manager: &Account<Manager>,
         manager_bump: u8,
         queue: &mut Account<Queue>,
+        worker: &mut Signer,
     ) -> Result<()> {
         // Validate the task id matches the queue's current execution state
         require!(
@@ -107,32 +107,32 @@ impl TaskAccount for Account<'_, Task> {
             CronosError::InvalidTask
         );
 
-        // Validate the delegate data is empty
-        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+        // Validate the worker data is empty
+        require!(worker.data_is_empty(), CronosError::DelegateDataNotEmpty);
 
-        // Record the delegate's lamports before invoking inner ixs
-        let delegate_lamports_pre = delegate.lamports();
+        // Record the worker's lamports before invoking inner ixs
+        let worker_lamports_pre = worker.lamports();
 
         // Create an array of dynamic ixs to update the task for the next invocation
         let dyanmic_ixs: &mut Vec<InstructionData> = &mut vec![];
 
         // Process all of the task instructions
         for ix in &self.ixs {
-            // If an inner ix account matches the Cronos delegate address (CronosDe1egate11111111111111111111111111111),
-            //  then inject the delegate account in its place. Dapp developers can use the delegate as a payer to initialize
+            // If an inner ix account matches the Cronos worker address (CronosDe1egate11111111111111111111111111111),
+            //  then inject the worker account in its place. Dapp developers can use the worker as a payer to initialize
             //  new accouns in their queues. Delegates will be reimbursed for all SOL spent during the inner ixs.
             //
-            // Because the delegate can be injected as the signer on inner ixs (written by presumed malicious parties),
-            //  node operators should not secure any assets or staking positions with their delegate wallets other than
+            // Because the worker can be injected as the signer on inner ixs (written by presumed malicious parties),
+            //  node operators should not secure any assets or staking positions with their worker wallets other than
             //  an operational level of lamports needed to submit txns (~0.1 ⊚).
             //
-            // TODO Update the network program to allow for split identity / delegate addresses so CRON stakes
-            //  are not secured by delegate signatures.
+            // TODO Update the network program to allow for split identity / worker addresses so CRON stakes
+            //  are not secured by worker signatures.
             let accs: &mut Vec<AccountMetaData> = &mut vec![];
             ix.accounts.iter().for_each(|acc| {
                 if acc.pubkey == crate::payer::ID {
                     accs.push(AccountMetaData {
-                        pubkey: delegate.key(),
+                        pubkey: worker.key(),
                         is_signer: acc.is_signer,
                         is_writable: acc.is_writable,
                     });
@@ -175,7 +175,7 @@ impl TaskAccount for Account<'_, Task> {
                                     let acc = ix.accounts.get(i).unwrap();
                                     AccountMetaData {
                                         pubkey: match pubkey {
-                                            _ if *pubkey == delegate.key() => crate::payer::ID,
+                                            _ if *pubkey == worker.key() => crate::payer::ID,
                                             _ => *pubkey,
                                         },
                                         is_signer: acc.is_signer,
@@ -190,34 +190,31 @@ impl TaskAccount for Account<'_, Task> {
             }
         }
 
-        // Verify that inner ixs have not initialized data at the delegate address
-        require!(delegate.data_is_empty(), CronosError::DelegateDataNotEmpty);
+        // Verify that inner ixs have not initialized data at the worker address
+        require!(worker.data_is_empty(), CronosError::DelegateDataNotEmpty);
 
         // Update the actions's ixs for the next invocation
         if !dyanmic_ixs.is_empty() {
             self.ixs = dyanmic_ixs.clone();
         }
 
-        // Track how many lamports the delegate spent in the inner ixs
-        let delegate_lamports_post = delegate.lamports();
-        let delegate_reimbursement = delegate_lamports_pre
-            .checked_sub(delegate_lamports_post)
+        // Track how many lamports the worker spent in the inner ixs
+        let worker_lamports_post = worker.lamports();
+        let worker_reimbursement = worker_lamports_pre
+            .checked_sub(worker_lamports_post)
             .unwrap();
 
-        // Pay delegate fees
-        let total_delegate_fee = config
-            .delegate_fee
-            .checked_add(delegate_reimbursement)
-            .unwrap();
+        // Pay worker fees
+        let total_worker_fee = config.worker_fee.checked_add(worker_reimbursement).unwrap();
         **manager.to_account_info().try_borrow_mut_lamports()? = manager
             .to_account_info()
             .lamports()
-            .checked_sub(total_delegate_fee)
+            .checked_sub(total_worker_fee)
             .unwrap();
-        **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
+        **worker.to_account_info().try_borrow_mut_lamports()? = worker
             .to_account_info()
             .lamports()
-            .checked_add(total_delegate_fee)
+            .checked_add(total_worker_fee)
             .unwrap();
 
         // Pay program fees

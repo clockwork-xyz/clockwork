@@ -167,21 +167,21 @@ impl QueueObserver {
         if pool_position.current_position.is_none() && unix_timestamp < queue.exec_at.unwrap() + 10
         {
             return Err(GeyserPluginError::Custom(
-                "This node is not a delegate, and the queue is not within the grace period".into(),
+                "This node is not a worker, and the queue is within the grace period".into(),
             ));
         }
 
         // Setup ixs based on queue's current status
-        let delegate_pubkey = cronos_client.payer_pubkey();
+        let worker_pubkey = cronos_client.payer_pubkey();
         let mut ixs: Vec<Instruction> = vec![];
         let mut starting_task_id = 0;
         match queue.status {
             QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
             QueueStatus::Pending => {
                 ixs.push(cronos_client::scheduler::instruction::queue_start(
-                    delegate_pubkey,
                     queue.manager,
                     queue_pubkey,
+                    worker_pubkey,
                 ));
             }
             QueueStatus::Processing { task_id } => starting_task_id = task_id,
@@ -195,10 +195,10 @@ impl QueueObserver {
 
             // Build ix
             let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
-                delegate_pubkey,
                 queue.manager,
                 queue_pubkey,
                 task_pubkey,
+                worker_pubkey,
             );
 
             // Inject accounts for inner ixs
@@ -217,10 +217,10 @@ impl QueueObserver {
                     if !acc_dedupe.contains(&acc.pubkey) {
                         acc_dedupe.insert(acc.pubkey);
 
-                        // Inject the delegate pubkey as the Cronos "payer" account
+                        // Inject the worker pubkey as the Cronos "payer" account
                         let mut payer_pubkey = acc.pubkey;
                         if acc.pubkey == cronos_client::scheduler::payer::ID {
-                            payer_pubkey = delegate_pubkey;
+                            payer_pubkey = worker_pubkey;
                         }
                         task_exec_ix.accounts.push(match acc.is_writable {
                             true => AccountMeta::new(payer_pubkey, false),
@@ -236,7 +236,7 @@ impl QueueObserver {
 
         // Pack into tx
         // TODO At what scale must ixs be chunked into separate txs?
-        let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&delegate_pubkey));
+        let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&worker_pubkey));
         tx.sign(
             &[cronos_client.payer()],
             cronos_client.get_latest_blockhash().map_err(|_err| {

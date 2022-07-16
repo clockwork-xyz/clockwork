@@ -86,7 +86,7 @@ pub fn handler<'info>(
     let workers = pool
         .clone()
         .into_inner()
-        .delegates
+        .workers
         .iter()
         .map(|k| *k)
         .collect::<Vec<Pubkey>>();

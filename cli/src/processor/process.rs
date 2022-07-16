@@ -22,17 +22,17 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSet {
             admin,
-            delegate_fee,
-            delegate_holdout_period,
-            delegate_spam_penalty,
+            worker_fee,
+            worker_holdout_period,
+            worker_spam_penalty,
             program_fee,
         } => super::config::set(
             &client,
             admin,
-            delegate_fee,
-            delegate_holdout_period,
-            delegate_spam_penalty,
             program_fee,
+            worker_fee,
+            worker_holdout_period,
+            worker_spam_penalty,
         ),
         CliCommand::Health => super::health::get(&client),
         CliCommand::HttpRequestNew {

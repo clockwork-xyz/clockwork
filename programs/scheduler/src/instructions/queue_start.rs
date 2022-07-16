@@ -8,9 +8,6 @@ pub struct QueueStart<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
-    #[account(mut)]
-    pub delegate: Signer<'info>,
-
     #[account(
         seeds = [
             SEED_MANAGER,
@@ -33,6 +30,9 @@ pub struct QueueStart<'info> {
         constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
     )]
     pub queue: Account<'info, Queue>,
+
+    #[account(mut)]
+    pub worker: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<QueueStart>) -> Result<()> {

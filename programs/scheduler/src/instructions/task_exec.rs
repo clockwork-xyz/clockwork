@@ -12,9 +12,6 @@ pub struct TaskExec<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(mut)]
-    pub delegate: Signer<'info>,
-
     #[account(
         mut,
         seeds = [
@@ -60,27 +57,30 @@ pub struct TaskExec<'info> {
         bump,
     )]
     pub task: Account<'info, Task>,
+
+    #[account(mut)]
+    pub worker: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let task = &mut ctx.accounts.task;
     let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
-    let delegate = &mut ctx.accounts.delegate;
     let fee = &mut ctx.accounts.fee;
     let manager = &ctx.accounts.manager;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
+    let worker = &mut ctx.accounts.worker;
 
     // Validate the delegate is authorized to execute this task
-    if is_spam(clock, &config, delegate, fee, pool, queue, system_program)? {
+    if is_spam(clock, &config, fee, pool, queue, system_program, worker)? {
         return Ok(());
     }
 
     let account_infos = &mut ctx.remaining_accounts.clone().to_vec();
 
     let manager_bump = *ctx.bumps.get("manager").unwrap();
-    task.exec(account_infos, config, delegate, fee, manager, manager_bump, queue)?;
+    task.exec(account_infos, config, fee, manager, manager_bump, queue, worker)?;
     Ok(())
 }

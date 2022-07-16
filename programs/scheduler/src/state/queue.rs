@@ -9,6 +9,17 @@ use {
 
 pub const SEED_QUEUE: &[u8] = b"queue";
 
+// #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+// pub enum Trigger {
+//     Cron {
+//         schedule: String,
+//     },
+//     Slot {
+//         repeat: Option<u64>,
+//         slot: Option<u64>,
+//     },
+// }
+
 /**
  * Queue
  */
@@ -22,6 +33,7 @@ pub struct Queue {
     pub schedule: String,
     pub status: QueueStatus,
     pub task_count: u128,
+    // pub trigger: Trigger,
 }
 
 impl Queue {

@@ -1,6 +1,6 @@
 {
   "libpath": "../target/debug/libcronos_plugin.dylib",
-  "delegate_keypath": "./test-ledger/validator-keypair.json",
+  "keypath": "./test-ledger/validator-keypair.json",
   "slot_timeout_threshold": 150,
   "worker_threads": 10
 }
