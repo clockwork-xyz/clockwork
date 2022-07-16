@@ -21,7 +21,7 @@ pub fn get(client: &Client) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountNotFound(pool_config_pubkey.to_string()))?;
 
     // Get scheduler config
-    let scheduler_config_pubkey = SchedulerConfig::pda().0;
+    let scheduler_config_pubkey = SchedulerConfig::pubkey();
     let scheduler_config = client
         .get::<SchedulerConfig>(&scheduler_config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(scheduler_config_pubkey.to_string()))?;
@@ -42,7 +42,7 @@ pub fn set(
     delegate_spam_penalty: Option<u64>,
     program_fee: Option<u64>,
 ) -> Result<(), CliError> {
-    let config_pubkey = SchedulerConfig::pda().0;
+    let config_pubkey = SchedulerConfig::pubkey();
     let config = client
         .get::<SchedulerConfig>(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;

@@ -1,5 +1,4 @@
 use {
-    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -25,8 +24,8 @@ impl TryFrom<Vec<u8>> for Fee {
 }
 
 impl Fee {
-    pub fn pda(queue: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_FEE, queue.as_ref()], &crate::ID)
+    pub fn pubkey(queue: Pubkey) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_FEE, queue.as_ref()], &crate::ID).0
     }
 }
 

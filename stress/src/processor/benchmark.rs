@@ -36,7 +36,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     // Create manager
     let authority = &Keypair::new();
-    let manager_pubkey = Manager::pda(authority.pubkey()).0;
+    let manager_pubkey = Manager::pubkey(authority.pubkey());
     let ix = cronos_client::scheduler::instruction::manager_new(
         authority.pubkey(),
         authority.pubkey(),
@@ -153,10 +153,10 @@ fn create_queue_ix(
     queue_id: u128,
 ) -> Instruction {
     // Get manager for authority
-    let manager_pubkey = Manager::pda(authority.pubkey()).0;
+    let manager_pubkey = Manager::pubkey(authority.pubkey());
 
     // Generate ix for new queue account
-    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
+    let queue_pubkey = Queue::pubkey(manager_pubkey, queue_id);
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -211,9 +211,9 @@ fn build_memo_ix(manager_pubkey: &Pubkey) -> Instruction {
 }
 
 fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruction {
-    let manager_pubkey = Manager::pda(authority.pubkey()).0;
-    let queue_pubkey = Queue::pda(manager_pubkey, queue_id).0;
-    let task_pubkey = Task::pda(queue_pubkey, task_id).0;
+    let manager_pubkey = Manager::pubkey(authority.pubkey());
+    let queue_pubkey = Queue::pubkey(manager_pubkey, queue_id);
+    let task_pubkey = Task::pubkey(queue_pubkey, task_id);
     let memo_ix = build_memo_ix(&manager_pubkey);
     cronos_client::scheduler::instruction::task_new(
         authority.pubkey(),

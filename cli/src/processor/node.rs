@@ -44,20 +44,12 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
     let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
 
-    let manager_pubkey = cronos_client::scheduler::state::Manager::pda(authority_pubkey).0;
-    // let rotator_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
-    // let rotator_task_pubkey = cronos_client::scheduler::state::Task::pda(
-    //     rotator_queue_pubkey,
-    //     registry_data.node_count.into(),
-    // )
-    // .0;
-
-    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pda(manager_pubkey, 0).0;
-    let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pda(
+    let manager_pubkey = cronos_client::scheduler::state::Manager::pubkey(authority_pubkey);
+    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(manager_pubkey, 0);
+    let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
-    )
-    .0;
+    );
 
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,

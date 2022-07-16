@@ -5,7 +5,7 @@ use crate::errors::CliError;
 
 pub fn create(client: &Client) -> Result<(), CliError> {
     let authority = client.payer_pubkey();
-    let manager_pubkey = cronos_client::scheduler::state::Manager::pda(authority).0;
+    let manager_pubkey = cronos_client::scheduler::state::Manager::pubkey(authority);
     let ix =
         cronos_client::scheduler::instruction::manager_new(authority, authority, manager_pubkey);
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();

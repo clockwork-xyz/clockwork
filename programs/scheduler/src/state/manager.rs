@@ -1,6 +1,6 @@
 use {
     super::InstructionData,
-    crate::{errors::CronosError, pda::PDA, responses::ExecResponse},
+    crate::{errors::CronosError, responses::ExecResponse},
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -26,8 +26,8 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn pda(authority: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_MANAGER, authority.as_ref()], &crate::ID)
+    pub fn pubkey(authority: Pubkey) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_MANAGER, authority.as_ref()], &crate::ID).0
     }
 }
 

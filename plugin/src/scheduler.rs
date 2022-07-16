@@ -190,7 +190,7 @@ impl Scheduler {
         // Build task_exec ixs
         for i in starting_task_id..queue.task_count {
             // Get the task account
-            let task_pubkey = Task::pda(queue_pubkey, i).0;
+            let task_pubkey = Task::pubkey(queue_pubkey, i);
             let task = cronos_client.get::<Task>(&task_pubkey).unwrap();
 
             // Build ix

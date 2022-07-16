@@ -1,6 +1,6 @@
 use {
     super::Manager,
-    crate::{errors::CronosError, pda::PDA},
+    crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     chrono::{DateTime, NaiveDateTime, Utc},
     cronos_cron::Schedule,
@@ -25,11 +25,12 @@ pub struct Queue {
 }
 
 impl Queue {
-    pub fn pda(manager: Pubkey, id: u128) -> PDA {
+    pub fn pubkey(manager: Pubkey, id: u128) -> Pubkey {
         Pubkey::find_program_address(
             &[SEED_QUEUE, manager.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
+        .0
     }
 }
 

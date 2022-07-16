@@ -4,7 +4,7 @@ use super::{Config, Fee, Manager};
 
 use {
     super::Queue,
-    crate::{errors::CronosError, pda::PDA},
+    crate::errors::CronosError,
     anchor_lang::{
         prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
@@ -27,11 +27,12 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn pda(queue: Pubkey, id: u128) -> PDA {
+    pub fn pubkey(queue: Pubkey, id: u128) -> Pubkey {
         Pubkey::find_program_address(
             &[SEED_TASK, queue.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
+        .0
     }
 }
 

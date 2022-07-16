@@ -8,16 +8,16 @@ use anchor_lang::{
 };
 
 pub fn task_exec(delegate: Pubkey, manager: Pubkey, queue: Pubkey, task: Pubkey) -> Instruction {
-    let config = cronos_scheduler::state::Config::pda().0;
-    let fee = cronos_scheduler::state::Fee::pda(queue).0;
+    let config_pubkey = cronos_scheduler::state::Config::pubkey();
+    let fee_pubkey = cronos_scheduler::state::Fee::pubkey(queue);
     let pool = cronos_pool::state::Pool::pda().0;
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new_readonly(config, false),
+            AccountMeta::new_readonly(config_pubkey, false),
             AccountMeta::new(delegate, true),
-            AccountMeta::new(fee, false),
+            AccountMeta::new(fee_pubkey, false),
             AccountMeta::new_readonly(manager, false),
             AccountMeta::new_readonly(pool, false),
             AccountMeta::new(queue, false),

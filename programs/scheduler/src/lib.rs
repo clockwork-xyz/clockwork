@@ -6,7 +6,6 @@ pub mod errors;
 pub mod events;
 pub mod id;
 pub mod payer;
-pub mod pda;
 pub mod responses;
 pub mod state;
 

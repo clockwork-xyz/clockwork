@@ -10,7 +10,7 @@ use {
 pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
     // Fetch manager data.
     let authority_pubkey = client.payer_pubkey();
-    let manager_pubkey = Manager::pda(authority_pubkey).0;
+    let manager_pubkey = Manager::pubkey(authority_pubkey);
     let data = client
         .get_account_data(&manager_pubkey)
         .map_err(|_err| CliError::AccountNotFound(manager_pubkey.to_string()))?;
@@ -18,7 +18,7 @@ pub fn create(client: &Client, schedule: String) -> Result<(), CliError> {
         .map_err(|_err| CliError::AccountDataNotParsable(manager_pubkey.to_string()))?;
 
     // Build queue_create ix.
-    let queue_pubkey = Queue::pda(manager_pubkey, manager_data.queue_count).0;
+    let queue_pubkey = Queue::pubkey(manager_pubkey, manager_data.queue_count);
     let queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority_pubkey,
         manager_pubkey,
@@ -42,7 +42,7 @@ pub fn get(client: &Client, address: &Pubkey, task_id: Option<u128>) -> Result<(
 
     let mut task_pubkeys = vec![];
     for i in 0..queue.task_count.min(10) {
-        let task_pubkey = cronos_client::scheduler::state::Task::pda(*address, i).0;
+        let task_pubkey = cronos_client::scheduler::state::Task::pubkey(*address, i);
         task_pubkeys.push(task_pubkey);
     }
 
@@ -51,7 +51,7 @@ pub fn get(client: &Client, address: &Pubkey, task_id: Option<u128>) -> Result<(
     match task_id {
         None => (),
         Some(task_id) => {
-            let task_pubkey = cronos_client::scheduler::state::Task::pda(*address, task_id).0;
+            let task_pubkey = cronos_client::scheduler::state::Task::pubkey(*address, task_id);
             super::task::get(client, &task_pubkey).ok();
         }
     }
