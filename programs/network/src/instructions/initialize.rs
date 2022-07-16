@@ -88,8 +88,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    // let rotator_fee = ctx.remaining_accounts.get(0).unwrap();
-    // let rotator_queue = ctx.remaining_accounts.get(1).unwrap();
     let manager = ctx.remaining_accounts.get(0).unwrap();
     let snapshot_fee = ctx.remaining_accounts.get(1).unwrap();
     let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
