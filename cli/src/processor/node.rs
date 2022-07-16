@@ -16,12 +16,12 @@ pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn get_by_delegate(client: &Client, delegate: Pubkey) -> Result<(), CliError> {
-    let node_pubkey = Node::pubkey(delegate);
+pub fn get_by_worker(client: &Client, worker: Pubkey) -> Result<(), CliError> {
+    let node_pubkey = Node::pubkey(worker);
     get(client, node_pubkey)
 }
 
-pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
+pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pubkey();
     let config_data = client
@@ -33,7 +33,7 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     // Build ix
     let owner = client.payer().clone();
     let authority_pubkey = Authority::pubkey();
-    let node_pubkey = Node::pubkey(delegate.pubkey());
+    let node_pubkey = Node::pubkey(worker.pubkey());
     let registry_pubkey = Registry::pubkey();
     let registry_data = client
         .get_account_data(&registry_pubkey)
@@ -54,9 +54,6 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
         config_pubkey,
-        // rotator_queue_pubkey,
-        // rotator_task_pubkey,
-        delegate.pubkey(),
         entry_pubkey,
         manager_pubkey,
         config_data.mint,
@@ -66,12 +63,13 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
         snapshot_pubkey,
         snapshot_queue_pubkey,
         snapshot_task_pubkey,
+        worker.pubkey(),
     );
-    client.send_and_confirm(&[ix], &[owner, &delegate]).unwrap();
+    client.send_and_confirm(&[ix], &[owner, &worker]).unwrap();
     get(client, node_pubkey)
 }
 
-pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
+pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pubkey();
     let config_data = client
@@ -82,14 +80,14 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
 
     // Build ix
     let signer = client.payer();
-    let node_pubkey = Node::pubkey(delegate);
+    let node_pubkey = Node::pubkey(worker);
     let ix = cronos_client::network::instruction::node_stake(
         amount,
         config_pubkey,
-        delegate,
         node_pubkey,
         config_data.mint,
         signer.pubkey(),
+        worker,
     );
 
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();

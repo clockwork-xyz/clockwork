@@ -47,16 +47,16 @@ rm cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
 
-Next, create a new keypair for signing Cronos delegate txs. The responsbilities of being a delegate currently include the processing of scheduled tasks and the rotating the delegate pool. Cronos delegates may be expected to perform other kinds of work in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
+Next, create a new keypair for signing Cronos txs. The responsbilities of being a worker currently include the processing of scheduled tasks and the rotating the worker pool. Cronos workers may be expected to perform other jobs in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
 ```sh
-solana-keygen new -o cronos-delegate-keypair.json
+solana-keygen new -o cronos-worker-keypair.json
 ```
 
 Then, setup the plugin config file in a folder where your startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
 ```js
 {
   "libpath": "/home/sol/cronos-geyser-plugin-release/lib/libcronos_plugin.so",
-  "keypath": "/home/sol/cronos-delegate-keypair.json",
+  "keypath": "/home/sol/cronos-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
   "slot_timeout_threshold": 150,
   "worker_threads": 10

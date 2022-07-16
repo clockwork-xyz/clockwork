@@ -1,15 +1,11 @@
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
 mod config;
+mod events;
 mod executors;
 mod observers;
-// mod delegate;
-mod events;
-// mod http_executor;
 mod plugin;
-// mod scheduler;
 mod tpu_client;
-// mod tx_executor;
 mod utils;
 
 pub use plugin::CronosPlugin;

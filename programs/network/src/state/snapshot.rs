@@ -66,10 +66,10 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         // Record the new snapshot entry
         entry.new(
             self.node_count,
-            node.delegate,
             self.key(),
             self.stake_total,
             stake.amount,
+            node.worker,
         )?;
 
         // Update the snapshot's entry count

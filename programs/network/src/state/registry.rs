@@ -45,10 +45,10 @@ pub trait RegistryAccount {
 
     fn new_node(
         &mut self,
-        delegate: &Signer,
         owner: &mut Signer,
         node: &mut Account<Node>,
         stake: &mut Account<TokenAccount>,
+        worker: &Signer,
     ) -> Result<()>;
 
     fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()>;
@@ -75,13 +75,13 @@ impl RegistryAccount for Account<'_, Registry> {
 
     fn new_node(
         &mut self,
-        delegate: &Signer,
         owner: &mut Signer,
         node: &mut Account<Node>,
         stake: &mut Account<TokenAccount>,
+        worker: &Signer,
     ) -> Result<()> {
         require!(!self.is_locked, CronosError::RegistryLocked);
-        node.new(delegate, self.node_count, owner, stake)?;
+        node.new(self.node_count, owner, stake, worker)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
         Ok(())
     }

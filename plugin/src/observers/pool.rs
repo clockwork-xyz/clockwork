@@ -197,10 +197,12 @@ impl PoolObserver {
         let snapshot_pubkey = cronos_client::network::state::Snapshot::pubkey(r_snapshot.id);
         let entry_pubkey =
             cronos_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
+        let entry = snapshot_entries.get(entry_id as usize).unwrap();
         let ix = cronos_client::network::instruction::rotator_turn(
             entry_pubkey,
             cronos_client.payer_pubkey(),
             snapshot_pubkey,
+            entry.worker,
         );
 
         // Drop read locks

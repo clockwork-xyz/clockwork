@@ -23,6 +23,7 @@ pub struct RotatorTurn<'info> {
         ],
         bump,
         has_one = snapshot,
+        has_one = worker,
         constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap() @ CronosError::InvalidSnapshotEntry,
     )]
     pub entry: Account<'info, SnapshotEntry>,
@@ -51,18 +52,21 @@ pub struct RotatorTurn<'info> {
         constraint = snapshot.status == SnapshotStatus::Current @ CronosError::SnapshotNotCurrent
     )]
     pub snapshot: Account<'info, Snapshot>,
+
+    #[account()]
+    pub worker: SystemAccount<'info>,
 }
 
 pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
     // Get accounts
     let clock = &ctx.accounts.clock;
-    let entry = &ctx.accounts.entry;
     let pool = &mut ctx.accounts.pool;
     let pool_config = &ctx.accounts.pool_config;
     let pool_program = &ctx.accounts.pool_program;
     let rotator = &mut ctx.accounts.rotator;
+    let worker = &ctx.accounts.worker;
 
-    // TODO Slash stakes of current delegates if rotator is too many slots behind
+    // TODO Slash stakes of current workers if rotator is too many slots behind
 
     // Rotate the pool and hash the nonce
     let rotator_bump = *ctx.bumps.get("rotator").unwrap();
@@ -73,10 +77,10 @@ pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
                 config: pool_config.to_account_info(),
                 rotator: rotator.to_account_info(),
                 pool: pool.to_account_info(),
+                worker: worker.to_account_info(),
             },
             &[&[SEED_ROTATOR, &[rotator_bump]]],
         ),
-        entry.delegate,
     )?;
 
     // Hash the rotator's nonce value

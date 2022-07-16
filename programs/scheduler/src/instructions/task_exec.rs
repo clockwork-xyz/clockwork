@@ -73,7 +73,7 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let system_program = &ctx.accounts.system_program;
     let worker = &mut ctx.accounts.worker;
 
-    // Validate the delegate is authorized to execute this task
+    // Validate the worker is authorized to execute this task
     if is_spam(clock, &config, fee, pool, queue, system_program, worker)? {
         return Ok(());
     }

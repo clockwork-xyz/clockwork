@@ -5,10 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(
-    amount: u64,
-    delegate: Pubkey
-)]
+#[instruction(amount: u64)]
 pub struct NodeStake<'info> {
     #[account(
         seeds = [SEED_CONFIG],
@@ -19,10 +16,10 @@ pub struct NodeStake<'info> {
     #[account(
         seeds = [
             SEED_NODE,
-            node.delegate.as_ref()
+            node.worker.as_ref()
         ],
         bump,
-        constraint = node.delegate == delegate
+        has_one = worker
     )]
     pub node: Account<'info, Node>,
 
@@ -48,9 +45,12 @@ pub struct NodeStake<'info> {
         associated_token::mint = mint,
     )]
     pub tokens: Account<'info, TokenAccount>,
+
+    #[account()]
+    pub worker: SystemAccount<'info>,
 }
 
-pub fn handler(ctx: Context<NodeStake>, amount: u64, _delegate: Pubkey) -> Result<()> {
+pub fn handler(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
     let node_stake = &mut ctx.accounts.node_stake;
     let signer = &mut ctx.accounts.signer;
     let token_program = &ctx.accounts.token_program;

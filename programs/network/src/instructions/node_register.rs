@@ -26,9 +26,6 @@ pub struct NodeRegister<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account()]
-    pub delegate: Signer<'info>,
-
     #[account(
         init,
         seeds = [
@@ -52,7 +49,7 @@ pub struct NodeRegister<'info> {
         init,
         seeds = [
             SEED_NODE,
-            delegate.key().as_ref()
+            worker.key().as_ref()
         ],
         bump,
         payer = owner,
@@ -60,7 +57,7 @@ pub struct NodeRegister<'info> {
     )]
     pub node: Account<'info, Node>,
 
-    #[account(mut, constraint = owner.key() != delegate.key())]
+    #[account(mut, constraint = owner.key() != worker.key())]
     pub owner: Signer<'info>,
 
     #[account(
@@ -104,13 +101,15 @@ pub struct NodeRegister<'info> {
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
+
+    #[account()]
+    pub worker: Signer<'info>,
 }
 
 pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
-    let delegate = &ctx.accounts.delegate;
     let entry = &mut ctx.accounts.entry;
     let manager = &ctx.accounts.manager;
     let node = &mut ctx.accounts.node;
@@ -121,6 +120,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let snapshot_queue = &ctx.accounts.snapshot_queue;
     let system_program = &ctx.accounts.system_program;
     let stake = &mut ctx.accounts.stake;
+    let worker = &ctx.accounts.worker;
 
     // Get remaining accountsgs
     let snapshot_task = ctx.remaining_accounts.get(0).unwrap();
@@ -129,7 +129,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let authority_bump = *ctx.bumps.get("authority").unwrap();
 
     // Add node to the registry
-    registry.new_node(delegate, owner, node, stake)?;
+    registry.new_node(owner, node, stake, worker)?;
 
     // Add an empty entry to the current snapshot
     snapshot.capture(entry, node, stake)?;

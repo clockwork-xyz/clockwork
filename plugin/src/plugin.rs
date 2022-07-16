@@ -30,10 +30,6 @@ pub struct CronosPlugin {
     pub config: PluginConfig,
     pub executors: Option<Arc<Executors>>,
     pub observers: Arc<Observers>,
-    // pub delegate: Arc<Delegate>,
-    // pub scheduler: Arc<Scheduler>,
-    // pub http_executor: Option<Arc<HttpExecutor>>,
-    // pub tx_executor: Option<Arc<TxExecutor>>,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }

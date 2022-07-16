@@ -1,7 +1,6 @@
 use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-#[account(delegate: Pubkey)]
 pub struct Rotate<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
@@ -11,13 +10,17 @@ pub struct Rotate<'info> {
 
     #[account(mut, seeds = [SEED_POOL], bump)]
     pub pool: Account<'info, Pool>,
+
+    #[account()]
+    pub worker: SystemAccount<'info>,
 }
 
-pub fn handler(ctx: Context<Rotate>, delegate: Pubkey) -> Result<()> {
+pub fn handler(ctx: Context<Rotate>) -> Result<()> {
     let config = &mut ctx.accounts.config;
     let pool = &mut ctx.accounts.pool;
+    let worker = &ctx.accounts.worker;
 
-    pool.rotate(config, delegate)?;
+    pool.rotate(config, worker.key())?;
 
     Ok(())
 }

@@ -29,8 +29,8 @@ pub mod cronos_network {
         node_register::handler(ctx)
     }
 
-    pub fn node_stake(ctx: Context<NodeStake>, amount: u64, delegate: Pubkey) -> Result<()> {
-        node_stake::handler(ctx, amount, delegate)
+    pub fn node_stake(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
+        node_stake::handler(ctx, amount)
     }
 
     pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {

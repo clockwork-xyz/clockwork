@@ -96,14 +96,14 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", matches)) => Ok(CliCommand::NodeGet {
-            delegate: parse_pubkey("delegate", matches)?,
+            worker: parse_pubkey("worker", matches)?,
         }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
-            delegate: parse_keypair_file("delegate", matches)?,
+            worker: parse_keypair_file("worker", matches)?,
         }),
         Some(("stake", matches)) => Ok(CliCommand::NodeStake {
             amount: parse_u64("amount", matches)?,
-            delegate: parse_pubkey("delegate", matches)?,
+            worker: parse_pubkey("worker", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

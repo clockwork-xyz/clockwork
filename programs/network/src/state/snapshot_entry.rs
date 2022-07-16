@@ -12,10 +12,10 @@ pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 #[derive(Debug)]
 pub struct SnapshotEntry {
     pub id: u64,
-    pub delegate: Pubkey,
     pub snapshot: Pubkey,
     pub stake_amount: u64,
     pub stake_offset: u64,
+    pub worker: Pubkey,
 }
 
 impl SnapshotEntry {
@@ -47,10 +47,10 @@ pub trait SnapshotEntryAccount {
     fn new(
         &mut self,
         id: u64,
-        delegate: Pubkey,
         snapshot: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
+        worker: Pubkey,
     ) -> Result<()>;
 }
 
@@ -58,16 +58,16 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn new(
         &mut self,
         id: u64,
-        delegate: Pubkey,
         snapshot: Pubkey,
         stake_offset: u64,
         stake_amount: u64,
+        worker: Pubkey,
     ) -> Result<()> {
         self.id = id;
-        self.delegate = delegate;
         self.snapshot = snapshot;
         self.stake_offset = stake_offset;
         self.stake_amount = stake_amount;
+        self.worker = worker;
         Ok(())
     }
 }

@@ -12,10 +12,10 @@ use {
 pub fn node_stake(
     amount: u64,
     config: Pubkey,
-    delegate: Pubkey,
     node: Pubkey,
     mint: Pubkey,
     signer: Pubkey,
+    worker: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
@@ -27,7 +27,8 @@ pub fn node_stake(
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new(get_associated_token_address(&signer, &mint), false),
+            AccountMeta::new_readonly(worker, false),
         ],
-        data: cronos_network::instruction::NodeStake { amount, delegate }.data(),
+        data: cronos_network::instruction::NodeStake { amount }.data(),
     }
 }

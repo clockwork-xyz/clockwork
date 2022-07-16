@@ -7,7 +7,12 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn rotator_turn(entry: Pubkey, signer: Pubkey, snapshot: Pubkey) -> Instruction {
+pub fn rotator_turn(
+    entry: Pubkey,
+    signer: Pubkey,
+    snapshot: Pubkey,
+    worker: Pubkey,
+) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
         accounts: vec![
@@ -20,6 +25,7 @@ pub fn rotator_turn(entry: Pubkey, signer: Pubkey, snapshot: Pubkey) -> Instruct
             AccountMeta::new(cronos_network::state::Rotator::pubkey(), false),
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(snapshot, false),
+            AccountMeta::new_readonly(worker, false),
         ],
         data: cronos_network::instruction::RotatorTurn {}.data(),
     }

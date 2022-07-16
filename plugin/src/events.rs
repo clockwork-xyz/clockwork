@@ -39,7 +39,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account is the delegate pool, return it
+        // If the account is the worker pool, return it
         if account_pubkey.eq(&pool_pubkey()) {
             return Ok(AccountUpdateEvent::Pool {
                 pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
@@ -50,7 +50,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account is the delegate pool rotator, return it
+        // If the account is the worker pool rotator, return it
         if account_pubkey.eq(&rotator_pubkey()) {
             return Ok(AccountUpdateEvent::Rotator {
                 rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {

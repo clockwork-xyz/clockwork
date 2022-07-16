@@ -13,9 +13,6 @@ use {
 pub fn node_register(
     authority: Pubkey,
     config: Pubkey,
-    // rotator_queue: Pubkey,
-    // rotator_task: Pubkey,
-    delegate: Pubkey,
     entry: Pubkey,
     manager: Pubkey,
     mint: Pubkey,
@@ -25,6 +22,7 @@ pub fn node_register(
     snapshot: Pubkey,
     snapshot_queue: Pubkey,
     snapshot_task: Pubkey,
+    worker: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: cronos_network::ID,
@@ -32,8 +30,6 @@ pub fn node_register(
             AccountMeta::new_readonly(associated_token::ID, false),
             AccountMeta::new_readonly(authority, false),
             AccountMeta::new_readonly(config, false),
-            // AccountMeta::new(rotator_queue, false),
-            AccountMeta::new_readonly(delegate, true),
             AccountMeta::new(entry, false),
             AccountMeta::new(manager, false),
             AccountMeta::new_readonly(mint, false),
@@ -47,8 +43,8 @@ pub fn node_register(
             AccountMeta::new(get_associated_token_address(&node, &mint), false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(token::ID, false),
+            AccountMeta::new_readonly(worker, true),
             // Additional accounts
-            // AccountMeta::new(rotator_task, false),
             AccountMeta::new(snapshot_task, false),
         ],
         data: cronos_network::instruction::NodeRegister {}.data(),

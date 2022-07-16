@@ -40,14 +40,14 @@ pub enum CliCommand {
 
     // Node commands
     NodeGet {
-        delegate: Pubkey,
+        worker: Pubkey,
     },
     NodeRegister {
-        delegate: Keypair,
+        worker: Keypair,
     },
     NodeStake {
         amount: u64,
-        delegate: Pubkey,
+        worker: Pubkey,
     },
 
     // Pool commands
@@ -232,24 +232,24 @@ pub fn app() -> Command<'static> {
                 .arg_required_else_help(true)
                 .subcommand(
                     Command::new("get")
-                        .about("Get a node by delegate address")
+                        .about("Get a node by worker address")
                         .arg(
-                            Arg::new("delegate")
+                            Arg::new("worker")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
-                                .help("The delegate address to stake tokens with"),
+                                .help("The worker address to stake tokens with"),
                         ),
                 )
                 .subcommand(
                     Command::new("register")
                         .about("Register a new node with the Cronos network")
                         .arg(
-                            Arg::new("delegate")
+                            Arg::new("worker")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
-                                .help("Filepath to the delegate wallet"),
+                                .help("Filepath to the worker keypair"),
                         ),
                 )
                 .subcommand(
@@ -263,15 +263,15 @@ pub fn app() -> Command<'static> {
                                 .help("The number of tokens to stake"),
                         )
                         .arg(
-                            Arg::new("delegate")
+                            Arg::new("worker")
                                 .index(2)
                                 .takes_value(true)
                                 .required(true)
-                                .help("The delegate address to stake tokens with"),
+                                .help("The worker address to stake tokens with"),
                         ),
                 ),
         )
-        .subcommand(Command::new("pool").about("Get the delegate pool info"))
+        .subcommand(Command::new("pool").about("Get the worker pool info"))
         .subcommand(
             Command::new("manager")
                 .about("Manage your managers")

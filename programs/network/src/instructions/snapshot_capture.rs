@@ -30,7 +30,7 @@ pub struct SnapshotCapture<'info> {
     #[account(
         seeds = [
             SEED_NODE,
-            node.delegate.as_ref(),
+            node.worker.as_ref(),
         ],
         bump,
         constraint = node.id == snapshot.node_count @ CronosError::InvalidNode
@@ -41,7 +41,7 @@ pub struct SnapshotCapture<'info> {
     pub payer: Signer<'info>,
 
     #[account(signer, constraint = manager.authority == authority.key())]
-    pub manager: Box<Account<'info, Manager>>, // TODO this should be the queue
+    pub manager: Box<Account<'info, Manager>>,
 
     #[account(seeds = [SEED_REGISTRY], bump)]
     pub registry: Box<Account<'info, Registry>>,

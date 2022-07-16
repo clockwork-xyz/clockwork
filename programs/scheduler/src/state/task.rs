@@ -108,7 +108,7 @@ impl TaskAccount for Account<'_, Task> {
         );
 
         // Validate the worker data is empty
-        require!(worker.data_is_empty(), CronosError::DelegateDataNotEmpty);
+        require!(worker.data_is_empty(), CronosError::WorkerDataNotEmpty);
 
         // Record the worker's lamports before invoking inner ixs
         let worker_lamports_pre = worker.lamports();
@@ -120,7 +120,7 @@ impl TaskAccount for Account<'_, Task> {
         for ix in &self.ixs {
             // If an inner ix account matches the Cronos worker address (CronosDe1egate11111111111111111111111111111),
             //  then inject the worker account in its place. Dapp developers can use the worker as a payer to initialize
-            //  new accouns in their queues. Delegates will be reimbursed for all SOL spent during the inner ixs.
+            //  new accouns in their queues. Workers will be reimbursed for all SOL spent during the inner ixs.
             //
             // Because the worker can be injected as the signer on inner ixs (written by presumed malicious parties),
             //  node operators should not secure any assets or staking positions with their worker wallets other than
@@ -191,7 +191,7 @@ impl TaskAccount for Account<'_, Task> {
         }
 
         // Verify that inner ixs have not initialized data at the worker address
-        require!(worker.data_is_empty(), CronosError::DelegateDataNotEmpty);
+        require!(worker.data_is_empty(), CronosError::WorkerDataNotEmpty);
 
         // Update the actions's ixs for the next invocation
         if !dyanmic_ixs.is_empty() {

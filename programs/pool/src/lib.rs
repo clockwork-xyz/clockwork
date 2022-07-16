@@ -13,8 +13,8 @@ use instructions::*;
 pub mod cronos_pool {
     use super::*;
 
-    pub fn rotate(ctx: Context<Rotate>, delegate: Pubkey) -> Result<()> {
-        rotate::handler(ctx, delegate)
+    pub fn rotate(ctx: Context<Rotate>) -> Result<()> {
+        rotate::handler(ctx)
     }
 
     pub fn initialize(ctx: Context<Initialize>, rotator: Pubkey) -> Result<()> {
