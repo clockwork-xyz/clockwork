@@ -1,7 +1,13 @@
+use crate::observers::http::{HttpObserver, HttpRequest};
+
 use {
     crate::{
-        config::PluginConfig, delegate::Delegate, events::AccountUpdateEvent, executor::Executor,
-        scheduler::Scheduler, tpu_client::TpuClient, utils::read_or_new_keypair,
+        config::PluginConfig,
+        events::AccountUpdateEvent,
+        executors::{http::HttpExecutor, tx::TxExecutor, Executors},
+        observers::{pool::PoolObserver, queue::QueueObserver, Observers},
+        tpu_client::TpuClient,
+        utils::read_or_new_keypair,
     },
     cronos_client::Client as CronosClient,
     log::info,
@@ -22,9 +28,12 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 pub struct CronosPlugin {
     // Plugin config values.
     pub config: PluginConfig,
-    pub delegate: Arc<Delegate>,
-    pub executor: Option<Arc<Executor>>,
-    pub scheduler: Arc<Scheduler>,
+    pub executors: Option<Arc<Executors>>,
+    pub observers: Arc<Observers>,
+    // pub delegate: Arc<Delegate>,
+    // pub scheduler: Arc<Scheduler>,
+    // pub http_executor: Option<Arc<HttpExecutor>>,
+    // pub tx_executor: Option<Arc<TxExecutor>>,
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -59,21 +68,33 @@ impl GeyserPlugin for CronosPlugin {
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.scheduler.clone().handle_updated_clock(clock)
+                    self.observers.queue.clone().handle_updated_clock(clock)
+                }
+                AccountUpdateEvent::HttpRequest { request } => {
+                    self.observers.http.clone().handle_updated_http_request(
+                        HttpRequest {
+                            pubkey: account_pubkey,
+                            request,
+                        },
+                        slot,
+                    )
                 }
                 AccountUpdateEvent::Pool { pool } => {
-                    self.delegate.clone().handle_updated_pool(pool, slot)
+                    self.observers.pool.clone().handle_updated_pool(pool, slot)
                 }
                 AccountUpdateEvent::Queue { queue } => self
-                    .scheduler
+                    .observers
+                    .queue
                     .clone()
                     .handle_updated_queue(queue, account_pubkey),
                 AccountUpdateEvent::Rotator { rotator } => {
-                    self.delegate.clone().handle_updated_rotator(rotator)
+                    self.observers.pool.clone().handle_updated_rotator(rotator)
                 }
-                AccountUpdateEvent::Snapshot { snapshot } => {
-                    self.delegate.clone().handle_updated_snapshot(snapshot)
-                }
+                AccountUpdateEvent::Snapshot { snapshot } => self
+                    .observers
+                    .pool
+                    .clone()
+                    .handle_updated_snapshot(snapshot),
             },
             Err(_err) => Ok(()),
         }
@@ -91,15 +112,15 @@ impl GeyserPlugin for CronosPlugin {
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
         // Re-check health and attempt to build the executor if we're still not caught up
-        if self.executor.is_none() {
-            self.try_build_executor()
+        if self.executors.is_none() {
+            self.try_build_executors()
         }
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
-            SlotStatus::Confirmed => match &self.executor {
-                Some(executor) => {
-                    executor.clone().handle_confirmed_slot(slot)?;
+            SlotStatus::Confirmed => match &self.executors {
+                Some(executors) => {
+                    executors.clone().handle_confirmed_slot(slot)?;
                 }
                 None => (),
             },
@@ -135,21 +156,28 @@ impl GeyserPlugin for CronosPlugin {
 impl CronosPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let delegate = Arc::new(Delegate::new(config.clone(), runtime.clone()));
-        let scheduler = Arc::new(Scheduler::new(
-            delegate.pool_positions.clone(),
+        let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
+        let queue_observer = Arc::new(QueueObserver::new(
+            pool_observer.pool_positions.clone(),
+            runtime.clone(),
+        ));
+        let http_observer = Arc::new(HttpObserver::new(
+            pool_observer.pool_positions.clone(),
             runtime.clone(),
         ));
         Self {
             config,
-            delegate,
-            executor: None,
-            scheduler,
+            executors: None,
+            observers: Arc::new(Observers {
+                http: http_observer,
+                pool: pool_observer,
+                queue: queue_observer,
+            }),
             runtime,
         }
     }
 
-    fn try_build_executor(&mut self) {
+    fn try_build_executors(&mut self) {
         // Return early if not healthy
         if RpcClient::new_with_commitment::<String>(
             LOCAL_RPC_URL.into(),
@@ -175,15 +203,26 @@ impl CronosPlugin {
             .unwrap(),
         );
 
-        // Build executor
-        self.executor = Some(Arc::new(Executor::new(
+        // Build executors
+        let http_executor = Arc::new(HttpExecutor::new(
+            self.config.clone(),
+            self.observers.clone(),
+            self.runtime.clone(),
+            cronos_client.payer_pubkey(),
+        ));
+        let tx_executor = Arc::new(TxExecutor::new(
             self.config.clone(),
             cronos_client.clone(),
-            self.delegate.clone(),
+            self.observers.clone(),
             self.runtime.clone(),
-            self.scheduler.clone(),
             tpu_client.clone(),
-        )));
+        ));
+        self.executors = Some(Arc::new(Executors {
+            http: http_executor,
+            tx: tx_executor,
+            observers: self.observers.clone(),
+            runtime: self.runtime.clone(),
+        }))
     }
 }
 

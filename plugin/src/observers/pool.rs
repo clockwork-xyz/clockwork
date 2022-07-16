@@ -18,7 +18,7 @@ use {
 
 static GRACE_PERIOD: u64 = 10;
 
-pub struct Delegate {
+pub struct PoolObserver {
     // Plugin config values.
     pub config: PluginConfig,
 
@@ -44,7 +44,7 @@ pub struct Delegate {
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 }
 
-impl Delegate {
+impl PoolObserver {
     pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
@@ -229,9 +229,9 @@ impl Delegate {
     }
 }
 
-impl Debug for Delegate {
+impl Debug for PoolObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Delegate")
+        write!(f, "pool-observer")
     }
 }
 

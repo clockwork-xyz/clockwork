@@ -1,7 +1,5 @@
 use {
-    crate::{
-        config::PluginConfig, delegate::Delegate, scheduler::Scheduler, tpu_client::TpuClient,
-    },
+    crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     cronos_client::Client as CronosClient,
     dashmap::{DashMap, DashSet},
     log::info,
@@ -24,73 +22,44 @@ static MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be 
 static TIMEOUT_PERIOD: u64 = 20; // If a signature does not have a status within this many slots, assume failure and retry
 static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
-#[derive(Clone, Copy)]
-pub struct TransactionAttempt {
-    pub attempt_count: u64,   // The number of times this tx has been attempted
-    pub signature: Signature, // The signature of the last attempt
-    pub tx_type: TransactionType,
-}
-
-impl Hash for TransactionAttempt {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.signature.hash(state);
-    }
-}
-
-impl PartialEq for TransactionAttempt {
-    fn eq(&self, other: &Self) -> bool {
-        self.signature == other.signature
-    }
-}
-
-impl Eq for TransactionAttempt {}
-
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
-pub enum TransactionType {
-    Queue { queue_pubkey: Pubkey },
-    Rotation { target_slot: u64 },
-}
-
-pub struct Executor {
+/**
+ * TxExecutor
+ */
+pub struct TxExecutor {
     pub config: PluginConfig,
     pub cronos_client: Arc<CronosClient>, // TODO CronosClient and TPUClient can be unified into a single interface
-    pub delegate: Arc<Delegate>,
+    pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
-    pub scheduler: Arc<Scheduler>,
     pub tpu_client: Arc<TpuClient>,
-    pub tx_dedupe: DashSet<TransactionType>,
-    pub tx_history: DashMap<u64, DashSet<TransactionAttempt>>,
+    pub tx_dedupe: DashSet<TxType>,
+    pub tx_history: DashMap<u64, DashSet<TxAttempt>>,
 }
 
-impl Executor {
+impl TxExecutor {
     pub fn new(
         config: PluginConfig,
         cronos_client: Arc<CronosClient>,
-        delegate: Arc<Delegate>,
+        observers: Arc<Observers>,
         runtime: Arc<Runtime>,
-        scheduler: Arc<Scheduler>,
         tpu_client: Arc<TpuClient>,
     ) -> Self {
         Self {
             config: config.clone(),
             cronos_client,
-            delegate,
+            observers,
             runtime,
-            scheduler,
             tpu_client,
             tx_dedupe: DashSet::new(),
             tx_history: DashMap::new(),
         }
     }
 
-    pub fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Rotate the pools
-            this.delegate.clone().handle_confirmed_slot(slot)?;
             this.clone().rotate_pools(None, slot).await.ok();
 
             // Proces actionable queues
-            this.scheduler.clone().handle_confirmed_slot(slot)?;
             this.clone().process_actionable_queues(slot).await.ok();
 
             // Lookup statuses of submitted txs, and retry txs that have timed out or failed
@@ -107,25 +76,22 @@ impl Executor {
 
     async fn rotate_pools(
         self: Arc<Self>,
-        prior_attempt: Option<TransactionAttempt>,
+        prior_attempt: Option<TxAttempt>,
         slot: u64,
     ) -> PluginResult<()> {
-        self.delegate
+        self.observers
+            .pool
             .clone()
             .build_rotation_tx(self.cronos_client.clone(), slot)
             .await
             .and_then(|(target_slot, tx)| {
-                self.execute_tx(
-                    prior_attempt,
-                    slot,
-                    &tx,
-                    TransactionType::Rotation { target_slot },
-                )
+                self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot })
             })
     }
 
     async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.scheduler
+        self.observers
+            .queue
             .clone()
             .build_queue_txs(self.cronos_client.clone(), slot)
             .await
@@ -136,7 +102,7 @@ impl Executor {
                         None,
                         slot,
                         tx,
-                        TransactionType::Queue {
+                        TxType::Queue {
                             queue_pubkey: *queue_pubkey,
                         },
                     )
@@ -145,28 +111,10 @@ impl Executor {
         Ok(())
     }
 
-    fn execute_tx(
-        self: Arc<Self>,
-        prior_attempt: Option<TransactionAttempt>,
-        slot: u64,
-        tx: &Transaction,
-        tx_type: TransactionType,
-    ) -> PluginResult<()> {
-        // Check for dedupes
-        if self.tx_dedupe.contains(&tx_type) {
-            return Ok(());
-        }
-
-        self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
-            .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
-    }
-
     async fn process_tx_history(
         self: Arc<Self>,
         confirmed_slot: u64,
-        retry_attempts: DashSet<TransactionAttempt>,
+        retry_attempts: DashSet<TxAttempt>,
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Check transaction statuses for every signature in the history
@@ -229,12 +177,12 @@ impl Executor {
 
     async fn process_retry_attempts(
         self: Arc<Self>,
-        retry_attempts: DashSet<TransactionAttempt>,
+        retry_attempts: DashSet<TxAttempt>,
         slot: u64,
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Get this node's current position in the scheduler pool
-            let r_pool_positions = this.delegate.pool_positions.read().await;
+            let r_pool_positions = this.observers.pool.pool_positions.read().await;
             let pool_position = r_pool_positions.scheduler_pool_position.clone();
             drop(r_pool_positions);
 
@@ -244,8 +192,9 @@ impl Executor {
                 .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
             {
                 match tx_attempt.tx_type {
-                    TransactionType::Queue { queue_pubkey } => {
-                        this.scheduler
+                    TxType::Queue { queue_pubkey } => {
+                        this.observers
+                            .queue
                             .clone()
                             .build_queue_tx(
                                 this.cronos_client.clone(),
@@ -258,12 +207,12 @@ impl Executor {
                                     Some(tx_attempt.clone()),
                                     slot,
                                     &tx,
-                                    TransactionType::Queue { queue_pubkey },
+                                    TxType::Queue { queue_pubkey },
                                 )
                             })
                             .ok();
                     }
-                    TransactionType::Rotation { target_slot } => {
+                    TxType::Rotation { target_slot } => {
                         this.clone()
                             .rotate_pools(Some(tx_attempt.clone()), target_slot)
                             .await
@@ -273,6 +222,24 @@ impl Executor {
             }
             Ok(())
         })
+    }
+
+    fn execute_tx(
+        self: Arc<Self>,
+        prior_attempt: Option<TxAttempt>,
+        slot: u64,
+        tx: &Transaction,
+        tx_type: TxType,
+    ) -> PluginResult<()> {
+        // Check for dedupes
+        if self.tx_dedupe.contains(&tx_type) {
+            return Ok(());
+        }
+
+        self.clone()
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
+            .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
@@ -302,13 +269,13 @@ impl Executor {
     fn log_tx_attempt(
         self: Arc<Self>,
         slot: u64,
-        prior_attempt: Option<TransactionAttempt>,
+        prior_attempt: Option<TxAttempt>,
         tx: Transaction,
-        tx_type: TransactionType,
+        tx_type: TxType,
     ) -> PluginResult<()> {
         let sig = tx.signatures[0];
         info!("slot: {} sig: {}", slot, sig);
-        let attempt = TransactionAttempt {
+        let attempt = TxAttempt {
             attempt_count: prior_attempt.map_or(0, |prior| prior.attempt_count + 1),
             signature: sig,
             tx_type,
@@ -336,8 +303,43 @@ impl Executor {
     }
 }
 
-impl Debug for Executor {
+impl Debug for TxExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Executor")
+        write!(f, "tx-executor")
     }
+}
+
+/**
+ * TxAttempt
+ */
+
+#[derive(Clone, Copy)]
+pub struct TxAttempt {
+    pub attempt_count: u64,   // The number of times this tx has been attempted
+    pub signature: Signature, // The signature of the last attempt
+    pub tx_type: TxType,
+}
+
+impl Hash for TxAttempt {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.signature.hash(state);
+    }
+}
+
+impl PartialEq for TxAttempt {
+    fn eq(&self, other: &Self) -> bool {
+        self.signature == other.signature
+    }
+}
+
+impl Eq for TxAttempt {}
+
+/**
+ * TxType
+ */
+
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+pub enum TxType {
+    Queue { queue_pubkey: Pubkey },
+    Rotation { target_slot: u64 },
 }
