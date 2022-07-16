@@ -47,7 +47,7 @@ rm cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
 
-Next, create a new keypair for signing Cronos delegate txs. The responsbilities of being a delegate currently include the processing of scheduled tasks and the rotating the delegate pool. Cronos delegates may be expected to perform other kinds of work in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). For many txs, you will be compensated for lamports spent by the programs they invoke. Automation fees (rewards) are implemented and will be enabled soon.
+Next, create a new keypair for signing Cronos delegate txs. The responsbilities of being a delegate currently include the processing of scheduled tasks and the rotating the delegate pool. Cronos delegates may be expected to perform other kinds of work in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
 ```sh
 solana-keygen new -o cronos-delegate-keypair.json
 ```

@@ -14,7 +14,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     // Process the command
     match command {
-        CliCommand::TaskGet { address } => super::task::get(&client, &address),
+        CliCommand::ApiNew {
+            ack_authority,
+            base_url,
+        } => super::api::api_new(&client, ack_authority, base_url),
         CliCommand::Clock => super::clock::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSet {
@@ -32,6 +35,12 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             program_fee,
         ),
         CliCommand::Health => super::health::get(&client),
+        CliCommand::HttpRequestNew {
+            api,
+            id,
+            method,
+            route,
+        } => super::http::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::NodeGet { delegate } => super::node::get_by_delegate(&client, delegate),
         CliCommand::NodeRegister { delegate } => super::node::register(&client, delegate),
@@ -43,5 +52,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::QueueGet { address, task_id } => super::queue::get(&client, &address, task_id),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),
+        CliCommand::TaskGet { address } => super::task::get(&client, &address),
     }
 }
