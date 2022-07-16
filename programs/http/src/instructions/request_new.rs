@@ -82,7 +82,6 @@ pub fn handler<'info>(
     // Initialize the request account
     let created_at = clock.slot;
     let fee_amount = config.request_fee;
-    let timeout_fee_amount = config.timeout_fee;
     let headers = HashMap::new(); // TODO Get headers from ix data
     let workers = pool
         .clone()
@@ -100,13 +99,10 @@ pub fn handler<'info>(
         id,
         method,
         route,
-        timeout_fee_amount,
         workers,
     )?;
 
     // Transfer fees into request account to hold in escrow
-    // let net_fee_amount = fee_amount.checked_add(timeout_fee_amount).unwrap();
-    let net_fee_amount = fee_amount;
     transfer(
         CpiContext::new(
             system_program.to_account_info(),
@@ -115,7 +111,7 @@ pub fn handler<'info>(
                 to: request.to_account_info(),
             },
         ),
-        net_fee_amount,
+        fee_amount,
     )?;
 
     Ok(())

@@ -11,7 +11,6 @@ pub const SEED_CONFIG: &[u8] = b"config";
  */
 
 static DEFAULT_REQUEST_FEE: u64 = 1_000_000; // 0.001 SOL
-static DEFAULT_TIMEOUT_FEE: u64 = 1_000_000_000; // 0.01 SOL
 static DEFAULT_TIMEOUT_THRESHOLD: u64 = 100; // 100 slots
 
 /**
@@ -24,7 +23,6 @@ pub struct Config {
     pub admin: Pubkey,
     pub request_fee: u64, // Amount to charge per request and payout to workers
     pub timeout_threshold: u64, // Duration (slots) to wait before a requests is considered "timed out"
-    pub timeout_fee: u64,       // Amount to charge the creator of a request if it times out
 }
 
 impl Config {
@@ -48,7 +46,6 @@ impl TryFrom<Vec<u8>> for Config {
 pub struct ConfigSettings {
     pub admin: Pubkey,
     pub request_fee: u64,
-    pub timeout_fee: u64,
     pub timeout_threshold: u64,
 }
 
@@ -66,7 +63,6 @@ impl ConfigAccount for Account<'_, Config> {
     fn new(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
         self.request_fee = DEFAULT_REQUEST_FEE;
-        self.timeout_fee = DEFAULT_TIMEOUT_FEE;
         self.timeout_threshold = DEFAULT_TIMEOUT_THRESHOLD;
         Ok(())
     }
@@ -78,7 +74,6 @@ impl ConfigAccount for Account<'_, Config> {
         );
         self.admin = settings.admin;
         self.request_fee = settings.request_fee;
-        self.timeout_fee = settings.timeout_fee;
         self.timeout_threshold = settings.timeout_threshold;
         Ok(())
     }

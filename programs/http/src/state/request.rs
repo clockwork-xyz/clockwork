@@ -28,7 +28,6 @@ pub struct Request {
     pub id: String,
     pub method: HttpMethod,
     pub route: String,
-    pub timeout_fee_amount: u64,
     pub url: String,
     pub workers: Vec<Pubkey>,
 }
@@ -70,7 +69,6 @@ pub trait RequestAccount {
         id: String,
         method: HttpMethod,
         route: String,
-        timeout_fee_amount: u64,
         workers: Vec<Pubkey>,
     ) -> Result<()>;
 }
@@ -86,7 +84,6 @@ impl RequestAccount for Account<'_, Request> {
         id: String,
         method: HttpMethod,
         route: String,
-        timeout_fee_amount: u64,
         workers: Vec<Pubkey>,
     ) -> Result<()> {
         self.api = api.key();
@@ -97,7 +94,6 @@ impl RequestAccount for Account<'_, Request> {
         self.id = id;
         self.method = method;
         self.route = route.clone();
-        self.timeout_fee_amount = timeout_fee_amount;
         self.url = api.clone().base_url.to_owned() + route.as_str();
         self.workers = workers;
         Ok(())

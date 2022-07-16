@@ -72,42 +72,9 @@ pub fn handler<'info>(ctx: Context<RequestAck>) -> Result<()> {
         fee.pay_to_worker(request)?;
     } else {
         // Either someone is spamming or this request has timed out. Do not pay worker.
-        // TODO Perhaps rather than being paid to the admin, this could be put in an escrow account where all workers could claim their rewards
-        // TODO If not claimed within X slots, the admin can claim their rewards and close the account
+        // TODO Perhaps rather than being paid to the admin, this could be put in an escrow account where all workers could claim equal rewards.
+        // TODO If not claimed within X slots, the admin can claim their rewards and close the account.
         fee.pay_to_admin(request)?;
-    }
-
-    // Payout timeout fee
-    if is_within_execution_window {
-        // Pay timeout fee back to the manager_authority (the account which created the request)
-        // **request.to_account_info().try_borrow_mut_lamports()? = request
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_sub(request.timeout_fee_amount)
-        //     .unwrap();
-        // **manager_authority
-        //     .to_account_info()
-        //     .try_borrow_mut_lamports()? = manager_authority
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_add(request.timeout_fee_amount)
-        //     .unwrap();
-    } else {
-        // Pay timeout fee into the fee account to be collected by the admin
-        // fee.admin_balance = fee
-        //     .admin_balance
-        //     .checked_add(request.timeout_fee_amount)
-        //     .unwrap();
-        // **request.to_account_info().try_borrow_mut_lamports()? = request
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_sub(request.timeout_fee_amount)
-        //     .unwrap();
-        // **fee.to_account_info().try_borrow_mut_lamports()? = fee
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_add(request.timeout_fee_amount)
-        //     .unwrap();
     }
 
     Ok(())
