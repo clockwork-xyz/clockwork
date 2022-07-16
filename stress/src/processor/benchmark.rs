@@ -1,7 +1,6 @@
 use {
     crate::{cli::CliError, parser::JsonInstructionData},
     chrono::{prelude::*, Duration},
-    cronos_client::scheduler::events::TaskExecuted,
     cronos_client::scheduler::state::{Manager, Queue, Task},
     cronos_client::Client,
     cronos_cron::Schedule,
@@ -11,7 +10,6 @@ use {
         rpc_config::{RpcTransactionLogsConfig, RpcTransactionLogsFilter},
     },
     solana_sdk::{
-        borsh,
         commitment_config::CommitmentConfig,
         instruction::Instruction,
         native_token::LAMPORTS_PER_SOL,
@@ -93,8 +91,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
 fn listen_for_events(
     num_expected_events: u32,
-    expected_exec_ats: &HashMap<Pubkey, Vec<i64>>,
-    actual_exec_ats: &mut HashMap<Pubkey, Vec<i64>>,
+    _expected_exec_ats: &HashMap<Pubkey, Vec<i64>>,
+    _actual_exec_ats: &mut HashMap<Pubkey, Vec<i64>>,
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
@@ -106,31 +104,31 @@ fn listen_for_events(
     .map_err(|_| CliError::WebsocketError)?;
 
     // Watch for task exec events
-    let mut event_count = 0;
+    let mut _event_count = 0;
     for log_response in log_receiver {
         let logs = log_response.value.logs.into_iter();
         for log in logs {
             match &log[..14] {
                 "Program data: " => {
                     // Decode event from log data
-                    let mut buffer = Vec::<u8>::new();
-                    base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
-                    let event =
-                        borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
-                    if expected_exec_ats.contains_key(&event.queue) {
-                        actual_exec_ats
-                            .entry(event.queue)
-                            .or_insert(Vec::new())
-                            .push(event.ts);
-                        event_count += 1;
-                    }
+                    // let mut buffer = Vec::<u8>::new();
+                    // base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
+                    // let event =
+                    //     borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
+                    // if expected_exec_ats.contains_key(&event.queue) {
+                    //     actual_exec_ats
+                    //         .entry(event.queue)
+                    //         .or_insert(Vec::new())
+                    //         .push(event.ts);
+                    //     event_count += 1;
+                    // }
                 }
                 _ => {}
             }
         }
 
         // Exit if we've received the expected number of events
-        if event_count == num_expected_events {
+        if _event_count == num_expected_events {
             break;
         }
     }

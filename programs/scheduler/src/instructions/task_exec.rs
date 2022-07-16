@@ -1,5 +1,5 @@
 use {
-    crate::{errors::CronosError, events::TaskExecuted, instructions::utils::is_spam, state::*},
+    crate::{errors::CronosError, instructions::utils::is_spam, state::*},
     anchor_lang::{prelude::*, solana_program::sysvar, system_program},
     cronos_pool::state::Pool
 };
@@ -82,13 +82,5 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
 
     let manager_bump = *ctx.bumps.get("manager").unwrap();
     task.exec(account_infos, config, delegate, fee, manager, manager_bump, queue)?;
-
-    emit!(TaskExecuted {
-        delegate: delegate.key(),
-        queue: queue.key(),
-        task: task.key(),
-        ts: clock.unix_timestamp,
-    });
-
     Ok(())
 }

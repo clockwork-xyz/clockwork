@@ -3,7 +3,6 @@ extern crate cronos_cron;
 
 pub mod anchor;
 pub mod errors;
-pub mod events;
 pub mod id;
 pub mod payer;
 pub mod responses;
