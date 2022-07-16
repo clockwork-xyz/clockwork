@@ -172,9 +172,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // )?;
 
     // Add an task to the snapshot queue to capture an entry for this node
-    let current_snapshot_pubkey = Snapshot::pda(registry.snapshot_count.checked_sub(1).unwrap()).0;
-    let next_snapshot_pubkey = Snapshot::pda(registry.snapshot_count).0;
-    let next_entry_pubkey = SnapshotEntry::pda(next_snapshot_pubkey, node.id).0;
+    let current_snapshot_pubkey = Snapshot::pubkey(registry.snapshot_count.checked_sub(1).unwrap());
+    let next_snapshot_pubkey = Snapshot::pubkey(registry.snapshot_count);
+    let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, node.id);
     let stake_pubkey = stake.key();
     let snapshot_capture_ix = Instruction {
         program_id: crate::ID,

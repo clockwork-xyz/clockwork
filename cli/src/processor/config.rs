@@ -9,7 +9,7 @@ use {
 
 pub fn get(client: &Client) -> Result<(), CliError> {
     // Get network config
-    let network_config_pubkey = NetworkConfig::pda().0;
+    let network_config_pubkey = NetworkConfig::pubkey();
     let network_config = client
         .get::<NetworkConfig>(&network_config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(network_config_pubkey.to_string()))?;

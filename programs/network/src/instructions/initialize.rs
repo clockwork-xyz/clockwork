@@ -140,7 +140,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // TODO Return the lamports to the manager account
 
     // Add an task to the snapshot queue to kick things off
-    let next_snapshot_pubkey = Snapshot::pda(1).0;
+    let next_snapshot_pubkey = Snapshot::pubkey(1);
     let snapshot_start_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![

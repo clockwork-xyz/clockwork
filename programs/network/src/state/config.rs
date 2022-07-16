@@ -1,5 +1,5 @@
 use {
-    crate::{errors::CronosError, pda::PDA},
+    crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -21,8 +21,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_CONFIG], &crate::ID)
+    pub fn pubkey() -> Pubkey {
+        Pubkey::find_program_address(&[SEED_CONFIG], &crate::ID).0
     }
 }
 

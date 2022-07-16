@@ -1,5 +1,4 @@
 use {
-    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -17,8 +16,8 @@ pub struct Authority {
 }
 
 impl Authority {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_AUTHORITY], &crate::ID)
+    pub fn pubkey() -> Pubkey {
+        Pubkey::find_program_address(&[SEED_AUTHORITY], &crate::ID).0
     }
 }
 

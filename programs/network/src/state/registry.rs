@@ -1,13 +1,11 @@
-use anchor_spl::token::TokenAccount;
-
 use {
     super::{Node, Snapshot},
     crate::{
         errors::CronosError,
-        pda::PDA,
         state::{NodeAccount, SnapshotAccount, SnapshotStatus},
     },
     anchor_lang::{prelude::*, AnchorDeserialize},
+    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
@@ -26,8 +24,8 @@ pub struct Registry {
 }
 
 impl Registry {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_REGISTRY], &crate::ID)
+    pub fn pubkey() -> Pubkey {
+        Pubkey::find_program_address(&[SEED_REGISTRY], &crate::ID).0
     }
 }
 

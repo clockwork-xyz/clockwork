@@ -102,7 +102,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
 
 #[cached]
 fn rotator_pubkey() -> Pubkey {
-    Rotator::pda().0
+    Rotator::pubkey()
 }
 
 #[cached]

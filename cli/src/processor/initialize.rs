@@ -14,7 +14,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     let ix_e = cronos_client::pool::instruction::initialize(admin);
 
     // Fund the network program's queues
-    let authority = cronos_client::network::state::Authority::pda().0;
+    let authority = cronos_client::network::state::Authority::pubkey();
     let manager = cronos_client::scheduler::state::Manager::pubkey(authority);
     let ix_f =
         cronos_client::scheduler::instruction::manager_fund(LAMPORTS_PER_SOL, manager, admin);

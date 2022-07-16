@@ -1,5 +1,4 @@
 use {
-    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -20,7 +19,7 @@ pub struct SnapshotEntry {
 }
 
 impl SnapshotEntry {
-    pub fn pda(snapshot: Pubkey, id: u64) -> PDA {
+    pub fn pubkey(snapshot: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_ENTRY,
@@ -29,6 +28,7 @@ impl SnapshotEntry {
             ],
             &crate::ID,
         )
+        .0
     }
 }
 

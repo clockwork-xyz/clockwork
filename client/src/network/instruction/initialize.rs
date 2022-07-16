@@ -8,14 +8,14 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
-    let authority = cronos_network::state::Authority::pda().0;
-    let config = cronos_network::state::Config::pda().0;
-    let rotator = cronos_network::state::Rotator::pda().0;
-    let registry = cronos_network::state::Registry::pda().0;
-    let snapshot = cronos_network::state::Snapshot::pda(0).0;
+    let authority_pubkey = cronos_network::state::Authority::pubkey();
+    let config_pubkey = cronos_network::state::Config::pubkey();
+    let rotator_pubkey = cronos_network::state::Rotator::pubkey();
+    let registry_pubkey = cronos_network::state::Registry::pubkey();
+    let snapshot_pubkey = cronos_network::state::Snapshot::pubkey(0);
 
-    let manager = cronos_scheduler::state::Manager::pubkey(authority);
-    let snapshot_queue = cronos_scheduler::state::Queue::pubkey(manager, 0);
+    let manager_pubkey = cronos_scheduler::state::Manager::pubkey(authority_pubkey);
+    let snapshot_queue = cronos_scheduler::state::Queue::pubkey(manager_pubkey, 0);
     let snapshot_fee = cronos_scheduler::state::Fee::pubkey(snapshot_queue);
     let snapshot_task = cronos_scheduler::state::Task::pubkey(snapshot_queue, 0);
 
@@ -23,19 +23,17 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
         program_id: cronos_network::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
-            AccountMeta::new(authority, false),
+            AccountMeta::new(authority_pubkey, false),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(config, false),
-            AccountMeta::new(rotator, false),
+            AccountMeta::new(config_pubkey, false),
+            AccountMeta::new(rotator_pubkey, false),
             AccountMeta::new(mint, false),
-            AccountMeta::new(registry, false),
+            AccountMeta::new(registry_pubkey, false),
             AccountMeta::new_readonly(cronos_scheduler::ID, false),
-            AccountMeta::new(snapshot, false),
+            AccountMeta::new(snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
-            // AccountMeta::new(rotator_fee, false),
-            // AccountMeta::new(rotator_queue, false),
-            AccountMeta::new(manager, false),
+            AccountMeta::new(manager_pubkey, false),
             AccountMeta::new(snapshot_fee, false),
             AccountMeta::new(snapshot_queue, false),
             AccountMeta::new(snapshot_task, false),

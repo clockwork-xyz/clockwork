@@ -1,5 +1,4 @@
 use {
-    crate::pda::PDA,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -21,8 +20,8 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn pda(delegate: Pubkey) -> PDA {
-        Pubkey::find_program_address(&[SEED_NODE, delegate.as_ref()], &crate::ID)
+    pub fn pubkey(delegate: Pubkey) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_NODE, delegate.as_ref()], &crate::ID).0
     }
 }
 

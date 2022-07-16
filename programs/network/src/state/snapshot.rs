@@ -1,6 +1,6 @@
 use {
     super::{Node, SnapshotEntry},
-    crate::{pda::PDA, state::SnapshotEntryAccount},
+    crate::state::SnapshotEntryAccount,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -22,8 +22,8 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    pub fn pda(id: u64) -> PDA {
-        Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID)
+    pub fn pubkey(id: u64) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID).0
     }
 }
 

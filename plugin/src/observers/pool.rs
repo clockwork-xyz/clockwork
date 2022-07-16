@@ -168,9 +168,9 @@ impl PoolObserver {
         }
 
         // Fetch the snapshot entries
-        let snapshot_pubkey = Snapshot::pda(r_snapshot.id).0;
+        let snapshot_pubkey = Snapshot::pubkey(r_snapshot.id);
         let snapshot_entries = (0..r_snapshot.clone().node_count)
-            .map(|id| SnapshotEntry::pda(snapshot_pubkey, id).0)
+            .map(|id| SnapshotEntry::pubkey(snapshot_pubkey, id))
             .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
             .collect::<Vec<SnapshotEntry>>();
 
@@ -194,9 +194,9 @@ impl PoolObserver {
             Err(i) => i - 1,
             Ok(i) => i,
         } as u64;
-        let snapshot_pubkey = cronos_client::network::state::Snapshot::pda(r_snapshot.id).0;
+        let snapshot_pubkey = cronos_client::network::state::Snapshot::pubkey(r_snapshot.id);
         let entry_pubkey =
-            cronos_client::network::state::SnapshotEntry::pda(snapshot_pubkey, entry_id).0;
+            cronos_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
         let ix = cronos_client::network::instruction::rotator_turn(
             entry_pubkey,
             cronos_client.payer_pubkey(),

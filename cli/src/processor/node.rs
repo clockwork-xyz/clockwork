@@ -17,13 +17,13 @@ pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
 }
 
 pub fn get_by_delegate(client: &Client, delegate: Pubkey) -> Result<(), CliError> {
-    let node_pubkey = Node::pda(delegate).0;
+    let node_pubkey = Node::pubkey(delegate);
     get(client, node_pubkey)
 }
 
 pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
     // Get config data
-    let config_pubkey = Config::pda().0;
+    let config_pubkey = Config::pubkey();
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
@@ -32,17 +32,17 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
 
     // Build ix
     let owner = client.payer().clone();
-    let authority_pubkey = Authority::pda().0;
-    let node_pubkey = Node::pda(delegate.pubkey()).0;
-    let registry_pubkey = Registry::pda().0;
+    let authority_pubkey = Authority::pubkey();
+    let node_pubkey = Node::pubkey(delegate.pubkey());
+    let registry_pubkey = Registry::pubkey();
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
     let registry_data = Registry::try_from(registry_data)
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
-    let snapshot_pubkey = Snapshot::pda(registry_data.snapshot_count - 1).0;
-    let entry_pubkey = SnapshotEntry::pda(snapshot_pubkey, registry_data.node_count).0;
+    let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
+    let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
 
     let manager_pubkey = cronos_client::scheduler::state::Manager::pubkey(authority_pubkey);
     let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(manager_pubkey, 0);
@@ -73,7 +73,7 @@ pub fn register(client: &Client, delegate: Keypair) -> Result<(), CliError> {
 
 pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliError> {
     // Get config data
-    let config_pubkey = Config::pda().0;
+    let config_pubkey = Config::pubkey();
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
@@ -82,7 +82,7 @@ pub fn stake(client: &Client, amount: u64, delegate: Pubkey) -> Result<(), CliEr
 
     // Build ix
     let signer = client.payer();
-    let node_pubkey = Node::pda(delegate).0;
+    let node_pubkey = Node::pubkey(delegate);
     let ix = cronos_client::network::instruction::node_stake(
         amount,
         config_pubkey,

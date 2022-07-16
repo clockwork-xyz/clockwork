@@ -81,8 +81,8 @@ pub fn handler(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
     // Use dynamic accounts to run the next invocation with the new current snapshot
     let entry_pubkey = entry.key();
     let snapshot_pubkey = snapshot.key();
-    let next_snapshot_pubkey = Snapshot::pda(snapshot.id.checked_add(1).unwrap()).0;
-    let next_entry_pubkey = SnapshotEntry::pda(next_snapshot_pubkey, entry.id).0;
+    let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
+    let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, entry.id);
     Ok(ExecResponse {
         dynamic_accounts: Some(
             ctx.accounts

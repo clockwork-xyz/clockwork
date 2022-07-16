@@ -1,6 +1,6 @@
 use {
     super::Snapshot,
-    crate::{pda::PDA, state::SnapshotEntry},
+    crate::state::SnapshotEntry,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
         collections::hash_map::DefaultHasher,
@@ -23,8 +23,8 @@ pub struct Rotator {
 }
 
 impl Rotator {
-    pub fn pda() -> PDA {
-        Pubkey::find_program_address(&[SEED_ROTATOR], &crate::ID)
+    pub fn pubkey() -> Pubkey {
+        Pubkey::find_program_address(&[SEED_ROTATOR], &crate::ID).0
     }
 }
 
