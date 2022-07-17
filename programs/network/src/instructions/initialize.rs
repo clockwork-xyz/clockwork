@@ -1,10 +1,8 @@
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
-
 use {
     crate::state::*,
     anchor_lang::{
         prelude::*, 
-        solana_program::{instruction::Instruction, system_program, sysvar}
+        solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL, system_program}
     },
     anchor_spl::token::Mint,
     std::mem::size_of,
@@ -23,9 +21,6 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Authority>(),
     )]
     pub authority: Account<'info, Authority>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(
         init,
@@ -80,7 +75,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Get accounts
     let admin = &ctx.accounts.admin;
     let authority = &mut ctx.accounts.authority;
-    let clock = &ctx.accounts.clock;
     let rotator = &mut ctx.accounts.rotator;
     let config = &mut ctx.accounts.config;
     let mint = &ctx.accounts.mint;
@@ -100,7 +94,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
 
     // Setup the first snapshot
     registry.new_snapshot(snapshot)?;
-    registry.rotate_snapshot(clock, None, snapshot)?;
+    registry.rotate_snapshot(None, snapshot)?;
 
     // Create a queue to take snapshots of the registry
     let bump = *ctx.bumps.get("authority").unwrap();
@@ -109,7 +103,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             scheduler_program.to_account_info(),
             cronos_scheduler::cpi::accounts::QueueNew {
                 authority: authority.to_account_info(),
-                clock: clock.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
@@ -143,7 +136,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(snapshot.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),

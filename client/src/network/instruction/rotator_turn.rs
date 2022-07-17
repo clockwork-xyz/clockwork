@@ -2,7 +2,6 @@ use anchor_lang::{
     solana_program::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
-        sysvar,
     },
     InstructionData,
 };
@@ -16,7 +15,6 @@ pub fn rotator_turn(
     Instruction {
         program_id: cronos_network::ID,
         accounts: vec![
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(cronos_network::state::Config::pubkey(), false),
             AccountMeta::new_readonly(entry, false),
             AccountMeta::new(cronos_pool::state::Pool::pubkey(), false),

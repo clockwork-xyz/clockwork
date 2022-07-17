@@ -2,7 +2,7 @@ use anchor_lang::{
     solana_program::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
-        system_program, sysvar,
+        system_program,
     },
     InstructionData,
 };
@@ -19,7 +19,6 @@ pub fn queue_new(
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),

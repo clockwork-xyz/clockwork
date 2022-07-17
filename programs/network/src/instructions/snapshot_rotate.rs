@@ -1,18 +1,11 @@
 use cronos_scheduler::state::Queue;
 
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::sysvar},
-    cronos_scheduler::responses::ExecResponse,
-};
+use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::ExecResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
@@ -46,13 +39,12 @@ pub struct SnapshotRotate<'info> {
 
 pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     // Get accounts
-    let clock = &ctx.accounts.clock;
     let current_snapshot = &mut ctx.accounts.current_snapshot;
     let next_snapshot = &mut ctx.accounts.next_snapshot;
     let registry = &mut ctx.accounts.registry;
 
     // Rotate the snapshot
-    let res = registry.rotate_snapshot(clock, Some(current_snapshot), next_snapshot);
+    let res = registry.rotate_snapshot(Some(current_snapshot), next_snapshot);
     if res.is_err() {
         // Don't return the error from here
         msg!("Snapshot rotation failed: {:?}", res.err())

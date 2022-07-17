@@ -2,7 +2,7 @@ use anchor_lang::{
     solana_program::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
-        system_program, sysvar,
+        system_program,
     },
     InstructionData,
 };
@@ -21,7 +21,6 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(authority_pubkey, false),
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new(config_pubkey, false),
             AccountMeta::new(rotator_pubkey, false),
             AccountMeta::new(mint, false),

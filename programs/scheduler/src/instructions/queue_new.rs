@@ -1,8 +1,6 @@
-
-
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::{system_program, sysvar}},
+    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
     std::mem::size_of
 };
 
@@ -11,9 +9,6 @@ use {
 pub struct QueueNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -38,13 +33,12 @@ pub struct QueueNew<'info> {
 pub fn handler(ctx: Context<QueueNew>, balance: u64, id: u128, schedule: String) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
-    let clock = &ctx.accounts.clock;
     let payer = &mut ctx.accounts.payer;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
-    queue.new(authority.key(), clock, id, schedule)?;
+    queue.new(authority.key(), id, schedule)?;
 
     // Transfer balance into the queue
     queue.balance = balance;

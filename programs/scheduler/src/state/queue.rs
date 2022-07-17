@@ -68,13 +68,7 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn process(&mut self) -> Result<()>;
 
-    fn new(
-        &mut self,
-        authority: Pubkey,
-        clock: &Sysvar<Clock>,
-        id: u128,
-        schedule: String,
-    ) -> Result<()>;
+    fn new(&mut self, authority: Pubkey, id: u128, schedule: String) -> Result<()>;
 
     fn next_process_at(&self, ts: i64) -> Option<i64>;
 
@@ -107,13 +101,7 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn new(
-        &mut self,
-        authority: Pubkey,
-        clock: &Sysvar<Clock>,
-        id: u128,
-        schedule: String,
-    ) -> Result<()> {
+    fn new(&mut self, authority: Pubkey, id: u128, schedule: String) -> Result<()> {
         // Initialize queue account
         self.authority = authority.key();
         self.balance = 0;
@@ -123,7 +111,8 @@ impl QueueAccount for Account<'_, Queue> {
         self.task_count = 0;
 
         // Set process_at (schedule must be set first)
-        self.process_at = self.next_process_at(clock.unix_timestamp);
+        let ts = Clock::get().unwrap().unix_timestamp;
+        self.process_at = self.next_process_at(ts);
 
         Ok(())
     }

@@ -48,7 +48,7 @@ pub trait RotatorAccount {
         snapshot: &Account<Snapshot>,
     ) -> Result<bool>;
 
-    fn hash_nonce(&mut self, slot: u64) -> Result<()>;
+    fn hash_nonce(&mut self) -> Result<()>;
 }
 
 impl RotatorAccount for Account<'_, Rotator> {
@@ -74,14 +74,14 @@ impl RotatorAccount for Account<'_, Rotator> {
         }
     }
 
-    fn hash_nonce(&mut self, slot: u64) -> Result<()> {
+    fn hash_nonce(&mut self) -> Result<()> {
         // Hash the nonce
         let mut hasher = DefaultHasher::new();
         self.nonce.hash(&mut hasher);
         self.nonce = hasher.finish();
 
         // Record the slot value
-        self.last_slot = slot;
+        self.last_slot = Clock::get().unwrap().slot;
         Ok(())
     }
 }

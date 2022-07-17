@@ -55,7 +55,6 @@ pub trait RegistryAccount {
 
     fn rotate_snapshot(
         &mut self,
-        clock: &Sysvar<Clock>,
         current_snapshot: Option<&mut Account<Snapshot>>,
         next_snapshot: &mut Account<Snapshot>,
     ) -> Result<()>;
@@ -95,7 +94,6 @@ impl RegistryAccount for Account<'_, Registry> {
 
     fn rotate_snapshot(
         &mut self,
-        clock: &Sysvar<Clock>,
         current_snapshot: Option<&mut Account<Snapshot>>,
         next_snapshot: &mut Account<Snapshot>,
     ) -> Result<()> {
@@ -114,6 +112,9 @@ impl RegistryAccount for Account<'_, Registry> {
             CronosError::SnapshotIncomplete
         );
 
+        // Get current timestamp
+        let ts = Clock::get().unwrap().unix_timestamp;
+
         // Archive the current snapshot
         match current_snapshot {
             Some(current_snapshot) => {
@@ -124,9 +125,7 @@ impl RegistryAccount for Account<'_, Registry> {
                 );
 
                 // Mark the current snapshot as archived
-                current_snapshot.status = SnapshotStatus::Archived {
-                    ts: clock.unix_timestamp,
-                };
+                current_snapshot.status = SnapshotStatus::Archived { ts };
             }
             None => require!(self.snapshot_count == 0, CronosError::SnapshotNotCurrent),
         }

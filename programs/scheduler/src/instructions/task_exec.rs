@@ -1,15 +1,12 @@
 use {
     crate::{errors::CronosError, instructions::utils::is_spam, state::*},
-    anchor_lang::{prelude::*, solana_program::sysvar, system_program},
+    anchor_lang::{prelude::*, system_program},
     cronos_pool::state::Pool,
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct TaskExec<'info> {
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
-
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
@@ -64,7 +61,6 @@ pub struct TaskExec<'info> {
 pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     // Load accounts
     let task = &mut ctx.accounts.task;
-    let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
     let pool = &ctx.accounts.pool;
@@ -72,7 +68,8 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let worker = &mut ctx.accounts.worker;
 
     // Validate the worker is authorized to execute this task
-    if is_spam(clock, &config, fee, pool, queue, worker)? {
+    if is_spam(&config, pool, queue, worker)? {
+        fee.pay_to_admin(config.spam_penalty, queue)?;
         return Ok(());
     }
 

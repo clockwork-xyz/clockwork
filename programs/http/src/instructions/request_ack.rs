@@ -1,6 +1,6 @@
 use {
     crate::state::{Config, Fee, FeeAccount, Request, SEED_CONFIG, SEED_FEE, SEED_REQUEST},
-    anchor_lang::{prelude::*, solana_program::sysvar, system_program},
+    anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };
 
@@ -12,9 +12,6 @@ pub struct RequestAck<'info> {
 
     #[account(mut)]
     pub caller: SystemAccount<'info>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
@@ -54,15 +51,15 @@ pub struct RequestAck<'info> {
 
 pub fn handler<'info>(ctx: Context<RequestAck>) -> Result<()> {
     // Get accounts
-    let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
     let request = &mut ctx.accounts.request;
     let worker = &mut ctx.accounts.worker;
 
     // Payout request fee
+    let current_slot = Clock::get().unwrap().slot;
     let is_authorized_worker = request.workers.contains(&worker.key());
-    let is_within_execution_window = clock.slot
+    let is_within_execution_window = current_slot
         < request
             .created_at
             .checked_add(config.timeout_threshold)

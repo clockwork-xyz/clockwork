@@ -1,6 +1,6 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::sysvar},
+    anchor_lang::prelude::*,
 };
 
 #[derive(Accounts)]
@@ -8,9 +8,6 @@ use {
 pub struct QueueResume<'info> {
     #[account()]
     pub authority: Signer<'info>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(
         mut,
@@ -28,12 +25,12 @@ pub struct QueueResume<'info> {
 
 pub fn handler(ctx: Context<QueueResume>, skip_forward: bool) -> Result<()> {
     // Get accounts
-    let clock = &ctx.accounts.clock;
     let queue = &mut ctx.accounts.queue;
 
     // Skip forward, if required
     if skip_forward {
-        queue.process_at = queue.next_process_at(clock.unix_timestamp);
+        let ts = Clock::get().unwrap().unix_timestamp;
+        queue.process_at = queue.next_process_at(ts);
     }
 
     // Pause the queue

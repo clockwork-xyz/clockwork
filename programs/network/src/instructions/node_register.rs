@@ -155,7 +155,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new_readonly(sysvar::clock::ID, false),
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(current_snapshot_pubkey, false),
             AccountMeta::new(next_snapshot_pubkey, false),

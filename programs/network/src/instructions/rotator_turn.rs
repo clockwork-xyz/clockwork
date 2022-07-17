@@ -2,16 +2,10 @@ use cronos_pool::cpi::accounts::Rotate;
 
 use crate::errors::CronosError;
 
-use {crate::state::*, anchor_lang::{prelude::*, solana_program::sysvar}};
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct RotatorTurn<'info> {
-    #[account(
-        address = sysvar::clock::ID, 
-        constraint = clock.slot >= rotator.last_slot.checked_add(config.slots_per_rotation).unwrap()
-    )]
-    pub clock: Sysvar<'info, Clock>,
-
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
 
@@ -37,7 +31,12 @@ pub struct RotatorTurn<'info> {
     #[account(address = cronos_pool::ID)]
     pub pool_program: Program<'info, cronos_pool::program::CronosPool>,
 
-    #[account(mut, seeds = [SEED_ROTATOR], bump)]
+    #[account(
+        mut, 
+        seeds = [SEED_ROTATOR], 
+        bump, 
+        constraint = Clock::get().unwrap().slot >= rotator.last_slot.checked_add(config.slots_per_rotation).unwrap()
+    )]
     pub rotator: Account<'info, Rotator>,
 
     #[account()]
@@ -59,7 +58,6 @@ pub struct RotatorTurn<'info> {
 
 pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
     // Get accounts
-    let clock = &ctx.accounts.clock;
     let pool = &mut ctx.accounts.pool;
     let pool_config = &ctx.accounts.pool_config;
     let pool_program = &ctx.accounts.pool_program;
@@ -84,7 +82,7 @@ pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
     )?;
 
     // Hash the rotator's nonce value
-    rotator.hash_nonce(clock.slot)?;
+    rotator.hash_nonce()?;
 
     Ok(())
 }

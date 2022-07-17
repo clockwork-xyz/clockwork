@@ -4,7 +4,7 @@ use {
     },
     anchor_lang::{
         prelude::*,
-        solana_program::{system_program, sysvar},
+        solana_program::system_program,
         system_program::{transfer, Transfer},
     },
     cronos_pool::state::Pool,
@@ -30,9 +30,6 @@ pub struct RequestNew<'info> {
 
     #[account()]
     pub caller: Signer<'info>,
-
-    #[account(address = sysvar::clock::ID)]
-    pub clock: Sysvar<'info, Clock>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
@@ -70,7 +67,6 @@ pub fn handler<'info>(
     // Fetch accounts
     let api = &ctx.accounts.api;
     let caller = &ctx.accounts.caller;
-    let clock = &ctx.accounts.clock;
     let config = &ctx.accounts.config;
     let payer = &mut ctx.accounts.payer;
     let pool = &ctx.accounts.pool;
@@ -80,7 +76,7 @@ pub fn handler<'info>(
     // TODO Validate route is a relative path
 
     // Initialize the request account
-    let created_at = clock.slot;
+    let current_slot = Clock::get().unwrap().slot;
     let fee_amount = config.request_fee;
     let headers = HashMap::new(); // TODO Get headers from ix data
     let workers = pool
@@ -93,7 +89,7 @@ pub fn handler<'info>(
     request.new(
         api,
         caller.key(),
-        created_at,
+        current_slot,
         fee_amount,
         headers,
         id,
