@@ -17,6 +17,7 @@ pub struct QueuePause<'info> {
         ],
         bump,
         has_one = authority,
+        constraint = queue.status == QueueStatus::Pending
     )]
     pub queue: Account<'info, Queue>,
 }
