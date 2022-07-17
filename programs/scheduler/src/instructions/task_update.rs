@@ -18,6 +18,7 @@ pub struct TaskUpdate<'info> {
         ],
         bump,
         has_one = authority,
+        constraint = queue.status == QueueStatus::Pending || queue.status == QueueStatus::Paused
     )]
     pub queue: Account<'info, Queue>,
 
