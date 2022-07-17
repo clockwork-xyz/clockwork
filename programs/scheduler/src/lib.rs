@@ -43,6 +43,10 @@ pub mod cronos_scheduler {
         queue_deposit::handler(ctx, amount)
     }
 
+    pub fn queue_pause(ctx: Context<QueuePause>) -> Result<()> {
+        queue_pause::handler(ctx)
+    }
+
     pub fn queue_new(
         ctx: Context<QueueNew>,
         balance: u64,
