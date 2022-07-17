@@ -178,7 +178,7 @@ impl QueueObserver {
         match queue.status {
             QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
             QueueStatus::Pending => {
-                ixs.push(cronos_client::scheduler::instruction::queue_start(
+                ixs.push(cronos_client::scheduler::instruction::queue_process(
                     queue_pubkey,
                     worker_pubkey,
                 ));

@@ -7,7 +7,7 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn queue_start(queue: Pubkey, worker: Pubkey) -> Instruction {
+pub fn queue_process(queue: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
@@ -15,6 +15,6 @@ pub fn queue_start(queue: Pubkey, worker: Pubkey) -> Instruction {
             AccountMeta::new(queue, false),
             AccountMeta::new(worker, true),
         ],
-        data: cronos_scheduler::instruction::QueueStart {}.data(),
+        data: cronos_scheduler::instruction::QueueProcess {}.data(),
     }
 }

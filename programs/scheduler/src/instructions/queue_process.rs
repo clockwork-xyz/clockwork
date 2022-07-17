@@ -4,7 +4,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct QueueStart<'info> {
+pub struct QueueProcess<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
@@ -25,7 +25,7 @@ pub struct QueueStart<'info> {
     pub worker: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<QueueStart>) -> Result<()> {
+pub fn handler(ctx: Context<QueueProcess>) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
-    queue.start()
+    queue.process()
 }

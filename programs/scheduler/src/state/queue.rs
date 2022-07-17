@@ -66,7 +66,7 @@ impl TryFrom<Vec<u8>> for Queue {
  */
 
 pub trait QueueAccount {
-    fn start(&mut self) -> Result<()>;
+    fn process(&mut self) -> Result<()>;
 
     fn new(
         &mut self,
@@ -89,7 +89,7 @@ pub trait QueueAccount {
 }
 
 impl QueueAccount for Account<'_, Queue> {
-    fn start(&mut self) -> Result<()> {
+    fn process(&mut self) -> Result<()> {
         // Validate the queue is pending
         require!(
             self.status == QueueStatus::Pending,

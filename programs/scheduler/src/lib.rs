@@ -47,6 +47,10 @@ pub mod cronos_scheduler {
         queue_pause::handler(ctx)
     }
 
+    pub fn queue_process(ctx: Context<QueueProcess>) -> Result<()> {
+        queue_process::handler(ctx)
+    }
+
     pub fn queue_new(
         ctx: Context<QueueNew>,
         balance: u64,
@@ -58,10 +62,6 @@ pub mod cronos_scheduler {
 
     pub fn queue_resume(ctx: Context<QueueResume>, skip_forward: bool) -> Result<()> {
         queue_resume::handler(ctx, skip_forward)
-    }
-
-    pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
-        queue_start::handler(ctx)
     }
 
     pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
