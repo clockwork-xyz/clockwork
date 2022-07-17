@@ -115,9 +115,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 system_program: system_program.to_account_info(),
             },
             &[&[SEED_AUTHORITY, &[bump]]]
-        ), 
+        ),
+        LAMPORTS_PER_SOL, 
         0,
-        LAMPORTS_PER_SOL,
         "0 * * * * * *".into()
     )?;
 

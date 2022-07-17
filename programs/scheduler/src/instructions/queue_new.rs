@@ -7,7 +7,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(id: u128, balance: u64, schedule: String)]
+#[instruction(balance: u64, id: u128, schedule: String)]
 pub struct QueueNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
@@ -35,7 +35,7 @@ pub struct QueueNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueNew>, id: u128, balance: u64, schedule: String) -> Result<()> {
+pub fn handler(ctx: Context<QueueNew>, balance: u64, id: u128, schedule: String) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
@@ -47,6 +47,7 @@ pub fn handler(ctx: Context<QueueNew>, id: u128, balance: u64, schedule: String)
     queue.new(authority.key(), clock, id, schedule)?;
 
     // Transfer balance into the queue
+    queue.balance = balance;
     transfer(
         CpiContext::new(
             system_program.to_account_info(),

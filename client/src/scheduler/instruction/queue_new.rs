@@ -25,8 +25,8 @@ pub fn queue_new(
             AccountMeta::new_readonly(system_program::ID, false),
         ],
         data: cronos_scheduler::instruction::QueueNew {
-            id,
             balance,
+            id,
             schedule,
         }
         .data(),

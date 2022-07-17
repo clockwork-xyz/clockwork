@@ -30,6 +30,8 @@ pub enum CronosError {
     #[msg("You are not the authority of this queue")]
     NotQueueAuthority,
 
+    #[msg("The queue does not have enough lamports for this operation")]
+    InsufficientQueueBalance,
     #[msg("The queue is not due")]
     QueueNotDue,
 }

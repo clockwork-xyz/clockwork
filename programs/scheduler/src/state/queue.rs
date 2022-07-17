@@ -35,6 +35,7 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[derive(Debug)]
 pub struct Queue {
     pub authority: Pubkey,
+    pub balance: u64,
     pub exec_at: Option<i64>,
     pub id: u128,
     pub schedule: String,
@@ -115,6 +116,7 @@ impl QueueAccount for Account<'_, Queue> {
     ) -> Result<()> {
         // Initialize queue account
         self.authority = authority.key();
+        self.balance = 0;
         self.id = id;
         self.schedule = schedule;
         self.status = QueueStatus::Pending;

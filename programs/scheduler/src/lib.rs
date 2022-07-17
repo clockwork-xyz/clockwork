@@ -39,17 +39,25 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
-    pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
-        queue_start::handler(ctx)
+    pub fn queue_deposit(ctx: Context<QueueDeposit>, amount: u64) -> Result<()> {
+        queue_deposit::handler(ctx, amount)
     }
 
     pub fn queue_new(
         ctx: Context<QueueNew>,
-        id: u128,
         balance: u64,
+        id: u128,
         schedule: String,
     ) -> Result<()> {
-        queue_new::handler(ctx, id, balance, schedule)
+        queue_new::handler(ctx, balance, id, schedule)
+    }
+
+    pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
+        queue_start::handler(ctx)
+    }
+
+    pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
+        queue_withdraw::handler(ctx, amount)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {

@@ -94,7 +94,8 @@ impl FeeAccount for Account<'_, Fee> {
     }
 
     fn pay_to_admin(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()> {
-        // Increment the claimable amount
+        // Transfer balance from queue to fee account
+        queue.balance = queue.balance.checked_sub(amount).unwrap();
         self.admin_balance = self.admin_balance.checked_add(amount).unwrap();
 
         // Transfer lamports
@@ -113,7 +114,8 @@ impl FeeAccount for Account<'_, Fee> {
     }
 
     fn pay_to_worker(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()> {
-        // Increment the claimable amount
+        // Transfer balance from queue to fee account
+        queue.balance = queue.balance.checked_sub(amount).unwrap();
         self.worker_balance = self.worker_balance.checked_add(amount).unwrap();
 
         // Transfer lamports
