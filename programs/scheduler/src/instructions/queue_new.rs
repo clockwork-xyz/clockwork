@@ -15,18 +15,6 @@ pub struct QueueNew<'info> {
     #[account(address = sysvar::clock::ID)]
     pub clock: Sysvar<'info, Clock>,
 
-    #[account(
-        init,
-        seeds = [
-            SEED_FEE, 
-            queue.key().as_ref()
-        ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<Fee>(),
-    )]
-    pub fee: Account<'info, Fee>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -51,13 +39,11 @@ pub fn handler(ctx: Context<QueueNew>, id: u128, balance: u64, schedule: String)
     // Get accounts
     let authority = &ctx.accounts.authority;
     let clock = &ctx.accounts.clock;
-    let fee = &mut ctx.accounts.fee;
     let payer = &mut ctx.accounts.payer;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
-    fee.new(queue.key())?;
     queue.new(authority.key(), clock, id, schedule)?;
 
     // Transfer balance into the queue

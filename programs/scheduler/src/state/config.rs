@@ -13,10 +13,9 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub program_fee: u64,
+    pub grace_period: i64,
+    pub spam_penalty: u64,
     pub worker_fee: u64,
-    pub worker_holdout_period: i64,
-    pub worker_spam_penalty: u64,
 }
 
 impl Config {
@@ -39,10 +38,9 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
-    pub program_fee: u64,
+    pub grace_period: i64,
+    pub spam_penalty: u64,
     pub worker_fee: u64,
-    pub worker_holdout_period: i64,
-    pub worker_spam_penalty: u64,
 }
 /**
  * ConfigAccount
@@ -57,19 +55,17 @@ pub trait ConfigAccount {
 impl ConfigAccount for Account<'_, Config> {
     fn new(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
-        self.program_fee = 0;
+        self.grace_period = 0;
+        self.spam_penalty = 0;
         self.worker_fee = 0;
-        self.worker_holdout_period = 0;
-        self.worker_spam_penalty = 0;
         Ok(())
     }
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
-        self.program_fee = settings.program_fee;
+        self.grace_period = settings.grace_period;
+        self.spam_penalty = settings.spam_penalty;
         self.worker_fee = settings.worker_fee;
-        self.worker_holdout_period = settings.worker_holdout_period;
-        self.worker_spam_penalty = settings.worker_spam_penalty;
         Ok(())
     }
 }

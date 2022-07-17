@@ -1,3 +1,5 @@
+use crate::state::FeeAccount;
+
 use {
     super::{Config, Fee, Queue},
     crate::{
@@ -198,31 +200,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Pay worker fees
         let total_worker_fee = config.worker_fee.checked_add(worker_reimbursement).unwrap();
-        **queue.to_account_info().try_borrow_mut_lamports()? = queue
-            .to_account_info()
-            .lamports()
-            .checked_sub(total_worker_fee)
-            .unwrap();
-        **worker.to_account_info().try_borrow_mut_lamports()? = worker
-            .to_account_info()
-            .lamports()
-            .checked_add(total_worker_fee)
-            .unwrap();
-
-        // Pay program fees
-        // **delegate.to_account_info().try_borrow_mut_lamports()? = delegate
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_sub(config.program_fee)
-        //     .unwrap();
-        // **fee.to_account_info().try_borrow_mut_lamports()? = fee
-        //     .to_account_info()
-        //     .lamports()
-        //     .checked_add(config.program_fee)
-        //     .unwrap();
-
-        // Increment collectable fee balance
-        fee.balance = fee.balance.checked_add(config.program_fee).unwrap();
+        fee.pay_to_worker(total_worker_fee, queue)?;
 
         // Update the queue status
         let next_task_id = self.id.checked_add(1).unwrap();

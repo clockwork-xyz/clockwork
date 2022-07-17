@@ -15,13 +15,11 @@ pub fn queue_new(
     queue: Pubkey,
     schedule: String,
 ) -> Instruction {
-    let fee_pubkey = cronos_scheduler::state::Fee::pubkey(queue);
     Instruction {
         program_id: cronos_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new_readonly(sysvar::clock::ID, false),
-            AccountMeta::new(fee_pubkey, false),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),

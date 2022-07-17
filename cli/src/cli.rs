@@ -14,10 +14,9 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        program_fee: Option<u64>,
         worker_fee: Option<u64>,
-        worker_holdout_period: Option<i64>,
-        worker_spam_penalty: Option<u64>,
+        grace_period: Option<i64>,
+        spam_penalty: Option<u64>,
     },
 
     // Task commands
@@ -122,26 +121,20 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("program_fee")
-                                .long("program_fee")
-                                .value_name("NUM_LAMPORTS")
-                                .takes_value(true),
-                        )
-                        .arg(
                             Arg::new("worker_fee")
                                 .long("worker_fee")
                                 .value_name("NUM_LAMPORTS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("worker_holdout_period")
-                                .long("worker_holdout_period")
+                            Arg::new("grace_period")
+                                .long("grace_period")
                                 .value_name("NUM_SECONDS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("worker_spam_penalty")
-                                .long("worker_spam_penalty")
+                            Arg::new("spam_penalty")
+                                .long("spam_penalty")
                                 .value_name("NUM_LAMPORTS")
                                 .takes_value(true),
                         )
@@ -150,9 +143,8 @@ pub fn app() -> Command<'static> {
                                 .args(&[
                                     "admin",
                                     "worker_fee",
-                                    "worker_holdout_period",
-                                    "worker_spam_penalty",
-                                    "program_fee",
+                                    "grace_period",
+                                    "spam_penalty",
                                 ])
                                 .multiple(true),
                         ),

@@ -1,7 +1,8 @@
 use {
     crate::{errors::CronosError, instructions::utils::is_spam, state::*},
     anchor_lang::{prelude::*, solana_program::sysvar, system_program},
-    cronos_pool::state::Pool
+    cronos_pool::state::Pool,
+    std::mem::size_of,
 };
 
 #[derive(Accounts)]
@@ -13,13 +14,14 @@ pub struct TaskExec<'info> {
     pub config: Box<Account<'info, Config>>,
 
     #[account(
-        mut,
+        init_if_needed,
         seeds = [
             SEED_FEE,
-            queue.key().as_ref()
+            worker.key().as_ref()
         ],
         bump,
-        has_one = queue
+        payer = worker,
+        space = 8 + size_of::<Fee>(),
     )]
     pub fee: Account<'info, Fee>,
 
@@ -67,11 +69,10 @@ pub fn handler(ctx: Context<TaskExec>) -> Result<()> {
     let fee = &mut ctx.accounts.fee;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
-    let system_program = &ctx.accounts.system_program;
     let worker = &mut ctx.accounts.worker;
 
     // Validate the worker is authorized to execute this task
-    if is_spam(clock, &config, fee, pool, queue, system_program, worker)? {
+    if is_spam(clock, &config, fee, pool, queue, worker)? {
         return Ok(());
     }
 

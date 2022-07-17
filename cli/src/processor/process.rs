@@ -23,17 +23,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ConfigSet {
             admin,
             worker_fee,
-            worker_holdout_period,
-            worker_spam_penalty,
-            program_fee,
-        } => super::config::set(
-            &client,
-            admin,
-            program_fee,
-            worker_fee,
-            worker_holdout_period,
-            worker_spam_penalty,
-        ),
+            grace_period,
+            spam_penalty,
+        } => super::config::set(&client, admin, worker_fee, grace_period, spam_penalty),
         CliCommand::Health => super::health::get(&client),
         CliCommand::HttpRequestNew {
             api,

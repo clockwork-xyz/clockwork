@@ -9,7 +9,7 @@ use anchor_lang::{
 
 pub fn task_exec(queue: Pubkey, task: Pubkey, worker: Pubkey) -> Instruction {
     let config_pubkey = cronos_scheduler::state::Config::pubkey();
-    let fee_pubkey = cronos_scheduler::state::Fee::pubkey(queue);
+    let fee_pubkey = cronos_scheduler::state::Fee::pubkey(worker);
     let pool_pubkey = cronos_pool::state::Pool::pubkey();
     Instruction {
         program_id: cronos_scheduler::ID,

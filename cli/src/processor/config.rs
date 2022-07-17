@@ -37,10 +37,9 @@ pub fn get(client: &Client) -> Result<(), CliError> {
 pub fn set(
     client: &Client,
     admin: Option<Pubkey>,
-    program_fee: Option<u64>,
     worker_fee: Option<u64>,
-    worker_holdout_period: Option<i64>,
-    worker_spam_penalty: Option<u64>,
+    grace_period: Option<i64>,
+    spam_penalty: Option<u64>,
 ) -> Result<(), CliError> {
     let config_pubkey = SchedulerConfig::pubkey();
     let config = client
@@ -52,21 +51,17 @@ pub fn set(
             Some(admin) => admin,
             None => config.admin,
         },
-        program_fee: match program_fee {
-            Some(program_fee) => program_fee,
-            None => config.program_fee,
-        },
         worker_fee: match worker_fee {
             Some(worker_fee) => worker_fee,
             None => config.worker_fee,
         },
-        worker_holdout_period: match worker_holdout_period {
-            Some(worker_holdout_period) => worker_holdout_period,
-            None => config.worker_holdout_period,
+        grace_period: match grace_period {
+            Some(grace_period) => grace_period,
+            None => config.grace_period,
         },
-        worker_spam_penalty: match worker_spam_penalty {
-            Some(worker_spam_penalty) => worker_spam_penalty,
-            None => config.worker_spam_penalty,
+        spam_penalty: match spam_penalty {
+            Some(spam_penalty) => spam_penalty,
+            None => config.spam_penalty,
         },
     };
 

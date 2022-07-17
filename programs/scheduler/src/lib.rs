@@ -27,10 +27,6 @@ pub mod cronos_scheduler {
         admin_config_update::handler(ctx, settings)
     }
 
-    pub fn admin_fee_collect(ctx: Context<AdminFeeCollect>) -> Result<()> {
-        admin_fee_collect::handler(ctx)
-    }
-
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
     }

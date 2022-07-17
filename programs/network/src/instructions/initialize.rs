@@ -90,9 +90,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let snapshot_fee = ctx.remaining_accounts.get(0).unwrap();
-    let snapshot_queue = ctx.remaining_accounts.get(1).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
 
     // Initialize accounts
     config.new(admin.key(), mint.key())?;
@@ -111,7 +110,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             cronos_scheduler::cpi::accounts::QueueNew {
                 authority: authority.to_account_info(),
                 clock: clock.to_account_info(),
-                fee: snapshot_fee.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
