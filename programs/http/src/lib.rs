@@ -8,11 +8,18 @@ pub use id::ID;
 
 use anchor_lang::prelude::*;
 use instructions::*;
-use state::HttpMethod;
+use state::*;
 
 #[program]
 pub mod cronos_http {
     use super::*;
+
+    pub fn admin_config_update(
+        ctx: Context<AdminConfigUpdate>,
+        settings: ConfigSettings,
+    ) -> Result<()> {
+        admin_config_update::handler(ctx, settings)
+    }
 
     pub fn admin_fee_claim<'info>(ctx: Context<AdminFeeClaim>, amount: u64) -> Result<()> {
         admin_fee_claim::handler(ctx, amount)

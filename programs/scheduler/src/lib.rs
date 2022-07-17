@@ -27,6 +27,14 @@ pub mod cronos_scheduler {
         admin_config_update::handler(ctx, settings)
     }
 
+    pub fn admin_fee_claim(ctx: Context<AdminFeeClaim>, amount: u64) -> Result<()> {
+        admin_fee_claim::handler(ctx, amount)
+    }
+
+    pub fn fee_claim(ctx: Context<FeeClaim>, amount: u64) -> Result<()> {
+        fee_claim::handler(ctx, amount)
+    }
+
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
     }

@@ -1,5 +1,4 @@
 use {
-    crate::errors::CronosError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -56,7 +55,7 @@ pub struct ConfigSettings {
 pub trait ConfigAccount {
     fn new(&mut self, admin: Pubkey) -> Result<()>;
 
-    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
+    fn update(&mut self, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
@@ -67,11 +66,7 @@ impl ConfigAccount for Account<'_, Config> {
         Ok(())
     }
 
-    fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
-        require!(
-            self.admin == admin.key(),
-            CronosError::AdminAuthorityInvalid
-        );
+    fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
         self.request_fee = settings.request_fee;
         self.timeout_threshold = settings.timeout_threshold;
