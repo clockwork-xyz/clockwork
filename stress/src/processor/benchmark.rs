@@ -29,8 +29,8 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
     let num_tasks_serial = count - num_tasks_parallel;
 
-    let mut expected_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
-    let mut actual_exec_ats = HashMap::<Pubkey, Vec<i64>>::new();
+    let mut expected_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
+    let mut actual_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
     // Fund authority account
     let authority = &Keypair::new();
@@ -42,7 +42,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     // Create queues for the parallel tasks
     for i in 0..num_tasks_parallel {
-        let ix_a = create_queue_ix(&authority, recurrence, &mut expected_exec_ats, i.into());
+        let ix_a = create_queue_ix(&authority, recurrence, &mut expected_process_ats, i.into());
         let ix_b = create_task_ix(&authority, i.into(), 0);
         client
             .send_and_confirm(&[ix_a, ix_b], &[authority])
@@ -54,7 +54,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         let ix_a = create_queue_ix(
             &authority,
             recurrence,
-            &mut expected_exec_ats,
+            &mut expected_process_ats,
             num_tasks_parallel.into(),
         );
 
@@ -74,18 +74,22 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
     let num_expected_events = count * (recurrence + 1);
     listen_for_events(
         num_expected_events,
-        &expected_exec_ats,
-        &mut actual_exec_ats,
+        &expected_process_ats,
+        &mut actual_process_ats,
     )?;
-    calculate_and_report_stats(num_expected_events, expected_exec_ats, actual_exec_ats)?;
+    calculate_and_report_stats(
+        num_expected_events,
+        expected_process_ats,
+        actual_process_ats,
+    )?;
 
     Ok(())
 }
 
 fn listen_for_events(
     num_expected_events: u32,
-    _expected_exec_ats: &HashMap<Pubkey, Vec<i64>>,
-    _actual_exec_ats: &mut HashMap<Pubkey, Vec<i64>>,
+    _expected_process_ats: &HashMap<Pubkey, Vec<i64>>,
+    _actual_process_ats: &mut HashMap<Pubkey, Vec<i64>>,
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
@@ -108,8 +112,8 @@ fn listen_for_events(
                     // base64::decode_config_buf(&log[14..], base64::STANDARD, &mut buffer).unwrap();
                     // let event =
                     //     borsh::try_from_slice_unchecked::<TaskExecuted>(&buffer[8..]).unwrap();
-                    // if expected_exec_ats.contains_key(&event.queue) {
-                    //     actual_exec_ats
+                    // if expected_process_ats.contains_key(&event.queue) {
+                    //     actual_process_ats
                     //         .entry(event.queue)
                     //         .or_insert(Vec::new())
                     //         .push(event.ts);
@@ -166,7 +170,7 @@ fn create_queue_ix(
         schedule.clone(),
     );
 
-    // Index expected exec_at times
+    // Index expected process_at times
     for datetime in Schedule::from_str(&schedule)
         .unwrap()
         .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))

@@ -4,8 +4,8 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(skip_forward: bool)]
-pub struct QueueResume<'info> {
+#[instruction(schedule: String)]
+pub struct QueueUpdate<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
@@ -21,23 +21,19 @@ pub struct QueueResume<'info> {
         ],
         bump,
         has_one = authority,
-        constraint = queue.status == QueueStatus::Paused
+        constraint = queue.status == QueueStatus::Pending || queue.status == QueueStatus::Paused
     )]
     pub queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<QueueResume>, skip_forward: bool) -> Result<()> {
+pub fn handler(ctx: Context<QueueUpdate>, schedule: String) -> Result<()> {
     // Get accounts
     let clock = &ctx.accounts.clock;
     let queue = &mut ctx.accounts.queue;
 
-    // Skip forward, if required
-    if skip_forward {
-        queue.process_at = queue.next_process_at(clock.unix_timestamp);
-    }
-
-    // Pause the queue
-    queue.status = QueueStatus::Pending;
+    // Update the queue
+    queue.schedule = schedule;
+    queue.process_at = queue.next_process_at(clock.unix_timestamp);
 
     Ok(())
 }

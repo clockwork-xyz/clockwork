@@ -16,7 +16,7 @@ pub struct QueueProcess<'info> {
             queue.id.to_be_bytes().as_ref(),
         ],
         bump,
-        constraint = queue.exec_at.is_some() && queue.exec_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
+        constraint = queue.process_at.is_some() && queue.process_at <= Some(clock.unix_timestamp) @ CronosError::QueueNotDue,
         constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
     )]
     pub queue: Account<'info, Queue>,

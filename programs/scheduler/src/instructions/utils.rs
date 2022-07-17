@@ -17,7 +17,7 @@ pub fn is_spam<'info>(
     let is_authorized = pool.clone().into_inner().workers.contains(&worker.key());
     let is_grace_period = clock.unix_timestamp
         < queue
-            .exec_at
+            .process_at
             .unwrap()
             .checked_add(config.grace_period)
             .unwrap();

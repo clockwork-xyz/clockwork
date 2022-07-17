@@ -26,7 +26,7 @@ pub struct QueueObserver {
     // The pool positions of this node.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
 
-    // Map from exec_at timestamps to the list of queues scheduled for that moment.
+    // Map from process_at timestamps to the list of queues scheduled for that moment.
     pub pending_queues: DashMap<i64, DashSet<Pubkey>>,
 
     // Tokio runtime for processing async tasks.
@@ -61,8 +61,8 @@ impl QueueObserver {
             // Move all pending queues that are due to the set of actionable queues.
             match confirmed_unix_timestamp {
                 Some(confirmed_unix_timestamp) => {
-                    this.pending_queues.retain(|exec_at, queue_pubkeys| {
-                        if *exec_at <= confirmed_unix_timestamp {
+                    this.pending_queues.retain(|process_at, queue_pubkeys| {
+                        if *process_at <= confirmed_unix_timestamp {
                             queue_pubkeys.iter().for_each(|pubkey| {
                                 this.actionable_queues.insert(pubkey.clone());
                             });
@@ -95,10 +95,10 @@ impl QueueObserver {
         self.spawn(|this| async move {
             info!("Caching queue {:#?}", queue_pubkey);
             this.actionable_queues.remove(&queue_pubkey);
-            match queue.exec_at {
-                Some(exec_at) => {
+            match queue.process_at {
+                Some(process_at) => {
                     this.pending_queues
-                        .entry(exec_at)
+                        .entry(process_at)
                         .and_modify(|v| {
                             v.insert(queue_pubkey);
                         })
@@ -151,10 +151,10 @@ impl QueueObserver {
         // Get the queue
         let queue = cronos_client.get::<Queue>(&queue_pubkey).unwrap();
 
-        // Return none if this queue has no exec_at
-        if queue.exec_at.is_none() {
+        // Return none if this queue has no process_at
+        if queue.process_at.is_none() {
             return Err(GeyserPluginError::Custom(
-                "Queue does not have an exec_at timestamp".into(),
+                "Queue does not have an process_at timestamp".into(),
             ));
         }
 
@@ -164,7 +164,8 @@ impl QueueObserver {
             Some(entry) => *entry.value(),
             None => cronos_client.get_clock().unwrap().unix_timestamp,
         };
-        if pool_position.current_position.is_none() && unix_timestamp < queue.exec_at.unwrap() + 10
+        if pool_position.current_position.is_none()
+            && unix_timestamp < queue.process_at.unwrap() + 10
         {
             return Err(GeyserPluginError::Custom(
                 "This node is not a worker, and the queue is within the grace period".into(),

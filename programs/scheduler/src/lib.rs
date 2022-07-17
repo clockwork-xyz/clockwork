@@ -64,6 +64,10 @@ pub mod cronos_scheduler {
         queue_resume::handler(ctx, skip_forward)
     }
 
+    pub fn queue_update(ctx: Context<QueueUpdate>, schedule: String) -> Result<()> {
+        queue_update::handler(ctx, schedule)
+    }
+
     pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
         queue_withdraw::handler(ctx, amount)
     }

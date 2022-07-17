@@ -36,8 +36,8 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 pub struct Queue {
     pub authority: Pubkey,
     pub balance: u64,
-    pub exec_at: Option<i64>,
     pub id: u128,
+    pub process_at: Option<i64>,
     pub schedule: String,
     pub status: QueueStatus,
     pub task_count: u128,
@@ -76,7 +76,7 @@ pub trait QueueAccount {
         schedule: String,
     ) -> Result<()>;
 
-    fn next_exec_at(&self, ts: i64) -> Option<i64>;
+    fn next_process_at(&self, ts: i64) -> Option<i64>;
 
     fn roll_forward(&mut self) -> Result<()>;
 
@@ -100,7 +100,7 @@ impl QueueAccount for Account<'_, Queue> {
             // If there are actions, change the queue status to 'executing'
             self.status = QueueStatus::Processing { task_id: 0 };
         } else {
-            // Otherwise, just roll forward the exec_at timestamp
+            // Otherwise, just roll forward the process_at timestamp
             self.roll_forward()?;
         }
 
@@ -122,13 +122,13 @@ impl QueueAccount for Account<'_, Queue> {
         self.status = QueueStatus::Pending;
         self.task_count = 0;
 
-        // Set exec_at (schedule must be set first)
-        self.exec_at = self.next_exec_at(clock.unix_timestamp);
+        // Set process_at (schedule must be set first)
+        self.process_at = self.next_process_at(clock.unix_timestamp);
 
         Ok(())
     }
 
-    fn next_exec_at(&self, ts: i64) -> Option<i64> {
+    fn next_process_at(&self, ts: i64) -> Option<i64> {
         match Schedule::from_str(&self.schedule)
             .unwrap()
             .after(&DateTime::<Utc>::from_utc(
@@ -145,8 +145,8 @@ impl QueueAccount for Account<'_, Queue> {
 
     fn roll_forward(&mut self) -> Result<()> {
         self.status = QueueStatus::Pending;
-        match self.exec_at {
-            Some(exec_at) => self.exec_at = self.next_exec_at(exec_at),
+        match self.process_at {
+            Some(process_at) => self.process_at = self.next_process_at(process_at),
             None => (),
         };
         Ok(())
