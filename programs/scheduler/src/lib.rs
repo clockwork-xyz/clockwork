@@ -56,6 +56,10 @@ pub mod cronos_scheduler {
         queue_new::handler(ctx, balance, id, schedule)
     }
 
+    pub fn queue_resume(ctx: Context<QueueResume>, skip_forward: bool) -> Result<()> {
+        queue_resume::handler(ctx, skip_forward)
+    }
+
     pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
         queue_start::handler(ctx)
     }
