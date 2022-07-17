@@ -5,12 +5,15 @@ use {
 
 
 #[derive(Accounts)]
-#[instruction(ixs: Vec<InstructionData>)]
-pub struct TaskUpdate<'info> {
+pub struct TaskClose<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
+    #[account(mut)]
+    pub close_to: SystemAccount<'info>,
+
     #[account(
+        mut,
         seeds = [
             SEED_QUEUE, 
             queue.authority.as_ref(),
@@ -30,19 +33,14 @@ pub struct TaskUpdate<'info> {
             task.id.to_be_bytes().as_ref(),
         ],
         bump,
+        constraint = task.id == queue.task_count.checked_sub(1).unwrap(),
+        close = close_to
     )]
     pub task: Account<'info, Task>,
 }
 
-pub fn handler(
-    ctx: Context<TaskUpdate>,
-    ixs: Vec<InstructionData>,
-) -> Result<()> {
-    let task = &mut ctx.accounts.task;
-
-    // TODO verify ixs
-    // TODO re-allocate aaccount space
-    task.ixs = ixs;
-
+pub fn handler(ctx: Context<TaskClose>) -> Result<()> {
+    let queue = &mut ctx.accounts.queue;
+    queue.task_count = queue.task_count.checked_sub(1).unwrap();
     Ok(())
 }

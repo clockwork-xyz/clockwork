@@ -39,6 +39,10 @@ pub mod cronos_scheduler {
         initialize::handler(ctx)
     }
 
+    pub fn queue_close(ctx: Context<QueueClose>) -> Result<()> {
+        queue_close::handler(ctx)
+    }
+
     pub fn queue_deposit(ctx: Context<QueueDeposit>, amount: u64) -> Result<()> {
         queue_deposit::handler(ctx, amount)
     }
@@ -70,6 +74,10 @@ pub mod cronos_scheduler {
 
     pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
         queue_withdraw::handler(ctx, amount)
+    }
+
+    pub fn task_close(ctx: Context<TaskClose>) -> Result<()> {
+        task_close::handler(ctx)
     }
 
     pub fn task_exec(ctx: Context<TaskExec>) -> Result<()> {
