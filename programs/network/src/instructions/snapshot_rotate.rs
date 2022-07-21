@@ -1,6 +1,6 @@
 use cronos_scheduler::state::Queue;
 
-use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::ExecResponse};
+use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::TaskResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
@@ -37,7 +37,7 @@ pub struct SnapshotRotate<'info> {
     pub registry: Account<'info, Registry>,
 }
 
-pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotRotate>) -> Result<TaskResponse> {
     // Get accounts
     let current_snapshot = &mut ctx.accounts.current_snapshot;
     let next_snapshot = &mut ctx.accounts.next_snapshot;
@@ -54,7 +54,7 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
     let snapshot_pubkey = current_snapshot.key();
     let next_snapshot_pubkey = next_snapshot.key();
     let next_next_snapshot_pubkey = Snapshot::pubkey(next_snapshot.id.checked_add(1).unwrap());
-    Ok(ExecResponse {
+    Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
                 .to_account_metas(None)

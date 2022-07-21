@@ -1,6 +1,6 @@
 use {
     super::InstructionData,
-    crate::{errors::CronosError, responses::ExecResponse},
+    crate::{errors::CronosError, responses::TaskResponse},
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -79,7 +79,7 @@ pub trait QueueAccount {
         account_infos: &[AccountInfo],
         bump: u8,
         ix: &InstructionData,
-    ) -> Result<Option<ExecResponse>>;
+    ) -> Result<Option<TaskResponse>>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -146,7 +146,7 @@ impl QueueAccount for Account<'_, Queue> {
         account_infos: &[AccountInfo],
         bump: u8,
         ix: &InstructionData,
-    ) -> Result<Option<ExecResponse>> {
+    ) -> Result<Option<TaskResponse>> {
         invoke_signed(
             &Instruction::from(ix),
             account_infos,
@@ -166,8 +166,8 @@ impl QueueAccount for Account<'_, Queue> {
                     Err(CronosError::InvalidReturnData.into())
                 } else {
                     Ok(Some(
-                        ExecResponse::try_from_slice(return_data.as_slice())
-                            .map_err(|_err| CronosError::InvalidExecResponse)?,
+                        TaskResponse::try_from_slice(return_data.as_slice())
+                            .map_err(|_err| CronosError::InvalidTaskResponse)?,
                     ))
                 }
             }

@@ -7,7 +7,7 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use cronos_scheduler::responses::ExecResponse;
+use cronos_scheduler::responses::TaskResponse;
 use instructions::*;
 
 #[program]
@@ -15,7 +15,7 @@ pub mod cronos_network {
 
     use super::*;
 
-    pub fn entry_close(ctx: Context<EntryClose>) -> Result<ExecResponse> {
+    pub fn entry_close(ctx: Context<EntryClose>) -> Result<TaskResponse> {
         entry_close::handler(ctx)
     }
 
@@ -37,19 +37,19 @@ pub mod cronos_network {
         node_stake::handler(ctx, amount)
     }
 
-    pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
+    pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<TaskResponse> {
         snapshot_capture::handler(ctx)
     }
 
-    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<ExecResponse> {
+    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
         snapshot_close::handler(ctx)
     }
 
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<TaskResponse> {
         snapshot_rotate::handler(ctx)
     }
 
-    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
+    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<TaskResponse> {
         snapshot_start::handler(ctx)
     }
 }

@@ -1,7 +1,7 @@
 use cronos_scheduler::state::Queue;
 
 use {
-    crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::ExecResponse,
+    crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::TaskResponse,
     std::mem::size_of,
 };
 
@@ -38,7 +38,7 @@ pub struct SnapshotStart<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotStart>) -> Result<TaskResponse> {
     // Get accounts
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
@@ -49,7 +49,7 @@ pub fn handler(ctx: Context<SnapshotStart>) -> Result<ExecResponse> {
     // Use dynamic accounts to run the next invocation with the new current snapshot
     let snapshot_pubkey = snapshot.key();
     let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
-    Ok(ExecResponse {
+    Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
                 .to_account_metas(None)

@@ -4,7 +4,7 @@ use {
     crate::{errors::CronosError, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::TokenAccount,
-    cronos_scheduler::responses::ExecResponse,
+    cronos_scheduler::responses::TaskResponse,
     std::mem::size_of,
 };
 
@@ -70,7 +70,7 @@ pub struct SnapshotCapture<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotCapture>) -> Result<TaskResponse> {
     // Get accounts
     let entry = &mut ctx.accounts.entry;
     let node = &ctx.accounts.node;
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
     let snapshot_pubkey = snapshot.key();
     let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
     let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, entry.id);
-    Ok(ExecResponse {
+    Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
                 .to_account_metas(None)

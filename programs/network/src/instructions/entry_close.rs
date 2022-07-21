@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    cronos_scheduler::{responses::TaskResponse, state::Queue},
 };
 
 #[derive(Accounts)]
@@ -36,7 +36,7 @@ pub struct EntryClose<'info> {
     pub snapshot: Account<'info, Snapshot>,
 }
 
-pub fn handler(ctx: Context<EntryClose>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
     // Get accounts
     let entry = &mut ctx.accounts.entry;
     let snapshot = &mut ctx.accounts.snapshot;
@@ -46,7 +46,7 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<ExecResponse> {
 
     // If snapshot is not closing, then noop and try again on next invocation.
     if snapshot.status != SnapshotStatus::Closing {
-        return Ok(ExecResponse::default());
+        return Ok(TaskResponse::default());
     }
 
     // If this is the last entry of the snapshot, then also close the snapshot account.
@@ -69,7 +69,7 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<ExecResponse> {
     let snapshot_pubkey = snapshot.key();
     let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
     let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, entry.id);
-    Ok(ExecResponse {
+    Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
                 .to_account_metas(None)

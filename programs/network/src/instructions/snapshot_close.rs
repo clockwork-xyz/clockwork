@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::ExecResponse, state::Queue},
+    cronos_scheduler::{responses::TaskResponse, state::Queue},
 };
 
 #[derive(Accounts)]
@@ -23,7 +23,7 @@ pub struct SnapshotClose<'info> {
     pub snapshot: Account<'info, Snapshot>,
 }
 
-pub fn handler(ctx: Context<SnapshotClose>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     // Get accounts
     let queue = &mut ctx.accounts.queue;
     let snapshot = &mut ctx.accounts.snapshot;
@@ -32,7 +32,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<ExecResponse> {
 
     // If snapshot is not archived, then noop and try again on next invocation.
     if snapshot.status != SnapshotStatus::Archived {
-        return Ok(ExecResponse::default());
+        return Ok(TaskResponse::default());
     }
 
     // If this snapshot has no entries, then close immediately
@@ -56,7 +56,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<ExecResponse> {
     // Use dynamic accounts to run the next invocation with the next snapshot
     let snapshot_pubkey = snapshot.key();
     let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
-    Ok(ExecResponse {
+    Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
                 .to_account_metas(None)

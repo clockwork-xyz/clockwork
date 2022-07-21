@@ -14,8 +14,8 @@ pub enum CronosError {
     InvalidTask,
     #[msg("The dynamic account list is not the expect size")]
     InvalidDynamicAccounts,
-    #[msg("The exec response value could not be parsed")]
-    InvalidExecResponse,
+    #[msg("The task response value could not be parsed")]
+    InvalidTaskResponse,
     #[msg("The return data is intended for another program")]
     InvalidReturnData,
     #[msg("The cron expression is invalid")]

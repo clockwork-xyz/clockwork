@@ -4,11 +4,11 @@ use {
 };
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-pub struct ExecResponse {
+pub struct TaskResponse {
     pub dynamic_accounts: Option<Vec<Pubkey>>,
 }
 
-impl Default for ExecResponse {
+impl Default for TaskResponse {
     fn default() -> Self {
         return Self {
             dynamic_accounts: None,
