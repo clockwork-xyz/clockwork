@@ -15,6 +15,10 @@ pub mod cronos_network {
 
     use super::*;
 
+    pub fn entry_close(ctx: Context<EntryClose>) -> Result<ExecResponse> {
+        entry_close::handler(ctx)
+    }
+
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
         initialize::handler(ctx)
     }
@@ -35,6 +39,10 @@ pub mod cronos_network {
 
     pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<ExecResponse> {
         snapshot_capture::handler(ctx)
+    }
+
+    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<ExecResponse> {
+        snapshot_close::handler(ctx)
     }
 
     pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<ExecResponse> {

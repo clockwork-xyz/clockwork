@@ -12,6 +12,8 @@ use {
 
 pub fn node_register(
     authority: Pubkey,
+    cleanup_queue: Pubkey,
+    cleanup_task: Pubkey,
     config: Pubkey,
     entry: Pubkey,
     mint: Pubkey,
@@ -28,6 +30,7 @@ pub fn node_register(
         accounts: vec![
             AccountMeta::new_readonly(associated_token::ID, false),
             AccountMeta::new_readonly(authority, false),
+            AccountMeta::new(cleanup_queue, false),
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(entry, false),
             AccountMeta::new_readonly(mint, false),
@@ -43,6 +46,7 @@ pub fn node_register(
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new_readonly(worker, true),
             // Additional accounts
+            AccountMeta::new(cleanup_task, false),
             AccountMeta::new(snapshot_task, false),
         ],
         data: cronos_network::instruction::NodeRegister {}.data(),

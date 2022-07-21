@@ -15,6 +15,8 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let snapshot_pubkey = cronos_network::state::Snapshot::pubkey(0);
     let snapshot_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, 0);
     let snapshot_task = cronos_scheduler::state::Task::pubkey(snapshot_queue, 0);
+    let cleanup_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, 1);
+    let cleanup_task = cronos_scheduler::state::Task::pubkey(cleanup_queue, 0);
 
     Instruction {
         program_id: cronos_network::ID,
@@ -29,6 +31,8 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(snapshot_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
             // Additional accounts
+            AccountMeta::new(cleanup_queue, false),
+            AccountMeta::new(cleanup_task, false),
             AccountMeta::new(snapshot_queue, false),
             AccountMeta::new(snapshot_task, false),
         ],

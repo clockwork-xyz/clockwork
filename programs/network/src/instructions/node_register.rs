@@ -23,6 +23,9 @@ pub struct NodeRegister<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
+    #[account(has_one = authority, constraint = cleanup_queue.id == 1)]
+    pub cleanup_queue: Box<Account<'info, Queue>>,
+
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
@@ -82,7 +85,7 @@ pub struct NodeRegister<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(has_one = authority)]
+    #[account(has_one = authority, constraint = snapshot_queue.id == 0)]
     pub snapshot_queue: Box<Account<'info, Queue>>,
 
     #[account(
@@ -106,6 +109,7 @@ pub struct NodeRegister<'info> {
 pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
+    let cleanup_queue = &ctx.accounts.cleanup_queue;
     let config = &ctx.accounts.config;
     let entry = &mut ctx.accounts.entry;
     let node = &mut ctx.accounts.node;
@@ -119,7 +123,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let worker = &ctx.accounts.worker;
 
     // Get remaining accountsgs
-    let snapshot_task = ctx.remaining_accounts.get(0).unwrap();
+    let cleanup_task = ctx.remaining_accounts.get(0).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
     
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
@@ -134,7 +139,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let current_snapshot_pubkey = Snapshot::pubkey(registry.snapshot_count.checked_sub(1).unwrap());
     let next_snapshot_pubkey = Snapshot::pubkey(registry.snapshot_count);
     let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, node.id);
-    let stake_pubkey = stake.key();
     let snapshot_capture_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
@@ -146,7 +150,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(snapshot_queue.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(stake_pubkey, false),
+            AccountMeta::new_readonly(stake.key(), false),
             AccountMeta::new_readonly(system_program.key(), false)
         ],
         data: cronos_scheduler::anchor::sighash("snapshot_capture").into(),
@@ -176,6 +180,32 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             &[&[SEED_AUTHORITY, &[authority_bump]]],
         ),
         vec![snapshot_capture_ix.into(), snapshot_rotate_ix.into()],
+    )?;
+
+    // Add task to the cleanup queue to close the entry for this node
+    let entry_close_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(authority.key(), false),
+            AccountMeta::new(entry.key(), false),
+            AccountMeta::new(cleanup_queue.key(), true),
+            AccountMeta::new(snapshot.key(), false),
+        ],
+        data: cronos_scheduler::anchor::sighash("entry_close").into(),
+    };
+    cronos_scheduler::cpi::task_new(
+        CpiContext::new_with_signer(
+            scheduler_program.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                authority: authority.to_account_info(),
+                payer: owner.to_account_info(),
+                queue: cleanup_queue.to_account_info(),
+                system_program: system_program.to_account_info(),
+                task: cleanup_task.to_account_info(),
+            },
+            &[&[SEED_AUTHORITY, &[authority_bump]]],
+        ),
+        vec![entry_close_ix.into()],
     )?;
 
     Ok(())

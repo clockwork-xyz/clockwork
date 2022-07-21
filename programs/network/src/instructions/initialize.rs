@@ -84,8 +84,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Get remaining accounts
-    let snapshot_queue = ctx.remaining_accounts.get(0).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
+    let cleanup_queue = ctx.remaining_accounts.get(0).unwrap();
+    let cleanup_task = ctx.remaining_accounts.get(1).unwrap();
+    let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
+    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
 
     // Initialize accounts
     config.new(admin.key(), mint.key())?;
@@ -113,9 +115,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         0,
         "0 * * * * * *".into()
     )?;
-
-    // TOOD Create a queue to cleanup snapshots and snapshot entries
-    // TODO Return the lamports to the authority
 
     // Add an task to the snapshot queue to kick things off
     let next_snapshot_pubkey = Snapshot::pubkey(1);
@@ -158,6 +157,49 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         ),
         vec![snapshot_start_ix.into(), snapshot_rotate_ix.into()],
     )?;
+
+    // Create a queue to cleanup old snapshots
+    cronos_scheduler::cpi::queue_new(
+        CpiContext::new_with_signer(
+            scheduler_program.to_account_info(),
+            cronos_scheduler::cpi::accounts::QueueNew {
+                authority: authority.to_account_info(),
+                payer: admin.to_account_info(),
+                queue: cleanup_queue.to_account_info(),
+                system_program: system_program.to_account_info(),
+            },
+            &[&[SEED_AUTHORITY, &[bump]]]
+        ),
+        LAMPORTS_PER_SOL, 
+        1,
+        "0 * * * * * *".into()
+    )?;
+
+    // Create task to close archived snapshot
+    let snapshot_close_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(authority.key(), false),
+            AccountMeta::new(cleanup_queue.key(), true),
+            AccountMeta::new(snapshot.key(), false),
+        ],
+        data: cronos_scheduler::anchor::sighash("snapshot_close").into(),
+    };
+    cronos_scheduler::cpi::task_new(
+        CpiContext::new_with_signer(
+            scheduler_program.to_account_info(),
+            cronos_scheduler::cpi::accounts::TaskNew {
+                authority: authority.to_account_info(),
+                payer: admin.to_account_info(),
+                queue: cleanup_queue.to_account_info(),
+                system_program: system_program.to_account_info(),
+                task: cleanup_task.to_account_info(),
+            },
+            &[&[SEED_AUTHORITY, &[bump]]],
+        ),
+        vec![snapshot_close_ix.into()],
+    )?;
+
 
     Ok(())
 }

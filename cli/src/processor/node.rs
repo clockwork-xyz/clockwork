@@ -49,8 +49,16 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
         (registry_data.node_count + 1).into(),
     );
 
+    let cleanup_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, 1);
+    let cleanup_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
+        cleanup_queue_pubkey,
+        (registry_data.node_count + 1).into(),
+    );
+
     let ix = cronos_client::network::instruction::node_register(
         authority_pubkey,
+        cleanup_queue_pubkey,
+        cleanup_task_pubkey,
         config_pubkey,
         entry_pubkey,
         config_data.mint,

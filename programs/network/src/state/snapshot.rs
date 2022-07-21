@@ -87,7 +87,8 @@ impl SnapshotAccount for Account<'_, Snapshot> {
  */
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
 pub enum SnapshotStatus {
-    Archived { ts: i64 },
+    Archived,
+    Closing,
     Current,
     InProgress,
 }

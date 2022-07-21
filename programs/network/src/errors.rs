@@ -23,6 +23,9 @@ pub enum CronosError {
     #[msg("The registry must be locked for this operation")]
     RegistryMustBeLocked,
 
+    #[msg("The snapshot is not archived")]
+    SnapshotNotArchived,
+
     #[msg("The snapshot is not in progress")]
     SnapshotNotInProgress,
 
