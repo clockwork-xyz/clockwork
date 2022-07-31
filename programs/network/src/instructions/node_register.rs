@@ -10,7 +10,7 @@ use {
     },
     cronos_scheduler::{
         program::CronosScheduler,
-        state::{Queue}
+        state::{Queue, QueueStatus}
     },
     std::mem::size_of,
 };
@@ -23,7 +23,11 @@ pub struct NodeRegister<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(has_one = authority, constraint = cleanup_queue.id == 1)]
+    #[account(
+        has_one = authority, 
+        constraint = cleanup_queue.id == 1,
+        constraint = cleanup_queue.status == QueueStatus::Pending
+    )]
     pub cleanup_queue: Box<Account<'info, Queue>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
@@ -85,7 +89,11 @@ pub struct NodeRegister<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(has_one = authority, constraint = snapshot_queue.id == 0)]
+    #[account(
+        has_one = authority, 
+        constraint = snapshot_queue.id == 0,
+        constraint = snapshot_queue.status == QueueStatus::Pending
+    )]
     pub snapshot_queue: Box<Account<'info, Queue>>,
 
     #[account(

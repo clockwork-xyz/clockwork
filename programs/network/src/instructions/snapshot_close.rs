@@ -36,17 +36,15 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     }
 
     // If this snapshot has no entries, then close immediately
+    let snapshot_pubkey = snapshot.key().clone();
+    let snapshot_id = snapshot.id.clone();
     if snapshot.node_count == 0 {
-        let amount = snapshot.to_account_info().try_lamports()?;
-        **snapshot.to_account_info().try_borrow_mut_lamports()? = snapshot
+        let snapshot_lamports = snapshot.to_account_info().lamports();
+        **snapshot.to_account_info().lamports.borrow_mut() = 0;
+        **queue.to_account_info().lamports.borrow_mut() = queue
             .to_account_info()
             .lamports()
-            .checked_sub(amount)
-            .unwrap();
-        **queue.to_account_info().try_borrow_mut_lamports()? = queue
-            .to_account_info()
-            .lamports()
-            .checked_add(amount)
+            .checked_add(snapshot_lamports)
             .unwrap();
     } else {
         // Otherwise, set the status to closing
@@ -54,8 +52,8 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     }
 
     // Use dynamic accounts to run the next invocation with the next snapshot
-    let snapshot_pubkey = snapshot.key();
-    let next_snapshot_pubkey = Snapshot::pubkey(snapshot.id.checked_add(1).unwrap());
+
+    let next_snapshot_pubkey = Snapshot::pubkey(snapshot_id.checked_add(1).unwrap());
     Ok(TaskResponse {
         dynamic_accounts: Some(
             ctx.accounts
