@@ -25,7 +25,6 @@ ENV PATH="${HOME}/soteria-linux-develop/bin/:${PATH}"
 RUN mkdir -p /workdir && \
     mkdir -p /tmp && \
     apt-get update && \
-    apt-get upgrade && \ 
     apt-get install -y build-essential git curl wget jq pkg-config libssl-dev libudev-dev
 
 # Move into root.
