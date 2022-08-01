@@ -10,7 +10,7 @@ use {
     },
     cronos_scheduler::{
         program::CronosScheduler,
-        state::{Queue, QueueStatus}
+        state::{Queue, QueueStatus, SEED_TASK}
     },
     std::mem::size_of,
 };
@@ -29,6 +29,13 @@ pub struct NodeRegister<'info> {
         constraint = cleanup_queue.status == QueueStatus::Pending
     )]
     pub cleanup_queue: Box<Account<'info, Queue>>,
+
+    #[account(
+        seeds = [SEED_TASK, cleanup_queue.key().as_ref(), cleanup_queue.task_count.to_be_bytes().as_ref()],
+        seeds::program = cronos_scheduler::ID,
+        bump
+    )]
+    pub cleanup_task: SystemAccount<'info>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
@@ -97,6 +104,13 @@ pub struct NodeRegister<'info> {
     pub snapshot_queue: Box<Account<'info, Queue>>,
 
     #[account(
+        seeds = [SEED_TASK, snapshot_queue.key().as_ref(), snapshot_queue.task_count.to_be_bytes().as_ref()],
+        seeds::program = cronos_scheduler::ID,
+        bump
+    )]
+    pub snapshot_task: SystemAccount<'info>,
+
+    #[account(
         init,
         payer = owner,
         associated_token::authority = node,
@@ -118,6 +132,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     // Get accounts
     let authority = &ctx.accounts.authority;
     let cleanup_queue = &ctx.accounts.cleanup_queue;
+    let cleanup_task = &ctx.accounts.cleanup_task;
     let config = &ctx.accounts.config;
     let entry = &mut ctx.accounts.entry;
     let node = &mut ctx.accounts.node;
@@ -126,14 +141,11 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
     let scheduler_program = &ctx.accounts.scheduler_program;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_queue = &ctx.accounts.snapshot_queue;
+    let snapshot_task = &ctx.accounts.snapshot_task;
     let system_program = &ctx.accounts.system_program;
     let stake = &mut ctx.accounts.stake;
     let worker = &ctx.accounts.worker;
 
-    // Get remaining accountsgs
-    let cleanup_task = ctx.remaining_accounts.get(0).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(1).unwrap();
-    
     // Get bumps
     let authority_bump = *ctx.bumps.get("authority").unwrap();
 

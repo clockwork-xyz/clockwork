@@ -1,4 +1,4 @@
-use cronos_scheduler::state::{Queue, SEED_QUEUE, SEED_TASK, Task};
+use cronos_scheduler::state::{SEED_QUEUE, SEED_TASK};
 
 use {
     crate::state::*,
@@ -23,6 +23,28 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Authority>(),
     )]
     pub authority: Account<'info, Authority>,
+
+    #[account(
+        seeds = [
+            SEED_QUEUE, 
+            authority.key().as_ref(), 
+            (1 as u128).to_be_bytes().as_ref()
+        ], 
+        seeds::program = cronos_scheduler::ID,
+        bump, 
+    )]
+    pub cleanup_queue: SystemAccount<'info>,
+
+    #[account(
+        seeds = [
+            SEED_TASK, 
+            cleanup_queue.key().as_ref(), 
+            (0 as u128).to_be_bytes().as_ref()
+        ], 
+        seeds::program = cronos_scheduler::ID,
+        bump, 
+    )]
+    pub cleanup_task: SystemAccount<'info>,
 
     #[account(
         init,
@@ -69,77 +91,47 @@ pub struct Initialize<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
+    #[account(
+        seeds = [
+            SEED_QUEUE, 
+            authority.key().as_ref(), 
+            (0 as u128).to_be_bytes().as_ref()
+        ], 
+        seeds::program = cronos_scheduler::ID,
+        bump
+    )]
+    pub snapshot_queue: SystemAccount<'info>,
+
+    #[account(
+        seeds = [
+            SEED_TASK, 
+            snapshot_queue.key().as_ref(), 
+            (0 as u128).to_be_bytes().as_ref()
+        ], 
+        seeds::program = cronos_scheduler::ID,
+        bump
+    )]
+    pub snapshot_task: SystemAccount<'info>,
+
     #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
-
-    // #[account(
-    //     seeds = [
-    //         SEED_QUEUE, 
-    //         authority.key().as_ref(), 
-    //         (1 as u128).to_be_bytes().as_ref()
-    //     ], 
-    //     seeds::program = cronos_scheduler::ID,
-    //     bump, 
-    // )]
-    // pub cleanup_queue: SystemAccount<'info>,
-
-    // #[account(
-    //     seeds = [
-    //         SEED_TASK, 
-    //         cleanup_queue.key().as_ref(), 
-    //         (0 as u128).to_be_bytes().as_ref()
-    //     ], 
-    //     seeds::program = cronos_scheduler::ID,
-    //     bump, 
-    // )]
-    // pub cleanup_task: SystemAccount<'info>,
-
-    // #[account(
-    //     seeds = [
-    //         SEED_QUEUE, 
-    //         authority.key().as_ref(), 
-    //         (0 as u128).to_be_bytes().as_ref()
-    //     ], 
-    //     seeds::program = cronos_scheduler::ID,
-    //     bump
-    // )]
-    // pub snapshot_queue: SystemAccount<'info>,
-
-    // #[account(
-    //     seeds = [
-    //         SEED_TASK, 
-    //         snapshot_queue.key().as_ref(), 
-    //         (0 as u128).to_be_bytes().as_ref()
-    //     ], 
-    //     seeds::program = cronos_scheduler::ID,
-    //     bump
-    // )]
-    // pub snapshot_task: SystemAccount<'info>,
-
+    pub system_program: Program<'info, System>,    
 }
 
 pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
     // Get accounts
     let admin = &ctx.accounts.admin;
-    let authority = &mut ctx.accounts.authority;
-    let rotator = &mut ctx.accounts.rotator;
+    let authority = &ctx.accounts.authority;
+    let cleanup_queue = &ctx.accounts.cleanup_queue;
+    let cleanup_task = &ctx.accounts.cleanup_task;
     let config = &mut ctx.accounts.config;
+    let rotator = &mut ctx.accounts.rotator;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
     let scheduler_program = &ctx.accounts.scheduler_program;
     let snapshot = &mut ctx.accounts.snapshot;
+    let snapshot_queue = &ctx.accounts.snapshot_queue;
+    let snapshot_task = &ctx.accounts.snapshot_task;
     let system_program = &ctx.accounts.system_program;
-
-    // let cleanup_queue = &ctx.accounts.cleanup_queue;
-    // let cleanup_task = &ctx.accounts.cleanup_task;
-    // let snapshot_queue = &ctx.accounts.snapshot_queue;
-    // let snapshot_task = &ctx.accounts.snapshot_task;
-
-    // Get remaining accounts
-    let cleanup_queue = ctx.remaining_accounts.get(0).unwrap();
-    let cleanup_task = ctx.remaining_accounts.get(1).unwrap();
-    let snapshot_queue = ctx.remaining_accounts.get(2).unwrap();
-    let snapshot_task = ctx.remaining_accounts.get(3).unwrap();
 
     // Initialize accounts
     config.new(admin.key(), mint.key())?;
