@@ -1,4 +1,4 @@
 pub mod instruction;
 
-pub use cronos_health::state;
-pub use cronos_health::ID;
+pub use clockwork_health::state;
+pub use clockwork_health::ID;

@@ -1,7 +1,7 @@
 use super::Api;
 
 use {
-    crate::errors::CronosError,
+    crate::errors::ClockworkError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
         collections::HashMap,
@@ -126,7 +126,7 @@ impl FromStr for HttpMethod {
         match input.to_uppercase().as_str() {
             "GET" => Ok(HttpMethod::Get),
             "POST" => Ok(HttpMethod::Post),
-            _ => Err(CronosError::InvalidHttpMethod.into()),
+            _ => Err(ClockworkError::InvalidHttpMethod.into()),
         }
     }
 }

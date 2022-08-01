@@ -1,18 +1,18 @@
 [package]
-name = "cronos-health"
+name = "clockwork-health"
 version = "0.2.0"
-description = "Cronos health protocol"
+description = "Clockwork health protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
+homepage = "https://clockwork.xyz"
 repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_health"
+name = "clockwork_health"
 
 [features]
 no-entrypoint = []

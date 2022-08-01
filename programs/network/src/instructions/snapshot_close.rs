@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    cronos_scheduler::{responses::TaskResponse, state::Queue},
+    clockwork_scheduler::{responses::TaskResponse, state::Queue},
 };
 
 #[derive(Accounts)]

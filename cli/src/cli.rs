@@ -1,5 +1,5 @@
 use clap::{Arg, ArgGroup, Command};
-use cronos_client::http::state::HttpMethod;
+use clockwork_client::http::state::HttpMethod;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
@@ -76,8 +76,8 @@ pub enum CliCommand {
 }
 
 pub fn app() -> Command<'static> {
-    Command::new("Cronos")
-        .bin_name("cronos")
+    Command::new("Clockwork")
+        .bin_name("clockwork")
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
@@ -108,7 +108,7 @@ pub fn app() -> Command<'static> {
         .subcommand(Command::new("clock").about("Display the current Solana clock time"))
         .subcommand(
             Command::new("config")
-                .about("Manage the Cronos configs")
+                .about("Manage the Clockwork configs")
                 .arg_required_else_help(true)
                 .subcommand(Command::new("get").about("Get a config value"))
                 .subcommand(
@@ -189,7 +189,7 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(
             Command::new("initialize")
-                .about("Initialize the Cronos programs")
+                .about("Initialize the Clockwork programs")
                 .arg(
                     Arg::new("mint")
                         .long("mint")
@@ -230,7 +230,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("register")
-                        .about("Register a new node with the Cronos network")
+                        .about("Register a new node with the Clockwork network")
                         .arg(
                             Arg::new("worker")
                                 .index(1)

@@ -7,11 +7,11 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use cronos_scheduler::responses::TaskResponse;
+use clockwork_scheduler::responses::TaskResponse;
 use instructions::*;
 
 #[program]
-pub mod cronos_network {
+pub mod clockwork_network {
 
     use super::*;
 

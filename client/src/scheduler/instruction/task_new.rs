@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    cronos_scheduler::state::InstructionData as CronosInstructionData,
+    clockwork_scheduler::state::InstructionData as ClockworkInstructionData,
 };
 
 pub fn task_new(
@@ -18,7 +18,7 @@ pub fn task_new(
     task: Pubkey,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_scheduler::ID,
+        program_id: clockwork_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new(payer, true),
@@ -26,10 +26,10 @@ pub fn task_new(
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new(task, false),
         ],
-        data: cronos_scheduler::instruction::TaskNew {
+        data: clockwork_scheduler::instruction::TaskNew {
             ixs: ixs
                 .iter()
-                .map(|ix| CronosInstructionData::from(ix.clone()))
+                .map(|ix| ClockworkInstructionData::from(ix.clone()))
                 .collect(),
         }
         .data(),

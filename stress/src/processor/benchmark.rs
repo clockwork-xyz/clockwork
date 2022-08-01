@@ -1,9 +1,9 @@
 use {
     crate::{cli::CliError, parser::JsonInstructionData},
     chrono::{prelude::*, Duration},
-    cronos_client::scheduler::state::{Queue, Task},
-    cronos_client::Client,
-    cronos_cron::Schedule,
+    clockwork_client::scheduler::state::{Queue, Task},
+    clockwork_client::Client,
+    clockwork_cron::Schedule,
     serde_json::json,
     solana_client::{
         pubsub_client::PubsubClient,
@@ -98,7 +98,7 @@ fn listen_for_events(
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
-        RpcTransactionLogsFilter::Mentions(vec![cronos_client::scheduler::ID.to_string()]),
+        RpcTransactionLogsFilter::Mentions(vec![clockwork_client::scheduler::ID.to_string()]),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
@@ -166,7 +166,7 @@ fn create_queue_ix(
         next_minute.weekday(),
         next_minute.year()
     );
-    let create_queue_ix = cronos_client::scheduler::instruction::queue_new(
+    let create_queue_ix = clockwork_client::scheduler::instruction::queue_new(
         authority.pubkey(),
         LAMPORTS_PER_SOL,
         queue_name,
@@ -212,7 +212,7 @@ fn create_task_ix(authority: &Keypair, queue_name: String, task_id: u64) -> Inst
     let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name);
     let task_pubkey = Task::pubkey(queue_pubkey, task_id);
     let memo_ix = build_memo_ix(&authority.pubkey());
-    cronos_client::scheduler::instruction::task_new(
+    clockwork_client::scheduler::instruction::task_new(
         authority.pubkey(),
         vec![memo_ix],
         authority.pubkey(),

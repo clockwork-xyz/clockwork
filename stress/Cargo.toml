@@ -1,21 +1,21 @@
 [package]
-name = "cronos-stress"
+name = "clockwork-stress"
 version = "0.2.0"
-description = "A stress testing tool for Cronos"
+description = "A stress testing tool for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
+homepage = "https://clockwork.xyz"
 repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-keywords = ["solana", "cronos", "program"]
+keywords = ["solana"]
 
 [dependencies]
 base64 = "0.13.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 clap = { version = "3.1.2", features = ["derive"] }
-cronos-client = { path = "../client", version = "0.2.0" }
-cronos-cron = { path = "../cron", version = "0.2.0" }
+clockwork-client = { path = "../client", version = "0.2.0" }
+clockwork-cron = { path = "../cron", version = "0.2.0" }
 serde_json = "1.0.79"
 serde = { version = "1.0.136", features = ["derive"] }
 solana-clap-utils = "1.10.29"
@@ -26,5 +26,5 @@ thiserror = "1.0.30"
 version = "3.0.0"
 
 [[bin]]
-name = "cronos_tests"
+name = "clockwork_stress"
 path = "src/main.rs"

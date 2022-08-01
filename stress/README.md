@@ -1,3 +1,3 @@
-# Cronos Stress
+# Clockwork Stress
 
-A stress testing tool for Cronos.
+A stress testing tool for Clockwork.

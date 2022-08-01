@@ -1,18 +1,18 @@
 [package]
-name = "cronos-scheduler"
+name = "clockwork-scheduler"
 version = "0.2.0"
-description = "Cronos scheduling protocol"
+description = "Clockwork scheduling protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
+homepage = "https://clockwork.xyz"
 repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_scheduler"
+name = "clockwork_scheduler"
 
 [features]
 no-entrypoint = []
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.25.0" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-cronos-cron = { path = "../../cron", version = "0.2.0" }
-cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0" }
+clockwork-cron = { path = "../../cron", version = "0.2.0" }
+clockwork-pool = { path = "../pool", features = ["cpi"], version = "0.2.0" }

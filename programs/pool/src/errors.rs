@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum CronosError {
+pub enum ClockworkError {
     #[msg("This instruction requires admin authority")]
     NotAuthorizedAdmin,
 }

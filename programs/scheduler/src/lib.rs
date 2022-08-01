@@ -1,5 +1,5 @@
 extern crate chrono;
-extern crate cronos_cron;
+extern crate clockwork_cron;
 
 pub mod anchor;
 pub mod errors;
@@ -17,7 +17,7 @@ use instructions::*;
 use state::*;
 
 #[program]
-pub mod cronos_scheduler {
+pub mod clockwork_scheduler {
     use super::*;
 
     pub fn admin_config_update(

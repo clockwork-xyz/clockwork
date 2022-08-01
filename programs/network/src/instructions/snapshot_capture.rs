@@ -1,10 +1,10 @@
-use cronos_scheduler::state::Queue;
+use clockwork_scheduler::state::Queue;
 
 use {
-    crate::{errors::CronosError, state::*},
+    crate::{errors::ClockworkError, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::TokenAccount,
-    cronos_scheduler::responses::TaskResponse,
+    clockwork_scheduler::responses::TaskResponse,
     std::mem::size_of,
 };
 
@@ -35,7 +35,7 @@ pub struct SnapshotCapture<'info> {
             node.worker.as_ref(),
         ],
         bump,
-        constraint = node.id == snapshot.node_count @ CronosError::InvalidNode
+        constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
     )]
     pub node: Box<Account<'info, Node>>,
 
@@ -55,7 +55,7 @@ pub struct SnapshotCapture<'info> {
             registry.snapshot_count.to_be_bytes().as_ref()
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::InProgress @ CronosError::SnapshotNotInProgress,
+        constraint = snapshot.status == SnapshotStatus::InProgress @ ClockworkError::SnapshotNotInProgress,
         constraint = snapshot.node_count < registry.node_count,
     )]
     pub snapshot: Account<'info, Snapshot>,

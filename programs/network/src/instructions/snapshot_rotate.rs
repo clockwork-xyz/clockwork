@@ -1,6 +1,6 @@
-use cronos_scheduler::state::Queue;
+use clockwork_scheduler::state::Queue;
 
-use {crate::state::*, anchor_lang::prelude::*, cronos_scheduler::responses::TaskResponse};
+use {crate::state::*, anchor_lang::prelude::*, clockwork_scheduler::responses::TaskResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {

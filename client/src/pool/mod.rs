@@ -1,4 +1,4 @@
 pub mod instruction;
 
-pub use cronos_pool::state;
-pub use cronos_pool::ID;
+pub use clockwork_pool::state;
+pub use clockwork_pool::ID;

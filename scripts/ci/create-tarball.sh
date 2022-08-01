@@ -20,7 +20,7 @@ linux)
   ;;
 esac
 
-RELEASE_BASENAME="${RELEASE_BASENAME:=cronos-geyser-plugin-release}"
+RELEASE_BASENAME="${RELEASE_BASENAME:=clockwork-geyser-plugin-release}"
 TARBALL_BASENAME="${TARBALL_BASENAME:="$RELEASE_BASENAME"}"
 
 echo --- Creating release tarball

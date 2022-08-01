@@ -26,7 +26,7 @@ pub fn node_register(
     worker: Pubkey,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_network::ID,
+        program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new_readonly(associated_token::ID, false),
             AccountMeta::new_readonly(authority, false),
@@ -39,7 +39,7 @@ pub fn node_register(
             AccountMeta::new(owner, true),
             AccountMeta::new(registry, false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),
-            AccountMeta::new_readonly(cronos_scheduler::ID, false),
+            AccountMeta::new_readonly(clockwork_scheduler::ID, false),
             AccountMeta::new(snapshot, false),
             AccountMeta::new(snapshot_queue, false),
             AccountMeta::new(snapshot_task, false),
@@ -48,6 +48,6 @@ pub fn node_register(
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new_readonly(worker, true),
         ],
-        data: cronos_network::instruction::NodeRegister {}.data(),
+        data: clockwork_network::instruction::NodeRegister {}.data(),
     }
 }

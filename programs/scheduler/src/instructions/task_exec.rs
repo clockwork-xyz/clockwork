@@ -1,7 +1,7 @@
 use {
-    crate::{errors::CronosError, instructions::utils::is_spam, state::*},
+    crate::{errors::ClockworkError, instructions::utils::is_spam, state::*},
     anchor_lang::{prelude::*, system_program},
-    cronos_pool::state::Pool,
+    clockwork_pool::state::Pool,
     std::mem::size_of,
 };
 
@@ -36,7 +36,7 @@ pub struct TaskExec<'info> {
         constraint = match queue.status {
             QueueStatus::Processing { task_id } => task_id == task.id,
             _ => false,
-        } @ CronosError::InvalidQueueStatus
+        } @ ClockworkError::InvalidQueueStatus
     )]
     pub queue: Account<'info, Queue>,
 

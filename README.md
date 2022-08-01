@@ -1,7 +1,7 @@
 <div align="center">
   <img height="170" src="https://user-images.githubusercontent.com/8634334/167159164-17b3b09a-ed1e-4768-b405-af9d423192c9.png?raw=true" />
 
-  <h1>Cronos</h1>
+  <h1>Clockwork</h1>
 
   <p>
     <strong>Automation infrastructure for Solana</strong>
@@ -14,9 +14,9 @@
   </p>
 
   <h4>
-    <a href="https://cronos.so/">Home</a>
+    <a href="https://clockwork.xyz/">Home</a>
     <span> | </span>
-    <a href="https://docs.cronos.so">Docs</a>
+    <a href="https://docs.clockwork.xyz">Docs</a>
     <span> | </span>
     <a href="https://twitter.com/cronos_so">Twitter</a>
   </h4>  
@@ -33,21 +33,21 @@
 
 ## Notes
 
-- Cronos is under active development. All interfaces and implementations are subject to change.
+- Clockwork is under active development. All interfaces and implementations are subject to change.
 - Smart contracts are automatically scanned by [Sec3](https://www.sec3.dev/)'s auto-auditing software, but have not been reviewed by a paid auditing firm.
 - Use at your own risk.
 
 ## Plugin
 
-To run the Cronos plugin on your Solana validator, you can either `cargo build` from scratch or install the pre-built binary:
+To run the Clockwork plugin on your Solana validator, you can either `cargo build` from scratch or install the pre-built binary:
 ```sh
-curl -s https://api.github.com/repos/cronos-so/cronos/releases/latest | grep "cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
-tar -xjvf cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
-rm cronos-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
+curl -s https://api.github.com/repos/cronos-so/cronos/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
+rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
 
-Next, create a new keypair for signing Cronos txs. The responsbilities of being a worker currently include the processing of scheduled tasks and the rotating the worker pool. Cronos workers may be expected to perform other jobs in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
+Next, create a new keypair for signing Clockwork txs. The responsbilities of being a worker currently include the processing of scheduled tasks and the rotating the worker pool. Clockwork workers may be expected to perform other jobs in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
 ```sh
 solana-keygen new -o cronos-worker-keypair.json
 ```
@@ -55,7 +55,7 @@ solana-keygen new -o cronos-worker-keypair.json
 Then, setup the plugin config file in a folder where your startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
 ```js
 {
-  "libpath": "/home/sol/cronos-geyser-plugin-release/lib/libcronos_plugin.so",
+  "libpath": "/home/sol/cronos-geyser-plugin-release/lib/libclockwork_plugin.so",
   "keypath": "/home/sol/cronos-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
   "slot_timeout_threshold": 150,
@@ -63,7 +63,7 @@ Then, setup the plugin config file in a folder where your startup script can ref
 }
 ```
 
-Finally, add an additional line to your startup script to run your validator with the Cronos plugin (often located at `/home/sol/bin/validator.sh`):
+Finally, add an additional line to your startup script to run your validator with the Clockwork plugin (often located at `/home/sol/bin/validator.sh`):
 ```sh
 #!/bin/bash
 

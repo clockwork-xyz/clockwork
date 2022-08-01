@@ -1,17 +1,17 @@
 [package]
-name = "cronos-cron"
+name = "clockwork-cron"
 version = "0.2.0"
 description = "A cron expression parser that's safe to use in the Solana runtime"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
+homepage = "https://clockwork.xyz"
 repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-keywords = ["solana", "cronos", "program"]
+keywords = ["solana"]
 
 [lib]
-name = "cronos_cron"
+name = "clockwork_cron"
 
 [dependencies]
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }

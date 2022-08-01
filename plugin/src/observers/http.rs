@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use {
     super::pool::PoolPositions,
-    cronos_client::http::state::Request,
+    clockwork_client::http::state::Request,
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,

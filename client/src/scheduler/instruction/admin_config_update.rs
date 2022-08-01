@@ -6,16 +6,16 @@ use {
         },
         InstructionData,
     },
-    cronos_scheduler::state::ConfigSettings,
+    clockwork_scheduler::state::ConfigSettings,
 };
 
 pub fn admin_config_update(admin: Pubkey, config: Pubkey, settings: ConfigSettings) -> Instruction {
     Instruction {
-        program_id: cronos_scheduler::ID,
+        program_id: clockwork_scheduler::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config, false),
         ],
-        data: cronos_scheduler::instruction::AdminConfigUpdate { settings }.data(),
+        data: clockwork_scheduler::instruction::AdminConfigUpdate { settings }.data(),
     }
 }

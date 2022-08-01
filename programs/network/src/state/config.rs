@@ -1,5 +1,5 @@
 use {
-    crate::errors::CronosError,
+    crate::errors::ClockworkError,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
 };
@@ -65,7 +65,7 @@ impl ConfigAccount for Account<'_, Config> {
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()> {
         require!(
             self.admin == admin.key(),
-            CronosError::AdminAuthorityInvalid
+            ClockworkError::AdminAuthorityInvalid
         );
         self.admin = settings.admin;
         Ok(())

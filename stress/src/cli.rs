@@ -31,9 +31,9 @@ pub enum CliError {
 }
 
 pub fn app() -> Command<'static> {
-    Command::new("Cronos")
-        .bin_name("cronos-test")
-        .about("Stress testing tool for Cronos")
+    Command::new("Clockwork")
+        .bin_name("clockwork-test")
+        .about("Stress testing tool for Clockwork")
         .version(version!())
         .arg_required_else_help(true)
         .arg(

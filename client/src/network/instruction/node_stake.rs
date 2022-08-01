@@ -18,7 +18,7 @@ pub fn node_stake(
     worker: Pubkey,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_network::ID,
+        program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new_readonly(config, false),
             AccountMeta::new_readonly(node, false),
@@ -29,6 +29,6 @@ pub fn node_stake(
             AccountMeta::new(get_associated_token_address(&signer, &mint), false),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: cronos_network::instruction::NodeStake { amount }.data(),
+        data: clockwork_network::instruction::NodeStake { amount }.data(),
     }
 }

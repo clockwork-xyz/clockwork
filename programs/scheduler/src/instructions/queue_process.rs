@@ -1,5 +1,5 @@
 use {
-    crate::{state::*, errors::CronosError},
+    crate::{state::*, errors::ClockworkError},
     anchor_lang::prelude::*,
 };
 
@@ -13,8 +13,8 @@ pub struct QueueProcess<'info> {
             queue.name.as_bytes(),
         ],
         bump,
-        constraint = queue.process_at.is_some() && queue.process_at <= Some(Clock::get().unwrap().unix_timestamp) @ CronosError::QueueNotDue,
-        constraint = queue.status == QueueStatus::Pending @ CronosError::InvalidQueueStatus,
+        constraint = queue.process_at.is_some() && queue.process_at <= Some(Clock::get().unwrap().unix_timestamp) @ ClockworkError::QueueNotDue,
+        constraint = queue.status == QueueStatus::Pending @ ClockworkError::InvalidQueueStatus,
     )]
     pub queue: Account<'info, Queue>,
 

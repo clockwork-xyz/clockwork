@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    cronos_client::{scheduler::state::Queue, Client},
+    clockwork_client::{scheduler::state::Queue, Client},
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };
 
@@ -8,7 +8,7 @@ pub fn create(client: &Client, name: String, schedule: String) -> Result<(), Cli
     // Build queue_create ix.
     let authority_pubkey = client.payer_pubkey();
     let queue_pubkey = Queue::pubkey(authority_pubkey, name.clone());
-    let queue_ix = cronos_client::scheduler::instruction::queue_new(
+    let queue_ix = clockwork_client::scheduler::instruction::queue_new(
         authority_pubkey,
         LAMPORTS_PER_SOL,
         name,
@@ -32,7 +32,7 @@ pub fn get(client: &Client, address: &Pubkey, task_id: Option<u64>) -> Result<()
 
     let mut task_pubkeys = vec![];
     for i in 0..queue.task_count.min(10) {
-        let task_pubkey = cronos_client::scheduler::state::Task::pubkey(*address, i);
+        let task_pubkey = clockwork_client::scheduler::state::Task::pubkey(*address, i);
         task_pubkeys.push(task_pubkey);
     }
 
@@ -41,7 +41,7 @@ pub fn get(client: &Client, address: &Pubkey, task_id: Option<u64>) -> Result<()
     match task_id {
         None => (),
         Some(task_id) => {
-            let task_pubkey = cronos_client::scheduler::state::Task::pubkey(*address, task_id);
+            let task_pubkey = clockwork_client::scheduler::state::Task::pubkey(*address, task_id);
             super::task::get(client, &task_pubkey).ok();
         }
     }

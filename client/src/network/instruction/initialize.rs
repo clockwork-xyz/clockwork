@@ -8,19 +8,20 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
-    let authority_pubkey = cronos_network::state::Authority::pubkey();
-    let config_pubkey = cronos_network::state::Config::pubkey();
-    let rotator_pubkey = cronos_network::state::Rotator::pubkey();
-    let registry_pubkey = cronos_network::state::Registry::pubkey();
-    let snapshot_pubkey = cronos_network::state::Snapshot::pubkey(0);
+    let authority_pubkey = clockwork_network::state::Authority::pubkey();
+    let config_pubkey = clockwork_network::state::Config::pubkey();
+    let rotator_pubkey = clockwork_network::state::Rotator::pubkey();
+    let registry_pubkey = clockwork_network::state::Registry::pubkey();
+    let snapshot_pubkey = clockwork_network::state::Snapshot::pubkey(0);
     let snapshot_queue =
-        cronos_scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
-    let snapshot_task = cronos_scheduler::state::Task::pubkey(snapshot_queue, 0);
-    let cleanup_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
-    let cleanup_task = cronos_scheduler::state::Task::pubkey(cleanup_queue, 0);
+        clockwork_scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
+    let snapshot_task = clockwork_scheduler::state::Task::pubkey(snapshot_queue, 0);
+    let cleanup_queue =
+        clockwork_scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
+    let cleanup_task = clockwork_scheduler::state::Task::pubkey(cleanup_queue, 0);
 
     Instruction {
-        program_id: cronos_network::ID,
+        program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(authority_pubkey, false),
@@ -30,12 +31,12 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(rotator_pubkey, false),
             AccountMeta::new(mint, false),
             AccountMeta::new(registry_pubkey, false),
-            AccountMeta::new_readonly(cronos_scheduler::ID, false),
+            AccountMeta::new_readonly(clockwork_scheduler::ID, false),
             AccountMeta::new(snapshot_pubkey, false),
             AccountMeta::new(snapshot_queue, false),
             AccountMeta::new(snapshot_task, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_network::instruction::Initialize {}.data(),
+        data: clockwork_network::instruction::Initialize {}.data(),
     }
 }

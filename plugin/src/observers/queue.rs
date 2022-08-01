@@ -1,8 +1,8 @@
 use {
     super::pool::{PoolPosition, PoolPositions},
-    cronos_client::{
+    clockwork_client::{
         scheduler::state::{Queue, QueueStatus, Task},
-        Client as CronosClient,
+        Client as ClockworkClient,
     },
     dashmap::{DashMap, DashSet},
     log::info,
@@ -116,7 +116,7 @@ impl QueueObserver {
 
     pub async fn build_queue_txs(
         self: Arc<Self>,
-        cronos_client: Arc<CronosClient>,
+        clockwork_client: Arc<ClockworkClient>,
         slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
         // Get this node's current pool position
@@ -129,7 +129,7 @@ impl QueueObserver {
             .iter()
             .filter_map(|queue_pubkey| {
                 match self.clone().build_queue_tx(
-                    cronos_client.clone(),
+                    clockwork_client.clone(),
                     pool_position.clone(),
                     queue_pubkey.clone(),
                     slot,
@@ -143,13 +143,13 @@ impl QueueObserver {
 
     pub fn build_queue_tx(
         self: Arc<Self>,
-        cronos_client: Arc<CronosClient>,
+        clockwork_client: Arc<ClockworkClient>,
         pool_position: PoolPosition,
         queue_pubkey: Pubkey,
         slot: u64,
     ) -> PluginResult<Transaction> {
         // Get the queue
-        let queue = cronos_client.get::<Queue>(&queue_pubkey).unwrap();
+        let queue = clockwork_client.get::<Queue>(&queue_pubkey).unwrap();
 
         // Return none if this queue has no process_at
         if queue.process_at.is_none() {
@@ -162,7 +162,7 @@ impl QueueObserver {
         //  we are still within the queue's grace period.
         let unix_timestamp = match self.unix_timestamps.get(&slot) {
             Some(entry) => *entry.value(),
-            None => cronos_client.get_clock().unwrap().unix_timestamp,
+            None => clockwork_client.get_clock().unwrap().unix_timestamp,
         };
         if pool_position.current_position.is_none()
             && unix_timestamp < queue.process_at.unwrap() + 10
@@ -173,13 +173,13 @@ impl QueueObserver {
         }
 
         // Setup ixs based on queue's current status
-        let worker_pubkey = cronos_client.payer_pubkey();
+        let worker_pubkey = clockwork_client.payer_pubkey();
         let mut ixs: Vec<Instruction> = vec![];
         let mut starting_task_id = 0;
         match queue.status {
             QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
             QueueStatus::Pending => {
-                ixs.push(cronos_client::scheduler::instruction::queue_process(
+                ixs.push(clockwork_client::scheduler::instruction::queue_process(
                     queue_pubkey,
                     worker_pubkey,
                 ));
@@ -191,10 +191,10 @@ impl QueueObserver {
         for i in starting_task_id..queue.task_count {
             // Get the task account
             let task_pubkey = Task::pubkey(queue_pubkey, i);
-            let task = cronos_client.get::<Task>(&task_pubkey).unwrap();
+            let task = clockwork_client.get::<Task>(&task_pubkey).unwrap();
 
             // Build ix
-            let mut task_exec_ix = cronos_client::scheduler::instruction::task_exec(
+            let mut task_exec_ix = clockwork_client::scheduler::instruction::task_exec(
                 queue_pubkey,
                 task_pubkey,
                 worker_pubkey,
@@ -216,9 +216,9 @@ impl QueueObserver {
                     if !acc_dedupe.contains(&acc.pubkey) {
                         acc_dedupe.insert(acc.pubkey);
 
-                        // Inject the worker pubkey as the Cronos "payer" account
+                        // Inject the worker pubkey as the Clockwork "payer" account
                         let mut payer_pubkey = acc.pubkey;
-                        if acc.pubkey == cronos_client::scheduler::payer::ID {
+                        if acc.pubkey == clockwork_client::scheduler::payer::ID {
                             payer_pubkey = worker_pubkey;
                         }
                         task_exec_ix.accounts.push(match acc.is_writable {
@@ -237,8 +237,8 @@ impl QueueObserver {
         // TODO At what scale must ixs be chunked into separate txs?
         let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&worker_pubkey));
         tx.sign(
-            &[cronos_client.payer()],
-            cronos_client.get_latest_blockhash().map_err(|_err| {
+            &[clockwork_client.payer()],
+            clockwork_client.get_latest_blockhash().map_err(|_err| {
                 GeyserPluginError::Custom("Failed to get latest blockhash".into())
             })?,
         );

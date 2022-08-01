@@ -71,6 +71,6 @@ mkdir -p "$installDir/lib"
   cargo $maybeRustVersion build $maybeReleaseFlag --lib
 )
 
-cp -fv "target/$buildVariant/libcronos_plugin.$libExt" "$installDir"/lib/
+cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib/
 
 echo "Done after $SECONDS seconds"

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-cargo publish -p cronos-cron
+cargo publish -p clockwork-cron
 sleep 25
-cargo publish -p cronos-health
+cargo publish -p clockwork-health
 sleep 25
-cargo publish -p cronos-http
+cargo publish -p clockwork-http
 sleep 25
-cargo publish -p cronos-pool
+cargo publish -p clockwork-pool
 sleep 25
-cargo publish -p cronos-scheduler
+cargo publish -p clockwork-scheduler
 sleep 25
-cargo publish -p cronos-network
+cargo publish -p clockwork-network

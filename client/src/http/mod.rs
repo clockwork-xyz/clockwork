@@ -1,4 +1,4 @@
 pub mod instruction;
 
-pub use cronos_http::state;
-pub use cronos_http::ID;
+pub use clockwork_http::state;
+pub use clockwork_http::ID;

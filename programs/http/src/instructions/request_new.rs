@@ -7,7 +7,7 @@ use {
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    cronos_pool::state::Pool,
+    clockwork_pool::state::Pool,
     std::{collections::HashMap, mem::size_of},
 };
 

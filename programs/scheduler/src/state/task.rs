@@ -3,7 +3,7 @@ use crate::state::FeeAccount;
 use {
     super::{Config, Fee, Queue},
     crate::{
-        errors::CronosError,
+        errors::ClockworkError,
         state::{QueueAccount, QueueStatus},
     },
     anchor_lang::{
@@ -70,7 +70,7 @@ impl TaskAccount for Account<'_, Task> {
                 if acc.is_signer {
                     require!(
                         acc.pubkey == queue.key() || acc.pubkey == crate::payer::ID,
-                        CronosError::InvalidSignatory
+                        ClockworkError::InvalidSignatory
                     );
                 }
             }
@@ -101,13 +101,13 @@ impl TaskAccount for Account<'_, Task> {
             self.id
                 == match queue.status {
                     QueueStatus::Processing { task_id } => task_id,
-                    _ => return Err(CronosError::InvalidQueueStatus.into()),
+                    _ => return Err(ClockworkError::InvalidQueueStatus.into()),
                 },
-            CronosError::InvalidTask
+            ClockworkError::InvalidTask
         );
 
         // Validate the worker data is empty
-        require!(worker.data_is_empty(), CronosError::WorkerDataNotEmpty);
+        require!(worker.data_is_empty(), ClockworkError::WorkerDataNotEmpty);
 
         // Record the worker's lamports before invoking inner ixs
         let worker_lamports_pre = worker.lamports();
@@ -117,7 +117,7 @@ impl TaskAccount for Account<'_, Task> {
 
         // Process all of the task instructions
         for ix in &self.ixs {
-            // If an inner ix account matches the Cronos payer address (CronosPayer11111111111111111111111111111111),
+            // If an inner ix account matches the Clockwork payer address (ClockworkPayer11111111111111111111111111111111),
             //  then inject the worker in its place. Dapp developers can use the worker as a payer to initialize
             //  new accounts in their tasks. Workers will be reimbursed for all SOL spent during the inner ixs.
             //
@@ -158,7 +158,7 @@ impl TaskAccount for Account<'_, Task> {
                     Some(dynamic_accounts) => {
                         require!(
                             dynamic_accounts.len() == ix.accounts.len(),
-                            CronosError::InvalidDynamicAccounts
+                            ClockworkError::InvalidDynamicAccounts
                         );
                         dyanmic_ixs.push(InstructionData {
                             program_id: ix.program_id,
@@ -185,7 +185,7 @@ impl TaskAccount for Account<'_, Task> {
         }
 
         // Verify that inner ixs have not initialized data at the worker address
-        require!(worker.data_is_empty(), CronosError::WorkerDataNotEmpty);
+        require!(worker.data_is_empty(), ClockworkError::WorkerDataNotEmpty);
 
         // Update the actions's ixs for the next invocation
         if !dyanmic_ixs.is_empty() {

@@ -1,7 +1,7 @@
 use {
     bincode::deserialize,
     cached::proc_macro::cached,
-    cronos_client::{
+    clockwork_client::{
         http::state::Request,
         network::state::{Rotator, Snapshot},
         pool::state::Pool,
@@ -44,7 +44,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             return Ok(AccountUpdateEvent::Pool {
                 pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos pool account".into(),
+                        msg: "Failed to parse Clockwork pool account".into(),
                     }
                 })?,
             });
@@ -55,40 +55,40 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             return Ok(AccountUpdateEvent::Rotator {
                 rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos rotator account".into(),
+                        msg: "Failed to parse Clockwork rotator account".into(),
                     }
                 })?,
             });
         }
 
         // If the account is a queue, return it
-        if owner_pubkey.eq(&cronos_client::scheduler::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::scheduler::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::Queue {
                 queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos queue account".into(),
+                        msg: "Failed to parse Clockwork queue account".into(),
                     }
                 })?,
             });
         }
 
         // If the account is a snapshot, return it
-        if owner_pubkey.eq(&cronos_client::network::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::network::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::Snapshot {
                 snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos snapshot account".into(),
+                        msg: "Failed to parse Clockwork snapshot account".into(),
                     }
                 })?,
             });
         }
 
         // If the account is an http request, return in
-        if owner_pubkey.eq(&cronos_client::http::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::http::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::HttpRequest {
                 request: Request::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Cronos http request".into(),
+                        msg: "Failed to parse Clockwork http request".into(),
                     }
                 })?,
             });

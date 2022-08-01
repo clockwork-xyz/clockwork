@@ -16,14 +16,14 @@ pub fn queue_new(
     schedule: String,
 ) -> Instruction {
     Instruction {
-        program_id: cronos_scheduler::ID,
+        program_id: clockwork_scheduler::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: cronos_scheduler::instruction::QueueNew {
+        data: clockwork_scheduler::instruction::QueueNew {
             balance,
             name,
             schedule,
