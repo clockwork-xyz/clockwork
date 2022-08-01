@@ -40,7 +40,7 @@ pub struct Queue {
     pub process_at: Option<i64>,
     pub schedule: String,
     pub status: QueueStatus,
-    pub task_count: u128,
+    pub task_count: u64,
 }
 
 impl Queue {
@@ -182,5 +182,5 @@ impl QueueAccount for Account<'_, Queue> {
 pub enum QueueStatus {
     Paused,
     Pending,
-    Processing { task_id: u128 },
+    Processing { task_id: u64 },
 }

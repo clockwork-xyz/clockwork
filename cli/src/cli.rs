@@ -59,7 +59,7 @@ pub enum CliCommand {
     },
     QueueGet {
         address: Pubkey,
-        task_id: Option<u128>,
+        task_id: Option<u64>,
     },
 
     // Registry

@@ -208,7 +208,7 @@ fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     .unwrap()
 }
 
-fn create_task_ix(authority: &Keypair, queue_name: String, task_id: u128) -> Instruction {
+fn create_task_ix(authority: &Keypair, queue_name: String, task_id: u64) -> Instruction {
     let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name);
     let task_pubkey = Task::pubkey(queue_pubkey, task_id);
     let memo_ix = build_memo_ix(&authority.pubkey());

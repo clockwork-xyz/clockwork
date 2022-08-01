@@ -24,7 +24,7 @@ pub fn create(client: &Client, name: String, schedule: String) -> Result<(), Cli
     get(client, &queue_pubkey, None)
 }
 
-pub fn get(client: &Client, address: &Pubkey, task_id: Option<u128>) -> Result<(), CliError> {
+pub fn get(client: &Client, address: &Pubkey, task_id: Option<u64>) -> Result<(), CliError> {
     let queue = client
         .get::<Queue>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;

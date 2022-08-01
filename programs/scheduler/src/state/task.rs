@@ -22,13 +22,13 @@ pub const SEED_TASK: &[u8] = b"task";
 #[account]
 #[derive(Debug)]
 pub struct Task {
-    pub id: u128,
+    pub id: u64,
     pub ixs: Vec<InstructionData>,
     pub queue: Pubkey,
 }
 
 impl Task {
-    pub fn pubkey(queue: Pubkey, id: u128) -> Pubkey {
+    pub fn pubkey(queue: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[SEED_TASK, queue.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,

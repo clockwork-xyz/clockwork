@@ -15,7 +15,7 @@ pub struct Api {
     pub ack_authority: Pubkey,
     pub authority: Pubkey,
     pub base_url: String,
-    pub request_count: u128,
+    pub request_count: u64,
 }
 
 impl Api {

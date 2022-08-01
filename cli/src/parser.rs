@@ -116,7 +116,7 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", matches)) => Ok(CliCommand::QueueGet {
             address: parse_pubkey("address", matches)?,
             task_id: match matches.subcommand() {
-                Some(("task", matches)) => Some(parse_u128("id", matches)?),
+                Some(("task", matches)) => Some(parse_u64("id", matches)?),
                 _ => None,
             },
         }),
@@ -174,13 +174,6 @@ pub fn parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
 pub fn parse_u64(arg: &str, matches: &ArgMatches) -> Result<u64, CliError> {
     Ok(parse_string(arg, matches)?
         .parse::<u64>()
-        .map_err(|_err| CliError::BadParameter(arg.into()))
-        .unwrap())
-}
-
-pub fn parse_u128(arg: &str, matches: &ArgMatches) -> Result<u128, CliError> {
-    Ok(parse_string(arg, matches)?
-        .parse::<u128>()
         .map_err(|_err| CliError::BadParameter(arg.into()))
         .unwrap())
 }

@@ -38,7 +38,7 @@ pub struct Initialize<'info> {
         seeds = [
             SEED_TASK, 
             cleanup_queue.key().as_ref(), 
-            (0 as u128).to_be_bytes().as_ref()
+            (0 as u64).to_be_bytes().as_ref()
         ], 
         seeds::program = cronos_scheduler::ID,
         bump, 
@@ -105,7 +105,7 @@ pub struct Initialize<'info> {
         seeds = [
             SEED_TASK, 
             snapshot_queue.key().as_ref(), 
-            (0 as u128).to_be_bytes().as_ref()
+            (0 as u64).to_be_bytes().as_ref()
         ], 
         seeds::program = cronos_scheduler::ID,
         bump
