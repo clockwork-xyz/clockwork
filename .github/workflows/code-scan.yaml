@@ -24,7 +24,7 @@ jobs:
     needs: build
     name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
-    container: clockworkxyz/dev:v1.10.8
+    container: clockworkxyz/dev:v1.10.29
     strategy:
       fail-fast: false
       matrix:
