@@ -95,7 +95,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         }
 
         Err(GeyserPluginError::AccountsUpdateError {
-            msg: "Account is not relevant to cronos plugin".into(),
+            msg: "Account is not relevant to Clockwork plugin".into(),
         })
     }
 }

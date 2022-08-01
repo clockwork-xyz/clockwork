@@ -8,9 +8,9 @@
   </p>
 
   <p>
-    <a href="https://github.com/cronos-so/cronos/actions/workflows/code-scan.yaml"><img alt="code scan" src="https://github.com/cronos-so/cronos/actions/workflows/code-scan.yaml/badge.svg?branch=main" /></a>
+    <a href="https://github.com/clockwork-xyz/clockwork/actions/workflows/code-scan.yaml"><img alt="code scan" src="https://github.com/clockwork-xyz/clockwork/actions/workflows/code-scan.yaml/badge.svg?branch=main" /></a>
     <a href="https://discord.com/channels/889725689543143425"><img alt="Discord Chat" src="https://img.shields.io/discord/889725689543143425?color=blueviolet" /></a>
-    <a href="https://www.gnu.org/licenses/agpl-3.0.en.html"><img alt="License" src="https://img.shields.io/github/license/cronos-so/cronos?color=turquoise" /></a>
+    <a href="https://www.gnu.org/licenses/agpl-3.0.en.html"><img alt="License" src="https://img.shields.io/github/license/clockwork-xyz/clockwork?color=turquoise" /></a>
   </p>
 
   <h4>
@@ -18,7 +18,7 @@
     <span> | </span>
     <a href="https://docs.clockwork.xyz">Docs</a>
     <span> | </span>
-    <a href="https://twitter.com/cronos_so">Twitter</a>
+    <a href="https://twitter.com/clockwork_xyz">Twitter</a>
   </h4>  
 </div>
 
@@ -41,7 +41,7 @@
 
 To run the Clockwork plugin on your Solana validator, you can either `cargo build` from scratch or install the pre-built binary:
 ```sh
-curl -s https://api.github.com/repos/cronos-so/cronos/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+curl -s https://api.github.com/repos/clockwork-xyz/clockwork/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
 tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
@@ -49,14 +49,14 @@ rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 
 Next, create a new keypair for signing Clockwork txs. The responsbilities of being a worker currently include the processing of scheduled tasks and the rotating the worker pool. Clockwork workers may be expected to perform other jobs in the near future. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
 ```sh
-solana-keygen new -o cronos-worker-keypair.json
+solana-keygen new -o clockwork-worker-keypair.json
 ```
 
 Then, setup the plugin config file in a folder where your startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
 ```js
 {
-  "libpath": "/home/sol/cronos-geyser-plugin-release/lib/libclockwork_plugin.so",
-  "keypath": "/home/sol/cronos-worker-keypair.json",
+  "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
+  "keypath": "/home/sol/clockwork-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
   "slot_timeout_threshold": 150,
   "worker_threads": 10
