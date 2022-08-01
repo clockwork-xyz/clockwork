@@ -1,18 +1,18 @@
 [package]
-name = "cronos-pool"
+name = "clockwork-pool"
 version = "0.2.0"
-description = "Cronos pool protocol"
+description = "Clockwork pool protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
-repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_pool"
+name = "clockwork_pool"
 
 [features]
 no-entrypoint = []

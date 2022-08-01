@@ -1,7 +1,7 @@
 use {
     super::{Node, Snapshot},
     crate::{
-        errors::CronosError,
+        errors::ClockworkError,
         state::{NodeAccount, SnapshotAccount, SnapshotStatus},
     },
     anchor_lang::{prelude::*, AnchorDeserialize},
@@ -79,14 +79,14 @@ impl RegistryAccount for Account<'_, Registry> {
         stake: &mut Account<TokenAccount>,
         worker: &Signer,
     ) -> Result<()> {
-        require!(!self.is_locked, CronosError::RegistryLocked);
+        require!(!self.is_locked, ClockworkError::RegistryLocked);
         node.new(self.node_count, owner, stake, worker)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
         Ok(())
     }
 
     fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()> {
-        require!(!self.is_locked, CronosError::RegistryLocked);
+        require!(!self.is_locked, ClockworkError::RegistryLocked);
         self.lock()?;
         snapshot.new(self.snapshot_count)?;
         Ok(())
@@ -98,18 +98,18 @@ impl RegistryAccount for Account<'_, Registry> {
         next_snapshot: &mut Account<Snapshot>,
     ) -> Result<()> {
         // Require the registry is locked
-        require!(self.is_locked, CronosError::RegistryMustBeLocked);
+        require!(self.is_locked, ClockworkError::RegistryMustBeLocked);
 
         // Validate the next snapshot is in progress
         require!(
             next_snapshot.status == SnapshotStatus::InProgress,
-            CronosError::SnapshotNotInProgress
+            ClockworkError::SnapshotNotInProgress
         );
 
         // Validate the snapshot has captured the entire registry
         require!(
             next_snapshot.node_count == self.node_count,
-            CronosError::SnapshotIncomplete
+            ClockworkError::SnapshotIncomplete
         );
 
         // Archive the current snapshot
@@ -118,13 +118,13 @@ impl RegistryAccount for Account<'_, Registry> {
                 // Validate the snapshot is current
                 require!(
                     current_snapshot.status == SnapshotStatus::Current,
-                    CronosError::SnapshotNotCurrent
+                    ClockworkError::SnapshotNotCurrent
                 );
 
                 // Mark the current snapshot as archived
                 current_snapshot.status = SnapshotStatus::Archived;
             }
-            None => require!(self.snapshot_count == 0, CronosError::SnapshotNotCurrent),
+            None => require!(self.snapshot_count == 0, ClockworkError::SnapshotNotCurrent),
         }
 
         // Mark the next snapshot as current

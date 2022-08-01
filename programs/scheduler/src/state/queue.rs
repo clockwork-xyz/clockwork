@@ -1,6 +1,6 @@
 use {
     super::InstructionData,
-    crate::{errors::CronosError, responses::TaskResponse},
+    crate::{errors::ClockworkError, responses::TaskResponse},
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -10,7 +10,7 @@ use {
         AnchorDeserialize,
     },
     chrono::{DateTime, NaiveDateTime, Utc},
-    cronos_cron::Schedule,
+    clockwork_cron::Schedule,
     std::{convert::TryFrom, str::FromStr},
 };
 
@@ -75,7 +75,7 @@ impl QueueAccount for Account<'_, Queue> {
         // Validate the queue is pending
         require!(
             self.status == QueueStatus::Pending,
-            CronosError::InvalidQueueStatus,
+            ClockworkError::InvalidQueueStatus,
         );
 
         if self.task_count > 0 {
@@ -145,17 +145,17 @@ impl QueueAccount for Account<'_, Queue> {
                 &[bump],
             ]],
         )
-        .map_err(|_err| CronosError::InnerIxFailed)?;
+        .map_err(|_err| ClockworkError::InnerIxFailed)?;
 
         match get_return_data() {
             None => Ok(None),
             Some((program_id, return_data)) => {
                 if program_id != ix.program_id {
-                    Err(CronosError::InvalidReturnData.into())
+                    Err(ClockworkError::InvalidReturnData.into())
                 } else {
                     Ok(Some(
                         TaskResponse::try_from_slice(return_data.as_slice())
-                            .map_err(|_err| CronosError::InvalidTaskResponse)?,
+                            .map_err(|_err| ClockworkError::InvalidTaskResponse)?,
                     ))
                 }
             }

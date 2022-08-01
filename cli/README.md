@@ -1,5 +1,5 @@
-# Cronos CLI
+# Clockwork CLI
 
 ```sh
-cargo install cronos-cli
+cargo install clockwork-cli
 ```

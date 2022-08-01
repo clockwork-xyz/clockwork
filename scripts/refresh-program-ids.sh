@@ -7,11 +7,11 @@ cargo clean
 anchor build 
 
 # Get pubkey addresses
-program_id_health=$(solana address -k target/deploy/cronos_health-keypair.json)
-program_id_http=$(solana address -k target/deploy/cronos_http-keypair.json)
-program_id_network=$(solana address -k target/deploy/cronos_network-keypair.json)
-program_id_pool=$(solana address -k target/deploy/cronos_pool-keypair.json)
-program_id_scheduler=$(solana address -k target/deploy/cronos_scheduler-keypair.json)
+program_id_health=$(solana address -k target/deploy/clockwork_health-keypair.json)
+program_id_http=$(solana address -k target/deploy/clockwork_http-keypair.json)
+program_id_network=$(solana address -k target/deploy/clockwork_network-keypair.json)
+program_id_pool=$(solana address -k target/deploy/clockwork_pool-keypair.json)
+program_id_scheduler=$(solana address -k target/deploy/clockwork_scheduler-keypair.json)
 
 # Update declared program IDs
 sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_health}'");/g' programs/health/src/id.rs

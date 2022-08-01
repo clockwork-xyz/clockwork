@@ -1,7 +1,9 @@
 use {
     crate::errors::CliError,
-    cronos_client::network::state::{Authority, Config, Node, Registry, Snapshot, SnapshotEntry},
-    cronos_client::Client,
+    clockwork_client::network::state::{
+        Authority, Config, Node, Registry, Snapshot, SnapshotEntry,
+    },
+    clockwork_client::Client,
     solana_sdk::{
         pubkey::Pubkey,
         signature::{Keypair, Signer},
@@ -10,7 +12,7 @@ use {
 
 pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     let node = client
-        .get::<cronos_client::network::state::Node>(&address)
+        .get::<clockwork_client::network::state::Node>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("{:#?}", node);
     Ok(())
@@ -44,20 +46,20 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
     let snapshot_queue_pubkey =
-        cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
-    let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
+        clockwork_client::scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
+    let snapshot_task_pubkey = clockwork_client::scheduler::state::Task::pubkey(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
     );
 
     let cleanup_queue_pubkey =
-        cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
-    let cleanup_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
+        clockwork_client::scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
+    let cleanup_task_pubkey = clockwork_client::scheduler::state::Task::pubkey(
         cleanup_queue_pubkey,
         (registry_data.node_count + 1).into(),
     );
 
-    let ix = cronos_client::network::instruction::node_register(
+    let ix = clockwork_client::network::instruction::node_register(
         authority_pubkey,
         cleanup_queue_pubkey,
         cleanup_task_pubkey,
@@ -88,7 +90,7 @@ pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliErro
     // Build ix
     let signer = client.payer();
     let node_pubkey = Node::pubkey(worker);
-    let ix = cronos_client::network::instruction::node_stake(
+    let ix = clockwork_client::network::instruction::node_stake(
         amount,
         config_pubkey,
         node_pubkey,

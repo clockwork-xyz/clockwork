@@ -1,6 +1,6 @@
 pub mod instruction;
 
-pub use cronos_scheduler::errors;
-pub use cronos_scheduler::payer;
-pub use cronos_scheduler::state;
-pub use cronos_scheduler::ID;
+pub use clockwork_scheduler::errors;
+pub use clockwork_scheduler::payer;
+pub use clockwork_scheduler::state;
+pub use clockwork_scheduler::ID;

@@ -1,6 +1,6 @@
 use crate::{cli::CliCommand, config::CliConfig, errors::CliError};
 use clap::ArgMatches;
-use cronos_client::Client;
+use clockwork_client::Client;
 use solana_sdk::signature::read_keypair_file;
 
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {

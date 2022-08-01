@@ -1,8 +1,8 @@
 use {
     crate::env::Envvar,
     chrono::{TimeZone, Utc},
-    cronos_client::health::state::Health,
-    cronos_client::Client,
+    clockwork_client::health::state::Health,
+    clockwork_client::Client,
     dotenv::dotenv,
     elasticsearch::{
         auth::Credentials, http::transport::Transport, Elasticsearch, Error, IndexParts,

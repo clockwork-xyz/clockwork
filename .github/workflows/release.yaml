@@ -55,8 +55,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body: |
-            cronos-geyser-plugin ${{ env.CI_TAG }}
+            clockwork-geyser-plugin ${{ env.CI_TAG }}
             solana ${{ env.SOLANA_VERSION }}
             rust ${{ env.RUST_STABLE }}
           files: |
-            cronos-geyser-plugin-release-*
+            clockwork-geyser-plugin-release-*

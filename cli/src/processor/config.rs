@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    cronos_client::{
+    clockwork_client::{
         network::state::Config as NetworkConfig, pool::state::Config as PoolConfig,
         scheduler::state::Config as SchedulerConfig, Client,
     },
@@ -46,7 +46,7 @@ pub fn set(
         .get::<SchedulerConfig>(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
 
-    let settings = cronos_client::scheduler::state::ConfigSettings {
+    let settings = clockwork_client::scheduler::state::ConfigSettings {
         admin: match admin {
             Some(admin) => admin,
             None => config.admin,
@@ -65,7 +65,7 @@ pub fn set(
         },
     };
 
-    let ix = cronos_client::scheduler::instruction::admin_config_update(
+    let ix = clockwork_client::scheduler::instruction::admin_config_update(
         client.payer_pubkey(),
         config_pubkey,
         settings,

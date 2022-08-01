@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum CronosError {
+pub enum ClockworkError {
     #[msg("Worker addresses cannot be initialized accounts")]
     WorkerDataNotEmpty,
 

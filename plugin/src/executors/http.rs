@@ -3,7 +3,7 @@ use {
         config::PluginConfig,
         observers::{http::HttpRequest, Observers},
     },
-    cronos_client::http::state::HttpMethod,
+    clockwork_client::http::state::HttpMethod,
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,

@@ -9,7 +9,7 @@ use {
         tpu_client::TpuClient,
         utils::read_or_new_keypair,
     },
-    cronos_client::Client as CronosClient,
+    clockwork_client::Client as ClockworkClient,
     log::info,
     solana_client::rpc_client::RpcClient,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -25,7 +25,7 @@ static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 #[derive(Debug)]
-pub struct CronosPlugin {
+pub struct ClockworkPlugin {
     // Plugin config values.
     pub config: PluginConfig,
     pub executors: Option<Arc<Executors>>,
@@ -34,15 +34,15 @@ pub struct CronosPlugin {
     pub runtime: Arc<Runtime>,
 }
 
-impl GeyserPlugin for CronosPlugin {
+impl GeyserPlugin for ClockworkPlugin {
     fn name(&self) -> &'static str {
-        "cronos-plugin"
+        "clockwork-plugin"
     }
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
         info!("Loading snapshot...");
-        *self = CronosPlugin::new_from_config(PluginConfig::read_from(config_file)?);
+        *self = ClockworkPlugin::new_from_config(PluginConfig::read_from(config_file)?);
         Ok(())
     }
 
@@ -149,7 +149,7 @@ impl GeyserPlugin for CronosPlugin {
     }
 }
 
-impl CronosPlugin {
+impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
         let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
@@ -186,7 +186,7 @@ impl CronosPlugin {
         }
 
         // Build clients
-        let cronos_client = Arc::new(CronosClient::new(
+        let clockwork_client = Arc::new(ClockworkClient::new(
             read_or_new_keypair(self.config.clone().keypath),
             LOCAL_RPC_URL.into(),
         ));
@@ -204,11 +204,11 @@ impl CronosPlugin {
             self.config.clone(),
             self.observers.clone(),
             self.runtime.clone(),
-            cronos_client.payer_pubkey(),
+            clockwork_client.payer_pubkey(),
         ));
         let tx_executor = Arc::new(TxExecutor::new(
             self.config.clone(),
-            cronos_client.clone(),
+            clockwork_client.clone(),
             self.observers.clone(),
             self.runtime.clone(),
             tpu_client.clone(),
@@ -222,7 +222,7 @@ impl CronosPlugin {
     }
 }
 
-impl Default for CronosPlugin {
+impl Default for ClockworkPlugin {
     fn default() -> Self {
         Self::new_from_config(PluginConfig::default())
     }
@@ -232,7 +232,7 @@ fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
     Arc::new(
         Builder::new_multi_thread()
             .enable_all()
-            .thread_name("cronos-plugin")
+            .thread_name("clockwork-plugin")
             .worker_threads(config.worker_threads)
             .max_blocking_threads(config.worker_threads)
             .build()

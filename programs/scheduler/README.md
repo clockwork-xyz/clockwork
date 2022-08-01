@@ -1,3 +1,3 @@
-# Cronos
+# Clockwork
 
-Cronos is an on-chain instruction scheduler for Solana. Developers can use Cronos to automate crank functions in their programs.
+Clockwork is an on-chain instruction scheduler for Solana. Developers can use Clockwork to automate crank functions in their programs.

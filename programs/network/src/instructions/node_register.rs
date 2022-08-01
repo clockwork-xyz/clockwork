@@ -8,8 +8,8 @@ use {
         associated_token::AssociatedToken,
         token::{Mint, Token, TokenAccount},
     },
-    cronos_scheduler::{
-        program::CronosScheduler,
+    clockwork_scheduler::{
+        program::ClockworkScheduler,
         state::{Queue, QueueStatus, SEED_TASK}
     },
     std::mem::size_of,
@@ -32,7 +32,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         seeds = [SEED_TASK, cleanup_queue.key().as_ref(), cleanup_queue.task_count.to_be_bytes().as_ref()],
-        seeds::program = cronos_scheduler::ID,
+        seeds::program = clockwork_scheduler::ID,
         bump
     )]
     pub cleanup_task: SystemAccount<'info>,
@@ -82,8 +82,8 @@ pub struct NodeRegister<'info> {
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
 
-    #[account(address = cronos_scheduler::ID)]
-    pub scheduler_program: Program<'info, CronosScheduler>,
+    #[account(address = clockwork_scheduler::ID)]
+    pub scheduler_program: Program<'info, ClockworkScheduler>,
 
     #[account(
         mut,
@@ -105,7 +105,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         seeds = [SEED_TASK, snapshot_queue.key().as_ref(), snapshot_queue.task_count.to_be_bytes().as_ref()],
-        seeds::program = cronos_scheduler::ID,
+        seeds::program = clockwork_scheduler::ID,
         bump
     )]
     pub snapshot_task: SystemAccount<'info>,
@@ -166,14 +166,14 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(config.key(), false),
             AccountMeta::new(next_entry_pubkey, false),
             AccountMeta::new_readonly(node.key(), false,),
-            AccountMeta::new(cronos_scheduler::payer::ID, true),
+            AccountMeta::new(clockwork_scheduler::payer::ID, true),
             AccountMeta::new_readonly(snapshot_queue.key(), true),
             AccountMeta::new_readonly(registry.key(), false),
             AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(stake.key(), false),
             AccountMeta::new_readonly(system_program.key(), false)
         ],
-        data: cronos_scheduler::anchor::sighash("snapshot_capture").into(),
+        data: clockwork_scheduler::anchor::sighash("snapshot_capture").into(),
     };
     let snapshot_rotate_ix = Instruction {
         program_id: crate::ID,
@@ -185,12 +185,12 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new_readonly(snapshot_queue.key(), true),
             AccountMeta::new(registry.key(), false),
         ],
-        data: cronos_scheduler::anchor::sighash("snapshot_rotate").into(),
+        data: clockwork_scheduler::anchor::sighash("snapshot_rotate").into(),
     };
-    cronos_scheduler::cpi::task_new(
+    clockwork_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::TaskNew {
+            clockwork_scheduler::cpi::accounts::TaskNew {
                 authority: authority.to_account_info(),
                 payer: owner.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
@@ -211,12 +211,12 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
             AccountMeta::new(cleanup_queue.key(), true),
             AccountMeta::new(snapshot.key(), false),
         ],
-        data: cronos_scheduler::anchor::sighash("entry_close").into(),
+        data: clockwork_scheduler::anchor::sighash("entry_close").into(),
     };
-    cronos_scheduler::cpi::task_new(
+    clockwork_scheduler::cpi::task_new(
         CpiContext::new_with_signer(
             scheduler_program.to_account_info(),
-            cronos_scheduler::cpi::accounts::TaskNew {
+            clockwork_scheduler::cpi::accounts::TaskNew {
                 authority: authority.to_account_info(),
                 payer: owner.to_account_info(),
                 queue: cleanup_queue.to_account_info(),

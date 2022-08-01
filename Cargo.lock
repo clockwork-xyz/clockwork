@@ -107,7 +107,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -134,7 +134,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.42",
@@ -144,7 +144,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.42",
@@ -155,7 +155,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -167,7 +167,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -192,7 +192,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -204,7 +204,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-syn",
  "anyhow",
@@ -216,7 +216,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-attribute-access-control",
  "anchor-attribute-account",
@@ -239,7 +239,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anchor-lang",
  "solana-program",
@@ -250,7 +250,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.25.0"
-source = "git+https://github.com/cronos-so/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
+source = "git+https://github.com/clockwork-xyz/anchor?branch=v0.25.0-solana.1.10.29#d38c4943adfaf2fe9b03897e40264ff8ea0d8b6e"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -800,6 +800,150 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-cli"
+version = "0.2.0"
+dependencies = [
+ "clap 3.2.16",
+ "clockwork-client",
+ "serde",
+ "serde_json",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-sdk",
+ "spl-memo",
+ "thiserror",
+ "version",
+]
+
+[[package]]
+name = "clockwork-client"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bincode",
+ "clockwork-health",
+ "clockwork-http",
+ "clockwork-network",
+ "clockwork-pool",
+ "clockwork-scheduler",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
+name = "clockwork-cron"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
+name = "clockwork-health"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
+name = "clockwork-http"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "clockwork-pool",
+]
+
+[[package]]
+name = "clockwork-metrics"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "clockwork-client",
+ "dotenv",
+ "elasticsearch",
+ "serde_json",
+ "solana-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "clockwork-network"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "clockwork-pool",
+ "clockwork-scheduler",
+]
+
+[[package]]
+name = "clockwork-pool"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
+name = "clockwork-scheduler"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-pool",
+]
+
+[[package]]
+name = "clockwork-stress"
+version = "0.2.0"
+dependencies = [
+ "base64 0.13.0",
+ "chrono",
+ "clap 3.2.16",
+ "clockwork-client",
+ "clockwork-cron",
+ "serde",
+ "serde_json",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+ "version",
+]
+
+[[package]]
+name = "clockwork_plugin"
+version = "0.2.0"
+dependencies = [
+ "bincode",
+ "bs58 0.4.0",
+ "bugsnag",
+ "cached",
+ "clockwork-client",
+ "dashmap 5.3.4",
+ "log 0.4.17",
+ "prost",
+ "prost-build",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "simple-error",
+ "solana-client",
+ "solana-geyser-plugin-interface",
+ "solana-logger",
+ "solana-program",
+ "solana-sdk",
+ "solana-transaction-status",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -886,150 +1030,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b540bd8bc810d3885c6ea91e2018302f68baba2129ab3e88f32389ee9370880d"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "cronos-cli"
-version = "0.2.0"
-dependencies = [
- "clap 3.2.16",
- "cronos-client",
- "serde",
- "serde_json",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-sdk",
- "spl-memo",
- "thiserror",
- "version",
-]
-
-[[package]]
-name = "cronos-client"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bincode",
- "cronos-health",
- "cronos-http",
- "cronos-network",
- "cronos-pool",
- "cronos-scheduler",
- "solana-client",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
-name = "cronos-cron"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "chrono-tz",
- "nom",
- "once_cell",
-]
-
-[[package]]
-name = "cronos-health"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
-name = "cronos-http"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
- "cronos-pool",
-]
-
-[[package]]
-name = "cronos-metrics"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "cronos-client",
- "dotenv",
- "elasticsearch",
- "serde_json",
- "solana-sdk",
- "tokio",
-]
-
-[[package]]
-name = "cronos-network"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "cronos-pool",
- "cronos-scheduler",
-]
-
-[[package]]
-name = "cronos-pool"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
-name = "cronos-scheduler"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
- "chrono",
- "cronos-cron",
- "cronos-pool",
-]
-
-[[package]]
-name = "cronos-stress"
-version = "0.2.0"
-dependencies = [
- "base64 0.13.0",
- "chrono",
- "clap 3.2.16",
- "cronos-client",
- "cronos-cron",
- "serde",
- "serde_json",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-sdk",
- "thiserror",
- "version",
-]
-
-[[package]]
-name = "cronos_plugin"
-version = "0.2.0"
-dependencies = [
- "bincode",
- "bs58 0.4.0",
- "bugsnag",
- "cached",
- "cronos-client",
- "dashmap 5.3.4",
- "log 0.4.17",
- "prost",
- "prost-build",
- "reqwest",
- "serde",
- "serde_json",
- "simple-error",
- "solana-client",
- "solana-geyser-plugin-interface",
- "solana-logger",
- "solana-program",
- "solana-sdk",
- "solana-transaction-status",
- "thiserror",
- "tokio",
 ]
 
 [[package]]
@@ -3376,9 +3376,9 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.140"
+version = "1.0.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc855a42c7967b7c369eb5860f7164ef1f6f81c20c7cc1141f2a604e18723b03"
+checksum = "7af873f2c95b99fcb0bd0fe622a43e29514658873c8ceba88c4cb88833a22500"
 dependencies = [
  "serde_derive",
 ]
@@ -3394,9 +3394,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.140"
+version = "1.0.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f2122636b9fe3b81f1cb25099fcf2d3f542cdb1d45940d56c713158884a05da"
+checksum = "75743a150d003dd863b51dc809bcad0d73f2102c53632f1e954e738192a3413f"
 dependencies = [
  "proc-macro2 1.0.42",
  "quote 1.0.20",

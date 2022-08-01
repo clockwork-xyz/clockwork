@@ -1,4 +1,4 @@
 pub mod instruction;
 
-pub use cronos_network::state;
-pub use cronos_network::ID;
+pub use clockwork_network::state;
+pub use clockwork_network::ID;

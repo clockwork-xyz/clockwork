@@ -2,7 +2,7 @@
 mod tests {
     use chrono::*;
     use chrono_tz::Tz;
-    use cronos_cron::{Schedule, TimeUnitSpec};
+    use clockwork_cron::{Schedule, TimeUnitSpec};
     use std::str::FromStr;
 
     #[test]

@@ -1,18 +1,18 @@
 [package]
-name = "cronos-http"
+name = "clockwork-http"
 version = "0.2.0"
-description = "Cronos http protocol"
+description = "Clockwork http protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
-repository = "https://github.com/cronos-so/cronos"
-documentation = "https://docs.cronos.so"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_http"
+name = "clockwork_http"
 
 [features]
 no-entrypoint = []
@@ -23,4 +23,4 @@ default = []
 
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.25.0" }
-cronos-pool = { path = "../pool", features = ["cpi"], version = "0.2.0" }
+clockwork-pool = { path = "../pool", features = ["cpi"], version = "0.2.0" }

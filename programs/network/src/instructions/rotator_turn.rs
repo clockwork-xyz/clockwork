@@ -1,6 +1,6 @@
-use cronos_pool::cpi::accounts::Rotate;
+use clockwork_pool::cpi::accounts::Rotate;
 
-use crate::errors::CronosError;
+use crate::errors::ClockworkError;
 
 use {crate::state::*, anchor_lang::prelude::*};
 
@@ -18,18 +18,18 @@ pub struct RotatorTurn<'info> {
         bump,
         has_one = snapshot,
         has_one = worker,
-        constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap() @ CronosError::InvalidSnapshotEntry,
+        constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap() @ ClockworkError::InvalidSnapshotEntry,
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(mut, address = cronos_pool::state::Pool::pubkey())]
-    pub pool: Account<'info, cronos_pool::state::Pool>,
+    #[account(mut, address = clockwork_pool::state::Pool::pubkey())]
+    pub pool: Account<'info, clockwork_pool::state::Pool>,
 
-    #[account(address = cronos_pool::state::Config::pubkey())]
-    pub pool_config: Account<'info, cronos_pool::state::Config>,
+    #[account(address = clockwork_pool::state::Config::pubkey())]
+    pub pool_config: Account<'info, clockwork_pool::state::Config>,
 
-    #[account(address = cronos_pool::ID)]
-    pub pool_program: Program<'info, cronos_pool::program::CronosPool>,
+    #[account(address = clockwork_pool::ID)]
+    pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
 
     #[account(
         mut, 
@@ -48,7 +48,7 @@ pub struct RotatorTurn<'info> {
             snapshot.id.to_be_bytes().as_ref()
         ], 
         bump,
-        constraint = snapshot.status == SnapshotStatus::Current @ CronosError::SnapshotNotCurrent
+        constraint = snapshot.status == SnapshotStatus::Current @ ClockworkError::SnapshotNotCurrent
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -68,7 +68,7 @@ pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
 
     // Rotate the pool and hash the nonce
     let rotator_bump = *ctx.bumps.get("rotator").unwrap();
-    cronos_pool::cpi::rotate(
+    clockwork_pool::cpi::rotate(
         CpiContext::new_with_signer(
             pool_program.to_account_info(),
             Rotate {

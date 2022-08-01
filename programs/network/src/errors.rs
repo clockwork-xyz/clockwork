@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum CronosError {
+pub enum ClockworkError {
     #[msg("This account has already been initialized")]
     AccountAlreadyInitialized,
 

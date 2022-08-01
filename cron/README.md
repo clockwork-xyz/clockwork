@@ -1,9 +1,9 @@
-# cronos-cron [![](https://img.shields.io/crates/v/cronos-cron.svg)](https://crates.io/crates/cronos-cron) [![](https://docs.rs/cron/badge.svg)](https://docs.rs/cronos-cron)
+# clockwork-cron [![](https://img.shields.io/crates/v/clockwork-cron.svg)](https://crates.io/crates/clockwork-cron) [![](https://docs.rs/cron/badge.svg)](https://docs.rs/clockwork-cron)
 
 A cron expression parser that's safe to use in the Solana runtime. Works with stable Rust v1.28.0.
 
 ```rust
-use cronos_cron::Schedule;
+use clockwork_cron::Schedule;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use std::str::FromStr;
 

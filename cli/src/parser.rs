@@ -1,6 +1,6 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use cronos_client::http::state::HttpMethod;
+use clockwork_client::http::state::HttpMethod;
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},

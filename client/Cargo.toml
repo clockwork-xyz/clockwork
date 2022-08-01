@@ -1,28 +1,28 @@
 [package]
-name = "cronos-client"
+name = "clockwork-client"
 version = "0.2.0"
 edition = "2021"
-description = "Cronos client"
+description = "Clockwork client"
 license = "AGPL-3.0-or-later"
-homepage = "https://cronos.so"
-repository = "https://github.com/cronos-so/client"
-documentation = "https://docs.rs/cronos-client"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/client"
+documentation = "https://docs.rs/clockwork-client"
 readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "cronos_client"
+name = "clockwork_client"
 
 [dependencies]
 anchor-lang = "0.25.0"
 anchor-spl = { features = ["mint", "token"], version = "0.25.0" }
 bincode = "1.3.3"
-cronos-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0" }
-cronos-http = { path = "../programs/http", features = ["no-entrypoint"], version = "0.2.0" }
-cronos-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0" }
-cronos-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0" }
-cronos-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-http = { path = "../programs/http", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0" }
 solana-client = "1.10.29"
 solana-sdk = "1.10.29"
 thiserror = "1.0.31"

@@ -23,7 +23,7 @@ use std::iter;
 /// Methods exposing a schedule's configured ordinals for each individual unit of time.
 /// # Example
 /// ```
-/// use cronos_cron::{Schedule,TimeUnitSpec};
+/// use clockwork_cron::{Schedule,TimeUnitSpec};
 /// use std::ops::Bound::{Included,Excluded};
 /// use std::str::FromStr;
 ///
@@ -42,7 +42,7 @@ pub trait TimeUnitSpec {
     /// being described.
     /// # Example
     /// ```
-    /// use cronos_cron::{Schedule,TimeUnitSpec};
+    /// use clockwork_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * * * * 2015-2044";
@@ -57,7 +57,7 @@ pub trait TimeUnitSpec {
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
     /// ```
-    /// use cronos_cron::{Schedule,TimeUnitSpec};
+    /// use clockwork_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";
@@ -70,7 +70,7 @@ pub trait TimeUnitSpec {
     /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or in the case of weekdays '1-7')
     /// # Example
     /// ```
-    /// use cronos_cron::{Schedule,TimeUnitSpec};
+    /// use clockwork_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";

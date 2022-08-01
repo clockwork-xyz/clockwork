@@ -1,9 +1,9 @@
 use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
-    cronos_client::{
+    clockwork_client::{
         network::state::{Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
         pool::state::Pool,
-        Client as CronosClient,
+        Client as ClockworkClient,
     },
     dashmap::DashMap,
     log::info,
@@ -128,7 +128,7 @@ impl PoolObserver {
 
     pub async fn build_rotation_tx(
         self: Arc<Self>,
-        cronos_client: Arc<CronosClient>,
+        clockwork_client: Arc<ClockworkClient>,
         slot: u64,
     ) -> PluginResult<(u64, Transaction)> {
         // Acquire read locks
@@ -171,7 +171,11 @@ impl PoolObserver {
         let snapshot_pubkey = Snapshot::pubkey(r_snapshot.id);
         let snapshot_entries = (0..r_snapshot.clone().node_count)
             .map(|id| SnapshotEntry::pubkey(snapshot_pubkey, id))
-            .map(|entry_pubkey| cronos_client.get::<SnapshotEntry>(&entry_pubkey).unwrap())
+            .map(|entry_pubkey| {
+                clockwork_client
+                    .get::<SnapshotEntry>(&entry_pubkey)
+                    .unwrap()
+            })
             .collect::<Vec<SnapshotEntry>>();
 
         // Build the rotation ix
@@ -194,13 +198,13 @@ impl PoolObserver {
             Err(i) => i - 1,
             Ok(i) => i,
         } as u64;
-        let snapshot_pubkey = cronos_client::network::state::Snapshot::pubkey(r_snapshot.id);
+        let snapshot_pubkey = clockwork_client::network::state::Snapshot::pubkey(r_snapshot.id);
         let entry_pubkey =
-            cronos_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
+            clockwork_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
         let entry = snapshot_entries.get(entry_id as usize).unwrap();
-        let ix = cronos_client::network::instruction::rotator_turn(
+        let ix = clockwork_client::network::instruction::rotator_turn(
             entry_pubkey,
-            cronos_client.payer_pubkey(),
+            clockwork_client.payer_pubkey(),
             snapshot_pubkey,
             entry.worker,
         );
@@ -211,10 +215,10 @@ impl PoolObserver {
         drop(r_snapshot);
 
         // Build and sign tx
-        let mut tx = Transaction::new_with_payer(&[ix], Some(&cronos_client.payer_pubkey()));
+        let mut tx = Transaction::new_with_payer(&[ix], Some(&clockwork_client.payer_pubkey()));
         tx.sign(
-            &[cronos_client.payer()],
-            cronos_client.get_latest_blockhash().map_err(|_err| {
+            &[clockwork_client.payer()],
+            clockwork_client.get_latest_blockhash().map_err(|_err| {
                 GeyserPluginError::Custom("Failed to get latest blockhash".into())
             })?,
         );

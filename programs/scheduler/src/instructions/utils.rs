@@ -1,7 +1,7 @@
 use {
     crate::state::{Config, Queue},
     anchor_lang::prelude::*,
-    cronos_pool::state::Pool,
+    clockwork_pool::state::Pool,
 };
 
 pub fn is_spam<'info>(

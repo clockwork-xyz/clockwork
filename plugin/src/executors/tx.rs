@@ -1,6 +1,6 @@
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
-    cronos_client::Client as CronosClient,
+    clockwork_client::Client as ClockworkClient,
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -27,7 +27,7 @@ static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot int
  */
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub cronos_client: Arc<CronosClient>, // TODO CronosClient and TPUClient can be unified into a single interface
+    pub clockwork_client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
@@ -38,14 +38,14 @@ pub struct TxExecutor {
 impl TxExecutor {
     pub fn new(
         config: PluginConfig,
-        cronos_client: Arc<CronosClient>,
+        clockwork_client: Arc<ClockworkClient>,
         observers: Arc<Observers>,
         runtime: Arc<Runtime>,
         tpu_client: Arc<TpuClient>,
     ) -> Self {
         Self {
             config: config.clone(),
-            cronos_client,
+            clockwork_client,
             observers,
             runtime,
             tpu_client,
@@ -82,7 +82,7 @@ impl TxExecutor {
         self.observers
             .pool
             .clone()
-            .build_rotation_tx(self.cronos_client.clone(), slot)
+            .build_rotation_tx(self.clockwork_client.clone(), slot)
             .await
             .and_then(|(target_slot, tx)| {
                 self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot })
@@ -93,7 +93,7 @@ impl TxExecutor {
         self.observers
             .queue
             .clone()
-            .build_queue_txs(self.cronos_client.clone(), slot)
+            .build_queue_txs(self.clockwork_client.clone(), slot)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
@@ -201,7 +201,7 @@ impl TxExecutor {
                             .queue
                             .clone()
                             .build_queue_tx(
-                                this.cronos_client.clone(),
+                                this.clockwork_client.clone(),
                                 pool_position.clone(),
                                 queue_pubkey,
                                 slot,

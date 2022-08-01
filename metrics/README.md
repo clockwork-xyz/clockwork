@@ -1,3 +1,3 @@
-# Cronos Telemetry
+# Clockwork Telemetry
 
-Monitoring service for Cronos bot clusters.
+Monitoring service for Clockwork bot clusters.

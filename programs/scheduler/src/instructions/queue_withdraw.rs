@@ -1,7 +1,7 @@
 
 
 use {
-    crate::{errors::CronosError, state::*},
+    crate::{errors::ClockworkError, state::*},
     anchor_lang::prelude::*,
 };
 
@@ -33,7 +33,7 @@ pub fn handler(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
     let queue = &mut ctx.accounts.queue;
 
     // Validate amount can be withdrawn
-    require!(amount > queue.balance, CronosError::InsufficientQueueBalance);
+    require!(amount > queue.balance, ClockworkError::InsufficientQueueBalance);
 
     // Transfer balance into the queue
     queue.balance = queue.balance.checked_sub(amount).unwrap();

@@ -10,7 +10,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 
 #[program]
-pub mod cronos_pool {
+pub mod clockwork_pool {
     use super::*;
 
     pub fn rotate(ctx: Context<Rotate>) -> Result<()> {
