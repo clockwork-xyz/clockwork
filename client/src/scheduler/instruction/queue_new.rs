@@ -10,7 +10,7 @@ use anchor_lang::{
 pub fn queue_new(
     authority: Pubkey,
     balance: u64,
-    id: u128,
+    name: String,
     payer: Pubkey,
     queue: Pubkey,
     schedule: String,
@@ -25,7 +25,7 @@ pub fn queue_new(
         ],
         data: cronos_scheduler::instruction::QueueNew {
             balance,
-            id,
+            name,
             schedule,
         }
         .data(),

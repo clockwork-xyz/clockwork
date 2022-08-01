@@ -58,10 +58,10 @@ pub mod cronos_scheduler {
     pub fn queue_new(
         ctx: Context<QueueNew>,
         balance: u64,
-        id: u128,
+        name: String,
         schedule: String,
     ) -> Result<()> {
-        queue_new::handler(ctx, balance, id, schedule)
+        queue_new::handler(ctx, balance, name, schedule)
     }
 
     pub fn queue_resume(ctx: Context<QueueResume>, skip_forward: bool) -> Result<()> {

@@ -21,7 +21,7 @@ pub struct EntryClose<'info> {
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(mut, has_one = authority, constraint = queue.id == 1)]
+    #[account(mut, has_one = authority, constraint = queue.name.eq("cleanup"))]
     pub queue: Account<'info, Queue>,
 
     #[account(

@@ -1,5 +1,3 @@
-use cronos_scheduler::state::{SEED_QUEUE, SEED_TASK};
-
 use {
     crate::state::*,
     anchor_lang::{
@@ -7,6 +5,7 @@ use {
         solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL, system_program}
     },
     anchor_spl::token::Mint,
+    cronos_scheduler::state::{SEED_QUEUE, SEED_TASK},
     std::mem::size_of,
 };
 
@@ -28,7 +27,7 @@ pub struct Initialize<'info> {
         seeds = [
             SEED_QUEUE, 
             authority.key().as_ref(), 
-            (1 as u128).to_be_bytes().as_ref()
+            "cleanup".as_bytes()
         ], 
         seeds::program = cronos_scheduler::ID,
         bump, 
@@ -95,7 +94,7 @@ pub struct Initialize<'info> {
         seeds = [
             SEED_QUEUE, 
             authority.key().as_ref(), 
-            (0 as u128).to_be_bytes().as_ref()
+            "snapshot".as_bytes()
         ], 
         seeds::program = cronos_scheduler::ID,
         bump
@@ -155,8 +154,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
-        LAMPORTS_PER_SOL, 
-        0,
+        LAMPORTS_PER_SOL,
+        "snapshot".into(),
         "0 * * * * * *".into()
     )?;
 
@@ -214,8 +213,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
-        LAMPORTS_PER_SOL, 
-        1,
+        LAMPORTS_PER_SOL,
+        "cleanup".into(),
         "0 * * * * * *".into()
     )?;
 

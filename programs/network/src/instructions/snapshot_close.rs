@@ -9,7 +9,7 @@ pub struct SnapshotClose<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
 
-    #[account(mut, has_one = authority, constraint = queue.id == 1)]
+    #[account(mut, has_one = authority, constraint = queue.name.eq("cleanup"))]
     pub queue: Account<'info, Queue>,
 
     #[account(

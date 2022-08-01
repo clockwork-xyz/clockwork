@@ -13,9 +13,10 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let rotator_pubkey = cronos_network::state::Rotator::pubkey();
     let registry_pubkey = cronos_network::state::Registry::pubkey();
     let snapshot_pubkey = cronos_network::state::Snapshot::pubkey(0);
-    let snapshot_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, 0);
+    let snapshot_queue =
+        cronos_scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
     let snapshot_task = cronos_scheduler::state::Task::pubkey(snapshot_queue, 0);
-    let cleanup_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, 1);
+    let cleanup_queue = cronos_scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
     let cleanup_task = cronos_scheduler::state::Task::pubkey(cleanup_queue, 0);
 
     Instruction {

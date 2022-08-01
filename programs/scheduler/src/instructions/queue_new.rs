@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-#[instruction(balance: u64, id: u128, schedule: String)]
+#[instruction(balance: u64, name: String, schedule: String)]
 pub struct QueueNew<'info> {
     #[account()]
     pub authority: Signer<'info>,
@@ -18,11 +18,11 @@ pub struct QueueNew<'info> {
         seeds = [
             SEED_QUEUE, 
             authority.key().as_ref(),
-            id.to_be_bytes().as_ref(),
+            name.as_bytes(),
         ],
         bump,
         payer = payer,
-        space = 8 + size_of::<Queue>(),
+        space = 8 + size_of::<Queue>() + name.len(),
     )]
     pub queue: Account<'info, Queue>,
 
@@ -30,7 +30,7 @@ pub struct QueueNew<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueNew>, balance: u64, id: u128, schedule: String) -> Result<()> {
+pub fn handler(ctx: Context<QueueNew>, balance: u64, name: String, schedule: String) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let payer = &mut ctx.accounts.payer;
@@ -38,7 +38,7 @@ pub fn handler(ctx: Context<QueueNew>, balance: u64, id: u128, schedule: String)
     let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
-    queue.new(authority.key(), id, schedule)?;
+    queue.new(authority.key(), name, schedule)?;
 
     // Transfer balance into the queue
     queue.balance = balance;

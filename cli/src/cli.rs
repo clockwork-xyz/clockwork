@@ -54,7 +54,7 @@ pub enum CliCommand {
 
     // Queue commands
     QueueCreate {
-        id: u128,
+        name: String,
         schedule: String,
     },
     QueueGet {
@@ -275,12 +275,12 @@ pub fn app() -> Command<'static> {
                                 .help("Filepath to the instruction to invoke"),
                         )
                         .arg(
-                            Arg::new("id")
-                                .long("id")
-                                .short('i')
+                            Arg::new("name")
+                                .long("name")
+                                .short('n')
                                 .takes_value(true)
                                 .required(true)
-                                .help("The id to use when creating the queue"),
+                                .help("The name of the queue"),
                         )
                         .arg(
                             Arg::new("schedule")

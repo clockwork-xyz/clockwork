@@ -42,8 +42,13 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
 
     // Create queues for the parallel tasks
     for i in 0..num_tasks_parallel {
-        let ix_a = create_queue_ix(&authority, recurrence, &mut expected_process_ats, i.into());
-        let ix_b = create_task_ix(&authority, i.into(), 0);
+        let ix_a = create_queue_ix(
+            &authority,
+            recurrence,
+            &mut expected_process_ats,
+            i.to_string(),
+        );
+        let ix_b = create_task_ix(&authority, i.to_string(), 0);
         client
             .send_and_confirm(&[ix_a, ix_b], &[authority])
             .unwrap();
@@ -55,7 +60,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
             &authority,
             recurrence,
             &mut expected_process_ats,
-            num_tasks_parallel.into(),
+            num_tasks_parallel.to_string(),
         );
 
         let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
@@ -63,7 +68,7 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         for i in 0..num_tasks_serial {
             ixs.push(create_task_ix(
                 &authority,
-                num_tasks_parallel.into(),
+                num_tasks_parallel.to_string(),
                 i.into(),
             ));
         }
@@ -145,10 +150,10 @@ fn create_queue_ix(
     authority: &Keypair,
     recurrence: u32,
     expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
-    queue_id: u128,
+    queue_name: String,
 ) -> Instruction {
     // Generate ix for new queue account
-    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_id);
+    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name.clone());
     let now: DateTime<Utc> = Utc::now();
     let next_minute = now + Duration::minutes(1);
     let schedule = format!(
@@ -164,7 +169,7 @@ fn create_queue_ix(
     let create_queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority.pubkey(),
         LAMPORTS_PER_SOL,
-        0,
+        queue_name,
         authority.pubkey(),
         queue_pubkey,
         schedule.clone(),
@@ -203,8 +208,8 @@ fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
     .unwrap()
 }
 
-fn create_task_ix(authority: &Keypair, queue_id: u128, task_id: u128) -> Instruction {
-    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_id);
+fn create_task_ix(authority: &Keypair, queue_name: String, task_id: u128) -> Instruction {
+    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name);
     let task_pubkey = Task::pubkey(queue_pubkey, task_id);
     let memo_ix = build_memo_ix(&authority.pubkey());
     cronos_client::scheduler::instruction::task_new(

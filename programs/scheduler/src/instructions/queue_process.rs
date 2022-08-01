@@ -10,7 +10,7 @@ pub struct QueueProcess<'info> {
         seeds = [
             SEED_QUEUE, 
             queue.authority.as_ref(),
-            queue.id.to_be_bytes().as_ref(),
+            queue.name.as_bytes(),
         ],
         bump,
         constraint = queue.process_at.is_some() && queue.process_at <= Some(Clock::get().unwrap().unix_timestamp) @ CronosError::QueueNotDue,

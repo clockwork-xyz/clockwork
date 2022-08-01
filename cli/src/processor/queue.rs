@@ -4,14 +4,14 @@ use {
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };
 
-pub fn create(client: &Client, id: u128, schedule: String) -> Result<(), CliError> {
+pub fn create(client: &Client, name: String, schedule: String) -> Result<(), CliError> {
     // Build queue_create ix.
     let authority_pubkey = client.payer_pubkey();
-    let queue_pubkey = Queue::pubkey(authority_pubkey, id);
+    let queue_pubkey = Queue::pubkey(authority_pubkey, name.clone());
     let queue_ix = cronos_client::scheduler::instruction::queue_new(
         authority_pubkey,
         LAMPORTS_PER_SOL,
-        id,
+        name,
         authority_pubkey,
         queue_pubkey,
         schedule,

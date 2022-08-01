@@ -3,25 +3,25 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-health = "Fj92pCCwG3cRWMkhjNNWYEa6bhdQq6heN8fJQWgBLowb"
-http = "3umc2EzaJCxg2bSDqD1h1YukpNCeCuAviH1hFd9u9dAK"
-network = "DptK4heM1jTrJz71YEaBtgVCECraULiJ5MF5pKhEbGqm"
-pool = "5jV83KWSzpGi9TUHoFtF3QXNPuecgTwUF6LWLBWx52j7"
-scheduler = "ATiKRUAhsweeF86DSRLywuN5vTS6QKY5vQNfJMsKWQGi"
+health = "Ag6ZjQ1eFHAf1YYD3oaQnQ4KbrCAMqrSDBmY8o24KVTh"
+http = "EB3Fb197CbjZtdzXVPLKpDapwpWju7JFPtGoSr82BFVe"
+network = "BkKrMFDoZPyBxZ1W9S2XM8RdMK3Jjxttu33fXmVuybzd"
+pool = "J1oQ8GLQDJBXrRmRWZ59XV47U9bCyib9ZJ6256EGgXmy"
+scheduler = "8jb7Qt5izxLMGH1PNfGvtmqbzqDmue1zmfNrpwc2L8zL"
 
 [programs.testnet]
-health = "Fj92pCCwG3cRWMkhjNNWYEa6bhdQq6heN8fJQWgBLowb"
-http = "3umc2EzaJCxg2bSDqD1h1YukpNCeCuAviH1hFd9u9dAK"
-network = "DptK4heM1jTrJz71YEaBtgVCECraULiJ5MF5pKhEbGqm"
-pool = "5jV83KWSzpGi9TUHoFtF3QXNPuecgTwUF6LWLBWx52j7"
-scheduler = "ATiKRUAhsweeF86DSRLywuN5vTS6QKY5vQNfJMsKWQGi"
+health = "Ag6ZjQ1eFHAf1YYD3oaQnQ4KbrCAMqrSDBmY8o24KVTh"
+http = "EB3Fb197CbjZtdzXVPLKpDapwpWju7JFPtGoSr82BFVe"
+network = "BkKrMFDoZPyBxZ1W9S2XM8RdMK3Jjxttu33fXmVuybzd"
+pool = "J1oQ8GLQDJBXrRmRWZ59XV47U9bCyib9ZJ6256EGgXmy"
+scheduler = "8jb7Qt5izxLMGH1PNfGvtmqbzqDmue1zmfNrpwc2L8zL"
 
 [programs.mainnet]
-health = "Fj92pCCwG3cRWMkhjNNWYEa6bhdQq6heN8fJQWgBLowb"
-http = "3umc2EzaJCxg2bSDqD1h1YukpNCeCuAviH1hFd9u9dAK"
-network = "DptK4heM1jTrJz71YEaBtgVCECraULiJ5MF5pKhEbGqm"
-pool = "5jV83KWSzpGi9TUHoFtF3QXNPuecgTwUF6LWLBWx52j7"
-scheduler = "ATiKRUAhsweeF86DSRLywuN5vTS6QKY5vQNfJMsKWQGi"
+health = "Ag6ZjQ1eFHAf1YYD3oaQnQ4KbrCAMqrSDBmY8o24KVTh"
+http = "EB3Fb197CbjZtdzXVPLKpDapwpWju7JFPtGoSr82BFVe"
+network = "BkKrMFDoZPyBxZ1W9S2XM8RdMK3Jjxttu33fXmVuybzd"
+pool = "J1oQ8GLQDJBXrRmRWZ59XV47U9bCyib9ZJ6256EGgXmy"
+scheduler = "8jb7Qt5izxLMGH1PNfGvtmqbzqDmue1zmfNrpwc2L8zL"
 
 [registry]
 url = "https://anchor.projectserum.com"

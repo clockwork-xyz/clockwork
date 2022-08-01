@@ -43,13 +43,15 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
 
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
-    let snapshot_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, 0);
+    let snapshot_queue_pubkey =
+        cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
     let snapshot_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
         snapshot_queue_pubkey,
         (registry_data.node_count + 1).into(),
     );
 
-    let cleanup_queue_pubkey = cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, 1);
+    let cleanup_queue_pubkey =
+        cronos_client::scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
     let cleanup_task_pubkey = cronos_client::scheduler::state::Task::pubkey(
         cleanup_queue_pubkey,
         (registry_data.node_count + 1).into(),

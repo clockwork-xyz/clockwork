@@ -16,7 +16,7 @@ pub struct QueueDeposit<'info> {
         seeds = [
             SEED_QUEUE, 
             queue.authority.key().as_ref(),
-            queue.id.to_be_bytes().as_ref(),
+            queue.name.as_bytes(),
         ],
         bump,
     )]

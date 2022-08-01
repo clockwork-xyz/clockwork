@@ -110,7 +110,7 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("create", matches)) => Ok(CliCommand::QueueCreate {
-            id: parse_u128("id", matches)?,
+            name: parse_string("name", matches)?,
             schedule: parse_string("schedule", matches)?,
         }),
         Some(("get", matches)) => Ok(CliCommand::QueueGet {

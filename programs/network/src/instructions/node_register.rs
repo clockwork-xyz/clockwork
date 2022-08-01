@@ -25,7 +25,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         has_one = authority, 
-        constraint = cleanup_queue.id == 1,
+        constraint = cleanup_queue.name.eq("cleanup"),
         constraint = cleanup_queue.status == QueueStatus::Pending
     )]
     pub cleanup_queue: Box<Account<'info, Queue>>,
@@ -98,7 +98,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         has_one = authority, 
-        constraint = snapshot_queue.id == 0,
+        constraint = snapshot_queue.name.eq("snapshot"),
         constraint = snapshot_queue.status == QueueStatus::Pending
     )]
     pub snapshot_queue: Box<Account<'info, Queue>>,

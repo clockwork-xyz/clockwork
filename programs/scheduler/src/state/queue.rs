@@ -36,18 +36,17 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 pub struct Queue {
     pub authority: Pubkey,
     pub balance: u64,
-    pub id: u128,
+    pub name: String,
     pub process_at: Option<i64>,
     pub schedule: String,
     pub status: QueueStatus,
     pub task_count: u128,
-    // pub trigger: Trigger,
 }
 
 impl Queue {
-    pub fn pubkey(authority: Pubkey, id: u128) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, name: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_QUEUE, authority.as_ref(), id.to_be_bytes().as_ref()],
+            &[SEED_QUEUE, authority.as_ref(), name.as_bytes()],
             &crate::ID,
         )
         .0
@@ -68,7 +67,7 @@ impl TryFrom<Vec<u8>> for Queue {
 pub trait QueueAccount {
     fn process(&mut self) -> Result<()>;
 
-    fn new(&mut self, authority: Pubkey, id: u128, schedule: String) -> Result<()>;
+    fn new(&mut self, authority: Pubkey, name: String, schedule: String) -> Result<()>;
 
     fn next_process_at(&self, ts: i64) -> Option<i64>;
 
@@ -101,11 +100,11 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn new(&mut self, authority: Pubkey, id: u128, schedule: String) -> Result<()> {
+    fn new(&mut self, authority: Pubkey, name: String, schedule: String) -> Result<()> {
         // Initialize queue account
         self.authority = authority.key();
         self.balance = 0;
-        self.id = id;
+        self.name = name;
         self.schedule = schedule;
         self.status = QueueStatus::Pending;
         self.task_count = 0;
@@ -153,7 +152,7 @@ impl QueueAccount for Account<'_, Queue> {
             &[&[
                 SEED_QUEUE,
                 self.authority.as_ref(),
-                self.id.to_be_bytes().as_ref(),
+                self.name.as_bytes(),
                 &[bump],
             ]],
         )
