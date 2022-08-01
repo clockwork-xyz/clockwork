@@ -1,7 +1,7 @@
 use clockwork_scheduler::state::Queue;
 
 use {
-    crate::state::*, anchor_lang::prelude::*, clockwork_scheduler::responses::TaskResponse,
+    crate::state::*, anchor_lang::prelude::*, clockwork_scheduler::response::TaskResponse,
     std::mem::size_of,
 };
 

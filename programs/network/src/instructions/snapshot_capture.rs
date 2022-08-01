@@ -1,10 +1,8 @@
-use clockwork_scheduler::state::Queue;
-
 use {
     crate::{errors::ClockworkError, state::*},
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::TokenAccount,
-    clockwork_scheduler::responses::TaskResponse,
+    clockwork_scheduler::{response::TaskResponse, state::Queue},
     std::mem::size_of,
 };
 

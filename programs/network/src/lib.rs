@@ -7,7 +7,7 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use clockwork_scheduler::responses::TaskResponse;
+use clockwork_scheduler::response::TaskResponse;
 use instructions::*;
 
 #[program]

@@ -1,6 +1,6 @@
 use {
     super::InstructionData,
-    crate::{errors::ClockworkError, responses::TaskResponse},
+    crate::{errors::ClockworkError, response::TaskResponse},
     anchor_lang::{
         prelude::*,
         solana_program::{
