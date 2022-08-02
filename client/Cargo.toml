@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-client"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2021"
 description = "Clockwork client"
 license = "AGPL-3.0-or-later"
@@ -18,11 +18,11 @@ name = "clockwork_client"
 anchor-lang = "0.25.0"
 anchor-spl = { features = ["mint", "token"], version = "0.25.0" }
 bincode = "1.3.3"
-clockwork-health = { path = "../programs/health", features = ["no-entrypoint"], version = "0.2.0" }
-clockwork-http = { path = "../programs/http", features = ["no-entrypoint"], version = "0.2.0" }
-clockwork-network = { path = "../programs/network", features = ["no-entrypoint"], version = "0.2.0" }
-clockwork-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "0.2.0" }
-clockwork-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "0.2.0" }
+clockwork-health = { path = "../programs/health", features = ["no-entrypoint"], version = "1.0.0" }
+clockwork-http = { path = "../programs/http", features = ["no-entrypoint"], version = "1.0.0" }
+clockwork-network = { path = "../programs/network", features = ["no-entrypoint"], version = "1.0.0" }
+clockwork-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "1.0.0" }
+clockwork-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "1.0.0" }
 solana-client = "1.10.29"
 solana-sdk = "1.10.29"
 thiserror = "1.0.31"

@@ -25,6 +25,7 @@ sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", featur
 sed -i '' -e 's/^clockwork-scheduler =.*/clockwork-scheduler = { path = "..\/scheduler", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
 sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
 sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
+sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/http/Cargo.toml
 
 # Bump clockwork-client
 sed -i '' -e 's/^clockwork-health =.*/clockwork-health = { path = "..\/programs\/health", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml

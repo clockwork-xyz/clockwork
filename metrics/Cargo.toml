@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-metrics"
-version = "0.2.0"
+version = "1.0.0"
 description = "Performance monitoring for Clockwork clusters"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [dependencies]
 chrono = "0.4.19"
-clockwork-client = { path = "../client", version = "0.2.0" }
+clockwork-client = { path = "../client", version = "1.0.0" }
 dotenv = "0.15.0"
 elasticsearch = "7.14.0-alpha.1"
 serde_json = "~1"
