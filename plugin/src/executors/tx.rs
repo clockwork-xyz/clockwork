@@ -85,7 +85,13 @@ impl TxExecutor {
             .build_rotation_tx(self.clockwork_client.clone(), slot)
             .await
             .and_then(|(target_slot, tx)| {
-                self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot })
+                match self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot }) {
+                    Ok(()) => Ok(()),
+                    Err(err) => {
+                        info!("Failed to execute tx: {}", err);
+                        Ok(())
+                    }
+                }
             })
     }
 
@@ -240,6 +246,7 @@ impl TxExecutor {
             return Ok(());
         }
 
+        // TODO Re-insert simulation
         self.clone()
             // .submit_tx(tx)
             .simulate_tx(tx)
