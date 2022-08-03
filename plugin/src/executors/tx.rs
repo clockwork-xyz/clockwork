@@ -246,9 +246,7 @@ impl TxExecutor {
             return Ok(());
         }
 
-        // TODO Re-insert simulation
         self.clone()
-            // .submit_tx(tx)
             .simulate_tx(tx)
             .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
