@@ -88,7 +88,7 @@ impl TxExecutor {
                 match self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot }) {
                     Ok(()) => Ok(()),
                     Err(err) => {
-                        info!("Failed to execute tx: {}", err);
+                        info!("Failed to rotate pools: {}", err);
                         Ok(())
                     }
                 }
@@ -113,7 +113,7 @@ impl TxExecutor {
                         },
                     )
                     .map_err(|err| {
-                        info!("Error: {}", err);
+                        info!("Failed to process actionable queue: {}", err);
                         err
                     })
                     .ok();
@@ -286,12 +286,15 @@ impl TxExecutor {
         tx_type: TxType,
     ) -> PluginResult<()> {
         let sig = tx.signatures[0];
-        info!("slot: {} sig: {}", slot, sig);
         let attempt = TxAttempt {
             attempt_count: prior_attempt.map_or(0, |prior| prior.attempt_count + 1),
             signature: sig,
             tx_type,
         };
+        info!(
+            "slot: {} sig: {} type: {:#?} attempt: {}",
+            slot, sig, attempt.tx_type, attempt.attempt_count
+        );
         self.tx_dedupe.insert(tx_type);
         self.tx_history
             .entry(slot)
@@ -354,4 +357,13 @@ impl Eq for TxAttempt {}
 pub enum TxType {
     Queue { queue_pubkey: Pubkey },
     Rotation { target_slot: u64 },
+}
+
+impl Debug for TxType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            TxType::Queue { queue_pubkey } => write!(f, "queue {}", queue_pubkey),
+            TxType::Rotation { target_slot } => write!(f, "rotation {}", target_slot),
+        }
+    }
 }
