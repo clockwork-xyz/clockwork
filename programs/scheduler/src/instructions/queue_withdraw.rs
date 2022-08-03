@@ -1,7 +1,5 @@
-
-
 use {
-    crate::{errors::ClockworkError, state::*},
+    crate::state::*,
     anchor_lang::prelude::*,
 };
 
@@ -32,11 +30,7 @@ pub fn handler(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
     let pay_to = &mut ctx.accounts.pay_to;
     let queue = &mut ctx.accounts.queue;
 
-    // Validate amount can be withdrawn
-    require!(amount > queue.balance, ClockworkError::InsufficientQueueBalance);
-
     // Transfer balance into the queue
-    queue.balance = queue.balance.checked_sub(amount).unwrap();
     **queue.to_account_info().try_borrow_mut_lamports()? = queue
         .to_account_info()
         .lamports()

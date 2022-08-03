@@ -36,7 +36,6 @@ pub fn handler(ctx: Context<QueueDeposit>, amount: u64) -> Result<()> {
     let system_program = &ctx.accounts.system_program;
 
     // Transfer balance into the queue
-    queue.balance = queue.balance.checked_add(amount).unwrap();
     transfer(
         CpiContext::new(
             system_program.to_account_info(),
