@@ -9,8 +9,8 @@ pub struct SnapshotClose<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
 
-    #[account(mut, has_one = authority, constraint = queue.name.eq("cleanup"))]
-    pub queue: Account<'info, Queue>,
+    #[account(signer, has_one = authority, constraint = cleanup_queue.name.eq("cleanup"))]
+    pub cleanup_queue: Account<'info, Queue>,
 
     #[account(
         mut,
@@ -21,11 +21,14 @@ pub struct SnapshotClose<'info> {
         bump,
     )]
     pub snapshot: Account<'info, Snapshot>,
+
+    #[account(mut, has_one = authority, constraint = snapshot_queue.name.eq("snapshot"))]
+    pub snapshot_queue: Account<'info, Queue>,
 }
 
 pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     // Get accounts
-    let queue = &mut ctx.accounts.queue;
+    let snapshot_queue = &mut ctx.accounts.snapshot_queue;
     let snapshot = &mut ctx.accounts.snapshot;
 
     msg!("Closing snapshot {} {:#?}", snapshot.id, snapshot.status);
@@ -41,7 +44,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     if snapshot.node_count == 0 {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
-        **queue.to_account_info().lamports.borrow_mut() = queue
+        **snapshot_queue.to_account_info().lamports.borrow_mut() = snapshot_queue
             .to_account_info()
             .lamports()
             .checked_add(snapshot_lamports)
@@ -52,7 +55,6 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
     }
 
     // Use dynamic accounts to run the next invocation with the next snapshot
-
     let next_snapshot_pubkey = Snapshot::pubkey(snapshot_id.checked_add(1).unwrap());
     Ok(TaskResponse {
         dynamic_accounts: Some(

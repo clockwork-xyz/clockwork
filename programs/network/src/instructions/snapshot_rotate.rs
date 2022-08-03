@@ -30,7 +30,7 @@ pub struct SnapshotRotate<'info> {
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
-    #[account(constraint = queue.authority == authority.key())]
+    #[account(signer, has_one = authority)]
     pub queue: Account<'info, Queue>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]

@@ -207,9 +207,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>) -> R
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new(entry.key(), false),
             AccountMeta::new(cleanup_queue.key(), true),
+            AccountMeta::new(entry.key(), false),
             AccountMeta::new(snapshot.key(), false),
+            AccountMeta::new(snapshot_queue.key(), false),
         ],
         data: clockwork_scheduler::anchor::sighash("entry_close").into(),
     };

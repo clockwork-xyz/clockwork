@@ -16,7 +16,7 @@ pub struct SnapshotStart<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(constraint = queue.authority == authority.key())]
+    #[account(signer, has_one = authority)]
     pub queue: Account<'info, Queue>,
 
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
