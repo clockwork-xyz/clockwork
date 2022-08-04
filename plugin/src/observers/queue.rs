@@ -95,7 +95,7 @@ impl QueueObserver {
         self.spawn(|this| async move {
             info!("Caching queue {:#?}", queue_pubkey);
 
-            // this.actionable_queues.remove(&queue_pubkey);
+            this.actionable_queues.remove(&queue_pubkey);
 
             match queue.process_at {
                 Some(process_at) => {
@@ -144,7 +144,7 @@ impl QueueObserver {
             .collect::<Vec<(Pubkey, Transaction)>>();
 
         // Clear all the actionable queues from the set.
-        self.actionable_queues.clear();
+        // self.actionable_queues.clear();
 
         txs
     }
