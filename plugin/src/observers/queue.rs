@@ -143,9 +143,6 @@ impl QueueObserver {
             })
             .collect::<Vec<(Pubkey, Transaction)>>();
 
-        // Clear all the actionable queues from the set.
-        // self.actionable_queues.clear();
-
         txs
     }
 
