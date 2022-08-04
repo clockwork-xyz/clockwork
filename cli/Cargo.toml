@@ -17,9 +17,9 @@ clap = { version = "3.1.2", features = ["derive"] }
 clockwork-client = { path = "../client", version = "1.0.1" }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
-solana-clap-utils = "1.10.29"
-solana-cli-config = "1.10.29"
-solana-sdk = "1.10.29"
+solana-clap-utils = "1.10.34"
+solana-cli-config = "1.10.34"
+solana-sdk = "1.10.34"
 spl-memo = "3.0.1"
 thiserror = "1.0.30"
 version = "3.0.0"

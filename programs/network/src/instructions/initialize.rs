@@ -225,6 +225,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new_readonly(authority.key(), false),
             AccountMeta::new(cleanup_queue.key(), true),
             AccountMeta::new(snapshot.key(), false),
+            AccountMeta::new(snapshot_queue.key(), false),
         ],
         data: clockwork_scheduler::anchor::sighash("snapshot_close").into(),
     };

@@ -9,6 +9,9 @@ pub struct EntryClose<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
 
+    #[account(signer, has_one = authority, constraint = cleanup_queue.name.eq("cleanup"))]
+    pub cleanup_queue: Account<'info, Queue>,
+
     #[account(
         mut,
         seeds = [
@@ -21,9 +24,6 @@ pub struct EntryClose<'info> {
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(mut, has_one = authority, constraint = queue.name.eq("cleanup"))]
-    pub queue: Account<'info, Queue>,
-
     #[account(
         mut,
         seeds = [
@@ -33,13 +33,16 @@ pub struct EntryClose<'info> {
         bump,
     )]
     pub snapshot: Account<'info, Snapshot>,
+
+    #[account(mut, has_one = authority, constraint = snapshot_queue.name.eq("snapshot"))]
+    pub snapshot_queue: Account<'info, Queue>,
 }
 
 pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
     // Get accounts
     let entry = &mut ctx.accounts.entry;
-    let queue = &mut ctx.accounts.queue;
     let snapshot = &mut ctx.accounts.snapshot;
+    let snapshot_queue = &mut ctx.accounts.snapshot_queue;
 
     msg!(
         "Closing entry {} of snapshot {} in status {:#?}",
@@ -58,7 +61,7 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
     let entry_pubkey = entry.key().clone();
     let entry_lamports = entry.to_account_info().lamports();
     **entry.to_account_info().lamports.borrow_mut() = 0;
-    **queue.to_account_info().lamports.borrow_mut() = queue
+    **snapshot_queue.to_account_info().lamports.borrow_mut() = snapshot_queue
         .to_account_info()
         .lamports()
         .checked_add(entry_lamports)
@@ -71,7 +74,7 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
     if entry_id == snapshot_node_count.checked_sub(1).unwrap() {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
-        **queue.to_account_info().lamports.borrow_mut() = queue
+        **snapshot_queue.to_account_info().lamports.borrow_mut() = snapshot_queue
             .to_account_info()
             .lamports()
             .checked_add(snapshot_lamports)

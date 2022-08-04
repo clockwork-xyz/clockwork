@@ -41,7 +41,6 @@ pub fn handler(ctx: Context<QueueNew>, balance: u64, name: String, schedule: Str
     queue.new(authority.key(), name, schedule)?;
 
     // Transfer balance into the queue
-    queue.balance = balance;
     transfer(
         CpiContext::new(
             system_program.to_account_info(),

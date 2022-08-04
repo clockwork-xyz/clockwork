@@ -85,7 +85,13 @@ impl TxExecutor {
             .build_rotation_tx(self.clockwork_client.clone(), slot)
             .await
             .and_then(|(target_slot, tx)| {
-                self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot })
+                match self.execute_tx(prior_attempt, slot, &tx, TxType::Rotation { target_slot }) {
+                    Ok(()) => Ok(()),
+                    Err(err) => {
+                        info!("Failed to rotate pools: {}", err);
+                        Ok(())
+                    }
+                }
             })
     }
 
@@ -107,7 +113,7 @@ impl TxExecutor {
                         },
                     )
                     .map_err(|err| {
-                        info!("Error: {}", err);
+                        info!("Failed to process actionable queue: {}", err);
                         err
                     })
                     .ok();
@@ -184,6 +190,8 @@ impl TxExecutor {
         retry_attempts: DashSet<TxAttempt>,
         slot: u64,
     ) -> PluginResult<()> {
+        info!("Retry attempts: {:#?}", retry_attempts.clone());
+
         self.spawn(|this| async move {
             // Get this node's current position in the scheduler pool
             let r_pool_positions = this.observers.pool.pool_positions.read().await;
@@ -241,7 +249,6 @@ impl TxExecutor {
         }
 
         self.clone()
-            // .submit_tx(tx)
             .simulate_tx(tx)
             .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
@@ -279,12 +286,15 @@ impl TxExecutor {
         tx_type: TxType,
     ) -> PluginResult<()> {
         let sig = tx.signatures[0];
-        info!("slot: {} sig: {}", slot, sig);
         let attempt = TxAttempt {
             attempt_count: prior_attempt.map_or(0, |prior| prior.attempt_count + 1),
             signature: sig,
             tx_type,
         };
+        info!(
+            "slot: {} sig: {} type: {:#?} attempt: {}",
+            slot, sig, attempt.tx_type, attempt.attempt_count
+        );
         self.tx_dedupe.insert(tx_type);
         self.tx_history
             .entry(slot)
@@ -337,6 +347,16 @@ impl PartialEq for TxAttempt {
     }
 }
 
+impl Debug for TxAttempt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "attempt_count {}, tx_type: {:#?}",
+            self.attempt_count, self.tx_type
+        )
+    }
+}
+
 impl Eq for TxAttempt {}
 
 /**
@@ -347,4 +367,13 @@ impl Eq for TxAttempt {}
 pub enum TxType {
     Queue { queue_pubkey: Pubkey },
     Rotation { target_slot: u64 },
+}
+
+impl Debug for TxType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            TxType::Queue { queue_pubkey } => write!(f, "queue {}", queue_pubkey),
+            TxType::Rotation { target_slot } => write!(f, "rotation {}", target_slot),
+        }
+    }
 }

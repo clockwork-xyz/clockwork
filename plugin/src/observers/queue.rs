@@ -94,7 +94,9 @@ impl QueueObserver {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!("Caching queue {:#?}", queue_pubkey);
+
             this.actionable_queues.remove(&queue_pubkey);
+
             match queue.process_at {
                 Some(process_at) => {
                     this.pending_queues
@@ -125,7 +127,8 @@ impl QueueObserver {
         drop(r_pool_positions);
 
         // Build the set of txs from the actionable queues
-        self.actionable_queues
+        let txs = self
+            .actionable_queues
             .iter()
             .filter_map(|queue_pubkey| {
                 match self.clone().build_queue_tx(
@@ -138,7 +141,9 @@ impl QueueObserver {
                     Ok(tx) => Some((queue_pubkey.clone(), tx)),
                 }
             })
-            .collect::<Vec<(Pubkey, Transaction)>>()
+            .collect::<Vec<(Pubkey, Transaction)>>();
+
+        txs
     }
 
     pub fn build_queue_tx(
