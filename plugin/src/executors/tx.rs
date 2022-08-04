@@ -190,6 +190,8 @@ impl TxExecutor {
         retry_attempts: DashSet<TxAttempt>,
         slot: u64,
     ) -> PluginResult<()> {
+        info!("Retry attempts: {:#?}", retry_attempts.clone());
+
         self.spawn(|this| async move {
             // Get this node's current position in the scheduler pool
             let r_pool_positions = this.observers.pool.pool_positions.read().await;
@@ -342,6 +344,16 @@ impl Hash for TxAttempt {
 impl PartialEq for TxAttempt {
     fn eq(&self, other: &Self) -> bool {
         self.signature == other.signature
+    }
+}
+
+impl Debug for TxAttempt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "attempt_count {}, tx_type: {:#?}",
+            self.attempt_count, self.tx_type
+        )
     }
 }
 
