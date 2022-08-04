@@ -24,6 +24,6 @@ clockwork-http = { path = "../programs/http", features = ["no-entrypoint"], vers
 clockwork-network = { path = "../programs/network", features = ["no-entrypoint"], version = "1.0.1" }
 clockwork-pool = { path = "../programs/pool", features = ["no-entrypoint"], version = "1.0.1" }
 clockwork-scheduler = { path = "../programs/scheduler", features = ["no-entrypoint"], version = "1.0.1" }
-solana-client = "1.10.29"
-solana-sdk = "1.10.29"
+solana-client = "1.10.34"
+solana-sdk = "1.10.34"
 thiserror = "1.0.31"
