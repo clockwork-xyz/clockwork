@@ -16,9 +16,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
             Some(("api", matches)) => parse_api_command(matches),
-            Some(("clock", _)) => Ok(CliCommand::Clock {}),
             Some(("config", matches)) => parse_config_command(matches),
-            Some(("health", _)) => Ok(CliCommand::Health {}),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("node", matches)) => parse_node_command(matches),

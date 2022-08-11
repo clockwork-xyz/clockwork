@@ -1,7 +1,5 @@
 mod api;
-mod clock;
 mod config;
-mod health;
 mod http;
 mod initialize;
 mod node;
