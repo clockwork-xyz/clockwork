@@ -101,6 +101,16 @@ done
 # Copy plugin
 cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
 
+# Anchor build
+anchor build
+
+# Copy program binaries into lib folder
+cp -fv "target/deploy/clockwork_health.so" "$installDir"/lib
+cp -fv "target/deploy/clockwork_http.so" "$installDir"/lib
+cp -fv "target/deploy/clockwork_network.so" "$installDir"/lib
+cp -fv "target/deploy/clockwork_pool.so" "$installDir"/lib
+cp -fv "target/deploy/clockwork_scheduler.so" "$installDir"/lib
+
 # Success message
 echo "Done after $SECONDS seconds"
 echo 
