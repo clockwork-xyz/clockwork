@@ -1,0 +1,6 @@
+{
+  "libpath": "/Users/garfield/Developer/clockwork-xyz/clockwork/lib/libclockwork_plugin.dylib",
+  "keypath": "/Users/garfield/Developer/clockwork-xyz/clockwork/lib/clockwork-worker-keypair.json",
+  "slot_timeout_threshold": 150,
+  "worker_threads": 10
+}
