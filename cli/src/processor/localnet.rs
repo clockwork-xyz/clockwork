@@ -18,22 +18,26 @@ pub fn start(client: &Client) -> Result<(), CliError> {
 }
 
 fn start_test_validator(client: &Client) -> Result<Child> {
-    // let health_program_path = format!("{}{}-{}", build_dir, version, "libclockwork_health.so");
-    // let http_program_path = format!("{}{}-{}", build_dir, version, "libclockwork_http.so");
-    // let network_program_path = format!("{}{}-{}", build_dir, version, "libclockwork_network.so");
-    // let pool_program_path = format!("{}{}-{}", build_dir, version, "libclockwork_pool.so");
-    // let scheduler_program_path =
-    //     format!("{}{}-{}", build_dir, version, "libclockwork_scheduler.so");
+    // Get Clockwork home path
+    let clockwork_config_path = dirs_next::home_dir()
+        .map(|mut path| {
+            path.extend(&[".config", "solana", "clockwork", "config.yml"]);
+            path.to_str().unwrap().to_string()
+        })
+        .unwrap();
+    let f = std::fs::File::open(clockwork_config_path)?;
+    let clockwork_config: serde_yaml::Value = serde_yaml::from_reader(f)?;
+    let home_dir = clockwork_config["home"].as_str().unwrap();
 
     // TODO Build a custom plugin config
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
-        // .add_bpf_program(clockwork_client::health::ID, health_program_path)
-        // .add_bpf_program(clockwork_client::http::ID, http_program_path)
-        // .add_bpf_program(clockwork_client::network::ID, network_program_path)
-        // .add_bpf_program(clockwork_client::pool::ID, pool_program_path)
-        // .add_bpf_program(clockwork_client::scheduler::ID, scheduler_program_path)
-        // .add_geyser_plugin()
+        .bpf_program(home_dir, clockwork_client::health::ID, "health")
+        .bpf_program(home_dir, clockwork_client::http::ID, "http")
+        .bpf_program(home_dir, clockwork_client::network::ID, "network")
+        .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
+        .bpf_program(home_dir, clockwork_client::scheduler::ID, "scheduler")
+        .geyser_plugin_config(home_dir)
         .spawn()
         .expect("Failed to start local test validator");
 
@@ -58,20 +62,35 @@ fn start_test_validator(client: &Client) -> Result<Child> {
     Ok(process)
 }
 
+fn lib_path(home_dir: &str, filename: &str) -> String {
+    format!("{}/lib/{}", home_dir, filename)
+}
+
 trait TestValidatorHelpers {
-    fn add_bpf_program(&mut self, program_id: Pubkey, program_path: String) -> &mut Command;
-    // fn add_geyser_plugin(&mut self) -> &mut Command;
+    fn bpf_program(
+        &mut self,
+        home_dir: &str,
+        program_id: Pubkey,
+        program_name: &str,
+    ) -> &mut Command;
+    fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command;
 }
 
 impl TestValidatorHelpers for Command {
-    fn add_bpf_program(&mut self, program_id: Pubkey, program_path: String) -> &mut Command {
+    fn bpf_program(
+        &mut self,
+        home_dir: &str,
+        program_id: Pubkey,
+        program_name: &str,
+    ) -> &mut Command {
+        let filename = format!("clockwork_{}.so", program_name);
         self.arg("--bpf-program")
             .arg(program_id.to_string())
-            .arg(program_path)
+            .arg(lib_path(home_dir, filename.as_str()))
     }
 
-    // fn add_geyser_plugin(&mut self) -> &mut Command {
-    //     self.arg("--geyser-plugin-config")
-    //         .arg(CLOCKWORK_GEYSER_PLUGIN_CONFIG_PATH)
-    // }
+    fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command {
+        self.arg("--geyser-plugin-config")
+            .arg(lib_path(home_dir, "geyser-plugin-config.json"))
+    }
 }
