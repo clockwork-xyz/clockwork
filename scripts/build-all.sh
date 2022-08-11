@@ -76,6 +76,7 @@ done
 (
   set -x
   cargo $maybeRustVersion build $maybeReleaseFlag "${binArgs[@]}" --lib
+  anchor build
 )
 
 # Create new Geyser plugin config 
@@ -88,21 +89,14 @@ echo "{
 }" > "$installDir"/lib/geyser-plugin-config.json
 
 # Create a worker keypair
+echo
 solana-keygen new -f -s --no-bip39-passphrase -o $installDir/lib/clockwork-worker-keypair.json
-
-# Set clockwork home
-CLOCKWORK_HOME=$installDir
+echo
 
 # Copy bins
 for bin in "${BINS}"; do
   cp -fv "target/$buildVariant/$bin" "$installDir"/bin
 done
-
-# Copy plugin
-cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
-
-# Anchor build
-anchor build
 
 # Copy program binaries into lib folder
 cp -fv "target/deploy/clockwork_health.so" "$installDir"/lib
@@ -110,6 +104,9 @@ cp -fv "target/deploy/clockwork_http.so" "$installDir"/lib
 cp -fv "target/deploy/clockwork_network.so" "$installDir"/lib
 cp -fv "target/deploy/clockwork_pool.so" "$installDir"/lib
 cp -fv "target/deploy/clockwork_scheduler.so" "$installDir"/lib
+
+# Copy plugin
+cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
 
 # Success message
 echo "Done after $SECONDS seconds"

@@ -4,6 +4,10 @@
 target
 **/*.rs.bk
 
+# Clockwork
+bin/
+lib/
+
 # Docker
 docker-target
 
