@@ -32,6 +32,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             route,
         } => super::http::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
+        CliCommand::Localnet {} => super::localnet::start(&client),
         CliCommand::NodeGet { worker } => super::node::get_by_worker(&client, worker),
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { amount, worker } => super::node::stake(&client, amount, worker),

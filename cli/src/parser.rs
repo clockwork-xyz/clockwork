@@ -19,6 +19,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("config", matches)) => parse_config_command(matches),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
+            Some(("localnet", _matches)) => Ok(CliCommand::Localnet {}),
             Some(("node", matches)) => parse_node_command(matches),
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),

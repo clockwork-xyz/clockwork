@@ -19,11 +19,6 @@ pub enum CliCommand {
         spam_penalty: Option<u64>,
     },
 
-    // Task commands
-    TaskGet {
-        address: Pubkey,
-    },
-
     // Http
     HttpRequestNew {
         api: Pubkey,
@@ -36,6 +31,9 @@ pub enum CliCommand {
     Initialize {
         mint: Pubkey,
     },
+
+    // Localnet commands
+    Localnet,
 
     // Node commands
     NodeGet {
@@ -68,6 +66,11 @@ pub enum CliCommand {
     // Snapshot
     SnapshotGet {
         entry_id: Option<u64>,
+    },
+
+    // Task commands
+    TaskGet {
+        address: Pubkey,
     },
 }
 
@@ -187,6 +190,10 @@ pub fn app() -> Command<'static> {
                         .required(true)
                         .help("Mint address of network token"),
                 ),
+        )
+        .subcommand(
+            Command::new("localnet")
+                .about("Launch a local Clockwork node for development and testing"),
         )
         .subcommand(
             Command::new("node")
