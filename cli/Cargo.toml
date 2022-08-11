@@ -13,6 +13,7 @@ keywords = ["solana"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.61"
 clap = { version = "3.1.2", features = ["derive"] }
 clockwork-client = { path = "../client", version = "1.0.1" }
 serde = { version = "1.0.136", features = ["derive"] }
