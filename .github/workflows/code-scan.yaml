@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: clockworkxyz/dev:v1.10.29
+    container: clockworkxyz/solana:v1.10.34
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
     needs: build
     name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
-    container: clockworkxyz/dev:v1.10.29
+    container: clockworkxyz/solana:v1.10.34
     strategy:
       fail-fast: false
       matrix:
