@@ -41,8 +41,8 @@ jobs:
       - name: Grant permissions to create-tarball.sh
         run: chmod +x ./scripts/ci/create-tarball.sh
 
-      - name: Grant permissions to cargo-install-all.sh
-        run: chmod +x ./scripts/ci/cargo-install-all.sh
+      - name: Grant permissions to build-all.sh
+        run: chmod +x ./scripts/build-all.sh
 
       - name: install libudev-dev
         run: sudo apt-get install libudev-dev
