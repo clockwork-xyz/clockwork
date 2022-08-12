@@ -37,17 +37,36 @@
 - Smart contracts are automatically scanned by [Sec3](https://www.sec3.dev/)'s auto-auditing software, but have not been reviewed by a paid auditing firm.
 - Use at your own risk.
 
-## Plugin
 
-To run the Clockwork plugin on your Solana validator, you can either `cargo build` from scratch or install the pre-built binary:
+## Getting started
+
+Download the source code:
+```sh
+git clone https://github.com/clockwork-xyz/clockwork
+cd clockwork
+```
+
+Build the repo:
+```sh
+./scripts/build-all .
+export PATH=$PWD/bin:$PATH
+```
+
+Start a local node for development:
+```sh
+clockwork localnet
+```
+
+## Deploying a worker
+
+To run the Clockwork plugin on your Solana validator, you can either build from scratch (shown above) or install the pre-built binary:
 ```sh
 curl -s https://api.github.com/repos/clockwork-xyz/clockwork/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
 tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
-
-Next, create a new keypair for signing Clockwork txs. The responsbilities of being a worker include processing of scheduled tasks and the rotating the worker pool. We recommend loading this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the programs invoked in a task. Automation fees (rewards) are implemented and will be enabled soon.
+Next, create a new keypair for signing Clockwork txs. Load this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the tasks your worker executes. Automation fees (rewards) are implemented and will soon be enabled.
 ```sh
 solana-keygen new -o clockwork-worker-keypair.json
 ```
