@@ -864,7 +864,9 @@ dependencies = [
  "solana-clap-utils",
  "solana-cli-config",
  "solana-sdk",
+ "spl-associated-token-account",
  "spl-memo",
+ "spl-token",
  "thiserror",
  "version",
 ]
