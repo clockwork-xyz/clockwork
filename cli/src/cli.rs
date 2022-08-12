@@ -19,11 +19,6 @@ pub enum CliCommand {
         spam_penalty: Option<u64>,
     },
 
-    // Task commands
-    TaskGet {
-        address: Pubkey,
-    },
-
     // Http
     HttpRequestNew {
         api: Pubkey,
@@ -36,6 +31,9 @@ pub enum CliCommand {
     Initialize {
         mint: Pubkey,
     },
+
+    // Localnet commands
+    Localnet,
 
     // Node commands
     NodeGet {
@@ -70,9 +68,10 @@ pub enum CliCommand {
         entry_id: Option<u64>,
     },
 
-    // Utility commands
-    Clock,
-    Health,
+    // Task commands
+    TaskGet {
+        address: Pubkey,
+    },
 }
 
 pub fn app() -> Command<'static> {
@@ -81,31 +80,30 @@ pub fn app() -> Command<'static> {
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
-        .subcommand(
-            Command::new("api")
-                .about("Manage APIs registered with the HTTP program")
-                .arg_required_else_help(true)
-                .subcommand(Command::new("new")
-                    .about("Register a new api")
-                    .arg(
-                        Arg::new("ack_authority")
-                            .long("ack_authority")
-                            .short('a')
-                            .takes_value(true)
-                            .required(true)
-                            .help("The authority which will acknowledge requests sent to this API"),
-                    )
-                    .arg(
-                        Arg::new("base_url")
-                            .long("base_url")
-                            .short('b')
-                            .takes_value(true)
-                            .required(true)
-                            .help("The base url of the API"),
-                    )
-                )
-        )
-        .subcommand(Command::new("clock").about("Display the current Solana clock time"))
+        // .subcommand(
+        //     Command::new("api")
+        //         .about("Manage APIs registered with the HTTP program")
+        //         .arg_required_else_help(true)
+        //         .subcommand(Command::new("new")
+        //             .about("Register a new api")
+        //             .arg(
+        //                 Arg::new("ack_authority")
+        //                     .long("ack_authority")
+        //                     .short('a')
+        //                     .takes_value(true)
+        //                     .required(true)
+        //                     .help("The authority which will acknowledge requests sent to this API"),
+        //             )
+        //             .arg(
+        //                 Arg::new("base_url")
+        //                     .long("base_url")
+        //                     .short('b')
+        //                     .takes_value(true)
+        //                     .required(true)
+        //                     .help("The base url of the API"),
+        //             )
+        //         )
+        // )
         .subcommand(
             Command::new("config")
                 .about("Manage the Clockwork configs")
@@ -140,53 +138,47 @@ pub fn app() -> Command<'static> {
                         )
                         .group(
                             ArgGroup::new("config_settings")
-                                .args(&[
-                                    "admin",
-                                    "worker_fee",
-                                    "grace_period",
-                                    "spam_penalty",
-                                ])
+                                .args(&["admin", "worker_fee", "grace_period", "spam_penalty"])
                                 .multiple(true),
                         ),
                 ),
         )
-        .subcommand(Command::new("health").about("Get the current system health"))
-        .subcommand(
-            Command::new("http")
-                .about("Trigger HTTP requests from Solana")
-                .arg(
-                    Arg::new("api")
-                        .long("api")
-                        .short('a')
-                        .takes_value(true)
-                        .required(true)
-                        .help("The address of the API to send this request to"),
-                )
-                .arg(
-                    Arg::new("id")
-                        .long("id")
-                        .short('i')
-                        .takes_value(true)
-                        .required(true)
-                        .help("A deduplication id for the request"),
-                )
-                .arg(
-                    Arg::new("method")
-                        .long("method")
-                        .short('m')
-                        .takes_value(true)
-                        .required(true)
-                        .help("The method to invoke the HTTP request with (GET, POST, PATCH)"),
-                )
-                .arg(
-                    Arg::new("route")
-                        .long("route")
-                        .short('r')
-                        .takes_value(true)
-                        .required(true)
-                        .help("The relative route to send the HTTP request to"),
-                ),
-        )
+        // .subcommand(
+        //     Command::new("http")
+        //         .about("Trigger HTTP requests from Solana")
+        //         .arg(
+        //             Arg::new("api")
+        //                 .long("api")
+        //                 .short('a')
+        //                 .takes_value(true)
+        //                 .required(true)
+        //                 .help("The address of the API to send this request to"),
+        //         )
+        //         .arg(
+        //             Arg::new("id")
+        //                 .long("id")
+        //                 .short('i')
+        //                 .takes_value(true)
+        //                 .required(true)
+        //                 .help("A deduplication id for the request"),
+        //         )
+        //         .arg(
+        //             Arg::new("method")
+        //                 .long("method")
+        //                 .short('m')
+        //                 .takes_value(true)
+        //                 .required(true)
+        //                 .help("The method to invoke the HTTP request with (GET, POST, PATCH)"),
+        //         )
+        //         .arg(
+        //             Arg::new("route")
+        //                 .long("route")
+        //                 .short('r')
+        //                 .takes_value(true)
+        //                 .required(true)
+        //                 .help("The relative route to send the HTTP request to"),
+        //         ),
+        // )
         .subcommand(
             Command::new("initialize")
                 .about("Initialize the Clockwork programs")
@@ -200,18 +192,8 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
-            Command::new("task")
-                .about("Manage an task")
-                .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("get").about("Get an task").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a task"),
-                    ),
-                ),
+            Command::new("localnet")
+                .about("Launch a local Clockwork node for development and testing"),
         )
         .subcommand(
             Command::new("node")
@@ -332,6 +314,20 @@ pub fn app() -> Command<'static> {
                                         .help("The id of an entry in the snapshot"),
                                 ),
                         ),
+                ),
+        )
+        .subcommand(
+            Command::new("task")
+                .about("Manage an task")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("get").about("Get an task").arg(
+                        Arg::new("address")
+                            .index(1)
+                            .takes_value(true)
+                            .required(true)
+                            .help("Public address of a task"),
+                    ),
                 ),
         )
 }

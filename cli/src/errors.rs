@@ -14,4 +14,8 @@ pub enum CliError {
     NotImplemented,
     #[error("Command not recognized: {0}")]
     CommandNotRecognized(String),
+    #[error("Transaction failed with error: {0}")]
+    FailedTransaction(String),
+    #[error("Failed to start localnet")]
+    FailedLocalnet,
 }

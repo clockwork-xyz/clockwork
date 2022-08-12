@@ -288,9 +288,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.59"
+version = "1.0.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91f1f46651137be86f3a2b9a8359f9ab421d04d941c62b5982e1ca21113adf9"
+checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
 
 [[package]]
 name = "arrayref"
@@ -854,14 +854,19 @@ dependencies = [
 name = "clockwork-cli"
 version = "1.0.1"
 dependencies = [
+ "anyhow",
  "clap 3.2.16",
  "clockwork-client",
+ "dirs-next",
  "serde",
  "serde_json",
+ "serde_yaml 0.9.4",
  "solana-clap-utils",
  "solana-cli-config",
  "solana-sdk",
+ "spl-associated-token-account",
  "spl-memo",
+ "spl-token",
  "thiserror",
  "version",
 ]
@@ -3573,6 +3578,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yaml"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79b7c9017c64a49806c6e8df8ef99b92446d09c92457f85f91835b01a8064ae0"
+dependencies = [
+ "indexmap",
+ "itoa",
+ "ryu",
+ "serde",
+ "unsafe-libyaml",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3779,7 +3797,7 @@ dependencies = [
  "lazy_static",
  "serde",
  "serde_derive",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "solana-clap-utils",
  "solana-sdk",
  "url 2.2.2",
@@ -5001,6 +5019,12 @@ dependencies = [
  "generic-array",
  "subtle",
 ]
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "931179334a56395bcf64ba5e0ff56781381c1a5832178280c7d7f91d1679aeb0"
 
 [[package]]
 name = "untrusted"

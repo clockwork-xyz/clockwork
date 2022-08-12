@@ -13,14 +13,19 @@ keywords = ["solana"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.61"
 clap = { version = "3.1.2", features = ["derive"] }
 clockwork-client = { path = "../client", version = "1.0.1" }
+dirs-next = "2.0.0"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
+serde_yaml = "0.9.4"
 solana-clap-utils = "1.10.34"
 solana-cli-config = "1.10.34"
 solana-sdk = "1.10.34"
+spl-associated-token-account = "~1.0.3"
 spl-memo = "3.0.1"
+spl-token = "~3.3.0"
 thiserror = "1.0.30"
 version = "3.0.0"
 

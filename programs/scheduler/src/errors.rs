@@ -2,13 +2,11 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ClockworkError {
-    #[msg("Worker addresses cannot be initialized accounts")]
-    WorkerDataNotEmpty,
-
     #[msg("An task's inner ix failed to execute")]
     InnerIxFailed,
-    #[msg("An inner instructure wants to mutate state owned by the scheduler")]
-    InnerIxReentrancy,
+
+    #[msg("The queue does not have enough lamports for this operation")]
+    InsufficientQueueBalance,
 
     #[msg("The queue is current executing another task")]
     InvalidTask,
@@ -30,8 +28,9 @@ pub enum ClockworkError {
     #[msg("You are not the authority of this queue")]
     NotQueueAuthority,
 
-    #[msg("The queue does not have enough lamports for this operation")]
-    InsufficientQueueBalance,
     #[msg("The queue is not due")]
     QueueNotDue,
+
+    #[msg("Worker addresses cannot be initialized accounts")]
+    WorkerDataNotEmpty,
 }

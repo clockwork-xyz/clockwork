@@ -75,7 +75,7 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
         worker.pubkey(),
     );
     client.send_and_confirm(&[ix], &[owner, &worker]).unwrap();
-    get(client, node_pubkey)
+    Ok(())
 }
 
 pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliError> {
@@ -100,5 +100,5 @@ pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliErro
     );
 
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, node_pubkey)
+    Ok(())
 }

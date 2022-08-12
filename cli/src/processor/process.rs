@@ -18,7 +18,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             ack_authority,
             base_url,
         } => super::api::api_new(&client, ack_authority, base_url),
-        CliCommand::Clock => super::clock::get(&client),
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSet {
             admin,
@@ -26,7 +25,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             grace_period,
             spam_penalty,
         } => super::config::set(&client, admin, worker_fee, grace_period, spam_penalty),
-        CliCommand::Health => super::health::get(&client),
         CliCommand::HttpRequestNew {
             api,
             id,
@@ -34,6 +32,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             route,
         } => super::http::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
+        CliCommand::Localnet {} => super::localnet::start(&client),
         CliCommand::NodeGet { worker } => super::node::get_by_worker(&client, worker),
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { amount, worker } => super::node::stake(&client, amount, worker),
