@@ -114,6 +114,11 @@ if command -v solana-keygen &> /dev/null; then
   echo
 fi
 
+# Create global Clockwork config file
+mkdir -p ~/.config/solana/clockwork
+touch ~/.config/solana/clockwork/config.yml
+echo "home: $installDir" > ~/.config/solana/clockwork/config.yml
+
 # Success message
 echo "Done after $SECONDS seconds"
 echo 
