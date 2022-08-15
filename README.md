@@ -46,6 +46,11 @@ git clone https://github.com/clockwork-xyz/clockwork
 cd clockwork
 ```
 
+The `main` branch is under active development and subject to bugs. To work with a stable version, checkout a release branch:
+```sh
+git checkout tags/v1.0.2
+```
+
 Build the repo:
 ```sh
 ./scripts/build-all .
@@ -56,6 +61,12 @@ Start a local node for development:
 ```sh
 clockwork localnet
 ```
+
+To stream program logs:
+```sh
+solana logs --url localhost
+```
+
 
 ## Deploying a worker
 
