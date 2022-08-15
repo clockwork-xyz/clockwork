@@ -13,6 +13,7 @@ env:
 
 jobs:
   release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +44,7 @@ jobs:
       - name: Grant permissions to build-all.sh
         run: chmod +x ./scripts/build-all.sh
 
-      - name: install libudev-dev
+      - name: Install libudev-dev
         run: sudo apt-get install libudev-dev
 
       - name: Build release tarball
