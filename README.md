@@ -53,7 +53,7 @@ git checkout tags/v1.0.2
 
 Build the repo:
 ```sh
-./scripts/build-all .
+./scripts/build-all.sh .
 export PATH=$PWD/bin:$PATH
 ```
 
