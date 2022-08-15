@@ -20,8 +20,8 @@ use {
 
 pub fn start(client: &Client) -> Result<(), CliError> {
     // Start the validator
-    let validator_process =
-        &mut start_test_validator(client).map_err(|_| CliError::FailedLocalnet)?;
+    let validator_process = &mut start_test_validator(client)
+        .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
 
     // Initialize Clockwork
     let mint_pubkey =

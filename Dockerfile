@@ -10,7 +10,7 @@
 # Note: When building Docker images on an M1 Mac, you should use the `--platform linux/amd64` flag.
 # 
 
-FROM ubuntu:18.04
+FROM projectserum/build
 
 # Set dependency versions.
 ENV SOLANA_VERSION=v1.10.34

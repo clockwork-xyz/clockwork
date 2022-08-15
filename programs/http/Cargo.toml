@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-http"
-version = "1.0.1"
+version = "1.0.2"
 description = "Clockwork http protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -23,4 +23,4 @@ default = []
 
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.25.0" }
-clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.1" }
+clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.2" }

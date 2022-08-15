@@ -852,7 +852,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "clap 3.2.16",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -891,7 +891,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -901,14 +901,14 @@ dependencies = [
 
 [[package]]
 name = "clockwork-health"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "clockwork-http"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
  "clockwork-pool",
@@ -916,7 +916,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-metrics"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "chrono",
  "clockwork-client",
@@ -929,7 +929,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -939,14 +939,14 @@ dependencies = [
 
 [[package]]
 name = "clockwork-pool"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "clockwork-scheduler"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -956,7 +956,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-stress"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "base64 0.13.0",
  "chrono",
@@ -975,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork_plugin"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "bincode",
  "bs58 0.4.0",

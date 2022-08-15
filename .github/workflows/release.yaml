@@ -33,7 +33,6 @@ jobs:
         run: |
           echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
           echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
-
           SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
           SOLANA_VERSION="v${SOLANA_VERSION#=}"
           echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"

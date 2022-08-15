@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$0")/../.."
+# cd "$(dirname "$0")/../.."
 
 case "$CI_OS_NAME" in
 osx)
@@ -25,15 +25,18 @@ TARBALL_BASENAME="${TARBALL_BASENAME:="$RELEASE_BASENAME"}"
 
 echo --- Creating release tarball
 (
+  var=$(pwd)
+  echo "The current working directory $var."
+
   set -x
   rm -rf "${RELEASE_BASENAME:?}"/
   mkdir "${RELEASE_BASENAME}"/
 
-  COMMIT="$(git rev-parse HEAD)"
+  # COMMIT="$(git rev-parse HEAD)"
 
   (
     echo "channel: $CI_TAG"
-    echo "commit: $COMMIT"
+    # echo "commit: $COMMIT"
     echo "target: $TARGET"
   ) > "${RELEASE_BASENAME}"/version.yml
 

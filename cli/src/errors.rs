@@ -16,6 +16,6 @@ pub enum CliError {
     CommandNotRecognized(String),
     #[error("Transaction failed with error: {0}")]
     FailedTransaction(String),
-    #[error("Failed to start localnet")]
-    FailedLocalnet,
+    #[error("Failed to start localnet with error: {0}")]
+    FailedLocalnet(String),
 }
