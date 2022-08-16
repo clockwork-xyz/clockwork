@@ -11,9 +11,6 @@ use {
 };
 
 pub fn node_register(
-    authority: Pubkey,
-    cleanup_queue: Pubkey,
-    cleanup_task: Pubkey,
     config: Pubkey,
     entry: Pubkey,
     mint: Pubkey,
@@ -21,17 +18,13 @@ pub fn node_register(
     owner: Pubkey,
     registry: Pubkey,
     snapshot: Pubkey,
-    snapshot_queue: Pubkey,
-    snapshot_task: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
+    let stake_pubkey = get_associated_token_address(&node, &mint);
     Instruction {
         program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new_readonly(associated_token::ID, false),
-            AccountMeta::new_readonly(authority, false),
-            AccountMeta::new(cleanup_queue, false),
-            AccountMeta::new(cleanup_task, false),
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(entry, false),
             AccountMeta::new_readonly(mint, false),
@@ -39,11 +32,8 @@ pub fn node_register(
             AccountMeta::new(owner, true),
             AccountMeta::new(registry, false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),
-            AccountMeta::new_readonly(clockwork_scheduler::ID, false),
             AccountMeta::new(snapshot, false),
-            AccountMeta::new(snapshot_queue, false),
-            AccountMeta::new(snapshot_task, false),
-            AccountMeta::new(get_associated_token_address(&node, &mint), false),
+            AccountMeta::new(stake_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new_readonly(worker, true),

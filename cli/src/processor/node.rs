@@ -34,7 +34,6 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
 
     // Build ix
     let owner = client.payer().clone();
-    let authority_pubkey = Authority::pubkey();
     let node_pubkey = Node::pubkey(worker.pubkey());
     let registry_pubkey = Registry::pubkey();
     let registry_data = client
@@ -45,24 +44,7 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
 
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
-    let snapshot_queue_pubkey =
-        clockwork_client::scheduler::state::Queue::pubkey(authority_pubkey, "snapshot".into());
-    let snapshot_task_pubkey = clockwork_client::scheduler::state::Task::pubkey(
-        snapshot_queue_pubkey,
-        (registry_data.node_count + 1).into(),
-    );
-
-    let cleanup_queue_pubkey =
-        clockwork_client::scheduler::state::Queue::pubkey(authority_pubkey, "cleanup".into());
-    let cleanup_task_pubkey = clockwork_client::scheduler::state::Task::pubkey(
-        cleanup_queue_pubkey,
-        (registry_data.node_count + 1).into(),
-    );
-
     let ix = clockwork_client::network::instruction::node_register(
-        authority_pubkey,
-        cleanup_queue_pubkey,
-        cleanup_task_pubkey,
         config_pubkey,
         entry_pubkey,
         config_data.mint,
@@ -70,8 +52,6 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
         owner.pubkey(),
         registry_pubkey,
         snapshot_pubkey,
-        snapshot_queue_pubkey,
-        snapshot_task_pubkey,
         worker.pubkey(),
     );
     client.send_and_confirm(&[ix], &[owner, &worker]).unwrap();

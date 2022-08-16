@@ -3,6 +3,7 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
+crank = "4o4USisUHmnCNE8LSpFzpbGqSLsSnh3Lek1cXYk2oWnp"
 health = "73bramYkSneHzsVxX3ovY6anDYgcRsnthqi4d4Htsskc"
 http = "7VRgExw4zFKwqfu9xTnYgfmzUdYUDcFwcy9HiiYJFwPB"
 network = "Fady3DhXdLAuVZgu9t8SQALsff9hSF9YDNRMxtW6iR1Z"
@@ -10,6 +11,7 @@ pool = "4GMkkUAvDQRsoVVLzcKHoJatP82m1o6Jk4g1gG8UxSqh"
 scheduler = "4SnjAUTwNaxT2VTmT7m4doDofVei1cudKb9EiLdxYzej"
 
 [programs.testnet]
+crank = "4o4USisUHmnCNE8LSpFzpbGqSLsSnh3Lek1cXYk2oWnp"
 health = "73bramYkSneHzsVxX3ovY6anDYgcRsnthqi4d4Htsskc"
 http = "7VRgExw4zFKwqfu9xTnYgfmzUdYUDcFwcy9HiiYJFwPB"
 network = "Fady3DhXdLAuVZgu9t8SQALsff9hSF9YDNRMxtW6iR1Z"
@@ -17,6 +19,7 @@ pool = "4GMkkUAvDQRsoVVLzcKHoJatP82m1o6Jk4g1gG8UxSqh"
 scheduler = "4SnjAUTwNaxT2VTmT7m4doDofVei1cudKb9EiLdxYzej"
 
 [programs.mainnet]
+crank = "4o4USisUHmnCNE8LSpFzpbGqSLsSnh3Lek1cXYk2oWnp"
 health = "73bramYkSneHzsVxX3ovY6anDYgcRsnthqi4d4Htsskc"
 http = "7VRgExw4zFKwqfu9xTnYgfmzUdYUDcFwcy9HiiYJFwPB"
 network = "Fady3DhXdLAuVZgu9t8SQALsff9hSF9YDNRMxtW6iR1Z"
