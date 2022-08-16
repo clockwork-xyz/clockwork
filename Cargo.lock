@@ -879,6 +879,7 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
+ "clockwork-crank",
  "clockwork-health",
  "clockwork-http",
  "clockwork-network",
