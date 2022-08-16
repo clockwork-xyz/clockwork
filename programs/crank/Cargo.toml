@@ -1,0 +1,28 @@
+[package]
+name = "clockwork-crank"
+version = "1.0.3"
+description = "Clockwork crank protocol"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
+readme = "./README.md"
+keywords = ["solana"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "clockwork_crank"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.25.0"
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+clockwork-cron = { path = "../../cron", version = "1.0.3" }
+clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.3" }

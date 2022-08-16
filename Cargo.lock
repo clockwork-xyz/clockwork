@@ -890,6 +890,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-crank"
+version = "1.0.3"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-pool",
+]
+
+[[package]]
 name = "clockwork-cron"
 version = "1.0.3"
 dependencies = [
