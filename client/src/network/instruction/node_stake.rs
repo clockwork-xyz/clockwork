@@ -15,7 +15,6 @@ pub fn node_stake(
     node: Pubkey,
     mint: Pubkey,
     signer: Pubkey,
-    worker: Pubkey,
 ) -> Instruction {
     let signer_tokens = get_associated_token_address(&signer, &mint);
     let stake_pubkey = get_associated_token_address(&node, &mint);
@@ -29,7 +28,6 @@ pub fn node_stake(
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new(signer_tokens, false),
-            AccountMeta::new_readonly(worker, false),
         ],
         data: clockwork_network::instruction::NodeStake { amount }.data(),
     }

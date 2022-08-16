@@ -1,8 +1,6 @@
 use {
     crate::errors::CliError,
-    clockwork_client::network::state::{
-        Authority, Config, Node, Registry, Snapshot, SnapshotEntry,
-    },
+    clockwork_client::network::state::{Config, Node, Registry, Snapshot, SnapshotEntry},
     clockwork_client::Client,
     solana_sdk::{
         pubkey::Pubkey,
@@ -10,18 +8,13 @@ use {
     },
 };
 
-pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
-    let node = client
-        .get::<clockwork_client::network::state::Node>(&address)
-        .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-    println!("{:#?}", node);
-    Ok(())
-}
-
-pub fn get_by_worker(client: &Client, worker: Pubkey) -> Result<(), CliError> {
-    let node_pubkey = Node::pubkey(worker);
-    get(client, node_pubkey)
-}
+// pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
+//     let node = client
+//         .get::<clockwork_client::network::state::Node>(&address)
+//         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
+//     println!("{:#?}", node);
+//     Ok(())
+// }
 
 pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     // Get config data
@@ -34,13 +27,14 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
 
     // Build ix
     let owner = client.payer().clone();
-    let node_pubkey = Node::pubkey(worker.pubkey());
     let registry_pubkey = Registry::pubkey();
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
     let registry_data = Registry::try_from(registry_data)
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
+
+    let node_pubkey = Node::pubkey(registry_data.node_count);
 
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
@@ -49,8 +43,8 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
         entry_pubkey,
         config_data.mint,
         node_pubkey,
-        owner.pubkey(),
         registry_pubkey,
+        owner.pubkey(),
         snapshot_pubkey,
         worker.pubkey(),
     );
@@ -58,7 +52,7 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliError> {
+pub fn stake(client: &Client, address: Pubkey, amount: u64) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pubkey();
     let config_data = client
@@ -69,14 +63,13 @@ pub fn stake(client: &Client, amount: u64, worker: Pubkey) -> Result<(), CliErro
 
     // Build ix
     let signer = client.payer();
-    let node_pubkey = Node::pubkey(worker);
+    // let node_pubkey = Node::pubkey(worker);
     let ix = clockwork_client::network::instruction::node_stake(
         amount,
         config_pubkey,
-        node_pubkey,
+        address,
         config_data.mint,
         signer.pubkey(),
-        worker,
     );
 
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();

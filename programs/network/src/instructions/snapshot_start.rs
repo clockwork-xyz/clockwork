@@ -65,7 +65,7 @@ pub fn handler(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
     // Build the next crank instruction
     let next_instruction = if registry.node_count > 0 {
         // There are nodes in the registry. Begin creating snapshot entries.
-        let node_pubkey = Node::pubkey(registry.key()); // TODO Fix up the node pubkeys
+        let node_pubkey = Node::pubkey(0);
         let entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), 0);
         let stake_pubkey = get_associated_token_address(&entry_pubkey, &config.mint);
         Some(

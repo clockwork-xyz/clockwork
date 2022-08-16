@@ -36,15 +36,12 @@ pub enum CliCommand {
     Localnet,
 
     // Node commands
-    NodeGet {
-        worker: Pubkey,
-    },
     NodeRegister {
         worker: Keypair,
     },
     NodeStake {
+        address: Pubkey,
         amount: u64,
-        worker: Pubkey,
     },
 
     // Pool commands
@@ -199,20 +196,20 @@ pub fn app() -> Command<'static> {
             Command::new("node")
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("get")
-                        .about("Get a node by worker address")
-                        .arg(
-                            Arg::new("worker")
-                                .index(1)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The worker address to stake tokens with"),
-                        ),
-                )
+                // .subcommand(
+                //     Command::new("get")
+                //         .about("Get a node by worker address")
+                //         .arg(
+                //             Arg::new("worker")
+                //                 .index(1)
+                //                 .takes_value(true)
+                //                 .required(true)
+                //                 .help("The worker address to stake tokens with"),
+                //         ),
+                // )
                 .subcommand(
                     Command::new("register")
-                        .about("Register a new node with the Clockwork network")
+                        .about("Register a new worker with the Clockwork network")
                         .arg(
                             Arg::new("worker")
                                 .index(1)
@@ -223,20 +220,20 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("stake")
-                        .about("Stake CRON with your Solana node")
+                        .about("Stake CRON with your Clockwork worker")
+                        .arg(
+                            Arg::new("address")
+                                .index(2)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The worker address to stake tokens with"),
+                        )
                         .arg(
                             Arg::new("amount")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
                                 .help("The number of tokens to stake"),
-                        )
-                        .arg(
-                            Arg::new("worker")
-                                .index(2)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The worker address to stake tokens with"),
                         ),
                 ),
         )

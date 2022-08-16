@@ -31,9 +31,7 @@ pub mod clockwork_network {
         rotator_turn::handler(ctx)
     }
 
-    pub fn node_register<'info>(
-        ctx: Context<'_, '_, '_, 'info, NodeRegister<'info>>,
-    ) -> Result<()> {
+    pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
         node_register::handler(ctx)
     }
 

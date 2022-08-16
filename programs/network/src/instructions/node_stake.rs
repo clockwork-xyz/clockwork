@@ -16,10 +16,9 @@ pub struct NodeStake<'info> {
     #[account(
         seeds = [
             SEED_NODE,
-            node.worker.as_ref()
+            node.id.to_be_bytes().as_ref()
         ],
         bump,
-        has_one = worker
     )]
     pub node: Account<'info, Node>,
 
@@ -45,9 +44,6 @@ pub struct NodeStake<'info> {
         associated_token::mint = mint,
     )]
     pub tokens: Account<'info, TokenAccount>,
-
-    #[account()]
-    pub worker: SystemAccount<'info>,
 }
 
 pub fn handler(ctx: Context<NodeStake>, amount: u64) -> Result<()> {

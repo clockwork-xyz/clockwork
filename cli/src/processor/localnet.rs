@@ -1,3 +1,5 @@
+use clockwork_client::network::state::Node;
+
 #[allow(deprecated)]
 use {
     crate::errors::CliError,
@@ -101,13 +103,8 @@ fn register_worker(client: &Client) -> Result<()> {
 }
 
 fn stake_worker(client: &Client) -> Result<()> {
-    let cfg = get_clockwork_config()?;
-    let keypath = format!(
-        "{}/lib/clockwork-worker-keypair.json",
-        cfg["home"].as_str().unwrap()
-    );
-    let worker_keypair = read_keypair_file(keypath).unwrap();
-    super::node::stake(client, 100, worker_keypair.pubkey())?;
+    let node_pubkey = Node::pubkey(0);
+    super::node::stake(client, node_pubkey, 100)?;
     Ok(())
 }
 
