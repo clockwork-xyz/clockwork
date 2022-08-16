@@ -1,35 +1,57 @@
-use anchor_spl::associated_token::get_associated_token_address;
-
 use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::instruction::Instruction},
+    crate::{errors::ClockworkError, state::*},
+    anchor_lang::{prelude::*, solana_program::{instruction::Instruction, system_program}},
+    anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount},
     clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
-pub struct SnapshotStart<'info> {
+pub struct EntryCreate<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
-    #[account(mut, seeds = [SEED_REGISTRY], bump)]
-    pub registry: Account<'info, Registry>,
-
     #[account(
         init,
         seeds = [
-            SEED_SNAPSHOT,
-            registry.snapshot_count.to_be_bytes().as_ref()
+            SEED_SNAPSHOT_ENTRY,
+            snapshot.key().as_ref(),
+            snapshot.node_count.to_be_bytes().as_ref()
         ],
         bump,
-        space = 8 + size_of::<Snapshot>(),
-        payer = payer
+        payer = payer,
+        space = 8 + size_of::<SnapshotEntry>()
+    )]
+    pub entry: Account<'info, SnapshotEntry>,
+
+    #[account(
+        seeds = [
+            SEED_NODE,
+            node.worker.as_ref(),
+        ],
+        bump,
+        constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
+    )]
+    pub node: Box<Account<'info, Node>>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(seeds = [SEED_REGISTRY], bump)]
+    pub registry: Box<Account<'info, Registry>>,
+
+    #[account(
+        mut,
+        seeds = [
+            SEED_SNAPSHOT,
+            snapshot.id.to_be_bytes().as_ref()
+        ],
+        bump,
+        constraint = snapshot.status == SnapshotStatus::InProgress @ ClockworkError::SnapshotNotInProgress,
+        constraint = snapshot.node_count < registry.node_count,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -46,21 +68,30 @@ pub struct SnapshotStart<'info> {
     )]
     pub snapshot_queue: Account<'info, Queue>,
 
-    #[account()]
+    #[account(
+        associated_token::authority = node,
+        associated_token::mint = config.mint,
+    )]
+    pub stake: Account<'info, TokenAccount>,
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
-    let registry = &mut ctx.accounts.registry;
+    let entry = &mut ctx.accounts.entry;
+    let node = &ctx.accounts.node;
+    let registry = &ctx.accounts.registry;
+    let stake = &ctx.accounts.stake;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_queue = &ctx.accounts.snapshot_queue;
     let system_program = &ctx.accounts.system_program;
 
-    // Start a new snapshot
-    registry.new_snapshot(snapshot)?;
+    // Capture the snapshot entry
+    snapshot.capture(entry, node, stake)?;
 
     // Build the next crank instruction
     let next_instruction = if registry.node_count > 0 {

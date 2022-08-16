@@ -7,7 +7,7 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use clockwork_scheduler::response::TaskResponse;
+use clockwork_crank::state::CrankResponse;
 use instructions::*;
 
 #[program]
@@ -15,8 +15,12 @@ pub mod clockwork_network {
 
     use super::*;
 
-    pub fn entry_close(ctx: Context<EntryClose>) -> Result<TaskResponse> {
+    pub fn entry_close(ctx: Context<EntryClose>) -> Result<CrankResponse> {
         entry_close::handler(ctx)
+    }
+
+    pub fn entry_create(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
+        entry_create::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -37,19 +41,15 @@ pub mod clockwork_network {
         node_stake::handler(ctx, amount)
     }
 
-    pub fn snapshot_capture(ctx: Context<SnapshotCapture>) -> Result<TaskResponse> {
-        snapshot_capture::handler(ctx)
-    }
-
-    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<TaskResponse> {
+    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
         snapshot_close::handler(ctx)
     }
 
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<TaskResponse> {
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
         snapshot_rotate::handler(ctx)
     }
 
-    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<TaskResponse> {
+    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
         snapshot_start::handler(ctx)
     }
 }

@@ -944,8 +944,8 @@ version = "1.0.3"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "clockwork-crank",
  "clockwork-pool",
- "clockwork-scheduler",
 ]
 
 [[package]]
