@@ -91,7 +91,7 @@ impl QueueObserver {
         queue_pubkey: Pubkey,
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Caching queue {:#?}", queue_pubkey);
+            info!("Caching queue {:#?} {:#?}", queue_pubkey, queue);
 
             // Index the queue by its pubkey
             this.queues.insert(queue_pubkey, queue);

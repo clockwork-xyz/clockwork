@@ -96,10 +96,14 @@ impl TxExecutor {
     }
 
     async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        let r_pool_positions = self.observers.pool.pool_positions.read().await;
+        let pool_position = r_pool_positions.scheduler_pool_position.clone();
+        drop(r_pool_positions);
+
         self.observers
             .queue
             .clone()
-            .build_queue_txs(self.clockwork_client.clone(), slot)
+            .build_queue_txs(self.clockwork_client.clone(), pool_position, slot)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {

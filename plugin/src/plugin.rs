@@ -72,6 +72,7 @@ impl GeyserPlugin for ClockworkPlugin {
                 AccountUpdateEvent::Exec { exec } => self
                     .observers
                     .queue
+                    .clone()
                     .handle_updated_exec(exec, account_pubkey),
                 AccountUpdateEvent::HttpRequest { request } => {
                     self.observers.http.clone().handle_updated_http_request(
