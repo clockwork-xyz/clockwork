@@ -1,11 +1,14 @@
+use clockwork_client::crank::state::Exec;
+
 use {
+    anchor_lang::Discriminator,
     bincode::deserialize,
     cached::proc_macro::cached,
     clockwork_client::{
+        crank::state::Queue,
         http::state::Request,
         network::state::{Rotator, Snapshot},
         pool::state::Pool,
-        scheduler::state::Queue,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo,
@@ -15,6 +18,7 @@ use {
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
+    Exec { exec: Exec },
     HttpRequest { request: Request },
     Pool { pool: Pool },
     Queue { queue: Queue },
@@ -62,14 +66,25 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         }
 
         // If the account is a queue, return it
-        if owner_pubkey.eq(&clockwork_client::scheduler::ID) && account_info.data.len() > 8 {
-            return Ok(AccountUpdateEvent::Queue {
-                queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
-                    GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Clockwork queue account".into(),
-                    }
-                })?,
-            });
+        if owner_pubkey.eq(&clockwork_client::crank::ID) && account_info.data.len() > 8 {
+            let d = &account_info.data[..8];
+            if d.eq(&Exec::discriminator()) {
+                return Ok(AccountUpdateEvent::Exec {
+                    exec: Exec::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork exec account".into(),
+                        }
+                    })?,
+                });
+            } else if d.eq(&Queue::discriminator()) {
+                return Ok(AccountUpdateEvent::Queue {
+                    queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork queue account".into(),
+                        }
+                    })?,
+                });
+            }
         }
 
         // If the account is a snapshot, return it

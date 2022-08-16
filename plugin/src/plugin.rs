@@ -1,4 +1,7 @@
-use crate::observers::http::{HttpObserver, HttpRequest};
+use crate::observers::{
+    clock::ClockObserver,
+    http::{HttpObserver, HttpRequest},
+};
 
 use {
     crate::{
@@ -64,8 +67,12 @@ impl GeyserPlugin for ClockworkPlugin {
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.observers.queue.clone().handle_updated_clock(clock)
+                    self.observers.clock.clone().handle_updated_clock(clock)
                 }
+                AccountUpdateEvent::Exec { exec } => self
+                    .observers
+                    .queue
+                    .handle_updated_exec(exec, account_pubkey),
                 AccountUpdateEvent::HttpRequest { request } => {
                     self.observers.http.clone().handle_updated_http_request(
                         HttpRequest {
@@ -152,19 +159,15 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
+        let clock_observer = Arc::new(ClockObserver::new(runtime.clone()));
         let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
-        let queue_observer = Arc::new(QueueObserver::new(
-            pool_observer.pool_positions.clone(),
-            runtime.clone(),
-        ));
-        let http_observer = Arc::new(HttpObserver::new(
-            pool_observer.pool_positions.clone(),
-            runtime.clone(),
-        ));
+        let queue_observer = Arc::new(QueueObserver::new(runtime.clone()));
+        let http_observer = Arc::new(HttpObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
+                clock: clock_observer,
                 http: http_observer,
                 pool: pool_observer,
                 queue: queue_observer,

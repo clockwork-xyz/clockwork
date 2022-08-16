@@ -6,7 +6,7 @@ use {
 #[derive(Accounts)]
 pub struct QueueCrank<'info> {
     #[account(
-        mut, 
+        mut,
         seeds = [
             SEED_EXEC,
             exec.queue.as_ref(),
@@ -18,6 +18,7 @@ pub struct QueueCrank<'info> {
     pub exec: Account<'info, Exec>,
     
     #[account(
+        mut,
         seeds = [
             SEED_QUEUE, 
             queue.authority.as_ref(),
