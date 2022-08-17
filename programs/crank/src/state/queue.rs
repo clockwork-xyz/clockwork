@@ -78,13 +78,7 @@ pub trait QueueAccount {
         trigger: Trigger,
     ) -> Result<()>;
 
-    fn crank(
-        &mut self,
-        account_infos: &[AccountInfo],
-        bump: u8,
-        ix: &InstructionData,
-        worker: &Signer,
-    ) -> Result<()>;
+    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -105,13 +99,12 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn crank(
-        &mut self,
-        account_infos: &[AccountInfo],
-        bump: u8,
-        instruction: &InstructionData,
-        worker: &Signer,
-    ) -> Result<()> {
+    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()> {
+        // Get the instruction to crank
+        let first_instruction: &InstructionData = &self.clone().first_instruction;
+        let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
+        let instruction = next_instruction.as_ref().unwrap_or(first_instruction);
+
         // Inject the worker's pubkey for the Clockwork payer ID
         let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
         instruction.accounts.iter().for_each(|acc| {
@@ -195,7 +188,7 @@ pub enum Trigger {
  * ExecContext
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ExecContext {
     Cron { last_exec_at: i64 },
     Immediate,

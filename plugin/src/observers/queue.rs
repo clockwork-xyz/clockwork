@@ -1,9 +1,4 @@
-use std::collections::HashSet;
-
-use anchor_lang::accounts::program;
-
 use {
-    super::pool::PoolPosition,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
         crank::state::{ExecContext, Queue, Trigger},
@@ -29,7 +24,8 @@ pub struct QueueObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: DashMap<u64, Clock>,
 
-    // TODO The set of the queues that are currently crankable (i.e. have a next_instruction)
+    // The set of the queues that are currently crankable (i.e. have a next_instruction)
+    pub crankable_queues: DashSet<Pubkey>,
 
     // Map from unix timestamps to the list of queues scheduled for that moment.
     pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
@@ -45,6 +41,7 @@ impl QueueObserver {
     pub fn new(runtime: Arc<Runtime>) -> Self {
         Self {
             clocks: DashMap::new(),
+            crankable_queues: DashSet::new(),
             cron_queues: DashMap::new(),
             immediate_queues: DashSet::new(),
             runtime,
@@ -73,47 +70,52 @@ impl QueueObserver {
         self.spawn(|this| async move {
             info!("Caching queue {:#?} {:#?}", queue_pubkey, queue);
 
-            // Index the queue according to its trigger type.
-            match queue.trigger {
-                Trigger::Cron { schedule } => {
-                    // Find a reference timestamp for calculating the queue's upcoming target time.
-                    let reference_timestamp = match queue.exec_context {
-                        None => queue.created_at.unix_timestamp,
-                        Some(exec_context) => match exec_context {
-                            ExecContext::Cron { last_exec_at } => last_exec_at,
-                            _ => {
-                                return Err(GeyserPluginError::Custom(
-                                    "Invalid exec context".into(),
-                                ))
-                            }
-                        },
-                    };
+            if queue.next_instruction.is_some() {
+                // If the queue has a next instruction, index it as crankable.
+                this.crankable_queues.insert(queue_pubkey);
+            } else {
+                // Index the queue according to its trigger type.
+                match queue.trigger {
+                    Trigger::Cron { schedule } => {
+                        // Find a reference timestamp for calculating the queue's upcoming target time.
+                        let reference_timestamp = match queue.exec_context {
+                            None => queue.created_at.unix_timestamp,
+                            Some(exec_context) => match exec_context {
+                                ExecContext::Cron { last_exec_at } => last_exec_at,
+                                _ => {
+                                    return Err(GeyserPluginError::Custom(
+                                        "Invalid exec context".into(),
+                                    ))
+                                }
+                            },
+                        };
 
-                    // Index the queue to its target timestamp
-                    match next_moment(reference_timestamp, schedule) {
-                        None => {} // The queue does not have any upcoming scheduled target time
-                        Some(target_timestamp) => {
-                            this.cron_queues
-                                .entry(target_timestamp)
-                                .and_modify(|v| {
-                                    v.insert(queue_pubkey);
-                                })
-                                .or_insert_with(|| {
-                                    let v = DashSet::new();
-                                    v.insert(queue_pubkey);
-                                    v
-                                });
+                        // Index the queue to its target timestamp
+                        match next_moment(reference_timestamp, schedule) {
+                            None => {} // The queue does not have any upcoming scheduled target time
+                            Some(target_timestamp) => {
+                                this.cron_queues
+                                    .entry(target_timestamp)
+                                    .and_modify(|v| {
+                                        v.insert(queue_pubkey);
+                                    })
+                                    .or_insert_with(|| {
+                                        let v = DashSet::new();
+                                        v.insert(queue_pubkey);
+                                        v
+                                    });
+                            }
                         }
                     }
-                }
-                Trigger::Immediate => {
-                    this.immediate_queues.insert(queue_pubkey);
+                    Trigger::Immediate => {
+                        this.immediate_queues.insert(queue_pubkey);
+                    }
                 }
             }
 
             info!(
-                "Indexes: immediate: {:#?}  cron: {:#?}",
-                this.immediate_queues, this.cron_queues
+                "Indexes: immediate: {:#?} crankable: {:#?} cron: {:#?}",
+                this.immediate_queues, this.crankable_queues, this.cron_queues
             );
 
             // Do we need to index queues according to their upcoming timestamps?
@@ -141,30 +143,38 @@ impl QueueObserver {
         };
 
         // Build the set of queue pubkeys that are executable.
-        let actionable_queue_pubkeys = DashSet::new();
+        let crankable_queue_pubkeys = DashSet::<Pubkey>::new();
+
+        // Push in all of the crankable queues.
+        self.crankable_queues.retain(|queue_pubkey| {
+            crankable_queue_pubkeys.insert(*queue_pubkey);
+            false
+        });
+
+        // Push in all of the scheduled queues that are due.
         self.cron_queues.retain(|target_timestamp, queue_pubkeys| {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
-                for pubkey in queue_pubkeys.iter() {
-                    actionable_queue_pubkeys.insert(pubkey.key().clone());
+                for queue_pubkey_ref in queue_pubkeys.iter() {
+                    crankable_queue_pubkeys.insert(queue_pubkey_ref.key().clone());
                 }
             }
             !is_due
         });
 
-        info!("Actionable queues: {:#?}", actionable_queue_pubkeys);
+        info!("Actionable queues: {:#?}", crankable_queue_pubkeys);
         info!(
             "Queues immediate: {:#?}  cron: {:#?}",
             self.immediate_queues, self.cron_queues
         );
 
         // Build the set of exec transactions
-        let txs = actionable_queue_pubkeys
+        let txs = crankable_queue_pubkeys
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 match self
                     .clone()
-                    .build_queue_exec_tx(client.clone(), queue_pubkey_ref.key().clone())
+                    .build_queue_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
                 {
                     Err(_) => None,
                     Ok(tx) => Some((queue_pubkey_ref.key().clone(), tx)),
@@ -177,7 +187,7 @@ impl QueueObserver {
         txs
     }
 
-    pub fn build_queue_exec_tx(
+    pub fn build_queue_crank_tx(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         queue_pubkey: Pubkey,
@@ -189,31 +199,31 @@ impl QueueObserver {
         let worker_pubkey = client.payer_pubkey();
         let mut ixs: Vec<Instruction> = vec![];
 
-        info!("Worker pubkey: {}", worker_pubkey);
-
-        // Build the queue_exec instruction
-        let mut ix = clockwork_client::crank::instruction::queue_exec(queue_pubkey, worker_pubkey);
+        // Build the queue_crank instruction
+        let mut crank_ix =
+            clockwork_client::crank::instruction::queue_crank(queue_pubkey, worker_pubkey);
 
         // Program accounts
-        let program_id = queue.first_instruction.program_id;
-        ix.accounts
-            .push(AccountMeta::new_readonly(program_id, false));
+        let inner_ix = queue.next_instruction.unwrap_or(queue.first_instruction);
+        crank_ix
+            .accounts
+            .push(AccountMeta::new_readonly(inner_ix.program_id, false));
 
         // Other accounts
-        for acc in queue.first_instruction.accounts {
+        for acc in inner_ix.accounts {
             // Inject the worker pubkey as the Clockwork "payer" account
             let mut acc_pubkey = acc.pubkey;
             let is_payer = acc_pubkey == clockwork_client::crank::payer::ID;
             if is_payer {
                 acc_pubkey = worker_pubkey;
             }
-            ix.accounts.push(match acc.is_writable {
+            crank_ix.accounts.push(match acc.is_writable {
                 true => AccountMeta::new(acc_pubkey, false),
                 false => AccountMeta::new_readonly(acc_pubkey, false),
             })
         }
 
-        ixs.push(ix);
+        ixs.push(crank_ix);
 
         // Pack into tx
         // TODO At what scale must ixs be chunked into separate txs?

@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
         // There are nodes in the registry. Begin creating snapshot entries.
         let node_pubkey = Node::pubkey(0);
         let entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), 0);
-        let stake_pubkey = get_associated_token_address(&entry_pubkey, &config.mint);
+        let stake_pubkey = get_associated_token_address(&node_pubkey, &config.mint);
         Some(
              Instruction {
                 program_id: crate::ID,
@@ -77,9 +77,9 @@ pub fn handler(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
                     AccountMeta::new(entry_pubkey, false),
                     AccountMeta::new_readonly(node_pubkey, false),
                     AccountMeta::new(clockwork_crank::payer::ID, true),
-                    AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
+                    AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
                     AccountMeta::new_readonly(system_program.key(), false)
                 ],

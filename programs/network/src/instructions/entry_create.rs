@@ -30,7 +30,7 @@ pub struct EntryCreate<'info> {
     #[account(
         seeds = [
             SEED_NODE,
-            node.worker.as_ref(),
+            node.id.to_be_bytes().as_ref(),
         ],
         bump,
         constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
@@ -94,12 +94,12 @@ pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
     snapshot.capture(entry, node, stake)?;
 
     // Build the next crank instruction
-    let next_instruction = if registry.node_count > 0 {
+    let next_instruction = if snapshot.node_count < registry.node_count {
         // There are more nodes in the registry. Continue creating snapshot entries.
         let next_id = node.id.checked_add(1).unwrap();
         let next_node_pubkey = Node::pubkey(next_id); 
         let next_entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), next_id);
-        let stake_pubkey = get_associated_token_address(&next_entry_pubkey, &config.mint);
+        let stake_pubkey = get_associated_token_address(&next_node_pubkey, &config.mint);
         Some(
              Instruction {
                 program_id: crate::ID,
@@ -109,9 +109,9 @@ pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
                     AccountMeta::new(next_entry_pubkey, false),
                     AccountMeta::new_readonly(next_node_pubkey, false),
                     AccountMeta::new(clockwork_crank::payer::ID, true),
-                    AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
+                    AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
                     AccountMeta::new_readonly(system_program.key(), false)
                 ],
@@ -120,7 +120,7 @@ pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
             .into()
         )
     } else {
-        // There are no more nodes in the registry. Activate the new snapshot.
+        // We have created entries for all the nodes. Activate the new snapshot.
         Some(
             Instruction {
                 program_id: crate::ID,

@@ -1,3 +1,5 @@
+use clockwork_client::crank::state::ExecContext;
+
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     clockwork_client::Client as ClockworkClient,
@@ -249,17 +251,18 @@ impl TxExecutor {
         tx: &Transaction,
         tx_type: TxType,
     ) -> PluginResult<()> {
+        // TODO Support dedupes
         // Check for dedupes
-        if self.tx_dedupe.contains(&tx_type) {
-            return Ok(());
-        }
+        // if self.tx_dedupe.contains(&tx_type) {
+        //     return Ok(());
+        // }
 
         info!("Submitting tx: {:#?}", tx.signatures[0]);
 
         self.clone()
-            // .simulate_tx(tx)
-            // .and_then(|tx| self.clone().submit_tx(&tx))
-            .submit_tx(&tx)
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
+            // .submit_tx(&tx)
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 
@@ -385,7 +388,9 @@ pub enum TxType {
 impl Debug for TxType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            TxType::Queue { queue_pubkey } => write!(f, "queue {}", queue_pubkey),
+            TxType::Queue { queue_pubkey } => {
+                write!(f, "queue {} ", queue_pubkey)
+            }
             TxType::Rotation { target_slot } => write!(f, "rotation {}", target_slot),
         }
     }
