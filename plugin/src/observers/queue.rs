@@ -132,7 +132,6 @@ impl QueueObserver {
         slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
         // TODO Build txs for immediate queues that have not been started
-        // TODO Build txs for cron scheduled queues that are due
 
         info!("Building queue txs...");
 
@@ -162,12 +161,6 @@ impl QueueObserver {
             !is_due
         });
 
-        info!("Actionable queues: {:#?}", crankable_queue_pubkeys);
-        info!(
-            "Queues immediate: {:#?}  cron: {:#?}",
-            self.immediate_queues, self.cron_queues
-        );
-
         // Build the set of exec transactions
         let txs = crankable_queue_pubkeys
             .iter()
@@ -181,8 +174,6 @@ impl QueueObserver {
                 }
             })
             .collect::<Vec<(Pubkey, Transaction)>>();
-
-        info!("Built the txs: {:#?}", txs);
 
         txs
     }

@@ -70,6 +70,7 @@ impl TxExecutor {
                 .process_tx_history(slot, retry_attempts.clone())
                 .await
                 .ok();
+
             // this.process_retry_attempts(retry_attempts, slot).await.ok();
 
             Ok(())
@@ -257,12 +258,9 @@ impl TxExecutor {
         //     return Ok(());
         // }
 
-        info!("Submitting tx: {:#?}", tx.signatures[0]);
-
         self.clone()
             .simulate_tx(tx)
             .and_then(|tx| self.clone().submit_tx(&tx))
-            // .submit_tx(&tx)
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 

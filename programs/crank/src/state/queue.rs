@@ -1,9 +1,12 @@
+use std::{cell::RefCell, rc::Rc};
+
 use {
     super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
         solana_program::{
+            entrypoint::MAX_PERMITTED_DATA_INCREASE,
             instruction::Instruction,
             program::{get_return_data, invoke_signed},
         },
@@ -12,6 +15,7 @@ use {
     std::{
         convert::TryFrom,
         hash::{Hash, Hasher},
+        mem::{size_of, size_of_val},
     },
 };
 
@@ -152,6 +156,16 @@ impl QueueAccount for Account<'_, Queue> {
                 self.next_instruction = crank_response.next_instruction;
             }
         };
+
+        // Realloc the queue account.
+        let new_size = 8
+            + size_of::<Queue>()
+            + size_of_val(&self.first_instruction)
+            + size_of_val(&self.name)
+            + size_of_val(&self.next_instruction)
+            + size_of_val(&self.trigger)
+            + 256;
+        self.to_account_info().realloc(new_size, false)?;
 
         Ok(())
     }
