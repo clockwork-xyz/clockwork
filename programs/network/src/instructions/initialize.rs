@@ -109,19 +109,14 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
 
     // Create a queue to take snapshots of the registry
     let bump = *ctx.bumps.get("authority").unwrap();
-    let next_snapshot_pubkey = Snapshot::pubkey(1);
     let snapshot_start_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new_readonly(config.key(), false),
-            AccountMeta::new(clockwork_crank::payer::ID, true),
             AccountMeta::new(registry.key(), false),
-            AccountMeta::new(next_snapshot_pubkey, false),
             AccountMeta::new_readonly(snapshot_queue.key(), true),
-            AccountMeta::new_readonly(system_program.key(), false),
         ],
-        data: clockwork_crank::anchor::sighash("snapshot_start").into(),
+        data: clockwork_crank::anchor::sighash("snapshot_queue_kickoff").into(),
     };
     clockwork_crank::cpi::queue_create(
         CpiContext::new_with_signer(

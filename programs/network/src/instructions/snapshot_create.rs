@@ -8,7 +8,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct SnapshotStart<'info> {
+pub struct SnapshotCreate<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
@@ -50,7 +50,7 @@ pub struct SnapshotStart<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;

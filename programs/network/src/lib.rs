@@ -43,11 +43,15 @@ pub mod clockwork_network {
         snapshot_close::handler(ctx)
     }
 
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
-        snapshot_rotate::handler(ctx)
+    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
+        snapshot_create::handler(ctx)
     }
 
-    pub fn snapshot_start(ctx: Context<SnapshotStart>) -> Result<CrankResponse> {
-        snapshot_start::handler(ctx)
+    pub fn snapshot_queue_kickoff(ctx: Context<SnapshotQueueKickoff>) -> Result<CrankResponse> {
+        snapshot_queue_kickoff::handler(ctx)
+    }
+
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
+        snapshot_rotate::handler(ctx)
     }
 }
