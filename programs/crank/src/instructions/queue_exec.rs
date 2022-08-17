@@ -28,6 +28,7 @@ pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
 
     // Get accounts
     let queue = &mut ctx.accounts.queue;
+    let worker = &ctx.accounts.worker;
 
     // Verify the queue's trigger has been met and an exec has not already been started for this event.
     match queue.trigger.clone() {
@@ -42,10 +43,13 @@ pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
                     }
                 }
             };
+            msg!("reference_timestamp: {:#?} schedule: {:#?}", reference_timestamp, schedule);
 
             // Verify the current time is greater than or equal to the target timestamp.
             let target_timestamp = next_moment(reference_timestamp, schedule).ok_or(ClockworkError::TriggerNotMet)?;
             let current_timestamp = Clock::get().unwrap().unix_timestamp;
+
+            msg!("current_timestamp: {:#?} target_timestamp: {:#?}", current_timestamp, target_timestamp);
             require!(current_timestamp >= target_timestamp, ClockworkError::TriggerNotMet);
 
             // Set the exec context.
@@ -61,7 +65,7 @@ pub fn handler(ctx: Context<QueueExec>) -> Result<()> {
     // Crank the queue.
     let bump = ctx.bumps.get("queue").unwrap();
     let instruction = &queue.clone().first_instruction;
-    queue.crank(ctx.remaining_accounts, *bump, instruction)?;
+    queue.crank(ctx.remaining_accounts, *bump, instruction, worker)?;
 
     Ok(())
 }

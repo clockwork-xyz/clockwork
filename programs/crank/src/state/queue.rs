@@ -1,9 +1,5 @@
-use std::hash::{Hash, Hasher};
-
-use super::ClockData;
-
 use {
-    super::InstructionData,
+    super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
@@ -13,7 +9,10 @@ use {
         },
         AnchorDeserialize,
     },
-    std::convert::TryFrom,
+    std::{
+        convert::TryFrom,
+        hash::{Hash, Hasher},
+    },
 };
 
 pub const SEED_QUEUE: &[u8] = b"queue";
@@ -84,6 +83,7 @@ pub trait QueueAccount {
         account_infos: &[AccountInfo],
         bump: u8,
         ix: &InstructionData,
+        worker: &Signer,
     ) -> Result<()>;
 }
 
@@ -110,10 +110,30 @@ impl QueueAccount for Account<'_, Queue> {
         account_infos: &[AccountInfo],
         bump: u8,
         instruction: &InstructionData,
+        worker: &Signer,
     ) -> Result<()> {
+        // Inject the worker's pubkey for the Clockwork payer ID
+        let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
+        instruction.accounts.iter().for_each(|acc| {
+            let acc_pubkey = if acc.pubkey == crate::payer::ID {
+                worker.key()
+            } else {
+                acc.pubkey
+            };
+            normalized_accounts.push(AccountMeta {
+                pubkey: acc_pubkey,
+                is_signer: acc.is_signer,
+                is_writable: acc.is_writable,
+            });
+        });
+
         // Invoke the provided instruction
         invoke_signed(
-            &Instruction::from(instruction),
+            &Instruction {
+                program_id: instruction.program_id,
+                data: instruction.data.clone(),
+                accounts: normalized_accounts.to_vec(),
+            },
             account_infos,
             &[&[
                 SEED_QUEUE,

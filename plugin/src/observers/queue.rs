@@ -1,3 +1,7 @@
+use std::collections::HashSet;
+
+use anchor_lang::accounts::program;
+
 use {
     super::pool::PoolPosition,
     chrono::{DateTime, NaiveDateTime, Utc},
@@ -25,6 +29,8 @@ pub struct QueueObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: DashMap<u64, Clock>,
 
+    // TODO The set of the queues that are currently crankable (i.e. have a next_instruction)
+
     // Map from unix timestamps to the list of queues scheduled for that moment.
     pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
 
@@ -47,12 +53,7 @@ impl QueueObserver {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            this.clocks.retain(|slot, _clock| {
-                // if confirmed_slot.eq(slot) {
-                //     this.confirmed_clock = Some(clock.clone());
-                // }
-                *slot > confirmed_slot
-            });
+            this.clocks.retain(|slot, _clock| *slot > confirmed_slot);
             Ok(())
         })
     }
@@ -126,133 +127,97 @@ impl QueueObserver {
     pub async fn build_queue_txs(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
-        pool_position: PoolPosition,
+        slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
         // TODO Build txs for immediate queues that have not been started
         // TODO Build txs for cron scheduled queues that are due
 
-        // Get this node's current pool position
-        // let r_pool_positions = self.pool_positions.read().await;
-        // let pool_position = r_pool_positions.scheduler_pool_position.clone();
-        // drop(r_pool_positions);
+        info!("Building queue txs...");
 
-        // Build the set of txs from the actionable queues
-        // let txs = self
-        //     .actionable_queues
-        //     .iter()
-        //     .filter_map(|queue_pubkey| {
-        //         match self.clone().build_queue_tx(
-        //             clockwork_client.clone(),
-        //             pool_position.clone(),
-        //             queue_pubkey.clone(),
-        //             slot,
-        //         ) {
-        //             Err(_) => None,
-        //             Ok(tx) => Some((queue_pubkey.clone(), tx)),
-        //         }
-        //     })
-        //     .collect::<Vec<(Pubkey, Transaction)>>();
+        // Get the clock for this slot
+        let clock = match self.clocks.get(&slot) {
+            None => return vec![],
+            Some(clock) => clock.value().clone(),
+        };
 
-        // txs
+        // Build the set of queue pubkeys that are executable.
+        let actionable_queue_pubkeys = DashSet::new();
+        self.cron_queues.retain(|target_timestamp, queue_pubkeys| {
+            let is_due = clock.unix_timestamp >= *target_timestamp;
+            if is_due {
+                for pubkey in queue_pubkeys.iter() {
+                    actionable_queue_pubkeys.insert(pubkey.key().clone());
+                }
+            }
+            !is_due
+        });
 
-        vec![]
+        info!("Actionable queues: {:#?}", actionable_queue_pubkeys);
+        info!(
+            "Queues immediate: {:#?}  cron: {:#?}",
+            self.immediate_queues, self.cron_queues
+        );
+
+        // Build the set of exec transactions
+        let txs = actionable_queue_pubkeys
+            .iter()
+            .filter_map(|queue_pubkey_ref| {
+                match self
+                    .clone()
+                    .build_queue_exec_tx(client.clone(), queue_pubkey_ref.key().clone())
+                {
+                    Err(_) => None,
+                    Ok(tx) => Some((queue_pubkey_ref.key().clone(), tx)),
+                }
+            })
+            .collect::<Vec<(Pubkey, Transaction)>>();
+
+        info!("Built the txs: {:#?}", txs);
+
+        txs
     }
 
-    pub fn build_queue_tx(
+    pub fn build_queue_exec_tx(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
-        pool_position: PoolPosition,
         queue_pubkey: Pubkey,
-        slot: u64,
     ) -> PluginResult<Transaction> {
         // Get the queue
-        // let queue = client.get::<Queue>(&queue_pubkey).unwrap();
-
-        // Return none if this queue has no process_at
-        // if queue.process_at.is_none() {
-        //     return Err(GeyserPluginError::Custom(
-        //         "Queue does not have an process_at timestamp".into(),
-        //     ));
-        // }
-
-        // Exit early this this node is not in the scheduler pool AND
-        //  we are still within the queue's grace period.
-        // let unix_timestamp = match self.unix_timestamps.get(&slot) {
-        //     Some(entry) => *entry.value(),
-        //     None => clockwork_client.get_clock().unwrap().unix_timestamp,
-        // };
-        // if pool_position.current_position.is_none()
-        //     && unix_timestamp < queue.process_at.unwrap() + 10
-        // {
-        //     return Err(GeyserPluginError::Custom(
-        //         "This node is not a worker, and the queue is within the grace period".into(),
-        //     ));
-        // }
+        let queue = client.get::<Queue>(&queue_pubkey).unwrap();
 
         // Setup ixs based on queue's current status
         let worker_pubkey = client.payer_pubkey();
         let mut ixs: Vec<Instruction> = vec![];
-        let mut starting_task_id = 0;
-        // match queue.status {
-        //     QueueStatus::Paused => return Err(GeyserPluginError::Custom("Queue is paused".into())),
-        //     QueueStatus::Pending => {
-        //         ixs.push(clockwork_client::scheduler::instruction::queue_process(
-        //             queue_pubkey,
-        //             worker_pubkey,
-        //         ));
-        //     }
-        //     QueueStatus::Processing { task_id } => starting_task_id = task_id,
-        // };
 
-        // Build task_exec ixs
-        // for i in starting_task_id..queue.task_count {
-        //     // Get the task account
-        //     let task_pubkey = Task::pubkey(queue_pubkey, i);
-        //     let task = clockwork_client.get::<Task>(&task_pubkey).unwrap();
+        info!("Worker pubkey: {}", worker_pubkey);
 
-        //     // Build ix
-        //     let mut task_exec_ix = clockwork_client::scheduler::instruction::task_exec(
-        //         queue_pubkey,
-        //         task_pubkey,
-        //         worker_pubkey,
-        //     );
+        // Build the queue_exec instruction
+        let mut ix = clockwork_client::crank::instruction::queue_exec(queue_pubkey, worker_pubkey);
 
-        //     // Inject accounts for inner ixs
-        //     let mut acc_dedupe = HashSet::<Pubkey>::new();
-        //     for inner_ix in &task.ixs {
-        //         // Program accounts
-        //         if !acc_dedupe.contains(&inner_ix.program_id) {
-        //             acc_dedupe.insert(inner_ix.program_id);
-        //             task_exec_ix
-        //                 .accounts
-        //                 .push(AccountMeta::new_readonly(inner_ix.program_id, false));
-        //         }
+        // Program accounts
+        let program_id = queue.first_instruction.program_id;
+        ix.accounts
+            .push(AccountMeta::new_readonly(program_id, false));
 
-        //         // Other accounts
-        //         for acc in &inner_ix.accounts {
-        //             if !acc_dedupe.contains(&acc.pubkey) {
-        //                 acc_dedupe.insert(acc.pubkey);
+        // Other accounts
+        for acc in queue.first_instruction.accounts {
+            // Inject the worker pubkey as the Clockwork "payer" account
+            let mut acc_pubkey = acc.pubkey;
+            let is_payer = acc_pubkey == clockwork_client::crank::payer::ID;
+            if is_payer {
+                acc_pubkey = worker_pubkey;
+            }
+            ix.accounts.push(match acc.is_writable {
+                true => AccountMeta::new(acc_pubkey, false),
+                false => AccountMeta::new_readonly(acc_pubkey, false),
+            })
+        }
 
-        //                 // Inject the worker pubkey as the Clockwork "payer" account
-        //                 let mut payer_pubkey = acc.pubkey;
-        //                 if acc.pubkey == clockwork_client::scheduler::payer::ID {
-        //                     payer_pubkey = worker_pubkey;
-        //                 }
-        //                 task_exec_ix.accounts.push(match acc.is_writable {
-        //                     true => AccountMeta::new(payer_pubkey, false),
-        //                     false => AccountMeta::new_readonly(payer_pubkey, false),
-        //                 })
-        //             }
-        //         }
-        //     }
-
-        //     // Collect ixs
-        //     ixs.push(task_exec_ix)
-        // }
+        ixs.push(ix);
 
         // Pack into tx
         // TODO At what scale must ixs be chunked into separate txs?
-        let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&worker_pubkey));
+        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
         tx.sign(
             &[client.payer()],
             client.get_latest_blockhash().map_err(|_err| {

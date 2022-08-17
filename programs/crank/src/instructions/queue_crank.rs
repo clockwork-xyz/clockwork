@@ -26,18 +26,19 @@ pub struct QueueCrank<'info> {
 pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // Get accounts
     let queue = &mut ctx.accounts.queue;
+    let worker = &ctx.accounts.worker;
 
     // Crank the queue
     match &queue.clone().next_instruction {
         None => { return Err(ClockworkError::NoInstruction.into())}
         Some(next_instruction) => {
             let bump = ctx.bumps.get("queue").unwrap();
-            queue.crank(ctx.remaining_accounts, *bump, next_instruction)?;
+            queue.crank(ctx.remaining_accounts, *bump, next_instruction, worker)?;
         }
     }
     
     // TODO Pay fees to worker
-    // TODO Support queue account resizing for new instruction
+    // TODO Dynamically resize queue account, if needed
 
     Ok(())
 }

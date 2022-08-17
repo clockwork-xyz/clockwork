@@ -59,8 +59,8 @@ impl TxExecutor {
             // Rotate the pools
             this.clone().rotate_pools(None, slot).await.ok();
 
-            // Proces actionable queues
-            this.clone().process_actionable_queues(slot).await.ok();
+            // Process queues
+            this.clone().process_queues(slot).await.ok();
 
             // Lookup statuses of submitted txs, and retry txs that have timed out or failed
             let retry_attempts = DashSet::new();
@@ -68,7 +68,7 @@ impl TxExecutor {
                 .process_tx_history(slot, retry_attempts.clone())
                 .await
                 .ok();
-            this.process_retry_attempts(retry_attempts, slot).await.ok();
+            // this.process_retry_attempts(retry_attempts, slot).await.ok();
 
             Ok(())
         })
@@ -95,15 +95,23 @@ impl TxExecutor {
             })
     }
 
-    async fn process_actionable_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        let r_pool_positions = self.observers.pool.pool_positions.read().await;
-        let pool_position = r_pool_positions.scheduler_pool_position.clone();
-        drop(r_pool_positions);
+    async fn process_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        // let r_pool_positions = self.observers.pool.pool_positions.read().await;
+        // let pool_position = r_pool_positions.scheduler_pool_position.clone();
+        // drop(r_pool_positions);
+
+        // Exit early this this node is not in the scheduler pool AND
+        //  we are still within the queue's grace period.
+        // if pool_position.current_position.is_none() {
+        //     return Err(GeyserPluginError::Custom(
+        //         "This node is not an authorized worker".into(),
+        //     ));
+        // }
 
         self.observers
             .queue
             .clone()
-            .build_queue_txs(self.clockwork_client.clone(), pool_position)
+            .build_queue_txs(self.clockwork_client.clone(), slot)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
@@ -117,7 +125,7 @@ impl TxExecutor {
                         },
                     )
                     .map_err(|err| {
-                        info!("Failed to process actionable queue: {}", err);
+                        info!("Failed to process queue: {}", err);
                         err
                     })
                     .ok();
@@ -190,54 +198,49 @@ impl TxExecutor {
         })
     }
 
-    async fn process_retry_attempts(
-        self: Arc<Self>,
-        retry_attempts: DashSet<TxAttempt>,
-        slot: u64,
-    ) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            // Get this node's current position in the scheduler pool
-            let r_pool_positions = this.observers.pool.pool_positions.read().await;
-            let pool_position = r_pool_positions.scheduler_pool_position.clone();
-            drop(r_pool_positions);
+    // async fn process_retry_attempts(
+    //     self: Arc<Self>,
+    //     retry_attempts: DashSet<TxAttempt>,
+    //     slot: u64,
+    // ) -> PluginResult<()> {
+    //     self.spawn(|this| async move {
+    //         // Get this node's current position in the scheduler pool
+    //         let r_pool_positions = this.observers.pool.pool_positions.read().await;
+    //         let pool_position = r_pool_positions.scheduler_pool_position.clone();
+    //         drop(r_pool_positions);
 
-            // Process all attempts in the retry queue
-            for tx_attempt in retry_attempts
-                .iter()
-                .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
-            {
-                match tx_attempt.tx_type {
-                    TxType::Queue { queue_pubkey } => {
-                        this.observers
-                            .queue
-                            .clone()
-                            .build_queue_tx(
-                                this.clockwork_client.clone(),
-                                pool_position.clone(),
-                                queue_pubkey,
-                                slot,
-                            )
-                            .and_then(|tx| {
-                                this.clone().execute_tx(
-                                    Some(tx_attempt.clone()),
-                                    slot,
-                                    &tx,
-                                    TxType::Queue { queue_pubkey },
-                                )
-                            })
-                            .ok();
-                    }
-                    TxType::Rotation { target_slot } => {
-                        this.clone()
-                            .rotate_pools(Some(tx_attempt.clone()), target_slot)
-                            .await
-                            .ok();
-                    }
-                }
-            }
-            Ok(())
-        })
-    }
+    //         // Process all attempts in the retry queue
+    //         for tx_attempt in retry_attempts
+    //             .iter()
+    //             .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
+    //         {
+    //             match tx_attempt.tx_type {
+    //                 TxType::Queue { queue_pubkey } => {
+    //                     this.observers
+    //                         .queue
+    //                         .clone()
+    //                         .build_queue_tx(this.clockwork_client.clone(), queue_pubkey, slot)
+    //                         .and_then(|tx| {
+    //                             this.clone().execute_tx(
+    //                                 Some(tx_attempt.clone()),
+    //                                 slot,
+    //                                 &tx,
+    //                                 TxType::Queue { queue_pubkey },
+    //                             )
+    //                         })
+    //                         .ok();
+    //                 }
+    //                 TxType::Rotation { target_slot } => {
+    //                     this.clone()
+    //                         .rotate_pools(Some(tx_attempt.clone()), target_slot)
+    //                         .await
+    //                         .ok();
+    //                 }
+    //             }
+    //         }
+    //         Ok(())
+    //     })
+    // }
 
     fn execute_tx(
         self: Arc<Self>,
@@ -251,9 +254,12 @@ impl TxExecutor {
             return Ok(());
         }
 
+        info!("Submitting tx: {:#?}", tx.signatures[0]);
+
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            // .simulate_tx(tx)
+            // .and_then(|tx| self.clone().submit_tx(&tx))
+            .submit_tx(&tx)
             .and_then(|tx| self.log_tx_attempt(slot, prior_attempt, tx, tx_type))
     }
 
@@ -267,7 +273,11 @@ impl TxExecutor {
             .map(|response| match response.value.err {
                 None => Ok(tx.clone()),
                 Some(err) => Err(GeyserPluginError::Custom(
-                    format!("Tx failed simulation: {}", err).into(),
+                    format!(
+                        "Tx failed simulation: {} Logs: {:#?}",
+                        err, response.value.logs
+                    )
+                    .into(),
                 )),
             })?
     }
