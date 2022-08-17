@@ -30,8 +30,8 @@ pub mod clockwork_crank {
         queue_create::handler(ctx, balance, instruction, name, trigger)
     }
 
-    pub fn queue_start(ctx: Context<QueueStart>) -> Result<()> {
-        queue_start::handler(ctx)
+    pub fn queue_exec(ctx: Context<QueueExec>) -> Result<()> {
+        queue_exec::handler(ctx)
     }
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {

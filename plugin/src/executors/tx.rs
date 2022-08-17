@@ -103,7 +103,7 @@ impl TxExecutor {
         self.observers
             .queue
             .clone()
-            .build_queue_txs(self.clockwork_client.clone(), pool_position, slot)
+            .build_queue_txs(self.clockwork_client.clone(), pool_position)
             .await
             .iter()
             .for_each(|(queue_pubkey, tx)| {
@@ -122,6 +122,7 @@ impl TxExecutor {
                     })
                     .ok();
             });
+
         Ok(())
     }
 

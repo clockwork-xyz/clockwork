@@ -1,4 +1,6 @@
-use super::Exec;
+use std::hash::{Hash, Hasher};
+
+use super::ClockData;
 
 use {
     super::InstructionData,
@@ -24,10 +26,11 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[derive(Debug)]
 pub struct Queue {
     pub authority: Pubkey,
-    pub exec_count: u64,
-    pub instruction: InstructionData,
-    pub last_exec: Option<Pubkey>,
+    pub created_at: ClockData,
+    pub exec_context: Option<ExecContext>,
+    pub first_instruction: InstructionData,
     pub name: String,
+    pub next_instruction: Option<InstructionData>,
     pub trigger: Trigger,
 }
 
@@ -48,6 +51,21 @@ impl TryFrom<Vec<u8>> for Queue {
     }
 }
 
+impl Hash for Queue {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.authority.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl PartialEq for Queue {
+    fn eq(&self, other: &Self) -> bool {
+        self.authority.eq(&other.authority) && self.name.eq(&other.name)
+    }
+}
+
+impl Eq for Queue {}
+
 /**
  * QueueAccount
  */
@@ -62,10 +80,9 @@ pub trait QueueAccount {
     ) -> Result<()>;
 
     fn crank(
-        &self,
+        &mut self,
         account_infos: &[AccountInfo],
         bump: u8,
-        exec: &mut Account<Exec>,
         ix: &InstructionData,
     ) -> Result<()>;
 }
@@ -79,19 +96,19 @@ impl QueueAccount for Account<'_, Queue> {
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
-        self.exec_count = 0;
-        self.instruction = instruction;
-        self.last_exec = None;
+        self.created_at = Clock::get().unwrap().into();
+        self.exec_context = None;
+        self.first_instruction = instruction;
         self.name = name;
+        self.next_instruction = None;
         self.trigger = trigger;
         Ok(())
     }
 
     fn crank(
-        &self,
+        &mut self,
         account_infos: &[AccountInfo],
         bump: u8,
-        exec: &mut Account<Exec>,
         instruction: &InstructionData,
     ) -> Result<()> {
         // Invoke the provided instruction
@@ -110,16 +127,16 @@ impl QueueAccount for Account<'_, Queue> {
         // Parse the crank response
         match get_return_data() {
             None => {
-                exec.instruction = None;
+                self.next_instruction = None;
             }
             Some((program_id, return_data)) => {
-                if program_id != instruction.program_id {
-                    return Err(ClockworkError::InvalidReturnData.into());
-                } else {
-                    let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
-                        .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
-                    exec.instruction = crank_response.next_instruction;
-                }
+                require!(
+                    program_id.eq(&instruction.program_id),
+                    ClockworkError::InvalidReturnData
+                );
+                let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
+                    .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
+                self.next_instruction = crank_response.next_instruction;
             }
         };
 
@@ -151,5 +168,15 @@ impl Default for CrankResponse {
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
 pub enum Trigger {
     Cron { schedule: String },
+    Immediate,
+}
+
+/**
+ * ExecContext
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+pub enum ExecContext {
+    Cron { last_exec_at: i64 },
     Immediate,
 }

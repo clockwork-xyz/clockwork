@@ -6,11 +6,10 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn queue_crank(exec: Pubkey, queue: Pubkey, worker: Pubkey) -> Instruction {
+pub fn queue_crank(queue: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_crank::ID,
         accounts: vec![
-            AccountMeta::new(exec, false),
             AccountMeta::new(queue, false),
             AccountMeta::new(worker, true),
         ],

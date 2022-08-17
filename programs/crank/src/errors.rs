@@ -26,6 +26,9 @@ pub enum ClockworkError {
     #[msg("Trigger condition has not been met")]
     TriggerNotMet,
 
+    #[msg("This queue does not have a instruction to crank")]
+    NoInstruction,
+
     #[msg("You are not the authority of this queue")]
     NotQueueAuthority,
 

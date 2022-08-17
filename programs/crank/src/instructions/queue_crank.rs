@@ -1,22 +1,12 @@
+use crate::errors::ClockworkError;
+
 use {
     crate::state::*,
     anchor_lang::prelude::*,
 };
 
 #[derive(Accounts)]
-pub struct QueueCrank<'info> {
-    #[account(
-        mut,
-        seeds = [
-            SEED_EXEC,
-            exec.queue.as_ref(),
-            exec.id.to_be_bytes().as_ref(),
-        ],
-        bump,
-        constraint = exec.instruction.is_some()
-    )]
-    pub exec: Account<'info, Exec>,
-    
+pub struct QueueCrank<'info> {    
     #[account(
         mut,
         seeds = [
@@ -25,6 +15,7 @@ pub struct QueueCrank<'info> {
             queue.name.as_bytes(),
         ],
         bump,
+        constraint = queue.next_instruction.is_some()
     )]
     pub queue: Account<'info, Queue>,
 
@@ -34,15 +25,19 @@ pub struct QueueCrank<'info> {
 
 pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // Get accounts
-    let exec = &mut ctx.accounts.exec;
-    let queue = &ctx.accounts.queue;
+    let queue = &mut ctx.accounts.queue;
 
     // Crank the queue
-    let bump = ctx.bumps.get("queue").unwrap();
-    queue.crank(ctx.remaining_accounts, *bump, exec, &queue.instruction)?;
+    match &queue.clone().next_instruction {
+        None => { return Err(ClockworkError::NoInstruction.into())}
+        Some(next_instruction) => {
+            let bump = ctx.bumps.get("queue").unwrap();
+            queue.crank(ctx.remaining_accounts, *bump, next_instruction)?;
+        }
+    }
     
     // TODO Pay fees to worker
-    // TODO Support exec account resizing for new instruction
+    // TODO Support queue account resizing for new instruction
 
     Ok(())
 }

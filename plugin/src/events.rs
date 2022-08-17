@@ -1,5 +1,3 @@
-use clockwork_client::crank::state::Exec;
-
 use {
     anchor_lang::Discriminator,
     bincode::deserialize,
@@ -18,7 +16,6 @@ use {
 
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
-    Exec { exec: Exec },
     HttpRequest { request: Request },
     Pool { pool: Pool },
     Queue { queue: Queue },
@@ -68,15 +65,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         // If the account is a queue, return it
         if owner_pubkey.eq(&clockwork_client::crank::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Exec::discriminator()) {
-                return Ok(AccountUpdateEvent::Exec {
-                    exec: Exec::try_from(account_info.data.to_vec()).map_err(|_| {
-                        GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork exec account".into(),
-                        }
-                    })?,
-                });
-            } else if d.eq(&Queue::discriminator()) {
+            if d.eq(&Queue::discriminator()) {
                 return Ok(AccountUpdateEvent::Queue {
                     queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {

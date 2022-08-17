@@ -1,9 +1,11 @@
 use {
-    super::pool::{PoolPosition, PoolPositions},
+    super::pool::PoolPosition,
+    chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{Exec, Queue},
+        crank::state::{ExecContext, Queue, Trigger},
         Client as ClockworkClient,
     },
+    clockwork_cron::Schedule,
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -15,17 +17,19 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::transaction::Transaction,
-    std::{collections::HashSet, fmt::Debug, sync::Arc},
-    tokio::{runtime::Runtime, sync::RwLock},
+    std::{fmt::Debug, str::FromStr, sync::Arc},
+    tokio::runtime::Runtime,
 };
 
 pub struct QueueObserver {
-    pub active_execs: DashMap<Pubkey, Exec>,
+    // Map from slot numbers to the sysvar clock data for that slot.
+    pub clocks: DashMap<u64, Clock>,
 
-    pub queues: DashMap<Pubkey, Queue>,
+    // Map from unix timestamps to the list of queues scheduled for that moment.
+    pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
 
-    // Map from timestamps to the list of queues scheduled for that timestamp.
-    pub cron_scheduled_queues: DashMap<i64, DashSet<Pubkey>>,
+    // The set of queues for immediate execution.
+    pub immediate_queues: DashSet<Pubkey>,
 
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
@@ -34,55 +38,30 @@ pub struct QueueObserver {
 impl QueueObserver {
     pub fn new(runtime: Arc<Runtime>) -> Self {
         Self {
-            // actionable_queues: DashSet::new(),
-            active_execs: DashMap::new(),
-            cron_scheduled_queues: DashMap::new(),
-            queues: DashMap::new(),
+            clocks: DashMap::new(),
+            cron_queues: DashMap::new(),
+            immediate_queues: DashSet::new(),
             runtime,
         }
     }
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Lookup the confirmed sysvar unix timestamp
-            // let mut confirmed_unix_timestamp = None;
-            // this.unix_timestamps.retain(|slot, unix_timestamp| {
-            //     if *slot == confirmed_slot {
-            //         confirmed_unix_timestamp = Some(unix_timestamp.clone());
-            //     }
-            //     *slot > confirmed_slot
-            // });
-
-            // Move all pending queues that are due to the set of actionable queues.
-            // match confirmed_unix_timestamp {
-            //     Some(confirmed_unix_timestamp) => {
-            //         this.cron_scheduled_queues
-            //             .retain(|process_at, queue_pubkeys| {
-            //                 if *process_at <= confirmed_unix_timestamp {
-            //                     queue_pubkeys.iter().for_each(|pubkey| {
-            //                         this.actionable_queues.insert(pubkey.clone());
-            //                     });
-            //                     false
-            //                 } else {
-            //                     true
-            //                 }
-            //             });
-            //     }
-            //     None => (),
-            // }
-
+            this.clocks.retain(|slot, _clock| {
+                // if confirmed_slot.eq(slot) {
+                //     this.confirmed_clock = Some(clock.clone());
+                // }
+                *slot > confirmed_slot
+            });
             Ok(())
         })
     }
 
-    pub fn handle_updated_exec(
-        self: Arc<Self>,
-        exec: Exec,
-        exec_pubkey: Pubkey,
-    ) -> PluginResult<()> {
-        // TODO
-
-        Ok(())
+    pub fn handle_updated_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
+        self.spawn(|this| async move {
+            this.clocks.insert(clock.slot, clock.clone());
+            Ok(())
+        })
     }
 
     pub fn handle_updated_queue(
@@ -93,36 +72,52 @@ impl QueueObserver {
         self.spawn(|this| async move {
             info!("Caching queue {:#?} {:#?}", queue_pubkey, queue);
 
-            // Index the queue by its pubkey
-            this.queues.insert(queue_pubkey, queue);
+            // Index the queue according to its trigger type.
+            match queue.trigger {
+                Trigger::Cron { schedule } => {
+                    // Find a reference timestamp for calculating the queue's upcoming target time.
+                    let reference_timestamp = match queue.exec_context {
+                        None => queue.created_at.unix_timestamp,
+                        Some(exec_context) => match exec_context {
+                            ExecContext::Cron { last_exec_at } => last_exec_at,
+                            _ => {
+                                return Err(GeyserPluginError::Custom(
+                                    "Invalid exec context".into(),
+                                ))
+                            }
+                        },
+                    };
 
-            // TODO Index the queue according to its trigger type
+                    // Index the queue to its target timestamp
+                    match next_moment(reference_timestamp, schedule) {
+                        None => {} // The queue does not have any upcoming scheduled target time
+                        Some(target_timestamp) => {
+                            this.cron_queues
+                                .entry(target_timestamp)
+                                .and_modify(|v| {
+                                    v.insert(queue_pubkey);
+                                })
+                                .or_insert_with(|| {
+                                    let v = DashSet::new();
+                                    v.insert(queue_pubkey);
+                                    v
+                                });
+                        }
+                    }
+                }
+                Trigger::Immediate => {
+                    this.immediate_queues.insert(queue_pubkey);
+                }
+            }
 
-            // Do we need to index queue's according to their upcoming timestamp?
-            // And then re-index them once a corresponding exec is created?
+            info!(
+                "Indexes: immediate: {:#?}  cron: {:#?}",
+                this.immediate_queues, this.cron_queues
+            );
+
+            // Do we need to index queues according to their upcoming timestamps?
+            // And then re-index them once a new exec context is set?
             // YES.
-
-            // In this model, queue data rarely updates...
-            // Instead, execs get created.
-            // Queue lamport balances update...
-
-            // this.actionable_queues.remove(&queue_pubkey);
-
-            // match queue.process_at {
-            //     Some(process_at) => {
-            //         this.cron_scheduled_queues
-            //             .entry(process_at)
-            //             .and_modify(|v| {
-            //                 v.insert(queue_pubkey);
-            //             })
-            //             .or_insert_with(|| {
-            //                 let v = DashSet::new();
-            //                 v.insert(queue_pubkey);
-            //                 v
-            //             });
-            //     }
-            //     None => (),
-            // };
 
             Ok(())
         })
@@ -130,10 +125,12 @@ impl QueueObserver {
 
     pub async fn build_queue_txs(
         self: Arc<Self>,
-        clockwork_client: Arc<ClockworkClient>,
+        client: Arc<ClockworkClient>,
         pool_position: PoolPosition,
-        slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
+        // TODO Build txs for immediate queues that have not been started
+        // TODO Build txs for cron scheduled queues that are due
+
         // Get this node's current pool position
         // let r_pool_positions = self.pool_positions.read().await;
         // let pool_position = r_pool_positions.scheduler_pool_position.clone();
@@ -163,13 +160,13 @@ impl QueueObserver {
 
     pub fn build_queue_tx(
         self: Arc<Self>,
-        clockwork_client: Arc<ClockworkClient>,
+        client: Arc<ClockworkClient>,
         pool_position: PoolPosition,
         queue_pubkey: Pubkey,
         slot: u64,
     ) -> PluginResult<Transaction> {
         // Get the queue
-        let queue = clockwork_client.get::<Queue>(&queue_pubkey).unwrap();
+        // let queue = client.get::<Queue>(&queue_pubkey).unwrap();
 
         // Return none if this queue has no process_at
         // if queue.process_at.is_none() {
@@ -193,7 +190,7 @@ impl QueueObserver {
         // }
 
         // Setup ixs based on queue's current status
-        let worker_pubkey = clockwork_client.payer_pubkey();
+        let worker_pubkey = client.payer_pubkey();
         let mut ixs: Vec<Instruction> = vec![];
         let mut starting_task_id = 0;
         // match queue.status {
@@ -257,8 +254,8 @@ impl QueueObserver {
         // TODO At what scale must ixs be chunked into separate txs?
         let mut tx = Transaction::new_with_payer(&ixs.clone().to_vec(), Some(&worker_pubkey));
         tx.sign(
-            &[clockwork_client.payer()],
-            clockwork_client.get_latest_blockhash().map_err(|_err| {
+            &[client.payer()],
+            client.get_latest_blockhash().map_err(|_err| {
                 GeyserPluginError::Custom("Failed to get latest blockhash".into())
             })?,
         );
@@ -279,4 +276,16 @@ impl Debug for QueueObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "queue-observer")
     }
+}
+
+fn next_moment(after: i64, schedule: String) -> Option<i64> {
+    Schedule::from_str(&schedule)
+        .unwrap()
+        .after(&DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(after, 0),
+            Utc,
+        ))
+        .take(1)
+        .next()
+        .map(|datetime| datetime.timestamp())
 }
