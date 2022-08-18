@@ -1,3 +1,5 @@
+use crate::parser::ProgramInfo;
+
 #[allow(deprecated)]
 use {
     crate::errors::CliError,
@@ -18,9 +20,9 @@ use {
     std::process::{Child, Command},
 };
 
-pub fn start(client: &Client) -> Result<(), CliError> {
+pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
     // Start the validator
-    let validator_process = &mut start_test_validator(client)
+    let validator_process = &mut start_test_validator(client, program_infos)
         .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
 
     // Initialize Clockwork
@@ -111,7 +113,7 @@ fn stake_worker(client: &Client) -> Result<()> {
     Ok(())
 }
 
-fn start_test_validator(client: &Client) -> Result<Child> {
+fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<Child> {
     // Get Clockwork home path
     let cfg = get_clockwork_config()?;
     let home_dir = cfg["home"].as_str().unwrap();
@@ -124,6 +126,7 @@ fn start_test_validator(client: &Client) -> Result<Child> {
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
         .bpf_program(home_dir, clockwork_client::scheduler::ID, "scheduler")
+        .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)
         .spawn()
         .expect("Failed to start local test validator");
@@ -166,6 +169,7 @@ fn get_clockwork_config() -> Result<serde_yaml::Value> {
 }
 
 trait TestValidatorHelpers {
+    fn add_programs_with_path(&mut self, program_infos: Vec<ProgramInfo>) -> &mut Command;
     fn bpf_program(
         &mut self,
         home_dir: &str,
@@ -176,6 +180,15 @@ trait TestValidatorHelpers {
 }
 
 impl TestValidatorHelpers for Command {
+    fn add_programs_with_path(&mut self, program_infos: Vec<ProgramInfo>) -> &mut Command {
+        for program_info in program_infos {
+            self.arg("--bpf-program")
+                .arg(program_info.program_id.to_string())
+                .arg(program_info.program_path);
+        }
+
+        self
+    }
     fn bpf_program(
         &mut self,
         home_dir: &str,

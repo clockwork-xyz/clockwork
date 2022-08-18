@@ -6,9 +6,9 @@ use solana_sdk::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
     signature::{read_keypair_file, Keypair},
+    signer::Signer,
 };
-use std::str::FromStr;
-use std::{convert::TryFrom, fs};
+use std::{convert::TryFrom, fs, path::PathBuf, str::FromStr};
 
 impl TryFrom<&ArgMatches> for CliCommand {
     type Error = CliError;
@@ -19,7 +19,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("config", matches)) => parse_config_command(matches),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
-            Some(("localnet", _matches)) => Ok(CliCommand::Localnet {}),
+            Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("node", matches)) => parse_node_command(matches),
             Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
             Some(("queue", matches)) => parse_queue_command(matches),
@@ -34,6 +34,40 @@ impl TryFrom<&ArgMatches> for CliCommand {
 }
 
 // Command parsers
+fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    let mut program_infos = Vec::<ProgramInfo>::new();
+
+    if let Some(values) = matches.values_of("bpf_program") {
+        let values: Vec<&str> = values.collect::<Vec<_>>();
+        for address_program in values.chunks(2) {
+            match address_program {
+                [address, program] => {
+                    let address = address
+                        .parse::<Pubkey>()
+                        .or_else(|_| read_keypair_file(address).map(|keypair| keypair.pubkey()));
+
+                    if address.is_err() {
+                        return Err(CliError::InvalidAddress);
+                    }
+
+                    let program_path = PathBuf::from(program);
+
+                    if !program_path.exists() {
+                        return Err(CliError::InvalidProgramFile);
+                    }
+
+                    program_infos.push(ProgramInfo {
+                        program_id: address.unwrap(),
+                        program_path,
+                    });
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    Ok(CliCommand::Localnet { program_infos })
+}
 
 fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
@@ -229,4 +263,10 @@ impl TryFrom<&JsonAccountMetaData> for AccountMeta {
             is_writable: value.is_writable,
         })
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ProgramInfo {
+    pub program_id: Pubkey,
+    pub program_path: PathBuf,
 }

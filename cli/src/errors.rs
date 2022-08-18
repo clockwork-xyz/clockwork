@@ -18,4 +18,8 @@ pub enum CliError {
     FailedTransaction(String),
     #[error("Failed to start localnet with error: {0}")]
     FailedLocalnet(String),
+    #[error("Invalid address")]
+    InvalidAddress,
+    #[error("Program file does not exist")]
+    InvalidProgramFile,
 }
