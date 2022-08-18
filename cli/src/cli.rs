@@ -14,9 +14,7 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        worker_fee: Option<u64>,
-        grace_period: Option<i64>,
-        spam_penalty: Option<u64>,
+        automation_fee: Option<u64>,
     },
 
     // Http
@@ -48,13 +46,8 @@ pub enum CliCommand {
     PoolGet,
 
     // Queue commands
-    QueueCreate {
-        name: String,
-        schedule: String,
-    },
     QueueGet {
         address: Pubkey,
-        task_id: Option<u64>,
     },
 
     // Registry
@@ -63,11 +56,6 @@ pub enum CliCommand {
     // Snapshot
     SnapshotGet {
         entry_id: Option<u64>,
-    },
-
-    // Task commands
-    TaskGet {
-        address: Pubkey,
     },
 }
 
@@ -243,34 +231,6 @@ pub fn app() -> Command<'static> {
                 .about("Manage your queues")
                 .arg_required_else_help(true)
                 .subcommand(
-                    Command::new("create")
-                        .about("Create a new queue")
-                        .arg(
-                            Arg::new("filepath")
-                                .long("filepath")
-                                .short('f')
-                                .takes_value(true)
-                                .required(true)
-                                .help("Filepath to the instruction to invoke"),
-                        )
-                        .arg(
-                            Arg::new("name")
-                                .long("name")
-                                .short('n')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The name of the queue"),
-                        )
-                        .arg(
-                            Arg::new("schedule")
-                                .long("schedule")
-                                .short('s')
-                                .takes_value(true)
-                                .required(false)
-                                .help("Schedule to invoke the instruction"),
-                        ),
-                )
-                .subcommand(
                     Command::new("get")
                         .about("Get a queue")
                         .arg(
@@ -311,20 +271,6 @@ pub fn app() -> Command<'static> {
                                         .help("The id of an entry in the snapshot"),
                                 ),
                         ),
-                ),
-        )
-        .subcommand(
-            Command::new("task")
-                .about("Manage an task")
-                .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("get").about("Get an task").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a task"),
-                    ),
                 ),
         )
 }

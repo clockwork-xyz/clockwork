@@ -114,8 +114,10 @@ impl QueueObserver {
             }
 
             info!(
-                "Indexes: immediate: {:#?} crankable: {:#?} cron: {:#?}",
-                this.immediate_queues, this.crankable_queues, this.cron_queues
+                "Queues – immediate: {:#?} crankable: {:#?} cron: {:#?}",
+                this.immediate_queues.len(),
+                this.crankable_queues.len(),
+                this.cron_queues.len()
             );
 
             // Do we need to index queues according to their upcoming timestamps?
@@ -131,10 +133,6 @@ impl QueueObserver {
         client: Arc<ClockworkClient>,
         slot: u64,
     ) -> Vec<(Pubkey, Transaction)> {
-        // TODO Build txs for immediate queues that have not been started
-
-        info!("Building queue txs...");
-
         // Get the clock for this slot
         let clock = match self.clocks.get(&slot) {
             None => return vec![],
@@ -143,6 +141,12 @@ impl QueueObserver {
 
         // Build the set of queue pubkeys that are executable.
         let crankable_queue_pubkeys = DashSet::<Pubkey>::new();
+
+        // Push in all of the immediate queues.
+        self.immediate_queues.retain(|queue_pubkey| {
+            crankable_queue_pubkeys.insert(*queue_pubkey);
+            false
+        });
 
         // Push in all of the crankable queues.
         self.crankable_queues.retain(|queue_pubkey| {
@@ -216,8 +220,10 @@ impl QueueObserver {
 
         ixs.push(crank_ix);
 
-        // Pack into tx
+        // TODO Pre-simulate other crank ixs.
         // TODO At what scale must ixs be chunked into separate txs?
+
+        // Pack into tx
         let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
         tx.sign(
             &[client.payer()],

@@ -121,7 +121,6 @@ fn start_test_validator(client: &Client) -> Result<Child> {
         .bpf_program(home_dir, clockwork_client::http::ID, "http")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
-        .bpf_program(home_dir, clockwork_client::scheduler::ID, "scheduler")
         .geyser_plugin_config(home_dir)
         .spawn()
         .expect("Failed to start local test validator");

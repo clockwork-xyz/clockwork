@@ -1,36 +1,33 @@
 use {
-    crate::{cli::CliError, parser::JsonInstructionData},
-    chrono::{prelude::*, Duration},
-    clockwork_client::scheduler::state::{Queue, Task},
+    crate::cli::CliError,
     clockwork_client::Client,
-    clockwork_cron::Schedule,
-    serde_json::json,
     solana_client::{
         pubsub_client::PubsubClient,
         rpc_config::{RpcTransactionLogsConfig, RpcTransactionLogsFilter},
     },
     solana_sdk::{
         commitment_config::CommitmentConfig,
-        instruction::Instruction,
         native_token::LAMPORTS_PER_SOL,
         pubkey::Pubkey,
         signature::{read_keypair_file, Keypair},
         signer::Signer,
     },
-    std::{collections::HashMap, ops::Div, str::FromStr},
+    std::{collections::HashMap, ops::Div},
 };
 
-pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError> {
+// TODO Redesign the benchmarking test for the crank program
+
+pub fn run(count: u32, parallelism: f32, _recurrence: u32) -> Result<(), CliError> {
     // Setup test
     let config_file = solana_cli_config::CONFIG_FILE.as_ref().unwrap().as_str();
     let solana_config = solana_cli_config::Config::load(config_file).unwrap();
     let payer = read_keypair_file(solana_config.keypair_path).unwrap();
     let client = Client::new(payer, solana_config.json_rpc_url);
     let num_tasks_parallel = (count as f32 * parallelism) as u32;
-    let num_tasks_serial = count - num_tasks_parallel;
+    let _num_tasks_serial = count - num_tasks_parallel;
 
-    let mut expected_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
-    let mut actual_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
+    // let mut expected_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
+    // let mut actual_process_ats = HashMap::<Pubkey, Vec<i64>>::new();
 
     // Fund authority account
     let authority = &Keypair::new();
@@ -38,67 +35,65 @@ pub fn run(count: u32, parallelism: f32, recurrence: u32) -> Result<(), CliError
         .airdrop(&authority.pubkey(), LAMPORTS_PER_SOL)
         .unwrap();
 
-    // TODO Schedule tasks asynchronously
-
     // Create queues for the parallel tasks
-    for i in 0..num_tasks_parallel {
-        let ix_a = create_queue_ix(
-            &authority,
-            recurrence,
-            &mut expected_process_ats,
-            i.to_string(),
-        );
-        let ix_b = create_task_ix(&authority, i.to_string(), 0);
-        client
-            .send_and_confirm(&[ix_a, ix_b], &[authority])
-            .unwrap();
-    }
+    // for i in 0..num_tasks_parallel {
+    //     let ix_a = create_queue_ix(
+    //         &authority,
+    //         recurrence,
+    //         &mut expected_process_ats,
+    //         i.to_string(),
+    //     );
+    //     let ix_b = create_task_ix(&authority, i.to_string(), 0);
+    //     client
+    //         .send_and_confirm(&[ix_a, ix_b], &[authority])
+    //         .unwrap();
+    // }
 
     // Create a queue for the serial tasks
-    if num_tasks_serial > 0 {
-        let ix_a = create_queue_ix(
-            &authority,
-            recurrence,
-            &mut expected_process_ats,
-            num_tasks_parallel.to_string(),
-        );
+    // if num_tasks_serial > 0 {
+    //     let ix_a = create_queue_ix(
+    //         &authority,
+    //         recurrence,
+    //         &mut expected_process_ats,
+    //         num_tasks_parallel.to_string(),
+    //     );
 
-        let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
+    //     let ixs: &mut Vec<Instruction> = &mut vec![ix_a];
 
-        for i in 0..num_tasks_serial {
-            ixs.push(create_task_ix(
-                &authority,
-                num_tasks_parallel.to_string(),
-                i.into(),
-            ));
-        }
-        client.send_and_confirm(ixs, &[authority]).unwrap();
-    }
+    //     for i in 0..num_tasks_serial {
+    //         ixs.push(create_task_ix(
+    //             &authority,
+    //             num_tasks_parallel.to_string(),
+    //             i.into(),
+    //         ));
+    //     }
+    //     client.send_and_confirm(ixs, &[authority]).unwrap();
+    // }
 
     // Collect and report test results
-    let num_expected_events = count * (recurrence + 1);
-    listen_for_events(
-        num_expected_events,
-        &expected_process_ats,
-        &mut actual_process_ats,
-    )?;
-    calculate_and_report_stats(
-        num_expected_events,
-        expected_process_ats,
-        actual_process_ats,
-    )?;
+    // let num_expected_events = count * (recurrence + 1);
+    // listen_for_events(
+    //     num_expected_events,
+    //     &expected_process_ats,
+    //     &mut actual_process_ats,
+    // )?;
+    // calculate_and_report_stats(
+    //     num_expected_events,
+    //     expected_process_ats,
+    //     actual_process_ats,
+    // )?;
 
     Ok(())
 }
 
-fn listen_for_events(
+fn _listen_for_events(
     num_expected_events: u32,
     _expected_process_ats: &HashMap<Pubkey, Vec<i64>>,
     _actual_process_ats: &mut HashMap<Pubkey, Vec<i64>>,
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
-        RpcTransactionLogsFilter::Mentions(vec![clockwork_client::scheduler::ID.to_string()]),
+        RpcTransactionLogsFilter::Mentions(vec![clockwork_client::crank::ID.to_string()]),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
@@ -146,82 +141,7 @@ fn listen_for_events(
     Ok(())
 }
 
-fn create_queue_ix(
-    authority: &Keypair,
-    recurrence: u32,
-    expected_exec: &mut HashMap<Pubkey, Vec<i64>>,
-    queue_name: String,
-) -> Instruction {
-    // Generate ix for new queue account
-    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name.clone());
-    let now: DateTime<Utc> = Utc::now();
-    let next_minute = now + Duration::minutes(1);
-    let schedule = format!(
-        "0-{} {} {} {} {} {} {}",
-        recurrence,
-        next_minute.minute(),
-        next_minute.hour(),
-        next_minute.day(),
-        next_minute.month(),
-        next_minute.weekday(),
-        next_minute.year()
-    );
-    let create_queue_ix = clockwork_client::scheduler::instruction::queue_new(
-        authority.pubkey(),
-        LAMPORTS_PER_SOL,
-        queue_name,
-        authority.pubkey(),
-        queue_pubkey,
-        schedule.clone(),
-    );
-
-    // Index expected process_at times
-    for datetime in Schedule::from_str(&schedule)
-        .unwrap()
-        .after(&Utc.from_utc_datetime(&Utc::now().naive_utc()))
-    {
-        expected_exec
-            .entry(queue_pubkey)
-            .or_insert(Vec::new())
-            .push(datetime.timestamp());
-    }
-
-    create_queue_ix
-}
-
-fn build_memo_ix(queue_pubkey: &Pubkey) -> Instruction {
-    let hello_world_memo = json!({
-      "program_id": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
-      "accounts": [
-        {
-          "pubkey": queue_pubkey.to_string(),
-          "is_signer": true,
-          "is_writable": false
-        }
-      ],
-      "data": [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
-    });
-    Instruction::try_from(
-        &serde_json::from_value::<JsonInstructionData>(hello_world_memo)
-            .expect("JSON was not well-formatted"),
-    )
-    .unwrap()
-}
-
-fn create_task_ix(authority: &Keypair, queue_name: String, task_id: u64) -> Instruction {
-    let queue_pubkey = Queue::pubkey(authority.pubkey(), queue_name);
-    let task_pubkey = Task::pubkey(queue_pubkey, task_id);
-    let memo_ix = build_memo_ix(&authority.pubkey());
-    clockwork_client::scheduler::instruction::task_new(
-        authority.pubkey(),
-        vec![memo_ix],
-        authority.pubkey(),
-        queue_pubkey,
-        task_pubkey,
-    )
-}
-
-fn calculate_and_report_stats(
+fn _calculate_and_report_stats(
     num_expected_events: u32,
     expecteds: HashMap<Pubkey, Vec<i64>>,
     actuals: HashMap<Pubkey, Vec<i64>>,
@@ -230,7 +150,7 @@ fn calculate_and_report_stats(
     let mut delays: Vec<i64> = vec![];
     let mut missing = 0;
     for (queue_pubkey, expecteds) in expecteds {
-        get_performance_data(queue_pubkey, expecteds, actuals.clone()).and_then(
+        _get_performance_data(queue_pubkey, expecteds, actuals.clone()).and_then(
             |(missing_data, delay_data)| {
                 missing += missing_data;
                 delay_data.iter().for_each(|d| delays.push(*d));
@@ -263,7 +183,7 @@ fn calculate_and_report_stats(
     Ok(())
 }
 
-fn get_performance_data(
+fn _get_performance_data(
     queue_pubkey: Pubkey,
     expecteds: Vec<i64>,
     actuals: HashMap<Pubkey, Vec<i64>>,

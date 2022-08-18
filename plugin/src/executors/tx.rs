@@ -18,7 +18,7 @@ use {
     tokio::runtime::Runtime,
 };
 
-static MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be retries before dropping
+static _MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be retries before dropping
 static TIMEOUT_PERIOD: u64 = 20; // If a signature does not have a status within this many slots, assume failure and retry
 static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
@@ -203,7 +203,7 @@ impl TxExecutor {
     //     slot: u64,
     // ) -> PluginResult<()> {
     //     self.spawn(|this| async move {
-    //         // Get this node's current position in the scheduler pool
+    //         // Get this node's current position in the crank pool
     //         let r_pool_positions = this.observers.pool.pool_positions.read().await;
     //         let pool_position = r_pool_positions.crank_pool_position.clone();
     //         drop(r_pool_positions);

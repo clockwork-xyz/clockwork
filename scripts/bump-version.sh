@@ -14,17 +14,17 @@ RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
 
 # Bump programs
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/crank/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/health/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/http/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/pool/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/scheduler/Cargo.toml
 
 # Bump inter-program dependencies
+sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/crank/Cargo.toml
+sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/crank/Cargo.toml
 sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^clockwork-scheduler =.*/clockwork-scheduler = { path = "..\/scheduler", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
-sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/scheduler/Cargo.toml
+sed -i '' -e 's/^clockwork-crank =.*/clockwork-crank = { path = "..\/crank", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
 sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/http/Cargo.toml
 
 # Bump clockwork-client
@@ -32,7 +32,7 @@ sed -i '' -e 's/^clockwork-health =.*/clockwork-health = { path = "..\/programs\
 sed -i '' -e 's/^clockwork-http =.*/clockwork-http = { path = "..\/programs\/http", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^clockwork-network =.*/clockwork-network = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/programs\/pool", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
-sed -i '' -e 's/^clockwork-scheduler =.*/clockwork-scheduler = { path = "..\/programs\/scheduler", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^clockwork-crank =.*/clockwork-crank = { path = "..\/programs\/crank", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' client/Cargo.toml
 
 # Bump clockwork-cli

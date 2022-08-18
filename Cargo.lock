@@ -884,7 +884,6 @@ dependencies = [
  "clockwork-http",
  "clockwork-network",
  "clockwork-pool",
- "clockwork-scheduler",
  "solana-client",
  "solana-sdk",
  "thiserror",
@@ -953,16 +952,6 @@ name = "clockwork-pool"
 version = "1.0.3"
 dependencies = [
  "anchor-lang",
-]
-
-[[package]]
-name = "clockwork-scheduler"
-version = "1.0.3"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-pool",
 ]
 
 [[package]]

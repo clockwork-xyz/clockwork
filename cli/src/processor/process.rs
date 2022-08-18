@@ -21,10 +21,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSet {
             admin,
-            worker_fee,
-            grace_period,
-            spam_penalty,
-        } => super::config::set(&client, admin, worker_fee, grace_period, spam_penalty),
+            automation_fee,
+        } => super::config::set(&client, admin, automation_fee),
         CliCommand::HttpRequestNew {
             api,
             id,
@@ -36,10 +34,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { address, amount } => super::node::stake(&client, address, amount),
         CliCommand::PoolGet => super::pool::get(&client),
-        CliCommand::QueueCreate { name, schedule } => super::queue::create(&client, name, schedule),
-        CliCommand::QueueGet { address, task_id } => super::queue::get(&client, &address, task_id),
+        CliCommand::QueueGet { address } => super::queue::get(&client, &address),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),
-        CliCommand::TaskGet { address } => super::task::get(&client, &address),
     }
 }
