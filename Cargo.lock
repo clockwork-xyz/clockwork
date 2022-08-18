@@ -845,6 +845,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-bench"
+version = "1.0.3"
+dependencies = [
+ "base64 0.13.0",
+ "chrono",
+ "clap 3.2.16",
+ "clockwork-client",
+ "clockwork-cron",
+ "serde",
+ "serde_json",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+ "version",
+]
+
+[[package]]
 name = "clockwork-cli"
 version = "1.0.3"
 dependencies = [
@@ -925,25 +944,6 @@ name = "clockwork-pool"
 version = "1.0.3"
 dependencies = [
  "anchor-lang",
-]
-
-[[package]]
-name = "clockwork-stress"
-version = "1.0.3"
-dependencies = [
- "base64 0.13.0",
- "chrono",
- "clap 3.2.16",
- "clockwork-client",
- "clockwork-cron",
- "serde",
- "serde_json",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-sdk",
- "thiserror",
- "version",
 ]
 
 [[package]]

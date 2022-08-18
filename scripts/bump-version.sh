@@ -10,7 +10,7 @@ read -r -p "    New version: " new_version
 # Build
 RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 
-# Bump clockwork-crono 
+# Bump clockwork-cron
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
 
 # Bump programs
@@ -33,22 +33,18 @@ sed -i '' -e 's/^clockwork-pool =.*/clockwork-pool = { path = "..\/programs\/poo
 sed -i '' -e 's/^clockwork-crank =.*/clockwork-crank = { path = "..\/programs\/crank", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' client/Cargo.toml
 
+# Bump clockwork-bench
+sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' bench/Cargo.toml
+sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/cron", version = "'${new_version}'" }/g' bench/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' bench/Cargo.toml
+
 # Bump clockwork-cli
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
 
-# Bump clockwork-metrics
-sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' metrics/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' metrics/Cargo.toml
-
 # Bump clockwork-plugin
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' plugin/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
-
-# Bump clockwork-stress
-sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' stress/Cargo.toml
-sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/cron", version = "'${new_version}'" }/g' stress/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' stress/Cargo.toml
 
 # Update version
 echo $new_version > VERSION

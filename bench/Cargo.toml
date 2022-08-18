@@ -1,7 +1,7 @@
 [package]
-name = "clockwork-stress"
+name = "clockwork-bench"
 version = "1.0.3"
-description = "A stress testing tool for Clockwork"
+description = "A benchmarking tool for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
@@ -26,5 +26,5 @@ thiserror = "1.0.30"
 version = "3.0.0"
 
 [[bin]]
-name = "clockwork_stress"
+name = "clockwork_bench"
 path = "src/main.rs"
