@@ -138,7 +138,7 @@ fn parse_string(arg: &str, matches: &ArgMatches) -> Result<String, CliError> {
         .to_string())
 }
 
-pub fn parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
+pub fn _parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
     Ok(parse_string(arg, matches)?
         .parse::<i64>()
         .map_err(|_err| CliError::BadParameter(arg.into()))

@@ -55,13 +55,13 @@ pub fn set(
         },
     };
 
-    // let ix = clockwork_client::crank::instruction::admin_config_update(
-    //     client.payer_pubkey(),
-    //     config_pubkey,
-    //     settings,
-    // );
+    let ix = clockwork_client::crank::instruction::config_update(
+        client.payer_pubkey(),
+        config_pubkey,
+        settings,
+    );
 
-    // client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
 }
