@@ -3,14 +3,14 @@ use {
         prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
     },
-    std::convert::TryFrom,
+    std::{convert::TryFrom, hash::Hash},
 };
 
 /**
  * InstructionData
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
 pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
@@ -70,7 +70,7 @@ impl TryFrom<Vec<u8>> for InstructionData {
  * AccountMetaData
  */
 
-#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
+#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
 pub struct AccountMetaData {
     /// An account's public key
     pub pubkey: Pubkey,

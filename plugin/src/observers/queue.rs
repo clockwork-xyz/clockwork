@@ -1,4 +1,10 @@
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
 use {
+    crate::executors::tx::TxType,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
         crank::state::{ExecContext, Queue, Trigger},
@@ -47,6 +53,10 @@ impl QueueObserver {
             runtime,
         }
     }
+
+    /**
+     * Account observers
+     */
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
@@ -120,19 +130,19 @@ impl QueueObserver {
                 this.cron_queues.len()
             );
 
-            // Do we need to index queues according to their upcoming timestamps?
-            // And then re-index them once a new exec context is set?
-            // YES.
-
             Ok(())
         })
     }
+
+    /**
+     * Tx builders
+     */
 
     pub async fn build_queue_txs(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         slot: u64,
-    ) -> Vec<(Pubkey, Transaction)> {
+    ) -> Vec<(Transaction, TxType)> {
         // Get the clock for this slot
         let clock = match self.clocks.get(&slot) {
             None => return vec![],
@@ -169,15 +179,11 @@ impl QueueObserver {
         let txs = crankable_queue_pubkeys
             .iter()
             .filter_map(|queue_pubkey_ref| {
-                match self
-                    .clone()
+                self.clone()
                     .build_queue_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
-                {
-                    Err(_) => None,
-                    Ok(tx) => Some((queue_pubkey_ref.key().clone(), tx)),
-                }
+                    .ok()
             })
-            .collect::<Vec<(Pubkey, Transaction)>>();
+            .collect::<Vec<(Transaction, TxType)>>();
 
         txs
     }
@@ -186,7 +192,7 @@ impl QueueObserver {
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         queue_pubkey: Pubkey,
-    ) -> PluginResult<Transaction> {
+    ) -> PluginResult<(Transaction, TxType)> {
         // Get the queue
         let queue = client.get::<Queue>(&queue_pubkey).unwrap();
 
@@ -205,7 +211,7 @@ impl QueueObserver {
             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
 
         // Other accounts
-        for acc in inner_ix.accounts {
+        for acc in inner_ix.clone().accounts {
             // Inject the worker pubkey as the Clockwork "payer" account
             let mut acc_pubkey = acc.pubkey;
             let is_payer = acc_pubkey == clockwork_client::crank::payer::ID;
@@ -232,8 +238,23 @@ impl QueueObserver {
             })?,
         );
 
-        Ok(tx)
+        // Create a hash for the crank attempt
+        let hasher = &mut DefaultHasher::new();
+        inner_ix.hash(hasher);
+        queue.exec_context.hash(hasher);
+
+        Ok((
+            tx,
+            TxType::Queue {
+                queue_pubkey,
+                crank_hash: hasher.finish(),
+            },
+        ))
     }
+
+    /**
+     * Runtime helpers
+     */
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
         self: &Arc<Self>,
