@@ -9,8 +9,6 @@ sleep 25
 cargo publish -p clockwork-crank
 sleep 25
 cargo publish -p clockwork-network
-sleep 25
-cargo publish -p clockwork-health
 sleep 25 
 cargo publish -p clockwork-client
 sleep 25

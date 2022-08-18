@@ -117,7 +117,6 @@ fn start_test_validator(client: &Client) -> Result<Child> {
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::crank::ID, "crank")
-        .bpf_program(home_dir, clockwork_client::health::ID, "health")
         .bpf_program(home_dir, clockwork_client::http::ID, "http")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")

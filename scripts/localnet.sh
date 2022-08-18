@@ -11,7 +11,6 @@ solana config set --url localhost
 clear
 solana-test-validator -r \
     --bpf-program target/deploy/clockwork_crank-keypair.json target/deploy/clockwork_crank.so \
-    --bpf-program target/deploy/clockwork_health-keypair.json target/deploy/clockwork_health.so \
     --bpf-program target/deploy/clockwork_http-keypair.json target/deploy/clockwork_http.so \
     --bpf-program target/deploy/clockwork_network-keypair.json target/deploy/clockwork_network.so \
     --bpf-program target/deploy/clockwork_pool-keypair.json target/deploy/clockwork_pool.so \
