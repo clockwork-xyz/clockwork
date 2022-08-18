@@ -109,14 +109,14 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
 
     // Create a queue to take snapshots of the registry
     let bump = *ctx.bumps.get("authority").unwrap();
-    let snapshot_start_ix = Instruction {
+    let snapshot_kickoff_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority.key(), false),
             AccountMeta::new(registry.key(), false),
             AccountMeta::new_readonly(snapshot_queue.key(), true),
         ],
-        data: clockwork_crank::anchor::sighash("snapshot_queue_kickoff").into(),
+        data: clockwork_crank::anchor::sighash("snapshot_kickoff").into(),
     };
     clockwork_crank::cpi::queue_create(
         CpiContext::new_with_signer(
@@ -130,7 +130,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
         LAMPORTS_PER_SOL,
-        snapshot_start_ix.into(),
+        snapshot_kickoff_ix.into(),
         "snapshot".into(),
         Trigger::Cron { schedule: "0 * * * * * *".into() }
     )?;

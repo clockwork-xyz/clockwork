@@ -108,7 +108,7 @@ impl PoolObserver {
             this.pool_forecasts.retain(|slot, pool| {
                 if *slot == confirmed_slot {
                     *w_pool_positions = PoolPositions {
-                        scheduler_pool_position: PoolPosition {
+                        crank_pool_position: PoolPosition {
                             current_position: pool
                                 .workers
                                 .iter()
@@ -157,7 +157,7 @@ impl PoolObserver {
         // Exit early this this node is not in the scheduler pool AND
         //  we are still within the pool's grace period.
         if r_pool_positions
-            .scheduler_pool_position
+            .crank_pool_position
             .current_position
             .is_none()
             && slot < target_slot + GRACE_PERIOD
@@ -249,13 +249,13 @@ pub struct PoolPosition {
 
 #[derive(Clone)]
 pub struct PoolPositions {
-    pub scheduler_pool_position: PoolPosition,
+    pub crank_pool_position: PoolPosition,
 }
 
 impl Default for PoolPositions {
     fn default() -> Self {
         PoolPositions {
-            scheduler_pool_position: PoolPosition {
+            crank_pool_position: PoolPosition {
                 current_position: None,
                 workers: vec![],
             },

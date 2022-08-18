@@ -32,9 +32,6 @@ pub enum ClockworkError {
     #[msg("You are not the authority of this queue")]
     NotQueueAuthority,
 
-    #[msg("Cannot resize the queue account")]
-    ResizeTooLarge,
-
     #[msg("Data cannot be saved at a worker address")]
     WorkerDataNotEmpty,
 }

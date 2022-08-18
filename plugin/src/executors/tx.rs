@@ -1,5 +1,3 @@
-use clockwork_client::crank::state::ExecContext;
-
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     clockwork_client::Client as ClockworkClient,
@@ -99,17 +97,15 @@ impl TxExecutor {
     }
 
     async fn process_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        // let r_pool_positions = self.observers.pool.pool_positions.read().await;
-        // let pool_position = r_pool_positions.scheduler_pool_position.clone();
-        // drop(r_pool_positions);
-
-        // Exit early this this node is not in the scheduler pool AND
-        //  we are still within the queue's grace period.
-        // if pool_position.current_position.is_none() {
-        //     return Err(GeyserPluginError::Custom(
-        //         "This node is not an authorized worker".into(),
-        //     ));
-        // }
+        // Exit early if we are not in the worker pool.
+        let r_pool_positions = self.observers.pool.pool_positions.read().await;
+        let pool_position = r_pool_positions.crank_pool_position.clone();
+        drop(r_pool_positions);
+        if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
+            return Err(GeyserPluginError::Custom(
+                "This node is not an authorized worker".into(),
+            ));
+        }
 
         self.observers
             .queue
@@ -209,7 +205,7 @@ impl TxExecutor {
     //     self.spawn(|this| async move {
     //         // Get this node's current position in the scheduler pool
     //         let r_pool_positions = this.observers.pool.pool_positions.read().await;
-    //         let pool_position = r_pool_positions.scheduler_pool_position.clone();
+    //         let pool_position = r_pool_positions.crank_pool_position.clone();
     //         drop(r_pool_positions);
 
     //         // Process all attempts in the retry queue

@@ -6,7 +6,7 @@ pub mod node_stake;
 pub mod rotator_turn;
 pub mod snapshot_close;
 pub mod snapshot_create;
-pub mod snapshot_queue_kickoff;
+pub mod snapshot_kickoff;
 pub mod snapshot_rotate;
 
 pub use entry_close::*;
@@ -17,5 +17,5 @@ pub use node_stake::*;
 pub use rotator_turn::*;
 pub use snapshot_close::*;
 pub use snapshot_create::*;
-pub use snapshot_queue_kickoff::*;
+pub use snapshot_kickoff::*;
 pub use snapshot_rotate::*;

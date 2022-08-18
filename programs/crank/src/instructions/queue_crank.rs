@@ -3,11 +3,34 @@ use {
     anchor_lang::{prelude::*, system_program},
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    std::str::FromStr,
+    clockwork_pool::state::{Pool, SEED_POOL},
+    std::{mem::size_of, str::FromStr},
 };
 
 #[derive(Accounts)]
-pub struct QueueCrank<'info> {    
+pub struct QueueCrank<'info> {
+    #[account(seeds = [SEED_CONFIG], bump)]
+    pub config: Account<'info, Config>,
+
+    #[account(
+        init_if_needed,
+        seeds = [
+            SEED_FEE,
+            worker.key().as_ref()
+        ],
+        bump,
+        payer = worker,
+        space = 8 + size_of::<Fee>(),
+    )]
+    pub fee: Account<'info, Fee>,
+
+    #[account(
+        seeds = [SEED_POOL],
+        bump,
+        seeds::program = clockwork_pool::ID,
+    )]
+    pub pool: Account<'info, Pool>,
+
     #[account(
         mut,
         seeds = [
@@ -19,12 +42,18 @@ pub struct QueueCrank<'info> {
     )]
     pub queue: Account<'info, Queue>,
 
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+
     #[account(mut)]
     pub worker: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // Get accounts
+    let config = &ctx.accounts.config;
+    let fee = &mut ctx.accounts.fee;
+    let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
     let worker = &ctx.accounts.worker;
 
@@ -42,13 +71,10 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                         }
                     }
                 };
-                msg!("reference_timestamp: {:#?} schedule: {:#?}", reference_timestamp, schedule);
 
                 // Verify the current time is greater than or equal to the target timestamp.
                 let target_timestamp = next_moment(reference_timestamp, schedule).ok_or(ClockworkError::TriggerNotMet)?;
                 let current_timestamp = Clock::get().unwrap().unix_timestamp;
-
-                msg!("current_timestamp: {:#?} target_timestamp: {:#?}", current_timestamp, target_timestamp);
                 require!(current_timestamp >= target_timestamp, ClockworkError::TriggerNotMet);
 
                 // Set the exec context.
@@ -66,11 +92,17 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     let bump = ctx.bumps.get("queue").unwrap();
     queue.crank(ctx.remaining_accounts, *bump, worker)?;
     
-    // TODO Pay fees to worker
-    // TODO Dynamically resize queue account, if neede
+    // If worker is in the pool, pay automation fees.
+    let is_authorized_worker = pool.clone().into_inner().workers.contains(&worker.key());
+    if is_authorized_worker {
+        fee.pay_to_worker(config.automation_fee, queue)?;
+    } else {
+        fee.pay_to_admin(config.automation_fee, queue)?;
+    }
 
     Ok(())
 }
+
 
 fn next_moment(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
@@ -83,3 +115,4 @@ fn next_moment(after: i64, schedule: String) -> Option<i64> {
         .next()
         .map(|datetime| datetime.timestamp())
 }
+

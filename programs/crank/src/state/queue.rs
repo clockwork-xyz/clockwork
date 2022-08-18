@@ -1,12 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
 use {
     super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
         solana_program::{
-            entrypoint::MAX_PERMITTED_DATA_INCREASE,
             instruction::Instruction,
             program::{get_return_data, invoke_signed},
         },

@@ -5,6 +5,8 @@ use {
 
 pub const SEED_CONFIG: &[u8] = b"config";
 
+static DEFAULT_AUTOMATION_FEE: u64 = 1_000;
+
 /**
  * Config
  */
@@ -13,6 +15,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
+    pub automation_fee: u64,
 }
 
 impl Config {
@@ -35,6 +38,7 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
+    pub automation_fee: u64,
 }
 
 /**
@@ -50,11 +54,13 @@ pub trait ConfigAccount {
 impl ConfigAccount for Account<'_, Config> {
     fn init(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
+        self.automation_fee = DEFAULT_AUTOMATION_FEE;
         Ok(())
     }
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
+        self.automation_fee = settings.automation_fee;
         Ok(())
     }
 }

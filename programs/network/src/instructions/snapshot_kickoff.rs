@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct SnapshotQueueKickoff<'info> {
+pub struct SnapshotKickoff<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Box<Account<'info, Authority>>,
 
@@ -26,7 +26,7 @@ pub struct SnapshotQueueKickoff<'info> {
     pub snapshot_queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<SnapshotQueueKickoff>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<SnapshotKickoff>) -> Result<CrankResponse> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let registry = &mut ctx.accounts.registry;
