@@ -257,6 +257,7 @@ impl TxExecutor {
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        info!("Simulating tx... {:#?}", tx);
         self.tpu_client
             .rpc_client()
             .simulate_transaction(tx)
@@ -276,6 +277,7 @@ impl TxExecutor {
     }
 
     fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        info!("Submitting tx... {:#?}", tx);
         if !self.tpu_client.send_transaction(tx) {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
