@@ -1,16 +1,13 @@
 use {
     crate::state::*,
-    anchor_lang::prelude::*,
-    clockwork_scheduler::{response::TaskResponse, state::Queue},
+    anchor_lang::{prelude::*, solana_program::instruction::Instruction},
+    clockwork_crank::state::{CrankResponse, Queue},
 };
 
 #[derive(Accounts)]
 pub struct EntryClose<'info> {
     #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
-
-    #[account(signer, has_one = authority, constraint = cleanup_queue.name.eq("cleanup"))]
-    pub cleanup_queue: Account<'info, Queue>,
 
     #[account(
         mut,
@@ -31,6 +28,7 @@ pub struct EntryClose<'info> {
             snapshot.id.to_be_bytes().as_ref()
         ],
         bump,
+        constraint = snapshot.status == SnapshotStatus::Closing,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -38,12 +36,12 @@ pub struct EntryClose<'info> {
     pub snapshot_queue: Account<'info, Queue>,
 }
 
-pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
+pub fn handler(ctx: Context<EntryClose>) -> Result<CrankResponse> {
     // Get accounts
+    let authority = &ctx.accounts.authority;
     let entry = &mut ctx.accounts.entry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_queue = &mut ctx.accounts.snapshot_queue;
-
     msg!(
         "Closing entry {} of snapshot {} in status {:#?}",
         entry.id,
@@ -53,12 +51,11 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
 
     // If snapshot is not closing, then noop and try again on next invocation.
     if snapshot.status != SnapshotStatus::Closing {
-        return Ok(TaskResponse::default());
+        return Ok(CrankResponse::default());
     }
 
     // Close the entry account.
     let entry_id = entry.id.clone();
-    let entry_pubkey = entry.key().clone();
     let entry_lamports = entry.to_account_info().lamports();
     **entry.to_account_info().lamports.borrow_mut() = 0;
     **snapshot_queue.to_account_info().lamports.borrow_mut() = snapshot_queue
@@ -68,7 +65,6 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
         .unwrap();
 
     // If this is the last entry of the snapshot, then also close the snapshot account.
-    let snapshot_id = snapshot.id.clone();
     let snapshot_pubkey = snapshot.key().clone();
     let snapshot_node_count = snapshot.node_count.clone();
     if entry_id == snapshot_node_count.checked_sub(1).unwrap() {
@@ -82,19 +78,25 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<TaskResponse> {
     }
 
     // Use dynamic accounts to run with the next snapshot on the next invocation
-    let next_snapshot_pubkey = Snapshot::pubkey(snapshot_id.checked_add(1).unwrap());
-    let next_entry_pubkey = SnapshotEntry::pubkey(next_snapshot_pubkey, entry_id);
-    Ok(TaskResponse {
-        dynamic_accounts: Some(
-            ctx.accounts
-                .to_account_metas(None)
-                .iter()
-                .map(|acc| match acc.pubkey {
-                    _ if acc.pubkey == entry_pubkey => next_entry_pubkey,
-                    _ if acc.pubkey == snapshot_pubkey => next_snapshot_pubkey,
-                    _ => acc.pubkey,
-                })
-                .collect(),
-        ),
-    })
+    let next_instruction = if entry_id < snapshot.node_count.checked_sub(1).unwrap() {
+        let next_entry_pubkey =
+            SnapshotEntry::pubkey(snapshot_pubkey, entry.id.checked_add(1).unwrap());
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: vec![
+                    AccountMeta::new_readonly(authority.key(), false),
+                    AccountMeta::new(next_entry_pubkey, false),
+                    AccountMeta::new(snapshot.key(), false),
+                    AccountMeta::new(snapshot_queue.key(), false),
+                ],
+                data: clockwork_crank::anchor::sighash("entry_close").into(),
+            }
+            .into(),
+        )
+    } else {
+        None
+    };
+
+    Ok(CrankResponse { next_instruction })
 }

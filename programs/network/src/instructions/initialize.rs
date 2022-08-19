@@ -1,3 +1,5 @@
+use clockwork_crank::state::Trigger;
+
 use {
     crate::state::*,
     anchor_lang::{
@@ -5,7 +7,7 @@ use {
         solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL, system_program}
     },
     anchor_spl::token::Mint,
-    clockwork_scheduler::state::{SEED_QUEUE, SEED_TASK},
+    clockwork_crank::state::{SEED_QUEUE},
     std::mem::size_of,
 };
 
@@ -23,27 +25,8 @@ pub struct Initialize<'info> {
     )]
     pub authority: Account<'info, Authority>,
 
-    #[account(
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "cleanup".as_bytes()
-        ], 
-        seeds::program = clockwork_scheduler::ID,
-        bump, 
-    )]
-    pub cleanup_queue: SystemAccount<'info>,
-
-    #[account(
-        seeds = [
-            SEED_TASK, 
-            cleanup_queue.key().as_ref(), 
-            (0 as u64).to_be_bytes().as_ref()
-        ], 
-        seeds::program = clockwork_scheduler::ID,
-        bump, 
-    )]
-    pub cleanup_task: SystemAccount<'info>,
+    #[account(address = clockwork_crank::ID)]
+    pub clockwork_program: Program<'info, clockwork_crank::program::ClockworkCrank>,
 
     #[account(
         init,
@@ -74,9 +57,6 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Registry>(),
     )]
     pub registry: Account<'info, Registry>,
- 
-    #[account(address = clockwork_scheduler::ID)]
-    pub scheduler_program: Program<'info, clockwork_scheduler::program::ClockworkScheduler>,
 
     #[account(
         init,
@@ -96,21 +76,10 @@ pub struct Initialize<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_scheduler::ID,
+        seeds::program = clockwork_crank::ID,
         bump
     )]
     pub snapshot_queue: SystemAccount<'info>,
-
-    #[account(
-        seeds = [
-            SEED_TASK, 
-            snapshot_queue.key().as_ref(), 
-            (0 as u64).to_be_bytes().as_ref()
-        ], 
-        seeds::program = clockwork_scheduler::ID,
-        bump
-    )]
-    pub snapshot_task: SystemAccount<'info>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,    
@@ -120,16 +89,13 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Get accounts
     let admin = &ctx.accounts.admin;
     let authority = &ctx.accounts.authority;
-    let cleanup_queue = &ctx.accounts.cleanup_queue;
-    let cleanup_task = &ctx.accounts.cleanup_task;
+    let clockwork_program = &ctx.accounts.clockwork_program;
     let config = &mut ctx.accounts.config;
     let rotator = &mut ctx.accounts.rotator;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
-    let scheduler_program = &ctx.accounts.scheduler_program;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_queue = &ctx.accounts.snapshot_queue;
-    let snapshot_task = &ctx.accounts.snapshot_task;
     let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
@@ -143,10 +109,19 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
 
     // Create a queue to take snapshots of the registry
     let bump = *ctx.bumps.get("authority").unwrap();
-    clockwork_scheduler::cpi::queue_new(
+    let snapshot_kickoff_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(authority.key(), false),
+            AccountMeta::new(registry.key(), false),
+            AccountMeta::new_readonly(snapshot_queue.key(), true),
+        ],
+        data: clockwork_crank::anchor::sighash("snapshot_kickoff").into(),
+    };
+    clockwork_crank::cpi::queue_create(
         CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            clockwork_scheduler::cpi::accounts::QueueNew {
+            clockwork_program.to_account_info(),
+            clockwork_crank::cpi::accounts::QueueCreate {
                 authority: authority.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),
@@ -155,95 +130,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
         LAMPORTS_PER_SOL,
+        snapshot_kickoff_ix.into(),
         "snapshot".into(),
-        "0 * * * * * *".into()
+        Trigger::Cron { schedule: "0 * * * * * *".into() }
     )?;
-
-    // Add an task to the snapshot queue to kick things off
-    let next_snapshot_pubkey = Snapshot::pubkey(1);
-    let snapshot_start_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new_readonly(config.key(), false),
-            AccountMeta::new(clockwork_scheduler::payer::ID, true),
-            AccountMeta::new_readonly(snapshot_queue.key(), true),
-            AccountMeta::new(registry.key(), false),
-            AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(system_program.key(), false),
-        ],
-        data: clockwork_scheduler::anchor::sighash("snapshot_start").into(),
-    };
-    let snapshot_rotate_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new_readonly(config.key(), false),
-            AccountMeta::new(snapshot.key(), false),
-            AccountMeta::new(next_snapshot_pubkey, false),
-            AccountMeta::new_readonly(snapshot_queue.key(), true),
-            AccountMeta::new(registry.key(), false),
-        ],
-        data: clockwork_scheduler::anchor::sighash("snapshot_rotate").into(),
-    };
-    clockwork_scheduler::cpi::task_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            clockwork_scheduler::cpi::accounts::TaskNew {
-                authority: authority.to_account_info(),
-                payer: admin.to_account_info(),
-                queue: snapshot_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-                task: snapshot_task.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]],
-        ),
-        vec![snapshot_start_ix.into(), snapshot_rotate_ix.into()],
-    )?;
-
-    // Create a queue to cleanup old snapshots
-    clockwork_scheduler::cpi::queue_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            clockwork_scheduler::cpi::accounts::QueueNew {
-                authority: authority.to_account_info(),
-                payer: admin.to_account_info(),
-                queue: cleanup_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]]
-        ),
-        LAMPORTS_PER_SOL,
-        "cleanup".into(),
-        "0 * * * * * *".into()
-    )?;
-
-    // Create task to close archived snapshot
-    let snapshot_close_ix = Instruction {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(authority.key(), false),
-            AccountMeta::new(cleanup_queue.key(), true),
-            AccountMeta::new(snapshot.key(), false),
-            AccountMeta::new(snapshot_queue.key(), false),
-        ],
-        data: clockwork_scheduler::anchor::sighash("snapshot_close").into(),
-    };
-    clockwork_scheduler::cpi::task_new(
-        CpiContext::new_with_signer(
-            scheduler_program.to_account_info(),
-            clockwork_scheduler::cpi::accounts::TaskNew {
-                authority: authority.to_account_info(),
-                payer: admin.to_account_info(),
-                queue: cleanup_queue.to_account_info(),
-                system_program: system_program.to_account_info(),
-                task: cleanup_task.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]],
-        ),
-        vec![snapshot_close_ix.into()],
-    )?;
-
 
     Ok(())
 }

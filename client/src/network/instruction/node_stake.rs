@@ -15,19 +15,19 @@ pub fn node_stake(
     node: Pubkey,
     mint: Pubkey,
     signer: Pubkey,
-    worker: Pubkey,
 ) -> Instruction {
+    let signer_tokens = get_associated_token_address(&signer, &mint);
+    let stake_pubkey = get_associated_token_address(&node, &mint);
     Instruction {
         program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new_readonly(config, false),
             AccountMeta::new_readonly(node, false),
-            AccountMeta::new(get_associated_token_address(&node, &mint), false),
+            AccountMeta::new(stake_pubkey, false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(token::ID, false),
-            AccountMeta::new(get_associated_token_address(&signer, &mint), false),
-            AccountMeta::new_readonly(worker, false),
+            AccountMeta::new(signer_tokens, false),
         ],
         data: clockwork_network::instruction::NodeStake { amount }.data(),
     }

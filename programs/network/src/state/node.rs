@@ -13,15 +13,15 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
+    pub authority: Pubkey, // The node's owner (controls the stake)
     pub id: u64,
-    pub owner: Pubkey,  // The node's owner gossip network (controls the stake)
     pub stake: Pubkey,  // The associated token account
-    pub worker: Pubkey, // The node's worker address used to sign txs
+    pub worker: Pubkey, // The node's worker address (used to sign txs)
 }
 
 impl Node {
-    pub fn pubkey(worker: Pubkey) -> Pubkey {
-        Pubkey::find_program_address(&[SEED_NODE, worker.as_ref()], &crate::ID).0
+    pub fn pubkey(id: u64) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_NODE, id.to_be_bytes().as_ref()], &crate::ID).0
     }
 }
 
@@ -39,8 +39,8 @@ impl TryFrom<Vec<u8>> for Node {
 pub trait NodeAccount {
     fn new(
         &mut self,
+        authority: &mut Signer,
         id: u64,
-        owner: &mut Signer,
         stake: &mut Account<TokenAccount>,
         worker: &Signer,
     ) -> Result<()>;
@@ -49,13 +49,13 @@ pub trait NodeAccount {
 impl NodeAccount for Account<'_, Node> {
     fn new(
         &mut self,
+        authority: &mut Signer,
         id: u64,
-        owner: &mut Signer,
         stake: &mut Account<TokenAccount>,
         worker: &Signer,
     ) -> Result<()> {
+        self.authority = authority.key();
         self.id = id;
-        self.owner = owner.key();
         self.stake = stake.key();
         self.worker = worker.key();
         Ok(())

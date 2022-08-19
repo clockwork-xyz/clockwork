@@ -1,10 +1,8 @@
-use crate::parser::ProgramInfo;
-
 #[allow(deprecated)]
 use {
-    crate::errors::CliError,
+    crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::Client,
+    clockwork_client::{network::state::Node, Client},
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -103,13 +101,8 @@ fn register_worker(client: &Client) -> Result<()> {
 }
 
 fn stake_worker(client: &Client) -> Result<()> {
-    let cfg = get_clockwork_config()?;
-    let keypath = format!(
-        "{}/lib/clockwork-worker-keypair.json",
-        cfg["home"].as_str().unwrap()
-    );
-    let worker_keypair = read_keypair_file(keypath).unwrap();
-    super::node::stake(client, 100, worker_keypair.pubkey())?;
+    let node_pubkey = Node::pubkey(0);
+    super::node::stake(client, node_pubkey, 100)?;
     Ok(())
 }
 
@@ -121,11 +114,10 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     // TODO Build a custom plugin config
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
-        .bpf_program(home_dir, clockwork_client::health::ID, "health")
+        .bpf_program(home_dir, clockwork_client::crank::ID, "crank")
         .bpf_program(home_dir, clockwork_client::http::ID, "http")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
-        .bpf_program(home_dir, clockwork_client::scheduler::ID, "scheduler")
         .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)
         .spawn()
