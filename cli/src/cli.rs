@@ -1,3 +1,4 @@
+use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
 use clockwork_client::http::state::HttpMethod;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
@@ -31,7 +32,9 @@ pub enum CliCommand {
     },
 
     // Localnet commands
-    Localnet,
+    Localnet {
+        program_infos: Vec<ProgramInfo>,
+    },
 
     // Node commands
     NodeRegister {
@@ -178,7 +181,20 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(
             Command::new("localnet")
-                .about("Launch a local Clockwork node for development and testing"),
+                .about("Launch a local Clockwork node for development and testing")
+                .arg(
+                    Arg::with_name("bpf_program")
+                        .long("bpf-program")
+                        .value_names(&["ADDRESS_OR_KEYPAIR", "BPF_PROGRAM.SO"])
+                        .takes_value(true)
+                        .number_of_values(2)
+                        .multiple(true)
+                        .help(
+                            "Add a BPF program to the genesis configuration. \
+                       If the ledger already exists then this parameter is silently ignored. \
+                       First argument can be a pubkey string or path to a keypair",
+                        ),
+                ),
         )
         .subcommand(
             Command::new("node")

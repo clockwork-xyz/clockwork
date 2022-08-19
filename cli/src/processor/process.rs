@@ -30,7 +30,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             route,
         } => super::http::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
-        CliCommand::Localnet {} => super::localnet::start(&client),
+        CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { address, amount } => super::node::stake(&client, address, amount),
         CliCommand::PoolGet => super::pool::get(&client),
