@@ -18,9 +18,9 @@ use {
     tokio::runtime::Runtime,
 };
 
-static MAX_RETRIES: u64 = 2; // The maximum number of times a failed tx will be retries before dropping
-static TIMEOUT_PERIOD: u64 = 20; // If a signature does not have a status within this many slots, assume failure and retry
-static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
+static MAX_RETRIES: u64 = 10; // The maximum number of times a failed tx will be retries before dropping
+static TIMEOUT_PERIOD: u64 = 30; // If a signature does not have a status within this many slots, assume failure and retry
+static POLLING_INTERVAL: u64 = 2; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
 /**
  * TxExecutor
