@@ -22,7 +22,11 @@ pub struct QueueCreate<'info> {
         ],
         bump,
         payer = payer,
-        space = 8 + size_of::<Queue>() + size_of_val(&instruction) + size_of_val(&name) + size_of_val(&trigger),
+        space = 8
+            + size_of::<Queue>()
+            + size_of_val(&name)
+            + size_of_val(&trigger)
+            + instruction.bytes_size()
     )]
     pub queue: Account<'info, Queue>,
 

@@ -1,5 +1,5 @@
 use {
-    super::{ClockData, InstructionData},
+    super::{BytesSize, ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
@@ -7,7 +7,7 @@ use {
             instruction::Instruction,
             program::{get_return_data, invoke_signed},
         },
-        AnchorDeserialize,
+        AnchorDeserialize, AnchorSerialize,
     },
     std::{
         convert::TryFrom,
@@ -154,14 +154,17 @@ impl QueueAccount for Account<'_, Queue> {
             }
         };
 
-        // Realloc the queue account.
+        // Realloc the queue account
         let new_size = 8
             + size_of::<Queue>()
-            + size_of_val(&self.first_instruction)
+            + size_of_val(&self.exec_context)
             + size_of_val(&self.name)
-            + size_of_val(&self.next_instruction)
             + size_of_val(&self.trigger)
-            + 256;
+            + self.first_instruction.bytes_size()
+            + match self.next_instruction.clone() {
+                None => size_of_val(&self.next_instruction),
+                Some(next_instruction) => next_instruction.bytes_size(),
+            };
         self.to_account_info().realloc(new_size, false)?;
 
         Ok(())
