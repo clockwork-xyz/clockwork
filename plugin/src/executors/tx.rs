@@ -18,9 +18,9 @@ use {
     tokio::runtime::Runtime,
 };
 
-static MAX_RETRIES: u64 = 10; // The maximum number of times a failed tx will be retries before dropping
+static MAX_RETRIES: u64 = 8; // The maximum number of times a failed tx will be retries before dropping
 static TIMEOUT_PERIOD: u64 = 30; // If a signature does not have a status within this many slots, assume failure and retry
-static POLLING_INTERVAL: u64 = 2; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
+static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
 /**
  * TxExecutor
@@ -175,6 +175,8 @@ impl TxExecutor {
                     .unwrap_or(false)
             });
 
+            info!("Num retries: {}", retry_attempts.len());
+
             this.process_retry_attempts(retry_attempts, confirmed_slot)
                 .await?;
 
@@ -198,6 +200,7 @@ impl TxExecutor {
                 .iter()
                 .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
             {
+                info!("Processing retry: {:#?}", tx_attempt.key());
                 match tx_attempt.tx_type {
                     TxType::Queue {
                         queue_pubkey,
