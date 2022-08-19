@@ -175,17 +175,15 @@ impl QueueObserver {
             !is_due
         });
 
-        // Build the set of exec transactions
-        let txs = crankable_queue_pubkeys
+        // Build the set of crank transactions
+        crankable_queue_pubkeys
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 self.clone()
                     .build_queue_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
                     .ok()
             })
-            .collect::<Vec<(Transaction, TxType)>>();
-
-        txs
+            .collect::<Vec<(Transaction, TxType)>>()
     }
 
     pub fn build_queue_crank_tx(
