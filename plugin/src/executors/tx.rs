@@ -211,6 +211,7 @@ impl TxExecutor {
                             .clone()
                             .build_queue_crank_tx(this.clockwork_client.clone(), queue_pubkey)
                             .and_then(|(tx, tx_type)| {
+                                info!("Executing retry: {:#?}", tx_attempt);
                                 this.clone().execute_tx(
                                     Some(tx_attempt.clone()),
                                     slot,
@@ -297,6 +298,8 @@ impl TxExecutor {
             slot, sig, tx_attempt.tx_type, tx_attempt.attempt_count
         );
         self.tx_attempts.insert(tx_type, tx_attempt);
+        info!("Attempts: {:#?}", self.tx_attempts);
+
         // self.tx_dedupe.insert(tx_type);
         // self.tx_history
         //     .entry(slot)
@@ -308,6 +311,7 @@ impl TxExecutor {
         //         v.insert(attempt);
         //         v
         //     });
+
         Ok(())
     }
 
