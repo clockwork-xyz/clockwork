@@ -211,7 +211,6 @@ impl TxExecutor {
                             .clone()
                             .build_queue_crank_tx(this.clockwork_client.clone(), queue_pubkey)
                             .and_then(|(tx, tx_type)| {
-                                info!("Executing retry: {:#?}", tx_attempt);
                                 this.clone().execute_tx(
                                     Some(tx_attempt.clone()),
                                     slot,
@@ -240,8 +239,14 @@ impl TxExecutor {
         tx: &Transaction,
         tx_type: &TxType,
     ) -> PluginResult<()> {
+        info!(
+            "Executing tx: {:#?} prior_attempt: {:#?}",
+            tx_type, prior_attempt
+        );
+
         // Exit early if this is a duplicate attempt
         if self.tx_attempts.contains_key(tx_type) {
+            info!("Tx attempts contains duplicate. Exiting...");
             return Ok(());
         }
 
