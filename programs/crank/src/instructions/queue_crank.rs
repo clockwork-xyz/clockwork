@@ -10,7 +10,7 @@ use {
 #[derive(Accounts)]
 pub struct QueueCrank<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(
         init_if_needed,
@@ -22,14 +22,14 @@ pub struct QueueCrank<'info> {
         payer = worker,
         space = 8 + size_of::<Fee>(),
     )]
-    pub fee: Account<'info, Fee>,
+    pub fee: Box<Account<'info, Fee>>,
 
     #[account(
         seeds = [SEED_POOL],
         bump,
         seeds::program = clockwork_pool::ID,
     )]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     #[account(
         mut,
@@ -40,7 +40,7 @@ pub struct QueueCrank<'info> {
         ],
         bump,
     )]
-    pub queue: Account<'info, Queue>,
+    pub queue: Box<Account<'info, Queue>>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
