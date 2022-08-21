@@ -245,10 +245,10 @@ impl TxExecutor {
         );
 
         // Exit early if this is a duplicate attempt
-        if self.tx_attempts.contains_key(tx_type) {
-            info!("Tx attempts contains duplicate {:#?}...", tx_type);
-            return Ok(());
-        }
+        // if self.tx_attempts.contains_key(tx_type) {
+        //     info!("Tx attempts contains duplicate {:#?}...", tx_type);
+        //     return Ok(());
+        // }
 
         self.clone()
             // .simulate_tx(tx)
