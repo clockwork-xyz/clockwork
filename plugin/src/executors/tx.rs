@@ -1,3 +1,5 @@
+use solana_client::rpc_config::RpcSimulateTransactionConfig;
+
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     clockwork_client::Client as ClockworkClient,
@@ -259,7 +261,14 @@ impl TxExecutor {
         info!("Simulating tx... {:#?}", tx);
         self.tpu_client
             .rpc_client()
-            .simulate_transaction(tx)
+            .simulate_transaction_with_config(
+                tx,
+                RpcSimulateTransactionConfig {
+                    commitment: Some(CommitmentConfig::processed()),
+                    ..RpcSimulateTransactionConfig::default()
+                },
+            )
+            // .simulate_transaction(tx)
             .map_err(|err| {
                 GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
             })
