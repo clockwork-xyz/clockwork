@@ -154,7 +154,7 @@ impl PoolObserver {
             ));
         }
 
-        // Exit early this this node is not in the worker pool AND
+        // Exit early if this node is not in the worker pool AND
         //  we are still within the pool's grace period.
         if r_pool_positions
             .crank_pool_position

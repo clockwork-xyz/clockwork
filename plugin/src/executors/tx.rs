@@ -61,7 +61,6 @@ impl TxExecutor {
             this.clone().process_queues(slot).await.ok();
 
             // Lookup statuses of submitted txs, and retry txs that have timed out or failed
-            // let retry_attempts = DashSet::new();
             this.clone().process_tx_history(slot).await.ok();
 
             // this.process_retry_attempts(retry_attempts, slot).await.ok();
@@ -162,7 +161,7 @@ impl TxExecutor {
                                 // Flag failed txs for retry.
                                 // Are there any errors that should not be retried?
                                 info!(
-                                    "Transaction has status for sig: {} slot: {} err: {:#?}",
+                                    "Transaction has status for sig: {} slot: {} result: {:#?}",
                                     tx_attempt.signature, confirmed_slot, res
                                 );
                                 if res.is_err() {
@@ -201,6 +200,7 @@ impl TxExecutor {
                 .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
             {
                 info!("Processing retry: {:#?}", tx_attempt.key());
+                this.tx_attempts.remove(&tx_attempt.tx_type);
                 match tx_attempt.tx_type {
                     TxType::Queue {
                         queue_pubkey,
@@ -211,12 +211,12 @@ impl TxExecutor {
                             .clone()
                             .build_queue_crank_tx(this.clockwork_client.clone(), queue_pubkey)
                             .and_then(|(tx, tx_type)| {
-                                this.clone().execute_tx(
-                                    Some(tx_attempt.clone()),
-                                    slot,
-                                    &tx,
-                                    &tx_type,
-                                )
+                                this.clone()
+                                    .execute_tx(Some(tx_attempt.clone()), slot, &tx, &tx_type)
+                                    .map_err(|err| {
+                                        info!("Failed to retry queue: {}", err);
+                                        err
+                                    })
                             })
                             .ok();
                     }
@@ -251,9 +251,9 @@ impl TxExecutor {
         }
 
         self.clone()
-            // .simulate_tx(tx)
-            // .and_then(|tx| self.clone().submit_tx(&tx))
-            .submit_tx(tx)
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
+            // .submit_tx(tx)
             .and_then(|tx| self.log_tx(slot, prior_attempt, tx, *tx_type))
     }
 
