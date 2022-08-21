@@ -174,8 +174,6 @@ impl TxExecutor {
                     .unwrap_or(false)
             });
 
-            info!("Num retries: {}", retry_attempts.len());
-
             this.process_retry_attempts(retry_attempts, confirmed_slot)
                 .await?;
 
@@ -246,7 +244,7 @@ impl TxExecutor {
 
         // Exit early if this is a duplicate attempt
         if self.tx_attempts.contains_key(tx_type) {
-            info!("Tx attempts contains duplicate. Exiting...");
+            info!("Tx attempts contains duplicate {:#?}...", tx_type);
             return Ok(());
         }
 
