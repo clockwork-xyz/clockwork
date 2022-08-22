@@ -1,22 +1,20 @@
-use std::hash::{Hash, Hasher};
-
 use {
-    super::pool::PoolPositions,
     clockwork_client::http::state::Request,
     dashmap::{DashMap, DashSet},
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
-    std::{fmt::Debug, sync::Arc},
-    tokio::{runtime::Runtime, sync::RwLock},
+    std::{
+        fmt::Debug,
+        hash::{Hash, Hasher},
+        sync::Arc,
+    },
+    tokio::runtime::Runtime,
 };
 
 pub struct HttpObserver {
     // The set of http request pubkeys that can be processed.
     pub confirmed_requests: DashSet<HttpRequest>,
-
-    // The pool positions of this node.
-    pub pool_positions: Arc<RwLock<PoolPositions>>,
 
     // Map from slot numbers to the list of http requests that arrived at that slot.
     pub unconfirmed_requests: DashMap<u64, DashSet<HttpRequest>>,
@@ -26,10 +24,9 @@ pub struct HttpObserver {
 }
 
 impl HttpObserver {
-    pub fn new(pool_positions: Arc<RwLock<PoolPositions>>, runtime: Arc<Runtime>) -> Self {
+    pub fn new(runtime: Arc<Runtime>) -> Self {
         Self {
             confirmed_requests: DashSet::new(),
-            pool_positions,
             unconfirmed_requests: DashMap::new(),
             runtime,
         }

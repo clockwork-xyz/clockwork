@@ -15,9 +15,7 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        worker_fee: Option<u64>,
-        grace_period: Option<i64>,
-        spam_penalty: Option<u64>,
+        automation_fee: Option<u64>,
     },
 
     // Http
@@ -39,28 +37,20 @@ pub enum CliCommand {
     },
 
     // Node commands
-    NodeGet {
-        worker: Pubkey,
-    },
     NodeRegister {
         worker: Keypair,
     },
     NodeStake {
+        address: Pubkey,
         amount: u64,
-        worker: Pubkey,
     },
 
     // Pool commands
     PoolGet,
 
     // Queue commands
-    QueueCreate {
-        name: String,
-        schedule: String,
-    },
     QueueGet {
         address: Pubkey,
-        task_id: Option<u64>,
     },
 
     // Registry
@@ -69,11 +59,6 @@ pub enum CliCommand {
     // Snapshot
     SnapshotGet {
         entry_id: Option<u64>,
-    },
-
-    // Task commands
-    TaskGet {
-        address: Pubkey,
     },
 }
 
@@ -215,20 +200,20 @@ pub fn app() -> Command<'static> {
             Command::new("node")
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("get")
-                        .about("Get a node by worker address")
-                        .arg(
-                            Arg::new("worker")
-                                .index(1)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The worker address to stake tokens with"),
-                        ),
-                )
+                // .subcommand(
+                //     Command::new("get")
+                //         .about("Get a node by worker address")
+                //         .arg(
+                //             Arg::new("worker")
+                //                 .index(1)
+                //                 .takes_value(true)
+                //                 .required(true)
+                //                 .help("The worker address to stake tokens with"),
+                //         ),
+                // )
                 .subcommand(
                     Command::new("register")
-                        .about("Register a new node with the Clockwork network")
+                        .about("Register a new worker with the Clockwork network")
                         .arg(
                             Arg::new("worker")
                                 .index(1)
@@ -239,20 +224,20 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("stake")
-                        .about("Stake CRON with your Solana node")
+                        .about("Stake CRON with your Clockwork worker")
+                        .arg(
+                            Arg::new("address")
+                                .index(2)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The worker address to stake tokens with"),
+                        )
                         .arg(
                             Arg::new("amount")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
                                 .help("The number of tokens to stake"),
-                        )
-                        .arg(
-                            Arg::new("worker")
-                                .index(2)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The worker address to stake tokens with"),
                         ),
                 ),
         )
@@ -261,34 +246,6 @@ pub fn app() -> Command<'static> {
             Command::new("queue")
                 .about("Manage your queues")
                 .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("create")
-                        .about("Create a new queue")
-                        .arg(
-                            Arg::new("filepath")
-                                .long("filepath")
-                                .short('f')
-                                .takes_value(true)
-                                .required(true)
-                                .help("Filepath to the instruction to invoke"),
-                        )
-                        .arg(
-                            Arg::new("name")
-                                .long("name")
-                                .short('n')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The name of the queue"),
-                        )
-                        .arg(
-                            Arg::new("schedule")
-                                .long("schedule")
-                                .short('s')
-                                .takes_value(true)
-                                .required(false)
-                                .help("Schedule to invoke the instruction"),
-                        ),
-                )
                 .subcommand(
                     Command::new("get")
                         .about("Get a queue")
@@ -330,20 +287,6 @@ pub fn app() -> Command<'static> {
                                         .help("The id of an entry in the snapshot"),
                                 ),
                         ),
-                ),
-        )
-        .subcommand(
-            Command::new("task")
-                .about("Manage an task")
-                .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("get").about("Get an task").arg(
-                        Arg::new("address")
-                            .index(1)
-                            .takes_value(true)
-                            .required(true)
-                            .help("Public address of a task"),
-                    ),
                 ),
         )
 }

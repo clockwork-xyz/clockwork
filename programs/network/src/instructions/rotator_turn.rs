@@ -1,8 +1,11 @@
-use clockwork_pool::cpi::accounts::Rotate;
-
-use crate::errors::ClockworkError;
-
-use {crate::state::*, anchor_lang::prelude::*};
+use {
+    crate::{
+        errors::ClockworkError,
+        state::*
+    },
+    anchor_lang::prelude::*,
+    clockwork_pool::cpi::accounts::Rotate
+};
 
 #[derive(Accounts)]
 pub struct RotatorTurn<'info> {

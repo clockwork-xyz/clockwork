@@ -42,7 +42,7 @@ impl TpuClient {
     ) -> Result<Self, TpuSenderError> {
         let rpc_client = Arc::new(RpcClient::new_with_commitment::<String>(
             rpc_url,
-            CommitmentConfig::confirmed(),
+            CommitmentConfig::processed(),
         ));
         let client = SolanaTpuClient::new(
             rpc_client,

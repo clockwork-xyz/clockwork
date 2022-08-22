@@ -91,11 +91,10 @@ if command -v anchor &> /dev/null; then
   anchor build
 
   # Copy program binaries into lib folder
-  cp -fv "target/deploy/clockwork_health.so" "$installDir"/lib
+  cp -fv "target/deploy/clockwork_crank.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_http.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_network.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_pool.so" "$installDir"/lib
-  cp -fv "target/deploy/clockwork_scheduler.so" "$installDir"/lib
 fi
 
 # Create new Geyser plugin config 

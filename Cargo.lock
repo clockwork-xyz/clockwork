@@ -433,12 +433,6 @@ dependencies = [
 
 [[package]]
 name = "base64"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
-
-[[package]]
-name = "base64"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3441f0f7b02788e948e47f457ca01f1d7e6d92c693bc132c22b087d3141c03ff"
@@ -851,6 +845,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-bench"
+version = "1.0.3"
+dependencies = [
+ "base64 0.13.0",
+ "chrono",
+ "clap 3.2.16",
+ "clockwork-client",
+ "clockwork-cron",
+ "serde",
+ "serde_json",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+ "version",
+]
+
+[[package]]
 name = "clockwork-cli"
 version = "1.0.3"
 dependencies = [
@@ -879,14 +892,23 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
- "clockwork-health",
+ "clockwork-crank",
  "clockwork-http",
  "clockwork-network",
  "clockwork-pool",
- "clockwork-scheduler",
  "solana-client",
  "solana-sdk",
  "thiserror",
+]
+
+[[package]]
+name = "clockwork-crank"
+version = "1.0.3"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-pool",
 ]
 
 [[package]]
@@ -900,13 +922,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-health"
-version = "1.0.3"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
 name = "clockwork-http"
 version = "1.0.3"
 dependencies = [
@@ -915,26 +930,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-metrics"
-version = "1.0.3"
-dependencies = [
- "chrono",
- "clockwork-client",
- "dotenv",
- "elasticsearch",
- "serde_json",
- "solana-sdk",
- "tokio",
-]
-
-[[package]]
 name = "clockwork-network"
 version = "1.0.3"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "clockwork-crank",
  "clockwork-pool",
- "clockwork-scheduler",
 ]
 
 [[package]]
@@ -945,43 +947,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-scheduler"
-version = "1.0.3"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-pool",
-]
-
-[[package]]
-name = "clockwork-stress"
-version = "1.0.3"
-dependencies = [
- "base64 0.13.0",
- "chrono",
- "clap 3.2.16",
- "clockwork-client",
- "clockwork-cron",
- "serde",
- "serde_json",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-sdk",
- "thiserror",
- "version",
-]
-
-[[package]]
 name = "clockwork_plugin"
 version = "1.0.3"
 dependencies = [
+ "anchor-lang",
  "bincode",
  "bs58 0.4.0",
  "bugsnag",
  "cached",
+ "chrono",
  "clockwork-client",
+ "clockwork-cron",
  "dashmap 5.3.4",
  "log 0.4.17",
  "prost",
@@ -1372,18 +1348,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dotenv"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
-
-[[package]]
-name = "dyn-clone"
-version = "1.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d07a982d1fb29db01e5a59b1918e03da4df7297eaeee7686ac45542fd4e59c8"
-
-[[package]]
 name = "ed25519"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1423,26 +1387,6 @@ name = "either"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
-
-[[package]]
-name = "elasticsearch"
-version = "7.14.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d853e1c104dbad916425c88e72ac5b73db65bbc22d3b8ab945174e68df91e6f0"
-dependencies = [
- "base64 0.11.0",
- "bytes",
- "dyn-clone",
- "lazy_static",
- "percent-encoding 2.1.0",
- "reqwest",
- "rustc_version 0.2.3",
- "serde",
- "serde_json",
- "serde_with",
- "url 2.2.2",
- "void",
-]
 
 [[package]]
 name = "encode_unicode"
@@ -3327,20 +3271,11 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc_version"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
-dependencies = [
- "semver 0.9.0",
-]
-
-[[package]]
-name = "rustc_version"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.12",
+ "semver",
 ]
 
 [[package]]
@@ -3472,24 +3407,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
-dependencies = [
- "semver-parser",
-]
-
-[[package]]
-name = "semver"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2333e6df6d6598f2b1974829f853c2b4c5f4a6e503c10af918081aa6f8564e1"
-
-[[package]]
-name = "semver-parser"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
@@ -3541,28 +3461,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "serde_with"
-version = "1.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "678b5a069e50bf00ecd22d0cd8ddf7c236f68581b03db652061ed5eb13a312ff"
-dependencies = [
- "serde",
- "serde_with_macros",
-]
-
-[[package]]
-name = "serde_with_macros"
-version = "1.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e182d6ec6f05393cc0e5ed1bf81ad6db3a8feedf8ee515ecdd369809bcce8082"
-dependencies = [
- "darling",
- "proc-macro2 1.0.42",
- "quote 1.0.20",
- "syn 1.0.98",
 ]
 
 [[package]]
@@ -3744,7 +3642,7 @@ dependencies = [
  "log 0.4.17",
  "num-derive",
  "num-traits",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "solana-frozen-abi",
  "solana-frozen-abi-macro",
@@ -3834,7 +3732,7 @@ dependencies = [
  "rayon",
  "reqwest",
  "rustls",
- "semver 1.0.12",
+ "semver",
  "serde",
  "serde_derive",
  "serde_json",
@@ -3919,7 +3817,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.17",
  "memmap2",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "serde_bytes",
  "serde_derive",
@@ -3936,7 +3834,7 @@ checksum = "b45334ad9c4abcc2946c4de684616bb155d5b9c4705d22de9b7fb17a902bcc58"
 dependencies = [
  "proc-macro2 1.0.42",
  "quote 1.0.20",
- "rustc_version 0.4.0",
+ "rustc_version",
  "syn 1.0.98",
 ]
 
@@ -4064,7 +3962,7 @@ dependencies = [
  "num-traits",
  "parking_lot 0.12.1",
  "rand 0.7.3",
- "rustc_version 0.4.0",
+ "rustc_version",
  "rustversion",
  "serde",
  "serde_bytes",
@@ -4093,7 +3991,7 @@ dependencies = [
  "log 0.4.17",
  "num-derive",
  "num-traits",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "solana-frozen-abi",
  "solana-frozen-abi-macro",
@@ -4125,7 +4023,7 @@ dependencies = [
  "num-traits",
  "parking_lot 0.12.1",
  "qstring",
- "semver 1.0.12",
+ "semver",
  "solana-sdk",
  "thiserror",
  "uriparse",
@@ -4163,7 +4061,7 @@ dependencies = [
  "rand 0.7.3",
  "rayon",
  "regex",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "serde_derive",
  "solana-address-lookup-table-program",
@@ -4223,7 +4121,7 @@ dependencies = [
  "qstring",
  "rand 0.7.3",
  "rand_chacha 0.2.2",
- "rustc_version 0.4.0",
+ "rustc_version",
  "rustversion",
  "serde",
  "serde_bytes",
@@ -4264,7 +4162,7 @@ dependencies = [
  "log 0.4.17",
  "num-derive",
  "num-traits",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "serde_derive",
  "solana-config-program",
@@ -4342,8 +4240,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1546721c034a8bfddb357d3ef87dc35845a8eef5922b0d912103b86adb88c2b0"
 dependencies = [
  "log 0.4.17",
- "rustc_version 0.4.0",
- "semver 1.0.12",
+ "rustc_version",
+ "semver",
  "serde",
  "serde_derive",
  "solana-frozen-abi",
@@ -4361,7 +4259,7 @@ dependencies = [
  "log 0.4.17",
  "num-derive",
  "num-traits",
- "rustc_version 0.4.0",
+ "rustc_version",
  "serde",
  "serde_derive",
  "solana-frozen-abi",
@@ -5100,12 +4998,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "walkdir"

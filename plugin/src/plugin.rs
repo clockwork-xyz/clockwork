@@ -1,11 +1,14 @@
-use crate::observers::http::{HttpObserver, HttpRequest};
-
 use {
     crate::{
         config::PluginConfig,
         events::AccountUpdateEvent,
         executors::{http::HttpExecutor, tx::TxExecutor, Executors},
-        observers::{pool::PoolObserver, queue::QueueObserver, Observers},
+        observers::{
+            http::{HttpObserver, HttpRequest},
+            pool::PoolObserver,
+            queue::QueueObserver,
+            Observers,
+        },
         tpu_client::TpuClient,
         utils::read_or_new_keypair,
     },
@@ -153,14 +156,8 @@ impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
         let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
-        let queue_observer = Arc::new(QueueObserver::new(
-            pool_observer.pool_positions.clone(),
-            runtime.clone(),
-        ));
-        let http_observer = Arc::new(HttpObserver::new(
-            pool_observer.pool_positions.clone(),
-            runtime.clone(),
-        ));
+        let queue_observer = Arc::new(QueueObserver::new(runtime.clone()));
+        let http_observer = Arc::new(HttpObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
