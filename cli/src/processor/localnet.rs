@@ -1,3 +1,5 @@
+use crate::parser::ProgramInfo;
+
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
