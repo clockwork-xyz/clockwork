@@ -251,9 +251,9 @@ impl TxExecutor {
         // }
 
         self.clone()
-            // .simulate_tx(tx)
-            // .and_then(|tx| self.clone().submit_tx(&tx))
-            .submit_tx(tx)
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
+            // .submit_tx(tx)
             .and_then(|tx| self.log_tx(slot, prior_attempt, tx, *tx_type))
     }
 
@@ -264,6 +264,7 @@ impl TxExecutor {
             .simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
+                    replace_recent_blockhash: true,
                     commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
@@ -305,7 +306,7 @@ impl TxExecutor {
         let tx_attempt = TxAttempt {
             attempt_count: prior_attempt.map_or(0, |prior| prior.attempt_count + 1),
             signature: sig,
-            slot: slot,
+            slot,
             tx_type,
         };
         info!(
@@ -313,20 +314,7 @@ impl TxExecutor {
             slot, sig, tx_attempt.tx_type, tx_attempt.attempt_count
         );
         self.tx_attempts.insert(tx_type, tx_attempt);
-        info!("Attempts: {:#?}", self.tx_attempts);
-
-        // self.tx_dedupe.insert(tx_type);
-        // self.tx_history
-        //     .entry(slot)
-        //     .and_modify(|tx_attempts| {
-        //         tx_attempts.insert(attempt);
-        //     })
-        //     .or_insert({
-        //         let v = DashSet::new();
-        //         v.insert(attempt);
-        //         v
-        //     });
-
+        info!("Attempts: {:#?}", self.tx_attempts.len());
         Ok(())
     }
 
