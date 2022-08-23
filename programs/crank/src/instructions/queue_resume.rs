@@ -33,7 +33,7 @@ pub fn handler(ctx: Context<QueueResume>) -> Result<()> {
         None => {}
         Some(exec_context) => {
             match exec_context {
-                ExecContext::Cron { started_at:_ } => {
+                ExecContext::Cron { started_at: _ } => {
                     // Jump ahead to the current timestamp
                     queue.exec_context = Some(ExecContext::Cron { started_at: Clock::get().unwrap().unix_timestamp });
                 }
