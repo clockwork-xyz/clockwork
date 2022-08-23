@@ -97,7 +97,7 @@ impl TxExecutor {
                 self.clone()
                     .execute_tx(slot, tx)
                     .map_err(|err| {
-                        info!("Failed to process queue: {}", err);
+                        info!("Failed to crank queue: {}", err);
                         err
                     })
                     .ok();
@@ -107,12 +107,6 @@ impl TxExecutor {
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
-        info!("slot: {} execute_tx: {:#?}", slot, tx);
-        info!(
-            "slot: {} message_history: {:#?}",
-            slot, self.message_history
-        );
-
         // Exit early if this message was sent recently
         if let Some(entry) = self
             .message_history
@@ -120,7 +114,6 @@ impl TxExecutor {
         {
             let msg_slot = entry.value();
             if slot < msg_slot + MESSAGE_DEDUPE_PERIOD {
-                info!("This message was recently sent at slot: {}", slot);
                 return Ok(());
             }
         }
