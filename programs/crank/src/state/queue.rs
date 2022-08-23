@@ -166,13 +166,11 @@ impl QueueAccount for Account<'_, Queue> {
         // Realloc the queue account
         self.realloc()?;
 
-        // Track how many lamports the worker spent in the inner ixs
+        // Reimbursement worker for lamports paid during inner ix
         let worker_lamports_post = worker.lamports();
         let worker_reimbursement = worker_lamports_pre
             .checked_sub(worker_lamports_post)
             .unwrap();
-
-        // Transfer reimbursement lamports
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()
             .lamports()
