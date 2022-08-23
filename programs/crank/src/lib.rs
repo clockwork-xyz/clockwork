@@ -24,10 +24,6 @@ pub mod clockwork_crank {
         initialize::handler(ctx)
     }
 
-    pub fn queue_close(ctx: Context<QueueClose>) -> Result<()> {
-        queue_close::handler(ctx)
-    }
-
     pub fn queue_crank(ctx: Context<QueueCrank>) -> Result<()> {
         queue_crank::handler(ctx)
     }
@@ -39,6 +35,10 @@ pub mod clockwork_crank {
         trigger: Trigger,
     ) -> Result<()> {
         queue_create::handler(ctx, instruction, name, trigger)
+    }
+
+    pub fn queue_delete(ctx: Context<QueueDelete>) -> Result<()> {
+        queue_delete::handler(ctx)
     }
 
     pub fn queue_pause(ctx: Context<QueuePause>) -> Result<()> {

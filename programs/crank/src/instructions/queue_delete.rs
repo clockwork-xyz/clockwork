@@ -5,7 +5,7 @@ use {
 
 
 #[derive(Accounts)]
-pub struct QueueClose<'info> {
+pub struct QueueDelete<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
@@ -26,6 +26,6 @@ pub struct QueueClose<'info> {
     pub queue: Account<'info, Queue>,
 }
 
-pub fn handler(_ctx: Context<QueueClose>) -> Result<()> {
+pub fn handler(_ctx: Context<QueueDelete>) -> Result<()> {
     Ok(())
 }
