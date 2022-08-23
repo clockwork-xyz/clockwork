@@ -1,5 +1,4 @@
 use {
-    crate::executors::tx::TxType,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
         crank::state::{ExecContext, Queue, Trigger},
@@ -17,13 +16,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::transaction::Transaction,
-    std::{
-        collections::hash_map::DefaultHasher,
-        fmt::Debug,
-        hash::{Hash, Hasher},
-        str::FromStr,
-        sync::Arc,
-    },
+    std::{collections::hash_map::DefaultHasher, fmt::Debug, hash::Hash, str::FromStr, sync::Arc},
     tokio::runtime::Runtime,
 };
 
@@ -141,7 +134,7 @@ impl QueueObserver {
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         slot: u64,
-    ) -> Vec<(Transaction, TxType)> {
+    ) -> Vec<Transaction> {
         // Get the clock for this slot
         let clock = match self.clocks.get(&slot) {
             None => return vec![],
@@ -167,14 +160,14 @@ impl QueueObserver {
                     .build_queue_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
                     .ok()
             })
-            .collect::<Vec<(Transaction, TxType)>>()
+            .collect::<Vec<Transaction>>()
     }
 
     pub fn build_queue_crank_tx(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         queue_pubkey: Pubkey,
-    ) -> PluginResult<(Transaction, TxType)> {
+    ) -> PluginResult<Transaction> {
         // Get the queue
         let queue = client.get::<Queue>(&queue_pubkey).unwrap();
 
@@ -225,13 +218,7 @@ impl QueueObserver {
         inner_ix.hash(hasher);
         queue.exec_context.hash(hasher);
 
-        Ok((
-            tx,
-            TxType::Queue {
-                queue_pubkey,
-                crank_hash: hasher.finish(),
-            },
-        ))
+        Ok(tx)
     }
 
     /**

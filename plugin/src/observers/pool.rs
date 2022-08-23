@@ -130,7 +130,7 @@ impl PoolObserver {
         self: Arc<Self>,
         clockwork_client: Arc<ClockworkClient>,
         slot: u64,
-    ) -> PluginResult<(u64, Transaction)> {
+    ) -> PluginResult<Transaction> {
         // Acquire read locks
         let r_pool_positions = self.pool_positions.read().await;
         let r_rotator = self.rotator.read().await;
@@ -223,7 +223,7 @@ impl PoolObserver {
             })?,
         );
 
-        Ok((target_slot, tx))
+        Ok(tx)
     }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
