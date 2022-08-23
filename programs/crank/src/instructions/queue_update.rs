@@ -38,5 +38,8 @@ pub fn handler(ctx: Context<QueueUpdate>, first_instruction: Option<InstructionD
         queue.exec_context = None;
     }
 
+    // Reallocate mem for the queue account
+    queue.realloc()?;
+
     Ok(())
 }

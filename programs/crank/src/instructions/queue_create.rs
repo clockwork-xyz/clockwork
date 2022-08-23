@@ -1,11 +1,11 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
+    anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::{size_of, size_of_val},
 };
 
 #[derive(Accounts)]
-#[instruction(balance: u64, instruction: InstructionData, name: String, trigger: Trigger)]
+#[instruction(instruction: InstructionData, name: String, trigger: Trigger)]
 pub struct QueueCreate<'info> {
     #[account()]
     pub authority: Signer<'info>,
@@ -34,28 +34,13 @@ pub struct QueueCreate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueCreate>, balance: u64, instruction: InstructionData, name: String, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<QueueCreate>, instruction: InstructionData, name: String, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
-    let payer = &mut ctx.accounts.payer;
     let queue = &mut ctx.accounts.queue;
-    let system_program = &ctx.accounts.system_program;
 
     // Initialize the queue
     queue.init(authority.key(), instruction, name, trigger)?;
-
-    // Transfer balance into the queue
-    // TODO Don't set this here this elsewhere
-    transfer(
-        CpiContext::new(
-            system_program.to_account_info(),
-            Transfer {
-                from: payer.to_account_info(),
-                to: queue.to_account_info(),
-            },
-        ),
-        balance,
-    )?;
 
     Ok(())
 }

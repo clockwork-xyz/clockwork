@@ -81,6 +81,8 @@ pub trait QueueAccount {
     ) -> Result<()>;
 
     fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()>;
+
+    fn realloc(&mut self) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -163,17 +165,7 @@ impl QueueAccount for Account<'_, Queue> {
         };
 
         // Realloc the queue account
-        let new_size = 8
-            + size_of::<Queue>()
-            + size_of_val(&self.exec_context)
-            + size_of_val(&self.name)
-            + size_of_val(&self.trigger)
-            + self.first_instruction.bytes_size()
-            + match self.next_instruction.clone() {
-                None => size_of_val(&self.next_instruction),
-                Some(next_instruction) => next_instruction.bytes_size(),
-            };
-        self.to_account_info().realloc(new_size, false)?;
+        self.realloc()?;
 
         // Track how many lamports the worker spent in the inner ixs
         let worker_lamports_post = worker.lamports();
@@ -193,6 +185,22 @@ impl QueueAccount for Account<'_, Queue> {
             .checked_add(worker_reimbursement)
             .unwrap();
 
+        Ok(())
+    }
+
+    fn realloc(&mut self) -> Result<()> {
+        // Realloc the queue account
+        let new_size = 8
+            + size_of::<Queue>()
+            + size_of_val(&self.exec_context)
+            + size_of_val(&self.name)
+            + size_of_val(&self.trigger)
+            + self.first_instruction.bytes_size()
+            + match self.next_instruction.clone() {
+                None => size_of_val(&self.next_instruction),
+                Some(next_instruction) => next_instruction.bytes_size(),
+            };
+        self.to_account_info().realloc(new_size, false)?;
         Ok(())
     }
 }

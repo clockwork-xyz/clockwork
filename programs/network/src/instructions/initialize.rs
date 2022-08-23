@@ -1,13 +1,11 @@
-use clockwork_crank::state::Trigger;
-
 use {
     crate::state::*,
     anchor_lang::{
         prelude::*, 
-        solana_program::{instruction::Instruction, native_token::LAMPORTS_PER_SOL, system_program}
+        solana_program::{instruction::Instruction, system_program}
     },
     anchor_spl::token::Mint,
-    clockwork_crank::state::{SEED_QUEUE},
+    clockwork_crank::state::{Trigger, SEED_QUEUE},
     std::mem::size_of,
 };
 
@@ -129,7 +127,6 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
-        LAMPORTS_PER_SOL,
         snapshot_kickoff_ix.into(),
         "snapshot".into(),
         Trigger::Cron { schedule: "0 * * * * * *".into() }

@@ -34,12 +34,11 @@ pub mod clockwork_crank {
 
     pub fn queue_create(
         ctx: Context<QueueCreate>,
-        balance: u64,
         instruction: InstructionData,
         name: String,
         trigger: Trigger,
     ) -> Result<()> {
-        queue_create::handler(ctx, balance, instruction, name, trigger)
+        queue_create::handler(ctx, instruction, name, trigger)
     }
 
     pub fn queue_pause(ctx: Context<QueuePause>) -> Result<()> {

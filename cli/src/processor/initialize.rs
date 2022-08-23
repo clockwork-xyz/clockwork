@@ -1,4 +1,8 @@
-use {crate::errors::CliError, clockwork_client::Client, solana_sdk::pubkey::Pubkey};
+use {
+    crate::errors::CliError,
+    clockwork_client::Client,
+    solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
+};
 
 pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     // Initialize the programs
@@ -12,5 +16,14 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     client
         .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d], &[client.payer()])
         .unwrap();
+
+    // Airdrop some sol to the network's snapshot queue
+    let network_authority_pubkey = clockwork_client::network::state::Authority::pubkey();
+    let snapshot_queue_pubkey =
+        clockwork_client::crank::state::Queue::pubkey(network_authority_pubkey, "snapshot".into());
+    client
+        .airdrop(&snapshot_queue_pubkey, LAMPORTS_PER_SOL)
+        .unwrap();
+
     Ok(())
 }
