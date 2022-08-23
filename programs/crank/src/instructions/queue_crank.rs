@@ -39,7 +39,7 @@ pub struct QueueCrank<'info> {
             queue.name.as_bytes(),
         ],
         bump,
-        constraint = !queue.is_paused @ ClockworkError::QueuePaused
+        constraint = !queue.is_paused @ ClockworkError::PausedQueue
     )]
     pub queue: Box<Account<'info, Queue>>,
 
@@ -68,22 +68,22 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                     Some(exec_context) => {
                         match exec_context {
                             ExecContext::Cron { started_at } => started_at,
-                            _ => return Err(ClockworkError::InvalidExecContext.into())
+                            _ => return Err(ClockworkError::InvalidQueueState.into())
                         }
                     }
                 };
 
                 // Verify the current time is greater than or equal to the target timestamp.
-                let target_timestamp = next_moment(reference_timestamp, schedule).ok_or(ClockworkError::TriggerNotMet)?;
+                let target_timestamp = next_timestamp(reference_timestamp, schedule).ok_or(ClockworkError::InvalidTrigger)?;
                 let current_timestamp = Clock::get().unwrap().unix_timestamp;
-                require!(current_timestamp >= target_timestamp, ClockworkError::TriggerNotMet);
+                require!(current_timestamp >= target_timestamp, ClockworkError::InvalidTrigger);
 
                 // Set the exec context.
                 queue.exec_context = Some(ExecContext::Cron { started_at: target_timestamp });
             },
             Trigger::Immediate => {
                 // Set the exec context.
-                require!(queue.exec_context.is_none(), ClockworkError::QueueAlreadyStarted);
+                require!(queue.exec_context.is_none(), ClockworkError::InvalidQueueState);
                 queue.exec_context = Some(ExecContext::Immediate);
             },
         }
@@ -105,7 +105,7 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
 }
 
 
-fn next_moment(after: i64, schedule: String) -> Option<i64> {
+fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
         .after(&DateTime::<Utc>::from_utc(

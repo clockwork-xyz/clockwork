@@ -142,11 +142,10 @@ impl QueueAccount for Account<'_, Queue> {
                 self.name.as_bytes(),
                 &[bump],
             ]],
-        )
-        .map_err(|_err| ClockworkError::InnerIxFailed)?;
+        )?;
 
-        // Verify that inner ixs have not initialized data at the worker address
-        require!(worker.data_is_empty(), ClockworkError::WorkerDataNotEmpty);
+        // Verify that the inner ix did not write data to the worker address
+        require!(worker.data_is_empty(), ClockworkError::UnauthorizedWrite);
 
         // Parse the crank response
         match get_return_data() {
@@ -156,7 +155,7 @@ impl QueueAccount for Account<'_, Queue> {
             Some((program_id, return_data)) => {
                 require!(
                     program_id.eq(&instruction.program_id),
-                    ClockworkError::InvalidReturnData
+                    ClockworkError::InvalidCrankResponse
                 );
                 let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
                     .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
