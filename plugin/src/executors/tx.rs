@@ -55,7 +55,7 @@ impl TxExecutor {
 
             // Purge message history that is beyond the dedupe period
             this.message_history
-                .retain(|_msg_hash, msg_slot| *msg_slot < slot + MESSAGE_DEDUPE_PERIOD);
+                .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
 
             Ok(())
         })
@@ -107,11 +107,16 @@ impl TxExecutor {
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
-        info!("Executing tx: {:#?}", tx);
+        info!("slot: {} execute_tx: {:#?}", tx);
+        info!(
+            "slot: {} message_history: {:#?}",
+            slot, self.message_history
+        );
 
         // Exit early if this message was sent recently
         if let Some(entry) = self.message_history.get(&tx.message().hash()) {
-            if slot < entry.value() + MESSAGE_DEDUPE_PERIOD {
+            let msg_slot = entry.value();
+            if slot < msg_slot + MESSAGE_DEDUPE_PERIOD {
                 info!("This message was recently sent at slot: {}", slot);
                 return Ok(());
             }
@@ -151,7 +156,6 @@ impl TxExecutor {
     }
 
     fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        info!("Submitting tx... {:#?}", tx);
         if !self.tpu_client.send_transaction(tx) {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
