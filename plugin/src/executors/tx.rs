@@ -107,7 +107,7 @@ impl TxExecutor {
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
-        info!("slot: {} execute_tx: {:#?}", tx);
+        info!("slot: {} execute_tx: {:#?}", slot, tx);
         info!(
             "slot: {} message_history: {:#?}",
             slot, self.message_history
