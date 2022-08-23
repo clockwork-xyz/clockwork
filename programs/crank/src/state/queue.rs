@@ -101,6 +101,9 @@ impl QueueAccount for Account<'_, Queue> {
     }
 
     fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()> {
+        // Record the worker's lamports before invoking inner ixs
+        let worker_lamports_pre = worker.lamports();
+
         // Get the instruction to crank
         let first_instruction: &InstructionData = &self.clone().first_instruction;
         let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
@@ -138,6 +141,9 @@ impl QueueAccount for Account<'_, Queue> {
         )
         .map_err(|_err| ClockworkError::InnerIxFailed)?;
 
+        // Verify that inner ixs have not initialized data at the worker address
+        require!(worker.data_is_empty(), ClockworkError::WorkerDataNotEmpty);
+
         // Parse the crank response
         match get_return_data() {
             None => {
@@ -166,6 +172,24 @@ impl QueueAccount for Account<'_, Queue> {
                 Some(next_instruction) => next_instruction.bytes_size(),
             };
         self.to_account_info().realloc(new_size, false)?;
+
+        // Track how many lamports the worker spent in the inner ixs
+        let worker_lamports_post = worker.lamports();
+        let worker_reimbursement = worker_lamports_pre
+            .checked_sub(worker_lamports_post)
+            .unwrap();
+
+        // Transfer reimbursement lamports
+        **self.to_account_info().try_borrow_mut_lamports()? = self
+            .to_account_info()
+            .lamports()
+            .checked_sub(worker_reimbursement)
+            .unwrap();
+        **worker.to_account_info().try_borrow_mut_lamports()? = worker
+            .to_account_info()
+            .lamports()
+            .checked_add(worker_reimbursement)
+            .unwrap();
 
         Ok(())
     }

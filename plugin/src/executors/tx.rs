@@ -7,13 +7,13 @@ use {
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
-    solana_program::hash::Hash,
+    solana_program::{hash::Hash, message::Message},
     solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction},
     std::{fmt::Debug, sync::Arc},
     tokio::runtime::Runtime,
 };
 
-static MESSAGE_DEDUPE_PERIOD: u64 = 3; // Number of slots to wait before retrying a message
+static MESSAGE_DEDUPE_PERIOD: u64 = 10; // Number of slots to wait before retrying a message
 
 /**
  * TxExecutor
@@ -114,7 +114,10 @@ impl TxExecutor {
         );
 
         // Exit early if this message was sent recently
-        if let Some(entry) = self.message_history.get(&tx.message().hash()) {
+        if let Some(entry) = self
+            .message_history
+            .get(&tx.message().blockhash_agnostic_hash())
+        {
             let msg_slot = entry.value();
             if slot < msg_slot + MESSAGE_DEDUPE_PERIOD {
                 info!("This message was recently sent at slot: {}", slot);
@@ -165,7 +168,8 @@ impl TxExecutor {
     }
 
     fn log_tx(self: Arc<Self>, slot: u64, tx: Transaction) -> PluginResult<()> {
-        self.message_history.insert(tx.message().hash(), slot);
+        self.message_history
+            .insert(tx.message().blockhash_agnostic_hash(), slot);
         let sig = tx.signatures[0];
         info!("slot: {} sig: {}", slot, sig);
         Ok(())
@@ -183,5 +187,24 @@ impl TxExecutor {
 impl Debug for TxExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "tx-executor")
+    }
+}
+
+/**
+ * BlockhashAgnosticHash
+ */
+trait BlockhashAgnosticHash {
+    fn blockhash_agnostic_hash(&self) -> Hash;
+}
+
+impl BlockhashAgnosticHash for Message {
+    fn blockhash_agnostic_hash(&self) -> Hash {
+        Message {
+            header: self.header.clone(),
+            account_keys: self.account_keys.clone(),
+            recent_blockhash: Hash::default(),
+            instructions: self.instructions.clone(),
+        }
+        .hash()
     }
 }
