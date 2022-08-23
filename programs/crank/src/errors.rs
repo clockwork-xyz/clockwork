@@ -23,6 +23,9 @@ pub enum ClockworkError {
     #[msg("This queue has already started")]
     QueueAlreadyStarted,
 
+    #[msg("The queue is currently paused")]
+    QueuePaused,
+
     #[msg("Trigger condition has not been met")]
     TriggerNotMet,
 

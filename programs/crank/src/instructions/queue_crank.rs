@@ -39,6 +39,7 @@ pub struct QueueCrank<'info> {
             queue.name.as_bytes(),
         ],
         bump,
+        constraint = !queue.is_paused @ ClockworkError::QueuePaused
     )]
     pub queue: Box<Account<'info, Queue>>,
 
@@ -66,7 +67,7 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                     None => queue.created_at.unix_timestamp,
                     Some(exec_context) => {
                         match exec_context {
-                            ExecContext::Cron { last_exec_at } => last_exec_at,
+                            ExecContext::Cron { started_at } => started_at,
                             _ => return Err(ClockworkError::InvalidExecContext.into())
                         }
                     }
@@ -78,7 +79,7 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                 require!(current_timestamp >= target_timestamp, ClockworkError::TriggerNotMet);
 
                 // Set the exec context.
-                queue.exec_context = Some(ExecContext::Cron { last_exec_at: target_timestamp });
+                queue.exec_context = Some(ExecContext::Cron { started_at: target_timestamp });
             },
             Trigger::Immediate => {
                 // Set the exec context.

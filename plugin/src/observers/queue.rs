@@ -73,18 +73,23 @@ impl QueueObserver {
             // Remove queue from crankable set
             this.crankable_queues.remove(&queue_pubkey);
 
+            // If the queue is paused, just return without indexing
+            if queue.is_paused {
+                return Ok(());
+            }
+
             if queue.next_instruction.is_some() {
                 // If the queue has a next instruction, index it as crankable.
                 this.crankable_queues.insert(queue_pubkey);
             } else {
-                // Index the queue according to its trigger type.
+                // Otherwise, index the queue according to its trigger type.
                 match queue.trigger {
                     Trigger::Cron { schedule } => {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
                             None => queue.created_at.unix_timestamp,
                             Some(exec_context) => match exec_context {
-                                ExecContext::Cron { last_exec_at } => last_exec_at,
+                                ExecContext::Cron { started_at } => started_at,
                                 _ => {
                                     return Err(GeyserPluginError::Custom(
                                         "Invalid exec context".into(),

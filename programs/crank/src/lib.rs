@@ -37,4 +37,12 @@ pub mod clockwork_crank {
     ) -> Result<()> {
         queue_create::handler(ctx, balance, instruction, name, trigger)
     }
+
+    pub fn queue_pause(ctx: Context<QueuePause>) -> Result<()> {
+        queue_pause::handler(ctx)
+    }
+
+    pub fn queue_resume(ctx: Context<QueueResume>) -> Result<()> {
+        queue_resume::handler(ctx)
+    }
 }

@@ -29,6 +29,7 @@ pub struct Queue {
     pub created_at: ClockData,
     pub exec_context: Option<ExecContext>,
     pub first_instruction: InstructionData,
+    pub is_paused: bool,
     pub name: String,
     pub next_instruction: Option<InstructionData>,
     pub trigger: Trigger,
@@ -94,6 +95,7 @@ impl QueueAccount for Account<'_, Queue> {
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
         self.first_instruction = instruction;
+        self.is_paused = false;
         self.name = name;
         self.next_instruction = None;
         self.trigger = trigger;
@@ -228,6 +230,6 @@ pub enum Trigger {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ExecContext {
-    Cron { last_exec_at: i64 },
+    Cron { started_at: i64 },
     Immediate,
 }
