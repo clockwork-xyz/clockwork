@@ -50,6 +50,14 @@ pub mod clockwork_crank {
         queue_resume::handler(ctx)
     }
 
+    pub fn queue_update(
+        ctx: Context<QueueUpdate>,
+        first_instruction: Option<InstructionData>,
+        trigger: Option<Trigger>,
+    ) -> Result<()> {
+        queue_update::handler(ctx, first_instruction, trigger)
+    }
+
     pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
         queue_withdraw::handler(ctx, amount)
     }

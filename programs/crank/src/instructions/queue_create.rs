@@ -45,6 +45,7 @@ pub fn handler(ctx: Context<QueueCreate>, balance: u64, instruction: Instruction
     queue.init(authority.key(), instruction, name, trigger)?;
 
     // Transfer balance into the queue
+    // TODO Don't set this here this elsewhere
     transfer(
         CpiContext::new(
             system_program.to_account_info(),
