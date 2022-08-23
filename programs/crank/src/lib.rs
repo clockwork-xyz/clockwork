@@ -45,4 +45,8 @@ pub mod clockwork_crank {
     pub fn queue_resume(ctx: Context<QueueResume>) -> Result<()> {
         queue_resume::handler(ctx)
     }
+
+    pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
+        queue_withdraw::handler(ctx, amount)
+    }
 }
