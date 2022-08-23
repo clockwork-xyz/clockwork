@@ -1,8 +1,3 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
 use {
     crate::executors::tx::TxType,
     chrono::{DateTime, NaiveDateTime, Utc},
@@ -22,7 +17,13 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::transaction::Transaction,
-    std::{fmt::Debug, str::FromStr, sync::Arc},
+    std::{
+        collections::hash_map::DefaultHasher,
+        fmt::Debug,
+        hash::{Hash, Hasher},
+        str::FromStr,
+        sync::Arc,
+    },
     tokio::runtime::Runtime,
 };
 
@@ -36,9 +37,6 @@ pub struct QueueObserver {
     // Map from unix timestamps to the list of queues scheduled for that moment.
     pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
 
-    // The set of queues for immediate execution.
-    pub immediate_queues: DashSet<Pubkey>,
-
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -49,7 +47,6 @@ impl QueueObserver {
             clocks: DashMap::new(),
             crankable_queues: DashSet::new(),
             cron_queues: DashMap::new(),
-            immediate_queues: DashSet::new(),
             runtime,
         }
     }
@@ -79,6 +76,9 @@ impl QueueObserver {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!("Caching queue {:#?} {:#?}", queue_pubkey, queue);
+
+            // Remove queue from crankable set
+            this.crankable_queues.remove(&queue_pubkey);
 
             if queue.next_instruction.is_some() {
                 // If the queue has a next instruction, index it as crankable.
@@ -118,14 +118,13 @@ impl QueueObserver {
                         }
                     }
                     Trigger::Immediate => {
-                        this.immediate_queues.insert(queue_pubkey);
+                        this.crankable_queues.insert(queue_pubkey);
                     }
                 }
             }
 
             info!(
-                "Queues – immediate: {:#?} crankable: {:#?} cron: {:#?}",
-                this.immediate_queues.len(),
+                "Queues – crankable: {:#?} cron: {:#?}",
                 this.crankable_queues.len(),
                 this.cron_queues.len()
             );
@@ -149,34 +148,19 @@ impl QueueObserver {
             Some(clock) => clock.value().clone(),
         };
 
-        // Build the set of queue pubkeys that are executable.
-        let crankable_queue_pubkeys = DashSet::<Pubkey>::new();
-
-        // Push in all of the immediate queues.
-        self.immediate_queues.retain(|queue_pubkey| {
-            crankable_queue_pubkeys.insert(*queue_pubkey);
-            false
-        });
-
-        // Push in all of the crankable queues.
-        self.crankable_queues.retain(|queue_pubkey| {
-            crankable_queue_pubkeys.insert(*queue_pubkey);
-            false
-        });
-
         // Push in all of the scheduled queues that are due.
         self.cron_queues.retain(|target_timestamp, queue_pubkeys| {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
                 for queue_pubkey_ref in queue_pubkeys.iter() {
-                    crankable_queue_pubkeys.insert(queue_pubkey_ref.key().clone());
+                    self.crankable_queues.insert(queue_pubkey_ref.key().clone());
                 }
             }
             !is_due
         });
 
         // Build the set of crank transactions
-        crankable_queue_pubkeys
+        self.crankable_queues
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 self.clone()

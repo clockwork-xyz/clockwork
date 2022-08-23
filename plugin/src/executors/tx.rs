@@ -1,10 +1,9 @@
-use solana_client::rpc_config::RpcSimulateTransactionConfig;
-
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     clockwork_client::Client as ClockworkClient,
-    dashmap::{DashMap, DashSet},
+    // dashmap::{DashMap, DashSet},
     log::info,
+    solana_client::rpc_config::RpcSimulateTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
@@ -20,9 +19,9 @@ use {
     tokio::runtime::Runtime,
 };
 
-static MAX_RETRIES: u64 = 8; // The maximum number of times a failed tx will be retries before dropping
-static TIMEOUT_PERIOD: u64 = 30; // If a signature does not have a status within this many slots, assume failure and retry
-static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
+// static MAX_RETRIES: u64 = 8; // The maximum number of times a failed tx will be retries before dropping
+// static TIMEOUT_PERIOD: u64 = 30; // If a signature does not have a status within this many slots, assume failure and retry
+// static POLLING_INTERVAL: u64 = 3; // Poll for tx statuses on a periodic slot interval. This value must be greater than 0.
 
 /**
  * TxExecutor
@@ -33,7 +32,7 @@ pub struct TxExecutor {
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
-    pub tx_attempts: DashMap<TxType, TxAttempt>,
+    // pub tx_attempts: DashMap<TxType, TxAttempt>,
 }
 
 impl TxExecutor {
@@ -50,7 +49,7 @@ impl TxExecutor {
             observers,
             runtime,
             tpu_client,
-            tx_attempts: DashMap::new(),
+            // tx_attempts: DashMap::new(),
         }
     }
 
@@ -63,9 +62,7 @@ impl TxExecutor {
             this.clone().process_queues(slot).await.ok();
 
             // Lookup statuses of submitted txs, and retry txs that have timed out or failed
-            this.clone().process_tx_history(slot).await.ok();
-
-            // this.process_retry_attempts(retry_attempts, slot).await.ok();
+            // this.clone().process_tx_history(slot).await.ok();
 
             Ok(())
         })
@@ -122,115 +119,115 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn process_tx_history(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            let retry_attempts = DashSet::new();
+    // async fn process_tx_history(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+    //     self.spawn(|this| async move {
+    //         let retry_attempts = DashSet::new();
 
-            this.tx_attempts.retain(|_tx_type, tx_attempt| {
-                // Exit early the polling interval has not passed
-                if confirmed_slot.eq(&tx_attempt.slot)
-                    || (confirmed_slot - tx_attempt.slot)
-                        .checked_rem(POLLING_INTERVAL)
-                        .unwrap_or(0)
-                        > 0
-                {
-                    return true;
-                }
+    //         this.tx_attempts.retain(|_tx_type, tx_attempt| {
+    //             // Exit early the polling interval has not passed
+    //             if confirmed_slot.eq(&tx_attempt.slot)
+    //                 || (confirmed_slot - tx_attempt.slot)
+    //                     .checked_rem(POLLING_INTERVAL)
+    //                     .unwrap_or(0)
+    //                     > 0
+    //             {
+    //                 return true;
+    //             }
 
-                // Lookup the tx signature status
-                this.tpu_client
-                    .rpc_client()
-                    .get_signature_status_with_commitment(
-                        &tx_attempt.signature,
-                        CommitmentConfig::processed(),
-                    )
-                    .map(|res| {
-                        match res {
-                            None => {
-                                // Retry txs that have passed the timeout period and do not have a confirmed status
-                                info!(
-                                    "No confirmation for sig: {} slot: {}",
-                                    tx_attempt.signature, confirmed_slot
-                                );
-                                if confirmed_slot > tx_attempt.slot + TIMEOUT_PERIOD {
-                                    retry_attempts.insert(tx_attempt.clone());
-                                    false
-                                } else {
-                                    true
-                                }
-                            }
-                            Some(res) => {
-                                // Flag failed txs for retry.
-                                // Are there any errors that should not be retried?
-                                info!(
-                                    "Transaction has status for sig: {} slot: {} result: {:#?}",
-                                    tx_attempt.signature, confirmed_slot, res
-                                );
-                                if res.is_err() {
-                                    retry_attempts.insert(tx_attempt.clone());
-                                }
-                                false
-                            }
-                        }
-                    })
-                    .unwrap_or(false)
-            });
+    //             // Lookup the tx signature status
+    //             this.tpu_client
+    //                 .rpc_client()
+    //                 .get_signature_status_with_commitment(
+    //                     &tx_attempt.signature,
+    //                     CommitmentConfig::processed(),
+    //                 )
+    //                 .map(|res| {
+    //                     match res {
+    //                         None => {
+    //                             // Retry txs that have passed the timeout period and do not have a confirmed status
+    //                             info!(
+    //                                 "No confirmation for sig: {} slot: {}",
+    //                                 tx_attempt.signature, confirmed_slot
+    //                             );
+    //                             if confirmed_slot > tx_attempt.slot + TIMEOUT_PERIOD {
+    //                                 retry_attempts.insert(tx_attempt.clone());
+    //                                 false
+    //                             } else {
+    //                                 true
+    //                             }
+    //                         }
+    //                         Some(res) => {
+    //                             // Flag failed txs for retry.
+    //                             // Are there any errors that should not be retried?
+    //                             info!(
+    //                                 "Transaction has status for sig: {} slot: {} result: {:#?}",
+    //                                 tx_attempt.signature, confirmed_slot, res
+    //                             );
+    //                             if res.is_err() {
+    //                                 retry_attempts.insert(tx_attempt.clone());
+    //                             }
+    //                             false
+    //                         }
+    //                     }
+    //                 })
+    //                 .unwrap_or(false)
+    //         });
 
-            this.process_retry_attempts(retry_attempts, confirmed_slot)
-                .await?;
+    //         this.process_retry_attempts(retry_attempts, confirmed_slot)
+    //             .await?;
 
-            Ok(())
-        })
-    }
+    //         Ok(())
+    //     })
+    // }
 
-    async fn process_retry_attempts(
-        self: Arc<Self>,
-        retry_attempts: DashSet<TxAttempt>,
-        slot: u64,
-    ) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            // Get this node's current position in the crank pool
-            // let r_pool_positions = this.observers.pool.pool_positions.read().await;
-            // let pool_position = r_pool_positions.crank_pool_position.clone();
-            // drop(r_pool_positions);
+    // async fn process_retry_attempts(
+    //     self: Arc<Self>,
+    //     retry_attempts: DashSet<TxAttempt>,
+    //     slot: u64,
+    // ) -> PluginResult<()> {
+    //     self.spawn(|this| async move {
+    //         // Get this node's current position in the crank pool
+    //         // let r_pool_positions = this.observers.pool.pool_positions.read().await;
+    //         // let pool_position = r_pool_positions.crank_pool_position.clone();
+    //         // drop(r_pool_positions);
 
-            // Process all attempts in the retry queue
-            for tx_attempt in retry_attempts
-                .iter()
-                .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
-            {
-                info!("Processing retry: {:#?}", tx_attempt.key());
-                this.tx_attempts.remove(&tx_attempt.tx_type);
-                match tx_attempt.tx_type {
-                    TxType::Queue {
-                        queue_pubkey,
-                        crank_hash: _,
-                    } => {
-                        this.observers
-                            .queue
-                            .clone()
-                            .build_queue_crank_tx(this.clockwork_client.clone(), queue_pubkey)
-                            .and_then(|(tx, tx_type)| {
-                                this.clone()
-                                    .execute_tx(Some(tx_attempt.clone()), slot, &tx, &tx_type)
-                                    .map_err(|err| {
-                                        info!("Failed to retry queue: {}", err);
-                                        err
-                                    })
-                            })
-                            .ok();
-                    }
-                    TxType::Rotation { target_slot } => {
-                        this.clone()
-                            .rotate_pools(Some(tx_attempt.clone()), target_slot)
-                            .await
-                            .ok();
-                    }
-                }
-            }
-            Ok(())
-        })
-    }
+    //         // Process all attempts in the retry queue
+    //         for tx_attempt in retry_attempts
+    //             .iter()
+    //             .filter(|tx_attempt| tx_attempt.attempt_count < MAX_RETRIES)
+    //         {
+    //             info!("Processing retry: {:#?}", tx_attempt.key());
+    //             this.tx_attempts.remove(&tx_attempt.tx_type);
+    //             match tx_attempt.tx_type {
+    //                 TxType::Queue {
+    //                     queue_pubkey,
+    //                     crank_hash: _,
+    //                 } => {
+    //                     this.observers
+    //                         .queue
+    //                         .clone()
+    //                         .build_queue_crank_tx(this.clockwork_client.clone(), queue_pubkey)
+    //                         .and_then(|(tx, tx_type)| {
+    //                             this.clone()
+    //                                 .execute_tx(Some(tx_attempt.clone()), slot, &tx, &tx_type)
+    //                                 .map_err(|err| {
+    //                                     info!("Failed to retry queue: {}", err);
+    //                                     err
+    //                                 })
+    //                         })
+    //                         .ok();
+    //                 }
+    //                 TxType::Rotation { target_slot } => {
+    //                     this.clone()
+    //                         .rotate_pools(Some(tx_attempt.clone()), target_slot)
+    //                         .await
+    //                         .ok();
+    //                 }
+    //             }
+    //         }
+    //         Ok(())
+    //     })
+    // }
 
     fn execute_tx(
         self: Arc<Self>,
@@ -244,21 +241,13 @@ impl TxExecutor {
             tx_type, prior_attempt
         );
 
-        // Exit early if this is a duplicate attempt
-        // if self.tx_attempts.contains_key(tx_type) {
-        //     info!("Tx attempts contains duplicate {:#?}...", tx_type);
-        //     return Ok(());
-        // }
-
         self.clone()
             .simulate_tx(tx)
             .and_then(|tx| self.clone().submit_tx(&tx))
-            // .submit_tx(tx)
             .and_then(|tx| self.log_tx(slot, prior_attempt, tx, *tx_type))
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        info!("Simulating tx... {:#?}", tx);
         self.tpu_client
             .rpc_client()
             .simulate_transaction_with_config(
@@ -269,7 +258,6 @@ impl TxExecutor {
                     ..RpcSimulateTransactionConfig::default()
                 },
             )
-            // .simulate_transaction(tx)
             .map_err(|err| {
                 GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
             })
@@ -313,8 +301,7 @@ impl TxExecutor {
             "slot: {} sig: {} type: {:#?} attempt: {}",
             slot, sig, tx_attempt.tx_type, tx_attempt.attempt_count
         );
-        self.tx_attempts.insert(tx_type, tx_attempt);
-        info!("Attempts: {:#?}", self.tx_attempts.len());
+        // self.tx_attempts.insert(tx_type, tx_attempt);
         Ok(())
     }
 
