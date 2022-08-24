@@ -1,5 +1,5 @@
 use {
-    super::{BytesSize, ClockData, InstructionData},
+    super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
@@ -12,7 +12,7 @@ use {
     std::{
         convert::TryFrom,
         hash::{Hash, Hasher},
-        mem::{size_of, size_of_val},
+        mem::size_of,
     },
 };
 
@@ -186,17 +186,8 @@ impl QueueAccount for Account<'_, Queue> {
     }
 
     fn realloc(&mut self) -> Result<()> {
-        // Realloc the queue account
-        let new_size = 8
-            + size_of::<Queue>()
-            + size_of_val(&self.exec_context)
-            + size_of_val(&self.name)
-            + size_of_val(&self.trigger)
-            + self.first_instruction.bytes_size()
-            + match self.next_instruction.clone() {
-                None => size_of_val(&self.next_instruction),
-                Some(next_instruction) => next_instruction.bytes_size(),
-            };
+        // Realloc memory for the queue account
+        let new_size = 8 + self.try_to_vec()?.len();
         self.to_account_info().realloc(new_size, false)?;
         Ok(())
     }

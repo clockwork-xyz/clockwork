@@ -30,7 +30,7 @@ pub fn handler(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {
     let pay_to = &mut ctx.accounts.pay_to;
     let queue = &mut ctx.accounts.queue;
 
-    // Transfer balance into the queue
+    // Withdraw balance from queue to the pay_to account
     **queue.to_account_info().try_borrow_mut_lamports()? = queue
         .to_account_info()
         .lamports()

@@ -3,7 +3,7 @@ use {
         prelude::borsh::BorshSchema, prelude::*, solana_program::instruction::Instruction,
         AnchorDeserialize,
     },
-    std::{convert::TryFrom, hash::Hash, mem::size_of_val},
+    std::{convert::TryFrom, hash::Hash},
 };
 
 /**
@@ -63,22 +63,6 @@ impl TryFrom<Vec<u8>> for InstructionData {
             borsh::try_from_slice_with_schema::<InstructionData>(data.as_slice())
                 .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
         )
-    }
-}
-
-pub trait BytesSize {
-    fn bytes_size(&self) -> usize;
-}
-
-impl BytesSize for InstructionData {
-    fn bytes_size(&self) -> usize {
-        size_of_val(&self.program_id)
-            + size_of_val(&self.data)
-            + self
-                .accounts
-                .iter()
-                .map(|acc| size_of_val(acc))
-                .sum::<usize>()
     }
 }
 

@@ -1,8 +1,9 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::{size_of, size_of_val},
+    std::mem::size_of,
 };
+
 
 #[derive(Accounts)]
 #[instruction(instruction: InstructionData, name: String, trigger: Trigger)]
@@ -24,9 +25,9 @@ pub struct QueueCreate<'info> {
         payer = payer,
         space = 8
             + size_of::<Queue>()
-            + size_of_val(&name)
-            + size_of_val(&trigger)
-            + instruction.bytes_size()
+            + instruction.try_to_vec()?.len()
+            + name.as_bytes().len()
+            + trigger.try_to_vec()?.len()
     )]
     pub queue: Account<'info, Queue>,
 
