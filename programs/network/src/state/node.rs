@@ -1,7 +1,7 @@
 use {
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
-    std::convert::TryFrom,
+    std::{collections::HashSet, convert::TryFrom},
 };
 
 pub const SEED_NODE: &[u8] = b"node";
@@ -13,10 +13,11 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
-    pub authority: Pubkey, // The node's owner (controls the stake)
+    pub authority: Pubkey, // The node's authority (controls the stake)
     pub id: u64,
     pub stake: Pubkey,  // The associated token account
     pub worker: Pubkey, // The node's worker address (used to sign txs)
+    pub supported_pools: HashSet<Pubkey>,
 }
 
 impl Node {

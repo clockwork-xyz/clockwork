@@ -4,11 +4,11 @@ use {
         state::*
     },
     anchor_lang::prelude::*,
-    clockwork_pool::cpi::accounts::Rotate
+    clockwork_pool::cpi::accounts::PoolRotate
 };
 
 #[derive(Accounts)]
-pub struct RotatorTurn<'info> {
+pub struct PoolsRotate<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
 
@@ -25,11 +25,15 @@ pub struct RotatorTurn<'info> {
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(mut, address = clockwork_pool::state::Pool::pubkey())]
-    pub pool: Account<'info, clockwork_pool::state::Pool>,
-
-    #[account(address = clockwork_pool::state::Config::pubkey())]
-    pub pool_config: Account<'info, clockwork_pool::state::Config>,
+    #[account(
+        seeds = [
+            SEED_NODE,
+            node.id.to_be_bytes().as_ref()
+        ],
+        bump,
+        constraint = node.id == entry.id
+    )]
+    pub node: Account<'info, Node>,
 
     #[account(address = clockwork_pool::ID)]
     pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
@@ -38,7 +42,7 @@ pub struct RotatorTurn<'info> {
         mut, 
         seeds = [SEED_ROTATOR], 
         bump, 
-        constraint = Clock::get().unwrap().slot >= rotator.last_slot.checked_add(config.slots_per_rotation).unwrap()
+        constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub rotator: Account<'info, Rotator>,
 
@@ -59,30 +63,45 @@ pub struct RotatorTurn<'info> {
     pub worker: SystemAccount<'info>,
 }
 
-pub fn handler(ctx: Context<RotatorTurn>) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Result<()> {
     // Get accounts
-    let pool = &mut ctx.accounts.pool;
-    let pool_config = &ctx.accounts.pool_config;
+    let node = &ctx.accounts.node;
     let pool_program = &ctx.accounts.pool_program;
     let rotator = &mut ctx.accounts.rotator;
     let worker = &ctx.accounts.worker;
 
-    // TODO Slash stakes of current workers if rotator is too many slots behind
+    // Require the number of remaining accounts matches the expected number of pools
+    require!(rotator.pool_pubkeys.len() == ctx.remaining_accounts.len(), ClockworkError::InvalidPool);
 
-    // Rotate the pool and hash the nonce
+    // Rotate the worker into its supported pools
     let rotator_bump = *ctx.bumps.get("rotator").unwrap();
-    clockwork_pool::cpi::rotate(
-        CpiContext::new_with_signer(
-            pool_program.to_account_info(),
-            Rotate {
-                config: pool_config.to_account_info(),
-                rotator: rotator.to_account_info(),
-                pool: pool.to_account_info(),
-                worker: worker.to_account_info(),
-            },
-            &[&[SEED_ROTATOR, &[rotator_bump]]],
-        ),
-    )?;
+    for i in 0..ctx.remaining_accounts.len() {
+        match ctx.remaining_accounts.get(i) {
+            None => return Err(ClockworkError::InvalidPool.into()),
+            Some(pool_acc_info) => {
+
+                // Verify the account pubkey is an expected pool
+                require!(pool_acc_info.key().eq(rotator.pool_pubkeys.get(i).unwrap()), ClockworkError::InvalidPool);
+
+                // If the node supports this pool, then rotate it in
+                if node.supported_pools.contains(&pool_acc_info.key()) {
+                    clockwork_pool::cpi::pool_rotate(
+                        CpiContext::new_with_signer(
+                            pool_program.to_account_info(),
+                            PoolRotate {
+                                authority: rotator.to_account_info(),
+                                pool: pool_acc_info.clone(),
+                                worker: worker.to_account_info(),
+                            },
+                            &[&[SEED_ROTATOR, &[rotator_bump]]],
+                        ),
+                    )?;
+                }
+            }
+        }
+    }
+
+    // TODO Slash stakes of current workers if rotator is too many slots behind (?)
 
     // Hash the rotator's nonce value
     rotator.hash_nonce()?;

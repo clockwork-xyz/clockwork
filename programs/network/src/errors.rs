@@ -17,6 +17,9 @@ pub enum ClockworkError {
     #[msg("The stake account cannot be used for this operation")]
     InvalidStakeAccount,
 
+    #[msg("One of the provided pool accounts is invalid or missing")]
+    InvalidPool,
+
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
 

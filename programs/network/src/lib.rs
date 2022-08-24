@@ -12,7 +12,6 @@ use instructions::*;
 
 #[program]
 pub mod clockwork_network {
-
     use super::*;
 
     pub fn entry_close(ctx: Context<EntryClose>) -> Result<CrankResponse> {
@@ -27,16 +26,20 @@ pub mod clockwork_network {
         initialize::handler(ctx)
     }
 
-    pub fn rotator_turn(ctx: Context<RotatorTurn>) -> Result<()> {
-        rotator_turn::handler(ctx)
-    }
-
     pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
         node_register::handler(ctx)
     }
 
     pub fn node_stake(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
         node_stake::handler(ctx, amount)
+    }
+
+    pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
+        pool_create::handler(ctx, name, size)
+    }
+
+    pub fn pools_rotate<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Result<()> {
+        pools_rotate::handler(ctx)
     }
 
     pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {

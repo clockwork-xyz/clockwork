@@ -7,7 +7,7 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn initialize(admin: Pubkey) -> Instruction {
+pub fn initialize(admin: Pubkey, worker_pool: Pubkey) -> Instruction {
     let config_pubkey = clockwork_crank::state::Config::pubkey();
     Instruction {
         program_id: clockwork_crank::ID,
@@ -16,6 +16,6 @@ pub fn initialize(admin: Pubkey) -> Instruction {
             AccountMeta::new(config_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_crank::instruction::Initialize {}.data(),
+        data: clockwork_crank::instruction::Initialize { worker_pool }.data(),
     }
 }

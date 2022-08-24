@@ -41,7 +41,7 @@ impl TryFrom<Vec<u8>> for Registry {
  */
 
 pub trait RegistryAccount {
-    fn new(&mut self) -> Result<()>;
+    fn init(&mut self) -> Result<()>;
 
     fn new_node(
         &mut self,
@@ -65,7 +65,7 @@ pub trait RegistryAccount {
 }
 
 impl RegistryAccount for Account<'_, Registry> {
-    fn new(&mut self) -> Result<()> {
+    fn init(&mut self) -> Result<()> {
         self.is_locked = false;
         self.node_count = 0;
         self.snapshot_count = 0;

@@ -16,6 +16,7 @@ static DEFAULT_AUTOMATION_FEE: u64 = 1_000;
 pub struct Config {
     pub admin: Pubkey,
     pub automation_fee: u64,
+    pub worker_pool: Pubkey,
 }
 
 impl Config {
@@ -39,6 +40,7 @@ impl TryFrom<Vec<u8>> for Config {
 pub struct ConfigSettings {
     pub admin: Pubkey,
     pub automation_fee: u64,
+    pub worker_pool: Pubkey,
 }
 
 /**
@@ -46,21 +48,23 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn init(&mut self, admin: Pubkey) -> Result<()>;
+    fn init(&mut self, admin: Pubkey, worker_pool: Pubkey) -> Result<()>;
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn init(&mut self, admin: Pubkey) -> Result<()> {
+    fn init(&mut self, admin: Pubkey, worker_pool: Pubkey) -> Result<()> {
         self.admin = admin;
         self.automation_fee = DEFAULT_AUTOMATION_FEE;
+        self.worker_pool = worker_pool;
         Ok(())
     }
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
         self.automation_fee = settings.automation_fee;
+        self.worker_pool;
         Ok(())
     }
 }

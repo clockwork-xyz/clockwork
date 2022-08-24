@@ -3,7 +3,7 @@ use {
     anchor_lang::{prelude::*, system_program},
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_pool::state::{Pool, SEED_POOL},
+    clockwork_pool::state::Pool,
     std::{mem::size_of, str::FromStr},
 };
 
@@ -24,11 +24,7 @@ pub struct QueueCrank<'info> {
     )]
     pub fee: Box<Account<'info, Fee>>,
 
-    #[account(
-        seeds = [SEED_POOL],
-        bump,
-        seeds::program = clockwork_pool::ID,
-    )]
+    #[account(address = config.worker_pool)]
     pub pool: Box<Account<'info, Pool>>,
 
     #[account(
