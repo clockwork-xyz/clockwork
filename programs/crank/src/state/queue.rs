@@ -12,7 +12,6 @@ use {
     std::{
         convert::TryFrom,
         hash::{Hash, Hasher},
-        mem::size_of,
     },
 };
 
