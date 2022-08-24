@@ -23,11 +23,13 @@ pub struct QueueCreate<'info> {
         ],
         bump,
         payer = payer,
-        space = 8
-            + size_of::<Queue>()
-            + instruction.try_to_vec()?.len()
-            + name.as_bytes().len()
-            + trigger.try_to_vec()?.len()
+        space = vec![
+            8, 
+            size_of::<Queue>(), 
+            instruction.try_to_vec()?.len(), 
+            name.as_bytes().len(), 
+            trigger.try_to_vec()?.len()
+        ].iter().sum()
     )]
     pub queue: Account<'info, Queue>,
 
