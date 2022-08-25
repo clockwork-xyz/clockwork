@@ -15,9 +15,9 @@ pub const SEED_NODE: &[u8] = b"node";
 pub struct Node {
     pub authority: Pubkey, // The node's authority (controls the stake)
     pub id: u64,
-    pub stake: Pubkey,  // The associated token account
-    pub worker: Pubkey, // The node's worker address (used to sign txs)
-    pub supported_pools: HashSet<Pubkey>,
+    pub stake: Pubkey,                    // The associated token account
+    pub worker: Pubkey,                   // The node's worker address (used to sign txs)
+    pub supported_pools: HashSet<Pubkey>, // The set pools that this node supports
 }
 
 impl Node {
@@ -45,6 +45,10 @@ pub trait NodeAccount {
         stake: &mut Account<TokenAccount>,
         worker: &Signer,
     ) -> Result<()>;
+
+    fn add_pool(&mut self, pool: Pubkey) -> Result<()>;
+
+    fn drop_pool(&mut self, pool: Pubkey) -> Result<()>;
 }
 
 impl NodeAccount for Account<'_, Node> {
@@ -59,6 +63,16 @@ impl NodeAccount for Account<'_, Node> {
         self.id = id;
         self.stake = stake.key();
         self.worker = worker.key();
+        Ok(())
+    }
+
+    fn add_pool(&mut self, pool: Pubkey) -> Result<()> {
+        self.supported_pools.insert(pool);
+        Ok(())
+    }
+
+    fn drop_pool(&mut self, pool: Pubkey) -> Result<()> {
+        self.supported_pools.remove(&pool);
         Ok(())
     }
 }

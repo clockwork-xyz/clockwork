@@ -229,8 +229,7 @@ impl PoolObserver {
 
         // Inject account metas for worker pools
         for pool_pubkey in r_rotator.pool_pubkeys.clone() {
-            ix.accounts
-                .push(AccountMeta::new_readonly(pool_pubkey, false));
+            ix.accounts.push(AccountMeta::new(pool_pubkey, false));
         }
 
         // Drop read locks

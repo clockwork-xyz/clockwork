@@ -58,6 +58,7 @@ pub struct NodeRegister<'info> {
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
 
+    // TODO Rename to signer to authority
     #[account(mut, constraint = signer.key() != worker.key())]
     pub signer: Signer<'info>,
 

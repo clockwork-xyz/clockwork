@@ -85,6 +85,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
 
                 // If the node supports this pool, then rotate it in
                 if node.supported_pools.contains(&pool_acc_info.key()) {
+
+                    msg!("Sending pool_rotate CPI");
                     clockwork_pool::cpi::pool_rotate(
                         CpiContext::new_with_signer(
                             pool_program.to_account_info(),

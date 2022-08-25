@@ -1,6 +1,8 @@
 pub mod entry_close;
 pub mod entry_create;
 pub mod initialize;
+pub mod node_add_pool;
+pub mod node_drop_pool;
 pub mod node_register;
 pub mod node_stake;
 pub mod pool_create;
@@ -15,6 +17,8 @@ pub mod snapshot_rotate;
 pub use entry_close::*;
 pub use entry_create::*;
 pub use initialize::*;
+pub use node_add_pool::*;
+pub use node_drop_pool::*;
 pub use node_register::*;
 pub use node_stake::*;
 pub use pool_create::*;

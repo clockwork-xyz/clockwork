@@ -16,6 +16,30 @@ use {
 //     Ok(())
 // }
 
+pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
+    let ix = clockwork_client::network::instruction::node_add_pool(
+        client.payer_pubkey(),
+        node_pubkey,
+        pool_pubkey,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    Ok(())
+}
+
+pub fn drop_pool(
+    client: &Client,
+    node_pubkey: Pubkey,
+    pool_pubkey: Pubkey,
+) -> Result<(), CliError> {
+    let ix = clockwork_client::network::instruction::node_drop_pool(
+        client.payer_pubkey(),
+        node_pubkey,
+        pool_pubkey,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    Ok(())
+}
+
 pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pubkey();

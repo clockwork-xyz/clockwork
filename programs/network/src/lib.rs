@@ -26,6 +26,14 @@ pub mod clockwork_network {
         initialize::handler(ctx)
     }
 
+    pub fn node_add_pool(ctx: Context<NodeAddPool>) -> Result<()> {
+        node_add_pool::handler(ctx)
+    }
+
+    pub fn node_drop_pool(ctx: Context<NodeDropPool>) -> Result<()> {
+        node_drop_pool::handler(ctx)
+    }
+
     pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
         node_register::handler(ctx)
     }

@@ -1,3 +1,5 @@
+use clockwork_client::pool::state::Pool;
+
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
@@ -28,7 +30,6 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
-    stake_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed
     _ = validator_process.wait();
@@ -97,12 +98,10 @@ fn register_worker(client: &Client) -> Result<()> {
     let worker_keypair = read_keypair_file(keypath).unwrap();
     client.airdrop(&worker_keypair.pubkey(), LAMPORTS_PER_SOL)?;
     super::node::register(client, worker_keypair)?;
-    Ok(())
-}
-
-fn stake_worker(client: &Client) -> Result<()> {
     let node_pubkey = Node::pubkey(0);
+    let pool_pubkey = Pool::pubkey("crank".into());
     super::node::stake(client, node_pubkey, 100)?;
+    super::node::add_pool(client, node_pubkey, pool_pubkey)?;
     Ok(())
 }
 
