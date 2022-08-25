@@ -1,7 +1,6 @@
 use {
     anchor_lang::Discriminator,
     bincode::deserialize,
-    cached::proc_macro::cached,
     clockwork_client::{
         crank::state::Queue,
         http::state::Request,
@@ -40,32 +39,10 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account is the worker pool, return it
-        if account_pubkey.eq(&pool_pubkey()) {
-            return Ok(AccountUpdateEvent::Pool {
-                pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
-                    GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Clockwork pool account".into(),
-                    }
-                })?,
-            });
-        }
-
-        // If the account is the worker pool rotator, return it
-        if account_pubkey.eq(&rotator_pubkey()) {
-            return Ok(AccountUpdateEvent::Rotator {
-                rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {
-                    GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Clockwork rotator account".into(),
-                    }
-                })?,
-            });
-        }
-
-        // If the account is a queue, return it
         if owner_pubkey.eq(&clockwork_client::crank::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
             if d.eq(&Queue::discriminator()) {
+                // If the account is a queue, return it
                 return Ok(AccountUpdateEvent::Queue {
                     queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
@@ -76,15 +53,41 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             }
         }
 
-        // If the account is a snapshot, return it
         if owner_pubkey.eq(&clockwork_client::network::ID) && account_info.data.len() > 8 {
-            return Ok(AccountUpdateEvent::Snapshot {
-                snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
-                    GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Clockwork snapshot account".into(),
-                    }
-                })?,
-            });
+            let d = &account_info.data[..8];
+            if d.eq(&Snapshot::discriminator()) {
+                // If the account is a snapshot, return it
+                return Ok(AccountUpdateEvent::Snapshot {
+                    snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork snapshot account".into(),
+                        }
+                    })?,
+                });
+            } else if d.eq(&Rotator::discriminator()) {
+                // If the account is the rotator, return it
+                return Ok(AccountUpdateEvent::Rotator {
+                    rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork rotator account".into(),
+                        }
+                    })?,
+                });
+            }
+        }
+
+        // If the account is a worker pool, return it
+        if owner_pubkey.eq(&clockwork_client::pool::ID) && account_info.data.len() > 8 {
+            let d = &account_info.data[..8];
+            if d.eq(&Pool::discriminator()) {
+                return Ok(AccountUpdateEvent::Pool {
+                    pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork pool account".into(),
+                        }
+                    })?,
+                });
+            }
         }
 
         // If the account is an http request, return in
@@ -102,14 +105,4 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             msg: "Account is not relevant to Clockwork plugin".into(),
         })
     }
-}
-
-#[cached]
-fn rotator_pubkey() -> Pubkey {
-    Rotator::pubkey()
-}
-
-#[cached]
-fn pool_pubkey() -> Pubkey {
-    Pool::pubkey()
 }

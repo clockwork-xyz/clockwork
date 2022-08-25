@@ -15,7 +15,7 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        automation_fee: Option<u64>,
+        crank_fee: Option<u64>,
     },
 
     // Http

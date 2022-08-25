@@ -92,11 +92,6 @@ impl RotatorAccount for Account<'_, Rotator> {
     fn add_pool(&mut self, pool_pubkey: Pubkey) -> Result<()> {
         // Push the pubkey into the set of registered pools
         self.pool_pubkeys.push(pool_pubkey);
-
-        // Realloc memory for the config account
-        let new_size = 8 + self.try_to_vec()?.len();
-        self.to_account_info().realloc(new_size, false)?;
-
         Ok(())
     }
 }

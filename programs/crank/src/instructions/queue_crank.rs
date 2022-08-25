@@ -92,9 +92,9 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // If worker is in the pool, pay automation fees.
     let is_authorized_worker = pool.clone().into_inner().workers.contains(&worker.key());
     if is_authorized_worker {
-        fee.pay_to_worker(config.automation_fee, queue)?;
+        fee.pay_to_worker(config.crank_fee, queue)?;
     } else {
-        fee.pay_to_admin(config.automation_fee, queue)?;
+        fee.pay_to_admin(config.crank_fee, queue)?;
     }
 
     Ok(())

@@ -1,8 +1,7 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        crank::state::Config as CrankConfig, network::state::Config as NetworkConfig,
-        pool::state::Config as PoolConfig, Client,
+        crank::state::Config as CrankConfig, network::state::Config as NetworkConfig, Client,
     },
     solana_sdk::pubkey::Pubkey,
 };
@@ -20,25 +19,14 @@ pub fn get(client: &Client) -> Result<(), CliError> {
         .get::<NetworkConfig>(&network_config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(network_config_pubkey.to_string()))?;
 
-    // Get pool config
-    let pool_config_pubkey = PoolConfig::pubkey();
-    let pool_config = client
-        .get::<PoolConfig>(&pool_config_pubkey)
-        .map_err(|_err| CliError::AccountNotFound(pool_config_pubkey.to_string()))?;
-
     // Print configs
     println!("Crank {:#?}", crank_config);
     println!("Network {:#?}", network_config);
-    println!("Pool {:#?}", pool_config);
 
     Ok(())
 }
 
-pub fn set(
-    client: &Client,
-    admin: Option<Pubkey>,
-    automation_fee: Option<u64>,
-) -> Result<(), CliError> {
+pub fn set(client: &Client, admin: Option<Pubkey>, crank_fee: Option<u64>) -> Result<(), CliError> {
     let config_pubkey = CrankConfig::pubkey();
     let config = client
         .get::<CrankConfig>(&config_pubkey)
@@ -49,10 +37,11 @@ pub fn set(
             Some(admin) => admin,
             None => config.admin,
         },
-        automation_fee: match automation_fee {
-            Some(automation_fee) => automation_fee,
-            None => config.automation_fee,
+        crank_fee: match crank_fee {
+            Some(crank_fee) => crank_fee,
+            None => config.crank_fee,
         },
+        worker_pool: config.worker_pool,
     };
 
     let ix = clockwork_client::crank::instruction::config_update(

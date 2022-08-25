@@ -1,30 +1,27 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    clockwork_pool::state::SEED_POOL
+    anchor_lang::{prelude::*, solana_program::system_program, system_program::{transfer, Transfer}},
+    clockwork_pool::{program::ClockworkPool, state::SEED_POOL}
 };
 
 #[derive(Accounts)]
 #[instruction(name: String, size: usize)]
 pub struct PoolCreate<'info> {
-    #[account()]
+    #[account(mut)]
     pub admin: Signer<'info>,
 
     #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
     pub config: Account<'info, Config>,
 
     #[account(
-        seeds = [
-            SEED_POOL,
-            name.as_bytes(),
-        ], 
+        seeds = [SEED_POOL, name.as_bytes()], 
+        seeds::program = clockwork_pool::ID,
         bump,
-        seeds::program = clockwork_pool::ID
     )]
     pub pool: SystemAccount<'info>,
 
     #[account(address = clockwork_pool::ID)]
-    pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
+    pub pool_program: Program<'info, ClockworkPool>,
 
     #[account(mut, seeds = [SEED_ROTATOR], bump)]
     pub rotator: Account<'info, Rotator>,
@@ -35,6 +32,7 @@ pub struct PoolCreate<'info> {
 
 pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
     // Get accounts
+    let admin = &ctx.accounts.admin;
     let pool = &ctx.accounts.pool;
     let pool_program = &ctx.accounts.pool_program;
     let rotator = &mut ctx.accounts.rotator;
@@ -47,6 +45,7 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
             pool_program.to_account_info(),
             clockwork_pool::cpi::accounts::PoolCreate {
                 authority: rotator.to_account_info(),
+                payer: admin.to_account_info(),
                 pool: pool.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
@@ -56,8 +55,29 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
         size,
     )?;
 
-    // Add pool to the rotator
+    // Add new pool pubkey to the rotator
     rotator.add_pool(pool.key())?;
+
+    // Realloc memory for the rotator account
+    let data_len = 8 + rotator.try_to_vec()?.len();
+    rotator.to_account_info().realloc(data_len, false)?;
+
+    // If lamports are required to maintain rent-exemption, pay them
+    let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
+    if minimum_rent > rotator.to_account_info().lamports() {
+        transfer(
+            CpiContext::new(
+                system_program.to_account_info(),
+                Transfer {
+                    from: admin.to_account_info(),
+                    to: rotator.to_account_info(),
+                },
+            ),
+            minimum_rent
+                .checked_sub(rotator.to_account_info().lamports())
+                .unwrap(),
+        )?;
+    }
 
     Ok(())
 }

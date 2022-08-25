@@ -85,7 +85,7 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
-            automation_fee: parse_u64("automation_fee", matches).map_or(None, |v| Some(v)),
+            crank_fee: parse_u64("crank_fee", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

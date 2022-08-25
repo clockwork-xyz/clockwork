@@ -18,7 +18,6 @@ pub struct Observers {
 impl Observers {
     pub fn handle_confirmed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.http.clone().handle_confirmed_slot(slot)?;
-        self.pool.clone().handle_confirmed_slot(slot)?;
         self.queue.clone().handle_confirmed_slot(slot)?;
         Ok(())
     }

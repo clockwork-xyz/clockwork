@@ -7,14 +7,17 @@ use {
 #[derive(Accounts)]
 #[instruction(name: String, size: usize)]
 pub struct PoolCreate<'info> {
-    #[account(mut)]
+    #[account()]
     pub authority: Signer<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         init,
         seeds = [SEED_POOL, name.as_bytes()],
         bump,
-        payer = authority,
+        payer = payer,
         space = 8 + size_of::<Pool>() + (size_of::<Pubkey>() * size) + name.as_bytes().len(),
     )]
     pub pool: Account<'info, Pool>,

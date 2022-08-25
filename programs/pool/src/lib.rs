@@ -10,6 +10,8 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
 
+// TODO Create config to hold onto network program ID (make configurable in case we need to cutover to new network program)
+
 #[program]
 pub mod clockwork_pool {
     use super::*;
