@@ -27,16 +27,20 @@ pub mod clockwork_network {
         initialize::handler(ctx)
     }
 
-    pub fn node_update(ctx: Context<NodeUpdate>, settings: NodeSettings) -> Result<()> {
-        node_update::handler(ctx, settings)
-    }
-
     pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
         node_register::handler(ctx)
     }
 
     pub fn node_stake(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
         node_stake::handler(ctx, amount)
+    }
+
+    pub fn node_update(ctx: Context<NodeUpdate>, settings: NodeSettings) -> Result<()> {
+        node_update::handler(ctx, settings)
+    }
+
+    pub fn node_unstake(ctx: Context<NodeUnstake>, amount: u64) -> Result<()> {
+        node_unstake::handler(ctx, amount)
     }
 
     pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
