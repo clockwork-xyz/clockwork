@@ -79,12 +79,12 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
     let ix = clockwork_client::network::instruction::node_register(
+        owner.pubkey(),
         config_pubkey,
         entry_pubkey,
         config_data.mint,
         node_pubkey,
         registry_pubkey,
-        owner.pubkey(),
         snapshot_pubkey,
         worker.pubkey(),
     );
