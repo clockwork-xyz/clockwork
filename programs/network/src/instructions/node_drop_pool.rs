@@ -28,9 +28,5 @@ pub fn handler(ctx: Context<NodeDropPool>) -> Result<()> {
     // Update the pool
     node.drop_pool(pool.key())?;
 
-    // Realloc memory for the node account
-    let data_len = 8 + node.try_to_vec()?.len();
-    node.to_account_info().realloc(data_len, false)?;
-
     Ok(())
 }
