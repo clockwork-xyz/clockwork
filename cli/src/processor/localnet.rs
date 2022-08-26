@@ -1,4 +1,6 @@
-use clockwork_client::pool::state::Pool;
+use std::collections::HashSet;
+
+use clockwork_client::{network::state::NodeSettings, pool::state::Pool};
 
 #[allow(deprecated)]
 use {
@@ -101,7 +103,13 @@ fn register_worker(client: &Client) -> Result<()> {
     let node_pubkey = Node::pubkey(0);
     let pool_pubkey = Pool::pubkey("crank".into());
     super::node::stake(client, node_pubkey, 100)?;
-    super::node::add_pool(client, node_pubkey, pool_pubkey)?;
+    super::node::update(
+        client,
+        node_pubkey,
+        NodeSettings {
+            supported_pools: HashSet::from([pool_pubkey]),
+        },
+    )?;
     Ok(())
 }
 

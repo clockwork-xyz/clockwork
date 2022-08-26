@@ -110,14 +110,14 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("add_pool", matches)) => Ok(CliCommand::NodeAddPool {
-            node_pubkey: parse_pubkey("node", matches)?,
-            pool_pubkey: parse_pubkey("pool", matches)?,
-        }),
-        Some(("drop_pool", matches)) => Ok(CliCommand::NodeDropPool {
-            node_pubkey: parse_pubkey("node", matches)?,
-            pool_pubkey: parse_pubkey("pool", matches)?,
-        }),
+        // Some(("add_pool", matches)) => Ok(CliCommand::NodeAddPool {
+        //     node_pubkey: parse_pubkey("node", matches)?,
+        //     pool_pubkey: parse_pubkey("pool", matches)?,
+        // }),
+        // Some(("drop_pool", matches)) => Ok(CliCommand::NodeDropPool {
+        //     node_pubkey: parse_pubkey("node", matches)?,
+        //     pool_pubkey: parse_pubkey("pool", matches)?,
+        // }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             worker: parse_keypair_file("worker", matches)?,
         }),

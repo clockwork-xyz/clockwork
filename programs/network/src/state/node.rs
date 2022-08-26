@@ -34,6 +34,14 @@ impl TryFrom<Vec<u8>> for Node {
 }
 
 /**
+ * NodeSettings
+ */
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct NodeSettings {
+    pub supported_pools: HashSet<Pubkey>,
+}
+
+/**
  * NodeAccount
  */
 
@@ -46,9 +54,7 @@ pub trait NodeAccount {
         worker: &Signer,
     ) -> Result<()>;
 
-    fn add_pool(&mut self, pool: Pubkey) -> Result<()>;
-
-    fn drop_pool(&mut self, pool: Pubkey) -> Result<()>;
+    fn update(&mut self, settings: NodeSettings) -> Result<()>;
 }
 
 impl NodeAccount for Account<'_, Node> {
@@ -66,13 +72,8 @@ impl NodeAccount for Account<'_, Node> {
         Ok(())
     }
 
-    fn add_pool(&mut self, pool: Pubkey) -> Result<()> {
-        self.supported_pools.insert(pool);
-        Ok(())
-    }
-
-    fn drop_pool(&mut self, pool: Pubkey) -> Result<()> {
-        self.supported_pools.remove(&pool);
+    fn update(&mut self, settings: NodeSettings) -> Result<()> {
+        self.supported_pools = settings.supported_pools;
         Ok(())
     }
 }

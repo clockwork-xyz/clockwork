@@ -9,6 +9,7 @@ pub use id::ID;
 use anchor_lang::prelude::*;
 use clockwork_crank::state::CrankResponse;
 use instructions::*;
+use state::*;
 
 #[program]
 pub mod clockwork_network {
@@ -26,12 +27,8 @@ pub mod clockwork_network {
         initialize::handler(ctx)
     }
 
-    pub fn node_add_pool(ctx: Context<NodeAddPool>) -> Result<()> {
-        node_add_pool::handler(ctx)
-    }
-
-    pub fn node_drop_pool(ctx: Context<NodeDropPool>) -> Result<()> {
-        node_drop_pool::handler(ctx)
+    pub fn node_update(ctx: Context<NodeUpdate>, settings: NodeSettings) -> Result<()> {
+        node_update::handler(ctx, settings)
     }
 
     pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {

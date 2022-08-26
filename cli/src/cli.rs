@@ -26,7 +26,6 @@ pub enum CliCommand {
         route: String,
     },
 
-    // Admin commands
     Initialize {
         mint: Pubkey,
     },
@@ -44,14 +43,14 @@ pub enum CliCommand {
         address: Pubkey,
         amount: u64,
     },
-    NodeAddPool {
-        node_pubkey: Pubkey,
-        pool_pubkey: Pubkey,
-    },
-    NodeDropPool {
-        node_pubkey: Pubkey,
-        pool_pubkey: Pubkey,
-    },
+    // NodeAddPool {
+    //     node_pubkey: Pubkey,
+    //     pool_pubkey: Pubkey,
+    // },
+    // NodeDropPool {
+    //     node_pubkey: Pubkey,
+    //     pool_pubkey: Pubkey,
+    // },
 
     // Pool commands
     PoolGet,
@@ -208,46 +207,6 @@ pub fn app() -> Command<'static> {
             Command::new("node")
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("add_pool")
-                        .about("Add the node to a worker pool")
-                        .arg(
-                            Arg::new("node")
-                                .long("node")
-                                .short('n')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The node you want update"),
-                        )
-                        .arg(
-                            Arg::new("pool")
-                                .long("pool")
-                                .short('p')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The pool you would like to add the node to"),
-                        ),
-                )
-                .subcommand(
-                    Command::new("drop_pool")
-                        .about("Drop the node from a worker pool")
-                        .arg(
-                            Arg::new("node")
-                                .long("node")
-                                .short('n')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The node you want update"),
-                        )
-                        .arg(
-                            Arg::new("pool")
-                                .long("pool")
-                                .short('p')
-                                .takes_value(true)
-                                .required(true)
-                                .help("The pool you would like to remove the node from"),
-                        ),
-                )
                 .subcommand(
                     Command::new("register")
                         .about("Register a new worker with the Clockwork network")

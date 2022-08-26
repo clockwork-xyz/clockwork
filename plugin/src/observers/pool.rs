@@ -66,8 +66,6 @@ impl PoolObserver {
 
     pub fn handle_updated_rotator(self: Arc<Self>, rotator: Rotator) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Updated rotator: {:#?}", rotator);
-
             let mut w_rotator = this.rotator.write().await;
             *w_rotator = rotator;
             drop(w_rotator);
@@ -81,18 +79,35 @@ impl PoolObserver {
 
             info!("Updated pool: {:#?}", pool);
 
+            // Build the new pool_position
             let mut w_pool_positions = this.pool_positions.write().await;
             let workers = &mut pool.workers.clone();
-            *w_pool_positions = PoolPositions {
-                crank_pool_position: PoolPosition {
-                    current_position: pool
-                        .workers
-                        .iter()
-                        .position(|k| k.eq(&this.pubkey))
-                        .map(|i| i as u64),
-                    workers: workers.make_contiguous().to_vec().clone(),
-                },
+            let pool_position = PoolPosition {
+                current_position: pool
+                    .workers
+                    .iter()
+                    .position(|k| k.eq(&this.pubkey))
+                    .map(|i| i as u64),
+                workers: workers.make_contiguous().to_vec().clone(),
             };
+
+            // Update the pool positions struct
+            match pool.name.as_str() {
+                "crank" => {
+                    *w_pool_positions = PoolPositions {
+                        crank_pool: pool_position,
+                        http_pool: w_pool_positions.http_pool.clone(),
+                    };
+                }
+                "http" => {
+                    *w_pool_positions = PoolPositions {
+                        crank_pool: w_pool_positions.crank_pool.clone(),
+                        http_pool: pool_position,
+                    };
+                }
+                _ => {}
+            }
+
             drop(w_pool_positions);
             Ok(())
         })
@@ -111,33 +126,12 @@ impl PoolObserver {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Log rotator data
             let r_rotator = this.rotator.read().await;
             info!(
                 "slot: {} last_rotation: {} nonce: {}",
                 confirmed_slot, r_rotator.last_rotation_at, r_rotator.nonce
             );
             drop(r_rotator);
-
-            // Update the set worker status
-            // let mut w_pool_positions = this.pool_positions.write().await;
-            // this.pool_forecasts.retain(|slot, pool| {
-            //     if *slot == confirmed_slot {
-            //         *w_pool_positions = PoolPositions {
-            //             crank_pool_position: PoolPosition {
-            //                 current_position: pool
-            //                     .workers
-            //                     .iter()
-            //                     .position(|k| k.eq(&this.pubkey))
-            //                     .map(|i| i as u64),
-            //                 workers: pool.workers.make_contiguous().to_vec().clone(),
-            //             },
-            //         }
-            //     }
-            //     *slot > confirmed_slot
-            // });
-            // drop(w_pool_positions);
-
             Ok(())
         })
     }
@@ -172,10 +166,7 @@ impl PoolObserver {
 
         // Exit early if this node is not in the worker pool AND
         //  we are still within the pool's grace period.
-        if r_pool_positions
-            .crank_pool_position
-            .current_position
-            .is_none()
+        if r_pool_positions.crank_pool.current_position.is_none()
             && slot < target_slot + GRACE_PERIOD
         {
             return Err(GeyserPluginError::Custom(
@@ -271,18 +262,26 @@ pub struct PoolPosition {
     pub workers: Vec<Pubkey>,
 }
 
+impl Default for PoolPosition {
+    fn default() -> Self {
+        PoolPosition {
+            current_position: None,
+            workers: vec![],
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct PoolPositions {
-    pub crank_pool_position: PoolPosition,
+    pub crank_pool: PoolPosition,
+    pub http_pool: PoolPosition,
 }
 
 impl Default for PoolPositions {
     fn default() -> Self {
         PoolPositions {
-            crank_pool_position: PoolPosition {
-                current_position: None,
-                workers: vec![],
-            },
+            crank_pool: PoolPosition::default(),
+            http_pool: PoolPosition::default(),
         }
     }
 }

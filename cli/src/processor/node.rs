@@ -1,3 +1,5 @@
+use clockwork_client::network::state::NodeSettings;
+
 use {
     crate::errors::CliError,
     clockwork_client::network::state::{Config, Node, Registry, Snapshot, SnapshotEntry},
@@ -16,25 +18,39 @@ use {
 //     Ok(())
 // }
 
-pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
-    let ix = clockwork_client::network::instruction::node_add_pool(
-        client.payer_pubkey(),
-        node_pubkey,
-        pool_pubkey,
-    );
-    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    Ok(())
-}
+// pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
+//     let ix = clockwork_client::network::instruction::node_add_pool(
+//         client.payer_pubkey(),
+//         node_pubkey,
+//         pool_pubkey,
+//     );
+//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+//     Ok(())
+// }
 
-pub fn drop_pool(
+// pub fn drop_pool(
+//     client: &Client,
+//     node_pubkey: Pubkey,
+//     pool_pubkey: Pubkey,
+// ) -> Result<(), CliError> {
+//     let ix = clockwork_client::network::instruction::node_drop_pool(
+//         client.payer_pubkey(),
+//         node_pubkey,
+//         pool_pubkey,
+//     );
+//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+//     Ok(())
+// }
+
+pub fn update(
     client: &Client,
     node_pubkey: Pubkey,
-    pool_pubkey: Pubkey,
+    settings: NodeSettings,
 ) -> Result<(), CliError> {
-    let ix = clockwork_client::network::instruction::node_drop_pool(
+    let ix = clockwork_client::network::instruction::node_update(
         client.payer_pubkey(),
         node_pubkey,
-        pool_pubkey,
+        settings,
     );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     Ok(())

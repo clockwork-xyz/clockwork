@@ -28,14 +28,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::http::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
-        CliCommand::NodeAddPool {
-            node_pubkey,
-            pool_pubkey,
-        } => super::node::add_pool(&client, node_pubkey, pool_pubkey),
-        CliCommand::NodeDropPool {
-            node_pubkey,
-            pool_pubkey,
-        } => super::node::drop_pool(&client, node_pubkey, pool_pubkey),
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
         CliCommand::NodeStake { address, amount } => super::node::stake(&client, address, amount),
         CliCommand::PoolGet => super::pool::get(&client),
