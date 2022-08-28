@@ -11,12 +11,12 @@ use {
 };
 
 pub fn node_register(
+    authority: Pubkey,
     config: Pubkey,
     entry: Pubkey,
     mint: Pubkey,
     node: Pubkey,
     registry: Pubkey,
-    signer: Pubkey,
     snapshot: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
@@ -25,13 +25,13 @@ pub fn node_register(
         program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new_readonly(associated_token::ID, false),
+            AccountMeta::new(authority, true),
             AccountMeta::new_readonly(config, false),
             AccountMeta::new(entry, false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new(node, false),
             AccountMeta::new(registry, false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),
-            AccountMeta::new(signer, true),
             AccountMeta::new(snapshot, false),
             AccountMeta::new(stake_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),

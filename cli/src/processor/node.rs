@@ -1,3 +1,5 @@
+use clockwork_client::network::state::NodeSettings;
+
 use {
     crate::errors::CliError,
     clockwork_client::network::state::{Config, Node, Registry, Snapshot, SnapshotEntry},
@@ -15,6 +17,44 @@ use {
 //     println!("{:#?}", node);
 //     Ok(())
 // }
+
+// pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
+//     let ix = clockwork_client::network::instruction::node_add_pool(
+//         client.payer_pubkey(),
+//         node_pubkey,
+//         pool_pubkey,
+//     );
+//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+//     Ok(())
+// }
+
+// pub fn drop_pool(
+//     client: &Client,
+//     node_pubkey: Pubkey,
+//     pool_pubkey: Pubkey,
+// ) -> Result<(), CliError> {
+//     let ix = clockwork_client::network::instruction::node_drop_pool(
+//         client.payer_pubkey(),
+//         node_pubkey,
+//         pool_pubkey,
+//     );
+//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+//     Ok(())
+// }
+
+pub fn update(
+    client: &Client,
+    node_pubkey: Pubkey,
+    settings: NodeSettings,
+) -> Result<(), CliError> {
+    let ix = clockwork_client::network::instruction::node_update(
+        client.payer_pubkey(),
+        node_pubkey,
+        settings,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    Ok(())
+}
 
 pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     // Get config data
@@ -39,12 +79,12 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
     let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
     let ix = clockwork_client::network::instruction::node_register(
+        owner.pubkey(),
         config_pubkey,
         entry_pubkey,
         config_data.mint,
         node_pubkey,
         registry_pubkey,
-        owner.pubkey(),
         snapshot_pubkey,
         worker.pubkey(),
     );

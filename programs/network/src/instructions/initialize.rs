@@ -97,9 +97,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     let system_program = &ctx.accounts.system_program;
 
     // Initialize accounts
-    config.new(admin.key(), mint.key())?;
-    registry.new()?;
-    rotator.new()?;
+    config.init(admin.key(), mint.key())?;
+    registry.init()?;
+    rotator.init()?;
 
     // Setup the first snapshot
     registry.new_snapshot(snapshot)?;

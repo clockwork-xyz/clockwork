@@ -18,8 +18,9 @@ pub const SEED_ROTATOR: &[u8] = b"rotator";
 #[account]
 #[derive(Debug)]
 pub struct Rotator {
-    pub last_slot: u64, // Slot of the last cycle
+    pub last_rotation_at: u64, // Slot of the last rotation
     pub nonce: u64,
+    pub pool_pubkeys: Vec<Pubkey>,
 }
 
 impl Rotator {
@@ -40,7 +41,7 @@ impl TryFrom<Vec<u8>> for Rotator {
  */
 
 pub trait RotatorAccount {
-    fn new(&mut self) -> Result<()>;
+    fn init(&mut self) -> Result<()>;
 
     fn is_valid_entry(
         &mut self,
@@ -49,15 +50,18 @@ pub trait RotatorAccount {
     ) -> Result<bool>;
 
     fn hash_nonce(&mut self) -> Result<()>;
+
+    fn add_pool(&mut self, pool: Pubkey) -> Result<()>;
 }
 
 impl RotatorAccount for Account<'_, Rotator> {
-    fn new(&mut self) -> Result<()> {
+    fn init(&mut self) -> Result<()> {
         // Start the nonce on a hash of the rotator's pubkey. This is an arbitrary value.
         let mut hasher = DefaultHasher::new();
         self.key().hash(&mut hasher);
         self.nonce = hasher.finish();
-        self.last_slot = 0;
+        self.last_rotation_at = 0;
+        self.pool_pubkeys = vec![];
         Ok(())
     }
 
@@ -81,7 +85,13 @@ impl RotatorAccount for Account<'_, Rotator> {
         self.nonce = hasher.finish();
 
         // Record the slot value
-        self.last_slot = Clock::get().unwrap().slot;
+        self.last_rotation_at = Clock::get().unwrap().slot;
+        Ok(())
+    }
+
+    fn add_pool(&mut self, pool_pubkey: Pubkey) -> Result<()> {
+        // Push the pubkey into the set of registered pools
+        self.pool_pubkeys.push(pool_pubkey);
         Ok(())
     }
 }

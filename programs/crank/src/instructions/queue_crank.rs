@@ -3,7 +3,7 @@ use {
     anchor_lang::{prelude::*, system_program},
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_pool::state::{Pool, SEED_POOL},
+    clockwork_pool::state::Pool,
     std::{mem::size_of, str::FromStr},
 };
 
@@ -24,11 +24,7 @@ pub struct QueueCrank<'info> {
     )]
     pub fee: Box<Account<'info, Fee>>,
 
-    #[account(
-        seeds = [SEED_POOL],
-        bump,
-        seeds::program = clockwork_pool::ID,
-    )]
+    #[account(address = config.worker_pool)]
     pub pool: Box<Account<'info, Pool>>,
 
     #[account(
@@ -96,9 +92,9 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // If worker is in the pool, pay automation fees.
     let is_authorized_worker = pool.clone().into_inner().workers.contains(&worker.key());
     if is_authorized_worker {
-        fee.pay_to_worker(config.automation_fee, queue)?;
+        fee.pay_to_worker(config.crank_fee, queue)?;
     } else {
-        fee.pay_to_admin(config.automation_fee, queue)?;
+        fee.pay_to_admin(config.crank_fee, queue)?;
     }
 
     Ok(())

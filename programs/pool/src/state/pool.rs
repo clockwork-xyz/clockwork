@@ -1,5 +1,4 @@
 use {
-    super::Config,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{collections::VecDeque, convert::TryFrom},
 };
@@ -13,12 +12,15 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[account]
 #[derive(Debug)]
 pub struct Pool {
+    pub authority: Pubkey,
+    pub name: String,
+    pub size: usize,
     pub workers: VecDeque<Pubkey>,
 }
 
 impl Pool {
-    pub fn pubkey() -> Pubkey {
-        Pubkey::find_program_address(&[SEED_POOL], &crate::ID).0
+    pub fn pubkey(name: String) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_POOL, name.as_bytes()], &crate::ID).0
     }
 }
 
@@ -30,22 +32,37 @@ impl TryFrom<Vec<u8>> for Pool {
 }
 
 /**
+ * PoolSettings
+ */
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct PoolSettings {
+    pub authority: Pubkey,
+    pub size: usize,
+}
+
+/**
  * PoolAccount
  */
 
 pub trait PoolAccount {
-    fn new(&mut self) -> Result<()>;
+    fn init(&mut self, authority: Pubkey, name: String, size: usize) -> Result<()>;
 
-    fn rotate(&mut self, config: &Account<Config>, worker: Pubkey) -> Result<()>;
+    fn rotate(&mut self, worker: Pubkey) -> Result<()>;
+
+    fn update(&mut self, settings: PoolSettings) -> Result<()>;
 }
 
 impl PoolAccount for Account<'_, Pool> {
-    fn new(&mut self) -> Result<()> {
+    fn init(&mut self, authority: Pubkey, name: String, size: usize) -> Result<()> {
+        self.authority = authority;
+        self.name = name;
+        self.size = size;
         self.workers = VecDeque::new();
         Ok(())
     }
 
-    fn rotate(&mut self, config: &Account<Config>, worker: Pubkey) -> Result<()> {
+    fn rotate(&mut self, worker: Pubkey) -> Result<()> {
         // Pop a worker out of the pool
         self.workers.pop_front();
 
@@ -53,10 +70,20 @@ impl PoolAccount for Account<'_, Pool> {
         self.workers.push_back(worker);
 
         // Drain pool to the configured size limit
-        while self.workers.len() > config.pool_size {
+        while self.workers.len() > self.size {
             self.workers.pop_front();
         }
 
+        // Reallocate memory for the pool account
+        let new_size = 8 + self.try_to_vec()?.len();
+        self.to_account_info().realloc(new_size, false)?;
+
+        Ok(())
+    }
+
+    fn update(&mut self, settings: PoolSettings) -> Result<()> {
+        self.authority = settings.authority;
+        self.size = settings.size;
         Ok(())
     }
 }

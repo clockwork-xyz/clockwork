@@ -49,13 +49,13 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()>;
+    fn init(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()>;
 
     fn update(&mut self, admin: &Signer, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()> {
+    fn init(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()> {
         self.admin = admin;
         self.mint = mint;
         self.slots_per_rotation = DEFAULT_SLOTS_PER_ROTATION;

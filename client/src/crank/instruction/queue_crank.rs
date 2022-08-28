@@ -16,7 +16,7 @@ pub fn queue_crank(queue: Pubkey, worker: Pubkey) -> Instruction {
         accounts: vec![
             AccountMeta::new_readonly(Config::pubkey(), false),
             AccountMeta::new(Fee::pubkey(worker), false),
-            AccountMeta::new_readonly(Pool::pubkey(), false),
+            AccountMeta::new_readonly(Pool::pubkey("crank".into()), false),
             AccountMeta::new(queue, false),
             AccountMeta::new(system_program::ID, false),
             AccountMeta::new(worker, true),

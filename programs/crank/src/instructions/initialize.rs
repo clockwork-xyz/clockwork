@@ -5,6 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
+#[instruction(worker_pool: Pubkey)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -22,11 +23,13 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Initialize>) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>, worker_pool: Pubkey) -> Result<()> {
+    // Get accounts
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
 
-    config.init(admin.key())?;
+    // Initialize config account
+    config.init(admin.key(), worker_pool)?;
 
     Ok(())
 }

@@ -1,7 +1,7 @@
 use {
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
-    std::convert::TryFrom,
+    std::{collections::HashSet, convert::TryFrom},
 };
 
 pub const SEED_NODE: &[u8] = b"node";
@@ -13,10 +13,11 @@ pub const SEED_NODE: &[u8] = b"node";
 #[account]
 #[derive(Debug)]
 pub struct Node {
-    pub authority: Pubkey, // The node's owner (controls the stake)
+    pub authority: Pubkey, // The node's authority (controls the stake)
     pub id: u64,
-    pub stake: Pubkey,  // The associated token account
-    pub worker: Pubkey, // The node's worker address (used to sign txs)
+    pub stake: Pubkey,                    // The associated token account
+    pub worker: Pubkey,                   // The node's worker address (used to sign txs)
+    pub supported_pools: HashSet<Pubkey>, // The set pools that this node supports
 }
 
 impl Node {
@@ -33,6 +34,14 @@ impl TryFrom<Vec<u8>> for Node {
 }
 
 /**
+ * NodeSettings
+ */
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct NodeSettings {
+    pub supported_pools: HashSet<Pubkey>,
+}
+
+/**
  * NodeAccount
  */
 
@@ -44,6 +53,8 @@ pub trait NodeAccount {
         stake: &mut Account<TokenAccount>,
         worker: &Signer,
     ) -> Result<()>;
+
+    fn update(&mut self, settings: NodeSettings) -> Result<()>;
 }
 
 impl NodeAccount for Account<'_, Node> {
@@ -58,6 +69,11 @@ impl NodeAccount for Account<'_, Node> {
         self.id = id;
         self.stake = stake.key();
         self.worker = worker.key();
+        Ok(())
+    }
+
+    fn update(&mut self, settings: NodeSettings) -> Result<()> {
+        self.supported_pools = settings.supported_pools;
         Ok(())
     }
 }

@@ -85,7 +85,7 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
-            automation_fee: parse_u64("automation_fee", matches).map_or(None, |v| Some(v)),
+            crank_fee: parse_u64("crank_fee", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -110,6 +110,14 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        // Some(("add_pool", matches)) => Ok(CliCommand::NodeAddPool {
+        //     node_pubkey: parse_pubkey("node", matches)?,
+        //     pool_pubkey: parse_pubkey("pool", matches)?,
+        // }),
+        // Some(("drop_pool", matches)) => Ok(CliCommand::NodeDropPool {
+        //     node_pubkey: parse_pubkey("node", matches)?,
+        //     pool_pubkey: parse_pubkey("pool", matches)?,
+        // }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             worker: parse_keypair_file("worker", matches)?,
         }),
@@ -135,17 +143,12 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 }
 
 fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::SnapshotGet {
-            entry_id: match matches.subcommand() {
-                Some(("entry", matches)) => Some(parse_u64("id", matches)?),
-                _ => None,
-            },
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
+    Ok(CliCommand::SnapshotGet {
+        entry_id: match matches.subcommand() {
+            Some(("entry", matches)) => Some(parse_u64("id", matches)?),
+            _ => None,
+        },
+    })
 }
 
 // Arg parsers

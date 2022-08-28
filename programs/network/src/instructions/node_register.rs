@@ -16,6 +16,9 @@ pub struct NodeRegister<'info> {
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
+    #[account(mut, constraint = authority.key() != worker.key())]
+    pub authority: Signer<'info>,
+
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
@@ -27,7 +30,7 @@ pub struct NodeRegister<'info> {
             snapshot.node_count.to_be_bytes().as_ref(),
         ],
         bump,
-        payer = signer,
+        payer = authority,
         space = 8 + size_of::<SnapshotEntry>(),
     )]
     pub entry: Account<'info, SnapshotEntry>,
@@ -42,7 +45,7 @@ pub struct NodeRegister<'info> {
             registry.node_count.to_be_bytes().as_ref()
         ],
         bump,
-        payer = signer,
+        payer = authority,
         space = 8 + size_of::<Node>(),
     )]
     pub node: Account<'info, Node>,
@@ -58,9 +61,6 @@ pub struct NodeRegister<'info> {
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
 
-    #[account(mut, constraint = signer.key() != worker.key())]
-    pub signer: Signer<'info>,
-
     #[account(
         mut,
         seeds = [
@@ -74,7 +74,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         init,
-        payer = signer,
+        payer = authority,
         associated_token::authority = node,
         associated_token::mint = mint,
     )]
@@ -92,14 +92,14 @@ pub struct NodeRegister<'info> {
 
 pub fn handler(ctx: Context<NodeRegister>) -> Result<()> {
     // Get accounts
+    let authority = &mut ctx.accounts.authority;
     let node = &mut ctx.accounts.node;
     let registry = &mut ctx.accounts.registry;
-    let signer = &mut ctx.accounts.signer;
     let stake = &mut ctx.accounts.stake;
     let worker = &ctx.accounts.worker;
 
     // Add node to the registry
-    registry.new_node(signer, node, stake, worker)?;
+    registry.new_node(authority, node, stake, worker)?;
 
     Ok(())
 }

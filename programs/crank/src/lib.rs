@@ -20,8 +20,8 @@ pub mod clockwork_crank {
         config_update::handler(ctx, settings)
     }
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    pub fn initialize(ctx: Context<Initialize>, worker_pool: Pubkey) -> Result<()> {
+        initialize::handler(ctx, worker_pool)
     }
 
     pub fn queue_crank(ctx: Context<QueueCrank>) -> Result<()> {

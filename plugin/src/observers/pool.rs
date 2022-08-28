@@ -1,12 +1,13 @@
+use anchor_lang::prelude::AccountMeta;
+use log::info;
+
 use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
     clockwork_client::{
-        network::state::{Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
+        network::state::{Node, Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
         pool::state::Pool,
         Client as ClockworkClient,
     },
-    dashmap::DashMap,
-    log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
@@ -22,10 +23,7 @@ pub struct PoolObserver {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // Map from unconfirmed slot numbers to the expected worker pool for that moment.
-    pub pool_forecasts: DashMap<u64, Pool>,
-
-    // RwLock for this node's worker status.
+    // RwLock for this node's position in the worker pools.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
 
     // Pub worker address
@@ -40,7 +38,7 @@ pub struct PoolObserver {
     // Current snapshot of the node-stake cumulative distribution.
     pub snapshot: RwLock<Snapshot>,
 
-    // Sorted entries of the snapshot.
+    // Sorted entries of the current snapshot.
     pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 }
 
@@ -48,12 +46,12 @@ impl PoolObserver {
     pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             config: config.clone(),
-            pool_forecasts: DashMap::new(),
             pool_positions: Arc::new(RwLock::new(PoolPositions::default())),
             pubkey: read_or_new_keypair(config.keypath).pubkey(),
             rotator: RwLock::new(Rotator {
-                last_slot: 0,
+                last_rotation_at: 0,
                 nonce: 0,
+                pool_pubkeys: vec![],
             }),
             runtime,
             snapshot: RwLock::new(Snapshot {
@@ -75,9 +73,42 @@ impl PoolObserver {
         })
     }
 
-    pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, slot: u64) -> PluginResult<()> {
+    pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, _slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            this.pool_forecasts.insert(slot, pool);
+            // TODO Parse for pool name
+
+            info!("Updated pool: {:#?}", pool);
+
+            // Build the new pool_position
+            let mut w_pool_positions = this.pool_positions.write().await;
+            let workers = &mut pool.workers.clone();
+            let pool_position = PoolPosition {
+                current_position: pool
+                    .workers
+                    .iter()
+                    .position(|k| k.eq(&this.pubkey))
+                    .map(|i| i as u64),
+                workers: workers.make_contiguous().to_vec().clone(),
+            };
+
+            // Update the pool positions struct
+            match pool.name.as_str() {
+                "crank" => {
+                    *w_pool_positions = PoolPositions {
+                        crank_pool: pool_position,
+                        http_pool: w_pool_positions.http_pool.clone(),
+                    };
+                }
+                "http" => {
+                    *w_pool_positions = PoolPositions {
+                        crank_pool: w_pool_positions.crank_pool.clone(),
+                        http_pool: pool_position,
+                    };
+                }
+                _ => {}
+            }
+
+            drop(w_pool_positions);
             Ok(())
         })
     }
@@ -95,33 +126,12 @@ impl PoolObserver {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Log rotator data
             let r_rotator = this.rotator.read().await;
             info!(
                 "slot: {} last_rotation: {} nonce: {}",
-                confirmed_slot, r_rotator.last_slot, r_rotator.nonce
+                confirmed_slot, r_rotator.last_rotation_at, r_rotator.nonce
             );
             drop(r_rotator);
-
-            // Update the set worker status
-            let mut w_pool_positions = this.pool_positions.write().await;
-            this.pool_forecasts.retain(|slot, pool| {
-                if *slot == confirmed_slot {
-                    *w_pool_positions = PoolPositions {
-                        crank_pool_position: PoolPosition {
-                            current_position: pool
-                                .workers
-                                .iter()
-                                .position(|k| k.eq(&this.pubkey))
-                                .map(|i| i as u64),
-                            workers: pool.workers.make_contiguous().to_vec().clone(),
-                        },
-                    }
-                }
-                *slot > confirmed_slot
-            });
-            drop(w_pool_positions);
-
             Ok(())
         })
     }
@@ -147,7 +157,7 @@ impl PoolObserver {
         }
 
         // Exit early if the pool cannot be rotated yet
-        let target_slot = r_rotator.last_slot + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
+        let target_slot = r_rotator.last_rotation_at + 10; // TODO Fetch the slots_per_rotation from the on-chain config account rather than using the default value
         if slot < target_slot {
             return Err(GeyserPluginError::Custom(
                 "Rotator cannot be turned yet".into(),
@@ -156,10 +166,7 @@ impl PoolObserver {
 
         // Exit early if this node is not in the worker pool AND
         //  we are still within the pool's grace period.
-        if r_pool_positions
-            .crank_pool_position
-            .current_position
-            .is_none()
+        if r_pool_positions.crank_pool.current_position.is_none()
             && slot < target_slot + GRACE_PERIOD
         {
             return Err(GeyserPluginError::Custom(
@@ -202,12 +209,19 @@ impl PoolObserver {
         let entry_pubkey =
             clockwork_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
         let entry = snapshot_entries.get(entry_id as usize).unwrap();
-        let ix = clockwork_client::network::instruction::rotator_turn(
+        let node = Node::pubkey(entry_id);
+        let ix = &mut clockwork_client::network::instruction::pools_rotate(
             entry_pubkey,
+            node,
             clockwork_client.payer_pubkey(),
             snapshot_pubkey,
             entry.worker,
         );
+
+        // Inject account metas for worker pools
+        for pool_pubkey in r_rotator.pool_pubkeys.clone() {
+            ix.accounts.push(AccountMeta::new(pool_pubkey, false));
+        }
 
         // Drop read locks
         drop(r_pool_positions);
@@ -215,7 +229,8 @@ impl PoolObserver {
         drop(r_snapshot);
 
         // Build and sign tx
-        let mut tx = Transaction::new_with_payer(&[ix], Some(&clockwork_client.payer_pubkey()));
+        let mut tx =
+            Transaction::new_with_payer(&[ix.clone()], Some(&clockwork_client.payer_pubkey()));
         tx.sign(
             &[clockwork_client.payer()],
             clockwork_client.get_latest_blockhash().map_err(|_err| {
@@ -247,18 +262,26 @@ pub struct PoolPosition {
     pub workers: Vec<Pubkey>,
 }
 
+impl Default for PoolPosition {
+    fn default() -> Self {
+        PoolPosition {
+            current_position: None,
+            workers: vec![],
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct PoolPositions {
-    pub crank_pool_position: PoolPosition,
+    pub crank_pool: PoolPosition,
+    pub http_pool: PoolPosition,
 }
 
 impl Default for PoolPositions {
     fn default() -> Self {
         PoolPositions {
-            crank_pool_position: PoolPosition {
-                current_position: None,
-                workers: vec![],
-            },
+            crank_pool: PoolPosition::default(),
+            http_pool: PoolPosition::default(),
         }
     }
 }

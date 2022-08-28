@@ -19,10 +19,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             base_url,
         } => super::api::api_new(&client, ack_authority, base_url),
         CliCommand::ConfigGet => super::config::get(&client),
-        CliCommand::ConfigSet {
-            admin,
-            automation_fee,
-        } => super::config::set(&client, admin, automation_fee),
+        CliCommand::ConfigSet { admin, crank_fee } => super::config::set(&client, admin, crank_fee),
         CliCommand::HttpRequestNew {
             api,
             id,

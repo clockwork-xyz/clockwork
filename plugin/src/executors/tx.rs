@@ -79,9 +79,9 @@ impl TxExecutor {
     async fn crank_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.pool.pool_positions.read().await;
-        let pool_position = r_pool_positions.crank_pool_position.clone();
+        let crank_pool = r_pool_positions.crank_pool.clone();
         drop(r_pool_positions);
-        if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
+        if crank_pool.current_position.is_none() && !crank_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
                 "This node is not an authorized worker".into(),
             ));
