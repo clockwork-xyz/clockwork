@@ -7,6 +7,7 @@ use {
 #[derive(Accounts)]
 #[instruction(name: String, size: usize)]
 pub struct PoolCreate<'info> {
+    // TODO Verify this signer is a Clockwork PDA
     #[account()]
     pub authority: Signer<'info>,
 

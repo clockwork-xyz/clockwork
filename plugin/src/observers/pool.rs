@@ -1,13 +1,12 @@
-use anchor_lang::prelude::AccountMeta;
-use log::info;
-
 use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
+    anchor_lang::prelude::AccountMeta,
     clockwork_client::{
         network::state::{Node, Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
         pool::state::Pool,
         Client as ClockworkClient,
     },
+    log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },

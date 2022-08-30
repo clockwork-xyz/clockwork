@@ -1,3 +1,6 @@
+use solana_account_decoder::UiAccountData;
+use solana_client::rpc_config::RpcSimulateTransactionAccountsConfig;
+
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
@@ -7,6 +10,8 @@ use {
     clockwork_cron::Schedule,
     dashmap::{DashMap, DashSet},
     log::info,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::rpc_config::RpcSimulateTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
@@ -15,8 +20,8 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
-    solana_sdk::transaction::Transaction,
-    std::{collections::hash_map::DefaultHasher, fmt::Debug, hash::Hash, str::FromStr, sync::Arc},
+    solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction},
+    std::{fmt::Debug, str::FromStr, sync::Arc},
     tokio::runtime::Runtime,
 };
 
@@ -206,10 +211,7 @@ impl QueueObserver {
 
         ixs.push(crank_ix);
 
-        // TODO Pre-simulate other crank ixs.
-        // TODO At what scale must ixs be chunked into separate txs?
-
-        // Pack into tx
+        // Build tx
         let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
         tx.sign(
             &[client.payer()],
@@ -218,10 +220,88 @@ impl QueueObserver {
             })?,
         );
 
-        // Create a hash for the crank attempt
-        let hasher = &mut DefaultHasher::new();
-        inner_ix.hash(hasher);
-        queue.exec_context.hash(hasher);
+        // TODO Pre-simulate crank ixs and pack into tx
+        // TODO At what scale must ixs be chunked into separate txs?
+        // TODO Should this be a setting on the config?
+        info!("Beginning simlation");
+        let now = std::time::Instant::now();
+        client
+            .simulate_transaction_with_config(
+                &tx,
+                RpcSimulateTransactionConfig {
+                    replace_recent_blockhash: true,
+                    commitment: Some(CommitmentConfig::processed()),
+                    accounts: Some(RpcSimulateTransactionAccountsConfig {
+                        encoding: Some(UiAccountEncoding::JsonParsed),
+                        addresses: vec![queue_pubkey.to_string()],
+                    }),
+                    ..RpcSimulateTransactionConfig::default()
+                },
+            )
+            .map_err(|err| {
+                GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
+            })
+            .and_then(|response| {
+                info!(
+                    "Simulation duration: {:#?} accounts: {:#?}",
+                    now.elapsed(),
+                    response.value.accounts
+                );
+
+                if let Some(ui_accounts) = response.value.accounts {
+                    if let Some(ui_account) = ui_accounts.get(0) {
+                        if let Some(ui_account) = ui_account {
+                            info!("UIAccount data: {:#?}", ui_account);
+
+                            // solana_account_decoder::parse_token
+
+                            match &ui_account.data {
+                                UiAccountData::Binary(data, _encoding) => {
+                                    // let sim_queue = Queue::try_from(data.as_bytes().to_vec());
+                                    // let queue_data =
+                                    //     bincode::deserialize::<Queue>(data.as_bytes())?;
+                                    match Queue::try_from(data.as_bytes().to_vec()) {
+                                        Err(err) => info!(
+                                            "Error deserializing simulated queue account: {}",
+                                            err
+                                        ),
+                                        Ok(simulated_queue) => {
+                                            info!("Simulated queue: {:#?}", simulated_queue);
+                                        }
+                                    }
+                                }
+                                UiAccountData::Json(acc) => {
+                                    info!("Parsed json account: {:#?}", acc);
+                                }
+                                _ => {
+                                    info!("Unrecognized data encoding");
+                                }
+                            }
+                        } else {
+                            info!("No ui account");
+                        }
+                    } else {
+                        info!("No ui account at index 0");
+                    }
+                } else {
+                    info!("No ui accounts");
+                }
+
+                info!("Ending simulation");
+
+                Ok(())
+            })?;
+
+        info!("Ended simulation");
+
+        // Pack ixs into tx
+        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
+        tx.sign(
+            &[client.payer()],
+            client.get_latest_blockhash().map_err(|_err| {
+                GeyserPluginError::Custom("Failed to get latest blockhash".into())
+            })?,
+        );
 
         Ok(tx)
     }
