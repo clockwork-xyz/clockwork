@@ -186,11 +186,8 @@ impl QueueAccount for Account<'_, Queue> {
 
     fn realloc(&mut self) -> Result<()> {
         // Realloc memory for the queue account
-        let new_size = 8 + self.try_to_vec()?.len();
-        self.to_account_info().realloc(new_size, false)?;
-
-        // TODO If lamports are required to maintain rent-exemption, pay them
-
+        let data_len = 8 + self.try_to_vec()?.len();
+        self.to_account_info().realloc(data_len, false)?;
         Ok(())
     }
 }

@@ -1,13 +1,13 @@
 use {
     crate::state::*,
-    anchor_lang::prelude::*,
+    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
 };
 
 
 #[derive(Accounts)]
 #[instruction(first_instruction: Option<InstructionData>, trigger: Option<Trigger>)]
 pub struct QueueUpdate<'info> {
-    #[account()]
+    #[account(mut)]
     pub authority: Signer<'info>,
 
     #[account(
@@ -21,11 +21,16 @@ pub struct QueueUpdate<'info> {
         has_one = authority,
     )]
     pub queue: Account<'info, Queue>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<QueueUpdate>, first_instruction: Option<InstructionData>, trigger: Option<Trigger>) -> Result<()> {
     // Get accounts
+    let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
+    let system_program = &ctx.accounts.system_program;
 
     // If provided, update the queue's first instruction
     if let Some(first_instruction) = first_instruction {
@@ -40,6 +45,24 @@ pub fn handler(ctx: Context<QueueUpdate>, first_instruction: Option<InstructionD
 
     // Reallocate mem for the queue account
     queue.realloc()?;
+
+    // If lamports are required to maintain rent-exemption, pay them
+    let data_len = 8 + queue.try_to_vec()?.len();
+    let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
+    if minimum_rent > queue.to_account_info().lamports() {
+        transfer(
+            CpiContext::new(
+                system_program.to_account_info(),
+                Transfer {
+                    from: authority.to_account_info(),
+                    to: queue.to_account_info(),
+                },
+            ),
+            minimum_rent
+                .checked_sub(queue.to_account_info().lamports())
+                .unwrap(),
+        )?;
+    }
 
     Ok(())
 }

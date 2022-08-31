@@ -42,12 +42,6 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<CrankResponse> {
     let entry = &mut ctx.accounts.entry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_queue = &mut ctx.accounts.snapshot_queue;
-    msg!(
-        "Closing entry {} of snapshot {} in status {:#?}",
-        entry.id,
-        snapshot.id,
-        snapshot.status
-    );
 
     // If snapshot is not closing, then noop and try again on next invocation.
     if snapshot.status != SnapshotStatus::Closing {

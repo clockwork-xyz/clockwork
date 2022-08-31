@@ -50,7 +50,7 @@ pub trait PoolAccount {
 
     fn rotate(&mut self, worker: Pubkey) -> Result<()>;
 
-    fn update(&mut self, settings: PoolSettings) -> Result<()>;
+    fn update(&mut self, settings: &PoolSettings) -> Result<()>;
 }
 
 impl PoolAccount for Account<'_, Pool> {
@@ -74,14 +74,10 @@ impl PoolAccount for Account<'_, Pool> {
             self.workers.pop_front();
         }
 
-        // Reallocate memory for the pool account
-        let new_size = 8 + self.try_to_vec()?.len();
-        self.to_account_info().realloc(new_size, false)?;
-
         Ok(())
     }
 
-    fn update(&mut self, settings: PoolSettings) -> Result<()> {
+    fn update(&mut self, settings: &PoolSettings) -> Result<()> {
         self.authority = settings.authority;
         self.size = settings.size;
         Ok(())
