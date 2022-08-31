@@ -165,6 +165,7 @@ impl QueueObserver {
         });
 
         // Build the set of crank transactions
+        // TODO Use rayon to parallelize this operation
         self.crankable_queues
             .iter()
             .filter_map(|queue_pubkey_ref| {
