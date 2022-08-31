@@ -90,7 +90,7 @@ impl TxExecutor {
         self.observers
             .queue
             .clone()
-            .build_queue_txs(self.clockwork_client.clone(), slot)
+            .build_crank_txs(self.clockwork_client.clone(), slot)
             .await
             .iter()
             .for_each(|tx| {
