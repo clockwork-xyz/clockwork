@@ -1,12 +1,16 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{ExecContext, Queue, Trigger},
+        crank::state::{ExecContext, InstructionData, Queue, Trigger},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
     dashmap::{DashMap, DashSet},
     log::info,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::rpc_config::{
+        RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
+    },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
@@ -15,10 +19,13 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
-    solana_sdk::transaction::Transaction,
-    std::{collections::hash_map::DefaultHasher, fmt::Debug, hash::Hash, str::FromStr, sync::Arc},
+    solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
+    std::{fmt::Debug, str::FromStr, sync::Arc},
     tokio::runtime::Runtime,
 };
+
+static COMPUTE_BUDGET_LIMIT: u64 = 1_400_000; // Max number of compute units per transaction
+static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized transaction
 
 pub struct QueueObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
@@ -135,7 +142,7 @@ impl QueueObserver {
      * Tx builders
      */
 
-    pub async fn build_queue_txs(
+    pub async fn build_crank_txs(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         slot: u64,
@@ -162,68 +169,131 @@ impl QueueObserver {
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 self.clone()
-                    .build_queue_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
+                    .build_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
                     .ok()
             })
             .collect::<Vec<Transaction>>()
     }
 
-    pub fn build_queue_crank_tx(
+    pub fn build_crank_tx(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         queue_pubkey: Pubkey,
     ) -> PluginResult<Transaction> {
-        // Get the queue
+        // Build the first crank ix
         let queue = client.get::<Queue>(&queue_pubkey).unwrap();
-
-        // Setup ixs based on queue's current status
+        let blockhash = client
+            .get_latest_blockhash()
+            .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
         let worker_pubkey = client.payer_pubkey();
-        let mut ixs: Vec<Instruction> = vec![];
+        let inner_ix = queue.next_instruction.unwrap_or(queue.first_instruction);
+        let mut ixs: Vec<Instruction> =
+            vec![self
+                .clone()
+                .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
 
+        // Pre-simulate crank ixs and pack into tx
+        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
+        tx.sign(&[client.payer()], blockhash);
+        let now = std::time::Instant::now();
+        let mut continue_packing = true;
+        while continue_packing {
+            let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
+            sim_tx.sign(&[client.payer()], blockhash);
+
+            // Exit early if tx exceeds size limit
+            if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
+                info!(
+                    "Transaction message exceeded size limit with {} bytes",
+                    sim_tx.message_data().len()
+                );
+                break;
+            }
+
+            // Simulate the packed tx
+            match client.simulate_transaction_with_config(
+                &sim_tx,
+                RpcSimulateTransactionConfig {
+                    replace_recent_blockhash: true,
+                    commitment: Some(CommitmentConfig::processed()),
+                    accounts: Some(RpcSimulateTransactionAccountsConfig {
+                        encoding: Some(UiAccountEncoding::Base64Zstd),
+                        addresses: vec![queue_pubkey.to_string()],
+                    }),
+                    ..RpcSimulateTransactionConfig::default()
+                },
+            ) {
+                Err(_err) => {
+                    continue_packing = false;
+                }
+                Ok(response) => {
+                    if response
+                        .value
+                        .units_consumed
+                        .lt(&Some(COMPUTE_BUDGET_LIMIT))
+                    {
+                        // This simulated tx is okay to submit
+                        tx = sim_tx;
+
+                        // Parse the simulated queue account for another ix to pack
+                        if let Some(ui_accounts) = response.value.accounts {
+                            if let Some(Some(ui_account)) = ui_accounts.get(0) {
+                                if let Some(account) = ui_account.decode::<Account>() {
+                                    if let Ok(queue) = Queue::try_from(account.data) {
+                                        if let Some(next_instruction) = queue.next_instruction {
+                                            ixs.push(self.clone().build_crank_ix(
+                                                next_instruction,
+                                                queue_pubkey,
+                                                worker_pubkey,
+                                            ));
+                                        } else {
+                                            continue_packing = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        continue_packing = false;
+                    }
+                }
+            }
+        }
+
+        info!("Total packing duration: {:#?}", now.elapsed());
+
+        Ok(tx)
+    }
+
+    fn build_crank_ix(
+        self: Arc<Self>,
+        inner_ix: InstructionData,
+        queue_pubkey: Pubkey,
+        worker_pubkey: Pubkey,
+    ) -> Instruction {
         // Build the queue_crank instruction
         let mut crank_ix =
             clockwork_client::crank::instruction::queue_crank(queue_pubkey, worker_pubkey);
 
         // Program accounts
-        let inner_ix = queue.next_instruction.unwrap_or(queue.first_instruction);
         crank_ix
             .accounts
             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
 
-        // Other accounts
+        // Inject the worker pubkey as the Clockwork "payer" account
         for acc in inner_ix.clone().accounts {
-            // Inject the worker pubkey as the Clockwork "payer" account
-            let mut acc_pubkey = acc.pubkey;
-            let is_payer = acc_pubkey == clockwork_client::crank::payer::ID;
-            if is_payer {
-                acc_pubkey = worker_pubkey;
-            }
+            let acc_pubkey = if acc.pubkey == clockwork_client::crank::payer::ID {
+                worker_pubkey
+            } else {
+                acc.pubkey
+            };
             crank_ix.accounts.push(match acc.is_writable {
                 true => AccountMeta::new(acc_pubkey, false),
                 false => AccountMeta::new_readonly(acc_pubkey, false),
             })
         }
 
-        ixs.push(crank_ix);
-
-        // TODO Pre-simulate other crank ixs.
-        // TODO At what scale must ixs be chunked into separate txs?
-
-        // Pack into tx
-        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
-        tx.sign(
-            &[client.payer()],
-            client.get_latest_blockhash().map_err(|_err| {
-                GeyserPluginError::Custom("Failed to get latest blockhash".into())
-            })?,
-        );
-
-        // Create a hash for the crank attempt
-        let hasher = &mut DefaultHasher::new();
-        inner_ix.hash(hasher);
-        queue.exec_context.hash(hasher);
-
-        Ok(tx)
+        crank_ix
     }
 
     /**
