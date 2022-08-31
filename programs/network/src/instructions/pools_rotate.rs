@@ -25,23 +25,17 @@ pub struct PoolsRotate<'info> {
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(
-        seeds = [
-            SEED_NODE,
-            node.id.to_be_bytes().as_ref()
-        ],
-        bump,
-        constraint = node.id == entry.id
-    )]
+    #[account(seeds = [SEED_NODE, node.id.to_be_bytes().as_ref()], bump, constraint = node.id == entry.id)]
     pub node: Account<'info, Node>,
 
     #[account(address = clockwork_pool::ID)]
     pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
 
+    #[account(seeds = [SEED_CONFIG], bump, seeds::program = clockwork_pool::ID)]
+    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
+
     #[account(
-        mut, 
-        seeds = [SEED_ROTATOR], 
-        bump, 
+        mut, seeds = [SEED_ROTATOR], bump, 
         constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub rotator: Account<'info, Rotator>,
@@ -50,11 +44,7 @@ pub struct PoolsRotate<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        seeds = [
-            SEED_SNAPSHOT, 
-            snapshot.id.to_be_bytes().as_ref()
-        ], 
-        bump,
+        seeds = [SEED_SNAPSHOT, snapshot.id.to_be_bytes().as_ref()], bump,
         constraint = snapshot.status == SnapshotStatus::Current @ ClockworkError::SnapshotNotCurrent
     )]
     pub snapshot: Account<'info, Snapshot>,
@@ -67,6 +57,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
     // Get accounts
     let node = &ctx.accounts.node;
     let pool_program = &ctx.accounts.pool_program;
+    let pool_program_config = &ctx.accounts.pool_program_config;
     let rotator = &mut ctx.accounts.rotator;
     let worker = &ctx.accounts.worker;
 
@@ -89,8 +80,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
                         CpiContext::new_with_signer(
                             pool_program.to_account_info(),
                             PoolRotate {
-                                authority: rotator.to_account_info(),
+                                config: pool_program_config.to_account_info(),
                                 pool: pool_acc_info.clone(),
+                                pool_authority: rotator.to_account_info(),
                                 worker: worker.to_account_info(),
                             },
                             &[&[SEED_ROTATOR, &[rotator_bump]]],

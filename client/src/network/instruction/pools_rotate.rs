@@ -22,6 +22,7 @@ pub fn pools_rotate(
             AccountMeta::new_readonly(entry, false),
             AccountMeta::new_readonly(node, false),
             AccountMeta::new_readonly(clockwork_pool::ID, false),
+            AccountMeta::new_readonly(clockwork_pool::state::Config::pubkey(), false),
             AccountMeta::new(clockwork_network::state::Rotator::pubkey(), false),
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(snapshot, false),

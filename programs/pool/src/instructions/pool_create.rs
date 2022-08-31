@@ -7,9 +7,8 @@ use {
 #[derive(Accounts)]
 #[instruction(name: String, size: usize)]
 pub struct PoolCreate<'info> {
-    // TODO Verify this signer is a Clockwork network program PDA
-    #[account()]
-    pub authority: Signer<'info>,
+    #[account(seeds = [SEED_CONFIG], bump, has_one = pool_authority)]
+    pub config: Account<'info, Config>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -23,17 +22,19 @@ pub struct PoolCreate<'info> {
     )]
     pub pool: Account<'info, Pool>,
 
+    #[account()]
+    pub pool_authority: Signer<'info>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
     // Get accounts
-    let authority = &ctx.accounts.authority;
     let pool = &mut ctx.accounts.pool;
 
     // Initialize the pool
-    pool.init(authority.key(), name, size)?;
+    pool.init(name, size)?;
 
     Ok(())
 }

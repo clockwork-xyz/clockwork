@@ -15,6 +15,10 @@ use state::*;
 pub mod clockwork_network {
     use super::*;
 
+    pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {
+        config_update::handler(ctx, settings)
+    }
+
     pub fn entry_close(ctx: Context<EntryClose>) -> Result<CrankResponse> {
         entry_close::handler(ctx)
     }

@@ -1,22 +1,27 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
-    std::mem::size_of
+    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+        system_program::{transfer, Transfer},
+    },
+    std::mem::size_of,
 };
 
 #[derive(Accounts)]
 #[instruction(settings: PoolSettings)]
 pub struct PoolUpdate<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    #[account(seeds = [SEED_CONFIG], bump, has_one = pool_authority)]
+    pub config: Account<'info, Config>,
 
-    #[account(
-        mut, 
-        seeds = [SEED_POOL, pool.name.as_bytes()], 
-        bump,
-        has_one = authority
-    )]
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(mut, seeds = [SEED_POOL, pool.name.as_bytes()], bump)]
     pub pool: Account<'info, Pool>,
+
+    #[account()]
+    pub pool_authority: Signer<'info>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -24,7 +29,7 @@ pub struct PoolUpdate<'info> {
 
 pub fn handler(ctx: Context<PoolUpdate>, settings: PoolSettings) -> Result<()> {
     // Get accounts
-    let authority = &ctx.accounts.authority;
+    let payer = &ctx.accounts.payer;
     let pool = &mut ctx.accounts.pool;
     let system_program = &ctx.accounts.system_program;
 
@@ -32,25 +37,25 @@ pub fn handler(ctx: Context<PoolUpdate>, settings: PoolSettings) -> Result<()> {
     pool.update(&settings)?;
 
     // Reallocate memory for the pool account
-    let data_len = 8 + size_of::<Pool>() + settings.size.checked_mul(size_of::<Pubkey>()).unwrap(); 
+    let data_len = 8 + size_of::<Pool>() + settings.size.checked_mul(size_of::<Pubkey>()).unwrap();
     pool.to_account_info().realloc(data_len, false)?;
 
-     // If lamports are required to maintain rent-exemption, pay them
-     let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
-     if minimum_rent > pool.to_account_info().lamports() {
-         transfer(
-             CpiContext::new(
-                 system_program.to_account_info(),
-                 Transfer {
-                     from: authority.to_account_info(),
-                     to: pool.to_account_info(),
-                 },
-             ),
-             minimum_rent
-                 .checked_sub(pool.to_account_info().lamports())
-                 .unwrap(),
-         )?;
-     }
+    // If lamports are required to maintain rent-exemption, pay them
+    let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
+    if minimum_rent > pool.to_account_info().lamports() {
+        transfer(
+            CpiContext::new(
+                system_program.to_account_info(),
+                Transfer {
+                    from: payer.to_account_info(),
+                    to: pool.to_account_info(),
+                },
+            ),
+            minimum_rent
+                .checked_sub(pool.to_account_info().lamports())
+                .unwrap(),
+        )?;
+    }
 
     Ok(())
 }

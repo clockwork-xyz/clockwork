@@ -14,6 +14,7 @@ pub fn pool_create(admin: Pubkey, name: String, size: usize) -> Instruction {
             AccountMeta::new_readonly(clockwork_network::state::Config::pubkey(), false),
             AccountMeta::new(clockwork_pool::state::Pool::pubkey(name.clone()), false),
             AccountMeta::new_readonly(clockwork_pool::ID, false),
+            AccountMeta::new_readonly(clockwork_pool::state::Config::pubkey(), false),
             AccountMeta::new(clockwork_network::state::Rotator::pubkey(), false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],

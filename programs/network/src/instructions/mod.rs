@@ -1,3 +1,4 @@
+pub mod config_update;
 pub mod entry_close;
 pub mod entry_create;
 pub mod initialize;
@@ -14,6 +15,7 @@ pub mod snapshot_pause;
 pub mod snapshot_resume;
 pub mod snapshot_rotate;
 
+pub use config_update::*;
 pub use entry_close::*;
 pub use entry_create::*;
 pub use initialize::*;

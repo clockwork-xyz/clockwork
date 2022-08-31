@@ -1,7 +1,11 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program, system_program::{transfer, Transfer}},
-    clockwork_pool::{program::ClockworkPool, state::SEED_POOL}
+    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+        system_program::{transfer, Transfer},
+    },
+    clockwork_pool::{program::ClockworkPool, state::SEED_POOL},
 };
 
 #[derive(Accounts)]
@@ -13,15 +17,14 @@ pub struct PoolCreate<'info> {
     #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
     pub config: Account<'info, Config>,
 
-    #[account(
-        seeds = [SEED_POOL, name.as_bytes()], 
-        seeds::program = clockwork_pool::ID,
-        bump,
-    )]
+    #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool::ID, bump)]
     pub pool: SystemAccount<'info>,
 
     #[account(address = clockwork_pool::ID)]
     pub pool_program: Program<'info, ClockworkPool>,
+
+    #[account(seeds = [SEED_CONFIG], seeds::program = clockwork_pool::ID, bump)]
+    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
 
     #[account(mut, seeds = [SEED_ROTATOR], bump)]
     pub rotator: Account<'info, Rotator>,
@@ -35,6 +38,7 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
     let admin = &ctx.accounts.admin;
     let pool = &ctx.accounts.pool;
     let pool_program = &ctx.accounts.pool_program;
+    let pool_program_config = &ctx.accounts.pool_program_config;
     let rotator = &mut ctx.accounts.rotator;
     let system_program = &ctx.accounts.system_program;
 
@@ -44,9 +48,10 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
         CpiContext::new_with_signer(
             pool_program.to_account_info(),
             clockwork_pool::cpi::accounts::PoolCreate {
-                authority: rotator.to_account_info(),
+                config: pool_program_config.to_account_info(),
                 payer: admin.to_account_info(),
                 pool: pool.to_account_info(),
+                pool_authority: rotator.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
             &[&[SEED_ROTATOR, &[rotator_bump]]],

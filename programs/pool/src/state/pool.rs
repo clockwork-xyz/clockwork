@@ -12,7 +12,6 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[account]
 #[derive(Debug)]
 pub struct Pool {
-    pub authority: Pubkey,
     pub name: String,
     pub size: usize,
     pub workers: VecDeque<Pubkey>,
@@ -37,7 +36,6 @@ impl TryFrom<Vec<u8>> for Pool {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct PoolSettings {
-    pub authority: Pubkey,
     pub size: usize,
 }
 
@@ -46,7 +44,7 @@ pub struct PoolSettings {
  */
 
 pub trait PoolAccount {
-    fn init(&mut self, authority: Pubkey, name: String, size: usize) -> Result<()>;
+    fn init(&mut self, name: String, size: usize) -> Result<()>;
 
     fn rotate(&mut self, worker: Pubkey) -> Result<()>;
 
@@ -54,8 +52,7 @@ pub trait PoolAccount {
 }
 
 impl PoolAccount for Account<'_, Pool> {
-    fn init(&mut self, authority: Pubkey, name: String, size: usize) -> Result<()> {
-        self.authority = authority;
+    fn init(&mut self, name: String, size: usize) -> Result<()> {
         self.name = name;
         self.size = size;
         self.workers = VecDeque::new();
@@ -78,7 +75,6 @@ impl PoolAccount for Account<'_, Pool> {
     }
 
     fn update(&mut self, settings: &PoolSettings) -> Result<()> {
-        self.authority = settings.authority;
         self.size = settings.size;
         Ok(())
     }

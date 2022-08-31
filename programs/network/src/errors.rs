@@ -5,9 +5,6 @@ pub enum ClockworkError {
     #[msg("This account has already been initialized")]
     AccountAlreadyInitialized,
 
-    #[msg("This instruction requires admin authority")]
-    AdminAuthorityInvalid,
-
     #[msg("The provided node is cannot be used for this operation")]
     InvalidNode,
 

@@ -1,7 +1,8 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        crank::state::Config as CrankConfig, network::state::Config as NetworkConfig, Client,
+        crank::state::Config as CrankConfig, network::state::Config as NetworkConfig,
+        pool::state::Config as PoolConfig, Client,
     },
     solana_sdk::pubkey::Pubkey,
 };
@@ -19,9 +20,16 @@ pub fn get(client: &Client) -> Result<(), CliError> {
         .get::<NetworkConfig>(&network_config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(network_config_pubkey.to_string()))?;
 
+    // Get pool config
+    let pool_config_pubkey = PoolConfig::pubkey();
+    let pool_config = client
+        .get::<PoolConfig>(&pool_config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(pool_config_pubkey.to_string()))?;
+
     // Print configs
     println!("Crank {:#?}", crank_config);
     println!("Network {:#?}", network_config);
+    println!("Pool {:#?}", pool_config);
 
     Ok(())
 }

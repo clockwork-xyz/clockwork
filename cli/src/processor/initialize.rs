@@ -1,8 +1,6 @@
-use clockwork_client::pool::state::Pool;
-
 use {
     crate::errors::CliError,
-    clockwork_client::Client,
+    clockwork_client::{pool::state::Pool, Client},
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };
 
@@ -16,11 +14,12 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     let ix_a = clockwork_client::crank::instruction::initialize(admin, pool);
     let ix_b = clockwork_client::http::instruction::initialize(admin);
     let ix_c = clockwork_client::network::instruction::initialize(admin, mint);
-    let ix_d = clockwork_client::network::instruction::pool_create(admin, pool_name.into(), 1);
+    let ix_d = clockwork_client::pool::instruction::initialize(admin);
+    let ix_e = clockwork_client::network::instruction::pool_create(admin, pool_name.into(), 1);
 
     // Submit tx
     client
-        .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d], &[client.payer()])
+        .send_and_confirm(&[ix_a, ix_b, ix_c, ix_d, ix_e], &[client.payer()])
         .unwrap();
 
     // Airdrop some lamports to the network's snapshot queue
