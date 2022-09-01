@@ -16,7 +16,7 @@
   <h4>
     <a href="https://clockwork.xyz/">Home</a>
     <span> | </span>
-    <a href="https://docs.clockwork.xyz">Docs</a>
+    <a href="https://docs.cronos.so/">Docs</a>
     <span> | </span>
     <a href="https://twitter.com/clockwork_xyz">Twitter</a>
   </h4>  
