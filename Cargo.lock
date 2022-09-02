@@ -804,7 +804,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-bench"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "base64 0.13.0",
  "chrono",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anyhow",
  "clap 3.2.16",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -861,7 +861,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-crank"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -871,7 +871,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -881,7 +881,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-http"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
  "clockwork-pool",
@@ -889,7 +889,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -899,14 +899,14 @@ dependencies = [
 
 [[package]]
 name = "clockwork-pool"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "clockwork_plugin"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "anchor-lang",
  "bincode",

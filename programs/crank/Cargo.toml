@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-crank"
-version = "1.0.4"
+version = "1.0.5"
 description = "Clockwork crank protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.25.0" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-cron = { path = "../../cron", version = "1.0.4" }
-clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.4" }
+clockwork-cron = { path = "../../cron", version = "1.0.5" }
+clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.5" }
