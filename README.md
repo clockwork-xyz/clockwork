@@ -68,7 +68,7 @@ solana logs --url localhost
 ```
 
 
-## Deploying a worker
+## Deploying to worker
 
 To run the Clockwork plugin on your Solana validator, you can either build from scratch (shown above) or install the pre-built binary:
 ```sh
