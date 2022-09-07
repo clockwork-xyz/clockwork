@@ -38,7 +38,7 @@
 - Use at your own risk.
 
 
-## Getting started
+## Deploying a localnet
 
 Download the source code:
 ```sh
