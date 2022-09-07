@@ -38,7 +38,7 @@
 - Use at your own risk.
 
 
-## Deploying a localnet
+## Deploying to localnet
 
 Download the source code:
 ```sh
@@ -68,7 +68,7 @@ solana logs --url localhost
 ```
 
 
-## Deploying to worker
+## Deploying a worker
 
 To run the Clockwork plugin on your Solana validator, you can either build from scratch (shown above) or install the pre-built binary:
 ```sh
