@@ -30,11 +30,11 @@ pub mod clockwork_crank {
 
     pub fn queue_create(
         ctx: Context<QueueCreate>,
-        instruction: InstructionData,
-        name: String,
+        id: String,
+        kickoff_instruction: InstructionData,
         trigger: Trigger,
     ) -> Result<()> {
-        queue_create::handler(ctx, instruction, name, trigger)
+        queue_create::handler(ctx, id, kickoff_instruction, trigger)
     }
 
     pub fn queue_delete(ctx: Context<QueueDelete>) -> Result<()> {

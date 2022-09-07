@@ -27,20 +27,16 @@ pub struct Queue {
     pub authority: Pubkey,
     pub created_at: ClockData,
     pub exec_context: Option<ExecContext>,
+    pub id: String,
     pub is_paused: bool,
     pub kickoff_instruction: InstructionData,
-    pub name: String,
     pub next_instruction: Option<InstructionData>,
     pub trigger: Trigger,
 }
 
 impl Queue {
-    pub fn pubkey(authority: Pubkey, name: String) -> Pubkey {
-        Pubkey::find_program_address(
-            &[SEED_QUEUE, authority.as_ref(), name.as_bytes()],
-            &crate::ID,
-        )
-        .0
+    pub fn pubkey(authority: Pubkey, id: String) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_QUEUE, authority.as_ref(), id.as_bytes()], &crate::ID).0
     }
 }
 
@@ -54,13 +50,13 @@ impl TryFrom<Vec<u8>> for Queue {
 impl Hash for Queue {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.authority.hash(state);
-        self.name.hash(state);
+        self.id.hash(state);
     }
 }
 
 impl PartialEq for Queue {
     fn eq(&self, other: &Self) -> bool {
-        self.authority.eq(&other.authority) && self.name.eq(&other.name)
+        self.authority.eq(&other.authority) && self.id.eq(&other.id)
     }
 }
 
@@ -74,8 +70,8 @@ pub trait QueueAccount {
     fn init(
         &mut self,
         authority: Pubkey,
-        instruction: InstructionData,
-        name: String,
+        id: String,
+        kickoff_instruction: InstructionData,
         trigger: Trigger,
     ) -> Result<()>;
 
@@ -88,16 +84,16 @@ impl QueueAccount for Account<'_, Queue> {
     fn init(
         &mut self,
         authority: Pubkey,
-        instruction: InstructionData,
-        name: String,
+        id: String,
+        kickoff_instruction: InstructionData,
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
-        self.kickoff_instruction = instruction;
+        self.id = id;
         self.is_paused = false;
-        self.name = name;
+        self.kickoff_instruction = kickoff_instruction;
         self.next_instruction = None;
         self.trigger = trigger;
         Ok(())
@@ -138,7 +134,7 @@ impl QueueAccount for Account<'_, Queue> {
             &[&[
                 SEED_QUEUE,
                 self.authority.as_ref(),
-                self.name.as_bytes(),
+                self.id.as_bytes(),
                 &[bump],
             ]],
         )?;

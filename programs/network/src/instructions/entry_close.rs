@@ -32,7 +32,7 @@ pub struct EntryClose<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(mut, has_one = authority, constraint = snapshot_queue.name.eq("snapshot"))]
+    #[account(mut, has_one = authority, constraint = snapshot_queue.id.eq("snapshot"))]
     pub snapshot_queue: Account<'info, Queue>,
 }
 

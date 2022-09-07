@@ -127,8 +127,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             },
             &[&[SEED_AUTHORITY, &[bump]]]
         ),
-        snapshot_kickoff_ix.into(),
         "snapshot".into(),
+        snapshot_kickoff_ix.into(),
         Trigger::Cron { schedule: "0 * * * * * *".into() }
     )?;
 

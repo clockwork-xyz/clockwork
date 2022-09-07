@@ -17,7 +17,7 @@ pub struct QueueDelete<'info> {
         seeds = [
             SEED_QUEUE, 
             queue.authority.as_ref(),
-            queue.name.as_bytes(),
+            queue.id.as_bytes(),
         ],
         bump,
         has_one = authority,

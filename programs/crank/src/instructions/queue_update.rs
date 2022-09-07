@@ -15,7 +15,7 @@ pub struct QueueUpdate<'info> {
         seeds = [
             SEED_QUEUE, 
             queue.authority.key().as_ref(),
-            queue.name.as_bytes(),
+            queue.id.as_bytes(),
         ],
         bump,
         has_one = authority,

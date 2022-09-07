@@ -32,7 +32,7 @@ pub struct QueueCrank<'info> {
         seeds = [
             SEED_QUEUE, 
             queue.authority.as_ref(),
-            queue.name.as_bytes(),
+            queue.id.as_bytes(),
         ],
         bump,
         constraint = !queue.is_paused @ ClockworkError::PausedQueue

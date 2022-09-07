@@ -12,8 +12,8 @@ use {
 
 pub fn queue_create(
     authority: Pubkey,
-    instruction: Instruction,
-    name: String,
+    id: String,
+    kickoff_instruction: Instruction,
     payer: Pubkey,
     queue: Pubkey,
     trigger: Trigger,
@@ -27,8 +27,8 @@ pub fn queue_create(
             AccountMeta::new_readonly(system_program::ID, false),
         ],
         data: clockwork_crank::instruction::QueueCreate {
-            instruction: ClockworkInstructionData::from(instruction),
-            name,
+            id,
+            kickoff_instruction: ClockworkInstructionData::from(kickoff_instruction),
             trigger,
         }
         .data(),
