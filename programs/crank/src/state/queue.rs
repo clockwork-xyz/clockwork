@@ -27,8 +27,8 @@ pub struct Queue {
     pub authority: Pubkey,
     pub created_at: ClockData,
     pub exec_context: Option<ExecContext>,
-    pub first_instruction: InstructionData,
     pub is_paused: bool,
+    pub kickoff_instruction: InstructionData,
     pub name: String,
     pub next_instruction: Option<InstructionData>,
     pub trigger: Trigger,
@@ -95,7 +95,7 @@ impl QueueAccount for Account<'_, Queue> {
         self.authority = authority.key();
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
-        self.first_instruction = instruction;
+        self.kickoff_instruction = instruction;
         self.is_paused = false;
         self.name = name;
         self.next_instruction = None;
@@ -108,9 +108,9 @@ impl QueueAccount for Account<'_, Queue> {
         let worker_lamports_pre = worker.lamports();
 
         // Get the instruction to crank
-        let first_instruction: &InstructionData = &self.clone().first_instruction;
+        let kickoff_instruction: &InstructionData = &self.clone().kickoff_instruction;
         let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
-        let instruction = next_instruction.as_ref().unwrap_or(first_instruction);
+        let instruction = next_instruction.as_ref().unwrap_or(kickoff_instruction);
 
         // Inject the worker's pubkey for the Clockwork payer ID
         let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];

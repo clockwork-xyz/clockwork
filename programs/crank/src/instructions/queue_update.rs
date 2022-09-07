@@ -5,7 +5,7 @@ use {
 
 
 #[derive(Accounts)]
-#[instruction(first_instruction: Option<InstructionData>, trigger: Option<Trigger>)]
+#[instruction(kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>)]
 pub struct QueueUpdate<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -26,15 +26,15 @@ pub struct QueueUpdate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueUpdate>, first_instruction: Option<InstructionData>, trigger: Option<Trigger>) -> Result<()> {
+pub fn handler(ctx: Context<QueueUpdate>, kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
 
     // If provided, update the queue's first instruction
-    if let Some(first_instruction) = first_instruction {
-        queue.first_instruction = first_instruction;
+    if let Some(kickoff_instruction) = kickoff_instruction {
+        queue.kickoff_instruction = kickoff_instruction;
     }
 
     // If provided, update the queue's trigger and reset the exec context

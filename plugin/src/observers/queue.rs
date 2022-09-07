@@ -187,7 +187,7 @@ impl QueueObserver {
             .get_latest_blockhash()
             .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
         let worker_pubkey = client.payer_pubkey();
-        let inner_ix = queue.next_instruction.unwrap_or(queue.first_instruction);
+        let inner_ix = queue.next_instruction.unwrap_or(queue.kickoff_instruction);
         let mut ixs: Vec<Instruction> =
             vec![self
                 .clone()
