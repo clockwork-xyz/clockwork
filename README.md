@@ -127,12 +127,3 @@ exec solana-validator \
 
 Now simply restart your validator however you normally would!
 
-
-
-## Token
-
-Airdrops and staking instructions coming soon... ⚙️
-
-
-
-
