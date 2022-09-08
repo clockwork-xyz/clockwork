@@ -6,6 +6,7 @@ members = [
     "cron",
     "plugin",
     "programs/*",
+    "sdk"
 ]
 
 # [patch.crates-io]

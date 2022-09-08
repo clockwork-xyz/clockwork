@@ -1,0 +1,22 @@
+[package]
+name = "clockwork-sdk"
+version = "1.0.6"
+description = "An SDK for the Clockwork automation engine"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
+readme = "./README.md"
+keywords = ["solana"]
+
+[lib]
+name = "clockwork_sdk"
+
+[dependencies]
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+nom = "~7"
+once_cell = "1.5.2"
+
+[dev-dependencies]
+chrono-tz = "0.6.1"

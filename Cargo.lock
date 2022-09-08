@@ -905,6 +905,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-sdk"
+version = "1.0.6"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
 name = "clockwork_plugin"
 version = "1.0.6"
 dependencies = [
