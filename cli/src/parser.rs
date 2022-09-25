@@ -110,14 +110,6 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        // Some(("add_pool", matches)) => Ok(CliCommand::NodeAddPool {
-        //     node_pubkey: parse_pubkey("node", matches)?,
-        //     pool_pubkey: parse_pubkey("pool", matches)?,
-        // }),
-        // Some(("drop_pool", matches)) => Ok(CliCommand::NodeDropPool {
-        //     node_pubkey: parse_pubkey("node", matches)?,
-        //     pool_pubkey: parse_pubkey("pool", matches)?,
-        // }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             worker: parse_keypair_file("worker", matches)?,
         }),
@@ -132,9 +124,12 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 }
 
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    let address = parse_pubkey("address", matches)?;
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::QueueGet {
-            address: parse_pubkey("address", matches)?,
+        Some(("get", _)) => Ok(CliCommand::QueueGet { address }),
+        Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
+            address: address,
+            rate_limit: parse_u64("rate_limit", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

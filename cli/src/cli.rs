@@ -43,14 +43,6 @@ pub enum CliCommand {
         address: Pubkey,
         amount: u64,
     },
-    // NodeAddPool {
-    //     node_pubkey: Pubkey,
-    //     pool_pubkey: Pubkey,
-    // },
-    // NodeDropPool {
-    //     node_pubkey: Pubkey,
-    //     pool_pubkey: Pubkey,
-    // },
 
     // Pool commands
     PoolGet,
@@ -58,6 +50,10 @@ pub enum CliCommand {
     // Queue commands
     QueueGet {
         address: Pubkey,
+    },
+    QueueUpdate {
+        address: Pubkey,
+        rate_limit: Option<u64>,
     },
 
     // Registry
@@ -242,26 +238,24 @@ pub fn app() -> Command<'static> {
             Command::new("queue")
                 .about("Manage your queues")
                 .arg_required_else_help(true)
+                .arg(
+                    Arg::new("address")
+                        .index(1)
+                        .takes_value(true)
+                        .required(false)
+                        .help("Public address of a queue"),
+                )
+                .subcommand(Command::new("get").about("Get a queue"))
                 .subcommand(
-                    Command::new("get")
-                        .about("Get a queue")
+                    Command::new("update")
+                        .about("Update a property on a queue")
                         .arg(
-                            Arg::new("address")
-                                .index(1)
+                            Arg::new("rate_limit")
+                                .long("rate_limit")
+                                .short('r')
                                 .takes_value(true)
                                 .required(false)
-                                .help("Public address of a queue"),
-                        )
-                        .subcommand(
-                            Command::new("task")
-                                .about("Lookup a task in the queue")
-                                .arg(
-                                    Arg::new("id")
-                                        .index(1)
-                                        .takes_value(true)
-                                        .required(true)
-                                        .help("The id of a task in the queue"),
-                                ),
+                                .help("The maximum allowed cranks per slot"),
                         ),
                 ),
         )
