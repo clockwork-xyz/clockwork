@@ -26,15 +26,15 @@ const DEFAULT_RATE_LIMIT: u64 = 10;
 #[account]
 #[derive(Debug)]
 pub struct Queue {
-    pub authority: Pubkey,
-    pub created_at: ClockData,
-    pub exec_context: Option<ExecContext>,
-    pub id: String,
-    pub is_paused: bool,
-    pub kickoff_instruction: InstructionData,
-    pub next_instruction: Option<InstructionData>,
-    pub rate_limit: u64,
-    pub trigger: Trigger,
+    pub authority: Pubkey,     // The authority (aka "owner") of this queue
+    pub created_at: ClockData, // The clock data at the moment the queue was created
+    pub exec_context: Option<ExecContext>, // Contextual data tracking the current execution state of this  queue
+    pub id: String,                        // The authority-given id of the queue
+    pub is_paused: bool,                   // Whether or not the queue is currently paused
+    pub kickoff_instruction: InstructionData, // The kickoff crank instrution
+    pub next_instruction: Option<InstructionData>, // The next crank instruction
+    pub rate_limit: u64,                   // The max number of cranks allowed per slot
+    pub trigger: Trigger,                  // The triggering event to kickoff queue processing
 }
 
 impl Queue {
@@ -162,6 +162,27 @@ impl QueueAccount for Account<'_, Queue> {
             }
         };
 
+        // Increment the crank count
+        let current_slot = Clock::get().unwrap().slot;
+        match self.exec_context {
+            None => return Err(ClockworkError::InvalidQueueState.into()),
+            Some(exec_context) => {
+                // Update the exec context
+                // let cranks_since_payout = exec_context.cranks_since_payout.checked_add(1).unwrap();
+                // let is_rate_limit_execeeded = cranks_since_payout.ge(&self.rate_limit);
+                self.exec_context = Some(ExecContext {
+                    crank_rate: if current_slot == exec_context.last_crank_at {
+                        exec_context.crank_rate.checked_add(1).unwrap()
+                    } else {
+                        1
+                    },
+                    cranks_since_payout: exec_context.cranks_since_payout.checked_add(1).unwrap(),
+                    last_crank_at: current_slot,
+                    trigger_context: exec_context.trigger_context,
+                });
+            }
+        }
+
         // Realloc the queue account
         self.realloc()?;
 
@@ -225,9 +246,10 @@ pub enum Trigger {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct ExecContext {
-    pub crank_count: u64,
-    pub last_crank_at: u64,
-    pub trigger_context: TriggerContext,
+    pub crank_rate: u64,                 // Number of cranks in this slot
+    pub cranks_since_payout: u64,        // Number of cranks since the last tx payout
+    pub last_crank_at: u64,              // Slot of the last crank
+    pub trigger_context: TriggerContext, // Context for the triggering condition
 }
 
 /**

@@ -1,7 +1,9 @@
 use {
-    crate::state::*,
+    crate::{errors::ClockworkError, state::*},
     anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
 };
+
+const MAX_RATE_LIMIT: u64 = 32; 
 
 
 #[derive(Accounts)]
@@ -49,6 +51,7 @@ pub fn handler(
 
     // If provided, update the rate_limit
     if let Some(rate_limit) = rate_limit {
+        require!(rate_limit.le(&MAX_RATE_LIMIT), ClockworkError::InvalidRateLimit);
         queue.rate_limit = rate_limit;
     }
 

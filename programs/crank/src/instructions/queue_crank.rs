@@ -7,6 +7,8 @@ use {
     std::{mem::size_of, str::FromStr},
 };
 
+const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
+
 #[derive(Accounts)]
 pub struct QueueCrank<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
@@ -77,7 +79,8 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
 
                 // Set the exec context.
                 queue.exec_context = Some(ExecContext {
-                    crank_count: 0,
+                    crank_rate: 0,
+                    cranks_since_payout: 0,
                     last_crank_at: current_slot,
                     trigger_context: TriggerContext::Cron { started_at: target_timestamp }
                 });
@@ -86,11 +89,23 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                 // Set the exec context.
                 require!(queue.exec_context.is_none(), ClockworkError::InvalidQueueState);
                 queue.exec_context = Some(ExecContext {
-                    crank_count: 0,
+                    crank_rate: 0,
+                    cranks_since_payout: 0,
                     last_crank_at: current_slot,
                     trigger_context: TriggerContext::Immediate,
                 });
             },
+        }
+    }
+
+    // If the rate limit has been met, exit early.
+    match queue.exec_context {
+        None => return Err(ClockworkError::InvalidQueueState.into()),
+        Some(exec_context) => {
+            if exec_context.last_crank_at == Clock::get().unwrap().slot && 
+                exec_context.crank_rate >= queue.rate_limit {
+                    return Err(ClockworkError::RateLimitExeceeded.into())
+            } 
         }
     }
 
@@ -106,19 +121,14 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
         fee.pay_to_admin(config.crank_fee, queue)?;
     }
 
-    // Increment the crank count 
+    // If the queue has no more work or the rate limit has been reached,
+    // reimburse the worker for the transaction base fee.
     match queue.exec_context {
         None => return Err(ClockworkError::InvalidQueueState.into()),
         Some(exec_context) => {
-            queue.exec_context = Some(ExecContext {
-                crank_count: if exec_context.last_crank_at == current_slot {
-                    exec_context.crank_count.checked_add(1).unwrap()
-                } else {
-                    1
-                },
-                last_crank_at: current_slot,
-                trigger_context: exec_context.trigger_context,
-            });
+            if queue.next_instruction.is_none() || exec_context.crank_rate >= queue.rate_limit {
+                fee.pay_to_worker(TRANSACTION_BASE_FEE_REIMBURSEMENT, queue)?;
+            }
         }
     }
 

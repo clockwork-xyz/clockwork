@@ -147,13 +147,14 @@ impl QueueObserver {
         client: Arc<ClockworkClient>,
         slot: u64,
     ) -> Vec<Transaction> {
-        // Get the clock for this slot
+        // Get the clock for this slot.
         let clock = match self.clocks.get(&slot) {
             None => return vec![],
             Some(clock) => clock.value().clone(),
         };
 
-        // Push in all of the scheduled queues that are due.
+        // Index all of the scheduled queues that are now due.
+        // Cache retains all queues that are not yet due.
         self.cron_queues.retain(|target_timestamp, queue_pubkeys| {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
@@ -193,7 +194,7 @@ impl QueueObserver {
                 .clone()
                 .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
 
-        // Pre-simulate crank ixs and pack into tx
+        // Pre-simulate crank ixs and pack as many as possible into tx.
         let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
         tx.sign(&[client.payer()], blockhash);
         let now = std::time::Instant::now();
@@ -202,7 +203,9 @@ impl QueueObserver {
             let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
             sim_tx.sign(&[client.payer()], blockhash);
 
-            // Exit early if tx exceeds size limit
+            // Exit early if tx exceeds Solana's size limit.
+            //
+            // TODO Transaction size limits will soon be increased with QUIC and Transaction v2 lookup tables.
             if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
                 info!(
                     "Transaction message exceeded size limit with {} bytes",
@@ -211,7 +214,7 @@ impl QueueObserver {
                 break;
             }
 
-            // Simulate the packed tx
+            // Simulate the complete packed tx.
             match client.simulate_transaction_with_config(
                 &sim_tx,
                 RpcSimulateTransactionConfig {
@@ -224,19 +227,22 @@ impl QueueObserver {
                     ..RpcSimulateTransactionConfig::default()
                 },
             ) {
+                // If there was an error, stop packing and continue with the cranks up until this one.
                 Err(_err) => {
                     continue_packing = false;
                 }
+
+                // If the simulation was successful, pack the crank ix into the tx.
                 Ok(response) => {
                     if response
                         .value
                         .units_consumed
                         .lt(&Some(COMPUTE_BUDGET_LIMIT))
                     {
-                        // This simulated tx is okay to submit
+                        // This simulated tx is okay to submit.
                         tx = sim_tx;
 
-                        // Parse the simulated queue account for another ix to pack
+                        // Parse the resulting queue account for the next crank ix to simulate.
                         if let Some(ui_accounts) = response.value.accounts {
                             if let Some(Some(ui_account)) = ui_accounts.get(0) {
                                 if let Some(account) = ui_account.decode::<Account>() {
@@ -261,7 +267,7 @@ impl QueueObserver {
             }
         }
 
-        info!("Total packing duration: {:#?}", now.elapsed());
+        info!("Time spent packing cranks: {:#?}", now.elapsed());
 
         Ok(tx)
     }
@@ -272,11 +278,11 @@ impl QueueObserver {
         queue_pubkey: Pubkey,
         worker_pubkey: Pubkey,
     ) -> Instruction {
-        // Build the queue_crank instruction
+        // Build the queue_crank instruction.
         let mut crank_ix =
             clockwork_client::crank::instruction::queue_crank(queue_pubkey, worker_pubkey);
 
-        // Program accounts
+        // Inject the target program account to the ix.
         crank_ix
             .accounts
             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
