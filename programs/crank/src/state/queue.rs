@@ -17,6 +17,8 @@ use {
 
 pub const SEED_QUEUE: &[u8] = b"queue";
 
+const DEFAULT_RATE_LIMIT: u64 = 10;
+
 /**
  * Queue
  */
@@ -25,13 +27,13 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[derive(Debug)]
 pub struct Queue {
     pub authority: Pubkey,
-    pub cranks_per_slot: u64,
     pub created_at: ClockData,
     pub exec_context: Option<ExecContext>,
     pub id: String,
     pub is_paused: bool,
     pub kickoff_instruction: InstructionData,
     pub next_instruction: Option<InstructionData>,
+    pub rate_limit: u64,
     pub trigger: Trigger,
 }
 
@@ -90,13 +92,13 @@ impl QueueAccount for Account<'_, Queue> {
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
-        self.cranks_per_slot = 10;
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
         self.id = id;
         self.is_paused = false;
         self.kickoff_instruction = kickoff_instruction;
         self.next_instruction = None;
+        self.rate_limit = DEFAULT_RATE_LIMIT;
         self.trigger = trigger;
         Ok(())
     }
@@ -226,16 +228,6 @@ pub struct ExecContext {
     pub crank_count: u64,
     pub last_crank_at: u64,
     pub trigger_context: TriggerContext,
-}
-
-impl ExecContext {
-    pub fn incremented_crank_count(&self) -> u64 {
-        if self.last_crank_at != Clock::get().unwrap().slot {
-            1
-        } else {
-            self.crank_count.checked_add(1).unwrap()
-        }
-    }
 }
 
 /**

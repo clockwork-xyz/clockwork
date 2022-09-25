@@ -51,11 +51,11 @@ pub mod clockwork_crank {
 
     pub fn queue_update(
         ctx: Context<QueueUpdate>,
-        cranks_per_slot: Option<u64>,
         kickoff_instruction: Option<InstructionData>,
+        rate_limit: Option<u64>,
         trigger: Option<Trigger>,
     ) -> Result<()> {
-        queue_update::handler(ctx, cranks_per_slot, kickoff_instruction, trigger)
+        queue_update::handler(ctx, kickoff_instruction, rate_limit, trigger)
     }
 
     pub fn queue_withdraw(ctx: Context<QueueWithdraw>, amount: u64) -> Result<()> {

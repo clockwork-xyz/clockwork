@@ -6,8 +6,8 @@ use {
 
 #[derive(Accounts)]
 #[instruction(
-    cranks_per_slot: Option<u64>, 
     kickoff_instruction: Option<InstructionData>, 
+    rate_limit: Option<u64>, 
     trigger: Option<Trigger>
 )]
 pub struct QueueUpdate<'info> {
@@ -32,8 +32,8 @@ pub struct QueueUpdate<'info> {
 
 pub fn handler(
     ctx: Context<QueueUpdate>, 
-    cranks_per_slot: Option<u64>, 
     kickoff_instruction: Option<InstructionData>, 
+    rate_limit: Option<u64>, 
     trigger: Option<Trigger>
 ) -> Result<()> {
     
@@ -42,14 +42,14 @@ pub fn handler(
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
 
-    // If provided, update the cranks_per_slot
-    if let Some(cranks_per_slot) = cranks_per_slot {
-        queue.cranks_per_slot = cranks_per_slot;
-    }
-
     // If provided, update the queue's first instruction
     if let Some(kickoff_instruction) = kickoff_instruction {
         queue.kickoff_instruction = kickoff_instruction;
+    }
+
+    // If provided, update the rate_limit
+    if let Some(rate_limit) = rate_limit {
+        queue.rate_limit = rate_limit;
     }
 
     // If provided, update the queue's trigger and reset the exec context
