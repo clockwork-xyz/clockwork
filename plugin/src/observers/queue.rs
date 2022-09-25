@@ -12,7 +12,7 @@ use {
         RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, Result as PluginResult,
+        GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
     },
     solana_program::{
         clock::Clock,
@@ -20,7 +20,13 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
-    std::{fmt::Debug, str::FromStr, sync::Arc},
+    std::{
+        collections::hash_map::DefaultHasher,
+        fmt::Debug,
+        hash::{Hash, Hasher},
+        str::FromStr,
+        sync::Arc,
+    },
     tokio::runtime::Runtime,
 };
 
@@ -37,9 +43,31 @@ pub struct QueueObserver {
     // Map from unix timestamps to the list of queues scheduled for that moment.
     pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
 
+    // Map from account pubkeys to the set of queues listening for an account update.
+    pub listener_queues: DashMap<Pubkey, DashSet<Pubkey>>,
+
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
+
+// pub struct CrankableQueue {
+//     pub pubkey: Pubkey,         // Pubkey of the queue to crank
+//     pub data_hash: Option<u64>, // Hash of the queue's data (used for deduping attempts)
+// }
+
+// impl Hash for CrankableQueue {
+//     fn hash<H: Hasher>(&self, state: &mut H) {
+//         self.pubkey.hash(state);
+//     }
+// }
+
+// impl PartialEq for CrankableQueue {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.pubkey.eq(&other.pubkey)
+//     }
+// }
+
+// impl Eq for CrankableQueue {}
 
 impl QueueObserver {
     pub fn new(runtime: Arc<Runtime>) -> Self {
@@ -47,6 +75,7 @@ impl QueueObserver {
             clocks: DashMap::new(),
             crankable_queues: DashSet::new(),
             cron_queues: DashMap::new(),
+            listener_queues: DashMap::new(),
             runtime,
         }
     }
@@ -65,6 +94,31 @@ impl QueueObserver {
     pub fn handle_updated_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
         self.spawn(|this| async move {
             this.clocks.insert(clock.slot, clock.clone());
+            Ok(())
+        })
+    }
+
+    pub fn handle_updated_account(
+        self: Arc<Self>,
+        account_pubkey: Pubkey,
+        _account_replica: ReplicaAccountInfo,
+    ) -> PluginResult<()> {
+        self.spawn(|this| async move {
+            // Move all queues listening to this account into the crankable set.
+            this.listener_queues.retain(|pubkey, queue_pubkeys| {
+                if account_pubkey.eq(pubkey) {
+                    for queue_pubkey in queue_pubkeys.iter() {
+                        this.crankable_queues.insert(*queue_pubkey.key());
+                    }
+                    false
+                } else {
+                    true
+                }
+            });
+
+            // TODO This account update could have just been a lamport change (not a data update).
+            // TODO To optimize, we need to fetch the queue accounts to verify the data update
+
             Ok(())
         })
     }
@@ -91,6 +145,21 @@ impl QueueObserver {
             } else {
                 // Otherwise, index the queue according to its trigger type.
                 match queue.trigger {
+                    Trigger::Account {
+                        pubkey: account_pubkey,
+                    } => {
+                        // Index the queue by its trigger's account pubkey.
+                        this.listener_queues
+                            .entry(account_pubkey)
+                            .and_modify(|v| {
+                                v.insert(queue_pubkey);
+                            })
+                            .or_insert_with(|| {
+                                let v = DashSet::new();
+                                v.insert(queue_pubkey);
+                                v
+                            });
+                    }
                     Trigger::Cron { schedule } => {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
@@ -158,7 +227,7 @@ impl QueueObserver {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
                 for queue_pubkey_ref in queue_pubkeys.iter() {
-                    self.crankable_queues.insert(queue_pubkey_ref.key().clone());
+                    self.crankable_queues.insert(*queue_pubkey_ref.key());
                 }
             }
             !is_due
@@ -170,7 +239,7 @@ impl QueueObserver {
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 self.clone()
-                    .build_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
+                    .build_crank_tx(client.clone(), *queue_pubkey_ref.key())
                     .ok()
             })
             .collect::<Vec<Transaction>>()
@@ -187,13 +256,16 @@ impl QueueObserver {
             .get_latest_blockhash()
             .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
         let worker_pubkey = client.payer_pubkey();
-        let inner_ix = queue.next_instruction.unwrap_or(queue.kickoff_instruction);
+        let mut inner_ix = queue
+            .next_instruction
+            .clone()
+            .unwrap_or(queue.kickoff_instruction);
+
+        // Pre-simulate crank ixs and pack into tx
         let mut ixs: Vec<Instruction> =
             vec![self
                 .clone()
                 .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
-
-        // Pre-simulate crank ixs and pack into tx
         let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
         tx.sign(&[client.payer()], blockhash);
         let now = std::time::Instant::now();
@@ -274,7 +346,7 @@ impl QueueObserver {
     ) -> Instruction {
         // Build the queue_crank instruction
         let mut crank_ix =
-            clockwork_client::crank::instruction::queue_crank(queue_pubkey, worker_pubkey);
+            clockwork_client::crank::instruction::queue_crank(None, queue_pubkey, worker_pubkey);
 
         // Program accounts
         crank_ix

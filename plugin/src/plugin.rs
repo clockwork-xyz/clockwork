@@ -63,7 +63,13 @@ impl GeyserPlugin for ClockworkPlugin {
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
-        // Parse and process the account update
+        // Send all account updates to the queue observer for account listeners.
+        self.observers
+            .queue
+            .clone()
+            .handle_updated_account(account_pubkey, account_info.clone())?;
+
+        // Parse and process specific update events.
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {

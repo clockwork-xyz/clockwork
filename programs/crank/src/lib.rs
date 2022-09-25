@@ -24,8 +24,8 @@ pub mod clockwork_crank {
         initialize::handler(ctx, worker_pool)
     }
 
-    pub fn queue_crank(ctx: Context<QueueCrank>) -> Result<()> {
-        queue_crank::handler(ctx)
+    pub fn queue_crank(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
+        queue_crank::handler(ctx, data_hash)
     }
 
     pub fn queue_create(

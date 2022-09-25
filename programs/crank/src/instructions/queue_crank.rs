@@ -4,10 +4,11 @@ use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
     clockwork_pool::state::Pool,
-    std::{mem::size_of, str::FromStr},
+    std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, mem::size_of, str::FromStr},
 };
 
 #[derive(Accounts)]
+#[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
@@ -46,7 +47,7 @@ pub struct QueueCrank<'info> {
     pub worker: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
+pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // Get accounts
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
@@ -57,6 +58,54 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     // If this queue does not have a next_instruction, verify the queue's trigger has been met and a new exec_context can be created.
     if queue.next_instruction.is_none() {
         match queue.trigger.clone() {
+            Trigger::Account { pubkey } => {
+                // Require the provided data_hash is non-null.
+                let data_hash = match data_hash {
+                    None => return Err(ClockworkError::InvalidQueueState.into()),
+                    Some(data_hash) => data_hash
+                };
+
+                // Verify proof that account data has been updated.
+                match ctx.remaining_accounts.first() {
+                    None => {},
+                    Some(account_info) => {
+                        // Sanity check on account info pubkey.
+                        require!(pubkey.eq(account_info.key), ClockworkError::InvalidTrigger);
+
+                        // Begin computing the expected data hash.
+                        let mut hasher = DefaultHasher::new();
+                        let data = &account_info.try_borrow_data().unwrap();
+                        data.to_vec().hash(&mut hasher);
+
+                        // Check the exec context for the prior data hash.
+                        let expected_data_hash = match queue.exec_context.clone() {
+                            None => {
+                                // This queue has not begun executing yet. 
+                                // There is no prior data hash to inject as a seed for the new one. 
+                                hasher.finish()
+                            }
+                            Some(exec_context) => {
+                                match exec_context {
+                                    ExecContext::Account { data_hash: prior_data_hash } => {
+                                        // Inject the prior data hash as a seed to the new one.
+                                        prior_data_hash.hash(&mut hasher);
+                                        hasher.finish()
+
+                                    },
+                                    _ => return Err(ClockworkError::InvalidQueueState.into())
+                                }
+                            }
+                        };
+
+                        // Verify the data hash provided by the worker is equal to the expected data hash.
+                        // This proves the account has been updated since the last crank and the worker has seen the new data.
+                        require!(data_hash.eq(&expected_data_hash), ClockworkError::InvalidTrigger);
+
+                        // Set a new exec context with the new data hash and slot number.
+                        queue.exec_context = Some(ExecContext::Account { data_hash })
+                    }
+                }
+            }
             Trigger::Cron { schedule } => {
                 // Get the reference timestamp for calculating the queue's scheduled target timestamp.
                 let reference_timestamp = match queue.exec_context.clone() {
