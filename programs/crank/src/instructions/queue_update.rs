@@ -5,7 +5,11 @@ use {
 
 
 #[derive(Accounts)]
-#[instruction(kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>)]
+#[instruction(
+    cranks_per_slot: Option<u64>, 
+    kickoff_instruction: Option<InstructionData>, 
+    trigger: Option<Trigger>
+)]
 pub struct QueueUpdate<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -26,11 +30,22 @@ pub struct QueueUpdate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueUpdate>, kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>) -> Result<()> {
+pub fn handler(
+    ctx: Context<QueueUpdate>, 
+    cranks_per_slot: Option<u64>, 
+    kickoff_instruction: Option<InstructionData>, 
+    trigger: Option<Trigger>
+) -> Result<()> {
+    
     // Get accounts
     let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
+
+    // If provided, update the cranks_per_slot
+    if let Some(cranks_per_slot) = cranks_per_slot {
+        queue.cranks_per_slot = cranks_per_slot;
+    }
 
     // If provided, update the queue's first instruction
     if let Some(kickoff_instruction) = kickoff_instruction {

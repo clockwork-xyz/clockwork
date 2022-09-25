@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{ExecContext, InstructionData, Queue, Trigger},
+        crank::state::{InstructionData, Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -95,8 +95,8 @@ impl QueueObserver {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
                             None => queue.created_at.unix_timestamp,
-                            Some(exec_context) => match exec_context {
-                                ExecContext::Cron { started_at } => started_at,
+                            Some(exec_context) => match exec_context.trigger_context {
+                                TriggerContext::Cron { started_at } => started_at,
                                 _ => {
                                     return Err(GeyserPluginError::Custom(
                                         "Invalid exec context".into(),

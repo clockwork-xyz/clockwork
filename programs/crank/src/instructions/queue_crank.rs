@@ -55,6 +55,7 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     let worker = &ctx.accounts.worker;
 
     // If this queue does not have a next_instruction, verify the queue's trigger has been met and a new exec_context can be created.
+    let current_slot = Clock::get().unwrap().slot;
     if queue.next_instruction.is_none() {
         match queue.trigger.clone() {
             Trigger::Cron { schedule } => {
@@ -62,8 +63,8 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                 let reference_timestamp = match queue.exec_context.clone() {
                     None => queue.created_at.unix_timestamp,
                     Some(exec_context) => {
-                        match exec_context {
-                            ExecContext::Cron { started_at } => started_at,
+                        match exec_context.trigger_context {
+                            TriggerContext::Cron { started_at } => started_at,
                             _ => return Err(ClockworkError::InvalidQueueState.into())
                         }
                     }
@@ -75,12 +76,20 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
                 require!(current_timestamp >= target_timestamp, ClockworkError::InvalidTrigger);
 
                 // Set the exec context.
-                queue.exec_context = Some(ExecContext::Cron { started_at: target_timestamp });
+                queue.exec_context = Some(ExecContext {
+                    crank_count: 0,
+                    last_crank_at: current_slot,
+                    trigger_context: TriggerContext::Cron { started_at: target_timestamp }
+                });
             },
             Trigger::Immediate => {
                 // Set the exec context.
                 require!(queue.exec_context.is_none(), ClockworkError::InvalidQueueState);
-                queue.exec_context = Some(ExecContext::Immediate);
+                queue.exec_context = Some(ExecContext {
+                    crank_count: 0,
+                    last_crank_at: current_slot,
+                    trigger_context: TriggerContext::Immediate,
+                });
             },
         }
     }
@@ -95,6 +104,22 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
         fee.pay_to_worker(config.crank_fee, queue)?;
     } else {
         fee.pay_to_admin(config.crank_fee, queue)?;
+    }
+
+    // Increment the crank count 
+    match queue.exec_context {
+        None => return Err(ClockworkError::InvalidQueueState.into()),
+        Some(exec_context) => {
+            queue.exec_context = Some(ExecContext {
+                crank_count: if exec_context.last_crank_at == current_slot {
+                    exec_context.crank_count.checked_add(1).unwrap()
+                } else {
+                    1
+                },
+                last_crank_at: current_slot,
+                trigger_context: exec_context.trigger_context,
+            });
+        }
     }
 
     Ok(())

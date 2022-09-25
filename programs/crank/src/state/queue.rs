@@ -25,6 +25,7 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 #[derive(Debug)]
 pub struct Queue {
     pub authority: Pubkey,
+    pub cranks_per_slot: u64,
     pub created_at: ClockData,
     pub exec_context: Option<ExecContext>,
     pub id: String,
@@ -89,6 +90,7 @@ impl QueueAccount for Account<'_, Queue> {
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
+        self.cranks_per_slot = 10;
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
         self.id = id;
@@ -220,7 +222,28 @@ pub enum Trigger {
  */
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum ExecContext {
+pub struct ExecContext {
+    pub crank_count: u64,
+    pub last_crank_at: u64,
+    pub trigger_context: TriggerContext,
+}
+
+impl ExecContext {
+    pub fn incremented_crank_count(&self) -> u64 {
+        if self.last_crank_at != Clock::get().unwrap().slot {
+            1
+        } else {
+            self.crank_count.checked_add(1).unwrap()
+        }
+    }
+}
+
+/**
+ * TriggerContext
+ */
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum TriggerContext {
     Cron { started_at: i64 },
     Immediate,
 }
