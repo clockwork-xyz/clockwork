@@ -32,6 +32,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::NodeStake { address, amount } => super::node::stake(&client, address, amount),
         CliCommand::PoolGet => super::pool::get(&client),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
+        CliCommand::QueueUpdate {
+            address,
+            rate_limit,
+        } => super::queue::update(&client, &address, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),
     }

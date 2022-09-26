@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{ExecContext, InstructionData, Queue, Trigger},
+        crank::state::{InstructionData, Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -20,13 +20,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
-    std::{
-        collections::hash_map::DefaultHasher,
-        fmt::Debug,
-        hash::{Hash, Hasher},
-        str::FromStr,
-        sync::Arc,
-    },
+    std::{fmt::Debug, str::FromStr, sync::Arc},
     tokio::runtime::Runtime,
 };
 
@@ -164,8 +158,8 @@ impl QueueObserver {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
                             None => queue.created_at.unix_timestamp,
-                            Some(exec_context) => match exec_context {
-                                ExecContext::Cron { started_at } => started_at,
+                            Some(exec_context) => match exec_context.trigger_context {
+                                TriggerContext::Cron { started_at } => started_at,
                                 _ => {
                                     return Err(GeyserPluginError::Custom(
                                         "Invalid exec context".into(),
@@ -216,13 +210,14 @@ impl QueueObserver {
         client: Arc<ClockworkClient>,
         slot: u64,
     ) -> Vec<Transaction> {
-        // Get the clock for this slot
+        // Get the clock for this slot.
         let clock = match self.clocks.get(&slot) {
             None => return vec![],
             Some(clock) => clock.value().clone(),
         };
 
-        // Push in all of the scheduled queues that are due.
+        // Index all of the scheduled queues that are now due.
+        // Cache retains all queues that are not yet due.
         self.cron_queues.retain(|target_timestamp, queue_pubkeys| {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
@@ -256,7 +251,7 @@ impl QueueObserver {
             .get_latest_blockhash()
             .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
         let worker_pubkey = client.payer_pubkey();
-        let mut inner_ix = queue
+        let inner_ix = queue
             .next_instruction
             .clone()
             .unwrap_or(queue.kickoff_instruction);
@@ -266,15 +261,16 @@ impl QueueObserver {
             vec![self
                 .clone()
                 .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
-        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
-        tx.sign(&[client.payer()], blockhash);
+
+        // Pre-simulate crank ixs and pack as many as possible into tx.
+        let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&worker_pubkey));
         let now = std::time::Instant::now();
-        let mut continue_packing = true;
-        while continue_packing {
+        loop {
             let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
             sim_tx.sign(&[client.payer()], blockhash);
 
-            // Exit early if tx exceeds size limit
+            // Exit early if tx exceeds Solana's size limit.
+            // TODO Transaction size limits will soon be increased with QUIC and Transaction v2 lookup tables.
             if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
                 info!(
                     "Transaction message exceeded size limit with {} bytes",
@@ -283,7 +279,7 @@ impl QueueObserver {
                 break;
             }
 
-            // Simulate the packed tx
+            // Simulate the complete packed tx.
             match client.simulate_transaction_with_config(
                 &sim_tx,
                 RpcSimulateTransactionConfig {
@@ -296,44 +292,59 @@ impl QueueObserver {
                     ..RpcSimulateTransactionConfig::default()
                 },
             ) {
+                // If there was an error, stop packing and continue with the cranks up until this one.
                 Err(_err) => {
-                    continue_packing = false;
+                    break;
                 }
+
+                // If the simulation was successful, pack the crank ix into the tx.
                 Ok(response) => {
+                    // If there was an error, then stop packing.
+                    if response.value.err.is_some() {
+                        break;
+                    }
+
+                    // If the compute budget limit was exceeded, then stop packing.
                     if response
                         .value
                         .units_consumed
-                        .lt(&Some(COMPUTE_BUDGET_LIMIT))
+                        .ge(&Some(COMPUTE_BUDGET_LIMIT))
                     {
-                        // This simulated tx is okay to submit
-                        tx = sim_tx;
+                        break;
+                    }
 
-                        // Parse the simulated queue account for another ix to pack
-                        if let Some(ui_accounts) = response.value.accounts {
-                            if let Some(Some(ui_account)) = ui_accounts.get(0) {
-                                if let Some(account) = ui_account.decode::<Account>() {
-                                    if let Ok(queue) = Queue::try_from(account.data) {
-                                        if let Some(next_instruction) = queue.next_instruction {
-                                            ixs.push(self.clone().build_crank_ix(
-                                                next_instruction,
-                                                queue_pubkey,
-                                                worker_pubkey,
-                                            ));
-                                        } else {
-                                            continue_packing = false;
-                                        }
+                    // Save the simulated tx. It is okay to submit.
+                    tx = sim_tx;
+
+                    // Parse the resulting queue account for the next crank ix to simulate.
+                    if let Some(ui_accounts) = response.value.accounts {
+                        if let Some(Some(ui_account)) = ui_accounts.get(0) {
+                            if let Some(account) = ui_account.decode::<Account>() {
+                                if let Ok(queue) = Queue::try_from(account.data) {
+                                    if let Some(next_instruction) = queue.next_instruction {
+                                        ixs.push(self.clone().build_crank_ix(
+                                            next_instruction,
+                                            queue_pubkey,
+                                            worker_pubkey,
+                                        ));
+                                    } else {
+                                        break;
                                     }
                                 }
                             }
                         }
-                    } else {
-                        continue_packing = false;
                     }
                 }
             }
         }
 
-        info!("Total packing duration: {:#?}", now.elapsed());
+        info!("Time spent packing cranks: {:#?}", now.elapsed());
+
+        if tx.message.instructions.len() == 0 {
+            return Err(GeyserPluginError::Custom(
+                "Transaction has no instructions".into(),
+            ));
+        }
 
         Ok(tx)
     }
@@ -344,11 +355,11 @@ impl QueueObserver {
         queue_pubkey: Pubkey,
         worker_pubkey: Pubkey,
     ) -> Instruction {
-        // Build the queue_crank instruction
+        // Build the queue_crank instruction.
         let mut crank_ix =
             clockwork_client::crank::instruction::queue_crank(None, queue_pubkey, worker_pubkey);
 
-        // Program accounts
+        // Inject the target program account to the ix.
         crank_ix
             .accounts
             .push(AccountMeta::new_readonly(inner_ix.program_id, false));
