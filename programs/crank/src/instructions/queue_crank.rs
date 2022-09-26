@@ -121,13 +121,17 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
         fee.pay_to_admin(config.crank_fee, queue)?;
     }
 
-    // If the queue has no more work or the rate limit has been reached,
+    // If the queue has no more work or the number of cranks since the last payout has reached the rate limit,
     // reimburse the worker for the transaction base fee.
     match queue.exec_context {
         None => return Err(ClockworkError::InvalidQueueState.into()),
         Some(exec_context) => {
-            if queue.next_instruction.is_none() || exec_context.crank_rate >= queue.rate_limit {
+            if queue.next_instruction.is_none() || exec_context.cranks_since_payout >= queue.rate_limit {
                 fee.pay_to_worker(TRANSACTION_BASE_FEE_REIMBURSEMENT, queue)?;
+                queue.exec_context = Some(ExecContext {
+                    cranks_since_payout: 0,
+                    ..exec_context
+                })
             }
         }
     }

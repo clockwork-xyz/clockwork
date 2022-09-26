@@ -195,16 +195,13 @@ impl QueueObserver {
                 .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
 
         // Pre-simulate crank ixs and pack as many as possible into tx.
-        let mut tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
-        tx.sign(&[client.payer()], blockhash);
+        let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&worker_pubkey));
         let now = std::time::Instant::now();
-        let mut continue_packing = true;
-        while continue_packing {
+        loop {
             let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
             sim_tx.sign(&[client.payer()], blockhash);
 
             // Exit early if tx exceeds Solana's size limit.
-            //
             // TODO Transaction size limits will soon be increased with QUIC and Transaction v2 lookup tables.
             if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
                 info!(
@@ -229,45 +226,57 @@ impl QueueObserver {
             ) {
                 // If there was an error, stop packing and continue with the cranks up until this one.
                 Err(_err) => {
-                    continue_packing = false;
+                    break;
                 }
 
                 // If the simulation was successful, pack the crank ix into the tx.
                 Ok(response) => {
+                    // If there was an error, then stop packing.
+                    if response.value.err.is_some() {
+                        break;
+                    }
+
+                    // If the compute budget limit was exceeded, then stop packing.
                     if response
                         .value
                         .units_consumed
-                        .lt(&Some(COMPUTE_BUDGET_LIMIT))
+                        .ge(&Some(COMPUTE_BUDGET_LIMIT))
                     {
-                        // This simulated tx is okay to submit.
-                        tx = sim_tx;
+                        break;
+                    }
 
-                        // Parse the resulting queue account for the next crank ix to simulate.
-                        if let Some(ui_accounts) = response.value.accounts {
-                            if let Some(Some(ui_account)) = ui_accounts.get(0) {
-                                if let Some(account) = ui_account.decode::<Account>() {
-                                    if let Ok(queue) = Queue::try_from(account.data) {
-                                        if let Some(next_instruction) = queue.next_instruction {
-                                            ixs.push(self.clone().build_crank_ix(
-                                                next_instruction,
-                                                queue_pubkey,
-                                                worker_pubkey,
-                                            ));
-                                        } else {
-                                            continue_packing = false;
-                                        }
+                    // Save the simulated tx. It is okay to submit.
+                    tx = sim_tx;
+
+                    // Parse the resulting queue account for the next crank ix to simulate.
+                    if let Some(ui_accounts) = response.value.accounts {
+                        if let Some(Some(ui_account)) = ui_accounts.get(0) {
+                            if let Some(account) = ui_account.decode::<Account>() {
+                                if let Ok(queue) = Queue::try_from(account.data) {
+                                    if let Some(next_instruction) = queue.next_instruction {
+                                        ixs.push(self.clone().build_crank_ix(
+                                            next_instruction,
+                                            queue_pubkey,
+                                            worker_pubkey,
+                                        ));
+                                    } else {
+                                        break;
                                     }
                                 }
                             }
                         }
-                    } else {
-                        continue_packing = false;
                     }
                 }
             }
         }
 
         info!("Time spent packing cranks: {:#?}", now.elapsed());
+
+        if tx.message.instructions.len() == 0 {
+            return Err(GeyserPluginError::Custom(
+                "Transaction has no instructions".into(),
+            ));
+        }
 
         Ok(tx)
     }
