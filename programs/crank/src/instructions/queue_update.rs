@@ -1,11 +1,17 @@
 use {
-    crate::state::*,
+    crate::{errors::ClockworkError, state::*},
     anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
 };
 
+const MAX_RATE_LIMIT: u64 = 32; 
+
 
 #[derive(Accounts)]
-#[instruction(kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>)]
+#[instruction(
+    kickoff_instruction: Option<InstructionData>, 
+    rate_limit: Option<u64>, 
+    trigger: Option<Trigger>
+)]
 pub struct QueueUpdate<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -26,7 +32,13 @@ pub struct QueueUpdate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueUpdate>, kickoff_instruction: Option<InstructionData>, trigger: Option<Trigger>) -> Result<()> {
+pub fn handler(
+    ctx: Context<QueueUpdate>, 
+    kickoff_instruction: Option<InstructionData>, 
+    rate_limit: Option<u64>, 
+    trigger: Option<Trigger>
+) -> Result<()> {
+    
     // Get accounts
     let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
@@ -35,6 +47,12 @@ pub fn handler(ctx: Context<QueueUpdate>, kickoff_instruction: Option<Instructio
     // If provided, update the queue's first instruction
     if let Some(kickoff_instruction) = kickoff_instruction {
         queue.kickoff_instruction = kickoff_instruction;
+    }
+
+    // If provided, update the rate_limit
+    if let Some(rate_limit) = rate_limit {
+        require!(rate_limit.le(&MAX_RATE_LIMIT), ClockworkError::InvalidRateLimit);
+        queue.rate_limit = rate_limit;
     }
 
     // If provided, update the queue's trigger and reset the exec context

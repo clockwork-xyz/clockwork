@@ -32,12 +32,15 @@ pub fn handler(ctx: Context<QueueResume>) -> Result<()> {
     match queue.exec_context {
         None => {}
         Some(exec_context) => {
-            match exec_context {
-                ExecContext::Cron { started_at: _ } => {
+            match exec_context.trigger_context {
+                TriggerContext::Cron { started_at: _ } => {
                     // Jump ahead to the current timestamp
-                    queue.exec_context = Some(ExecContext::Cron { started_at: Clock::get().unwrap().unix_timestamp });
+                    queue.exec_context = Some(ExecContext {
+                        trigger_context: TriggerContext::Cron { started_at: Clock::get().unwrap().unix_timestamp },
+                        ..exec_context
+                    });
                 }
-                ExecContext::Immediate => {
+                TriggerContext::Immediate => {
                     // Nothing to do
                 }
             }
