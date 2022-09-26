@@ -126,6 +126,9 @@ impl TxExecutor {
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        // TODO Only submit this transaction if the simulated increase in this worker's
+        //      Fee account balance is greater than the lamports spent by the worker.
+
         self.tpu_client
             .rpc_client()
             .simulate_transaction_with_config(

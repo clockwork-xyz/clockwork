@@ -20,3 +20,5 @@ sleep 25
 cargo publish -p clockwork-cli
 sleep 25 
 cargo publish -p clockwork-bench
+sleep 25
+cargo publish -p clockwork-sdk
