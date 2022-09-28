@@ -62,7 +62,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     if queue.next_instruction.is_none() {
         match queue.trigger.clone() {
             Trigger::Account { pubkey } => {
-                // Require the provided data_hash is non-null.
+                // Require the provided data hash is non-null.
                 let data_hash = match data_hash {
                     None => return Err(ClockworkError::InvalidQueueState.into()),
                     Some(data_hash) => data_hash
@@ -72,10 +72,10 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                 match ctx.remaining_accounts.first() {
                     None => {},
                     Some(account_info) => {
-                        // Sanity check on account info pubkey.
+                        // Verify the remaining account is the account this queue is listening for. 
                         require!(pubkey.eq(account_info.key), ClockworkError::InvalidTrigger);
 
-                        // Begin computing the expected data hash.
+                        // Begin computing the data hash of this account.
                         let mut hasher = DefaultHasher::new();
                         let data = &account_info.try_borrow_data().unwrap();
                         data.to_vec().hash(&mut hasher);
@@ -84,13 +84,13 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                         let expected_data_hash = match queue.exec_context.clone() {
                             None => {
                                 // This queue has not begun executing yet. 
-                                // There is no prior data hash to inject as a seed for the new one. 
+                                // There is no prior data hash to include in our hash.
                                 hasher.finish()
                             }
                             Some(exec_context) => {
                                 match exec_context.trigger_context {
                                     TriggerContext::Account { data_hash: prior_data_hash } => {
-                                        // Inject the prior data hash as a seed to the new one.
+                                        // Inject the prior data hash as a seed.
                                         prior_data_hash.hash(&mut hasher);
                                         hasher.finish()
 
