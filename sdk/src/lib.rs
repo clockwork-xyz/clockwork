@@ -61,13 +61,5 @@ pub mod program {
 
 #[cfg(feature = "client")]
 pub mod client {
-    #[cfg(feature = "crank")]
-    pub use clockwork_client::crank::*;
-    #[cfg(feature = "http")]
-    pub use clockwork_client::http::*;
-    #[cfg(feature = "network")]
-    pub use clockwork_client::network::*;
-    #[cfg(feature = "pool")]
-    pub use clockwork_client::pool::*;
-    pub use clockwork_client::Client;
+    pub use clockwork_client::*;
 }
