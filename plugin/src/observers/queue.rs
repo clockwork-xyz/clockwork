@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{Queue, Trigger, TriggerContext},
+        queue::state::{Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -383,7 +383,7 @@ impl QueueObserver {
             .next_instruction
             .clone()
             .unwrap_or(queue.kickoff_instruction);
-        let mut crank_ix = clockwork_client::crank::instruction::queue_crank(
+        let mut crank_ix = clockwork_client::queue::instruction::queue_crank(
             data_hash,
             queue_pubkey,
             worker_pubkey,
@@ -406,7 +406,7 @@ impl QueueObserver {
 
         // Inject the worker pubkey as the Clockwork "payer" account
         for acc in inner_ix.clone().accounts {
-            let acc_pubkey = if acc.pubkey == clockwork_client::crank::payer::ID {
+            let acc_pubkey = if acc.pubkey == clockwork_client::queue::payer::ID {
                 worker_pubkey
             } else {
                 acc.pubkey

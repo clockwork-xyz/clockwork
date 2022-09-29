@@ -3,7 +3,7 @@ use anchor_spl::associated_token::get_associated_token_address;
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue::state::{CrankResponse, Queue, SEED_QUEUE},
     std::mem::size_of,
 };
 
@@ -40,7 +40,7 @@ pub struct SnapshotCreate<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_crank::ID,
+        seeds::program = clockwork_queue::ID,
         bump,
         has_one = authority
     )]
@@ -76,14 +76,14 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                     AccountMeta::new_readonly(config.key(), false),
                     AccountMeta::new(entry_pubkey, false),
                     AccountMeta::new_readonly(node_pubkey, false),
-                    AccountMeta::new(clockwork_crank::payer::ID, true),
+                    AccountMeta::new(clockwork_queue::payer::ID, true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
                     AccountMeta::new_readonly(system_program.key(), false)
                 ],
-                data: clockwork_crank::anchor::sighash("entry_create").into(),
+                data: clockwork_queue::anchor::sighash("entry_create").into(),
             }
             .into()
         )
@@ -100,7 +100,7 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                     AccountMeta::new(registry.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                 ],
-                data: clockwork_crank::anchor::sighash("snapshot_rotate").into(),
+                data: clockwork_queue::anchor::sighash("snapshot_rotate").into(),
             }
             .into()
         )

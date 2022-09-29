@@ -7,26 +7,28 @@ use {
         },
         InstructionData,
     },
-    clockwork_crank::state::{InstructionData as ClockworkInstructionData, Trigger},
+    clockwork_queue::state::{InstructionData as ClockworkInstructionData, Trigger},
 };
 
-pub fn queue_update(
+pub fn queue_create(
     authority: Pubkey,
+    id: String,
+    kickoff_instruction: Instruction,
+    payer: Pubkey,
     queue: Pubkey,
-    kickoff_instruction: Option<ClockworkInstructionData>,
-    rate_limit: Option<u64>,
-    trigger: Option<Trigger>,
+    trigger: Trigger,
 ) -> Instruction {
     Instruction {
-        program_id: clockwork_crank::ID,
+        program_id: clockwork_queue::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_crank::instruction::QueueUpdate {
-            kickoff_instruction,
-            rate_limit,
+        data: clockwork_queue::instruction::QueueCreate {
+            id,
+            kickoff_instruction: ClockworkInstructionData::from(kickoff_instruction),
             trigger,
         }
         .data(),

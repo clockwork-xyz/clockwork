@@ -7,7 +7,7 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use clockwork_crank::state::CrankResponse;
+use clockwork_queue::state::CrankResponse;
 use instructions::*;
 use state::*;
 

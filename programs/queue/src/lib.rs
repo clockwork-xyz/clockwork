@@ -13,7 +13,7 @@ use instructions::*;
 use state::*;
 
 #[program]
-pub mod clockwork_crank {
+pub mod clockwork_queue {
     use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {

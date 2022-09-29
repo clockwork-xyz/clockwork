@@ -8,14 +8,14 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey, worker_pool: Pubkey) -> Instruction {
-    let config_pubkey = clockwork_crank::state::Config::pubkey();
+    let config_pubkey = clockwork_queue::state::Config::pubkey();
     Instruction {
-        program_id: clockwork_crank::ID,
+        program_id: clockwork_queue::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(config_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_crank::instruction::Initialize { worker_pool }.data(),
+        data: clockwork_queue::instruction::Initialize { worker_pool }.data(),
     }
 }

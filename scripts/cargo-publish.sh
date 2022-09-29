@@ -9,7 +9,7 @@ cargo publish -p clockwork-pool
 sleep 25
 cargo publish -p clockwork-http
 sleep 25
-cargo publish -p clockwork-crank
+cargo publish -p clockwork-queue
 sleep 25
 cargo publish -p clockwork-network
 sleep 25

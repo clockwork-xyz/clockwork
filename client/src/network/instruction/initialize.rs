@@ -13,14 +13,14 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let rotator_pubkey = clockwork_network::state::Rotator::pubkey();
     let registry_pubkey = clockwork_network::state::Registry::pubkey();
     let snapshot_pubkey = clockwork_network::state::Snapshot::pubkey(0);
-    let snapshot_queue = clockwork_crank::state::Queue::pubkey(authority_pubkey, "snapshot".into());
+    let snapshot_queue = clockwork_queue::state::Queue::pubkey(authority_pubkey, "snapshot".into());
 
     Instruction {
         program_id: clockwork_network::ID,
         accounts: vec![
             AccountMeta::new(admin, true),
             AccountMeta::new(authority_pubkey, false),
-            AccountMeta::new_readonly(clockwork_crank::ID, false),
+            AccountMeta::new_readonly(clockwork_queue::ID, false),
             AccountMeta::new(config_pubkey, false),
             AccountMeta::new(rotator_pubkey, false),
             AccountMeta::new(mint, false),

@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_crank::state::{CrankResponse, Queue},
+    clockwork_queue::state::{CrankResponse, Queue},
 };
 
 #[derive(Accounts)]
@@ -84,7 +84,7 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<CrankResponse> {
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new(snapshot_queue.key(), false),
                 ],
-                data: clockwork_crank::anchor::sighash("entry_close").into(),
+                data: clockwork_queue::anchor::sighash("entry_close").into(),
             }
             .into(),
         )
