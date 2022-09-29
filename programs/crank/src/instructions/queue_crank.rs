@@ -4,12 +4,13 @@ use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
     clockwork_pool::state::Pool,
-    std::{mem::size_of, str::FromStr},
+    std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, mem::size_of, str::FromStr},
 };
 
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 
 #[derive(Accounts)]
+#[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
@@ -48,7 +49,7 @@ pub struct QueueCrank<'info> {
     pub worker: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
+pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // Get accounts
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
@@ -60,6 +61,59 @@ pub fn handler(ctx: Context<QueueCrank>) -> Result<()> {
     let current_slot = Clock::get().unwrap().slot;
     if queue.next_instruction.is_none() {
         match queue.trigger.clone() {
+            Trigger::Account { pubkey } => {
+                // Require the provided data hash is non-null.
+                let data_hash = match data_hash {
+                    None => return Err(ClockworkError::InvalidQueueState.into()),
+                    Some(data_hash) => data_hash
+                };
+
+                // Verify proof that account data has been updated.
+                match ctx.remaining_accounts.first() {
+                    None => {},
+                    Some(account_info) => {
+                        // Verify the remaining account is the account this queue is listening for. 
+                        require!(pubkey.eq(account_info.key), ClockworkError::InvalidTrigger);
+
+                        // Begin computing the data hash of this account.
+                        let mut hasher = DefaultHasher::new();
+                        let data = &account_info.try_borrow_data().unwrap();
+                        data.to_vec().hash(&mut hasher);
+
+                        // Check the exec context for the prior data hash.
+                        let expected_data_hash = match queue.exec_context.clone() {
+                            None => {
+                                // This queue has not begun executing yet. 
+                                // There is no prior data hash to include in our hash.
+                                hasher.finish()
+                            }
+                            Some(exec_context) => {
+                                match exec_context.trigger_context {
+                                    TriggerContext::Account { data_hash: prior_data_hash } => {
+                                        // Inject the prior data hash as a seed.
+                                        prior_data_hash.hash(&mut hasher);
+                                        hasher.finish()
+
+                                    },
+                                    _ => return Err(ClockworkError::InvalidQueueState.into())
+                                }
+                            }
+                        };
+
+                        // Verify the data hash provided by the worker is equal to the expected data hash.
+                        // This proves the account has been updated since the last crank and the worker has seen the new data.
+                        require!(data_hash.eq(&expected_data_hash), ClockworkError::InvalidTrigger);
+
+                        // Set a new exec context with the new data hash and slot number.
+                        queue.exec_context = Some(ExecContext {
+                            crank_rate: 0,
+                            cranks_since_payout: 0,
+                            last_crank_at: current_slot,
+                            trigger_context: TriggerContext::Account { data_hash }
+                        })
+                    }
+                }
+            }
             Trigger::Cron { schedule } => {
                 // Get the reference timestamp for calculating the queue's scheduled target timestamp.
                 let reference_timestamp = match queue.exec_context.clone() {

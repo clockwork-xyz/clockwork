@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        crank::state::{InstructionData, Queue, Trigger, TriggerContext},
+        crank::state::{Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -12,7 +12,7 @@ use {
         RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, Result as PluginResult,
+        GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
     },
     solana_program::{
         clock::Clock,
@@ -20,7 +20,13 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
-    std::{fmt::Debug, str::FromStr, sync::Arc},
+    std::{
+        collections::hash_map::DefaultHasher,
+        fmt::Debug,
+        hash::{Hash, Hasher},
+        str::FromStr,
+        sync::Arc,
+    },
     tokio::runtime::Runtime,
 };
 
@@ -37,6 +43,9 @@ pub struct QueueObserver {
     // Map from unix timestamps to the list of queues scheduled for that moment.
     pub cron_queues: DashMap<i64, DashSet<Pubkey>>,
 
+    // Map from account pubkeys to the set of queues listening for an account update.
+    pub listener_queues: DashMap<Pubkey, DashSet<Pubkey>>,
+
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -47,6 +56,7 @@ impl QueueObserver {
             clocks: DashMap::new(),
             crankable_queues: DashSet::new(),
             cron_queues: DashMap::new(),
+            listener_queues: DashMap::new(),
             runtime,
         }
     }
@@ -65,6 +75,31 @@ impl QueueObserver {
     pub fn handle_updated_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
         self.spawn(|this| async move {
             this.clocks.insert(clock.slot, clock.clone());
+            Ok(())
+        })
+    }
+
+    pub fn handle_updated_account(
+        self: Arc<Self>,
+        account_pubkey: Pubkey,
+        _account_replica: ReplicaAccountInfo,
+    ) -> PluginResult<()> {
+        self.spawn(|this| async move {
+            // Move all queues listening to this account into the crankable set.
+            this.listener_queues.retain(|pubkey, queue_pubkeys| {
+                if account_pubkey.eq(pubkey) {
+                    for queue_pubkey in queue_pubkeys.iter() {
+                        this.crankable_queues.insert(*queue_pubkey.key());
+                    }
+                    false
+                } else {
+                    true
+                }
+            });
+
+            // TODO This account update could have just been a lamport change (not a data update).
+            // TODO To optimize, we need to fetch the queue accounts to verify the data update
+
             Ok(())
         })
     }
@@ -91,6 +126,21 @@ impl QueueObserver {
             } else {
                 // Otherwise, index the queue according to its trigger type.
                 match queue.trigger {
+                    Trigger::Account {
+                        pubkey: account_pubkey,
+                    } => {
+                        // Index the queue by its trigger's account pubkey.
+                        this.listener_queues
+                            .entry(account_pubkey)
+                            .and_modify(|v| {
+                                v.insert(queue_pubkey);
+                            })
+                            .or_insert_with(|| {
+                                let v = DashSet::new();
+                                v.insert(queue_pubkey);
+                                v
+                            });
+                    }
                     Trigger::Cron { schedule } => {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
@@ -159,7 +209,7 @@ impl QueueObserver {
             let is_due = clock.unix_timestamp >= *target_timestamp;
             if is_due {
                 for queue_pubkey_ref in queue_pubkeys.iter() {
-                    self.crankable_queues.insert(queue_pubkey_ref.key().clone());
+                    self.crankable_queues.insert(*queue_pubkey_ref.key());
                 }
             }
             !is_due
@@ -171,7 +221,7 @@ impl QueueObserver {
             .iter()
             .filter_map(|queue_pubkey_ref| {
                 self.clone()
-                    .build_crank_tx(client.clone(), queue_pubkey_ref.key().clone())
+                    .build_crank_tx(client.clone(), *queue_pubkey_ref.key())
                     .ok()
             })
             .collect::<Vec<Transaction>>()
@@ -188,11 +238,12 @@ impl QueueObserver {
             .get_latest_blockhash()
             .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
         let worker_pubkey = client.payer_pubkey();
-        let inner_ix = queue.next_instruction.unwrap_or(queue.kickoff_instruction);
+
+        // Pre-simulate crank ixs and pack into tx
         let mut ixs: Vec<Instruction> =
             vec![self
                 .clone()
-                .build_crank_ix(inner_ix, queue_pubkey, worker_pubkey)];
+                .build_crank_ix(client.clone(), queue, worker_pubkey)?];
 
         // Pre-simulate crank ixs and pack as many as possible into tx.
         let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&worker_pubkey));
@@ -202,7 +253,7 @@ impl QueueObserver {
             sim_tx.sign(&[client.payer()], blockhash);
 
             // Exit early if tx exceeds Solana's size limit.
-            // TODO Transaction size limits will soon be increased with QUIC and Transaction v2 lookup tables.
+            // TODO With QUIC and Transaction v2 lookup tables, Solana will soon support much larger transaction sizes.
             if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
                 info!(
                     "Transaction message exceeded size limit with {} bytes",
@@ -252,13 +303,13 @@ impl QueueObserver {
                     if let Some(ui_accounts) = response.value.accounts {
                         if let Some(Some(ui_account)) = ui_accounts.get(0) {
                             if let Some(account) = ui_account.decode::<Account>() {
-                                if let Ok(queue) = Queue::try_from(account.data) {
-                                    if let Some(next_instruction) = queue.next_instruction {
+                                if let Ok(sim_queue) = Queue::try_from(account.data) {
+                                    if sim_queue.next_instruction.is_some() {
                                         ixs.push(self.clone().build_crank_ix(
-                                            next_instruction,
-                                            queue_pubkey,
+                                            client.clone(),
+                                            sim_queue,
                                             worker_pubkey,
-                                        ));
+                                        )?);
                                     } else {
                                         break;
                                     }
@@ -283,13 +334,70 @@ impl QueueObserver {
 
     fn build_crank_ix(
         self: Arc<Self>,
-        inner_ix: InstructionData,
-        queue_pubkey: Pubkey,
+        client: Arc<ClockworkClient>,
+        queue: Queue,
         worker_pubkey: Pubkey,
-    ) -> Instruction {
-        // Build the queue_crank instruction.
-        let mut crank_ix =
-            clockwork_client::crank::instruction::queue_crank(queue_pubkey, worker_pubkey);
+    ) -> PluginResult<Instruction> {
+        // TODO If this queue is an account listener, grab the account and create the data_hash.
+        let mut trigger_account_pubkey: Option<Pubkey> = None;
+        let mut data_hash: Option<u64> = None;
+        match queue.trigger {
+            Trigger::Account { pubkey } => {
+                // Save the trigger account.
+                trigger_account_pubkey = Some(pubkey);
+
+                // Begin computing the data hash of this account.
+                let data = client.get_account_data(&pubkey).unwrap();
+                let mut hasher = DefaultHasher::new();
+                data.hash(&mut hasher);
+
+                // Check the exec context for the prior data hash.
+                match queue.exec_context.clone() {
+                    None => {
+                        // This queue has not begun executing yet.
+                        // There is no prior data hash to include in our hash.
+                        data_hash = Some(hasher.finish());
+                    }
+                    Some(exec_context) => {
+                        match exec_context.trigger_context {
+                            TriggerContext::Account {
+                                data_hash: prior_data_hash,
+                            } => {
+                                // Inject the prior data hash as a seed.
+                                prior_data_hash.hash(&mut hasher);
+                                data_hash = Some(hasher.finish());
+                            }
+                            _ => {
+                                return Err(GeyserPluginError::Custom("Invalid queue state".into()))
+                            }
+                        }
+                    }
+                };
+            }
+            _ => {}
+        }
+
+        // Build the instruction.
+        let queue_pubkey = Queue::pubkey(queue.authority, queue.id);
+        let inner_ix = queue
+            .next_instruction
+            .clone()
+            .unwrap_or(queue.kickoff_instruction);
+        let mut crank_ix = clockwork_client::crank::instruction::queue_crank(
+            data_hash,
+            queue_pubkey,
+            worker_pubkey,
+        );
+
+        // Inject the trigger account.
+        match trigger_account_pubkey {
+            None => {}
+            Some(pubkey) => crank_ix.accounts.push(AccountMeta {
+                pubkey,
+                is_signer: false,
+                is_writable: false,
+            }),
+        }
 
         // Inject the target program account to the ix.
         crank_ix
@@ -309,7 +417,7 @@ impl QueueObserver {
             })
         }
 
-        crank_ix
+        Ok(crank_ix)
     }
 
     /**

@@ -236,6 +236,7 @@ impl Default for CrankResponse {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
 pub enum Trigger {
+    Account { pubkey: Pubkey },
     Cron { schedule: String },
     Immediate,
 }
@@ -258,6 +259,7 @@ pub struct ExecContext {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum TriggerContext {
+    Account { data_hash: u64 },
     Cron { started_at: i64 },
     Immediate,
 }

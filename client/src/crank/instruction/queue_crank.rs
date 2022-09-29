@@ -10,7 +10,7 @@ use {
     clockwork_pool::state::Pool,
 };
 
-pub fn queue_crank(queue: Pubkey, worker: Pubkey) -> Instruction {
+pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_crank::ID,
         accounts: vec![
@@ -21,6 +21,6 @@ pub fn queue_crank(queue: Pubkey, worker: Pubkey) -> Instruction {
             AccountMeta::new(system_program::ID, false),
             AccountMeta::new(worker, true),
         ],
-        data: clockwork_crank::instruction::QueueCrank {}.data(),
+        data: clockwork_crank::instruction::QueueCrank { data_hash }.data(),
     }
 }

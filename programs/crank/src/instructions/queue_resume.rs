@@ -33,6 +33,9 @@ pub fn handler(ctx: Context<QueueResume>) -> Result<()> {
         None => {}
         Some(exec_context) => {
             match exec_context.trigger_context {
+                TriggerContext::Account { data_hash: _ } => {
+                    // Nothing to do
+                }
                 TriggerContext::Cron { started_at: _ } => {
                     // Jump ahead to the current timestamp
                     queue.exec_context = Some(ExecContext {
