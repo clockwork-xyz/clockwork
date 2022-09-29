@@ -912,9 +912,6 @@ dependencies = [
  "chrono-tz",
  "clockwork-client",
  "clockwork-crank",
- "clockwork-http",
- "clockwork-network",
- "clockwork-pool",
  "nom",
  "once_cell",
 ]
