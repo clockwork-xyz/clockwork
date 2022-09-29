@@ -4,7 +4,7 @@
   <h1>Clockwork</h1>
 
   <p>
-    <strong>Automation infrastructure for Solana</strong>
+    <strong>Automation engine for the Solana blockchain</strong>
   </p>
 
   <p>
@@ -38,7 +38,7 @@
 - Use at your own risk.
 
 
-## Deploying to localnet
+## Getting started
 
 Download the source code:
 ```sh
