@@ -2,7 +2,7 @@ use {
     crate::{
         config::PluginConfig,
         events::AccountUpdateEvent,
-        executors::{http::HttpExecutor, tx::TxExecutor, Executors},
+        executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
             http::{HttpObserver, HttpRequest},
             pool::PoolObserver,
@@ -203,7 +203,7 @@ impl ClockworkPlugin {
         );
 
         // Build executors
-        let http_executor = Arc::new(HttpExecutor::new(
+        let webhook_executor = Arc::new(WebhookExecutor::new(
             self.config.clone(),
             self.observers.clone(),
             self.runtime.clone(),
@@ -217,10 +217,10 @@ impl ClockworkPlugin {
             tpu_client.clone(),
         ));
         self.executors = Some(Arc::new(Executors {
-            http: http_executor,
             tx: tx_executor,
             observers: self.observers.clone(),
             runtime: self.runtime.clone(),
+            webhook: webhook_executor,
         }))
     }
 }

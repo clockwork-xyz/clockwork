@@ -122,7 +122,7 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::queue::ID, "crank")
-        .bpf_program(home_dir, clockwork_client::http::ID, "http")
+        .bpf_program(home_dir, clockwork_client::webhook::ID, "http")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
         .add_programs_with_path(program_infos)

@@ -11,7 +11,7 @@ solana config set --url localhost
 clear
 solana-test-validator -r \
     --bpf-program target/deploy/clockwork_queue-keypair.json target/deploy/clockwork_queue.so \
-    --bpf-program target/deploy/clockwork_http-keypair.json target/deploy/clockwork_http.so \
+    --bpf-program target/deploy/clockwork_webhook-keypair.json target/deploy/clockwork_webhook.so \
     --bpf-program target/deploy/clockwork_network-keypair.json target/deploy/clockwork_network.so \
     --bpf-program target/deploy/clockwork_pool-keypair.json target/deploy/clockwork_pool.so \
     --geyser-plugin-config plugin/config.json

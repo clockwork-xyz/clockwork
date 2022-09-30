@@ -12,7 +12,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     // Initialize the programs
     let admin = client.payer_pubkey();
     let ix_a = clockwork_client::queue::instruction::initialize(admin, pool);
-    let ix_b = clockwork_client::http::instruction::initialize(admin);
+    let ix_b = clockwork_client::webhook::instruction::initialize(admin);
     let ix_c = clockwork_client::network::instruction::initialize(admin, mint);
     let ix_d = clockwork_client::pool::instruction::initialize(admin);
     let ix_e = clockwork_client::network::instruction::pool_create(admin, pool_name.into(), 1);

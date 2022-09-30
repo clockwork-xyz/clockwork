@@ -11,7 +11,7 @@ use instructions::*;
 use state::*;
 
 #[program]
-pub mod clockwork_http {
+pub mod clockwork_webhook {
     use super::*;
 
     pub fn admin_config_update(

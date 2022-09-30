@@ -3,7 +3,7 @@ use {
         config::PluginConfig,
         observers::{http::HttpRequest, Observers},
     },
-    clockwork_client::http::state::HttpMethod,
+    clockwork_client::webhook::state::HttpMethod,
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
@@ -11,7 +11,7 @@ use {
     tokio::runtime::Runtime,
 };
 
-pub struct HttpExecutor {
+pub struct WebhookExecutor {
     pub config: PluginConfig,
     pub client: reqwest::Client,
     pub observers: Arc<Observers>,
@@ -19,7 +19,7 @@ pub struct HttpExecutor {
     pub worker_id: Pubkey,
 }
 
-impl HttpExecutor {
+impl WebhookExecutor {
     pub fn new(
         config: PluginConfig,
         observers: Arc<Observers>,
@@ -72,7 +72,7 @@ impl HttpExecutor {
     }
 }
 
-impl Debug for HttpExecutor {
+impl Debug for WebhookExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "http-executor")
     }

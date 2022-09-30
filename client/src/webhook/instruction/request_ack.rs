@@ -13,10 +13,10 @@ pub fn request_ack(
     request: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
-    let config_pubkey = clockwork_http::state::Config::pubkey();
-    let fee_pubkey = clockwork_http::state::Fee::pubkey(worker);
+    let config_pubkey = clockwork_webhook::state::Config::pubkey();
+    let fee_pubkey = clockwork_webhook::state::Fee::pubkey(worker);
     Instruction {
-        program_id: clockwork_http::ID,
+        program_id: clockwork_webhook::ID,
         accounts: vec![
             AccountMeta::new(ack_authority, true),
             AccountMeta::new(caller, false),
@@ -27,6 +27,6 @@ pub fn request_ack(
             AccountMeta::new_readonly(system_program::ID, false),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: clockwork_http::instruction::RequestAck {}.data(),
+        data: clockwork_webhook::instruction::RequestAck {}.data(),
     }
 }

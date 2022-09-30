@@ -7,7 +7,7 @@ cargo clean
 anchor build 
 
 # Get pubkey addresses
-program_id_http=$(solana address -k target/deploy/clockwork_http-keypair.json)
+program_id_http=$(solana address -k target/deploy/clockwork_webhook-keypair.json)
 program_id_network=$(solana address -k target/deploy/clockwork_network-keypair.json)
 program_id_pool=$(solana address -k target/deploy/clockwork_pool-keypair.json)
 program_id_crank=$(solana address -k target/deploy/clockwork_queue-keypair.json)

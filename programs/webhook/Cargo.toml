@@ -1,7 +1,7 @@
 [package]
-name = "clockwork-http"
+name = "clockwork-webhook"
 version = "1.0.6"
-description = "Clockwork http protocol"
+description = "Clockwork webhook protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "clockwork_http"
+name = "clockwork_webhook"
 
 [features]
 no-entrypoint = []

@@ -1,4 +1,4 @@
-use clockwork_client::{http::state::HttpMethod, Client};
+use clockwork_client::{webhook::state::HttpMethod, Client};
 use solana_sdk::pubkey::Pubkey;
 
 use crate::errors::CliError;
@@ -10,7 +10,7 @@ pub fn request_new(
     method: HttpMethod,
     route: String,
 ) -> Result<(), CliError> {
-    let ix = clockwork_client::http::instruction::request_new(
+    let ix = clockwork_client::webhook::instruction::request_new(
         api,
         client.payer_pubkey(),
         id,
