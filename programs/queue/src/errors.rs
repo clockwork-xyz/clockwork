@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
 
+/**
+ * ClockworkError
+ */
+
 #[error_code]
 pub enum ClockworkError {
     #[msg("The crank response could not be parsed")]
