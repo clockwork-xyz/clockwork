@@ -11,6 +11,5 @@ pub mod queue_program {
 /**
  * Client level
  */
-
 #[cfg(feature = "client")]
-pub use clockwork_client::{Client, ClientError, ClientResult};
+pub use clockwork_client::{Client, ClientError, ClientResult, SplToken};
