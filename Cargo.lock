@@ -856,6 +856,7 @@ dependencies = [
  "clockwork-webhook-program",
  "solana-client",
  "solana-sdk",
+ "spl-associated-token-account",
  "thiserror",
 ]
 

@@ -26,3 +26,4 @@ clockwork-webhook-program = { path = "../programs/webhook", features = ["no-entr
 solana-client = "1.10.34"
 solana-sdk = "1.10.34"
 thiserror = "1.0.31"
+spl-associated-token-account = { version = "1.0.5", features = ["no-entrypoint"] }
