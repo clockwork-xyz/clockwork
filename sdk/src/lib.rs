@@ -6,7 +6,7 @@
 pub use clockwork_client::{Client, ClientError, ClientResult};
 
 #[cfg(feature = "client")]
-mod queue_program {
+pub mod queue_program {
     pub use clockwork_queue_program::{anchor, errors, payer, state, ID};
 }
 
@@ -14,6 +14,6 @@ mod queue_program {
  * Program level
  */
 #[cfg(not(feature = "client"))]
-mod queue_program {
+pub mod queue_program {
     pub use clockwork_queue_program::*;
 }
