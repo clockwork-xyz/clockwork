@@ -26,3 +26,4 @@ anchor-lang = { features = ["init-if-needed"], version = "0.25.0" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 clockwork-cron = { path = "../../cron", version = "1.0.6" }
 clockwork-pool-program = { path = "../pool", features = ["cpi"], version = "1.0.6" }
+static-pubkey = "1.0.3"

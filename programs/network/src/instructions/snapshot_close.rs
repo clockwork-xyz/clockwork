@@ -66,7 +66,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new(snapshot_queue.key(), true),
                 ],
-                data: clockwork_queue_program::anchor::sighash("entry_close").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("entry_close").into(),
             }.into()
         )
     } else {

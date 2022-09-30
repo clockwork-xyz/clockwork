@@ -1,8 +1,7 @@
-pub mod anchor;
 pub mod errors;
 pub mod id;
-pub mod payer;
 pub mod state;
+pub mod utils;
 
 mod instructions;
 

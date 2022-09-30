@@ -39,13 +39,13 @@ pub fn handler(ctx: Context<SnapshotKickoff>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMeta::new_readonly(authority.key(), false),
                 AccountMeta::new_readonly(Config::pubkey(), false),
-                AccountMeta::new(clockwork_queue_program::payer::ID, true),
+                AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
                 AccountMeta::new(registry.key(), false),
                 AccountMeta::new(Snapshot::pubkey(registry.snapshot_count), false),
                 AccountMeta::new_readonly(snapshot_queue.key(), true),
                 AccountMeta::new_readonly(system_program::ID, false),
             ],
-            data: clockwork_queue_program::anchor::sighash("snapshot_create").into(),
+            data: clockwork_queue_program::utils::anchor_sighash("snapshot_create").into(),
         }.into()) 
     })
 }

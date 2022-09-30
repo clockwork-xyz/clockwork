@@ -114,7 +114,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new(registry.key(), false),
             AccountMeta::new_readonly(snapshot_queue.key(), true),
         ],
-        data: clockwork_queue_program::anchor::sighash("snapshot_kickoff").into(),
+        data: clockwork_queue_program::utils::anchor_sighash("snapshot_kickoff").into(),
     };
     clockwork_queue_program::cpi::queue_create(
         CpiContext::new_with_signer(

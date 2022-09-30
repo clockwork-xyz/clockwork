@@ -406,7 +406,7 @@ impl QueueObserver {
 
         // Inject the worker pubkey as the Clockwork "payer" account
         for acc in inner_ix.clone().accounts {
-            let acc_pubkey = if acc.pubkey == clockwork_client::queue::payer::ID {
+            let acc_pubkey = if acc.pubkey == clockwork_client::queue::utils::PAYER_PUBKEY {
                 worker_pubkey
             } else {
                 acc.pubkey

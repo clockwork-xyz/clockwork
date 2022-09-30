@@ -76,14 +76,14 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                     AccountMeta::new_readonly(config.key(), false),
                     AccountMeta::new(entry_pubkey, false),
                     AccountMeta::new_readonly(node_pubkey, false),
-                    AccountMeta::new(clockwork_queue_program::payer::ID, true),
+                    AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
                     AccountMeta::new_readonly(system_program.key(), false)
                 ],
-                data: clockwork_queue_program::anchor::sighash("entry_create").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("entry_create").into(),
             }
             .into()
         )
@@ -100,7 +100,7 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                     AccountMeta::new(registry.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                 ],
-                data: clockwork_queue_program::anchor::sighash("snapshot_rotate").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("snapshot_rotate").into(),
             }
             .into()
         )

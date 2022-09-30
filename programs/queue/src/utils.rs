@@ -1,4 +1,9 @@
-pub fn sighash(name: &str) -> [u8; 8] {
+use anchor_lang::{prelude::Pubkey, solana_program};
+use static_pubkey::static_pubkey;
+
+pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
+
+pub fn anchor_sighash(name: &str) -> [u8; 8] {
     let namespace = "global";
     let preimage = format!("{}:{}", namespace, name);
     let mut sighash = [0u8; 8];

@@ -70,7 +70,7 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
                 AccountMeta::new(current_snapshot.key(), false),
                 AccountMeta::new(snapshot_queue.key(), true),
             ],
-            data: clockwork_queue_program::anchor::sighash("snapshot_close").into(),
+            data: clockwork_queue_program::utils::anchor_sighash("snapshot_close").into(),
         }.into()
     );
 
