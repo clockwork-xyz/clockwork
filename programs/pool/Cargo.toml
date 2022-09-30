@@ -1,5 +1,5 @@
 [package]
-name = "clockwork-pool"
+name = "clockwork-pool-program"
 version = "1.0.6"
 description = "Clockwork pool protocol"
 edition = "2021"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "clockwork_pool"
+name = "clockwork_pool_program"
 
 [features]
 no-entrypoint = []

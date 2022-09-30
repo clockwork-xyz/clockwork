@@ -4,7 +4,7 @@ use {
         state::*
     },
     anchor_lang::prelude::*,
-    clockwork_pool::cpi::accounts::PoolRotate
+    clockwork_pool_program::cpi::accounts::PoolRotate
 };
 
 #[derive(Accounts)]
@@ -28,11 +28,11 @@ pub struct PoolsRotate<'info> {
     #[account(seeds = [SEED_NODE, node.id.to_be_bytes().as_ref()], bump, constraint = node.id == entry.id)]
     pub node: Account<'info, Node>,
 
-    #[account(address = clockwork_pool::ID)]
-    pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
+    #[account(address = clockwork_pool_program::ID)]
+    pub pool_program: Program<'info, clockwork_pool_program::program::PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], bump, seeds::program = clockwork_pool::ID)]
-    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
+    #[account(seeds = [SEED_CONFIG], bump, seeds::program = clockwork_pool_program::ID)]
+    pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
 
     #[account(
         mut, seeds = [SEED_ROTATOR], bump, 
@@ -76,7 +76,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
 
                 // If the node supports this pool, then rotate it in
                 if node.supported_pools.contains(&pool_acc_info.key()) {
-                    clockwork_pool::cpi::pool_rotate(
+                    clockwork_pool_program::cpi::pool_rotate(
                         CpiContext::new_with_signer(
                             pool_program.to_account_info(),
                             PoolRotate {

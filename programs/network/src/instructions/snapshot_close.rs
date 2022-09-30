@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::state::{CrankResponse, Queue, SEED_QUEUE},
 };
 
 #[derive(Accounts)]
@@ -27,7 +27,7 @@ pub struct SnapshotClose<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_queue::ID,
+        seeds::program = clockwork_queue_program::ID,
         bump,
         has_one = authority
     )]
@@ -66,7 +66,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new(snapshot_queue.key(), true),
                 ],
-                data: clockwork_queue::anchor::sighash("entry_close").into(),
+                data: clockwork_queue_program::anchor::sighash("entry_close").into(),
             }.into()
         )
     } else {

@@ -1,5 +1,5 @@
 [package]
-name = "clockwork-network"
+name = "clockwork-network-program"
 version = "1.0.6"
 description = "Clockwork networking protocol"
 edition = "2021"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "clockwork_network"
+name = "clockwork_network_program"
 
 [features]
 no-entrypoint = []
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = "0.25.0"
 anchor-spl = { features = ["mint", "token"], version = "0.25.0" }
-clockwork-pool = { path = "../pool", features = ["cpi"], version = "1.0.6" }
-clockwork-queue = { path = "../queue", features = ["cpi"], version = "1.0.6" }
+clockwork-pool-program = { path = "../pool", features = ["cpi"], version = "1.0.6" }
+clockwork-queue-program = { path = "../queue", features = ["cpi"], version = "1.0.6" }

@@ -6,7 +6,7 @@ use anchor_lang::{
     },
     InstructionData,
 };
-use clockwork_webhook::state::HttpMethod;
+use clockwork_webhook_program::state::HttpMethod;
 
 pub fn request_new(
     api: Pubkey,
@@ -16,11 +16,11 @@ pub fn request_new(
     payer: Pubkey,
     route: String,
 ) -> Instruction {
-    let config_pubkey = clockwork_webhook::state::Config::pubkey();
-    let pool_pubkey = clockwork_pool::state::Pool::pubkey("http_workers".into());
-    let request_pubkey = clockwork_webhook::state::Request::pubkey(api, caller, id.clone());
+    let config_pubkey = clockwork_webhook_program::state::Config::pubkey();
+    let pool_pubkey = clockwork_pool_program::state::Pool::pubkey("http_workers".into());
+    let request_pubkey = clockwork_webhook_program::state::Request::pubkey(api, caller, id.clone());
     Instruction {
-        program_id: clockwork_webhook::ID,
+        program_id: clockwork_webhook_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(api, false),
             AccountMeta::new_readonly(caller, true),
@@ -31,6 +31,6 @@ pub fn request_new(
             AccountMeta::new(request_pubkey, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_webhook::instruction::RequestNew { id, method, route }.data(),
+        data: clockwork_webhook_program::instruction::RequestNew { id, method, route }.data(),
     }
 }

@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_queue::state::{InstructionData as ClockworkInstructionData, Trigger},
+    clockwork_queue_program::state::{InstructionData as ClockworkInstructionData, Trigger},
 };
 
 pub fn queue_update(
@@ -18,13 +18,13 @@ pub fn queue_update(
     trigger: Option<Trigger>,
 ) -> Instruction {
     Instruction {
-        program_id: clockwork_queue::ID,
+        program_id: clockwork_queue_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_queue::instruction::QueueUpdate {
+        data: clockwork_queue_program::instruction::QueueUpdate {
             kickoff_instruction,
             rate_limit,
             trigger,

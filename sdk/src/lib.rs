@@ -1,4 +1,4 @@
-pub use ::clockwork_queue::{program::ClockworkQueue as Program, *};
+pub use ::clockwork_queue_program::*;
 
 #[cfg(feature = "client")]
 pub use clockwork_client::Client;

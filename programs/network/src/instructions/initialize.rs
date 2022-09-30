@@ -5,7 +5,7 @@ use {
         solana_program::{instruction::Instruction, system_program}
     },
     anchor_spl::token::Mint,
-    clockwork_queue::state::{Trigger, SEED_QUEUE},
+    clockwork_queue_program::state::{Trigger, SEED_QUEUE},
     std::mem::size_of,
 };
 
@@ -23,8 +23,8 @@ pub struct Initialize<'info> {
     )]
     pub authority: Account<'info, Authority>,
 
-    #[account(address = clockwork_queue::ID)]
-    pub clockwork_program: Program<'info, clockwork_queue::program::ClockworkQueue>,
+    #[account(address = clockwork_queue_program::ID)]
+    pub clockwork_program: Program<'info, clockwork_queue_program::program::QueueProgram>,
 
     #[account(
         init,
@@ -74,7 +74,7 @@ pub struct Initialize<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_queue::ID,
+        seeds::program = clockwork_queue_program::ID,
         bump
     )]
     pub snapshot_queue: SystemAccount<'info>,
@@ -114,12 +114,12 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
             AccountMeta::new(registry.key(), false),
             AccountMeta::new_readonly(snapshot_queue.key(), true),
         ],
-        data: clockwork_queue::anchor::sighash("snapshot_kickoff").into(),
+        data: clockwork_queue_program::anchor::sighash("snapshot_kickoff").into(),
     };
-    clockwork_queue::cpi::queue_create(
+    clockwork_queue_program::cpi::queue_create(
         CpiContext::new_with_signer(
             clockwork_program.to_account_info(),
-            clockwork_queue::cpi::accounts::QueueCreate {
+            clockwork_queue_program::cpi::accounts::QueueCreate {
                 authority: authority.to_account_info(),
                 payer: admin.to_account_info(),
                 queue: snapshot_queue.to_account_info(),

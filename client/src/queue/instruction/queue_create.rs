@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_queue::state::{InstructionData as ClockworkInstructionData, Trigger},
+    clockwork_queue_program::state::{InstructionData as ClockworkInstructionData, Trigger},
 };
 
 pub fn queue_create(
@@ -19,14 +19,14 @@ pub fn queue_create(
     trigger: Trigger,
 ) -> Instruction {
     Instruction {
-        program_id: clockwork_queue::ID,
+        program_id: clockwork_queue_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new(payer, true),
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_queue::instruction::QueueCreate {
+        data: clockwork_queue_program::instruction::QueueCreate {
             id,
             kickoff_instruction: ClockworkInstructionData::from(kickoff_instruction),
             trigger,

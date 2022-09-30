@@ -850,10 +850,10 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
- "clockwork-network",
- "clockwork-pool",
- "clockwork-queue",
- "clockwork-webhook",
+ "clockwork-network-program",
+ "clockwork-pool-program",
+ "clockwork-queue-program",
+ "clockwork-webhook-program",
  "solana-client",
  "solana-sdk",
  "thiserror",
@@ -870,30 +870,30 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-network"
+name = "clockwork-network-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "clockwork-pool",
- "clockwork-queue",
+ "clockwork-pool-program",
+ "clockwork-queue-program",
 ]
 
 [[package]]
-name = "clockwork-pool"
+name = "clockwork-pool-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
-name = "clockwork-queue"
+name = "clockwork-queue-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
  "chrono",
  "clockwork-cron",
- "clockwork-pool",
+ "clockwork-pool-program",
 ]
 
 [[package]]
@@ -903,17 +903,17 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "clockwork-client",
- "clockwork-queue",
+ "clockwork-queue-program",
  "nom",
  "once_cell",
 ]
 
 [[package]]
-name = "clockwork-webhook"
+name = "clockwork-webhook-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
- "clockwork-pool",
+ "clockwork-pool-program",
 ]
 
 [[package]]

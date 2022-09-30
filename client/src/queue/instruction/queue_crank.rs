@@ -6,13 +6,13 @@ use {
         },
         system_program, InstructionData,
     },
-    clockwork_pool::state::Pool,
-    clockwork_queue::state::{Config, Fee},
+    clockwork_pool_program::state::Pool,
+    clockwork_queue_program::state::{Config, Fee},
 };
 
 pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
-        program_id: clockwork_queue::ID,
+        program_id: clockwork_queue_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(Config::pubkey(), false),
             AccountMeta::new(Fee::pubkey(worker), false),
@@ -21,6 +21,6 @@ pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, worker: Pubkey) -> Ins
             AccountMeta::new(system_program::ID, false),
             AccountMeta::new(worker, true),
         ],
-        data: clockwork_queue::instruction::QueueCrank { data_hash }.data(),
+        data: clockwork_queue_program::instruction::QueueCrank { data_hash }.data(),
     }
 }

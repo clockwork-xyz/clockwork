@@ -6,16 +6,16 @@ use anchor_lang::{
     },
     InstructionData,
 };
-use clockwork_network::state::NodeSettings;
+use clockwork_network_program::state::NodeSettings;
 
 pub fn node_update(authority: Pubkey, node: Pubkey, settings: NodeSettings) -> Instruction {
     Instruction {
-        program_id: clockwork_network::ID,
+        program_id: clockwork_network_program::ID,
         accounts: vec![
             AccountMeta::new(authority, true),
             AccountMeta::new(node, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_network::instruction::NodeUpdate { settings }.data(),
+        data: clockwork_network_program::instruction::NodeUpdate { settings }.data(),
     }
 }
