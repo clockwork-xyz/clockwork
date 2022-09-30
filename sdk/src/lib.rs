@@ -16,5 +16,7 @@ pub mod queue_program {
 
 #[cfg(not(feature = "client"))]
 pub mod queue_program {
-    pub use clockwork_queue_program::{accounts, cpi, errors, state, utils, ID};
+    pub use clockwork_queue_program::{
+        accounts, cpi, errors, program::QueueProgram, state, utils, ID,
+    };
 }
