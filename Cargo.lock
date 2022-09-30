@@ -850,23 +850,13 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
- "clockwork-crank",
- "clockwork-http",
- "clockwork-network",
- "clockwork-pool",
+ "clockwork-network-program",
+ "clockwork-pool-program",
+ "clockwork-queue-program",
+ "clockwork-webhook-program",
  "solana-client",
  "solana-sdk",
  "thiserror",
-]
-
-[[package]]
-name = "clockwork-crank"
-version = "1.0.6"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-pool",
 ]
 
 [[package]]
@@ -880,28 +870,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-http"
-version = "1.0.6"
-dependencies = [
- "anchor-lang",
- "clockwork-pool",
-]
-
-[[package]]
-name = "clockwork-network"
+name = "clockwork-network-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "clockwork-crank",
- "clockwork-pool",
+ "clockwork-pool-program",
+ "clockwork-queue-program",
 ]
 
 [[package]]
-name = "clockwork-pool"
+name = "clockwork-pool-program"
 version = "1.0.6"
 dependencies = [
  "anchor-lang",
+]
+
+[[package]]
+name = "clockwork-queue-program"
+version = "1.0.6"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-pool-program",
+ "static-pubkey",
 ]
 
 [[package]]
@@ -911,9 +904,17 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "clockwork-client",
- "clockwork-crank",
+ "clockwork-queue-program",
  "nom",
  "once_cell",
+]
+
+[[package]]
+name = "clockwork-webhook-program"
+version = "1.0.6"
+dependencies = [
+ "anchor-lang",
+ "clockwork-pool-program",
 ]
 
 [[package]]
@@ -4348,6 +4349,18 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "static-pubkey"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0547d5945c93f55e1b18bf2a67d1a3d0548561f2687645b22c1c1d4fbb9a8e90"
+dependencies = [
+ "bs58 0.4.0",
+ "proc-macro2 1.0.42",
+ "quote 1.0.20",
+ "syn 1.0.98",
+]
 
 [[package]]
 name = "static_assertions"

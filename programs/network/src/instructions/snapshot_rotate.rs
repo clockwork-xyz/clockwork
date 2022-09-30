@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::state::{CrankResponse, Queue, SEED_QUEUE},
 };
 
 #[derive(Accounts)]
@@ -43,7 +43,7 @@ pub struct SnapshotRotate<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_crank::ID,
+        seeds::program = clockwork_queue_program::ID,
         bump,
         has_one = authority
     )]
@@ -70,7 +70,7 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
                 AccountMeta::new(current_snapshot.key(), false),
                 AccountMeta::new(snapshot_queue.key(), true),
             ],
-            data: clockwork_crank::anchor::sighash("snapshot_close").into(),
+            data: clockwork_queue_program::utils::anchor_sighash("snapshot_close").into(),
         }.into()
     );
 

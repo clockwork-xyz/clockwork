@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction, system_program},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::state::{CrankResponse, Queue, SEED_QUEUE},
 };
 
 #[derive(Accounts)]
@@ -19,7 +19,7 @@ pub struct SnapshotKickoff<'info> {
             authority.key().as_ref(), 
             "snapshot".as_bytes()
         ], 
-        seeds::program = clockwork_crank::ID,
+        seeds::program = clockwork_queue_program::ID,
         bump,
         has_one = authority
     )]
@@ -39,13 +39,13 @@ pub fn handler(ctx: Context<SnapshotKickoff>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMeta::new_readonly(authority.key(), false),
                 AccountMeta::new_readonly(Config::pubkey(), false),
-                AccountMeta::new(clockwork_crank::payer::ID, true),
+                AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
                 AccountMeta::new(registry.key(), false),
                 AccountMeta::new(Snapshot::pubkey(registry.snapshot_count), false),
                 AccountMeta::new_readonly(snapshot_queue.key(), true),
                 AccountMeta::new_readonly(system_program::ID, false),
             ],
-            data: clockwork_crank::anchor::sighash("snapshot_create").into(),
+            data: clockwork_queue_program::utils::anchor_sighash("snapshot_create").into(),
         }.into()) 
     })
 }

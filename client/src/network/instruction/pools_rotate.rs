@@ -16,18 +16,18 @@ pub fn pools_rotate(
     worker: Pubkey,
 ) -> Instruction {
     Instruction {
-        program_id: clockwork_network::ID,
+        program_id: clockwork_network_program::ID,
         accounts: vec![
-            AccountMeta::new_readonly(clockwork_network::state::Config::pubkey(), false),
+            AccountMeta::new_readonly(clockwork_network_program::state::Config::pubkey(), false),
             AccountMeta::new_readonly(entry, false),
             AccountMeta::new_readonly(node, false),
-            AccountMeta::new_readonly(clockwork_pool::ID, false),
-            AccountMeta::new_readonly(clockwork_pool::state::Config::pubkey(), false),
-            AccountMeta::new(clockwork_network::state::Rotator::pubkey(), false),
+            AccountMeta::new_readonly(clockwork_pool_program::ID, false),
+            AccountMeta::new_readonly(clockwork_pool_program::state::Config::pubkey(), false),
+            AccountMeta::new(clockwork_network_program::state::Rotator::pubkey(), false),
             AccountMeta::new(signer, true),
             AccountMeta::new_readonly(snapshot, false),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: clockwork_network::instruction::PoolsRotate {}.data(),
+        data: clockwork_network_program::instruction::PoolsRotate {}.data(),
     }
 }

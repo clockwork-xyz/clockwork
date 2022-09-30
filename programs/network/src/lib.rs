@@ -7,12 +7,12 @@ mod instructions;
 pub use id::ID;
 
 use anchor_lang::prelude::*;
-use clockwork_crank::state::CrankResponse;
+use clockwork_queue_program::state::CrankResponse;
 use instructions::*;
 use state::*;
 
 #[program]
-pub mod clockwork_network {
+pub mod network_program {
     use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {

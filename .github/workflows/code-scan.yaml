@@ -29,14 +29,14 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - cmd: cd programs/crank && soteria -analyzeAll .
-            path: programs/crank
-          - cmd: cd programs/http && soteria -analyzeAll .
-            path: programs/http
           - cmd: cd programs/network && soteria -analyzeAll .
             path: programs/network
           - cmd: cd programs/pool && soteria -analyzeAll .
             path: programs/pool
+          - cmd: cd programs/queue && soteria -analyzeAll .
+            path: programs/queue
+          - cmd: cd programs/webhook && soteria -analyzeAll .
+            path: programs/webhook
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

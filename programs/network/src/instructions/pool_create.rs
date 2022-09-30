@@ -5,7 +5,7 @@ use {
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    clockwork_pool::{program::ClockworkPool, state::SEED_POOL},
+    clockwork_pool_program::{program::PoolProgram, state::SEED_POOL},
 };
 
 #[derive(Accounts)]
@@ -17,14 +17,14 @@ pub struct PoolCreate<'info> {
     #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
     pub config: Account<'info, Config>,
 
-    #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool::ID, bump)]
+    #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool_program::ID, bump)]
     pub pool: SystemAccount<'info>,
 
-    #[account(address = clockwork_pool::ID)]
-    pub pool_program: Program<'info, ClockworkPool>,
+    #[account(address = clockwork_pool_program::ID)]
+    pub pool_program: Program<'info, PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], seeds::program = clockwork_pool::ID, bump)]
-    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
+    #[account(seeds = [SEED_CONFIG], seeds::program = clockwork_pool_program::ID, bump)]
+    pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
 
     #[account(mut, seeds = [SEED_ROTATOR], bump)]
     pub rotator: Account<'info, Rotator>,
@@ -44,10 +44,10 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
 
     // Rotate the worker into its supported pools
     let rotator_bump = *ctx.bumps.get("rotator").unwrap();
-    clockwork_pool::cpi::pool_create(
+    clockwork_pool_program::cpi::pool_create(
         CpiContext::new_with_signer(
             pool_program.to_account_info(),
-            clockwork_pool::cpi::accounts::PoolCreate {
+            clockwork_pool_program::cpi::accounts::PoolCreate {
                 config: pool_program_config.to_account_info(),
                 payer: admin.to_account_info(),
                 pool: pool.to_account_info(),

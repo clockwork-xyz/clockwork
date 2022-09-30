@@ -11,7 +11,7 @@ use instructions::*;
 use state::*;
 
 #[program]
-pub mod clockwork_pool {
+pub mod pool_program {
     use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {

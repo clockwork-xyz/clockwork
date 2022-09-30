@@ -2,10 +2,10 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        crank::state::Queue,
-        http::state::Request,
         network::state::{Rotator, Snapshot},
         pool::state::Pool,
+        queue::state::Queue,
+        webhook::state::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo,
@@ -39,7 +39,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        if owner_pubkey.eq(&clockwork_client::crank::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::queue::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
             if d.eq(&Queue::discriminator()) {
                 // If the account is a queue, return it
@@ -91,7 +91,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         }
 
         // If the account is an http request, return in
-        if owner_pubkey.eq(&clockwork_client::http::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::webhook::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::HttpRequest {
                 request: Request::try_from(account_info.data.to_vec()).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {

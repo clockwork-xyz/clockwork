@@ -25,7 +25,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             id,
             method,
             route,
-        } => super::http::request_new(&client, api, id, method, route),
+        } => super::webhook::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
