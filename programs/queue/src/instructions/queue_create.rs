@@ -5,15 +5,19 @@ use {
 };
 
 
+/// Required accounts for the `queue_create` instruction.
 #[derive(Accounts)]
 #[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
 pub struct QueueCreate<'info> {
+    /// The owner of the queue.
     #[account()]
     pub authority: Signer<'info>,
 
+    /// The payer for account initializations. 
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    /// The queue to create.
     #[account(
         init,
         seeds = [
@@ -33,6 +37,7 @@ pub struct QueueCreate<'info> {
     )]
     pub queue: Account<'info, Queue>,
 
+    /// The Solana system program.
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }

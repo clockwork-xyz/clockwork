@@ -1,4 +1,4 @@
-//! Defines all the accounts, enums, and structs that make up the queue program's state.
+//! Defines all the accounts, enums, and structs that make up the program's state.
 
 mod clock;
 mod config;

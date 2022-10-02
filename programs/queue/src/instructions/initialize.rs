@@ -4,12 +4,15 @@ use {
     std::mem::size_of,
 };
 
+/// Required accounts for the `initialize` instruction.
 #[derive(Accounts)]
 #[instruction(worker_pool: Pubkey)]
 pub struct Initialize<'info> {
+    /// The program admin.
     #[account(mut)]
     pub admin: Signer<'info>,
 
+    /// The program config account.
     #[account(
         init,
         seeds = [SEED_CONFIG],
@@ -19,6 +22,7 @@ pub struct Initialize<'info> {
     )]
     pub config: Account<'info, Config>,
 
+    /// The Solana system program.
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }

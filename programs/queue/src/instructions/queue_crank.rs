@@ -9,12 +9,15 @@ use {
 
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 
+/// Required accounts for the `queue_crank` instruction.
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
+    /// The program config account.
     #[account(seeds = [SEED_CONFIG], bump)]
     pub config: Box<Account<'info, Config>>,
 
+    /// The worker's fee account.
     #[account(
         init_if_needed,
         seeds = [
@@ -27,9 +30,11 @@ pub struct QueueCrank<'info> {
     )]
     pub fee: Box<Account<'info, Fee>>,
 
+    /// The active worker pool.
     #[account(address = config.worker_pool)]
     pub pool: Box<Account<'info, Pool>>,
 
+    /// The queue to crank.
     #[account(
         mut,
         seeds = [
@@ -42,9 +47,11 @@ pub struct QueueCrank<'info> {
     )]
     pub queue: Box<Account<'info, Queue>>,
 
+    /// The Solana system program.
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
+    /// The worker.
     #[account(mut)]
     pub worker: Signer<'info>,
 }
