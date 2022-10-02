@@ -106,7 +106,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
                         // Set a new exec context with the new data hash and slot number.
                         queue.exec_context = Some(ExecContext {
-                            crank_rate: 0,
+                            crank_count: 0,
                             cranks_since_payout: 0,
                             last_crank_at: current_slot,
                             trigger_context: TriggerContext::Account { data_hash }
@@ -114,7 +114,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                     }
                 }
             }
-            Trigger::Cron { schedule } => {
+            Trigger::Cron { schedule, skippable } => {
                 // Get the reference timestamp for calculating the queue's scheduled target timestamp.
                 let reference_timestamp = match queue.exec_context.clone() {
                     None => queue.created_at.unix_timestamp,
@@ -126,24 +126,32 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                     }
                 };
 
-                // Verify the current time is greater than or equal to the target timestamp.
-                let target_timestamp = next_timestamp(reference_timestamp, schedule).ok_or(ClockworkError::InvalidTrigger)?;
+                // Verify the current timestamp is greater than or equal to the threshold timestamp.
                 let current_timestamp = Clock::get().unwrap().unix_timestamp;
-                require!(current_timestamp >= target_timestamp, ClockworkError::InvalidTrigger);
+                let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone()).ok_or(ClockworkError::InvalidTrigger)?;
+                require!(current_timestamp >= threshold_timestamp, ClockworkError::InvalidTrigger);
+
+                // If the schedule is skippable, the set the started_at of the exec context 
+                // to be the threshold moment just before the current timestamp. 
+                let started_at = if skippable {
+                    prev_timestamp(current_timestamp, schedule).ok_or(ClockworkError::InvalidTrigger)?
+                } else {
+                    threshold_timestamp
+                };
 
                 // Set the exec context.
                 queue.exec_context = Some(ExecContext {
-                    crank_rate: 0,
+                    crank_count: 0,
                     cranks_since_payout: 0,
                     last_crank_at: current_slot,
-                    trigger_context: TriggerContext::Cron { started_at: target_timestamp }
+                    trigger_context: TriggerContext::Cron { started_at }
                 });
             },
             Trigger::Immediate => {
                 // Set the exec context.
                 require!(queue.exec_context.is_none(), ClockworkError::InvalidQueueState);
                 queue.exec_context = Some(ExecContext {
-                    crank_rate: 0,
+                    crank_count: 0,
                     cranks_since_payout: 0,
                     last_crank_at: current_slot,
                     trigger_context: TriggerContext::Immediate,
@@ -157,7 +165,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
         None => return Err(ClockworkError::InvalidQueueState.into()),
         Some(exec_context) => {
             if exec_context.last_crank_at == Clock::get().unwrap().slot && 
-                exec_context.crank_rate >= queue.rate_limit {
+                exec_context.crank_count >= queue.rate_limit {
                     return Err(ClockworkError::RateLimitExeceeded.into())
             } 
         }
@@ -206,3 +214,13 @@ fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
         .map(|datetime| datetime.timestamp())
 }
 
+fn prev_timestamp(before: i64, schedule: String) -> Option<i64> {
+    Schedule::from_str(&schedule)
+        .unwrap()
+        .previous(&DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(before, 0), 
+            Utc
+        ))
+        .take()
+        .map(|datetime| datetime.timestamp())
+}

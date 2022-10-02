@@ -141,7 +141,10 @@ impl QueueObserver {
                                 v
                             });
                     }
-                    Trigger::Cron { schedule } => {
+                    Trigger::Cron {
+                        schedule,
+                        skippable: _,
+                    } => {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
                             None => queue.created_at.unix_timestamp,
