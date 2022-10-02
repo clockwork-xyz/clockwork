@@ -3,22 +3,22 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
 pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+queue = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
+webhook = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 
 [programs.testnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
 pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+queue = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
+webhook = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 
 [programs.mainnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
 pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+queue = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
+webhook = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
 
 [registry]
 url = "https://anchor.projectserum.com"
