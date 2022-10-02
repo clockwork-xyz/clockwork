@@ -1,8 +1,6 @@
-use anchor_lang::prelude::*;
+//! Clockwork errors
 
-/**
- * ClockworkError
- */
+use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ClockworkError {

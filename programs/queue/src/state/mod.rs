@@ -1,3 +1,5 @@
+//! Defines all the accounts, enums, and structs that make up the queue program's state.
+
 mod clock;
 mod config;
 mod fee;

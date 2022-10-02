@@ -1,3 +1,5 @@
+//! Utility functions to make it easier to build programs with Clockwork.
+
 use anchor_lang::{prelude::Pubkey, solana_program};
 use static_pubkey::static_pubkey;
 
