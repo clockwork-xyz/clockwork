@@ -106,8 +106,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
                         // Set a new exec context with the new data hash and slot number.
                         queue.exec_context = Some(ExecContext {
-                            crank_count: 0,
-                            cranks_since_payout: 0,
+                            cranks_since_reimbursement: 0,
+                            cranks_since_slot: 0,
                             last_crank_at: current_slot,
                             trigger_context: TriggerContext::Account { data_hash }
                         })
@@ -141,8 +141,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
                 // Set the exec context.
                 queue.exec_context = Some(ExecContext {
-                    crank_count: 0,
-                    cranks_since_payout: 0,
+                    cranks_since_reimbursement: 0,
+                    cranks_since_slot: 0,
                     last_crank_at: current_slot,
                     trigger_context: TriggerContext::Cron { started_at }
                 });
@@ -151,8 +151,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                 // Set the exec context.
                 require!(queue.exec_context.is_none(), ClockworkError::InvalidQueueState);
                 queue.exec_context = Some(ExecContext {
-                    crank_count: 0,
-                    cranks_since_payout: 0,
+                    cranks_since_reimbursement: 0,
+                    cranks_since_slot: 0,
                     last_crank_at: current_slot,
                     trigger_context: TriggerContext::Immediate,
                 });
@@ -165,7 +165,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
         None => return Err(ClockworkError::InvalidQueueState.into()),
         Some(exec_context) => {
             if exec_context.last_crank_at == Clock::get().unwrap().slot && 
-                exec_context.crank_count >= queue.rate_limit {
+                exec_context.cranks_since_slot >= queue.rate_limit {
                     return Err(ClockworkError::RateLimitExeceeded.into())
             } 
         }
@@ -188,10 +188,10 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     match queue.exec_context {
         None => return Err(ClockworkError::InvalidQueueState.into()),
         Some(exec_context) => {
-            if queue.next_instruction.is_none() || exec_context.cranks_since_payout >= queue.rate_limit {
+            if queue.next_instruction.is_none() || exec_context.cranks_since_reimbursement >= queue.rate_limit {
                 fee.pay_to_worker(TRANSACTION_BASE_FEE_REIMBURSEMENT, queue)?;
                 queue.exec_context = Some(ExecContext {
-                    cranks_since_payout: 0,
+                    cranks_since_reimbursement: 0,
                     ..exec_context
                 })
             }

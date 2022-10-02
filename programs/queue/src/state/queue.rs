@@ -169,12 +169,15 @@ impl QueueAccount for Account<'_, Queue> {
             Some(exec_context) => {
                 // Update the exec context
                 self.exec_context = Some(ExecContext {
-                    crank_count: if current_slot == exec_context.last_crank_at {
-                        exec_context.crank_count.checked_add(1).unwrap()
+                    cranks_since_reimbursement: exec_context
+                        .cranks_since_reimbursement
+                        .checked_add(1)
+                        .unwrap(),
+                    cranks_since_slot: if current_slot == exec_context.last_crank_at {
+                        exec_context.cranks_since_slot.checked_add(1).unwrap()
                     } else {
                         1
                     },
-                    cranks_since_payout: exec_context.cranks_since_payout.checked_add(1).unwrap(),
                     last_crank_at: current_slot,
                     trigger_context: exec_context.trigger_context,
                 });
@@ -245,8 +248,8 @@ pub enum Trigger {
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct ExecContext {
-    pub crank_count: u64,                // Number of cranks in this slot
-    pub cranks_since_payout: u64,        // Number of cranks since the last tx payout
+    pub cranks_since_reimbursement: u64, // Number of cranks since the last tx reimbursement
+    pub cranks_since_slot: u64,          // Number of cranks in this slot
     pub last_crank_at: u64,              // Slot of the last crank
     pub trigger_context: TriggerContext, // Context for the triggering condition
 }
