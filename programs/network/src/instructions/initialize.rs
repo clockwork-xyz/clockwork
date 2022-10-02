@@ -129,7 +129,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
         ),
         "snapshot".into(),
         snapshot_kickoff_ix.into(),
-        Trigger::Cron { schedule: "0 * * * * * *".into() }
+        Trigger::Cron { schedule: "0 * * * * * *".into(), skippable: true }
     )?;
 
     Ok(())
