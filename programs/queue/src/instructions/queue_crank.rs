@@ -131,7 +131,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                 let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone()).ok_or(ClockworkError::InvalidTrigger)?;
                 require!(current_timestamp >= threshold_timestamp, ClockworkError::InvalidTrigger);
 
-                // If the schedule is skippable, the set the started_at of the exec context 
+                // If the schedule is marked as skippable, set the started_at of the exec context 
                 // to be the threshold moment just before the current timestamp. 
                 let started_at = if skippable {
                     prev_timestamp(current_timestamp, schedule).ok_or(ClockworkError::InvalidTrigger)?
@@ -205,19 +205,18 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
-        .after(&DateTime::<Utc>::from_utc(
+        .next_after(&DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp(after, 0),
             Utc,
         ))
-        .take(1)
-        .next()
+        .take()
         .map(|datetime| datetime.timestamp())
 }
 
 fn prev_timestamp(before: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
-        .previous(&DateTime::<Utc>::from_utc(
+        .prev_before(&DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp(before, 0), 
             Utc
         ))

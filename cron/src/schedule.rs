@@ -24,7 +24,7 @@ impl Schedule {
         Schedule { source, fields }
     }
 
-    fn next_after<Z>(&self, after: &DateTime<Z>) -> Option<DateTime<Z>>
+    pub fn next_after<Z>(&self, after: &DateTime<Z>) -> Option<DateTime<Z>>
     where
         Z: TimeZone,
     {
@@ -119,7 +119,7 @@ impl Schedule {
         None
     }
 
-    pub fn previous<Z>(&self, before: &DateTime<Z>) -> Option<DateTime<Z>>
+    pub fn prev_before<Z>(&self, before: &DateTime<Z>) -> Option<DateTime<Z>>
     where
         Z: TimeZone,
     {
@@ -429,7 +429,7 @@ where
             return None;
         }
 
-        if let Some(prev_datetime) = self.schedule.previous(&self.previous_datetime) {
+        if let Some(prev_datetime) = self.schedule.prev_before(&self.previous_datetime) {
             self.previous_datetime = prev_datetime.clone();
             Some(prev_datetime)
         } else {
