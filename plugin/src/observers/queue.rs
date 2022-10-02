@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        queue::state::{Queue, Trigger, TriggerContext},
+        queue::objects::{Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -116,7 +116,7 @@ impl QueueObserver {
             this.crankable_queues.remove(&queue_pubkey);
 
             // If the queue is paused, just return without indexing
-            if queue.is_paused {
+            if queue.paused {
                 return Ok(());
             }
 

@@ -15,29 +15,36 @@ use {
     },
 };
 
-pub const SEED_QUEUE: &[u8] = b"queue";
+const SEED_QUEUE: &[u8] = b"queue";
 
 const DEFAULT_RATE_LIMIT: u64 = 10;
 
-/**
- * Queue
- */
-
+/// Tracks the current state of a transaction thread on Solana.
 #[account]
 #[derive(Debug)]
 pub struct Queue {
-    pub authority: Pubkey,     // The authority (aka "owner") of this queue
-    pub created_at: ClockData, // The clock data at the moment the queue was created
-    pub exec_context: Option<ExecContext>, // Contextual data tracking the current execution state of this  queue
-    pub id: String,                        // The authority-given id of the queue
-    pub is_paused: bool,                   // Whether or not the queue is currently paused
-    pub kickoff_instruction: InstructionData, // The kickoff crank instrution
-    pub next_instruction: Option<InstructionData>, // The next crank instruction
-    pub rate_limit: u64,                   // The max number of cranks allowed per slot
-    pub trigger: Trigger,                  // The triggering event to kickoff queue processing
+    /// The owner of this queue.
+    pub authority: Pubkey,
+    /// The cluster clock at the moment the queue was created.
+    pub created_at: ClockData,
+    /// The context of the current thread execution state.
+    pub exec_context: Option<ExecContext>,
+    /// The id of the queue, given by the authority.
+    pub id: String,
+    /// The instruction to kick-off the thread.
+    pub kickoff_instruction: InstructionData,
+    /// The next instruction in the thread.
+    pub next_instruction: Option<InstructionData>,
+    /// Whether or not the queue is currently paused.
+    pub paused: bool,
+    /// The maximum number of cranks allowed per slot.
+    pub rate_limit: u64,
+    /// The triggering event to kickoff a thread.
+    pub trigger: Trigger,
 }
 
 impl Queue {
+    /// Derive the pubkey of a queue account.
     pub fn pubkey(authority: Pubkey, id: String) -> Pubkey {
         Pubkey::find_program_address(&[SEED_QUEUE, authority.as_ref(), id.as_bytes()], &crate::ID).0
     }
@@ -65,11 +72,12 @@ impl PartialEq for Queue {
 
 impl Eq for Queue {}
 
-/**
- * QueueAccount
- */
-
+/// Trait for reading and writing to a queue account.
 pub trait QueueAccount {
+    /// Get the pubkey of the queue account.
+    fn pubkey(&self) -> Pubkey;
+
+    /// Initialize the account to hold queue object.
     fn init(
         &mut self,
         authority: Pubkey,
@@ -78,12 +86,18 @@ pub trait QueueAccount {
         trigger: Trigger,
     ) -> Result<()>;
 
+    /// Crank the queue. Call out to the target program and parse the response for a next instruction.
     fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()>;
 
+    /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
+    fn pubkey(&self) -> Pubkey {
+        Queue::pubkey(self.authority, self.id.clone())
+    }
+
     fn init(
         &mut self,
         authority: Pubkey,
@@ -95,9 +109,9 @@ impl QueueAccount for Account<'_, Queue> {
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
         self.id = id;
-        self.is_paused = false;
         self.kickoff_instruction = kickoff_instruction;
         self.next_instruction = None;
+        self.paused = false;
         self.rate_limit = DEFAULT_RATE_LIMIT;
         self.trigger = trigger;
         Ok(())
@@ -214,12 +228,10 @@ impl QueueAccount for Account<'_, Queue> {
     }
 }
 
-/**
- * CrankResponse
- */
-
+/// A response value target programs can return to update the queue.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct CrankResponse {
+    /// The next instruction to set on the queue.
     pub next_instruction: Option<InstructionData>,
 }
 
@@ -231,36 +243,60 @@ impl Default for CrankResponse {
     }
 }
 
-/**
- * Trigger
- */
-
+/// The triggering conditions of a queue.
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
 pub enum Trigger {
-    Account { pubkey: Pubkey },
-    Cron { schedule: String, skippable: bool },
+    /// Allows a queue to subscribe to an accout and be cranked whenever the data of that account changes.
+    Account {
+        /// The address of the account to subscribe to.
+        pubkey: Pubkey,
+    },
+
+    /// Allows a queue to be cranked according to a one-time or recurring schedule.
+    Cron {
+        /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
+        schedule: String,
+
+        /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
+        /// If false, any "missed" triggering moments will simply be cranked as soon as the network comes back online.
+        skippable: bool,
+    },
+
+    /// Allows a queue to be cranked as soon as it's created.
     Immediate,
 }
 
-/**
- * ExecContext
- */
-
+/// The execution context of a particular transaction thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct ExecContext {
-    pub cranks_since_reimbursement: u64, // Number of cranks since the last tx reimbursement
-    pub cranks_since_slot: u64,          // Number of cranks in this slot
-    pub last_crank_at: u64,              // Slot of the last crank
-    pub trigger_context: TriggerContext, // Context for the triggering condition
+    /// Number of cranks since the last tx reimbursement.
+    pub cranks_since_reimbursement: u64,
+
+    /// Number of cranks in this slot.
+    pub cranks_since_slot: u64,
+
+    /// Slot of the last crank
+    pub last_crank_at: u64,
+
+    /// Context for the triggering condition
+    pub trigger_context: TriggerContext,
 }
 
-/**
- * TriggerContext
- */
-
+/// The event which allowed a particular transaction thread to be triggered.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum TriggerContext {
-    Account { data_hash: u64 },
-    Cron { started_at: i64 },
+    /// A running hash of the observed account data.
+    Account {
+        /// The account's data hash.
+        data_hash: u64,
+    },
+
+    /// A cron execution context.
+    Cron {
+        /// The threshold moment the schedule was waiting for.
+        started_at: i64,
+    },
+
+    /// The immediate trigger context.
     Immediate,
 }

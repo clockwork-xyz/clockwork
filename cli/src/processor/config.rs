@@ -2,7 +2,7 @@ use {
     crate::errors::CliError,
     clockwork_client::{
         network::state::Config as NetworkConfig, pool::state::Config as PoolConfig,
-        queue::state::Config as CrankConfig, Client,
+        queue::objects::Config as CrankConfig, Client,
     },
     solana_sdk::pubkey::Pubkey,
 };
@@ -40,7 +40,7 @@ pub fn set(client: &Client, admin: Option<Pubkey>, crank_fee: Option<u64>) -> Re
         .get::<CrankConfig>(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
 
-    let settings = clockwork_client::queue::state::ConfigSettings {
+    let settings = clockwork_client::queue::objects::ConfigSettings {
         admin: match admin {
             Some(admin) => admin,
             None => config.admin,

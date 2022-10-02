@@ -16,7 +16,7 @@ program_id_crank=$(solana address -k target/deploy/clockwork_queue-keypair.json)
 sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_http}'");/g' programs/http/src/id.rs
 sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_network}'");/g' programs/network/src/id.rs
 sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_pool}'");/g' programs/pool/src/id.rs
-sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_queue}'");/g' programs/queue/src/id.rs
+sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_queue}'");/g' programs/queue/src/lib.rs
 
 # Update Anchor config
 sed -i '' -e 's/^http = ".*"/http = "'${program_id_http}'"/g' Anchor.toml

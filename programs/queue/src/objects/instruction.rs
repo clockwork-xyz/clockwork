@@ -6,10 +6,7 @@ use {
     std::{convert::TryFrom, hash::Hash},
 };
 
-/**
- * InstructionData
- */
-
+/// The data needed execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
 pub struct InstructionData {
     /// Pubkey of the instruction processor that executes this instruction
@@ -66,10 +63,7 @@ impl TryFrom<Vec<u8>> for InstructionData {
     }
 }
 
-/**
- * AccountMetaData
- */
-
+/// Account metadata needed to execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
 pub struct AccountMetaData {
     /// An account's public key

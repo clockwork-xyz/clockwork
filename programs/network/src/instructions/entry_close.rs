@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue_program::state::{CrankResponse, Queue},
+    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
@@ -32,7 +32,12 @@ pub struct EntryClose<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(mut, has_one = authority, constraint = snapshot_queue.id.eq("snapshot"))]
+    #[account(
+        mut, 
+        address = snapshot_queue.pubkey(), 
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority, 
+    )]
     pub snapshot_queue: Account<'info, Queue>,
 }
 

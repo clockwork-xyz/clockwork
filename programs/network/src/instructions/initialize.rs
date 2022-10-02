@@ -5,7 +5,7 @@ use {
         solana_program::{instruction::Instruction, system_program}
     },
     anchor_spl::token::Mint,
-    clockwork_queue_program::state::{Trigger, SEED_QUEUE},
+    clockwork_queue_program::objects::{Queue, Trigger},
     std::mem::size_of,
 };
 
@@ -68,15 +68,7 @@ pub struct Initialize<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_queue_program::ID,
-        bump
-    )]
+    #[account(address = Queue::pubkey(authority.key(), "snapshot".into()))]
     pub snapshot_queue: SystemAccount<'info>,
 
     #[account(address = system_program::ID)]

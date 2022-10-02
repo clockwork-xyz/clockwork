@@ -1,27 +1,26 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
 
 
+/// Accounts required by the `queue_create` instruction.
 #[derive(Accounts)]
 #[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
 pub struct QueueCreate<'info> {
+    /// The authority (owner) of the queue.
     #[account()]
     pub authority: Signer<'info>,
 
+    /// The payer for account initializations. 
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    /// The queue to be created.
     #[account(
         init,
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(),
-            id.as_bytes(),
-        ],
-        bump,
+        address = Queue::pubkey(authority.key(), id),
         payer = payer,
         space = vec![
             8, 
@@ -33,6 +32,7 @@ pub struct QueueCreate<'info> {
     )]
     pub queue: Account<'info, Queue>,
 
+    /// The Solana system program.
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
