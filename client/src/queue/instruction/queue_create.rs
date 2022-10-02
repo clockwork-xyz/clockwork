@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_queue_program::state::{InstructionData as ClockworkInstructionData, Trigger},
+    clockwork_queue_program::objects::{InstructionData as ClockworkInstructionData, Trigger},
 };
 
 pub fn queue_create(

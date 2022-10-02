@@ -1,7 +1,7 @@
 use {
     crate::state::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue_program::state::{CrankResponse, Queue},
+    clockwork_queue_program::objects::{CrankResponse, Queue},
 };
 
 #[derive(Accounts)]

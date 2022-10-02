@@ -4,7 +4,7 @@ use {
     clockwork_client::{
         network::state::{Rotator, Snapshot},
         pool::state::Pool,
-        queue::state::Queue,
+        queue::objects::Queue,
         webhook::state::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{

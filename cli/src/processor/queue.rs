@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    clockwork_client::{queue::state::Queue, Client},
+    clockwork_client::{queue::objects::Queue, Client},
     solana_sdk::pubkey::Pubkey,
 };
 

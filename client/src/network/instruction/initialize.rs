@@ -14,7 +14,7 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
     let registry_pubkey = clockwork_network_program::state::Registry::pubkey();
     let snapshot_pubkey = clockwork_network_program::state::Snapshot::pubkey(0);
     let snapshot_queue =
-        clockwork_queue_program::state::Queue::pubkey(authority_pubkey, "snapshot".into());
+        clockwork_queue_program::objects::Queue::pubkey(authority_pubkey, "snapshot".into());
 
     Instruction {
         program_id: clockwork_network_program::ID,

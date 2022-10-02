@@ -1,25 +1,21 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-};
+use {crate::objects::*, anchor_lang::prelude::*};
 
+/// Accounts required by the `queue_withdraw` instruction.
 #[derive(Accounts)]
 #[instruction(amount: u64)]
 pub struct QueueWithdraw<'info> {
+    /// The authority (owner) of the queue.
     #[account()]
     pub authority: Signer<'info>,
 
+    /// The account to withdraw lamports to.
     #[account(mut)]
     pub pay_to: SystemAccount<'info>,
 
+    /// The queue to be.
     #[account(
         mut,
-        seeds = [
-            SEED_QUEUE, 
-            queue.authority.key().as_ref(),
-            queue.id.as_bytes(),
-        ],
-        bump,
+        address = queue.pubkey(),
         has_one = authority,
     )]
     pub queue: Account<'info, Queue>,

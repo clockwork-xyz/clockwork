@@ -1,15 +1,15 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
 
 
-/// Required accounts for the `queue_create` instruction.
+/// Accounts required by the `queue_create` instruction.
 #[derive(Accounts)]
 #[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
 pub struct QueueCreate<'info> {
-    /// The owner of the queue.
+    /// The authority (owner) of the queue.
     #[account()]
     pub authority: Signer<'info>,
 
@@ -17,15 +17,10 @@ pub struct QueueCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// The queue to create.
+    /// The queue to be created.
     #[account(
         init,
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(),
-            id.as_bytes(),
-        ],
-        bump,
+        address = Queue::pubkey(authority.key(), id),
         payer = payer,
         space = vec![
             8, 

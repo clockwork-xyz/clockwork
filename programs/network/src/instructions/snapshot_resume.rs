@@ -1,7 +1,7 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*},
-    clockwork_queue_program::state::{Queue, SEED_QUEUE},
+    anchor_lang::prelude::*,
+    clockwork_queue_program::objects::{Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
@@ -19,13 +19,10 @@ pub struct SnapshotResume<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_queue_program::ID,
-        bump,
+        address = snapshot_queue.pubkey(),
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority,
+        signer,
     )]
     pub snapshot_queue: Account<'info, Queue>,
 }
@@ -38,16 +35,14 @@ pub fn handler(ctx: Context<SnapshotResume>) -> Result<()> {
 
     // Pause the snapshot queue
     let bump = *ctx.bumps.get("authority").unwrap();
-    clockwork_queue_program::cpi::queue_resume(
-        CpiContext::new_with_signer(
-            clockwork_program.to_account_info(),
-            clockwork_queue_program::cpi::accounts::QueueResume {
-                authority: authority.to_account_info(),
-                queue: snapshot_queue.to_account_info(),
-            },
-            &[&[SEED_AUTHORITY, &[bump]]]
-        ),
-    )?;
+    clockwork_queue_program::cpi::queue_resume(CpiContext::new_with_signer(
+        clockwork_program.to_account_info(),
+        clockwork_queue_program::cpi::accounts::QueueResume {
+            authority: authority.to_account_info(),
+            queue: snapshot_queue.to_account_info(),
+        },
+        &[&[SEED_AUTHORITY, &[bump]]],
+    ))?;
 
     Ok(())
 }

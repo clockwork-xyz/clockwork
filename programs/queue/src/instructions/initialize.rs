@@ -1,10 +1,10 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
 
-/// Required accounts for the `initialize` instruction.
+/// Accounts required by the `initialize` instruction.
 #[derive(Accounts)]
 #[instruction(worker_pool: Pubkey)]
 pub struct Initialize<'info> {
@@ -15,8 +15,7 @@ pub struct Initialize<'info> {
     /// The program config account.
     #[account(
         init,
-        seeds = [SEED_CONFIG],
-        bump,
+        address = Config::pubkey(),
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]

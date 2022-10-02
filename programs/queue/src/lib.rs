@@ -1,18 +1,16 @@
-#![warn(missing_docs)]
-
 //! This program allows users to create transaction queues on Solana. Queues are dynamic, long-running
-//! transaction threads for the blockchain. They can persist across blocks and even run indefinitely.
-//! Developers can use queues to schedule transactions and automate smart-contracts without relying on centralized infrastructure.
+//! transaction threads that can persist across blocks and even run indefinitely. Developers can use queues
+//! to schedule transactions and automate smart-contracts without relying on centralized infrastructure.
 
 pub mod errors;
-pub mod state;
+pub mod objects;
 pub mod utils;
 
 mod instructions;
 
 use anchor_lang::prelude::*;
 use instructions::*;
-use state::*;
+use objects::*;
 
 declare_id!("2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT");
 
