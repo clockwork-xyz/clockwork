@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-webhook-program"
-version = "1.0.6"
+version = "1.1.0"
 description = "Clockwork webhook program"
 edition = "2021"
 license = "AGPL-3.0-or-later"
