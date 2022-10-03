@@ -40,10 +40,10 @@ pub trait FeeAccount {
     /// Initialize the account to hold fee object.
     fn init(&mut self, worker: Pubkey) -> Result<()>;
 
-    /// Claim the balance. Only callable by the worker associated with this fee account.
+    /// Claim the balance.
     fn claim_balance(&mut self, amount: u64, pay_to: &mut SystemAccount) -> Result<()>;
 
-    /// Claim the withholding. Only callable by the admin of the program.
+    /// Claim the withholding.
     fn claim_withholding(&mut self, amount: u64, pay_to: &mut SystemAccount) -> Result<()>;
 
     /// Debits lamports from the queue and increments the claimable balance.
