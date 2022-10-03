@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb");
+declare_id!("AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm");
 
 #[program]
 pub mod pool_program {

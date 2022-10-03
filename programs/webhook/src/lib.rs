@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3");
+declare_id!("73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8");
 
 #[program]
 pub mod webhook_program {

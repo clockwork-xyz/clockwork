@@ -12,7 +12,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT");
+declare_id!("AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H");
 
 /// Program for creating transaction queues on Solana.
 #[program]

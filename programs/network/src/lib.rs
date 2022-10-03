@@ -8,7 +8,7 @@ use clockwork_queue_program::objects::CrankResponse;
 use instructions::*;
 use objects::*;
 
-declare_id!("7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t");
+declare_id!("7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP");
 
 #[program]
 pub mod network_program {
