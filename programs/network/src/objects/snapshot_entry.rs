@@ -46,7 +46,7 @@ impl TryFrom<Vec<u8>> for SnapshotEntry {
 pub trait SnapshotEntryAccount {
     fn pubkey(&self) -> Pubkey;
 
-    fn new(
+    fn init(
         &mut self,
         id: u64,
         snapshot: Pubkey,
@@ -61,7 +61,7 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
         SnapshotEntry::pubkey(self.snapshot, self.id)
     }
 
-    fn new(
+    fn init(
         &mut self,
         id: u64,
         snapshot: Pubkey,

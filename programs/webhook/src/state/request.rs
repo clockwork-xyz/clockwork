@@ -59,7 +59,7 @@ impl TryFrom<Vec<u8>> for Request {
  */
 
 pub trait RequestAccount {
-    fn new(
+    fn init(
         &mut self,
         api: &Account<Api>,
         caller: Pubkey,
@@ -74,7 +74,7 @@ pub trait RequestAccount {
 }
 
 impl RequestAccount for Account<'_, Request> {
-    fn new(
+    fn init(
         &mut self,
         api: &Account<Api>,
         caller: Pubkey,

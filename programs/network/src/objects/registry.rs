@@ -80,7 +80,7 @@ impl RegistryAccount for Account<'_, Registry> {
         worker: &Signer,
     ) -> Result<()> {
         require!(!self.is_locked, ClockworkError::RegistryLocked);
-        node.new(authority, self.node_count, stake, worker)?;
+        node.init(authority, self.node_count, stake, worker)?;
         self.node_count = self.node_count.checked_add(1).unwrap();
         Ok(())
     }
@@ -88,7 +88,7 @@ impl RegistryAccount for Account<'_, Registry> {
     fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()> {
         require!(!self.is_locked, ClockworkError::RegistryLocked);
         self.lock()?;
-        snapshot.new(self.snapshot_count)?;
+        snapshot.init(self.snapshot_count)?;
         Ok(())
     }
 

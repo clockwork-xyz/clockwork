@@ -86,7 +86,7 @@ pub fn handler<'info>(
         .iter()
         .map(|k| *k)
         .collect::<Vec<Pubkey>>();
-    request.new(
+    request.init(
         api,
         caller.key(),
         current_slot,

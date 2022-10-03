@@ -53,13 +53,13 @@ pub struct ConfigSettings {
  */
 
 pub trait ConfigAccount {
-    fn new(&mut self, admin: Pubkey) -> Result<()>;
+    fn init(&mut self, admin: Pubkey) -> Result<()>;
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()>;
 }
 
 impl ConfigAccount for Account<'_, Config> {
-    fn new(&mut self, admin: Pubkey) -> Result<()> {
+    fn init(&mut self, admin: Pubkey) -> Result<()> {
         self.admin = admin;
         self.request_fee = DEFAULT_REQUEST_FEE;
         self.timeout_threshold = DEFAULT_TIMEOUT_THRESHOLD;

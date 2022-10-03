@@ -40,11 +40,11 @@ impl TryFrom<Vec<u8>> for Api {
  */
 
 pub trait ApiAccount {
-    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
+    fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
 }
 
 impl ApiAccount for Account<'_, Api> {
-    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
+    fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
         self.ack_authority = ack_authority;
         self.authority = authority;
         self.base_url = base_url;

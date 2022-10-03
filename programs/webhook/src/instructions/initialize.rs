@@ -28,7 +28,7 @@ pub fn handler<'info>(ctx: Context<Initialize>) -> Result<()> {
     let config = &mut ctx.accounts.config;
 
     // Initialize the config account
-    config.new(admin.key())?;
+    config.init(admin.key())?;
 
     Ok(())
 }
