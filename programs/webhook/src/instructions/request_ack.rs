@@ -1,5 +1,5 @@
 use {
-    crate::state::{Config, Fee, FeeAccount, Request, SEED_CONFIG, SEED_FEE, SEED_REQUEST},
+    crate::objects::{Config, Fee, FeeAccount, Request, RequestAccount},
     anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };
@@ -13,16 +13,12 @@ pub struct RequestAck<'info> {
     #[account(mut)]
     pub caller: SystemAccount<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
         init_if_needed,
-        seeds = [
-            SEED_FEE,
-            worker.key().as_ref(),
-        ],
-        bump,
+        address = Fee::pubkey(worker.key()),
         space = 8 + size_of::<Fee>(),
         payer = ack_authority
     )]
@@ -30,13 +26,7 @@ pub struct RequestAck<'info> {
 
     #[account(
         mut,
-        seeds = [
-            SEED_REQUEST,
-            request.api.as_ref(),
-            request.caller.as_ref(),
-            request.id.as_bytes().as_ref()
-        ],
-        bump,
+        address = request.pubkey(),
         close = caller,
         has_one = caller
     )]

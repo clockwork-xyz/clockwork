@@ -11,7 +11,7 @@ use {
     },
 };
 
-pub const SEED_REQUEST: &[u8] = b"request";
+const SEED_REQUEST: &[u8] = b"request";
 
 /**
  * Request
@@ -59,6 +59,8 @@ impl TryFrom<Vec<u8>> for Request {
  */
 
 pub trait RequestAccount {
+    fn pubkey(&self) -> Pubkey;
+
     fn init(
         &mut self,
         api: &Account<Api>,
@@ -74,6 +76,10 @@ pub trait RequestAccount {
 }
 
 impl RequestAccount for Account<'_, Request> {
+    fn pubkey(&self) -> Pubkey {
+        Request::pubkey(self.api, self.caller, self.id.clone())
+    }
+
     fn init(
         &mut self,
         api: &Account<Api>,

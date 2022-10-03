@@ -1,5 +1,5 @@
 use {
-    crate::state::{Fee, FeeAccount, SEED_FEE},
+    crate::objects::{Fee, FeeAccount},
     anchor_lang::prelude::*,
 };
 
@@ -14,11 +14,7 @@ pub struct FeeClaim<'info> {
 
     #[account(
         mut,
-        seeds = [
-            SEED_FEE,
-            fee.authority.as_ref(),
-        ],
-        bump,
+        address = fee.pubkey(),
         has_one = authority,
     )]
     pub fee: Account<'info, Fee>,

@@ -13,8 +13,8 @@ pub fn request_ack(
     request: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
-    let config_pubkey = clockwork_webhook_program::state::Config::pubkey();
-    let fee_pubkey = clockwork_webhook_program::state::Fee::pubkey(worker);
+    let config_pubkey = clockwork_webhook_program::objects::Config::pubkey();
+    let fee_pubkey = clockwork_webhook_program::objects::Fee::pubkey(worker);
     Instruction {
         program_id: clockwork_webhook_program::ID,
         accounts: vec![

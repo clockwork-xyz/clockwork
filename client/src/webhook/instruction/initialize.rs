@@ -8,7 +8,7 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey) -> Instruction {
-    let config_pubkey = clockwork_webhook_program::state::Config::pubkey();
+    let config_pubkey = clockwork_webhook_program::objects::Config::pubkey();
     Instruction {
         program_id: clockwork_webhook_program::ID,
         accounts: vec![

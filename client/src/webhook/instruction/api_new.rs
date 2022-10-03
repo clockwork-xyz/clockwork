@@ -13,7 +13,7 @@ pub fn api_new(
     base_url: String,
     payer: Pubkey,
 ) -> Instruction {
-    let api_pubkey = clockwork_webhook_program::state::Api::pubkey(authority, base_url.clone());
+    let api_pubkey = clockwork_webhook_program::objects::Api::pubkey(authority, base_url.clone());
     Instruction {
         program_id: clockwork_webhook_program::ID,
         accounts: vec![

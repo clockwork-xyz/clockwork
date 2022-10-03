@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_CONFIG: &[u8] = b"config";
+const SEED_CONFIG: &[u8] = b"config";
 
 /**
  * Defaults

@@ -5,7 +5,7 @@ use {
         network::objects::{Rotator, Snapshot},
         pool::objects::Pool,
         queue::objects::Queue,
-        webhook::state::Request,
+        webhook::objects::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo,

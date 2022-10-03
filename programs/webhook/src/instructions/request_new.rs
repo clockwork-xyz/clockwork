@@ -1,6 +1,6 @@
 use {
-    crate::state::{
-        Api, Config, HttpMethod, Request, RequestAccount, SEED_API, SEED_CONFIG, SEED_REQUEST,
+    crate::objects::{
+        Api, ApiAccount, Config, HttpMethod, Request, RequestAccount,
     },
     anchor_lang::{
         prelude::*,
@@ -18,20 +18,13 @@ use {
     route: String
 )]
 pub struct RequestNew<'info> {
-    #[account(
-        seeds = [
-            SEED_API,
-            api.authority.as_ref(),
-            api.base_url.as_bytes().as_ref(),
-        ],
-        bump,
-    )]
+    #[account(address = api.pubkey())]
     pub api: Account<'info, Api>,
 
     #[account()]
     pub caller: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(mut)]
@@ -42,13 +35,7 @@ pub struct RequestNew<'info> {
 
     #[account(
         init,
-        seeds = [
-            SEED_REQUEST,
-            api.key().as_ref(),
-            caller.key().as_ref(),
-            id.as_bytes().as_ref(),
-        ],
-        bump,
+        address = Request::pubkey(api.key(), caller.key(), id),
         space = 8 + size_of::<Request>(),
         payer = payer
     )]

@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_API: &[u8] = b"api";
+const SEED_API: &[u8] = b"api";
 
 /**
  * Api
@@ -40,10 +40,16 @@ impl TryFrom<Vec<u8>> for Api {
  */
 
 pub trait ApiAccount {
+    fn pubkey(&self) -> Pubkey;
+
     fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
 }
 
 impl ApiAccount for Account<'_, Api> {
+    fn pubkey(&self) -> Pubkey {
+        Api::pubkey(self.authority, self.base_url.clone())
+    }
+
     fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
         self.ack_authority = ack_authority;
         self.authority = authority;
