@@ -3,7 +3,7 @@ use {
     std::{collections::VecDeque, convert::TryFrom},
 };
 
-pub const SEED_POOL: &[u8] = b"pool";
+const SEED_POOL: &[u8] = b"pool";
 
 /**
  * Pool
@@ -44,6 +44,8 @@ pub struct PoolSettings {
  */
 
 pub trait PoolAccount {
+    fn pubkey(&self) -> Pubkey;
+
     fn init(&mut self, name: String, size: usize) -> Result<()>;
 
     fn rotate(&mut self, worker: Pubkey) -> Result<()>;
@@ -52,6 +54,10 @@ pub trait PoolAccount {
 }
 
 impl PoolAccount for Account<'_, Pool> {
+    fn pubkey(&self) -> Pubkey {
+        Pool::pubkey(self.name.clone())
+    }
+
     fn init(&mut self, name: String, size: usize) -> Result<()> {
         self.name = name;
         self.size = size;

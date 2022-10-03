@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
@@ -15,11 +15,7 @@ pub struct NodeUpdate<'info> {
 
     #[account(
         mut,
-        seeds = [
-            SEED_NODE,
-            node.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = node.pubkey(),
         has_one = authority,
     )]
     pub node: Account<'info, Node>,

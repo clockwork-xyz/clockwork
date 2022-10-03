@@ -1,11 +1,14 @@
-use {crate::state::*, anchor_lang::prelude::*};
+use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct PoolRotate<'info> {
-    #[account(seeds = [SEED_CONFIG], bump, has_one = pool_authority)]
+    #[account(
+        address = Config::pubkey(), 
+        has_one = pool_authority
+    )]
     pub config: Account<'info, Config>,
 
-    #[account(mut, seeds = [SEED_POOL, pool.name.as_bytes()], bump)]
+    #[account(mut, address = pool.pubkey())]
     pub pool: Account<'info, Pool>,
 
     #[account()]

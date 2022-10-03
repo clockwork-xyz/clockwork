@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
@@ -12,8 +12,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_CONFIG],
-        bump,
+        address = Config::pubkey(),
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]

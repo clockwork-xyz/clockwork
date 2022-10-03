@@ -1,5 +1,5 @@
 use {
-    crate::{errors::ClockworkError, state::*},
+    crate::{errors::ClockworkError, objects::*},
     anchor_lang::{
         prelude::*,
         solana_program::{instruction::Instruction, system_program},
@@ -11,31 +11,22 @@ use {
 
 #[derive(Accounts)]
 pub struct EntryCreate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(
         init,
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            snapshot.key().as_ref(),
-            snapshot.node_count.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = SnapshotEntry::pubkey(snapshot.key(), snapshot.node_count),
         payer = payer,
         space = 8 + size_of::<SnapshotEntry>(),
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
-        seeds = [
-            SEED_NODE,
-            node.id.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = node.pubkey(),
         constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
     )]
     pub node: Box<Account<'info, Node>>,
@@ -43,16 +34,12 @@ pub struct EntryCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(seeds = [SEED_REGISTRY], bump)]
+    #[account(address = Registry::pubkey())]
     pub registry: Box<Account<'info, Registry>>,
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = snapshot.pubkey(),
         constraint = snapshot.status == SnapshotStatus::InProgress @ ClockworkError::SnapshotNotInProgress,
         constraint = snapshot.node_count < registry.node_count,
     )]

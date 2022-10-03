@@ -1,8 +1,8 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
-        prelude::*, 
-        solana_program::{instruction::Instruction, system_program}
+        prelude::*,
+        solana_program::{instruction::Instruction, system_program},
     },
     anchor_spl::token::Mint,
     clockwork_queue_program::objects::{Queue, Trigger},
@@ -16,8 +16,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_AUTHORITY],
-        bump,
+        address = Authority::pubkey(),
         payer = admin,
         space = 8 + size_of::<Authority>(),
     )]
@@ -28,17 +27,15 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_CONFIG],
-        bump,
+        address = Config::pubkey(),
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]
     pub config: Account<'info, Config>,
-    
+
     #[account(
         init,
-        seeds = [SEED_ROTATOR],
-        bump,
+        address = Rotator::pubkey(),
         payer = admin,
         space = 8 + size_of::<Rotator>(),
     )]
@@ -49,8 +46,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_REGISTRY],
-        bump,
+        address = Registry::pubkey(),
         payer = admin,
         space = 8 + size_of::<Registry>(),
     )]
@@ -58,11 +54,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [
-            SEED_SNAPSHOT, 
-            (0 as u64).to_be_bytes().as_ref()
-        ],
-        bump,
+        address = Snapshot::pubkey(0),
         payer = admin,
         space = 8 + size_of::<Snapshot>(),
     )]
@@ -72,7 +64,7 @@ pub struct Initialize<'info> {
     pub snapshot_queue: SystemAccount<'info>,
 
     #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,    
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -117,13 +109,15 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[bump]]]
+            &[&[SEED_AUTHORITY, &[bump]]],
         ),
         "snapshot".into(),
         snapshot_kickoff_ix.into(),
-        Trigger::Cron { schedule: "0 * * * * * *".into(), skippable: true }
+        Trigger::Cron {
+            schedule: "0 * * * * * *".into(),
+            skippable: true,
+        },
     )?;
 
     Ok(())
 }
-

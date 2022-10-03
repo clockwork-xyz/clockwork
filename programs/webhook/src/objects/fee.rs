@@ -5,7 +5,7 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_FEE: &[u8] = b"fee";
+const SEED_FEE: &[u8] = b"fee";
 
 /**
  * Fee
@@ -37,7 +37,9 @@ impl TryFrom<Vec<u8>> for Fee {
  */
 
 pub trait FeeAccount {
-    fn new(&mut self, authority: Pubkey) -> Result<()>;
+    fn pubkey(&self) -> Pubkey;
+
+    fn init(&mut self, authority: Pubkey) -> Result<()>;
 
     fn claim_admin_balance(&mut self, amount: u64, pay_to: &mut SystemAccount) -> Result<()>;
 
@@ -49,7 +51,11 @@ pub trait FeeAccount {
 }
 
 impl FeeAccount for Account<'_, Fee> {
-    fn new(&mut self, authority: Pubkey) -> Result<()> {
+    fn pubkey(&self) -> Pubkey {
+        Fee::pubkey(self.authority)
+    }
+
+    fn init(&mut self, authority: Pubkey) -> Result<()> {
         self.authority = authority;
         self.admin_balance = 0;
         self.worker_balance = 0;

@@ -1,7 +1,7 @@
 use anchor_spl::associated_token::get_associated_token_address;
 
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
     clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
     std::mem::size_of,
@@ -9,25 +9,21 @@ use {
 
 #[derive(Accounts)]
 pub struct SnapshotCreate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, seeds = [SEED_REGISTRY], bump)]
+    #[account(mut, address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
 
     #[account(
         init,
-        seeds = [
-            SEED_SNAPSHOT,
-            registry.snapshot_count.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = Snapshot::pubkey(registry.snapshot_count),
         space = 8 + size_of::<Snapshot>(),
         payer = payer
     )]

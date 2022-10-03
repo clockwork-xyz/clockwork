@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::prelude::*,
     clockwork_queue_program::objects::{Queue, QueueAccount},
 };
@@ -9,13 +9,13 @@ pub struct SnapshotPause<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Account<'info, Authority>,
 
     #[account(address = clockwork_queue_program::ID)]
     pub clockwork_program: Program<'info, clockwork_queue_program::program::QueueProgram>,
 
-    #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
+    #[account(address = Config::pubkey(), has_one = admin)]
     pub config: Account<'info, Config>,
 
     #[account(

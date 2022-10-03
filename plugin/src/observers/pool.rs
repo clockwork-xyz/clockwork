@@ -2,8 +2,8 @@ use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
     anchor_lang::prelude::AccountMeta,
     clockwork_client::{
-        network::state::{Node, Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
-        pool::state::Pool,
+        network::objects::{Node, Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
+        pool::objects::Pool,
         Client as ClockworkClient,
     },
     log::info,
@@ -204,9 +204,9 @@ impl PoolObserver {
             Err(i) => i - 1,
             Ok(i) => i,
         } as u64;
-        let snapshot_pubkey = clockwork_client::network::state::Snapshot::pubkey(r_snapshot.id);
+        let snapshot_pubkey = clockwork_client::network::objects::Snapshot::pubkey(r_snapshot.id);
         let entry_pubkey =
-            clockwork_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
+            clockwork_client::network::objects::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
         let entry = snapshot_entries.get(entry_id as usize).unwrap();
         let node = Node::pubkey(entry_id);
         let ix = &mut clockwork_client::network::instruction::pools_rotate(

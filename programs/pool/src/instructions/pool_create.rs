@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
@@ -7,7 +7,10 @@ use {
 #[derive(Accounts)]
 #[instruction(name: String, size: usize)]
 pub struct PoolCreate<'info> {
-    #[account(seeds = [SEED_CONFIG], bump, has_one = pool_authority)]
+    #[account(
+        address = Config::pubkey(), 
+        has_one = pool_authority
+    )]
     pub config: Account<'info, Config>,
 
     #[account(mut)]
@@ -15,8 +18,7 @@ pub struct PoolCreate<'info> {
 
     #[account(
         init,
-        seeds = [SEED_POOL, name.as_bytes()],
-        bump,
+        address = Pool::pubkey(name),
         payer = payer,
         space = 8 + size_of::<Pool>() + (size_of::<Pubkey>() * size) + name.as_bytes().len(),
     )]

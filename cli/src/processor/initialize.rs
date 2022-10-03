@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    clockwork_client::{pool::state::Pool, Client},
+    clockwork_client::{pool::objects::Pool, Client},
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
 };
 
@@ -23,7 +23,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
         .unwrap();
 
     // Airdrop some lamports to the network's snapshot queue
-    let network_authority_pubkey = clockwork_client::network::state::Authority::pubkey();
+    let network_authority_pubkey = clockwork_client::network::objects::Authority::pubkey();
     let snapshot_queue_pubkey = clockwork_client::queue::objects::Queue::pubkey(
         network_authority_pubkey,
         "snapshot".into(),

@@ -1,46 +1,14 @@
-use clockwork_client::network::state::NodeSettings;
+use clockwork_client::network::objects::NodeSettings;
 
 use {
     crate::errors::CliError,
-    clockwork_client::network::state::{Config, Node, Registry, Snapshot, SnapshotEntry},
+    clockwork_client::network::objects::{Config, Node, Registry, Snapshot, SnapshotEntry},
     clockwork_client::Client,
     solana_sdk::{
         pubkey::Pubkey,
         signature::{Keypair, Signer},
     },
 };
-
-// pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
-//     let node = client
-//         .get::<clockwork_client::network::state::Node>(&address)
-//         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-//     println!("{:#?}", node);
-//     Ok(())
-// }
-
-// pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
-//     let ix = clockwork_client::network::instruction::node_add_pool(
-//         client.payer_pubkey(),
-//         node_pubkey,
-//         pool_pubkey,
-//     );
-//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-//     Ok(())
-// }
-
-// pub fn drop_pool(
-//     client: &Client,
-//     node_pubkey: Pubkey,
-//     pool_pubkey: Pubkey,
-// ) -> Result<(), CliError> {
-//     let ix = clockwork_client::network::instruction::node_drop_pool(
-//         client.payer_pubkey(),
-//         node_pubkey,
-//         pool_pubkey,
-//     );
-//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-//     Ok(())
-// }
 
 pub fn update(
     client: &Client,

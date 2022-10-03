@@ -1,5 +1,5 @@
 use {
-    crate::state::{Config, ConfigAccount, SEED_CONFIG},
+    crate::objects::{Config, ConfigAccount},
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
@@ -11,8 +11,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_CONFIG],
-        bump,
+        address = Config::pubkey(),
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]
@@ -28,7 +27,7 @@ pub fn handler<'info>(ctx: Context<Initialize>) -> Result<()> {
     let config = &mut ctx.accounts.config;
 
     // Initialize the config account
-    config.new(admin.key())?;
+    config.init(admin.key())?;
 
     Ok(())
 }

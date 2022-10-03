@@ -6,7 +6,7 @@ use anchor_lang::{
     },
     InstructionData,
 };
-use clockwork_network_program::state::NodeSettings;
+use clockwork_network_program::objects::NodeSettings;
 
 pub fn node_update(authority: Pubkey, node: Pubkey, settings: NodeSettings) -> Instruction {
     Instruction {

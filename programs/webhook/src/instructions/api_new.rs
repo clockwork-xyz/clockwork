@@ -1,5 +1,5 @@
 use {
-    crate::state::{Api, ApiAccount, SEED_API},
+    crate::objects::{Api, ApiAccount},
     anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };
@@ -12,12 +12,7 @@ pub struct ApiNew<'info> {
 
     #[account(
         init,
-        seeds = [
-            SEED_API,
-            authority.key().as_ref(),
-            base_url.as_bytes().as_ref(),
-        ],
-        bump,
+        address = Api::pubkey(authority.key(), base_url),
         payer = payer,
         space = 8 + size_of::<Api>() + base_url.len(),
     )]
@@ -42,7 +37,7 @@ pub fn handler<'info>(ctx: Context<ApiNew>, base_url: String) -> Result<()> {
     // TODO Validate base_url
 
     // Initialize the api account
-    api.new(ack_authority.key(), authority.key(), base_url)?;
+    api.init(ack_authority.key(), authority.key(), base_url)?;
 
     Ok(())
 }

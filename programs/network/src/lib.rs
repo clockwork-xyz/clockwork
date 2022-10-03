@@ -1,15 +1,14 @@
 pub mod errors;
-pub mod id;
-pub mod state;
+pub mod objects;
 
 mod instructions;
-
-pub use id::ID;
 
 use anchor_lang::prelude::*;
 use clockwork_queue_program::objects::CrankResponse;
 use instructions::*;
-use state::*;
+use objects::*;
+
+declare_id!("7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t");
 
 #[program]
 pub mod network_program {

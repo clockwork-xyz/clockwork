@@ -46,7 +46,9 @@ pub struct NodeSettings {
  */
 
 pub trait NodeAccount {
-    fn new(
+    fn pubkey(&self) -> Pubkey;
+
+    fn init(
         &mut self,
         authority: &mut Signer,
         id: u64,
@@ -58,7 +60,11 @@ pub trait NodeAccount {
 }
 
 impl NodeAccount for Account<'_, Node> {
-    fn new(
+    fn pubkey(&self) -> Pubkey {
+        Node::pubkey(self.id)
+    }
+
+    fn init(
         &mut self,
         authority: &mut Signer,
         id: u64,
