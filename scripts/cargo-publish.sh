@@ -7,11 +7,11 @@ sleep 25
 # Publish programs
 cargo publish -p clockwork-pool
 sleep 25
-cargo publish -p clockwork-http
-sleep 25
 cargo publish -p clockwork-queue
 sleep 25
 cargo publish -p clockwork-network
+sleep 25
+cargo publish -p clockwork-webhook
 sleep 25
 
 # Publish downstream bins and libs
