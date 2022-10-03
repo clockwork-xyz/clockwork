@@ -1,7 +1,7 @@
 use {
     crate::{
         errors::ClockworkError,
-        state::*
+        objects::*
     },
     anchor_lang::prelude::*,
     clockwork_pool_program::cpi::accounts::PoolRotate
@@ -9,33 +9,32 @@ use {
 
 #[derive(Accounts)]
 pub struct PoolsRotate<'info> {
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            entry.snapshot.as_ref(),
-            entry.id.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = entry.pubkey(),
         has_one = snapshot,
         has_one = worker,
         constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap() @ ClockworkError::InvalidSnapshotEntry,
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(seeds = [SEED_NODE, node.id.to_be_bytes().as_ref()], bump, constraint = node.id == entry.id)]
+    #[account(
+        address = node.pubkey(), 
+        constraint = node.id == entry.id
+    )]
     pub node: Account<'info, Node>,
 
     #[account(address = clockwork_pool_program::ID)]
     pub pool_program: Program<'info, clockwork_pool_program::program::PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], bump, seeds::program = clockwork_pool_program::ID)]
+    #[account(seeds = [clockwork_pool_program::state::SEED_CONFIG], bump, seeds::program = clockwork_pool_program::ID)]
     pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
 
     #[account(
-        mut, seeds = [SEED_ROTATOR], bump, 
+        mut,
+        address = Rotator::pubkey(), 
         constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub rotator: Account<'info, Rotator>,
@@ -44,7 +43,7 @@ pub struct PoolsRotate<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        seeds = [SEED_SNAPSHOT, snapshot.id.to_be_bytes().as_ref()], bump,
+        address = snapshot.pubkey(),
         constraint = snapshot.status == SnapshotStatus::Current @ ClockworkError::SnapshotNotCurrent
     )]
     pub snapshot: Account<'info, Snapshot>,

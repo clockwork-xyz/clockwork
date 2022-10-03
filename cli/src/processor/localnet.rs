@@ -1,12 +1,12 @@
-use std::collections::HashSet;
-
-use clockwork_client::{network::state::NodeSettings, pool::state::Pool};
-
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::{network::state::Node, Client},
+    clockwork_client::{
+        network::objects::{Node, NodeSettings},
+        pool::state::Pool,
+        Client,
+    },
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -19,7 +19,10 @@ use {
         instruction::{initialize_mint, mint_to},
         state::Mint,
     },
-    std::process::{Child, Command},
+    std::{
+        collections::HashSet,
+        process::{Child, Command},
+    },
 };
 
 pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {

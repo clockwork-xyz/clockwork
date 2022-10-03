@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
+const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 
 /**
  * SnapshotEntry
@@ -44,6 +44,8 @@ impl TryFrom<Vec<u8>> for SnapshotEntry {
  */
 
 pub trait SnapshotEntryAccount {
+    fn pubkey(&self) -> Pubkey;
+
     fn new(
         &mut self,
         id: u64,
@@ -55,6 +57,10 @@ pub trait SnapshotEntryAccount {
 }
 
 impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
+    fn pubkey(&self) -> Pubkey {
+        SnapshotEntry::pubkey(self.snapshot, self.id)
+    }
+
     fn new(
         &mut self,
         id: u64,

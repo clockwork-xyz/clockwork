@@ -2,14 +2,14 @@ use {
     super::{Node, Snapshot},
     crate::{
         errors::ClockworkError,
-        state::{NodeAccount, SnapshotAccount, SnapshotStatus},
+        objects::{NodeAccount, SnapshotAccount, SnapshotStatus},
     },
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
-pub const SEED_REGISTRY: &[u8] = b"registry";
+const SEED_REGISTRY: &[u8] = b"registry";
 
 /**
  * Registry

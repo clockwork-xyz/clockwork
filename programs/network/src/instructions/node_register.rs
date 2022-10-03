@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::{system_program, sysvar},
@@ -19,17 +19,12 @@ pub struct NodeRegister<'info> {
     #[account(mut, constraint = authority.key() != worker.key())]
     pub authority: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(
         init,
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            snapshot.key().as_ref(),
-            snapshot.node_count.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = SnapshotEntry::pubkey(snapshot.key(), snapshot.node_count),
         payer = authority,
         space = 8 + size_of::<SnapshotEntry>(),
     )]
@@ -40,11 +35,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         init,
-        seeds = [
-            SEED_NODE,
-            registry.node_count.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = Node::pubkey(registry.node_count),
         payer = authority,
         space = 8 + size_of::<Node>(),
     )]
@@ -52,8 +43,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         mut, 
-        seeds = [SEED_REGISTRY], 
-        bump,
+        address = Registry::pubkey(),
         constraint = !registry.is_locked
     )]
     pub registry: Account<'info, Registry>,
@@ -63,11 +53,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = snapshot.pubkey(),
         constraint = snapshot.status == SnapshotStatus::Current
     )]
     pub snapshot: Account<'info, Snapshot>,

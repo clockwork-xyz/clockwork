@@ -1,6 +1,6 @@
 use {
     super::Snapshot,
-    crate::state::SnapshotEntry,
+    crate::objects::SnapshotEntry,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
         collections::hash_map::DefaultHasher,

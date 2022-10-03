@@ -1,33 +1,24 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
     clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
 pub struct EntryClose<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Account<'info, Authority>,
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            entry.snapshot.as_ref(),
-            entry.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = entry.pubkey(),
         has_one = snapshot,
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = snapshot.pubkey(),
         constraint = snapshot.status == SnapshotStatus::Closing,
     )]
     pub snapshot: Account<'info, Snapshot>,

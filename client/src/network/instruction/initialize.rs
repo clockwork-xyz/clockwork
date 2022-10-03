@@ -8,11 +8,11 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
-    let authority_pubkey = clockwork_network_program::state::Authority::pubkey();
-    let config_pubkey = clockwork_network_program::state::Config::pubkey();
-    let rotator_pubkey = clockwork_network_program::state::Rotator::pubkey();
-    let registry_pubkey = clockwork_network_program::state::Registry::pubkey();
-    let snapshot_pubkey = clockwork_network_program::state::Snapshot::pubkey(0);
+    let authority_pubkey = clockwork_network_program::objects::Authority::pubkey();
+    let config_pubkey = clockwork_network_program::objects::Config::pubkey();
+    let rotator_pubkey = clockwork_network_program::objects::Rotator::pubkey();
+    let registry_pubkey = clockwork_network_program::objects::Registry::pubkey();
+    let snapshot_pubkey = clockwork_network_program::objects::Snapshot::pubkey(0);
     let snapshot_queue =
         clockwork_queue_program::objects::Queue::pubkey(authority_pubkey, "snapshot".into());
 

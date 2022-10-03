@@ -1,16 +1,16 @@
-use clockwork_client::network::state::{Registry, Snapshot, SnapshotEntry};
+use clockwork_client::network::objects::{Registry, Snapshot, SnapshotEntry};
 use solana_sdk::pubkey::Pubkey;
 
 use {crate::errors::CliError, clockwork_client::Client};
 
 pub fn get(client: &Client, entry_id: Option<u64>) -> Result<(), CliError> {
-    let registry_pubkey = clockwork_client::network::state::Registry::pubkey();
+    let registry_pubkey = clockwork_client::network::objects::Registry::pubkey();
     let registry = client
         .get::<Registry>(&registry_pubkey)
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     let snapshot_pubkey =
-        clockwork_client::network::state::Snapshot::pubkey(registry.snapshot_count - 1);
+        clockwork_client::network::objects::Snapshot::pubkey(registry.snapshot_count - 1);
     let snapshot = client
         .get::<Snapshot>(&snapshot_pubkey)
         .map_err(|_err| CliError::AccountDataNotParsable(snapshot_pubkey.to_string()))?;
@@ -33,7 +33,7 @@ pub fn get_snapshot_entry(
     entry_id: u64,
 ) -> Result<(), CliError> {
     let entry_pubkey =
-        clockwork_client::network::state::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
+        clockwork_client::network::objects::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
 
     let entry = client
         .get::<SnapshotEntry>(&entry_pubkey)

@@ -2,7 +2,7 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::state::{Rotator, Snapshot},
+        network::objects::{Rotator, Snapshot},
         pool::state::Pool,
         queue::objects::Queue,
         webhook::state::Request,

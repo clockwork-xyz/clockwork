@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::prelude::*,
     anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
@@ -10,15 +10,11 @@ pub struct NodeUnstake<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
-        seeds = [
-            SEED_NODE,
-            node.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = node.pubkey(),
         has_one = authority,
     )]
     pub node: Account<'info, Node>,

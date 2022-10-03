@@ -1,15 +1,15 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction, system_program},
     clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
 pub struct SnapshotKickoff<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(mut, seeds = [SEED_REGISTRY], bump)]
+    #[account(mut, address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
 
     #[account(

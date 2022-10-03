@@ -23,7 +23,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
         .unwrap();
 
     // Airdrop some lamports to the network's snapshot queue
-    let network_authority_pubkey = clockwork_client::network::state::Authority::pubkey();
+    let network_authority_pubkey = clockwork_client::network::objects::Authority::pubkey();
     let snapshot_queue_pubkey = clockwork_client::queue::objects::Queue::pubkey(
         network_authority_pubkey,
         "snapshot".into(),

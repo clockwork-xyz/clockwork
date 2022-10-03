@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
@@ -14,7 +14,7 @@ pub struct PoolCreate<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
+    #[account(address = Config::pubkey(), has_one = admin)]
     pub config: Account<'info, Config>,
 
     #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool_program::ID, bump)]
@@ -23,10 +23,10 @@ pub struct PoolCreate<'info> {
     #[account(address = clockwork_pool_program::ID)]
     pub pool_program: Program<'info, PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], seeds::program = clockwork_pool_program::ID, bump)]
+    #[account(seeds = [clockwork_pool_program::state::SEED_CONFIG], seeds::program = clockwork_pool_program::ID, bump)]
     pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
 
-    #[account(mut, seeds = [SEED_ROTATOR], bump)]
+    #[account(mut, address = Rotator::pubkey())]
     pub rotator: Account<'info, Rotator>,
 
     #[account(address = system_program::ID)]

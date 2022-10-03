@@ -1,12 +1,12 @@
 use {
     super::{Node, SnapshotEntry},
-    crate::state::SnapshotEntryAccount,
+    crate::objects::SnapshotEntryAccount,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
-pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
+const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
 /**
  * Snapshot
@@ -39,6 +39,8 @@ impl TryFrom<Vec<u8>> for Snapshot {
  */
 
 pub trait SnapshotAccount {
+    fn pubkey(&self) -> Pubkey;
+
     fn new(&mut self, id: u64) -> Result<()>;
 
     fn capture(
@@ -50,6 +52,10 @@ pub trait SnapshotAccount {
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
+    fn pubkey(&self) -> Pubkey {
+        Snapshot::pubkey(self.id)
+    }
+
     fn new(&mut self, id: u64) -> Result<()> {
         self.id = id;
         self.node_count = 0;

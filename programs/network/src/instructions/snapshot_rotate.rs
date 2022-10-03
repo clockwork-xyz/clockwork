@@ -1,39 +1,32 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
     clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Account<'info, Authority>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            current_snapshot.id.to_be_bytes().as_ref()
-        ],
-        bump,
+        address = current_snapshot.pubkey(),
         constraint = current_snapshot.status == SnapshotStatus::Current
     )]
     pub current_snapshot: Account<'info, Snapshot>,
 
     #[account(
         mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            current_snapshot.id.checked_add(1).unwrap().to_be_bytes().as_ref()
-        ],
-        bump,
+        address = next_snapshot.pubkey(),
+        constraint = current_snapshot.id.checked_add(1).unwrap().eq(&next_snapshot.id)
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
-    #[account(mut, seeds = [SEED_REGISTRY], bump)]
+    #[account(mut, address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
 
     #[account(
