@@ -3,7 +3,7 @@ use {
     anchor_lang::prelude::AccountMeta,
     clockwork_client::{
         network::objects::{Node, Rotator, Snapshot, SnapshotEntry, SnapshotStatus},
-        pool::state::Pool,
+        pool::objects::Pool,
         Client as ClockworkClient,
     },
     log::info,

@@ -6,7 +6,7 @@ use {
         },
         system_program, InstructionData,
     },
-    clockwork_pool_program::state::Pool,
+    clockwork_pool_program::objects::Pool,
     clockwork_queue_program::objects::{Config, Fee},
 };
 

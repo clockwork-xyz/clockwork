@@ -17,7 +17,7 @@ pub fn request_new(
     route: String,
 ) -> Instruction {
     let config_pubkey = clockwork_webhook_program::state::Config::pubkey();
-    let pool_pubkey = clockwork_pool_program::state::Pool::pubkey("http_workers".into());
+    let pool_pubkey = clockwork_pool_program::objects::Pool::pubkey("http_workers".into());
     let request_pubkey = clockwork_webhook_program::state::Request::pubkey(api, caller, id.clone());
     Instruction {
         program_id: clockwork_webhook_program::ID,

@@ -29,8 +29,8 @@ pub struct PoolsRotate<'info> {
     #[account(address = clockwork_pool_program::ID)]
     pub pool_program: Program<'info, clockwork_pool_program::program::PoolProgram>,
 
-    #[account(seeds = [clockwork_pool_program::state::SEED_CONFIG], bump, seeds::program = clockwork_pool_program::ID)]
-    pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
+    #[account(address = clockwork_pool_program::objects::Config::pubkey())]
+    pub pool_program_config: Account<'info, clockwork_pool_program::objects::Config>,
 
     #[account(
         mut,

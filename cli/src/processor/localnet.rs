@@ -4,7 +4,7 @@ use {
     anyhow::Result,
     clockwork_client::{
         network::objects::{Node, NodeSettings},
-        pool::state::Pool,
+        pool::objects::Pool,
         Client,
     },
     solana_sdk::{

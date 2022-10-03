@@ -3,7 +3,7 @@ use {
     bincode::deserialize,
     clockwork_client::{
         network::objects::{Rotator, Snapshot},
-        pool::state::Pool,
+        pool::objects::Pool,
         queue::objects::Queue,
         webhook::state::Request,
     },

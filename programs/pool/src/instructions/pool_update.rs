@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
@@ -11,13 +11,16 @@ use {
 #[derive(Accounts)]
 #[instruction(settings: PoolSettings)]
 pub struct PoolUpdate<'info> {
-    #[account(seeds = [SEED_CONFIG], bump, has_one = pool_authority)]
+    #[account(
+        address = Config::pubkey(), 
+        has_one = pool_authority
+    )]
     pub config: Account<'info, Config>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, seeds = [SEED_POOL, pool.name.as_bytes()], bump)]
+    #[account(mut, address = pool.pubkey())]
     pub pool: Account<'info, Pool>,
 
     #[account()]

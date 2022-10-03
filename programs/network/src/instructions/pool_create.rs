@@ -5,7 +5,7 @@ use {
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    clockwork_pool_program::{program::PoolProgram, state::SEED_POOL},
+    clockwork_pool_program::{objects::Pool, program::PoolProgram},
 };
 
 #[derive(Accounts)]
@@ -17,14 +17,14 @@ pub struct PoolCreate<'info> {
     #[account(address = Config::pubkey(), has_one = admin)]
     pub config: Account<'info, Config>,
 
-    #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool_program::ID, bump)]
+    #[account(address = Pool::pubkey(name))]
     pub pool: SystemAccount<'info>,
 
     #[account(address = clockwork_pool_program::ID)]
     pub pool_program: Program<'info, PoolProgram>,
 
-    #[account(seeds = [clockwork_pool_program::state::SEED_CONFIG], seeds::program = clockwork_pool_program::ID, bump)]
-    pub pool_program_config: Account<'info, clockwork_pool_program::state::Config>,
+    #[account(address = clockwork_pool_program::objects::Config::pubkey())]
+    pub pool_program_config: Account<'info, clockwork_pool_program::objects::Config>,
 
     #[account(mut, address = Rotator::pubkey())]
     pub rotator: Account<'info, Rotator>,
