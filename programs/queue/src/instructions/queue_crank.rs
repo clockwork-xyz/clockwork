@@ -146,7 +146,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
                 // If the schedule is marked as skippable, set the started_at of the exec context
                 // to be the threshold moment just before the current timestamp.
-                let started_at = if skippable {
+                let started_at = if skippable && current_timestamp > threshold_timestamp {
                     prev_timestamp(current_timestamp, schedule)
                         .ok_or(ClockworkError::InvalidTrigger)?
                 } else {
