@@ -9,7 +9,7 @@ pub struct SnapshotKickoff<'info> {
     #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(mut, address = Registry::pubkey())]
+    #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
 
     #[account(

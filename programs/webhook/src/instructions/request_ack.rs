@@ -1,5 +1,5 @@
 use {
-    crate::objects::{Config, Fee, FeeAccount, Request, RequestAccount, SEED_FEE},
+    crate::objects::{Config, Fee, FeeAccount, Request, SEED_FEE, SEED_REQUEST},
     anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };
@@ -30,7 +30,13 @@ pub struct RequestAck<'info> {
 
     #[account(
         mut,
-        address = request.pubkey(),
+        seeds = [
+            SEED_REQUEST,
+            request.api.as_ref(),
+            request.caller.as_ref(),
+            request.id.as_bytes(),
+        ],
+        bump,
         close = caller,
         has_one = caller
     )]

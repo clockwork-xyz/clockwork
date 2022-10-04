@@ -3,13 +3,10 @@ use {crate::objects::*, anchor_lang::prelude::*};
 #[derive(Accounts)]
 #[instruction(settings: ConfigSettings)]
 pub struct AdminConfigUpdate<'info> {
-    #[account(
-        mut,
-        address = config.admin,
-    )]
+    #[account(mut, address = config.admin)]
     pub admin: Signer<'info>,
 
-    #[account(mut, address = Config::pubkey())]
+    #[account(mut, seeds = [SEED_CONFIG], bump)]
     pub config: Account<'info, Config>,
 }
 

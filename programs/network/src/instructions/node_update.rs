@@ -15,7 +15,11 @@ pub struct NodeUpdate<'info> {
 
     #[account(
         mut,
-        address = node.pubkey(),
+        seeds = [
+            SEED_NODE,
+            node.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         has_one = authority,
     )]
     pub node: Account<'info, Node>,

@@ -10,7 +10,12 @@ pub struct QueuePause<'info> {
     /// The queue to be paused.
     #[account(
         mut,
-        address = queue.pubkey(),
+        seeds = [
+            SEED_QUEUE,
+            queue.authority.as_ref(),
+            queue.id.as_bytes(),
+        ],
+        bump,
         has_one = authority
     )]
     pub queue: Account<'info, Queue>,

@@ -11,21 +11,30 @@ pub struct EntryClose<'info> {
 
     #[account(
         mut,
-        address = entry.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT_ENTRY,
+            entry.snapshot.as_ref(),
+            entry.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         has_one = snapshot,
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
         mut,
-        address = snapshot.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT,
+            snapshot.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         constraint = snapshot.status == SnapshotStatus::Closing,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(
         mut, 
-        address = snapshot_queue.pubkey(), 
+        address = snapshot_queue.pubkey(),
         constraint = snapshot_queue.id.eq("snapshot"),
         has_one = authority, 
     )]

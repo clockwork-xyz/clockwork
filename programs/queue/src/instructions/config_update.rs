@@ -9,7 +9,12 @@ pub struct ConfigUpdate<'info> {
     pub admin: Signer<'info>,
 
     /// The program config account.
-    #[account(mut, address = Config::pubkey(), has_one = admin)]
+    #[account(
+        mut, 
+        seeds = [SEED_CONFIG],
+        bump,
+        has_one = admin
+    )]
     pub config: Account<'info, Config>,
 }
 

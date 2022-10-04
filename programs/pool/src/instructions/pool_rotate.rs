@@ -8,7 +8,14 @@ pub struct PoolRotate<'info> {
     )]
     pub config: Account<'info, Config>,
 
-    #[account(mut, address = pool.pubkey())]
+    #[account(
+        mut,
+        seeds = [
+            SEED_POOL,
+            pool.name.as_bytes(),
+        ],
+        bump,
+    )]
     pub pool: Account<'info, Pool>,
 
     #[account()]

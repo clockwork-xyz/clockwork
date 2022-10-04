@@ -11,7 +11,11 @@ pub struct SnapshotClose<'info> {
 
     #[account(
         mut,
-        address = snapshot.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT,
+            snapshot.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         constraint = snapshot.status == SnapshotStatus::Archived
     )]
     pub snapshot: Account<'info, Snapshot>,

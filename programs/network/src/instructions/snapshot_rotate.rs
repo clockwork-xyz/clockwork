@@ -14,19 +14,27 @@ pub struct SnapshotRotate<'info> {
 
     #[account(
         mut,
-        address = current_snapshot.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT,
+            current_snapshot.id.to_be_bytes().as_ref()
+        ],
+        bump,
         constraint = current_snapshot.status == SnapshotStatus::Current
     )]
     pub current_snapshot: Account<'info, Snapshot>,
 
     #[account(
         mut,
-        address = next_snapshot.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT,
+            next_snapshot.id.to_be_bytes().as_ref()
+        ],
+        bump,
         constraint = current_snapshot.id.checked_add(1).unwrap().eq(&next_snapshot.id)
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
-    #[account(mut, address = Registry::pubkey())]
+    #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
 
     #[account(

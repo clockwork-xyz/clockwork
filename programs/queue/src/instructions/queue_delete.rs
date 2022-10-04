@@ -14,7 +14,12 @@ pub struct QueueDelete<'info> {
     /// The queue to be delete.
     #[account(
         mut,
-        address = queue.pubkey(),
+        seeds = [
+            SEED_QUEUE,
+            queue.authority.as_ref(),
+            queue.id.as_bytes(),
+        ],
+        bump,
         has_one = authority,
         close = close_to
     )]

@@ -18,7 +18,7 @@ pub struct SnapshotCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, address = Registry::pubkey())]
+    #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
 
     #[account(

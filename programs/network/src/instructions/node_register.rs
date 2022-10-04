@@ -52,7 +52,8 @@ pub struct NodeRegister<'info> {
 
     #[account(
         mut, 
-        address = Registry::pubkey(),
+        seeds = [SEED_REGISTRY],
+        bump,
         constraint = !registry.is_locked
     )]
     pub registry: Account<'info, Registry>,
@@ -62,7 +63,11 @@ pub struct NodeRegister<'info> {
 
     #[account(
         mut,
-        address = snapshot.pubkey(),
+        seeds = [
+            SEED_SNAPSHOT,
+            snapshot.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         constraint = snapshot.status == SnapshotStatus::Current
     )]
     pub snapshot: Account<'info, Snapshot>,
