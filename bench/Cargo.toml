@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-bench"
-version = "1.1.0"
+version = "1.1.1"
 description = "A benchmarking tool for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -14,8 +14,8 @@ keywords = ["solana"]
 base64 = "0.13.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 clap = { version = "3.1.2", features = ["derive"] }
-clockwork-client = { path = "../client", version = "1.1.0" }
-clockwork-cron = { path = "../cron", version = "1.1.0" }
+clockwork-client = { path = "../client", version = "1.1.1" }
+clockwork-cron = { path = "../cron", version = "1.1.1" }
 serde_json = "1.0.79"
 serde = { version = "1.0.136", features = ["derive"] }
 solana-clap-utils = "1.10.34"
