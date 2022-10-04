@@ -10,7 +10,13 @@ pub struct NodeStake<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = node.pubkey())]
+    #[account(
+        seeds = [
+            SEED_NODE,
+            node.id.to_be_bytes().as_ref(),
+        ],
+        bump
+    )]
     pub node: Account<'info, Node>,
 
     #[account(

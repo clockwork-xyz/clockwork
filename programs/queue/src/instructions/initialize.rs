@@ -15,7 +15,8 @@ pub struct Initialize<'info> {
     /// The program config account.
     #[account(
         init,
-        address = Config::pubkey(),
+        seeds = [SEED_CONFIG],
+        bump,
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]

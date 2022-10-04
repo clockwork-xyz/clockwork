@@ -20,7 +20,12 @@ pub struct QueueCreate<'info> {
     /// The queue to be created.
     #[account(
         init,
-        address = Queue::pubkey(authority.key(), id),
+        seeds = [
+            SEED_QUEUE,
+            authority.key().as_ref(),
+            id.as_bytes(),
+        ],
+        bump,
         payer = payer,
         space = vec![
             8, 

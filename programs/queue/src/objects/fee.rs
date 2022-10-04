@@ -4,7 +4,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_FEE: &[u8] = b"fee";
+pub const SEED_FEE: &[u8] = b"fee";
 
 /// Escrows the lamport balance owed to a particular worker.
 #[account]

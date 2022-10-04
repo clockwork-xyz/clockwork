@@ -23,7 +23,11 @@ pub struct SnapshotCreate<'info> {
 
     #[account(
         init,
-        address = Snapshot::pubkey(registry.snapshot_count),
+        seeds = [
+            SEED_SNAPSHOT,
+            registry.snapshot_count.to_be_bytes().as_ref(),
+        ],
+        bump,
         space = 8 + size_of::<Snapshot>(),
         payer = payer
     )]

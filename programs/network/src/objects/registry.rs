@@ -9,7 +9,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_REGISTRY: &[u8] = b"registry";
+pub const SEED_REGISTRY: &[u8] = b"registry";
 
 /**
  * Registry

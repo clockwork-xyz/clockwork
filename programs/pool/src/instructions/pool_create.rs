@@ -18,7 +18,11 @@ pub struct PoolCreate<'info> {
 
     #[account(
         init,
-        address = Pool::pubkey(name),
+        seeds = [
+            SEED_POOL,
+            name.as_bytes(),
+        ],
+        bump,
         payer = payer,
         space = 8 + size_of::<Pool>() + (size_of::<Pubkey>() * size) + name.as_bytes().len(),
     )]

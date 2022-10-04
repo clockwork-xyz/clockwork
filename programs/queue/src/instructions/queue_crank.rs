@@ -26,7 +26,11 @@ pub struct QueueCrank<'info> {
     /// The worker's fee account.
     #[account(
         init_if_needed,
-        address = Fee::pubkey(worker.key()),
+        seeds = [
+            SEED_FEE,
+            worker.key().as_ref(),
+        ],
+        bump,
         payer = worker,
         space = 8 + size_of::<Fee>(),
     )]
@@ -39,7 +43,12 @@ pub struct QueueCrank<'info> {
     /// The queue to crank.
     #[account(
         mut,
-        address = queue.pubkey(),
+        seeds = [
+            SEED_QUEUE,
+            queue.authority.as_ref(),
+            queue.id.as_bytes(),
+        ],
+        bump,
         constraint = !queue.paused @ ClockworkError::PausedQueue
     )]
     pub queue: Box<Account<'info, Queue>>,

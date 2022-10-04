@@ -11,7 +11,7 @@ use {
     },
 };
 
-const SEED_REQUEST: &[u8] = b"request";
+pub const SEED_REQUEST: &[u8] = b"request";
 
 /**
  * Request
@@ -35,12 +35,7 @@ pub struct Request {
 impl Request {
     pub fn pubkey(api: Pubkey, caller: Pubkey, id: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[
-                SEED_REQUEST,
-                api.as_ref(),
-                caller.as_ref(),
-                id.as_bytes().as_ref(),
-            ],
+            &[SEED_REQUEST, api.as_ref(), caller.as_ref(), id.as_bytes()],
             &crate::ID,
         )
         .0

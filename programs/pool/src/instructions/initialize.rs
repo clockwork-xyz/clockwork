@@ -12,7 +12,8 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Config::pubkey(),
+        seeds = [SEED_CONFIG],
+        bump,
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]

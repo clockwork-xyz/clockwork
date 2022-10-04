@@ -34,7 +34,8 @@ pub struct PoolsRotate<'info> {
 
     #[account(
         mut,
-        address = Rotator::pubkey(), 
+        seeds = [SEED_ROTATOR], 
+        bump,
         constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub rotator: Account<'info, Rotator>,
@@ -64,7 +65,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
     require!(rotator.pool_pubkeys.len() == ctx.remaining_accounts.len(), ClockworkError::InvalidPool);
 
     // Rotate the worker into its supported pools
-    let rotator_bump = *ctx.bumps.get("rotator").unwrap();
+    let bump = *ctx.bumps.get("rotator").unwrap();
     for i in 0..ctx.remaining_accounts.len() {
         match ctx.remaining_accounts.get(i) {
             None => return Err(ClockworkError::InvalidPool.into()),
@@ -84,7 +85,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
                                 pool_authority: rotator.to_account_info(),
                                 worker: worker.to_account_info(),
                             },
-                            &[&[SEED_ROTATOR, &[rotator_bump]]],
+                            &[&[SEED_ROTATOR, &[bump]]],
                         ),
                     )?;
                 }

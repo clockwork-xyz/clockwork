@@ -5,7 +5,7 @@ use {
 };
 
 pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
-    // TODO Create a worker pool
+    // Create a worker pool
     let pool_name = "crank";
     let pool = Pool::pubkey(pool_name.into());
 

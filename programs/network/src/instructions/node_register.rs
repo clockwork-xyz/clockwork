@@ -24,7 +24,12 @@ pub struct NodeRegister<'info> {
 
     #[account(
         init,
-        address = SnapshotEntry::pubkey(snapshot.key(), snapshot.node_count),
+        seeds = [
+            SEED_SNAPSHOT_ENTRY,
+            snapshot.key().as_ref(),
+            snapshot.id.to_be_bytes().as_ref(),
+        ],
+        bump,
         payer = authority,
         space = 8 + size_of::<SnapshotEntry>(),
     )]
@@ -35,7 +40,11 @@ pub struct NodeRegister<'info> {
 
     #[account(
         init,
-        address = Node::pubkey(registry.node_count),
+        seeds = [
+            SEED_NODE,
+            registry.node_count.to_be_bytes().as_ref(),
+        ],
+        bump,
         payer = authority,
         space = 8 + size_of::<Node>(),
     )]
