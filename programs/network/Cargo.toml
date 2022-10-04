@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-network-program"
-version = "1.1.1"
+version = "1.1.2"
 description = "Clockwork networking protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
