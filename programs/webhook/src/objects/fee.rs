@@ -5,7 +5,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_FEE: &[u8] = b"fee";
+pub const SEED_FEE: &[u8] = b"fee";
 
 /**
  * Fee

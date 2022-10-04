@@ -16,7 +16,8 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Authority::pubkey(),
+        seeds = [SEED_AUTHORITY],
+        bump,
         payer = admin,
         space = 8 + size_of::<Authority>(),
     )]
@@ -27,7 +28,8 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Config::pubkey(),
+        seeds = [SEED_CONFIG],
+        bump,
         payer = admin,
         space = 8 + size_of::<Config>(),
     )]
@@ -35,7 +37,8 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Rotator::pubkey(),
+        seeds = [SEED_ROTATOR],
+        bump,
         payer = admin,
         space = 8 + size_of::<Rotator>(),
     )]
@@ -46,7 +49,8 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Registry::pubkey(),
+        seeds = [SEED_REGISTRY],
+        bump,
         payer = admin,
         space = 8 + size_of::<Registry>(),
     )]
@@ -54,7 +58,11 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        address = Snapshot::pubkey(0),
+        seeds = [
+            SEED_SNAPSHOT,
+            (0 as u64).to_be_bytes().as_ref(),
+        ],
+        bump,
         payer = admin,
         space = 8 + size_of::<Snapshot>(),
     )]

@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
 
-const SEED_CONFIG: &[u8] = b"config";
+pub const SEED_CONFIG: &[u8] = b"config";
 
 /**
  * Config

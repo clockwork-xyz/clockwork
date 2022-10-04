@@ -9,7 +9,7 @@ pub struct SnapshotPause<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(address = Authority::pubkey())]
+    #[account(seeds = [SEED_AUTHORITY], bump)]
     pub authority: Account<'info, Authority>,
 
     #[account(address = clockwork_queue_program::ID)]

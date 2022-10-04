@@ -1,5 +1,5 @@
 use {
-    crate::objects::{Api, ApiAccount},
+    crate::objects::{Api, ApiAccount, SEED_API},
     anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };
@@ -12,7 +12,12 @@ pub struct ApiNew<'info> {
 
     #[account(
         init,
-        address = Api::pubkey(authority.key(), base_url),
+        seeds = [
+            SEED_API,
+            authority.key().as_ref(),
+            base_url.as_bytes(),
+        ],
+        bump,
         payer = payer,
         space = 8 + size_of::<Api>() + base_url.len(),
     )]

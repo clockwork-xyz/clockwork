@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_API: &[u8] = b"api";
+pub const SEED_API: &[u8] = b"api";
 
 /**
  * Api
@@ -21,7 +21,7 @@ pub struct Api {
 impl Api {
     pub fn pubkey(authority: Pubkey, base_url: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_API, authority.as_ref(), base_url.as_bytes().as_ref()],
+            &[SEED_API, authority.as_ref(), base_url.as_bytes()],
             &crate::ID,
         )
         .0

@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
+pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 
 /**
  * SnapshotEntry

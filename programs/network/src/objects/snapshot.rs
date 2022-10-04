@@ -6,7 +6,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_SNAPSHOT: &[u8] = b"snapshot";
+pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
 /**
  * Snapshot

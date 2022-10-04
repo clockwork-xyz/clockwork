@@ -15,7 +15,7 @@ use {
     },
 };
 
-const SEED_QUEUE: &[u8] = b"queue";
+pub const SEED_QUEUE: &[u8] = b"queue";
 
 const DEFAULT_RATE_LIMIT: u64 = 10;
 

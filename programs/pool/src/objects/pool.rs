@@ -3,7 +3,7 @@ use {
     std::{collections::VecDeque, convert::TryFrom},
 };
 
-const SEED_POOL: &[u8] = b"pool";
+pub const SEED_POOL: &[u8] = b"pool";
 
 /**
  * Pool

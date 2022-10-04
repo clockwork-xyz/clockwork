@@ -3,7 +3,7 @@ use {
     std::convert::TryFrom,
 };
 
-const SEED_CONFIG: &[u8] = b"config";
+pub const SEED_CONFIG: &[u8] = b"config";
 
 static DEFAULT_SLOTS_PER_ROTATION: u64 = 10;
 

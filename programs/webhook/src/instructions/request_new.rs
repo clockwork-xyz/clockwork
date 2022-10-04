@@ -1,6 +1,6 @@
 use {
     crate::objects::{
-        Api, ApiAccount, Config, HttpMethod, Request, RequestAccount,
+        Api, ApiAccount, Config, HttpMethod, Request, RequestAccount, SEED_REQUEST,
     },
     anchor_lang::{
         prelude::*,
@@ -35,7 +35,13 @@ pub struct RequestNew<'info> {
 
     #[account(
         init,
-        address = Request::pubkey(api.key(), caller.key(), id),
+        seeds = [
+            SEED_REQUEST,
+            api.key().as_ref(),
+            caller.key().as_ref(),
+            id.as_bytes(),
+        ],
+        bump,
         space = 8 + size_of::<Request>(),
         payer = payer
     )]
