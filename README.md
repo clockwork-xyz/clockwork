@@ -4,7 +4,7 @@
   <h1>Clockwork</h1>
 
   <p>
-    <strong>Open-source automation engine for the Solana blockchain</strong>
+    <strong>Automation engine for the Solana blockchain</strong>
   </p>
 
   <p>
