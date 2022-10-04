@@ -19,7 +19,12 @@ pub struct EntryCreate<'info> {
 
     #[account(
         init,
-        address = SnapshotEntry::pubkey(snapshot.key(), snapshot.node_count),
+        seeds = [
+            SEED_SNAPSHOT_ENTRY,
+            snapshot.key().as_ref(),
+            snapshot.node_count.to_be_bytes().as_ref(),
+        ],
+        bump,
         payer = payer,
         space = 8 + size_of::<SnapshotEntry>(),
     )]
