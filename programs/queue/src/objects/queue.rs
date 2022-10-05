@@ -1,5 +1,4 @@
 use {
-    super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
@@ -9,6 +8,7 @@ use {
         },
         AnchorDeserialize, AnchorSerialize,
     },
+    clockwork_utils::*,
     std::{
         convert::TryFrom,
         hash::{Hash, Hasher},
@@ -225,21 +225,6 @@ impl QueueAccount for Account<'_, Queue> {
         let data_len = 8 + self.try_to_vec()?.len();
         self.to_account_info().realloc(data_len, false)?;
         Ok(())
-    }
-}
-
-/// A response value target programs can return to update the queue.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-pub struct CrankResponse {
-    /// The next instruction to set on the queue.
-    pub next_instruction: Option<InstructionData>,
-}
-
-impl Default for CrankResponse {
-    fn default() -> Self {
-        return Self {
-            next_instruction: None,
-        };
     }
 }
 

@@ -1,6 +1,7 @@
 pub mod config_update;
 pub mod entry_close;
 pub mod entry_create;
+pub mod epoch_start;
 pub mod initialize;
 pub mod node_register;
 pub mod node_stake;
@@ -15,6 +16,7 @@ pub mod snapshot_create;
 pub use config_update::*;
 pub use entry_close::*;
 pub use entry_create::*;
+pub use epoch_start::*;
 pub use initialize::*;
 pub use node_register::*;
 pub use node_stake::*;

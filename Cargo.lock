@@ -456,6 +456,7 @@ version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "clockwork-utils",
 ]
 
 [[package]]
@@ -466,6 +467,16 @@ dependencies = [
  "chrono",
  "clockwork-cron",
  "clockwork-network-program",
+ "clockwork-utils",
+ "static-pubkey",
+]
+
+[[package]]
+name = "clockwork-utils"
+version = "1.1.4"
+dependencies = [
+ "anchor-lang",
+ "chrono-tz",
  "static-pubkey",
 ]
 

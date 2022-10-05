@@ -4,6 +4,7 @@ pub mod objects;
 mod instructions;
 
 use anchor_lang::prelude::*;
+use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
@@ -23,6 +24,10 @@ pub mod network_program {
 
     pub fn entry_create(ctx: Context<EntryCreate>) -> Result<()> {
         entry_create::handler(ctx)
+    }
+
+    pub fn epoch_start(ctx: Context<EpochStart>) -> Result<CrankResponse> {
+        epoch_start::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {

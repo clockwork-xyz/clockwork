@@ -24,4 +24,4 @@ default = []
 [dependencies]
 anchor-lang = "0.25.0"
 anchor-spl = { features = ["mint", "token"], version = "0.25.0" }
-# clockwork-queue-program = { path = "../queue", features = ["cpi"], version = "1.1.4" }
+clockwork-utils = { path = "../../utils", version = "1.1.4" }
