@@ -1,7 +1,6 @@
 use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
@@ -37,39 +36,36 @@ pub struct SnapshotRotate<'info> {
     #[account(mut, seeds = [SEED_REGISTRY], bump)]
     pub registry: Account<'info, Registry>,
 
-    #[account(
-        address = snapshot_queue.pubkey(),
-        constraint = snapshot_queue.id.eq("snapshot"),
-        has_one = authority,
-        signer,
-    )]
-    pub snapshot_queue: Account<'info, Queue>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<SnapshotRotate>) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let current_snapshot = &mut ctx.accounts.current_snapshot;
     let next_snapshot = &mut ctx.accounts.next_snapshot;
     let registry = &mut ctx.accounts.registry;
-    let snapshot_queue = &ctx.accounts.snapshot_queue;
+    let signer = &ctx.accounts.signer;
 
     // Rotate the snapshot
     registry.rotate_snapshot(Some(current_snapshot), next_snapshot)?;
 
-    // Build the next instruction
-    let next_instruction = Some(
-        Instruction {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMeta::new_readonly(authority.key(), false),
-                AccountMeta::new(current_snapshot.key(), false),
-                AccountMeta::new(snapshot_queue.key(), true),
-            ],
-            data: clockwork_queue_program::utils::anchor_sighash("snapshot_close").into(),
-        }
-        .into(),
-    );
+    Ok(())
 
-    Ok(CrankResponse { next_instruction })
+    // Build the next instruction
+    // let next_instruction = Some(
+    //     Instruction {
+    //         program_id: crate::ID,
+    //         accounts: vec![
+    //             AccountMeta::new_readonly(authority.key(), false),
+    //             AccountMeta::new(current_snapshot.key(), false),
+    //             AccountMeta::new(snapshot_queue.key(), true),
+    //         ],
+    //         data: clockwork_queue_program::utils::anchor_sighash("snapshot_close").into(),
+    //     }
+    //     .into(),
+    // );
+
+    // Ok(CrankResponse { next_instruction })
 }

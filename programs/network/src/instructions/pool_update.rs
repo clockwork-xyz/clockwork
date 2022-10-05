@@ -11,9 +11,12 @@ use {
 #[derive(Accounts)]
 #[instruction(settings: PoolSettings)]
 pub struct PoolUpdate<'info> {
+    #[account()]
+    pub admin: Signer<'info>,
+
     #[account(
         address = Config::pubkey(), 
-        has_one = pool_authority
+        has_one = admin
     )]
     pub config: Account<'info, Config>,
 
@@ -22,9 +25,6 @@ pub struct PoolUpdate<'info> {
 
     #[account(mut, address = pool.pubkey())]
     pub pool: Account<'info, Pool>,
-
-    #[account()]
-    pub pool_authority: Signer<'info>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,

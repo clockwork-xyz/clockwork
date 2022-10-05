@@ -4,7 +4,6 @@ pub mod objects;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_queue_program::objects::CrankResponse;
 use instructions::*;
 use objects::*;
 
@@ -18,11 +17,11 @@ pub mod network_program {
         config_update::handler(ctx, settings)
     }
 
-    pub fn entry_close(ctx: Context<EntryClose>) -> Result<CrankResponse> {
+    pub fn entry_close(ctx: Context<EntryClose>) -> Result<()> {
         entry_close::handler(ctx)
     }
 
-    pub fn entry_create(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
+    pub fn entry_create(ctx: Context<EntryCreate>) -> Result<()> {
         entry_create::handler(ctx)
     }
 
@@ -58,27 +57,15 @@ pub mod network_program {
         pool_update::handler(ctx, settings)
     }
 
-    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
+    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<()> {
         snapshot_close::handler(ctx)
     }
 
-    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
+    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<()> {
         snapshot_create::handler(ctx)
     }
 
-    pub fn snapshot_kickoff(ctx: Context<SnapshotKickoff>) -> Result<CrankResponse> {
-        snapshot_kickoff::handler(ctx)
-    }
-
-    pub fn snapshot_pause(ctx: Context<SnapshotPause>) -> Result<()> {
-        snapshot_pause::handler(ctx)
-    }
-
-    pub fn snapshot_resume(ctx: Context<SnapshotResume>) -> Result<()> {
-        snapshot_resume::handler(ctx)
-    }
-
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
+    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<()> {
         snapshot_rotate::handler(ctx)
     }
 }

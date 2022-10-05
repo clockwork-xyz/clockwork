@@ -3,7 +3,7 @@ use {
     anchor_lang::{prelude::*, system_program},
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_pool_program::objects::Pool,
+    clockwork_network_program::objects::Pool,
     std::{
         collections::hash_map::DefaultHasher,
         hash::{Hash, Hasher},
