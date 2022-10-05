@@ -36,6 +36,9 @@ pub enum CliCommand {
     },
 
     // Node commands
+    NodeGet {
+        worker: Pubkey,
+    },
     NodeRegister {
         worker: Keypair,
     },
@@ -143,6 +146,17 @@ pub fn app() -> Command<'static> {
             Command::new("node")
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("get")
+                        .about("Lookup a registered worker node")
+                        .arg(
+                            Arg::new("worker_address")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The worker address to lookup"),
+                        ),
+                )
                 .subcommand(
                     Command::new("register")
                         .about("Register a new worker with the Clockwork network")
