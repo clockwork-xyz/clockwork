@@ -1,4 +1,3 @@
-mod authority;
 mod config;
 mod node;
 mod pool;
@@ -7,7 +6,6 @@ mod rotator;
 mod snapshot;
 mod snapshot_entry;
 
-pub use authority::*;
 pub use config::*;
 pub use node::*;
 pub use pool::*;

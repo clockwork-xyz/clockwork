@@ -27,15 +27,13 @@ pub struct PoolRotate<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account()]
-    pub worker: SystemAccount<'info>,
+    #[account(address = worker.pubkey())]
+    pub worker: Account<'info, Node>,
 }
 
 pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
     // Get accounts
-    // let pool = &mut ctx.accounts.pool;
     let rotator = &mut ctx.accounts.rotator;
-    let worker = &ctx.accounts.worker;
 
     // Rotate the worker into its supported pools
     for i in 0..ctx.remaining_accounts.len() {

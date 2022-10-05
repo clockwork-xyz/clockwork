@@ -1,14 +1,11 @@
-use {
-    crate::objects::*,
-    anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-};
+use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct SnapshotClose<'info> {
-    #[account(address = Authority::pubkey())]
-    pub authority: Account<'info, Authority>,
+    #[account(address = Config::pubkey())]
+    pub config: Account<'info, Config>,
 
-    #[account(mut)]
+    #[account(address = config.automation_authority)]
     pub signer: Signer<'info>,
 
     #[account(
@@ -25,7 +22,6 @@ pub struct SnapshotClose<'info> {
 
 pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
     // Get accounts
-    let authority = &ctx.accounts.authority;
     let snapshot = &mut ctx.accounts.snapshot;
     let signer = &mut ctx.accounts.signer;
 
