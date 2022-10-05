@@ -55,7 +55,7 @@ impl PoolObserver {
             runtime,
             snapshot: RwLock::new(Snapshot {
                 id: 0,
-                node_count: 0,
+                total_workers: 0,
                 stake_total: 0,
                 status: SnapshotStatus::Current,
             }),
@@ -151,7 +151,7 @@ impl PoolObserver {
         }
 
         // Exit early if there is no stake in the snapshot
-        if r_snapshot.stake_total == 0 {
+        if r_snapshot.total_stake == 0 {
             return Err(GeyserPluginError::Custom("No stake in snapshot".into()));
         }
 
@@ -174,8 +174,8 @@ impl PoolObserver {
         }
 
         // Fetch the snapshot entries
-        let snapshot_pubkey = Snapshot::pubkey(r_snapshot.id);
-        let snapshot_entries = (0..r_snapshot.clone().node_count)
+        let snapshot_pubkey = Snapshot::pubkey(r_snapshot.epoch);
+        let snapshot_entries = (0..r_snapshot.clone().total_workers)
             .map(|id| SnapshotEntry::pubkey(snapshot_pubkey, id))
             .map(|entry_pubkey| {
                 clockwork_client
@@ -187,7 +187,7 @@ impl PoolObserver {
         // Build the rotation ix
         let sample = r_rotator
             .nonce
-            .checked_rem(r_snapshot.stake_total)
+            .checked_rem(r_snapshot.total_stake)
             .unwrap_or(0);
 
         let entry_id = match snapshot_entries.binary_search_by(|entry| {
@@ -204,7 +204,7 @@ impl PoolObserver {
             Err(i) => i - 1,
             Ok(i) => i,
         } as u64;
-        let snapshot_pubkey = clockwork_client::network::objects::Snapshot::pubkey(r_snapshot.id);
+        let snapshot_pubkey = clockwork_client::network::objects::Snapshot::pubkey(r_snapshot.epoch);
         let entry_pubkey =
             clockwork_client::network::objects::SnapshotEntry::pubkey(snapshot_pubkey, entry_id);
         let entry = snapshot_entries.get(entry_id as usize).unwrap();

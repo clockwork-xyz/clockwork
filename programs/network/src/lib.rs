@@ -64,8 +64,4 @@ pub mod network_program {
     pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<()> {
         snapshot_create::handler(ctx)
     }
-
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<()> {
-        snapshot_rotate::handler(ctx)
-    }
 }

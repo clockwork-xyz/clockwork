@@ -12,7 +12,7 @@ pub struct SnapshotClose<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref(),
+            snapshot.epoch.as_ref(),
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::Archived
@@ -26,7 +26,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
     let signer = &mut ctx.accounts.signer;
 
     // If this snapshot has no entries, then close immediately
-    if snapshot.node_count == 0 {
+    if snapshot.total_workers == 0 {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
         **signer.to_account_info().lamports.borrow_mut() = signer
@@ -42,7 +42,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
     Ok(())
 
     // If there are entries to capture, build the next instruction
-    // let next_instruction = if snapshot.node_count > 0 {
+    // let next_instruction = if snapshot.total_workers > 0 {
     //     let entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), 0);
     //     Some(
     //         Instruction {

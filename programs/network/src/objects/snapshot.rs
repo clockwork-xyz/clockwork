@@ -15,15 +15,15 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
-    pub id: u64,
-    pub node_count: u64,
-    pub stake_total: u64,
+    pub epoch: Pubkey,
     pub status: SnapshotStatus,
+    pub total_stake: u64,
+    pub total_workers: u64,
 }
 
 impl Snapshot {
-    pub fn pubkey(id: u64) -> Pubkey {
-        Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID).0
+    pub fn pubkey(epoch: Pubkey) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_SNAPSHOT, epoch.as_ref()], &crate::ID).0
     }
 }
 
@@ -41,7 +41,7 @@ impl TryFrom<Vec<u8>> for Snapshot {
 pub trait SnapshotAccount {
     fn pubkey(&self) -> Pubkey;
 
-    fn init(&mut self, id: u64) -> Result<()>;
+    fn init(&mut self, epoch: Pubkey) -> Result<()>;
 
     fn capture(
         &mut self,
@@ -53,13 +53,14 @@ pub trait SnapshotAccount {
 
 impl SnapshotAccount for Account<'_, Snapshot> {
     fn pubkey(&self) -> Pubkey {
-        Snapshot::pubkey(self.id)
+        Snapshot::pubkey(self.epoch)
     }
 
-    fn init(&mut self, id: u64) -> Result<()> {
-        self.id = id;
-        self.node_count = 0;
-        self.status = SnapshotStatus::InProgress;
+    fn init(&mut self, epoch: Pubkey) -> Result<()> {
+        self.epoch = epoch;
+        self.status = SnapshotStatus::Capturing;
+        self.total_stake = 0;
+        self.total_workers = 0;
         Ok(())
     }
 
@@ -71,18 +72,18 @@ impl SnapshotAccount for Account<'_, Snapshot> {
     ) -> Result<()> {
         // Record the new snapshot entry
         entry.init(
-            self.node_count,
+            self.total_workers,
             self.key(),
-            self.stake_total,
+            self.total_stake,
             stake.amount,
             node.worker,
         )?;
 
         // Update the snapshot's entry count
-        self.node_count = self.node_count.checked_add(1).unwrap();
+        self.total_workers = self.total_workers.checked_add(1).unwrap();
 
         // Update the sum stake amount
-        self.stake_total = self.stake_total.checked_add(stake.amount).unwrap();
+        self.total_stake = self.total_stake.checked_add(stake.amount).unwrap();
 
         Ok(())
     }
@@ -94,7 +95,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
 pub enum SnapshotStatus {
     Archived,
+    Capturing,
     Closing,
     Current,
-    InProgress,
 }

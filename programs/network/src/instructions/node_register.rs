@@ -27,7 +27,7 @@ pub struct NodeRegister<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.node_count.to_be_bytes().as_ref(),
+            snapshot.total_workers.to_be_bytes().as_ref(),
         ],
         bump,
         payer = authority,
@@ -42,7 +42,7 @@ pub struct NodeRegister<'info> {
         init,
         seeds = [
             SEED_NODE,
-            registry.node_count.to_be_bytes().as_ref(),
+            registry.total_workers.to_be_bytes().as_ref(),
         ],
         bump,
         payer = authority,
@@ -65,11 +65,11 @@ pub struct NodeRegister<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref(),
+            snapshot.epoch.as_ref(),
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::Current,
-        constraint = snapshot.node_count == registry.node_count
+        constraint = snapshot.total_workers == registry.total_workers
     )]
     pub snapshot: Account<'info, Snapshot>,
 

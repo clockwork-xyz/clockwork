@@ -42,10 +42,10 @@ pub fn register(client: &Client, worker: Keypair) -> Result<(), CliError> {
     let registry_data = Registry::try_from(registry_data)
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
-    let node_pubkey = Node::pubkey(registry_data.node_count);
+    let node_pubkey = Node::pubkey(registry_data.total_workers);
 
     let snapshot_pubkey = Snapshot::pubkey(registry_data.snapshot_count - 1);
-    let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.node_count);
+    let entry_pubkey = SnapshotEntry::pubkey(snapshot_pubkey, registry_data.total_workers);
     let ix = clockwork_client::network::instruction::node_register(
         owner.pubkey(),
         config_pubkey,

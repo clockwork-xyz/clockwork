@@ -71,7 +71,7 @@ impl RotatorAccount for Account<'_, Rotator> {
         snapshot: &Account<Snapshot>,
     ) -> Result<bool> {
         // Return true if the sample is within the entry's stake range
-        match self.nonce.checked_rem(snapshot.stake_total) {
+        match self.nonce.checked_rem(snapshot.total_stake) {
             None => Ok(false),
             Some(sample) => Ok(sample >= entry.stake_offset
                 && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),

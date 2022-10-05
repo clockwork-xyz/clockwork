@@ -19,8 +19,7 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 #[derive(Debug)]
 pub struct Registry {
     pub is_locked: bool,
-    pub node_count: u64,
-    pub snapshot_count: u64,
+    pub total_workers: u64,
 }
 
 impl Registry {
@@ -51,14 +50,6 @@ pub trait RegistryAccount {
         worker: &Signer,
     ) -> Result<()>;
 
-    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()>;
-
-    fn rotate_snapshot(
-        &mut self,
-        current_snapshot: Option<&mut Account<Snapshot>>,
-        next_snapshot: &mut Account<Snapshot>,
-    ) -> Result<()>;
-
     fn lock(&mut self) -> Result<()>;
 
     fn unlock(&mut self) -> Result<()>;
@@ -67,8 +58,7 @@ pub trait RegistryAccount {
 impl RegistryAccount for Account<'_, Registry> {
     fn init(&mut self) -> Result<()> {
         self.is_locked = false;
-        self.node_count = 0;
-        self.snapshot_count = 0;
+        self.total_workers = 0;
         Ok(())
     }
 
@@ -80,62 +70,8 @@ impl RegistryAccount for Account<'_, Registry> {
         worker: &Signer,
     ) -> Result<()> {
         require!(!self.is_locked, ClockworkError::RegistryLocked);
-        node.init(authority, self.node_count, stake, worker)?;
-        self.node_count = self.node_count.checked_add(1).unwrap();
-        Ok(())
-    }
-
-    fn new_snapshot(&mut self, snapshot: &mut Account<Snapshot>) -> Result<()> {
-        require!(!self.is_locked, ClockworkError::RegistryLocked);
-        self.lock()?;
-        snapshot.init(self.snapshot_count)?;
-        Ok(())
-    }
-
-    fn rotate_snapshot(
-        &mut self,
-        current_snapshot: Option<&mut Account<Snapshot>>,
-        next_snapshot: &mut Account<Snapshot>,
-    ) -> Result<()> {
-        // Require the registry is locked
-        require!(self.is_locked, ClockworkError::RegistryMustBeLocked);
-
-        // Validate the next snapshot is in progress
-        require!(
-            next_snapshot.status == SnapshotStatus::InProgress,
-            ClockworkError::SnapshotNotInProgress
-        );
-
-        // Validate the snapshot has captured the entire registry
-        require!(
-            next_snapshot.node_count == self.node_count,
-            ClockworkError::SnapshotIncomplete
-        );
-
-        // Archive the current snapshot
-        match current_snapshot {
-            Some(current_snapshot) => {
-                // Validate the snapshot is current
-                require!(
-                    current_snapshot.status == SnapshotStatus::Current,
-                    ClockworkError::SnapshotNotCurrent
-                );
-
-                // Mark the current snapshot as archived
-                current_snapshot.status = SnapshotStatus::Archived;
-            }
-            None => require!(self.snapshot_count == 0, ClockworkError::SnapshotNotCurrent),
-        }
-
-        // Mark the next snapshot as current
-        next_snapshot.status = SnapshotStatus::Current;
-
-        // Increment snapshot counter
-        self.snapshot_count = self.snapshot_count.checked_add(1).unwrap();
-
-        // Unlock the registry
-        self.unlock()?;
-
+        node.init(authority, self.total_workers, stake, worker)?;
+        self.total_workers = self.total_workers.checked_add(1).unwrap();
         Ok(())
     }
 

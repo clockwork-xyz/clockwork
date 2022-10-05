@@ -71,8 +71,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     rotator.init()?;
 
     // Setup the first snapshot.
-    registry.new_snapshot(snapshot)?;
-    registry.rotate_snapshot(None, snapshot)?;
+    // registry.new_snapshot(snapshot)?;
+    // registry.rotate_snapshot(None, snapshot)?;
 
     Ok(())
 }

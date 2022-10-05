@@ -11,6 +11,9 @@ pub struct SnapshotCreate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
+    #[account(address = new_epoch.pubkey())]
+    pub new_epoch: Account<'info, Epoch>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -29,7 +32,7 @@ pub struct SnapshotCreate<'info> {
         init,
         seeds = [
             SEED_SNAPSHOT,
-            registry.snapshot_count.to_be_bytes().as_ref(),
+            new_epoch.key().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Snapshot>(),
@@ -45,11 +48,12 @@ pub struct SnapshotCreate<'info> {
 
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<()> {
     // Get accounts
+    let new_epoch = &ctx.accounts.new_epoch;
     let registry = &mut ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
 
-    // Start a new snapshot
-    registry.new_snapshot(snapshot)?;
+    // Start a new snapshot.
+    snapshot.init(new_epoch.key())?;
 
     Ok(())
 }

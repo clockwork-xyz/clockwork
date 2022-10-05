@@ -1,4 +1,5 @@
 mod config;
+mod epoch;
 mod node;
 mod pool;
 mod registry;
@@ -7,6 +8,7 @@ mod snapshot;
 mod snapshot_entry;
 
 pub use config::*;
+pub use epoch::*;
 pub use node::*;
 pub use pool::*;
 pub use registry::*;

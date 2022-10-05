@@ -15,7 +15,7 @@ pub struct EntryCreate<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.node_count.to_be_bytes().as_ref(),
+            snapshot.total_workers.to_be_bytes().as_ref(),
         ],
         bump,
         payer = payer,
@@ -25,7 +25,7 @@ pub struct EntryCreate<'info> {
 
     #[account(
         address = node.pubkey(),
-        constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
+        constraint = node.id == snapshot.total_workers @ ClockworkError::InvalidNode
     )]
     pub node: Box<Account<'info, Node>>,
 
@@ -42,11 +42,11 @@ pub struct EntryCreate<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref(),
+            snapshot.epoch.as_ref(),
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::InProgress @ ClockworkError::SnapshotNotInProgress,
-        constraint = snapshot.node_count < registry.node_count,
+        constraint = snapshot.status == SnapshotStatus::Capturing @ ClockworkError::SnapshotNotInProgress,
+        constraint = snapshot.total_workers < registry.total_workers,
     )]
     pub snapshot: Account<'info, Snapshot>,
 

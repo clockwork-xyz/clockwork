@@ -1,9 +1,17 @@
 use {crate::{errors::*, objects::*}, anchor_lang::prelude::*};
 
+// TODO Make pool rotation a function of the epoch pubkey.
+//      Workers should self-select into the delegate pool on deterministic epochs.
+//      If a worker is not active, they will not rotate into the pool. 
+//      This gives curent workers (presumably active) extra time in the pool.
+
 #[derive(Accounts)]
 pub struct PoolRotate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
+
+    #[account(mut)]
+    pub delegate: Signer<'info>,
 
     #[account(
         address = entry.pubkey(),
@@ -76,7 +84,7 @@ fn is_valid_entry(
     snapshot: &Account<Snapshot>,
 ) -> Result<bool> {
     // Return true if the sample is within the entry's stake range
-    match rotator.nonce.checked_rem(snapshot.stake_total) {
+    match rotator.nonce.checked_rem(snapshot.total_stake) {
         None => Ok(false),
         Some(sample) => Ok(sample >= entry.stake_offset
             && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),

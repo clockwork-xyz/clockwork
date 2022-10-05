@@ -11,7 +11,6 @@ pub mod pool_rotate;
 pub mod pool_update;
 pub mod snapshot_close;
 pub mod snapshot_create;
-pub mod snapshot_rotate;
 
 pub use config_update::*;
 pub use entry_close::*;
@@ -26,4 +25,3 @@ pub use pool_rotate::*;
 pub use pool_update::*;
 pub use snapshot_close::*;
 pub use snapshot_create::*;
-pub use snapshot_rotate::*;

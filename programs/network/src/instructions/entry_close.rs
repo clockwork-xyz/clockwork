@@ -18,7 +18,7 @@ pub struct EntryClose<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref(),
+            snapshot.epoch.as_ref(),
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::Closing,
@@ -51,8 +51,8 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<()> {
         .unwrap();
 
     // If this is the last entry of the snapshot, then also close the snapshot account.
-    let snapshot_node_count = snapshot.node_count.clone();
-    if entry_id == snapshot_node_count.checked_sub(1).unwrap() {
+    let snapshot_total_workers = snapshot.total_workers.clone();
+    if entry_id == snapshot_total_workers.checked_sub(1).unwrap() {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
         **signer.to_account_info().lamports.borrow_mut() = signer
