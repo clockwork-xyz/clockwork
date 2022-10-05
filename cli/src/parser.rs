@@ -110,6 +110,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::NodeGet {
+            worker: parse_pubkey("worker_address", matches)?,
+        }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             worker: parse_keypair_file("worker", matches)?,
         }),
