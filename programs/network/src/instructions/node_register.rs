@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::{system_program, sysvar},
@@ -19,7 +19,7 @@ pub struct NodeRegister<'info> {
     #[account(mut, constraint = authority.key() != worker.key())]
     pub authority: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(
@@ -42,7 +42,7 @@ pub struct NodeRegister<'info> {
         init,
         seeds = [
             SEED_NODE,
-            registry.node_count.to_be_bytes().as_ref()
+            registry.node_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = authority,
@@ -52,7 +52,7 @@ pub struct NodeRegister<'info> {
 
     #[account(
         mut, 
-        seeds = [SEED_REGISTRY], 
+        seeds = [SEED_REGISTRY],
         bump,
         constraint = !registry.is_locked
     )]
@@ -68,7 +68,8 @@ pub struct NodeRegister<'info> {
             snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::Current
+        constraint = snapshot.status == SnapshotStatus::Current,
+        constraint = snapshot.node_count == registry.node_count
     )]
     pub snapshot: Account<'info, Snapshot>,
 

@@ -6,8 +6,8 @@ use {
         },
         system_program, InstructionData,
     },
-    clockwork_pool_program::state::Pool,
-    clockwork_queue_program::state::{Config, Fee},
+    clockwork_pool_program::objects::Pool,
+    clockwork_queue_program::objects::{Config, Fee},
 };
 
 pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, worker: Pubkey) -> Instruction {

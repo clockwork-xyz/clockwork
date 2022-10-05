@@ -1,6 +1,6 @@
 use {
     super::{Node, SnapshotEntry},
-    crate::state::SnapshotEntryAccount,
+    crate::objects::SnapshotEntryAccount,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -39,7 +39,9 @@ impl TryFrom<Vec<u8>> for Snapshot {
  */
 
 pub trait SnapshotAccount {
-    fn new(&mut self, id: u64) -> Result<()>;
+    fn pubkey(&self) -> Pubkey;
+
+    fn init(&mut self, id: u64) -> Result<()>;
 
     fn capture(
         &mut self,
@@ -50,7 +52,11 @@ pub trait SnapshotAccount {
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
-    fn new(&mut self, id: u64) -> Result<()> {
+    fn pubkey(&self) -> Pubkey {
+        Snapshot::pubkey(self.id)
+    }
+
+    fn init(&mut self, id: u64) -> Result<()> {
         self.id = id;
         self.node_count = 0;
         self.status = SnapshotStatus::InProgress;
@@ -64,7 +70,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         stake: &Account<TokenAccount>,
     ) -> Result<()> {
         // Record the new snapshot entry
-        entry.new(
+        entry.init(
             self.node_count,
             self.key(),
             self.stake_total,

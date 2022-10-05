@@ -804,7 +804,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-bench"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "base64 0.13.0",
  "chrono",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anyhow",
  "clap 3.2.16",
@@ -832,8 +832,10 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml 0.9.4",
+ "solana-account-decoder",
  "solana-clap-utils",
  "solana-cli-config",
+ "solana-client",
  "solana-sdk",
  "spl-associated-token-account",
  "spl-memo",
@@ -844,7 +846,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -862,7 +864,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -872,7 +874,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -882,14 +884,14 @@ dependencies = [
 
 [[package]]
 name = "clockwork-pool-program"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "clockwork-queue-program"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -900,7 +902,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-sdk"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -912,7 +914,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-webhook-program"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "clockwork-pool-program",
@@ -920,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork_plugin"
-version = "1.0.6"
+version = "1.1.4"
 dependencies = [
  "anchor-lang",
  "bincode",

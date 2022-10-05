@@ -1,12 +1,12 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue_program::state::{CrankResponse, Queue},
+    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
 pub struct EntryClose<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Account<'info, Authority>,
 
     #[account(
@@ -14,7 +14,7 @@ pub struct EntryClose<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             entry.snapshot.as_ref(),
-            entry.id.to_be_bytes().as_ref()
+            entry.id.to_be_bytes().as_ref(),
         ],
         bump,
         has_one = snapshot,
@@ -25,14 +25,19 @@ pub struct EntryClose<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref()
+            snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::Closing,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(mut, has_one = authority, constraint = snapshot_queue.id.eq("snapshot"))]
+    #[account(
+        mut, 
+        address = snapshot_queue.pubkey(),
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority, 
+    )]
     pub snapshot_queue: Account<'info, Queue>,
 }
 

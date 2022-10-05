@@ -8,19 +8,20 @@ use {
     std::convert::TryFrom,
 };
 
+/// The clock object, representing a specific moment in time recorded by a Solana cluster.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
 pub struct ClockData {
+    /// The current slot.
     pub slot: Slot,
-    /// the timestamp of the first Slot in this Epoch
+    /// The timestamp of the first slot in this Solana epoch.
     pub epoch_start_timestamp: UnixTimestamp,
-    /// the bank Epoch
+    /// The bank epoch.
     pub epoch: Epoch,
-    /// the future Epoch for which the leader schedule has
-    ///  most recently been calculated
+    /// The future epoch for which the leader schedule has most recently been calculated.
     pub leader_schedule_epoch: Epoch,
-    /// originally computed from genesis creation time and network time
+    /// Originally computed from genesis creation time and network time
     /// in slots (drifty); corrected using validator timestamp oracle as of
-    /// timestamp_correction and timestamp_bounding features
+    /// timestamp_correction and timestamp_bounding features.
     pub unix_timestamp: UnixTimestamp,
 }
 

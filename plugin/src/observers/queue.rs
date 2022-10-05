@@ -1,7 +1,7 @@
 use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
-        queue::state::{Queue, Trigger, TriggerContext},
+        queue::objects::{Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
     clockwork_cron::Schedule,
@@ -116,7 +116,7 @@ impl QueueObserver {
             this.crankable_queues.remove(&queue_pubkey);
 
             // If the queue is paused, just return without indexing
-            if queue.is_paused {
+            if queue.paused {
                 return Ok(());
             }
 
@@ -141,7 +141,10 @@ impl QueueObserver {
                                 v
                             });
                     }
-                    Trigger::Cron { schedule } => {
+                    Trigger::Cron {
+                        schedule,
+                        skippable: _,
+                    } => {
                         // Find a reference timestamp for calculating the queue's upcoming target time.
                         let reference_timestamp = match queue.exec_context {
                             None => queue.created_at.unix_timestamp,
@@ -442,11 +445,10 @@ impl Debug for QueueObserver {
 fn next_moment(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
-        .after(&DateTime::<Utc>::from_utc(
+        .next_after(&DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp(after, 0),
             Utc,
         ))
-        .take(1)
-        .next()
+        .take()
         .map(|datetime| datetime.timestamp())
 }

@@ -1,3 +1,5 @@
+//! All objects needed to describe and manage the program's state.
+
 mod clock;
 mod config;
 mod fee;

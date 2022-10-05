@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-cli"
-version = "1.0.6"
+version = "1.1.4"
 description = "Command line interface for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -10,16 +10,16 @@ documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "1.0.61"
 clap = { version = "3.1.2", features = ["derive"] }
-clockwork-client = { path = "../client", version = "1.0.6" }
+clockwork-client = { path = "../client", version = "1.1.4" }
 dirs-next = "2.0.0"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 serde_yaml = "0.9.4"
+solana-account-decoder = "1.10.34"
+solana-client = "1.10.34"
 solana-clap-utils = "1.10.34"
 solana-cli-config = "1.10.34"
 solana-sdk = "1.10.34"

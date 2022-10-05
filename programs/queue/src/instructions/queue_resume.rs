@@ -1,18 +1,18 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-};
+use {crate::objects::*, anchor_lang::prelude::*};
 
+/// Accounts required by the `queue_resume` instruction.
 #[derive(Accounts)]
 pub struct QueueResume<'info> {
+    /// The authority (owner) of the queue.
     #[account()]
     pub authority: Signer<'info>,
 
+    /// The queue to be resumed.
     #[account(
         mut,
         seeds = [
-            SEED_QUEUE, 
-            queue.authority.key().as_ref(),
+            SEED_QUEUE,
+            queue.authority.as_ref(),
             queue.id.as_bytes(),
         ],
         bump,
@@ -24,9 +24,9 @@ pub struct QueueResume<'info> {
 pub fn handler(ctx: Context<QueueResume>) -> Result<()> {
     // Get accounts
     let queue = &mut ctx.accounts.queue;
-    
+
     // Resume the queue
-    queue.is_paused = false;
+    queue.paused = false;
 
     // Update the exec context
     match queue.exec_context {
@@ -39,7 +39,9 @@ pub fn handler(ctx: Context<QueueResume>) -> Result<()> {
                 TriggerContext::Cron { started_at: _ } => {
                     // Jump ahead to the current timestamp
                     queue.exec_context = Some(ExecContext {
-                        trigger_context: TriggerContext::Cron { started_at: Clock::get().unwrap().unix_timestamp },
+                        trigger_context: TriggerContext::Cron {
+                            started_at: Clock::get().unwrap().unix_timestamp,
+                        },
                         ..exec_context
                     });
                 }

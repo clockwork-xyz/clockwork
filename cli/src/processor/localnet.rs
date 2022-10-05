@@ -1,12 +1,12 @@
-use std::collections::HashSet;
-
-use clockwork_client::{network::state::NodeSettings, pool::state::Pool};
-
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::{network::state::Node, Client},
+    clockwork_client::{
+        network::objects::{Node, NodeSettings},
+        pool::objects::Pool,
+        Client,
+    },
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -19,7 +19,10 @@ use {
         instruction::{initialize_mint, mint_to},
         state::Mint,
     },
-    std::process::{Child, Command},
+    std::{
+        collections::HashSet,
+        process::{Child, Command},
+    },
 };
 
 pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
@@ -121,10 +124,10 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     // TODO Build a custom plugin config
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
-        .bpf_program(home_dir, clockwork_client::queue::ID, "crank")
-        .bpf_program(home_dir, clockwork_client::webhook::ID, "http")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
+        .bpf_program(home_dir, clockwork_client::queue::ID, "queue")
+        .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
         .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)
         .spawn()
@@ -194,7 +197,7 @@ impl TestValidatorHelpers for Command {
         program_id: Pubkey,
         program_name: &str,
     ) -> &mut Command {
-        let filename = format!("clockwork_{}.so", program_name);
+        let filename = format!("clockwork_{}_program.so", program_name);
         self.arg("--bpf-program")
             .arg(program_id.to_string())
             .arg(lib_path(home_dir, filename.as_str()))

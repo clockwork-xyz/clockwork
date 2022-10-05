@@ -1,14 +1,13 @@
 pub mod errors;
-pub mod id;
-pub mod state;
+pub mod objects;
 
 mod instructions;
 
-pub use id::ID;
-
 use anchor_lang::prelude::*;
 use instructions::*;
-use state::*;
+use objects::*;
+
+declare_id!("73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8");
 
 #[program]
 pub mod webhook_program {

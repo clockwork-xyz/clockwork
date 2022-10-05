@@ -1,6 +1,6 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use clockwork_client::webhook::state::HttpMethod;
+use clockwork_client::webhook::objects::HttpMethod;
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
@@ -110,6 +110,9 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::NodeGet {
+            worker: parse_pubkey("worker_address", matches)?,
+        }),
         Some(("register", matches)) => Ok(CliCommand::NodeRegister {
             worker: parse_keypair_file("worker", matches)?,
         }),

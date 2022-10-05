@@ -2,10 +2,10 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::state::{Rotator, Snapshot},
-        pool::state::Pool,
-        queue::state::Queue,
-        webhook::state::Request,
+        network::objects::{Rotator, Snapshot},
+        pool::objects::Pool,
+        queue::objects::Queue,
+        webhook::objects::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo,

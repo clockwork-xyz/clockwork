@@ -1,13 +1,13 @@
 use {
-    crate::state::{
-        Api, Config, HttpMethod, Request, RequestAccount, SEED_API, SEED_CONFIG, SEED_REQUEST,
+    crate::objects::{
+        Api, ApiAccount, Config, HttpMethod, Request, RequestAccount, SEED_REQUEST,
     },
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    clockwork_pool_program::state::Pool,
+    clockwork_pool_program::objects::Pool,
     std::{collections::HashMap, mem::size_of},
 };
 
@@ -18,20 +18,13 @@ use {
     route: String
 )]
 pub struct RequestNew<'info> {
-    #[account(
-        seeds = [
-            SEED_API,
-            api.authority.as_ref(),
-            api.base_url.as_bytes().as_ref(),
-        ],
-        bump,
-    )]
+    #[account(address = api.pubkey())]
     pub api: Account<'info, Api>,
 
     #[account()]
     pub caller: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(mut)]
@@ -46,7 +39,7 @@ pub struct RequestNew<'info> {
             SEED_REQUEST,
             api.key().as_ref(),
             caller.key().as_ref(),
-            id.as_bytes().as_ref(),
+            id.as_bytes(),
         ],
         bump,
         space = 8 + size_of::<Request>(),
@@ -86,7 +79,7 @@ pub fn handler<'info>(
         .iter()
         .map(|k| *k)
         .collect::<Vec<Pubkey>>();
-    request.new(
+    request.init(
         api,
         caller.key(),
         current_slot,

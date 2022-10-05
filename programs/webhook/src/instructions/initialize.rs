@@ -1,5 +1,5 @@
 use {
-    crate::state::{Config, ConfigAccount, SEED_CONFIG},
+    crate::objects::{Config, ConfigAccount, SEED_CONFIG},
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
@@ -28,7 +28,7 @@ pub fn handler<'info>(ctx: Context<Initialize>) -> Result<()> {
     let config = &mut ctx.accounts.config;
 
     // Initialize the config account
-    config.new(admin.key())?;
+    config.init(admin.key())?;
 
     Ok(())
 }

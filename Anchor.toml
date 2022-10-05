@@ -3,22 +3,22 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
-network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
-pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
+pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
+queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
+webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
 
 [programs.testnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
-network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
-pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
+pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
+queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
+webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
 
 [programs.mainnet]
-crank = "2mhQcnHhWuHyBbuf7GQUpD69Aq9JBLGa4bsa2WbWUAVT"
-http = "Fbg9HZFafLy39Hfmj5346kPCarZy9WDxk8ADwFTUojF3"
-network = "7uTtwxSLrUs6rTWzqYnvoQ8JnmcWT9WPDdoN1ojmvD6t"
-pool = "CZZNnqWESL8qvcYktJ244YZo79L12g7EpJf646NgnKkb"
+network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
+pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
+queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
+webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
 
 [registry]
 url = "https://anchor.projectserum.com"

@@ -1,5 +1,5 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::prelude::*,
     anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
@@ -7,18 +7,15 @@ use {
 #[derive(Accounts)]
 #[instruction(amount: u64)]
 pub struct NodeStake<'info> {
-    #[account(
-        seeds = [SEED_CONFIG],
-        bump
-    )]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
         seeds = [
             SEED_NODE,
-            node.id.to_be_bytes().as_ref()
+            node.id.to_be_bytes().as_ref(),
         ],
-        bump,
+        bump
     )]
     pub node: Account<'info, Node>,
 

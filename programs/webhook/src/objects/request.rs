@@ -35,12 +35,7 @@ pub struct Request {
 impl Request {
     pub fn pubkey(api: Pubkey, caller: Pubkey, id: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[
-                SEED_REQUEST,
-                api.as_ref(),
-                caller.as_ref(),
-                id.as_bytes().as_ref(),
-            ],
+            &[SEED_REQUEST, api.as_ref(), caller.as_ref(), id.as_bytes()],
             &crate::ID,
         )
         .0
@@ -59,7 +54,9 @@ impl TryFrom<Vec<u8>> for Request {
  */
 
 pub trait RequestAccount {
-    fn new(
+    fn pubkey(&self) -> Pubkey;
+
+    fn init(
         &mut self,
         api: &Account<Api>,
         caller: Pubkey,
@@ -74,7 +71,11 @@ pub trait RequestAccount {
 }
 
 impl RequestAccount for Account<'_, Request> {
-    fn new(
+    fn pubkey(&self) -> Pubkey {
+        Request::pubkey(self.api, self.caller, self.id.clone())
+    }
+
+    fn init(
         &mut self,
         api: &Account<Api>,
         caller: Pubkey,

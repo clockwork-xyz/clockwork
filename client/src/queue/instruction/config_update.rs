@@ -6,7 +6,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_queue_program::state::ConfigSettings,
+    clockwork_queue_program::objects::ConfigSettings,
 };
 
 pub fn config_update(admin: Pubkey, config: Pubkey, settings: ConfigSettings) -> Instruction {

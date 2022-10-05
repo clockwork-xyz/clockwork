@@ -1,11 +1,11 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
-        prelude::*, 
-        solana_program::{instruction::Instruction, system_program}
+        prelude::*,
+        solana_program::{instruction::Instruction, system_program},
     },
     anchor_spl::token::Mint,
-    clockwork_queue_program::state::{Trigger, SEED_QUEUE},
+    clockwork_queue_program::objects::{Queue, Trigger},
     std::mem::size_of,
 };
 
@@ -34,7 +34,7 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Config>(),
     )]
     pub config: Account<'info, Config>,
-    
+
     #[account(
         init,
         seeds = [SEED_ROTATOR],
@@ -59,8 +59,8 @@ pub struct Initialize<'info> {
     #[account(
         init,
         seeds = [
-            SEED_SNAPSHOT, 
-            (0 as u64).to_be_bytes().as_ref()
+            SEED_SNAPSHOT,
+            (0 as u64).to_be_bytes().as_ref(),
         ],
         bump,
         payer = admin,
@@ -68,19 +68,11 @@ pub struct Initialize<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_queue_program::ID,
-        bump
-    )]
+    #[account(address = Queue::pubkey(authority.key(), "snapshot".into()))]
     pub snapshot_queue: SystemAccount<'info>,
 
     #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,    
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -125,13 +117,15 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
                 queue: snapshot_queue.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
-            &[&[SEED_AUTHORITY, &[bump]]]
+            &[&[SEED_AUTHORITY, &[bump]]],
         ),
         "snapshot".into(),
         snapshot_kickoff_ix.into(),
-        Trigger::Cron { schedule: "0 * * * * * *".into() }
+        Trigger::Cron {
+            schedule: "0 * * * * * *".into(),
+            skippable: true,
+        },
     )?;
 
     Ok(())
 }
-

@@ -1,11 +1,11 @@
 use {
-    crate::{errors::ClockworkError, state::*},
+    crate::{errors::ClockworkError, objects::*},
     anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
 };
 
 const MAX_RATE_LIMIT: u64 = 32; 
 
-
+/// Accounts required by the `queue_update` instruction.
 #[derive(Accounts)]
 #[instruction(
     kickoff_instruction: Option<InstructionData>, 
@@ -13,14 +13,16 @@ const MAX_RATE_LIMIT: u64 = 32;
     trigger: Option<Trigger>
 )]
 pub struct QueueUpdate<'info> {
+    /// The authority (owner) of the queue.
     #[account(mut)]
     pub authority: Signer<'info>,
 
+    /// The queue to be updated.
     #[account(
         mut,
         seeds = [
-            SEED_QUEUE, 
-            queue.authority.key().as_ref(),
+            SEED_QUEUE,
+            queue.authority.as_ref(),
             queue.id.as_bytes(),
         ],
         bump,
@@ -28,6 +30,7 @@ pub struct QueueUpdate<'info> {
     )]
     pub queue: Account<'info, Queue>,
 
+    /// The Solana system program
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
@@ -51,7 +54,7 @@ pub fn handler(
 
     // If provided, update the rate_limit
     if let Some(rate_limit) = rate_limit {
-        require!(rate_limit.le(&MAX_RATE_LIMIT), ClockworkError::InvalidRateLimit);
+        require!(rate_limit.le(&MAX_RATE_LIMIT), ClockworkError::RateLimitTooLarge);
         queue.rate_limit = rate_limit;
     }
 

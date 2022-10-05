@@ -8,8 +8,8 @@ use anchor_lang::{
 };
 
 pub fn initialize(admin: Pubkey) -> Instruction {
-    let config_pubkey = clockwork_pool_program::state::Config::pubkey();
-    let pool_authority = clockwork_network_program::state::Rotator::pubkey();
+    let config_pubkey = clockwork_pool_program::objects::Config::pubkey();
+    let pool_authority = clockwork_network_program::objects::Rotator::pubkey();
 
     Instruction {
         program_id: clockwork_pool_program::ID,

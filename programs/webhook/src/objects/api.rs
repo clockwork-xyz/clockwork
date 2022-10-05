@@ -21,7 +21,7 @@ pub struct Api {
 impl Api {
     pub fn pubkey(authority: Pubkey, base_url: String) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_API, authority.as_ref(), base_url.as_bytes().as_ref()],
+            &[SEED_API, authority.as_ref(), base_url.as_bytes()],
             &crate::ID,
         )
         .0
@@ -40,11 +40,17 @@ impl TryFrom<Vec<u8>> for Api {
  */
 
 pub trait ApiAccount {
-    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
+    fn pubkey(&self) -> Pubkey;
+
+    fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()>;
 }
 
 impl ApiAccount for Account<'_, Api> {
-    fn new(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
+    fn pubkey(&self) -> Pubkey {
+        Api::pubkey(self.authority, self.base_url.clone())
+    }
+
+    fn init(&mut self, ack_authority: Pubkey, authority: Pubkey, base_url: String) -> Result<()> {
         self.ack_authority = ack_authority;
         self.authority = authority;
         self.base_url = base_url;
