@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
 
-use super::{Snapshot, SnapshotAccount};
+use super::Snapshot;
 
 pub const SEED_EPOCH: &[u8] = b"epoch";
 
@@ -11,9 +11,9 @@ pub const SEED_EPOCH: &[u8] = b"epoch";
 #[account]
 #[derive(Debug)]
 pub struct Epoch {
+    pub current: bool,
     pub id: u64,
-    pub snapshot: Snapshot,
-    pub status: Pubkey,
+    pub snapshot: Pubkey,
 }
 
 impl Epoch {
@@ -35,18 +35,19 @@ impl TryFrom<Vec<u8>> for Epoch {
 
 pub trait EpochAccount {
     fn pubkey(&self) -> Pubkey;
+
+    fn init(&mut self, id: u64) -> Result<()>;
 }
 
 impl EpochAccount for Account<'_, Epoch> {
     fn pubkey(&self) -> Pubkey {
         Epoch::pubkey(self.id)
     }
-}
 
-///
-/// EpochStatus
-///
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
-pub enum EpochStatus {
-    Current,
+    fn init(&mut self, id: u64) -> Result<()> {
+        self.current = true;
+        self.id = id;
+        self.snapshot = Snapshot::pubkey(self.pubkey());
+        Ok(())
+    }
 }

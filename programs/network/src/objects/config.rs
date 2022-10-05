@@ -15,7 +15,7 @@ static DEFAULT_SLOTS_PER_ROTATION: u64 = 10;
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub automation_authority: Pubkey,
+    pub authorized_queue: Pubkey,
     pub mint: Pubkey,
     pub slots_per_rotation: u64, // Target number of slots between each rotation
 }

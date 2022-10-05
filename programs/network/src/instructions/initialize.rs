@@ -21,6 +21,15 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
+        seeds = [SEED_EPOCH, (0 as u64).to_be_bytes().as_ref()],
+        bump,
+        payer = admin,
+        space = 8 + size_of::<Epoch>(),
+    )]
+    pub epoch: Account<'info, Epoch>,
+
+    #[account(
+        init,
         seeds = [SEED_ROTATOR],
         bump,
         payer = admin,
@@ -60,6 +69,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Get accounts
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
+    let epoch = &ctx.accounts.epoch;
     let rotator = &mut ctx.accounts.rotator;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
@@ -70,7 +80,9 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     registry.init()?;
     rotator.init()?;
 
-    // Setup the first snapshot.
+    // TODO Create the 0th epoch.
+
+    // Take the first snapshot.
     // registry.new_snapshot(snapshot)?;
     // registry.rotate_snapshot(None, snapshot)?;
 

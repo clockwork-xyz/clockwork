@@ -5,7 +5,7 @@ pub struct SnapshotClose<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.automation_authority)]
+    #[account(address = config.authorized_queue)]
     pub signer: Signer<'info>,
 
     #[account(

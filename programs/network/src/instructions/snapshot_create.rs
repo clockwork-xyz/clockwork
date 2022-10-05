@@ -17,6 +17,9 @@ pub struct SnapshotCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(address = config.authorized_queue)]
+    pub queue: Signer<'info>,
+
     #[account(
         mut, 
         seeds = [SEED_REGISTRY], 
@@ -24,9 +27,6 @@ pub struct SnapshotCreate<'info> {
         constraint = !registry.is_locked
     )]
     pub registry: Account<'info, Registry>,
-
-    #[account(address = config.automation_authority)]
-    pub signer: Signer<'info>,
 
     #[account(
         init,
