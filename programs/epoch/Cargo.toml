@@ -1,7 +1,7 @@
 [package]
-name = "clockwork-pool-program"
+name = "clockwork-epoch-program"
 version = "1.1.4"
-description = "Clockwork pool protocol"
+description = "Clockwork epoch protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "clockwork_pool_program"
+name = "clockwork_epoch_program"
 
 [features]
 no-entrypoint = []
@@ -23,3 +23,6 @@ default = []
 
 [dependencies]
 anchor-lang = "0.25.0"
+anchor-spl = { features = ["mint", "token"], version = "0.25.0" }
+clockwork-network-program = { path = "../network", features = ["cpi"], version = "1.1.4" }
+clockwork-queue-program = { path = "../queue", features = ["cpi"], version = "1.1.4" }

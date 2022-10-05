@@ -50,8 +50,12 @@ pub mod network_program {
         pool_create::handler(ctx, name, size)
     }
 
-    pub fn pools_rotate<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Result<()> {
-        pools_rotate::handler(ctx)
+    pub fn pool_rotate(ctx: Context<PoolRotate>) -> Result<()> {
+        pool_rotate::handler(ctx)
+    }
+
+    pub fn pool_update(ctx: Context<PoolUpdate>, settings: PoolSettings) -> Result<()> {
+        pool_update::handler(ctx, settings)
     }
 
     pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
