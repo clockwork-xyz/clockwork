@@ -22,7 +22,7 @@ pub fn node_register(
 ) -> Instruction {
     let stake_pubkey = get_associated_token_address(&node, &mint);
     Instruction {
-        program_id: clockwork_network::ID,
+        program_id: clockwork_network_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(associated_token::ID, false),
             AccountMeta::new(authority, true),
@@ -38,6 +38,6 @@ pub fn node_register(
             AccountMeta::new_readonly(token::ID, false),
             AccountMeta::new_readonly(worker, true),
         ],
-        data: clockwork_network::instruction::NodeRegister {}.data(),
+        data: clockwork_network_program::instruction::NodeRegister {}.data(),
     }
 }

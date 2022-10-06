@@ -1,6 +1,5 @@
 mod api;
 mod config;
-mod http;
 mod initialize;
 mod localnet;
 mod node;
@@ -9,5 +8,6 @@ mod process;
 mod queue;
 mod registry;
 mod snapshot;
+mod webhook;
 
 pub use process::*;

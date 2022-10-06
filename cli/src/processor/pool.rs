@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    clockwork_client::{pool::state::Pool, Client},
+    clockwork_client::{pool::objects::Pool, Client},
 };
 
 pub fn get(client: &Client) -> Result<(), CliError> {

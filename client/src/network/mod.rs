@@ -1,4 +1,4 @@
 pub mod instruction;
 
-pub use clockwork_network::state;
-pub use clockwork_network::ID;
+pub use clockwork_network_program::objects;
+pub use clockwork_network_program::ID;

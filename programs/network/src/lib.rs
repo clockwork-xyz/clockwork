@@ -1,18 +1,17 @@
 pub mod errors;
-pub mod id;
-pub mod state;
+pub mod objects;
 
 mod instructions;
 
-pub use id::ID;
-
 use anchor_lang::prelude::*;
-use clockwork_crank::state::CrankResponse;
+use clockwork_queue_program::objects::CrankResponse;
 use instructions::*;
-use state::*;
+use objects::*;
+
+declare_id!("7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP");
 
 #[program]
-pub mod clockwork_network {
+pub mod network_program {
     use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {

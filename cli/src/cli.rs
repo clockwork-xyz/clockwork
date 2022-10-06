@@ -1,6 +1,6 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
-use clockwork_client::http::state::HttpMethod;
+use clockwork_client::webhook::objects::HttpMethod;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
@@ -36,6 +36,9 @@ pub enum CliCommand {
     },
 
     // Node commands
+    NodeGet {
+        worker: Pubkey,
+    },
     NodeRegister {
         worker: Keypair,
     },
@@ -71,30 +74,6 @@ pub fn app() -> Command<'static> {
         .about("Automation infrastructure for Solana")
         .version(version!())
         .arg_required_else_help(true)
-        // .subcommand(
-        //     Command::new("api")
-        //         .about("Manage APIs registered with the HTTP program")
-        //         .arg_required_else_help(true)
-        //         .subcommand(Command::new("new")
-        //             .about("Register a new api")
-        //             .arg(
-        //                 Arg::new("ack_authority")
-        //                     .long("ack_authority")
-        //                     .short('a')
-        //                     .takes_value(true)
-        //                     .required(true)
-        //                     .help("The authority which will acknowledge requests sent to this API"),
-        //             )
-        //             .arg(
-        //                 Arg::new("base_url")
-        //                     .long("base_url")
-        //                     .short('b')
-        //                     .takes_value(true)
-        //                     .required(true)
-        //                     .help("The base url of the API"),
-        //             )
-        //         )
-        // )
         .subcommand(
             Command::new("config")
                 .about("Manage the Clockwork configs")
@@ -134,42 +113,6 @@ pub fn app() -> Command<'static> {
                         ),
                 ),
         )
-        // .subcommand(
-        //     Command::new("http")
-        //         .about("Trigger HTTP requests from Solana")
-        //         .arg(
-        //             Arg::new("api")
-        //                 .long("api")
-        //                 .short('a')
-        //                 .takes_value(true)
-        //                 .required(true)
-        //                 .help("The address of the API to send this request to"),
-        //         )
-        //         .arg(
-        //             Arg::new("id")
-        //                 .long("id")
-        //                 .short('i')
-        //                 .takes_value(true)
-        //                 .required(true)
-        //                 .help("A deduplication id for the request"),
-        //         )
-        //         .arg(
-        //             Arg::new("method")
-        //                 .long("method")
-        //                 .short('m')
-        //                 .takes_value(true)
-        //                 .required(true)
-        //                 .help("The method to invoke the HTTP request with (GET, POST, PATCH)"),
-        //         )
-        //         .arg(
-        //             Arg::new("route")
-        //                 .long("route")
-        //                 .short('r')
-        //                 .takes_value(true)
-        //                 .required(true)
-        //                 .help("The relative route to send the HTTP request to"),
-        //         ),
-        // )
         .subcommand(
             Command::new("initialize")
                 .about("Initialize the Clockwork programs")
@@ -204,6 +147,17 @@ pub fn app() -> Command<'static> {
                 .about("Manage your nodes")
                 .arg_required_else_help(true)
                 .subcommand(
+                    Command::new("get")
+                        .about("Lookup a registered worker node")
+                        .arg(
+                            Arg::new("worker_address")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The worker address to lookup"),
+                        ),
+                )
+                .subcommand(
                     Command::new("register")
                         .about("Register a new worker with the Clockwork network")
                         .arg(
@@ -216,13 +170,13 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("stake")
-                        .about("Stake CRON with your Clockwork worker")
+                        .about("Stake CLOCK tokens with a Clockwork worker")
                         .arg(
                             Arg::new("address")
                                 .index(2)
                                 .takes_value(true)
                                 .required(true)
-                                .help("The worker address to stake tokens with"),
+                                .help("The node address to stake tokens with"),
                         )
                         .arg(
                             Arg::new("amount")

@@ -1,17 +1,20 @@
 use {
-    crate::{errors::ClockworkError, state::*},
-    anchor_lang::{prelude::*, solana_program::{instruction::Instruction, system_program}},
+    crate::{errors::ClockworkError, objects::*},
+    anchor_lang::{
+        prelude::*,
+        solana_program::{instruction::Instruction, system_program},
+    },
     anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct EntryCreate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(
@@ -19,7 +22,7 @@ pub struct EntryCreate<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.node_count.to_be_bytes().as_ref()
+            snapshot.node_count.to_be_bytes().as_ref(),
         ],
         bump,
         payer = payer,
@@ -28,11 +31,7 @@ pub struct EntryCreate<'info> {
     pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
-        seeds = [
-            SEED_NODE,
-            node.id.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = node.pubkey(),
         constraint = node.id == snapshot.node_count @ ClockworkError::InvalidNode
     )]
     pub node: Box<Account<'info, Node>>,
@@ -40,14 +39,14 @@ pub struct EntryCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(seeds = [SEED_REGISTRY], bump)]
+    #[account(address = Registry::pubkey())]
     pub registry: Box<Account<'info, Registry>>,
 
     #[account(
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.id.to_be_bytes().as_ref()
+            snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
         constraint = snapshot.status == SnapshotStatus::InProgress @ ClockworkError::SnapshotNotInProgress,
@@ -56,15 +55,10 @@ pub struct EntryCreate<'info> {
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(
-        signer, 
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_crank::ID,
-        bump,
-        has_one = authority
+        address = snapshot_queue.pubkey(),
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority,
+        signer,
     )]
     pub snapshot_queue: Account<'info, Queue>,
 
@@ -97,27 +91,27 @@ pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
     let next_instruction = if snapshot.node_count < registry.node_count {
         // There are more nodes in the registry. Continue creating snapshot entries.
         let next_id = node.id.checked_add(1).unwrap();
-        let next_node_pubkey = Node::pubkey(next_id); 
+        let next_node_pubkey = Node::pubkey(next_id);
         let next_entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), next_id);
         let stake_pubkey = get_associated_token_address(&next_node_pubkey, &config.mint);
         Some(
-             Instruction {
+            Instruction {
                 program_id: crate::ID,
                 accounts: vec![
                     AccountMeta::new_readonly(authority.key(), false),
                     AccountMeta::new_readonly(config.key(), false),
                     AccountMeta::new(next_entry_pubkey, false),
                     AccountMeta::new_readonly(next_node_pubkey, false),
-                    AccountMeta::new(clockwork_crank::payer::ID, true),
+                    AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
-                    AccountMeta::new_readonly(system_program.key(), false)
+                    AccountMeta::new_readonly(system_program.key(), false),
                 ],
-                data: clockwork_crank::anchor::sighash("entry_create").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("entry_create").into(),
             }
-            .into()
+            .into(),
         )
     } else {
         // We have created entries for all the nodes. Activate the new snapshot.
@@ -132,9 +126,9 @@ pub fn handler(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
                     AccountMeta::new(registry.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                 ],
-                data: clockwork_crank::anchor::sighash("snapshot_rotate").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("snapshot_rotate").into(),
             }
-            .into()
+            .into(),
         )
     };
 

@@ -1,18 +1,18 @@
 use anchor_spl::associated_token::get_associated_token_address;
 
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotCreate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Box<Account<'info, Authority>>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
     #[account(mut)]
@@ -25,7 +25,7 @@ pub struct SnapshotCreate<'info> {
         init,
         seeds = [
             SEED_SNAPSHOT,
-            registry.snapshot_count.to_be_bytes().as_ref()
+            registry.snapshot_count.to_be_bytes().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Snapshot>(),
@@ -34,15 +34,10 @@ pub struct SnapshotCreate<'info> {
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(
-        signer, 
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_crank::ID,
-        bump,
-        has_one = authority
+        address = snapshot_queue.pubkey(),
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority,
+        signer,
     )]
     pub snapshot_queue: Account<'info, Queue>,
 
@@ -69,23 +64,23 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
         let entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), 0);
         let stake_pubkey = get_associated_token_address(&node_pubkey, &config.mint);
         Some(
-             Instruction {
+            Instruction {
                 program_id: crate::ID,
                 accounts: vec![
                     AccountMeta::new_readonly(authority.key(), false),
                     AccountMeta::new_readonly(config.key(), false),
                     AccountMeta::new(entry_pubkey, false),
                     AccountMeta::new_readonly(node_pubkey, false),
-                    AccountMeta::new(clockwork_crank::payer::ID, true),
+                    AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
                     AccountMeta::new_readonly(registry.key(), false),
                     AccountMeta::new(snapshot.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                     AccountMeta::new_readonly(stake_pubkey, false),
-                    AccountMeta::new_readonly(system_program.key(), false)
+                    AccountMeta::new_readonly(system_program.key(), false),
                 ],
-                data: clockwork_crank::anchor::sighash("entry_create").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("entry_create").into(),
             }
-            .into()
+            .into(),
         )
     } else {
         // There are no nodes in the registry. Activate the new snapshot.
@@ -100,9 +95,9 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                     AccountMeta::new(registry.key(), false),
                     AccountMeta::new_readonly(snapshot_queue.key(), true),
                 ],
-                data: clockwork_crank::anchor::sighash("snapshot_rotate").into(),
+                data: clockwork_queue_program::utils::anchor_sighash("snapshot_rotate").into(),
             }
-            .into()
+            .into(),
         )
     };
 

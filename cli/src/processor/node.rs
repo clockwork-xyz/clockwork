@@ -1,46 +1,47 @@
-use clockwork_client::network::state::NodeSettings;
+use std::str::FromStr;
 
 use {
     crate::errors::CliError,
-    clockwork_client::network::state::{Config, Node, Registry, Snapshot, SnapshotEntry},
+    clockwork_client::network::objects::{
+        Config, Node, NodeSettings, Registry, Snapshot, SnapshotEntry,
+    },
     clockwork_client::Client,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::{
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+        rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
+    },
     solana_sdk::{
+        commitment_config::CommitmentConfig,
         pubkey::Pubkey,
         signature::{Keypair, Signer},
     },
+    std::mem::size_of,
 };
 
-// pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
-//     let node = client
-//         .get::<clockwork_client::network::state::Node>(&address)
-//         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-//     println!("{:#?}", node);
-//     Ok(())
-// }
-
-// pub fn add_pool(client: &Client, node_pubkey: Pubkey, pool_pubkey: Pubkey) -> Result<(), CliError> {
-//     let ix = clockwork_client::network::instruction::node_add_pool(
-//         client.payer_pubkey(),
-//         node_pubkey,
-//         pool_pubkey,
-//     );
-//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-//     Ok(())
-// }
-
-// pub fn drop_pool(
-//     client: &Client,
-//     node_pubkey: Pubkey,
-//     pool_pubkey: Pubkey,
-// ) -> Result<(), CliError> {
-//     let ix = clockwork_client::network::instruction::node_drop_pool(
-//         client.payer_pubkey(),
-//         node_pubkey,
-//         pool_pubkey,
-//     );
-//     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-//     Ok(())
-// }
+pub fn get(client: &Client, worker_pubkey: Pubkey) -> Result<(), CliError> {
+    let memcmp = RpcFilterType::Memcmp(Memcmp {
+        offset: 8 + size_of::<Pubkey>() + size_of::<Pubkey>() + size_of::<u64>(),
+        bytes: MemcmpEncodedBytes::Base58(worker_pubkey.to_string()),
+        encoding: None,
+    });
+    let config = RpcProgramAccountsConfig {
+        filters: Some(vec![memcmp]),
+        account_config: RpcAccountInfoConfig {
+            encoding: Some(UiAccountEncoding::Base64),
+            ..RpcAccountInfoConfig::default()
+        },
+        ..RpcProgramAccountsConfig::default()
+    };
+    let acc_infos = client
+        .get_program_accounts_with_config(&clockwork_client::network::ID, config)
+        .unwrap();
+    for (pubkey, acc_info) in acc_infos {
+        let node = Node::try_from(acc_info.data).unwrap();
+        println!("Address: {:#?}\n{:#?}", pubkey, node);
+    }
+    Ok(())
+}
 
 pub fn update(
     client: &Client,

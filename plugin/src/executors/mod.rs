@@ -1,20 +1,20 @@
-pub mod http;
 pub mod tx;
+pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
-use http::HttpExecutor;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
+use webhook::WebhookExecutor;
 
 use crate::observers::Observers;
 
 pub struct Executors {
-    pub http: Arc<HttpExecutor>,
     pub tx: Arc<TxExecutor>,
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
+    pub webhook: Arc<WebhookExecutor>,
 }
 
 impl Executors {
@@ -25,7 +25,7 @@ impl Executors {
 
             // Execute work
             this.tx.clone().execute_txs(slot)?;
-            this.http.clone().execute_requests()?;
+            this.webhook.clone().execute_requests()?;
             Ok(())
         })
     }

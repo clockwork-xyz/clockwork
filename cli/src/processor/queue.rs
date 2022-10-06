@@ -1,6 +1,6 @@
 use {
     crate::errors::CliError,
-    clockwork_client::{crank::state::Queue, Client},
+    clockwork_client::{queue::objects::Queue, Client},
     solana_sdk::pubkey::Pubkey,
 };
 
@@ -14,7 +14,7 @@ pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
 }
 
 pub fn update(client: &Client, address: &Pubkey, rate_limit: Option<u64>) -> Result<(), CliError> {
-    let ix = clockwork_client::crank::instruction::queue_update(
+    let ix = clockwork_client::queue::instruction::queue_update(
         client.payer_pubkey(),
         *address,
         None,

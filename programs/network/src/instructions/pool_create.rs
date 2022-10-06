@@ -1,11 +1,11 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    clockwork_pool::{program::ClockworkPool, state::SEED_POOL},
+    clockwork_pool_program::{objects::Pool, program::PoolProgram},
 };
 
 #[derive(Accounts)]
@@ -14,17 +14,17 @@ pub struct PoolCreate<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(seeds = [SEED_CONFIG], bump, has_one = admin)]
+    #[account(address = Config::pubkey(), has_one = admin)]
     pub config: Account<'info, Config>,
 
-    #[account(seeds = [SEED_POOL, name.as_bytes()], seeds::program = clockwork_pool::ID, bump)]
+    #[account(address = Pool::pubkey(name))]
     pub pool: SystemAccount<'info>,
 
-    #[account(address = clockwork_pool::ID)]
-    pub pool_program: Program<'info, ClockworkPool>,
+    #[account(address = clockwork_pool_program::ID)]
+    pub pool_program: Program<'info, PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], seeds::program = clockwork_pool::ID, bump)]
-    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
+    #[account(address = clockwork_pool_program::objects::Config::pubkey())]
+    pub pool_program_config: Account<'info, clockwork_pool_program::objects::Config>,
 
     #[account(mut, seeds = [SEED_ROTATOR], bump)]
     pub rotator: Account<'info, Rotator>,
@@ -43,18 +43,18 @@ pub fn handler(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()
     let system_program = &ctx.accounts.system_program;
 
     // Rotate the worker into its supported pools
-    let rotator_bump = *ctx.bumps.get("rotator").unwrap();
-    clockwork_pool::cpi::pool_create(
+    let bump = *ctx.bumps.get("rotator").unwrap();
+    clockwork_pool_program::cpi::pool_create(
         CpiContext::new_with_signer(
             pool_program.to_account_info(),
-            clockwork_pool::cpi::accounts::PoolCreate {
+            clockwork_pool_program::cpi::accounts::PoolCreate {
                 config: pool_program_config.to_account_info(),
                 payer: admin.to_account_info(),
                 pool: pool.to_account_info(),
                 pool_authority: rotator.to_account_info(),
                 system_program: system_program.to_account_info(),
             },
-            &[&[SEED_ROTATOR, &[rotator_bump]]],
+            &[&[SEED_ROTATOR, &[bump]]],
         ),
         name,
         size,

@@ -1,15 +1,15 @@
 use {
-    crate::state::*,
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_crank::state::{CrankResponse, Queue, SEED_QUEUE},
+    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
 };
 
 #[derive(Accounts)]
 pub struct SnapshotRotate<'info> {
-    #[account(seeds = [SEED_AUTHORITY], bump)]
+    #[account(address = Authority::pubkey())]
     pub authority: Account<'info, Authority>,
 
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
@@ -27,9 +27,10 @@ pub struct SnapshotRotate<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            current_snapshot.id.checked_add(1).unwrap().to_be_bytes().as_ref()
+            next_snapshot.id.to_be_bytes().as_ref()
         ],
         bump,
+        constraint = current_snapshot.id.checked_add(1).unwrap().eq(&next_snapshot.id)
     )]
     pub next_snapshot: Account<'info, Snapshot>,
 
@@ -37,15 +38,10 @@ pub struct SnapshotRotate<'info> {
     pub registry: Account<'info, Registry>,
 
     #[account(
-        signer, 
-        seeds = [
-            SEED_QUEUE, 
-            authority.key().as_ref(), 
-            "snapshot".as_bytes()
-        ], 
-        seeds::program = clockwork_crank::ID,
-        bump,
-        has_one = authority
+        address = snapshot_queue.pubkey(),
+        constraint = snapshot_queue.id.eq("snapshot"),
+        has_one = authority,
+        signer,
     )]
     pub snapshot_queue: Account<'info, Queue>,
 }
@@ -70,8 +66,9 @@ pub fn handler(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
                 AccountMeta::new(current_snapshot.key(), false),
                 AccountMeta::new(snapshot_queue.key(), true),
             ],
-            data: clockwork_crank::anchor::sighash("snapshot_close").into(),
-        }.into()
+            data: clockwork_queue_program::utils::anchor_sighash("snapshot_close").into(),
+        }
+        .into(),
     );
 
     Ok(CrankResponse { next_instruction })

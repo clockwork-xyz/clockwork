@@ -1,6 +1,6 @@
 [package]
-name = "clockwork-pool"
-version = "1.0.6"
+name = "clockwork-pool-program"
+version = "1.1.4"
 description = "Clockwork pool protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -12,7 +12,7 @@ keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "clockwork_pool"
+name = "clockwork_pool_program"
 
 [features]
 no-entrypoint = []

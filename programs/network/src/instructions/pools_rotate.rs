@@ -1,41 +1,41 @@
 use {
     crate::{
         errors::ClockworkError,
-        state::*
+        objects::*
     },
     anchor_lang::prelude::*,
-    clockwork_pool::cpi::accounts::PoolRotate
+    clockwork_pool_program::cpi::accounts::PoolRotate
 };
 
 #[derive(Accounts)]
 pub struct PoolsRotate<'info> {
-    #[account(seeds = [SEED_CONFIG], bump)]
+    #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            entry.snapshot.as_ref(),
-            entry.id.to_be_bytes().as_ref(),
-        ],
-        bump,
+        address = entry.pubkey(),
         has_one = snapshot,
         has_one = worker,
         constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap() @ ClockworkError::InvalidSnapshotEntry,
     )]
     pub entry: Account<'info, SnapshotEntry>,
 
-    #[account(seeds = [SEED_NODE, node.id.to_be_bytes().as_ref()], bump, constraint = node.id == entry.id)]
+    #[account(
+        address = node.pubkey(), 
+        constraint = node.id == entry.id
+    )]
     pub node: Account<'info, Node>,
 
-    #[account(address = clockwork_pool::ID)]
-    pub pool_program: Program<'info, clockwork_pool::program::ClockworkPool>,
+    #[account(address = clockwork_pool_program::ID)]
+    pub pool_program: Program<'info, clockwork_pool_program::program::PoolProgram>,
 
-    #[account(seeds = [SEED_CONFIG], bump, seeds::program = clockwork_pool::ID)]
-    pub pool_program_config: Account<'info, clockwork_pool::state::Config>,
+    #[account(address = clockwork_pool_program::objects::Config::pubkey())]
+    pub pool_program_config: Account<'info, clockwork_pool_program::objects::Config>,
 
     #[account(
-        mut, seeds = [SEED_ROTATOR], bump, 
+        mut,
+        seeds = [SEED_ROTATOR], 
+        bump,
         constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
     )]
     pub rotator: Account<'info, Rotator>,
@@ -44,7 +44,7 @@ pub struct PoolsRotate<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        seeds = [SEED_SNAPSHOT, snapshot.id.to_be_bytes().as_ref()], bump,
+        address = snapshot.pubkey(),
         constraint = snapshot.status == SnapshotStatus::Current @ ClockworkError::SnapshotNotCurrent
     )]
     pub snapshot: Account<'info, Snapshot>,
@@ -65,7 +65,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
     require!(rotator.pool_pubkeys.len() == ctx.remaining_accounts.len(), ClockworkError::InvalidPool);
 
     // Rotate the worker into its supported pools
-    let rotator_bump = *ctx.bumps.get("rotator").unwrap();
+    let bump = *ctx.bumps.get("rotator").unwrap();
     for i in 0..ctx.remaining_accounts.len() {
         match ctx.remaining_accounts.get(i) {
             None => return Err(ClockworkError::InvalidPool.into()),
@@ -76,7 +76,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
 
                 // If the node supports this pool, then rotate it in
                 if node.supported_pools.contains(&pool_acc_info.key()) {
-                    clockwork_pool::cpi::pool_rotate(
+                    clockwork_pool_program::cpi::pool_rotate(
                         CpiContext::new_with_signer(
                             pool_program.to_account_info(),
                             PoolRotate {
@@ -85,7 +85,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Re
                                 pool_authority: rotator.to_account_info(),
                                 worker: worker.to_account_info(),
                             },
-                            &[&[SEED_ROTATOR, &[rotator_bump]]],
+                            &[&[SEED_ROTATOR, &[bump]]],
                         ),
                     )?;
                 }

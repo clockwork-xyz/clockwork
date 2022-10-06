@@ -1,17 +1,16 @@
 pub mod errors;
-pub mod id;
-pub mod state;
+pub mod objects;
 
 mod instructions;
 
-pub use id::ID;
-
 use anchor_lang::prelude::*;
 use instructions::*;
-use state::*;
+use objects::*;
+
+declare_id!("AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm");
 
 #[program]
-pub mod clockwork_pool {
+pub mod pool_program {
     use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {

@@ -93,7 +93,7 @@ fn _listen_for_events(
 ) -> Result<(), CliError> {
     let (ws_sub, log_receiver) = PubsubClient::logs_subscribe(
         "ws://localhost:8900/",
-        RpcTransactionLogsFilter::Mentions(vec![clockwork_client::crank::ID.to_string()]),
+        RpcTransactionLogsFilter::Mentions(vec![clockwork_client::queue::ID.to_string()]),
         RpcTransactionLogsConfig {
             commitment: Some(CommitmentConfig::confirmed()),
         },
