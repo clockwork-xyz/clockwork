@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    # "bench",
     # "cli",
     # "client",
     "cron",
