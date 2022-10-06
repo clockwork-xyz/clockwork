@@ -51,7 +51,7 @@ pub fn handler(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
     //      For each "unstake request" transfer tokens from the Worker stake account to the Delegation authority's token account.
     //      Decrement the Delegation's stake balance by the amount unstaked.
 
-    // TODO Delegate stakes.
+    // TODO Lock delegated stakes.
     //      Transfer tokens from the Delegation's stake account to the Worker's stake account.
     //      Increment the Delegation's stake balance by the amount moved.
 

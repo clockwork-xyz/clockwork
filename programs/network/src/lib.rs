@@ -22,15 +22,12 @@ pub mod network_program {
         delegation_create::handler(ctx)
     }
 
-    pub fn delegation_request_unstake(
-        ctx: Context<DelegationRequestUnstake>,
-        amount: u64,
-    ) -> Result<()> {
-        delegation_request_unstake::handler(ctx, amount)
+    pub fn epoch_create(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
+        epoch_create::handler(ctx)
     }
 
-    pub fn epoch_start(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
-        epoch_create::handler(ctx)
+    pub fn epoch_start(ctx: Context<EpochStart>) -> Result<CrankResponse> {
+        epoch_start::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {

@@ -7,6 +7,8 @@ use {
     std::mem::size_of,
 };
 
+// TODO Create worker stake account
+
 #[derive(Accounts)]
 pub struct WorkerRegister<'info> {
     #[account(mut, constraint = authority.key() != worker.key())]

@@ -26,6 +26,9 @@ pub struct SnapshotFrameCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(address = config.authorized_queue)]
+    pub queue: Signer<'info>,
+
     #[account(
         address = Registry::pubkey(),
         constraint = registry.locked
@@ -79,6 +82,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
     let current_epoch = &ctx.accounts.current_epoch;
     let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
+    let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
@@ -104,7 +108,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
 
     // Build the next instruction for the queue.
     let next_instruction = if worker.total_delegations > 0 {
-        // This worker has delegations. Create snapshot entries for each delegation associated with this worker.
+        // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
         Some(InstructionData {
@@ -119,6 +123,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
                 ),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new(zeroth_snapshot_entry_pubkey, false),
@@ -140,6 +145,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
@@ -152,17 +158,20 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("snapshot_frame_create").to_vec(),
         })
-    } else if snapshot.total_workers.eq(&registry.total_workers) {
-        // TODO The snapshot is done!
+    } else if snapshot.total_workers.eq(&registry.total_workers) && worker.total_delegations == 0 {
+        // This worker has no delegations and this is the last frame, so the snapshot is done. Start the epoch!
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                // TODO AccountMetaData::new(pubkey, is_signer)
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(current_epoch.key(), false),
+                AccountMetaData::new(epoch.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
             ],
             data: anchor_sighash("epoch_start").to_vec(),
         })
     } else {
-        // Something is wrong...
+        // Something is wrong. This branch should never be reached...
         return Err(ClockworkError::InvalidSnapshot.into());
     };
 

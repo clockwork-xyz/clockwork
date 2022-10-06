@@ -39,6 +39,9 @@ pub struct SnapshotEntryCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(address = config.authorized_queue)]
+    pub queue: Signer<'info>,
+
     #[account(
         address = Registry::pubkey(),
         constraint = registry.locked
@@ -96,6 +99,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     let delegation_stake = &ctx.accounts.delegation_stake;
     let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
+    let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
@@ -135,6 +139,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
                 ),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_entry_pubkey, false),
@@ -158,6 +163,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
@@ -173,8 +179,17 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     } else if snapshot_frame.total_entries.eq(&worker.total_delegations)
         && snapshot.total_workers.eq(&registry.total_workers)
     {
-        // TODO This frame has captured all its entries and it is the last frame. The snapshot is done!
-        None
+        // All entries in this frame have been captured, and it is the last frame. The snapshot is done!
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(current_epoch.key(), false),
+                AccountMetaData::new(epoch.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+            ],
+            data: anchor_sighash("epoch_start").to_vec(),
+        })
     } else {
         // Something is wrong...
         return Err(ClockworkError::InvalidSnapshot.into());

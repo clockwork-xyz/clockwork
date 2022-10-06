@@ -6,20 +6,20 @@ pub const SEED_DELEGATION: &[u8] = b"delegation";
 #[account]
 #[derive(Debug)]
 pub struct Delegation {
-    /// The authority of this stake delegation account.
+    /// The authority of this delegation account.
     pub authority: Pubkey,
+
+    /// The number of lamports claimable as yield by the authority.
+    pub claimable_yield: u64,
 
     /// The id of this delegation (auto-incrementing integer relative to worker)
     pub id: u64,
 
-    /// The number of tokens the authority has delegated to this worker.
-    pub stake_balance: u64,
+    /// The number of delegated tokens currently locked with the worker.
+    pub locked_stake_amount: u64,
 
-    /// The worker the stake has been delegated to.
+    /// The worker to delegate stake to.
     pub worker: Pubkey,
-
-    /// The amount claimable lamports payable as yield to the authority.
-    pub yield_balance: u64,
 }
 
 impl Delegation {
@@ -45,6 +45,8 @@ impl TryFrom<Vec<u8>> for Delegation {
 
 pub trait DelegationAccount {
     fn pubkey(&self) -> Pubkey;
+
+    // TODO init
 }
 
 impl DelegationAccount for Account<'_, Delegation> {
