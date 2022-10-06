@@ -6,19 +6,23 @@ pub const SEED_DELEGATION: &[u8] = b"delegation";
 #[account]
 #[derive(Debug)]
 pub struct Delegation {
-    /// The claimable yield paid out by the worker.
-    pub claimable_yield: u64,
-
-    /// The number of tokens that have been staked with this worker.
-    pub stake_amount: u64,
+    /// The authority of this stake delegation account.
+    pub authority: Pubkey,
 
     /// The worker the stake has been delegated to.
     pub worker: Pubkey,
+
+    /// The amount claimable lamports payable as yield to the authority.
+    pub yield_balance: u64,
 }
 
 impl Delegation {
-    pub fn pubkey() -> Pubkey {
-        Pubkey::find_program_address(&[SEED_DELEGATION], &crate::ID).0
+    pub fn pubkey(authority: Pubkey, worker: Pubkey) -> Pubkey {
+        Pubkey::find_program_address(
+            &[SEED_DELEGATION, authority.as_ref(), worker.as_ref()],
+            &crate::ID,
+        )
+        .0
     }
 }
 

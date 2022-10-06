@@ -18,12 +18,23 @@ pub mod network_program {
         config_update::handler(ctx, settings)
     }
 
+    pub fn delegation_create(ctx: Context<DelegationCreate>) -> Result<()> {
+        delegation_create::handler(ctx)
+    }
+
+    pub fn delegation_request_unstake(
+        ctx: Context<DelegationRequestUnstake>,
+        amount: u64,
+    ) -> Result<()> {
+        delegation_request_unstake::handler(ctx, amount)
+    }
+
     pub fn entry_close(ctx: Context<EntryClose>) -> Result<()> {
-        entry_close::handler(ctx)
+        snapshot_entry_close::handler(ctx)
     }
 
     pub fn entry_create(ctx: Context<EntryCreate>) -> Result<()> {
-        entry_create::handler(ctx)
+        snapshot_entry_create::handler(ctx)
     }
 
     pub fn epoch_start(ctx: Context<EpochStart>) -> Result<CrankResponse> {
@@ -32,22 +43,6 @@ pub mod network_program {
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
         initialize::handler(ctx)
-    }
-
-    pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {
-        worker_register::handler(ctx)
-    }
-
-    pub fn worker_stake(ctx: Context<WorkerStake>, amount: u64) -> Result<()> {
-        worker_stake::handler(ctx, amount)
-    }
-
-    pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {
-        worker_update::handler(ctx, settings)
-    }
-
-    pub fn worker_unstake(ctx: Context<WorkerUnstake>, amount: u64) -> Result<()> {
-        worker_unstake::handler(ctx, amount)
     }
 
     pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
@@ -68,5 +63,13 @@ pub mod network_program {
 
     pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<()> {
         snapshot_create::handler(ctx)
+    }
+
+    pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {
+        worker_register::handler(ctx)
+    }
+
+    pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {
+        worker_update::handler(ctx, settings)
     }
 }
