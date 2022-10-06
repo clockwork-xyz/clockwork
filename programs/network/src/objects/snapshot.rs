@@ -1,5 +1,5 @@
 use {
-    super::{Node, SnapshotEntry},
+    super::{SnapshotEntry, Worker},
     crate::objects::SnapshotEntryAccount,
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
@@ -46,7 +46,7 @@ pub trait SnapshotAccount {
     fn capture(
         &mut self,
         entry: &mut Account<SnapshotEntry>,
-        node: &Account<Node>,
+        node: &Account<Worker>,
         stake: &Account<TokenAccount>,
     ) -> Result<()>;
 }
@@ -67,7 +67,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
     fn capture(
         &mut self,
         entry: &mut Account<SnapshotEntry>,
-        node: &Account<Node>,
+        worker: &Account<Worker>,
         stake: &Account<TokenAccount>,
     ) -> Result<()> {
         // Record the new snapshot entry
@@ -76,7 +76,7 @@ impl SnapshotAccount for Account<'_, Snapshot> {
             self.key(),
             self.total_stake,
             stake.amount,
-            node.worker,
+            worker.delegate,
         )?;
 
         // Update the snapshot's entry count

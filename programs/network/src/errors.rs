@@ -6,7 +6,7 @@ pub enum ClockworkError {
     AccountAlreadyInitialized,
 
     #[msg("The provided node is cannot be used for this operation")]
-    InvalidNode,
+    InvalidWorker,
 
     #[msg("The provided snapshot entry cannot be used for this operation")]
     InvalidSnapshotEntry,

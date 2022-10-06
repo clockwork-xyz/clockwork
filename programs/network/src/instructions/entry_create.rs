@@ -24,10 +24,10 @@ pub struct EntryCreate<'info> {
     pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
-        address = node.pubkey(),
-        constraint = node.id == snapshot.total_workers @ ClockworkError::InvalidNode
+        address = worker.pubkey(),
+        constraint = worker.id == snapshot.total_workers @ ClockworkError::InvalidWorker
     )]
-    pub node: Box<Account<'info, Node>>,
+    pub worker: Box<Account<'info, Worker>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -51,7 +51,7 @@ pub struct EntryCreate<'info> {
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(
-        associated_token::authority = node,
+        associated_token::authority = worker,
         associated_token::mint = config.mint,
     )]
     pub stake: Account<'info, TokenAccount>,
@@ -63,12 +63,12 @@ pub struct EntryCreate<'info> {
 pub fn handler(ctx: Context<EntryCreate>) -> Result<()> {
     // Get accounts
     let entry = &mut ctx.accounts.entry;
-    let node = &ctx.accounts.node;
+    let worker = &ctx.accounts.worker;
     let stake = &ctx.accounts.stake;
     let snapshot = &mut ctx.accounts.snapshot;
 
     // Capture the snapshot entry
-    snapshot.capture(entry, node, stake)?;
+    snapshot.capture(entry, worker, stake)?;
 
     Ok(())
 }

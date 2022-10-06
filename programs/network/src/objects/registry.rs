@@ -1,8 +1,8 @@
 use {
-    super::{Node, Snapshot},
+    super::{Snapshot, Worker},
     crate::{
         errors::ClockworkError,
-        objects::{NodeAccount, SnapshotAccount, SnapshotStatus},
+        objects::{SnapshotAccount, SnapshotStatus, WorkerAccount},
     },
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
@@ -42,14 +42,6 @@ impl TryFrom<Vec<u8>> for Registry {
 pub trait RegistryAccount {
     fn init(&mut self) -> Result<()>;
 
-    fn new_node(
-        &mut self,
-        authority: &mut Signer,
-        node: &mut Account<Node>,
-        stake: &mut Account<TokenAccount>,
-        worker: &Signer,
-    ) -> Result<()>;
-
     fn lock(&mut self) -> Result<()>;
 
     fn unlock(&mut self) -> Result<()>;
@@ -59,19 +51,6 @@ impl RegistryAccount for Account<'_, Registry> {
     fn init(&mut self) -> Result<()> {
         self.is_locked = false;
         self.total_workers = 0;
-        Ok(())
-    }
-
-    fn new_node(
-        &mut self,
-        authority: &mut Signer,
-        node: &mut Account<Node>,
-        stake: &mut Account<TokenAccount>,
-        worker: &Signer,
-    ) -> Result<()> {
-        require!(!self.is_locked, ClockworkError::RegistryLocked);
-        node.init(authority, self.total_workers, stake, worker)?;
-        self.total_workers = self.total_workers.checked_add(1).unwrap();
         Ok(())
     }
 

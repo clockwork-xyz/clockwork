@@ -34,20 +34,20 @@ pub mod network_program {
         initialize::handler(ctx)
     }
 
-    pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
-        node_register::handler(ctx)
+    pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {
+        worker_register::handler(ctx)
     }
 
-    pub fn node_stake(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
-        node_stake::handler(ctx, amount)
+    pub fn worker_stake(ctx: Context<WorkerStake>, amount: u64) -> Result<()> {
+        worker_stake::handler(ctx, amount)
     }
 
-    pub fn node_update(ctx: Context<NodeUpdate>, settings: NodeSettings) -> Result<()> {
-        node_update::handler(ctx, settings)
+    pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {
+        worker_update::handler(ctx, settings)
     }
 
-    pub fn node_unstake(ctx: Context<NodeUnstake>, amount: u64) -> Result<()> {
-        node_unstake::handler(ctx, amount)
+    pub fn worker_unstake(ctx: Context<WorkerUnstake>, amount: u64) -> Result<()> {
+        worker_unstake::handler(ctx, amount)
     }
 
     pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {

@@ -36,7 +36,7 @@ pub struct PoolRotate<'info> {
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(address = worker.pubkey())]
-    pub worker: Account<'info, Node>,
+    pub worker: Account<'info, Worker>,
 }
 
 pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
