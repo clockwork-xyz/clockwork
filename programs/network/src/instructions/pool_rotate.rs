@@ -14,12 +14,12 @@ pub struct PoolRotate<'info> {
     pub delegate: Signer<'info>,
 
     #[account(
-        address = entry.pubkey(),
+        address = snapshot_frame.pubkey(),
         has_one = snapshot,
         has_one = worker,
-        constraint = is_valid_entry(&entry, &rotator, &snapshot).unwrap()
+        constraint = is_valid_frame(&rotator, &snapshot, &snapshot_frame).unwrap()
     )]
-    pub entry: Account<'info, SnapshotEntry>,
+    pub snapshot_frame: Account<'info, SnapshotFrame>,
 
     #[account(
         mut,
@@ -78,15 +78,15 @@ pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
     Ok(())
 }
 
-fn is_valid_entry(
-    entry: &Account<SnapshotEntry>,
+fn is_valid_frame(
     rotator: &Account<Rotator>,
     snapshot: &Account<Snapshot>,
+    snapshot_frame: &Account<SnapshotFrame>,
 ) -> Result<bool> {
     // Return true if the sample is within the entry's stake range
     match rotator.nonce.checked_rem(snapshot.total_stake) {
         None => Ok(false),
-        Some(sample) => Ok(sample >= entry.stake_offset
-            && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),
+        Some(sample) => Ok(sample >= snapshot_frame.stake_offset
+            && sample < snapshot_frame.stake_offset.checked_add(snapshot_frame.stake_amount).unwrap()),
     }
 }

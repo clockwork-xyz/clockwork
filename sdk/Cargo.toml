@@ -14,8 +14,8 @@ keywords = ["solana"]
 name = "clockwork_sdk"
 
 [dependencies]
-clockwork-client = { optional = true, path = "../client", version = "1.1.4" }
-clockwork-queue-program = { path = "../programs/queue", features = ["cpi"], version = "1.1.4" }
+clockwork-client = { path = "../client", version = "1.1.4", optional = true, }
+clockwork-queue-program = {  path = "../programs/queue", features = ["cpi"], version = "1.1.4", optional = true, }
 clockwork-utils = { path = "../utils", version = "1.1.4" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 nom = "~7"
@@ -27,3 +27,4 @@ chrono-tz = "0.6.1"
 [features]
 default = []
 client = ["clockwork-client"]
+queue = ["clockwork-queue-program"]

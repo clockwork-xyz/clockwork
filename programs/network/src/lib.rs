@@ -61,8 +61,12 @@ pub mod network_program {
         snapshot_close::handler(ctx)
     }
 
-    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<()> {
+    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
         snapshot_create::handler(ctx)
+    }
+
+    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
+        snapshot_frame_create::handler(ctx)
     }
 
     pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {

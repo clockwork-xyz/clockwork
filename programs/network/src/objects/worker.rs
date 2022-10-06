@@ -13,9 +13,10 @@ pub const SEED_WORKER: &[u8] = b"worker";
 #[derive(Debug)]
 pub struct Worker {
     pub authority: Pubkey,                // The worker's authority
-    pub delegate: Pubkey,                 // The worker's delegate address (used to sign txs)
+    pub signatory: Pubkey,                // The worker's signatory address (used to sign txs)
     pub id: u64,                          // The worker's id (auto-incrementing)
     pub supported_pools: HashSet<Pubkey>, // The set of pools this worker supports
+    pub total_delegations: u64,           // The number delegations allocated to this worker
 }
 
 impl Worker {
@@ -36,6 +37,7 @@ impl TryFrom<Vec<u8>> for Worker {
  */
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WorkerSettings {
+    pub signatory: Pubkey,
     pub supported_pools: HashSet<Pubkey>,
 }
 
@@ -46,7 +48,7 @@ pub struct WorkerSettings {
 pub trait WorkerAccount {
     fn pubkey(&self) -> Pubkey;
 
-    fn init(&mut self, authority: &mut Signer, delegate: &Signer, id: u64) -> Result<()>;
+    fn init(&mut self, authority: &mut Signer, id: u64, signatory: &Signer) -> Result<()>;
 
     fn update(&mut self, settings: WorkerSettings) -> Result<()>;
 }
@@ -56,14 +58,17 @@ impl WorkerAccount for Account<'_, Worker> {
         Worker::pubkey(self.id)
     }
 
-    fn init(&mut self, authority: &mut Signer, delegate: &Signer, id: u64) -> Result<()> {
+    fn init(&mut self, authority: &mut Signer, id: u64, signatory: &Signer) -> Result<()> {
         self.authority = authority.key();
-        self.delegate = delegate.key();
         self.id = id;
+        self.signatory = signatory.key();
+        self.supported_pools = HashSet::new();
+        self.total_delegations = 0;
         Ok(())
     }
 
     fn update(&mut self, settings: WorkerSettings) -> Result<()> {
+        self.signatory = settings.signatory;
         self.supported_pools = settings.supported_pools;
         Ok(())
     }

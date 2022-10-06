@@ -15,9 +15,6 @@ pub struct WorkerRegister<'info> {
     #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
-    #[account()]
-    pub delegate: Signer<'info>,
-
     #[account(
         init,
         seeds = [
@@ -35,9 +32,12 @@ pub struct WorkerRegister<'info> {
         mut, 
         seeds = [SEED_REGISTRY],
         bump,
-        constraint = !registry.is_locked
+        constraint = !registry.locked
     )]
     pub registry: Account<'info, Registry>,
+
+    #[account()]
+    pub signatory: Signer<'info>,
 
     #[account(
         mut,
@@ -70,14 +70,14 @@ pub struct WorkerRegister<'info> {
 pub fn handler(ctx: Context<WorkerRegister>) -> Result<()> {
     // Get accounts
     let authority = &mut ctx.accounts.authority;
-    let delegate = &mut ctx.accounts.delegate;
     let registry = &mut ctx.accounts.registry;
+    let signatory = &mut ctx.accounts.signatory;
     let worker = &mut ctx.accounts.worker;
 
     // Initialize the worker account.
-    worker.init(authority, delegate, registry.total_workers)?;
+    worker.init(authority, registry.total_workers, signatory)?;
 
-    // Increment the worker count on the registry.
+    // Update the registry.
     registry.total_workers = registry.total_workers.checked_add(1).unwrap();
 
     Ok(())

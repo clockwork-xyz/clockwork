@@ -8,6 +8,8 @@ use {
 // This program's account structure is rooted around a trunk of Epochs.
 // Epochs are iterable via their ids, auto-incrementing sequentially forward.
 
+// TODO Create epoch_kickoff instruction
+
 #[derive(Accounts)]
 pub struct EpochStart<'info> {
     #[account(address = Config::pubkey())]
@@ -46,13 +48,17 @@ pub fn handler(ctx: Context<EpochStart>) -> Result<CrankResponse> {
     //      Transfer collected lamports from Fee accounts to Delegation accounts based on the delegation distributions in the current Epoch's Snapshot.
 
     // TODO Process unstake requests.
-    //      For each "unstake request" transfer tokens from the Delegation stake account to the authority's token account.
+    //      For each "unstake request" transfer tokens from the Worker stake account to the Delegation authority's token account.
+    //      Decrement the Delegation's stake balance by the amount unstaked.
 
-    // TODO Take a snapshot of Delegation stake balances.
-    //      Unfreeze Delegation stake accounts and transfer CLOCK tokens from liquid epoch stake accounts to delegation stake accounts.
-    //      Refreeze the delegation stake accounts.
+    // TODO Delegate stakes.
+    //      Transfer tokens from the Delegation's stake account to the Worker's stake account.
+    //      Increment the Delegation's stake balance by the amount moved.
 
-    // TODO Capture a snapshot (cumulative sum) of the frozen stake delegation account balances.
+    // TODO Take a snapshot.
+    //      Capture a snapshot (cumulative sum) of the total stake and broken-down delegation balances.
+    //      SnapshotFrames capture worker-level aggregate stake balances.
+    //      SnapshotEntries capture delegation-level individual stake balances.
 
     // TODO Mark the new epoch as "current".
 

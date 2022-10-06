@@ -1,3 +1,5 @@
+use clockwork_utils::CrankResponse;
+
 use {
     crate::objects::*,
     anchor_lang::prelude::*,
@@ -24,7 +26,7 @@ pub struct SnapshotCreate<'info> {
         mut, 
         seeds = [SEED_REGISTRY], 
         bump,
-        constraint = !registry.is_locked
+        constraint = !registry.locked
     )]
     pub registry: Account<'info, Registry>,
 
@@ -46,7 +48,7 @@ pub struct SnapshotCreate<'info> {
 
 // TODO Add condition to check if enough time has passed since the last snapshot.
 
-pub fn handler(ctx: Context<SnapshotCreate>) -> Result<()> {
+pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Get accounts
     let new_epoch = &ctx.accounts.new_epoch;
     let registry = &mut ctx.accounts.registry;
@@ -55,5 +57,5 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<()> {
     // Start a new snapshot.
     snapshot.init(new_epoch.key())?;
 
-    Ok(())
+    Ok(CrankResponse { next_instruction: None })
 }

@@ -1,6 +1,4 @@
 use {
-    super::Snapshot,
-    crate::objects::SnapshotEntry,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{
         collections::hash_map::DefaultHasher,
@@ -43,12 +41,6 @@ impl TryFrom<Vec<u8>> for Rotator {
 pub trait RotatorAccount {
     fn init(&mut self) -> Result<()>;
 
-    fn is_valid_entry(
-        &mut self,
-        entry: &Account<SnapshotEntry>,
-        snapshot: &Account<Snapshot>,
-    ) -> Result<bool>;
-
     fn hash_nonce(&mut self) -> Result<()>;
 
     fn add_pool(&mut self, pool: Pubkey) -> Result<()>;
@@ -63,19 +55,6 @@ impl RotatorAccount for Account<'_, Rotator> {
         self.last_rotation_at = 0;
         self.pool_pubkeys = vec![];
         Ok(())
-    }
-
-    fn is_valid_entry(
-        &mut self,
-        entry: &Account<SnapshotEntry>,
-        snapshot: &Account<Snapshot>,
-    ) -> Result<bool> {
-        // Return true if the sample is within the entry's stake range
-        match self.nonce.checked_rem(snapshot.total_stake) {
-            None => Ok(false),
-            Some(sample) => Ok(sample >= entry.stake_offset
-                && sample < entry.stake_offset.checked_add(entry.stake_amount).unwrap()),
-        }
     }
 
     fn hash_nonce(&mut self) -> Result<()> {

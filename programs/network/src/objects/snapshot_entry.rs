@@ -1,34 +1,27 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
 
 pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
-
-// TODO Create a leaf-node account off of the SnapshotEntry to track user-level delegation distribution.
-//      This is needed to distribute fees according to their stake weight.
 
 /**
  * SnapshotEntry
  */
+
 #[account]
 #[derive(Debug)]
 pub struct SnapshotEntry {
+    pub delegation: Pubkey,
+    pub frame: Pubkey,
     pub id: u64,
-    pub snapshot: Pubkey,
-    pub stake_amount: u64,
-    pub stake_offset: u64,
-    pub worker: Pubkey,
+    pub stake_balance: u64,
 }
 
 impl SnapshotEntry {
-    pub fn pubkey(id: u64, snapshot: Pubkey, worker: Pubkey) -> Pubkey {
+    pub fn pubkey(frame: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_ENTRY,
+                frame.as_ref(),
                 id.to_be_bytes().as_ref(),
-                snapshot.as_ref(),
-                worker.as_ref(),
             ],
             &crate::ID,
         )
@@ -52,32 +45,29 @@ pub trait SnapshotEntryAccount {
 
     fn init(
         &mut self,
+        delegation: Pubkey,
+        frame: Pubkey,
         id: u64,
-        snapshot: Pubkey,
-        stake_offset: u64,
-        stake_amount: u64,
-        worker: Pubkey,
+        stake_balance: u64,
     ) -> Result<()>;
 }
 
 impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotEntry::pubkey(self.id, self.snapshot, self.worker)
+        SnapshotEntry::pubkey(self.frame, self.id)
     }
 
     fn init(
         &mut self,
+        delegation: Pubkey,
+        frame: Pubkey,
         id: u64,
-        snapshot: Pubkey,
-        stake_offset: u64,
-        stake_amount: u64,
-        worker: Pubkey,
+        stake_balance: u64,
     ) -> Result<()> {
+        self.delegation = delegation;
+        self.frame = frame;
         self.id = id;
-        self.snapshot = snapshot;
-        self.stake_offset = stake_offset;
-        self.stake_amount = stake_amount;
-        self.worker = worker;
+        self.stake_balance = stake_balance;
         Ok(())
     }
 }

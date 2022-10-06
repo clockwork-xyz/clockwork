@@ -10,19 +10,18 @@ pub struct EntryCreate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
 
-    #[account(
-        init,
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            snapshot.key().as_ref(),
-            snapshot.total_workers.to_be_bytes().as_ref(),
-        ],
-        bump,
-        payer = payer,
-        space = 8 + size_of::<SnapshotEntry>(),
-    )]
-    pub entry: Account<'info, SnapshotEntry>,
-
+    // #[account(
+    //     init,
+    //     seeds = [
+    //         SEED_SNAPSHOT_ENTRY,
+    //         snapshot.key().as_ref(),
+    //         snapshot.total_workers.to_be_bytes().as_ref(),
+    //     ],
+    //     bump,
+    //     payer = payer,
+    //     space = 8 + size_of::<SnapshotEntry>(),
+    // )]
+    // pub entry: Account<'info, SnapshotEntry>,
     #[account(
         address = worker.pubkey(),
         constraint = worker.id == snapshot.total_workers @ ClockworkError::InvalidWorker
@@ -62,13 +61,13 @@ pub struct EntryCreate<'info> {
 
 pub fn handler(ctx: Context<EntryCreate>) -> Result<()> {
     // Get accounts
-    let entry = &mut ctx.accounts.entry;
-    let worker = &ctx.accounts.worker;
-    let stake = &ctx.accounts.stake;
+    // let entry = &mut ctx.accounts.entry;
     let snapshot = &mut ctx.accounts.snapshot;
+    let stake = &ctx.accounts.stake;
+    let worker = &ctx.accounts.worker;
 
     // Capture the snapshot entry
-    snapshot.capture(entry, worker, stake)?;
+    // snapshot.capture(entry, worker, stake)?;
 
     Ok(())
 }

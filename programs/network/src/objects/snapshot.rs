@@ -1,6 +1,5 @@
 use {
-    super::{SnapshotEntry, Worker},
-    crate::objects::SnapshotEntryAccount,
+    super::{SnapshotFrame, SnapshotFrameAccount, Worker},
     anchor_lang::{prelude::*, AnchorDeserialize},
     anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
@@ -42,13 +41,6 @@ pub trait SnapshotAccount {
     fn pubkey(&self) -> Pubkey;
 
     fn init(&mut self, epoch: Pubkey) -> Result<()>;
-
-    fn capture(
-        &mut self,
-        entry: &mut Account<SnapshotEntry>,
-        node: &Account<Worker>,
-        stake: &Account<TokenAccount>,
-    ) -> Result<()>;
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
@@ -61,30 +53,6 @@ impl SnapshotAccount for Account<'_, Snapshot> {
         self.status = SnapshotStatus::Capturing;
         self.total_stake = 0;
         self.total_workers = 0;
-        Ok(())
-    }
-
-    fn capture(
-        &mut self,
-        entry: &mut Account<SnapshotEntry>,
-        worker: &Account<Worker>,
-        stake: &Account<TokenAccount>,
-    ) -> Result<()> {
-        // Record the new snapshot entry
-        entry.init(
-            self.total_workers,
-            self.key(),
-            self.total_stake,
-            stake.amount,
-            worker.delegate,
-        )?;
-
-        // Update the snapshot's entry count
-        self.total_workers = self.total_workers.checked_add(1).unwrap();
-
-        // Update the sum stake amount
-        self.total_stake = self.total_stake.checked_add(stake.amount).unwrap();
-
         Ok(())
     }
 }

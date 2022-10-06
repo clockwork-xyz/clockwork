@@ -10,6 +10,8 @@ pub mod snapshot_close;
 pub mod snapshot_create;
 pub mod snapshot_entry_close;
 pub mod snapshot_entry_create;
+pub mod snapshot_frame_close;
+pub mod snapshot_frame_create;
 pub mod worker_register;
 pub mod worker_update;
 
@@ -25,5 +27,7 @@ pub use snapshot_close::*;
 pub use snapshot_create::*;
 pub use snapshot_entry_close::*;
 pub use snapshot_entry_create::*;
+pub use snapshot_frame_close::*;
+pub use snapshot_frame_create::*;
 pub use worker_register::*;
 pub use worker_update::*;

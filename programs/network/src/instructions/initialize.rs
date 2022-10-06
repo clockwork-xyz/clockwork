@@ -80,11 +80,8 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     registry.init()?;
     rotator.init()?;
 
-    // TODO Create the 0th epoch.
-
-    // Take the first snapshot.
-    // registry.new_snapshot(snapshot)?;
-    // registry.rotate_snapshot(None, snapshot)?;
+    // TODO Initialize the 0th epoch.
+    // TOOD Initialize the 0th snapshot.
 
     Ok(())
 }

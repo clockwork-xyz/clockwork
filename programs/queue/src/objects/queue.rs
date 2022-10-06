@@ -15,6 +15,12 @@ use {
     },
 };
 
+// TODO Add optional lookup_table property to queues.
+//      If the value is set, then use that lookup table when building the transaction.
+//      Add a property to CrankResponse to allow updating the lookup table.
+//      I believe Transaction.v0 only supports one lookup table at a time. So if this value changes between cranks,
+//      workers will need to stop packing the transaction and submit.
+
 pub const SEED_QUEUE: &[u8] = b"queue";
 
 const DEFAULT_RATE_LIMIT: u64 = 10;

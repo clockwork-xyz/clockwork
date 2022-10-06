@@ -1,11 +1,5 @@
 use {
-    super::{Snapshot, Worker},
-    crate::{
-        errors::ClockworkError,
-        objects::{SnapshotAccount, SnapshotStatus, WorkerAccount},
-    },
     anchor_lang::{prelude::*, AnchorDeserialize},
-    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
@@ -18,7 +12,7 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 #[account]
 #[derive(Debug)]
 pub struct Registry {
-    pub is_locked: bool,
+    pub locked: bool,
     pub total_workers: u64,
 }
 
@@ -49,18 +43,18 @@ pub trait RegistryAccount {
 
 impl RegistryAccount for Account<'_, Registry> {
     fn init(&mut self) -> Result<()> {
-        self.is_locked = false;
+        self.locked = false;
         self.total_workers = 0;
         Ok(())
     }
 
     fn lock(&mut self) -> Result<()> {
-        self.is_locked = true;
+        self.locked = true;
         Ok(())
     }
 
     fn unlock(&mut self) -> Result<()> {
-        self.is_locked = false;
+        self.locked = false;
         Ok(())
     }
 }

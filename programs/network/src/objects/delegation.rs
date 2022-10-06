@@ -9,6 +9,9 @@ pub struct Delegation {
     /// The authority of this stake delegation account.
     pub authority: Pubkey,
 
+    /// The number of tokens the authority has delegated to this worker.
+    pub stake_balance: u64,
+
     /// The worker the stake has been delegated to.
     pub worker: Pubkey,
 

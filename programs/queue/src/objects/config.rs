@@ -3,6 +3,12 @@ use {
     std::convert::TryFrom,
 };
 
+// TODO We can probably get rid of this config.
+//      Move the fee to be just a property on the queues. This will allow for a dynamic pricing market.
+//      Use the DEFAULT_CRANK_FEE as a minimum value (cranks cannot cost less than 1000 lamports).
+//      Make the worker_poool pubkey just a static value. If we need to change it, we can redeploy.
+//      Then there would be no more "admin" to this program and the queue would be the only account!
+
 pub const SEED_CONFIG: &[u8] = b"config";
 
 static DEFAULT_CRANK_FEE: u64 = 1_000;
