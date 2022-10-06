@@ -11,7 +11,6 @@ pub const SEED_EPOCH: &[u8] = b"epoch";
 #[account]
 #[derive(Debug)]
 pub struct Epoch {
-    pub current: bool,
     pub id: u64,
     pub snapshot: Pubkey,
 }
@@ -45,7 +44,6 @@ impl EpochAccount for Account<'_, Epoch> {
     }
 
     fn init(&mut self, id: u64) -> Result<()> {
-        self.current = true;
         self.id = id;
         self.snapshot = Snapshot::pubkey(self.pubkey());
         Ok(())

@@ -3,7 +3,7 @@ use {
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::{
         associated_token::get_associated_token_address,
-        token::{transfer, Mint, Token, TokenAccount, Transfer},
+        token::{transfer, Token, TokenAccount, Transfer},
     },
     clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
 };
@@ -128,12 +128,34 @@ pub fn handler(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
         .unwrap()
         .lt(&registry.total_workers)
     {
-        // TODO If this worker has no more delegations, move on to the next worker.
-        // TODO What if the next worker has no delegations????
-        None
+        // This worker has no more delegations, move on to the next worker.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(worker.key(), false),
+            ],
+            data: anchor_sighash("worker_lock_delegation_stakes").to_vec(),
+        })
     } else {
-        // TODO If this is the last worker, move on to the next task.
-        None
+        // This worker has no more delegations and it is the last worker. Start the snapshot!
+        let epoch_pubkey = Epoch::pubkey(registry.current_epoch_id.checked_add(1).unwrap());
+        let snapshot_pubkey = Snapshot::pubkey(epoch_pubkey);
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(epoch_pubkey, false),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new(snapshot_pubkey, false),
+                AccountMetaData::new_readonly(system_program::ID, false),
+            ],
+            data: anchor_sighash("snapshot_create").to_vec(),
+        })
     };
 
     Ok(CrankResponse { next_instruction })

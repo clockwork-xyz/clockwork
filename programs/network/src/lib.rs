@@ -22,12 +22,20 @@ pub mod network_program {
         delegation_create::handler(ctx)
     }
 
+    pub fn delegation_lock_stake(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
+        delegation_lock_stake::handler(ctx)
+    }
+
     pub fn epoch_create(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
         epoch_create::handler(ctx)
     }
 
-    pub fn epoch_start(ctx: Context<EpochStart>) -> Result<CrankResponse> {
-        epoch_start::handler(ctx)
+    pub fn epoch_cutover(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
+        epoch_cutover::handler(ctx)
+    }
+
+    pub fn epoch_kickoff(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
+        epoch_kickoff::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -60,6 +68,12 @@ pub mod network_program {
 
     pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
         snapshot_frame_create::handler(ctx)
+    }
+
+    pub fn worker_lock_delegation_stakes(
+        ctx: Context<WorkerLockDelegationStakes>,
+    ) -> Result<CrankResponse> {
+        worker_lock_delegation_stakes::handler(ctx)
     }
 
     pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {

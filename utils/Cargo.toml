@@ -15,7 +15,5 @@ name = "clockwork_utils"
 
 [dependencies]
 anchor-lang = "0.25.0"
-
-[dev-dependencies]
-chrono-tz = "0.6.1"
 static-pubkey = "1.0.3"
+

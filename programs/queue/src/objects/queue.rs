@@ -135,7 +135,7 @@ impl QueueAccount for Account<'_, Queue> {
         // Inject the worker's pubkey for the Clockwork payer ID
         let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
         instruction.accounts.iter().for_each(|acc| {
-            let acc_pubkey = if acc.pubkey == crate::utils::PAYER_PUBKEY {
+            let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
                 worker.key()
             } else {
                 acc.pubkey

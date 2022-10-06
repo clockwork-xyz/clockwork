@@ -12,14 +12,8 @@ pub struct SnapshotFrameCreate<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        address = current_epoch.pubkey(),
-        constraint = current_epoch.current
-    )]
-    pub current_epoch: Account<'info, Epoch>,
-
-    #[account(
         address = epoch.pubkey(),
-        constraint = current_epoch.id.checked_add(1).unwrap().eq(&epoch.id),
+        constraint = registry.current_epoch_id.checked_add(1).unwrap().eq(&epoch.id),
     )]
     pub epoch: Account<'info, Epoch>,
 
@@ -79,7 +73,6 @@ pub struct SnapshotFrameCreate<'info> {
 pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let current_epoch = &ctx.accounts.current_epoch;
     let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
     let queue = &ctx.accounts.queue;
@@ -107,7 +100,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
     snapshot.total_workers = snapshot.total_workers.checked_add(1).unwrap();
 
     // Build the next instruction for the queue.
-    let next_instruction = if worker.total_delegations > 0 {
+    let next_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
@@ -115,7 +108,6 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(zeroth_delegation_pubkey, false),
                 AccountMetaData::new_readonly(
                     get_associated_token_address(&zeroth_delegation_pubkey, &config.mint),
@@ -142,7 +134,6 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
@@ -158,21 +149,18 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("snapshot_frame_create").to_vec(),
         })
-    } else if snapshot.total_workers.eq(&registry.total_workers) && worker.total_delegations == 0 {
-        // This worker has no delegations and this is the last frame, so the snapshot is done. Start the epoch!
+    } else {
+        // This worker has no delegations and this is the last frame, so the snapshot is done. Cutover to the next epoch!
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(current_epoch.key(), false),
-                AccountMetaData::new(epoch.key(), false),
+                AccountMetaData::new_readonly(epoch.key(), false),
+                AccountMetaData::new(registry.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
             ],
-            data: anchor_sighash("epoch_start").to_vec(),
+            data: anchor_sighash("epoch_cutover").to_vec(),
         })
-    } else {
-        // Something is wrong. This branch should never be reached...
-        return Err(ClockworkError::InvalidSnapshot.into());
     };
 
     Ok(CrankResponse { next_instruction })

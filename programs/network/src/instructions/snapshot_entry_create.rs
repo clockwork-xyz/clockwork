@@ -13,7 +13,7 @@ pub struct SnapshotEntryCreate<'info> {
 
     #[account(
         address = current_epoch.pubkey(),
-        constraint = current_epoch.current
+        constraint = current_epoch.id.eq(&registry.current_epoch_id)
     )]
     pub current_epoch: Account<'info, Epoch>,
 

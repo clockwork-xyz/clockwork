@@ -4,7 +4,6 @@
 
 pub mod errors;
 pub mod objects;
-pub mod utils;
 
 mod instructions;
 

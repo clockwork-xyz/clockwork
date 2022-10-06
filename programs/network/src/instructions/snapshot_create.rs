@@ -2,7 +2,7 @@ use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::associated_token::get_associated_token_address,
-    clockwork_utils::{CrankResponse, InstructionData, anchor_sighash, AccountMetaData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
     std::mem::size_of,
 };
 
@@ -15,14 +15,8 @@ pub struct SnapshotCreate<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        address = current_epoch.pubkey(),
-        constraint = current_epoch.current
-    )]
-    pub current_epoch: Account<'info, Epoch>,
-
-    #[account(
         address = epoch.pubkey(),
-        constraint = current_epoch.id.checked_add(1).unwrap().eq(&epoch.id)
+        constraint = registry.current_epoch_id.checked_add(1).unwrap().eq(&epoch.id)
     )]
     pub epoch: Account<'info, Epoch>,
 
@@ -33,9 +27,7 @@ pub struct SnapshotCreate<'info> {
     pub queue: Signer<'info>,
 
     #[account(
-        mut, 
-        seeds = [SEED_REGISTRY], 
-        bump,
+        address = Registry::pubkey(),
         constraint = !registry.locked
     )]
     pub registry: Account<'info, Registry>,
@@ -59,7 +51,6 @@ pub struct SnapshotCreate<'info> {
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let current_epoch = &ctx.accounts.current_epoch;
     let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
     let queue = &ctx.accounts.queue;
@@ -79,7 +70,6 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
@@ -88,9 +78,12 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
                 AccountMetaData::new(snapshot_frame_pubkey, false),
                 AccountMetaData::new_readonly(system_program.key(), false),
                 AccountMetaData::new_readonly(worker_pubkey, false),
-                AccountMetaData::new_readonly(get_associated_token_address(&worker_pubkey, &config.mint), false),
+                AccountMetaData::new_readonly(
+                    get_associated_token_address(&worker_pubkey, &config.mint),
+                    false,
+                ),
             ],
-            data: anchor_sighash("snapshot_frame_create").to_vec()
+            data: anchor_sighash("snapshot_frame_create").to_vec(),
         })
     } else {
         // The registry has no workers, so the snapshot is done. Start the epoch!
@@ -98,11 +91,11 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(current_epoch.key(), false),
                 AccountMetaData::new(epoch.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new(registry.key(), false),
             ],
-            data: anchor_sighash("epoch_start").to_vec(),
+            data: anchor_sighash("epoch_cutover").to_vec(),
         })
     };
 
