@@ -11,7 +11,7 @@ use {
 // TODO Create epoch_kickoff instruction
 
 #[derive(Accounts)]
-pub struct EpochStart<'info> {
+pub struct EpochCreate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -43,7 +43,7 @@ pub struct EpochStart<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<EpochStart>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
     // TODO Payout yield.
     //      Transfer collected lamports from Fee accounts to Delegation accounts based on the delegation distributions in the current Epoch's Snapshot.
 

@@ -9,6 +9,9 @@ pub struct Delegation {
     /// The authority of this stake delegation account.
     pub authority: Pubkey,
 
+    /// The id of this delegation (auto-incrementing integer relative to worker)
+    pub id: u64,
+
     /// The number of tokens the authority has delegated to this worker.
     pub stake_balance: u64,
 
@@ -20,9 +23,9 @@ pub struct Delegation {
 }
 
 impl Delegation {
-    pub fn pubkey(authority: Pubkey, worker: Pubkey) -> Pubkey {
+    pub fn pubkey(worker: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_DELEGATION, authority.as_ref(), worker.as_ref()],
+            &[SEED_DELEGATION, worker.as_ref(), id.to_be_bytes().as_ref()],
             &crate::ID,
         )
         .0
@@ -40,6 +43,12 @@ impl TryFrom<Vec<u8>> for Delegation {
  * DelegationAccount
  */
 
-pub trait DelegationAccount {}
+pub trait DelegationAccount {
+    fn pubkey(&self) -> Pubkey;
+}
 
-impl DelegationAccount for Account<'_, Delegation> {}
+impl DelegationAccount for Account<'_, Delegation> {
+    fn pubkey(&self) -> Pubkey {
+        Delegation::pubkey(self.worker, self.id)
+    }
+}

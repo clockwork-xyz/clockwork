@@ -18,17 +18,17 @@ pub struct SnapshotFrame {
     pub snapshot: Pubkey,
     pub stake_amount: u64,
     pub stake_offset: u64,
+    pub total_entries: u64,
     pub worker: Pubkey,
 }
 
 impl SnapshotFrame {
-    pub fn pubkey(id: u64, snapshot: Pubkey, worker: Pubkey) -> Pubkey {
+    pub fn pubkey(id: u64, snapshot: Pubkey) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_FRAME,
                 id.to_be_bytes().as_ref(),
                 snapshot.as_ref(),
-                worker.as_ref(),
             ],
             &crate::ID,
         )
@@ -62,7 +62,7 @@ pub trait SnapshotFrameAccount {
 
 impl SnapshotFrameAccount for Account<'_, SnapshotFrame> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotFrame::pubkey(self.id, self.snapshot, self.worker)
+        SnapshotFrame::pubkey(self.id, self.snapshot)
     }
 
     fn init(
@@ -77,6 +77,7 @@ impl SnapshotFrameAccount for Account<'_, SnapshotFrame> {
         self.snapshot = snapshot;
         self.stake_offset = stake_offset;
         self.stake_amount = stake_amount;
+        self.total_entries = 0;
         self.worker = worker;
         Ok(())
     }

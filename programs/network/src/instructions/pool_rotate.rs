@@ -31,7 +31,7 @@ pub struct PoolRotate<'info> {
 
     #[account(
         address = snapshot.pubkey(),
-        constraint = snapshot.status == SnapshotStatus::Current
+        
     )]
     pub snapshot: Account<'info, Snapshot>,
 

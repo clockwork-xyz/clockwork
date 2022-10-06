@@ -29,16 +29,8 @@ pub mod network_program {
         delegation_request_unstake::handler(ctx, amount)
     }
 
-    pub fn entry_close(ctx: Context<EntryClose>) -> Result<()> {
-        snapshot_entry_close::handler(ctx)
-    }
-
-    pub fn entry_create(ctx: Context<EntryCreate>) -> Result<()> {
-        snapshot_entry_create::handler(ctx)
-    }
-
-    pub fn epoch_start(ctx: Context<EpochStart>) -> Result<CrankResponse> {
-        epoch_start::handler(ctx)
+    pub fn epoch_start(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
+        epoch_create::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -63,6 +55,10 @@ pub mod network_program {
 
     pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
         snapshot_create::handler(ctx)
+    }
+
+    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
+        snapshot_entry_create::handler(ctx)
     }
 
     pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {

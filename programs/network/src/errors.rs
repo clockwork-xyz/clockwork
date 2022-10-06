@@ -14,6 +14,9 @@ pub enum ClockworkError {
     #[msg("The stake account cannot be used for this operation")]
     InvalidStakeAccount,
 
+    #[msg("The snapshot has reached an invalid state. This should not happen.")]
+    InvalidSnapshot,
+
     #[msg("One of the provided pool accounts is invalid or missing")]
     InvalidPool,
 

@@ -46,7 +46,6 @@ pub struct WorkerRegister<'info> {
             snapshot.epoch.as_ref(),
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::Current,
         constraint = snapshot.total_workers == registry.total_workers
     )]
     pub snapshot: Account<'info, Snapshot>,

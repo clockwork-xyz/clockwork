@@ -156,3 +156,23 @@ pub struct AccountMetaData {
     /// True if the `pubkey` can be loaded as a read-write account.
     pub is_writable: bool,
 }
+
+impl AccountMetaData {
+    /// Construct metadata for a writable account.
+    pub fn new(pubkey: Pubkey, is_signer: bool) -> Self {
+        Self {
+            pubkey,
+            is_signer,
+            is_writable: true,
+        }
+    }
+
+    /// Construct metadata for a read-only account.
+    pub fn new_readonly(pubkey: Pubkey, is_signer: bool) -> Self {
+        Self {
+            pubkey,
+            is_signer,
+            is_writable: false,
+        }
+    }
+}

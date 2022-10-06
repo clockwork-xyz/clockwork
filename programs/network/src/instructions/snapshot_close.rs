@@ -15,7 +15,7 @@ pub struct SnapshotClose<'info> {
             snapshot.epoch.as_ref(),
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::Archived
+        // constraint = snapshot.status == SnapshotStatus::Archived
     )]
     pub snapshot: Account<'info, Snapshot>,
 }
@@ -36,7 +36,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
             .unwrap();
     } else {
         // Otherwise, set the status to closing
-        snapshot.status = SnapshotStatus::Closing;
+        // snapshot.status = SnapshotStatus::Closing;
     }
 
     Ok(())

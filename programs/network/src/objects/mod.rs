@@ -1,4 +1,5 @@
 mod config;
+mod delegation;
 mod epoch;
 mod pool;
 mod registry;
@@ -9,6 +10,7 @@ mod snapshot_frame;
 mod worker;
 
 pub use config::*;
+pub use delegation::*;
 pub use epoch::*;
 pub use pool::*;
 pub use registry::*;

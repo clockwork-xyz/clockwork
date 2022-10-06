@@ -1,7 +1,7 @@
 pub mod config_update;
 pub mod delegation_create;
 pub mod delegation_request_unstake;
-pub mod epoch_start;
+pub mod epoch_create;
 pub mod initialize;
 pub mod pool_create;
 pub mod pool_rotate;
@@ -18,7 +18,7 @@ pub mod worker_update;
 pub use config_update::*;
 pub use delegation_create::*;
 pub use delegation_request_unstake::*;
-pub use epoch_start::*;
+pub use epoch_create::*;
 pub use initialize::*;
 pub use pool_create::*;
 pub use pool_rotate::*;

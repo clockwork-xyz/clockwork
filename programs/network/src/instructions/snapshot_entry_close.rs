@@ -9,7 +9,7 @@ pub struct EntryClose<'info> {
             snapshot.epoch.as_ref(),
         ],
         bump,
-        constraint = snapshot.status == SnapshotStatus::Closing,
+        // constraint = snapshot.status == SnapshotStatus::Closing,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -35,9 +35,9 @@ pub fn handler(ctx: Context<EntryClose>) -> Result<()> {
     let snapshot = &mut ctx.accounts.snapshot;
 
     // If snapshot is not closing, then noop and try again on next invocation.
-    if snapshot.status != SnapshotStatus::Closing {
-        return Ok(());
-    }
+    // if snapshot.status != SnapshotStatus::Closing {
+    //     return Ok(());
+    // }
 
     // Close the entry account.
     // let entry_id = entry.id.clone();

@@ -38,7 +38,6 @@ impl TryFrom<Vec<u8>> for Worker {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WorkerSettings {
     pub signatory: Pubkey,
-    pub supported_pools: HashSet<Pubkey>,
 }
 
 /**
@@ -62,14 +61,12 @@ impl WorkerAccount for Account<'_, Worker> {
         self.authority = authority.key();
         self.id = id;
         self.signatory = signatory.key();
-        self.supported_pools = HashSet::new();
         self.total_delegations = 0;
         Ok(())
     }
 
     fn update(&mut self, settings: WorkerSettings) -> Result<()> {
         self.signatory = settings.signatory;
-        self.supported_pools = settings.supported_pools;
         Ok(())
     }
 }
