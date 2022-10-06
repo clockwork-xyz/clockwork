@@ -5,6 +5,9 @@ use {
 
 pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 
+// TODO Create a leaf-node account off of the SnapshotEntry to track user-level delegation distribution.
+//      This is needed to distribute fees according to their stake weight.
+
 /**
  * SnapshotEntry
  */
@@ -19,12 +22,13 @@ pub struct SnapshotEntry {
 }
 
 impl SnapshotEntry {
-    pub fn pubkey(snapshot: Pubkey, id: u64) -> Pubkey {
+    pub fn pubkey(id: u64, snapshot: Pubkey, worker: Pubkey) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_ENTRY,
-                snapshot.as_ref(),
                 id.to_be_bytes().as_ref(),
+                snapshot.as_ref(),
+                worker.as_ref(),
             ],
             &crate::ID,
         )
@@ -58,7 +62,7 @@ pub trait SnapshotEntryAccount {
 
 impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotEntry::pubkey(self.snapshot, self.id)
+        SnapshotEntry::pubkey(self.id, self.snapshot, self.worker)
     }
 
     fn init(

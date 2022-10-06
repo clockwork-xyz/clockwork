@@ -2,13 +2,19 @@ use anchor_lang::{prelude::*, AnchorDeserialize};
 
 pub const SEED_DELEGATION: &[u8] = b"delegation";
 
-/**
- * Delegation
- */
-
+/// An account to manage a token holder's stake delegation with a particiular a worker.
 #[account]
 #[derive(Debug)]
-pub struct Delegation {}
+pub struct Delegation {
+    /// The claimable yield paid out by the worker.
+    pub claimable_yield: u64,
+
+    /// The number of tokens that have been staked with this worker.
+    pub stake_amount: u64,
+
+    /// The worker the stake has been delegated to.
+    pub worker: Pubkey,
+}
 
 impl Delegation {
     pub fn pubkey() -> Pubkey {

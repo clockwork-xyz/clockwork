@@ -43,7 +43,7 @@ pub struct EpochStart<'info> {
 
 pub fn handler(ctx: Context<EpochStart>) -> Result<CrankResponse> {
     // TODO Payout yield.
-    //      Transfer lamports from Fee accounts to Delegation accounts based on the current epoch's snapshot.
+    //      Transfer collected lamports from Fee accounts to Delegation accounts based on the distributions in the current epoch's snapshot.
 
     // TODO Take a snapshot of Delegation stake balances.
     //      Unfreeze Delegation stake accounts and transfer CLOCK tokens from liquid epoch stake accounts to delegation stake accounts.
@@ -51,9 +51,11 @@ pub fn handler(ctx: Context<EpochStart>) -> Result<CrankResponse> {
 
     // TODO Capture a snapshot (cumulative sum) of the frozen stake delegation account balances.
 
-    // TODO Mark the new epoch as "current"
+    // TODO Mark the new epoch as "current".
 
     // TODO (optional) For cost-efficiency, close the snapshot accounts and return the lamports to a queue.
 
-    Ok(CrankResponse { next_instruction: None })
+    Ok(CrankResponse {
+        next_instruction: None,
+    })
 }
