@@ -1,7 +1,4 @@
-use anchor_lang::{
-    prelude::{AccountMeta, Clock},
-    AccountDeserialize,
-};
+use anchor_lang::{prelude::Clock, AccountDeserialize};
 use anchor_spl::token::{
     spl_token::{self, state::Account as TokenAccount},
     Mint,
@@ -306,22 +303,14 @@ impl SplToken for Client {
         recipient: &Pubkey,
         token_mint: &Pubkey,
     ) -> ClientResult<Pubkey> {
-        let associated_account_address = Self::get_associated_token_address(recipient, token_mint);
-
         let mut transaction = Transaction::new_with_payer(
-            &[Instruction {
-                program_id: spl_token::id(),
-                accounts: vec![
-                    AccountMeta::new(funder.pubkey(), true),
-                    AccountMeta::new(associated_account_address, false),
-                    AccountMeta::new_readonly(*recipient, false),
-                    AccountMeta::new_readonly(*token_mint, false),
-                    AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-                    AccountMeta::new_readonly(spl_token::id(), false),
-                    AccountMeta::new_readonly(solana_sdk::sysvar::rent::id(), false),
-                ],
-                data: vec![],
-            }],
+            &[
+                spl_associated_token_account::instruction::create_associated_token_account(
+                    &funder.pubkey(),
+                    recipient,
+                    token_mint,
+                ),
+            ],
             Some(&self.payer_pubkey()),
         );
         if funder.pubkey() == self.payer_pubkey() {
