@@ -1,7 +1,9 @@
+pub use clockwork_utils::*;
 /**
  * Program level
  */
 
+#[cfg(feature = "queue")]
 pub mod queue_program {
     pub use clockwork_queue_program::{cpi, errors, program::QueueProgram, utils, ID};
     pub mod accounts {
@@ -14,4 +16,8 @@ pub mod queue_program {
  * Client level
  */
 #[cfg(feature = "client")]
-pub use clockwork_client::{Client, ClientError, ClientResult, SplToken};
+pub mod client {
+    pub use clockwork_client::{
+        queue as queue_program, Client, ClientError, ClientResult, SplToken,
+    };
+}

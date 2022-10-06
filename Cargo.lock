@@ -908,8 +908,18 @@ dependencies = [
  "chrono-tz",
  "clockwork-client",
  "clockwork-queue-program",
+ "clockwork-utils",
  "nom",
  "once_cell",
+]
+
+[[package]]
+name = "clockwork-utils"
+version = "1.1.4"
+dependencies = [
+ "anchor-lang",
+ "chrono-tz",
+ "static-pubkey",
 ]
 
 [[package]]
