@@ -76,7 +76,7 @@ pub struct SnapshotEntryCreate<'info> {
         ],
         bump,
         has_one = snapshot,
-        constraint = snapshot_frame.id.eq(&snapshot.total_workers),
+        constraint = snapshot_frame.id.eq(&snapshot.total_frames),
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
 
@@ -86,7 +86,6 @@ pub struct SnapshotEntryCreate<'info> {
     #[account(
         address = worker.pubkey(),
         constraint = worker.id.eq(&snapshot_frame.id),
-        constraint = worker.id.eq(&snapshot.total_workers),
     )]
     pub worker: Account<'info, Worker>,
 }
@@ -110,8 +109,8 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     // Initialize snapshot entry account.
     snapshot_entry.init(
         delegation.key(),
-        snapshot_frame.key(),
         snapshot_frame.total_entries,
+        snapshot_frame.key(),
         delegation_stake.amount,
     )?;
 
@@ -150,7 +149,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             data: anchor_sighash("snapshot_entry_create").to_vec(),
         })
     } else if snapshot_frame.total_entries.eq(&worker.total_delegations)
-        && snapshot.total_workers.lt(&registry.total_workers)
+        && snapshot.total_frames.lt(&registry.total_workers)
     {
         // This frame has captured all its entries. Create a frame for the next worker.
         let next_snapshot_frame_pubkey =
@@ -177,7 +176,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             data: anchor_sighash("snapshot_frame_create").to_vec(),
         })
     } else if snapshot_frame.total_entries.eq(&worker.total_delegations)
-        && snapshot.total_workers.eq(&registry.total_workers)
+        && snapshot.total_frames.eq(&registry.total_workers)
     {
         // All entries in this frame have been captured, and it is the last frame. The snapshot is done!
         Some(InstructionData {

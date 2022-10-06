@@ -22,8 +22,8 @@ pub mod network_program {
         delegation_create::handler(ctx)
     }
 
-    pub fn delegation_lock_stake(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
-        delegation_lock_stake::handler(ctx)
+    pub fn delegation_lock(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
+        delegation_lock::handler(ctx)
     }
 
     pub fn epoch_create(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
@@ -36,6 +36,10 @@ pub mod network_program {
 
     pub fn epoch_kickoff(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
         epoch_kickoff::handler(ctx)
+    }
+
+    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
+        fee_distribute::handler(ctx)
     }
 
     pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
@@ -70,10 +74,12 @@ pub mod network_program {
         snapshot_frame_create::handler(ctx)
     }
 
-    pub fn worker_lock_delegation_stakes(
-        ctx: Context<WorkerLockDelegationStakes>,
-    ) -> Result<CrankResponse> {
-        worker_lock_delegation_stakes::handler(ctx)
+    pub fn worker_distribute_fees(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+        worker_distribute_fees::handler(ctx)
+    }
+
+    pub fn worker_lock_delegations(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
+        worker_lock_delegations::handler(ctx)
     }
 
     pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {

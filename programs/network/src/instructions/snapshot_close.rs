@@ -26,7 +26,7 @@ pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
     let signer = &mut ctx.accounts.signer;
 
     // If this snapshot has no entries, then close immediately
-    if snapshot.total_workers == 0 {
+    if snapshot.total_frames == 0 {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
         **signer.to_account_info().lamports.borrow_mut() = signer

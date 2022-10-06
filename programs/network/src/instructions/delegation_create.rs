@@ -1,29 +1,29 @@
 use {
     crate::objects::*,
     anchor_lang::prelude::*,
-    anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer},
+    anchor_spl::token::{Mint, Token, TokenAccount},
 };
 
 #[derive(Accounts)]
 pub struct DelegationCreate<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        associated_token::authority = authority,
+        associated_token::mint = mint,
+    )]
+    pub authority_tokens: Account<'info, TokenAccount>,
+
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
     #[account(address = config.mint)]
     pub mint: Account<'info, Mint>,
 
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
-
-    #[account(
-        mut,
-        associated_token::authority = signer,
-        associated_token::mint = mint,
-    )]
-    pub tokens: Account<'info, TokenAccount>,
 
     #[account(
         seeds = [
@@ -36,9 +36,9 @@ pub struct DelegationCreate<'info> {
 }
 
 pub fn handler(ctx: Context<DelegationCreate>) -> Result<()> {
-    let signer = &mut ctx.accounts.signer;
-    let token_program = &ctx.accounts.token_program;
-    let tokens = &mut ctx.accounts.tokens;
+    // let authority = &mut ctx.accounts.authority;
+    // let authority_tokens = &mut ctx.accounts.authority_tokens;
+    // let token_program = &ctx.accounts.token_program;
 
     // transfer(
     //     CpiContext::new(

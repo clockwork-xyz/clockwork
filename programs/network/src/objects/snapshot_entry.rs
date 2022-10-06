@@ -10,17 +10,17 @@ pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 #[derive(Debug)]
 pub struct SnapshotEntry {
     pub delegation: Pubkey,
-    pub frame: Pubkey,
     pub id: u64,
+    pub snapshot_frame: Pubkey,
     pub stake_balance: u64,
 }
 
 impl SnapshotEntry {
-    pub fn pubkey(frame: Pubkey, id: u64) -> Pubkey {
+    pub fn pubkey(snapshot_frame: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_ENTRY,
-                frame.as_ref(),
+                snapshot_frame.as_ref(),
                 id.to_be_bytes().as_ref(),
             ],
             &crate::ID,
@@ -46,27 +46,27 @@ pub trait SnapshotEntryAccount {
     fn init(
         &mut self,
         delegation: Pubkey,
-        frame: Pubkey,
         id: u64,
+        snapshot_frame: Pubkey,
         stake_balance: u64,
     ) -> Result<()>;
 }
 
 impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotEntry::pubkey(self.frame, self.id)
+        SnapshotEntry::pubkey(self.snapshot_frame, self.id)
     }
 
     fn init(
         &mut self,
         delegation: Pubkey,
-        frame: Pubkey,
         id: u64,
+        snapshot_frame: Pubkey,
         stake_balance: u64,
     ) -> Result<()> {
         self.delegation = delegation;
-        self.frame = frame;
         self.id = id;
+        self.snapshot_frame = snapshot_frame;
         self.stake_balance = stake_balance;
         Ok(())
     }

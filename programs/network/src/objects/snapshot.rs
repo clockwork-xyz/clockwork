@@ -15,8 +15,8 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 #[derive(Debug)]
 pub struct Snapshot {
     pub epoch: Pubkey,
+    pub total_frames: u64,
     pub total_stake: u64,
-    pub total_workers: u64,
 }
 
 impl Snapshot {
@@ -49,8 +49,8 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 
     fn init(&mut self, epoch: Pubkey) -> Result<()> {
         self.epoch = epoch;
+        self.total_frames = 0;
         self.total_stake = 0;
-        self.total_workers = 0;
         Ok(())
     }
 }

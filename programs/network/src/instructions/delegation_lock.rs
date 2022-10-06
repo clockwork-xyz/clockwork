@@ -9,7 +9,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct DelegationLockStake<'info> {
+pub struct DelegationLock<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -60,7 +60,7 @@ pub struct DelegationLockStake<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -120,7 +120,7 @@ pub fn handler(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(worker.key(), false),
                 AccountMetaData::new(worker_stake.key(), false),
             ],
-            data: anchor_sighash("delegation_lock_stake").to_vec(),
+            data: anchor_sighash("delegation_lock").to_vec(),
         })
     } else if worker
         .id
@@ -137,7 +137,7 @@ pub fn handler(ctx: Context<DelegationLockStake>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_lock_delegation_stakes").to_vec(),
+            data: anchor_sighash("worker_lock_delegations").to_vec(),
         })
     } else {
         // This worker has no more delegations and it is the last worker. Start the snapshot!

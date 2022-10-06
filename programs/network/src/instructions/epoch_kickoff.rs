@@ -5,7 +5,7 @@ use {
 };
 
 // TODO Payout yield.
-//      Transfer lamports collect by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
+//      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
 
 // TODO Process unstake requests.
 //      For each "unstake request" transfer tokens from the Worker stake account to the Delegation authority's token account.

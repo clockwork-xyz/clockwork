@@ -22,7 +22,7 @@ pub struct WorkerRegister<'info> {
         seeds = [
             SEED_SNAPSHOT_ENTRY,
             snapshot.key().as_ref(),
-            snapshot.total_workers.to_be_bytes().as_ref(),
+            snapshot.total_frames.to_be_bytes().as_ref(),
         ],
         bump,
         payer = authority,
@@ -48,7 +48,7 @@ pub struct WorkerRegister<'info> {
             snapshot.epoch.as_ref(),
         ],
         bump,
-        constraint = snapshot.total_workers == registry.total_workers
+        constraint = snapshot.total_frames == registry.total_workers
     )]
     pub snapshot: Account<'info, Snapshot>,
 

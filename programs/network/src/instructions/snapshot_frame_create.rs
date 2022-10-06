@@ -37,7 +37,7 @@ pub struct SnapshotFrameCreate<'info> {
         ],
         bump,
         has_one = epoch,
-        constraint = snapshot.total_workers < registry.total_workers,
+        constraint = snapshot.total_frames < registry.total_workers,
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -46,7 +46,7 @@ pub struct SnapshotFrameCreate<'info> {
         seeds = [
             SEED_SNAPSHOT_FRAME,
             snapshot.key().as_ref(),
-            snapshot.total_workers.to_be_bytes().as_ref(),
+            snapshot.total_frames.to_be_bytes().as_ref(),
         ],
         bump,
         payer = payer,
@@ -59,7 +59,7 @@ pub struct SnapshotFrameCreate<'info> {
 
     #[account(
         address = worker.pubkey(),
-        constraint = worker.id.eq(&snapshot.total_workers),
+        constraint = worker.id.eq(&snapshot.total_frames),
     )]
     pub worker: Account<'info, Worker>,
 
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
 
     // Initialize snapshot frame account.
     snapshot_frame.init(
-        snapshot.total_workers,
+        snapshot.total_frames,
         snapshot.key(),
         worker_stake.amount,
         snapshot.total_stake,
@@ -97,7 +97,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
         .total_stake
         .checked_add(worker_stake.amount)
         .unwrap();
-    snapshot.total_workers = snapshot.total_workers.checked_add(1).unwrap();
+    snapshot.total_frames = snapshot.total_frames.checked_add(1).unwrap();
 
     // Build the next instruction for the queue.
     let next_instruction = if worker.total_delegations.gt(&0) {
@@ -125,7 +125,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("snapshot_entry_create").to_vec(),
         })
-    } else if snapshot.total_workers.lt(&registry.total_workers) {
+    } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This worker has no delegations. Create a snapshot frame for the next worker.
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());

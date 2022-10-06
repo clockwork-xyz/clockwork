@@ -5,11 +5,6 @@ use {
     std::mem::size_of,
 };
 
-// This program's account structure is rooted around a trunk of Epochs.
-// Epochs are iterable via their ids, auto-incrementing sequentially forward.
-
-// TODO Create epoch_kickoff instruction
-
 #[derive(Accounts)]
 pub struct EpochCreate<'info> {
     #[account(address = Config::pubkey())]
@@ -41,6 +36,12 @@ pub struct EpochCreate<'info> {
 }
 
 pub fn handler(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
+    // TODO Get accounts
+
+    // TODO Initialize the epoch account.
+
+    // TODO Build next instruction for the queue.
+
     Ok(CrankResponse {
         next_instruction: None,
     })

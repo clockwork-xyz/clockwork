@@ -9,9 +9,6 @@ pub struct Delegation {
     /// The authority of this delegation account.
     pub authority: Pubkey,
 
-    /// The number of lamports claimable as yield by the authority.
-    pub claimable_yield: u64,
-
     /// The id of this delegation (auto-incrementing integer relative to worker)
     pub id: u64,
 
@@ -20,6 +17,9 @@ pub struct Delegation {
 
     /// The worker to delegate stake to.
     pub worker: Pubkey,
+
+    /// The number of lamports claimable as yield by the authority.
+    pub yield_balance: u64,
 }
 
 impl Delegation {

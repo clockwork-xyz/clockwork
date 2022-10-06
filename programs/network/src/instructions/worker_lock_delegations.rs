@@ -6,7 +6,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct WorkerLockDelegationStakes<'info> {
+pub struct WorkerLockDelegations<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -30,7 +30,7 @@ pub struct WorkerLockDelegationStakes<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerLockDelegationStakes>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let queue = &ctx.accounts.queue;
@@ -59,7 +59,7 @@ pub fn handler(ctx: Context<WorkerLockDelegationStakes>) -> Result<CrankResponse
                     false,
                 ),
             ],
-            data: anchor_sighash("delegation_lock_stake").to_vec(),
+            data: anchor_sighash("delegation_lock").to_vec(),
         })
     } else if worker
         .id
@@ -76,7 +76,7 @@ pub fn handler(ctx: Context<WorkerLockDelegationStakes>) -> Result<CrankResponse
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_lock_delegation_stakes").to_vec(),
+            data: anchor_sighash("worker_lock_delegations").to_vec(),
         })
     } else {
         // This worker has no delegations and it is the last worker. Move on to the snapshot job!
