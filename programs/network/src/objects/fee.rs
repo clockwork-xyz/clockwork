@@ -11,10 +11,6 @@ pub const SEED_FEE: &[u8] = b"fee";
 #[account]
 #[derive(Debug)]
 pub struct Fee {
-    /// The number of lamports that have been collected by the worker.
-    pub collected_balance: u64,
-    /// The number of lamports that are distributable in this epoch.
-    pub distributable_balance: u64,
     /// The number of lamports that are withheld as penalty because the worker submitted spam.
     pub penalty_balance: u64,
     /// The worker who did the work.
@@ -56,8 +52,6 @@ impl FeeAccount for Account<'_, Fee> {
     }
 
     fn init(&mut self, worker: Pubkey) -> Result<()> {
-        self.collected_balance = 0;
-        self.distributable_balance = 0;
         self.penalty_balance = 0;
         self.worker = worker;
         Ok(())

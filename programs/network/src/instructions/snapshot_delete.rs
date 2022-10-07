@@ -1,7 +1,7 @@
 use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-pub struct SnapshotClose<'info> {
+pub struct SnapshotDelete<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -20,7 +20,7 @@ pub struct SnapshotClose<'info> {
     pub snapshot: Account<'info, Snapshot>,
 }
 
-pub fn handler(ctx: Context<SnapshotClose>) -> Result<()> {
+pub fn handler(ctx: Context<SnapshotDelete>) -> Result<()> {
     // Get accounts
     let snapshot = &mut ctx.accounts.snapshot;
     let signer = &mut ctx.accounts.signer;

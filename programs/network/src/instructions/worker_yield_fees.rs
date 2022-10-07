@@ -4,7 +4,7 @@ use clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, Instructio
 use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-pub struct WorkerDistributeFees<'info> {
+pub struct WorkerYieldFees<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -48,7 +48,7 @@ pub struct WorkerDistributeFees<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let epoch = &ctx.accounts.epoch;
@@ -59,8 +59,10 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
     let snapshot_frame = &ctx.accounts.snapshot_frame;
     let worker = &ctx.accounts.worker;
 
-    // Record the distributable fee balance.
-    fee.distributable_balance = fee.collected_balance;
+    // TODO Record the distributable fee balance.
+    //
+    //
+    // fee.distributable_balance = fee.collected_balance;
 
     // TODO Build next instruction for the queue.
     let next_instruction = if snapshot_frame.total_entries.gt(&0) {
