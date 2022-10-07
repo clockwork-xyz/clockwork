@@ -48,7 +48,7 @@ impl TxExecutor {
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Rotate worker pools
-            this.clone().rotate_pools(slot).await.ok();
+            // this.clone().rotate_pools(slot).await.ok();
 
             // Crank queues
             this.clone().crank_queues(slot).await.ok();
@@ -61,27 +61,31 @@ impl TxExecutor {
         })
     }
 
-    async fn rotate_pools(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.observers
-            .pool
-            .clone()
-            .build_rotation_tx(self.clockwork_client.clone(), slot)
-            .await
-            .and_then(|tx| match self.execute_tx(slot, &tx) {
-                Ok(()) => Ok(()),
-                Err(err) => {
-                    info!("Failed to rotate pools: {}", err);
-                    Ok(())
-                }
-            })
+    async fn _rotate_pools(self: Arc<Self>, _slot: u64) -> PluginResult<()> {
+        // TODO Come back to this!
+
+        // self.observers
+        //     .network
+        //     .clone()
+        //     .build_rotation_tx(self.clockwork_client.clone(), slot)
+        //     .await
+        //     .and_then(|tx| match self.execute_tx(slot, &tx) {
+        //         Ok(()) => Ok(()),
+        //         Err(err) => {
+        //             info!("Failed to rotate pools: {}", err);
+        //             Ok(())
+        //         }
+        //     })
+
+        Ok(())
     }
 
     async fn crank_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
-        let r_pool_positions = self.observers.pool.pool_positions.read().await;
-        let crank_pool = r_pool_positions.crank_pool.clone();
+        let r_pool_positions = self.observers.network.pool_positions.read().await;
+        let queue_pool = r_pool_positions.queue_pool.clone();
         drop(r_pool_positions);
-        if crank_pool.current_position.is_none() && !crank_pool.workers.is_empty() {
+        if queue_pool.current_position.is_none() && !queue_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
                 "This node is not an authorized worker".into(),
             ));

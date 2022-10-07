@@ -3,9 +3,9 @@ members = [
     # "cli",
     "client",
     "cron",
-    # "plugin",
+    "plugin",
     "programs/*",
-    # "sdk"
+    "sdk",
     "utils"
 ]
 

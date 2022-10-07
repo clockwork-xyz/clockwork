@@ -4,9 +4,9 @@ use {
         events::AccountUpdateEvent,
         executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
-            http::{HttpObserver, HttpRequest},
-            pool::PoolObserver,
+            network::NetworkObserver,
             queue::QueueObserver,
+            webhook::{HttpRequest, WebhookObserver},
             Observers,
         },
         tpu_client::TpuClient,
@@ -76,7 +76,7 @@ impl GeyserPlugin for ClockworkPlugin {
                     self.observers.queue.clone().handle_updated_clock(clock)
                 }
                 AccountUpdateEvent::HttpRequest { request } => {
-                    self.observers.http.clone().handle_updated_http_request(
+                    self.observers.webhook.clone().handle_updated_http_request(
                         HttpRequest {
                             pubkey: account_pubkey,
                             request,
@@ -84,22 +84,26 @@ impl GeyserPlugin for ClockworkPlugin {
                         slot,
                     )
                 }
-                AccountUpdateEvent::Pool { pool } => {
-                    self.observers.pool.clone().handle_updated_pool(pool, slot)
-                }
+                AccountUpdateEvent::Pool { pool } => self
+                    .observers
+                    .network
+                    .clone()
+                    .handle_updated_pool(pool, slot),
                 AccountUpdateEvent::Queue { queue } => self
                     .observers
                     .queue
                     .clone()
                     .handle_updated_queue(queue, account_pubkey),
-                AccountUpdateEvent::Rotator { rotator } => {
-                    self.observers.pool.clone().handle_updated_rotator(rotator)
-                }
-                AccountUpdateEvent::Snapshot { snapshot } => self
+                AccountUpdateEvent::Registry { registry } => self
                     .observers
-                    .pool
+                    .network
                     .clone()
-                    .handle_updated_snapshot(snapshot),
+                    .handle_updated_registry(registry),
+                AccountUpdateEvent::Rotator { rotator } => self
+                    .observers
+                    .network
+                    .clone()
+                    .handle_updated_rotator(rotator),
             },
             Err(_err) => Ok(()),
         }
@@ -161,16 +165,16 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
+        let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
         let queue_observer = Arc::new(QueueObserver::new(runtime.clone()));
-        let http_observer = Arc::new(HttpObserver::new(runtime.clone()));
+        let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
-                http: http_observer,
-                pool: pool_observer,
+                network: network_observer,
                 queue: queue_observer,
+                webhook: webhook_observer,
             }),
             runtime,
         }

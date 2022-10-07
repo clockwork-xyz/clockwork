@@ -1,7 +1,11 @@
 // For everyone
 pub use clockwork_utils::*;
 
-// For programs that need to send CPIs to the queue program
+// For clients
+#[cfg(feature = "client")]
+pub use clockwork_client::{Client, ClientError, ClientResult, SplToken};
+
+// For programs that need to CPI into Clockwork.
 #[cfg(feature = "queue")]
 pub mod queue_program {
     pub use clockwork_queue_program::{cpi, errors, program::QueueProgram, utils, ID};
@@ -10,7 +14,3 @@ pub mod queue_program {
         pub use clockwork_queue_program::objects::*;
     }
 }
-
-// For clients
-#[cfg(feature = "client")]
-pub use clockwork_client::{Client, ClientError, ClientResult, SplToken};

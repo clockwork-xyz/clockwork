@@ -2,8 +2,7 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::objects::{Rotator, Snapshot},
-        pool::objects::Pool,
+        network::objects::{Pool, Registry, Rotator},
         queue::objects::Queue,
         webhook::objects::Request,
     },
@@ -18,8 +17,8 @@ pub enum AccountUpdateEvent {
     HttpRequest { request: Request },
     Pool { pool: Pool },
     Queue { queue: Queue },
+    Registry { registry: Registry },
     Rotator { rotator: Rotator },
-    Snapshot { snapshot: Snapshot },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -39,28 +38,21 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        if owner_pubkey.eq(&clockwork_client::queue::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::network::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Queue::discriminator()) {
-                // If the account is a queue, return it
-                return Ok(AccountUpdateEvent::Queue {
-                    queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
+            if d.eq(&Pool::discriminator()) {
+                return Ok(AccountUpdateEvent::Pool {
+                    pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork queue account".into(),
+                            msg: "Failed to parse Clockwork pool account".into(),
                         }
                     })?,
                 });
-            }
-        }
-
-        if owner_pubkey.eq(&clockwork_client::network::ID) && account_info.data.len() > 8 {
-            let d = &account_info.data[..8];
-            if d.eq(&Snapshot::discriminator()) {
-                // If the account is a snapshot, return it
-                return Ok(AccountUpdateEvent::Snapshot {
-                    snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
+            } else if d.eq(&Registry::discriminator()) {
+                return Ok(AccountUpdateEvent::Registry {
+                    registry: Registry::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork snapshot account".into(),
+                            msg: "Failed to parse Clockwork registry account".into(),
                         }
                     })?,
                 });
@@ -76,21 +68,21 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             }
         }
 
-        // If the account is a worker pool, return it
-        if owner_pubkey.eq(&clockwork_client::pool::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::queue::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Pool::discriminator()) {
-                return Ok(AccountUpdateEvent::Pool {
-                    pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
+            if d.eq(&Queue::discriminator()) {
+                // If the account is a queue, return it
+                return Ok(AccountUpdateEvent::Queue {
+                    queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork pool account".into(),
+                            msg: "Failed to parse Clockwork queue account".into(),
                         }
                     })?,
                 });
             }
         }
 
-        // If the account is an http request, return in
+        // If the account is an webhook request, return in
         if owner_pubkey.eq(&clockwork_client::webhook::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::HttpRequest {
                 request: Request::try_from(account_info.data.to_vec()).map_err(|_| {

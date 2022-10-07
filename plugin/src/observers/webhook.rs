@@ -12,7 +12,7 @@ use {
     tokio::runtime::Runtime,
 };
 
-pub struct HttpObserver {
+pub struct WebhookObserver {
     // The set of http request pubkeys that can be processed.
     pub confirmed_requests: DashSet<HttpRequest>,
 
@@ -23,7 +23,7 @@ pub struct HttpObserver {
     pub runtime: Arc<Runtime>,
 }
 
-impl HttpObserver {
+impl WebhookObserver {
     pub fn new(runtime: Arc<Runtime>) -> Self {
         Self {
             confirmed_requests: DashSet::new(),
@@ -82,7 +82,7 @@ impl HttpObserver {
     }
 }
 
-impl Debug for HttpObserver {
+impl Debug for WebhookObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "http-observer")
     }
