@@ -50,7 +50,7 @@ pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
             Some(pool_acc_info) => {
 
                 // Verify the account pubkey is an expected pool
-                require!(pool_acc_info.key().eq(rotator.pool_pubkeys.get(i).unwrap()), ClockworkError::InvalidPool);
+                // require!(pool_acc_info.key().eq(rotator.pool_pubkeys.get(i).unwrap()), ClockworkError::InvalidPool);
 
                 // If the node supports this pool, then rotate it in
                 // if node.supported_pools.contains(&pool_acc_info.key()) {

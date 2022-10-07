@@ -13,10 +13,6 @@ pub enum CliCommand {
 
     // Config commands
     ConfigGet,
-    ConfigSet {
-        admin: Option<Pubkey>,
-        crank_fee: Option<u64>,
-    },
 
     // Http
     HttpRequestNew {
@@ -35,15 +31,6 @@ pub enum CliCommand {
         program_infos: Vec<ProgramInfo>,
     },
 
-    // Node commands
-    NodeRegister {
-        worker: Keypair,
-    },
-    NodeStake {
-        address: Pubkey,
-        amount: u64,
-    },
-
     // Pool commands
     PoolGet,
 
@@ -60,8 +47,17 @@ pub enum CliCommand {
     RegistryGet,
 
     // Snapshot
-    SnapshotGet {
-        entry_id: Option<u64>,
+    // SnapshotGet {
+    //     entry_id: Option<u64>,
+    // },
+
+    // Worker commands
+    WorkerCreate {
+        signatory: Keypair,
+    },
+    WorkerDelegateStake {
+        amount: u64,
+        worker_pubkey: Pubkey,
     },
 }
 
@@ -139,40 +135,6 @@ pub fn app() -> Command<'static> {
                         ),
                 ),
         )
-        .subcommand(
-            Command::new("node")
-                .about("Manage your nodes")
-                .arg_required_else_help(true)
-                .subcommand(
-                    Command::new("register")
-                        .about("Register a new worker with the Clockwork network")
-                        .arg(
-                            Arg::new("worker")
-                                .index(1)
-                                .takes_value(true)
-                                .required(true)
-                                .help("Filepath to the worker keypair"),
-                        ),
-                )
-                .subcommand(
-                    Command::new("stake")
-                        .about("Stake CLOCK tokens with a Clockwork worker")
-                        .arg(
-                            Arg::new("address")
-                                .index(2)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The node address to stake tokens with"),
-                        )
-                        .arg(
-                            Arg::new("amount")
-                                .index(1)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The number of tokens to stake"),
-                        ),
-                ),
-        )
         .subcommand(Command::new("pool").about("Get the worker pool info"))
         .subcommand(
             Command::new("queue")
@@ -212,6 +174,40 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(true)
                                 .help("The id of an entry in the snapshot"),
+                        ),
+                ),
+        )
+        .subcommand(
+            Command::new("worker")
+                .about("Manage your workers")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("create")
+                        .about("Register a new worker with the Clockwork network")
+                        .arg(
+                            Arg::new("signatory-keypair")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("Filepath to the worker's signatory keypair"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("delegate-stake")
+                        .about("Stake CLOCK tokens with a Clockwork worker")
+                        .arg(
+                            Arg::new("amount")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The number of tokens to stake"),
+                        )
+                        .arg(
+                            Arg::new("worker-pubkey")
+                                .index(2)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The pubkey of the worker to delegate stake to"),
                         ),
                 ),
         )

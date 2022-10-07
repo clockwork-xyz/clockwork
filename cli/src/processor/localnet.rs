@@ -3,8 +3,7 @@ use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
     clockwork_client::{
-        network::objects::{Node, NodeSettings},
-        pool::objects::Pool,
+        network::objects::{Pool, Worker},
         Client,
     },
     solana_sdk::{
@@ -19,10 +18,7 @@ use {
         instruction::{initialize_mint, mint_to},
         state::Mint,
     },
-    std::{
-        collections::HashSet,
-        process::{Child, Command},
-    },
+    std::process::{Child, Command},
 };
 
 pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
@@ -100,19 +96,12 @@ fn register_worker(client: &Client) -> Result<()> {
         "{}/lib/clockwork-worker-keypair.json",
         cfg["home"].as_str().unwrap()
     );
-    let worker_keypair = read_keypair_file(keypath).unwrap();
-    client.airdrop(&worker_keypair.pubkey(), LAMPORTS_PER_SOL)?;
-    super::node::register(client, worker_keypair)?;
-    let node_pubkey = Node::pubkey(0);
+    let signatory = read_keypair_file(keypath).unwrap();
+    client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
+    super::worker::create(client, signatory)?;
+    let worker_pubkey = Worker::pubkey(0);
     let pool_pubkey = Pool::pubkey("crank".into());
-    super::node::stake(client, node_pubkey, 100)?;
-    super::node::update(
-        client,
-        node_pubkey,
-        NodeSettings {
-            supported_pools: HashSet::from([pool_pubkey]),
-        },
-    )?;
+    // super::worker::stake(client, worker_pubkey, 100)?;
     Ok(())
 }
 
@@ -125,7 +114,6 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
-        .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
         .bpf_program(home_dir, clockwork_client::queue::ID, "queue")
         .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
         .add_programs_with_path(program_infos)

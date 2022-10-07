@@ -18,7 +18,6 @@ pub const SEED_ROTATOR: &[u8] = b"rotator";
 pub struct Rotator {
     pub last_rotation_at: u64, // Slot of the last rotation
     pub nonce: u64,
-    pub pool_pubkeys: Vec<Pubkey>,
 }
 
 impl Rotator {
@@ -42,8 +41,6 @@ pub trait RotatorAccount {
     fn init(&mut self) -> Result<()>;
 
     fn hash_nonce(&mut self) -> Result<()>;
-
-    fn add_pool(&mut self, pool: Pubkey) -> Result<()>;
 }
 
 impl RotatorAccount for Account<'_, Rotator> {
@@ -53,7 +50,6 @@ impl RotatorAccount for Account<'_, Rotator> {
         self.key().hash(&mut hasher);
         self.nonce = hasher.finish();
         self.last_rotation_at = 0;
-        self.pool_pubkeys = vec![];
         Ok(())
     }
 
@@ -65,12 +61,6 @@ impl RotatorAccount for Account<'_, Rotator> {
 
         // Record the slot value
         self.last_rotation_at = Clock::get().unwrap().slot;
-        Ok(())
-    }
-
-    fn add_pool(&mut self, pool_pubkey: Pubkey) -> Result<()> {
-        // Push the pubkey into the set of registered pools
-        self.pool_pubkeys.push(pool_pubkey);
         Ok(())
     }
 }

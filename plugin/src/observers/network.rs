@@ -60,7 +60,6 @@ impl NetworkObserver {
             rotator: RwLock::new(Rotator {
                 last_rotation_at: 0,
                 nonce: 0,
-                pool_pubkeys: vec![],
             }),
             runtime,
             snapshot_entries: RwLock::new(vec![]),
