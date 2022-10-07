@@ -5,6 +5,9 @@ pub enum ClockworkError {
     #[msg("This account has already been initialized")]
     AccountAlreadyInitialized,
 
+    #[msg("The commission must be between 0 and 100")]
+    InvalidCommission,
+
     #[msg("The provided node is cannot be used for this operation")]
     InvalidWorker,
 

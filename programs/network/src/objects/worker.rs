@@ -1,4 +1,5 @@
 use {
+    crate::errors::*,
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::{collections::HashSet, convert::TryFrom},
 };
@@ -12,11 +13,18 @@ pub const SEED_WORKER: &[u8] = b"worker";
 #[account]
 #[derive(Debug)]
 pub struct Worker {
-    pub authority: Pubkey,                // The worker's authority
-    pub signatory: Pubkey,                // The worker's signatory address (used to sign txs)
-    pub id: u64,                          // The worker's id (auto-incrementing)
-    pub supported_pools: HashSet<Pubkey>, // The set of pools this worker supports
-    pub total_delegations: u64,           // The number delegations allocated to this worker
+    /// The worker's authority (owner).
+    pub authority: Pubkey,
+    /// The number of lamports claimable by the authority as commission for running the worker.
+    pub commission_balance: u64,
+    /// Integer between 0 and 100 determining the percentage of fees worker will keep as commission.
+    pub commission_rate: u64,
+    /// The worker's id.
+    pub id: u64,
+    /// The worker's signatory address (used to sign txs).
+    pub signatory: Pubkey,
+    /// The number delegations allocated to this worker.
+    pub total_delegations: u64,
 }
 
 impl Worker {
@@ -37,6 +45,7 @@ impl TryFrom<Vec<u8>> for Worker {
  */
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WorkerSettings {
+    pub commission_rate: u64,
     pub signatory: Pubkey,
 }
 
@@ -59,6 +68,8 @@ impl WorkerAccount for Account<'_, Worker> {
 
     fn init(&mut self, authority: &mut Signer, id: u64, signatory: &Signer) -> Result<()> {
         self.authority = authority.key();
+        self.commission_balance = 0;
+        self.commission_rate = 0;
         self.id = id;
         self.signatory = signatory.key();
         self.total_delegations = 0;
@@ -66,6 +77,11 @@ impl WorkerAccount for Account<'_, Worker> {
     }
 
     fn update(&mut self, settings: WorkerSettings) -> Result<()> {
+        require!(
+            settings.commission_rate.ge(&0) && settings.commission_rate.le(&100),
+            ClockworkError::InvalidCommission
+        );
+        self.commission_rate = settings.commission_rate;
         self.signatory = settings.signatory;
         Ok(())
     }

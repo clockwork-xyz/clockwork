@@ -12,7 +12,7 @@ pub struct SnapshotEntry {
     pub delegation: Pubkey,
     pub id: u64,
     pub snapshot_frame: Pubkey,
-    pub stake_balance: u64,
+    pub stake_amount: u64,
 }
 
 impl SnapshotEntry {
@@ -48,7 +48,7 @@ pub trait SnapshotEntryAccount {
         delegation: Pubkey,
         id: u64,
         snapshot_frame: Pubkey,
-        stake_balance: u64,
+        stake_amount: u64,
     ) -> Result<()>;
 }
 
@@ -62,12 +62,12 @@ impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
         delegation: Pubkey,
         id: u64,
         snapshot_frame: Pubkey,
-        stake_balance: u64,
+        stake_amount: u64,
     ) -> Result<()> {
         self.delegation = delegation;
         self.id = id;
         self.snapshot_frame = snapshot_frame;
-        self.stake_balance = stake_balance;
+        self.stake_amount = stake_amount;
         Ok(())
     }
 }

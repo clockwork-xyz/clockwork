@@ -74,8 +74,8 @@ pub mod network_program {
         snapshot_frame_create::handler(ctx)
     }
 
-    pub fn worker_distribute_fees(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
-        worker_yield_fees::handler(ctx)
+    pub fn worker_distribute_fees(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+        worker_distribute_fees::handler(ctx)
     }
 
     pub fn worker_lock_delegations(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {

@@ -1,10 +1,11 @@
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData};
-
-use {crate::objects::*, anchor_lang::prelude::*};
+use {
+    crate::objects::*,
+    anchor_lang::prelude::*,
+    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
+};
 
 #[derive(Accounts)]
-pub struct WorkerYieldFees<'info> {
+pub struct WorkerDistributeFees<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -48,7 +49,7 @@ pub struct WorkerYieldFees<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let epoch = &ctx.accounts.epoch;
@@ -57,14 +58,41 @@ pub fn handler(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
     let registry = &ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_frame = &ctx.accounts.snapshot_frame;
-    let worker = &ctx.accounts.worker;
+    let worker = &mut ctx.accounts.worker;
 
-    // TODO Record the distributable fee balance.
-    //
-    //
-    // fee.distributable_balance = fee.collected_balance;
+    // Calculate the commission to be retained by the worker.
+    let commission_balance = fee
+        .accumulated_balance
+        .checked_mul(worker.commission_rate)
+        .unwrap()
+        .checked_div(100)
+        .unwrap();
 
-    // TODO Build next instruction for the queue.
+    // Transfer commission to the worker.
+    **fee.to_account_info().try_borrow_mut_lamports()? = fee
+        .to_account_info()
+        .lamports()
+        .checked_sub(commission_balance)
+        .unwrap();
+    **worker.to_account_info().try_borrow_mut_lamports()? = worker
+        .to_account_info()
+        .lamports()
+        .checked_add(commission_balance)
+        .unwrap();
+
+    // Increment the worker's commission balance.
+    worker.commission_balance = worker
+        .commission_balance
+        .checked_add(commission_balance)
+        .unwrap();
+
+    // Record the balance that is distributable to delegations.
+    fee.distributable_balance = fee
+        .accumulated_balance
+        .checked_sub(commission_balance)
+        .unwrap();
+
+    // Build next instruction for the queue.
     let next_instruction = if snapshot_frame.total_entries.gt(&0) {
         // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
@@ -82,10 +110,6 @@ pub fn handler(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(snapshot_frame.key(), false),
                 AccountMetaData::new_readonly(snapshot_entry_pubkey.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
-                AccountMetaData::new_readonly(
-                    get_associated_token_address(&worker.key(), &config.mint),
-                    false,
-                ),
             ],
             data: anchor_sighash("fee_distribute").to_vec(),
         })
@@ -95,10 +119,26 @@ pub fn handler(ctx: Context<WorkerYieldFees>) -> Result<CrankResponse> {
         .unwrap()
         .lt(&snapshot.total_frames)
     {
-        // TODO If there are other frames, move on to next frame.
-        None
+        // This frame has no entries. Move on to the next frame.
+        let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
+        let next_snapshot_frame_pubkey =
+            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(epoch.key(), false),
+                AccountMetaData::new(fee.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(snapshot.key(), false),
+                AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
+                AccountMetaData::new_readonly(next_worker_pubkey, false),
+            ],
+            data: anchor_sighash("worker_distribute_fees").to_vec(),
+        })
     } else {
-        // TODO If there are no other frames, move on to the next job!
+        // TODO This frame has no entries and it is the last frame. Move on to the next job! (Processing unstake requests)
         None
     };
 

@@ -1,6 +1,7 @@
 use {
-    crate::objects::*, anchor_lang::prelude::*, anchor_spl::token::TokenAccount,
-    clockwork_utils::CrankResponse,
+    crate::objects::*,
+    anchor_lang::prelude::*,
+    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
 };
 
 #[derive(Accounts)]
@@ -65,18 +66,103 @@ pub struct FeeDistribute<'info> {
 
     #[account()]
     pub worker: Account<'info, Worker>,
-
-    #[account(
-        associated_token::authority = worker,
-        associated_token::mint = config.mint,
-    )]
-    pub worker_tokens: Account<'info, TokenAccount>,
 }
 
 pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
-    // TODO Distribute fees from the Fee accounts to the Delegation accounts according to the weight of the SnapshotEntry.
+    // Get accounts
+    let config = &ctx.accounts.config;
+    let delegation = &mut ctx.accounts.delegation;
+    let epoch = &ctx.accounts.epoch;
+    let fee = &mut ctx.accounts.fee;
+    let queue = &ctx.accounts.queue;
+    let registry = &ctx.accounts.registry;
+    let snapshot = &ctx.accounts.snapshot;
+    let snapshot_entry = &ctx.accounts.snapshot_entry;
+    let snapshot_frame = &ctx.accounts.snapshot_frame;
+    let worker = &ctx.accounts.worker;
 
-    Ok(CrankResponse {
-        next_instruction: None,
-    })
+    // Calculate the yield balance of this particular delegation, based on the weight of its stake with this worker.
+    let yield_balance = fee
+        .distributable_balance
+        .checked_mul(snapshot_entry.stake_amount)
+        .unwrap()
+        .checked_div(snapshot_frame.stake_amount)
+        .unwrap();
+
+    // Transfer yield to the worker.
+    **fee.to_account_info().try_borrow_mut_lamports()? = fee
+        .to_account_info()
+        .lamports()
+        .checked_sub(yield_balance)
+        .unwrap();
+    **delegation.to_account_info().try_borrow_mut_lamports()? = worker
+        .to_account_info()
+        .lamports()
+        .checked_add(yield_balance)
+        .unwrap();
+
+    // Increment the delegation's yield balance.
+    delegation.yield_balance = delegation.yield_balance.checked_add(yield_balance).unwrap();
+
+    // Build the next instruction for the queue.
+    let next_instruction = if snapshot_entry
+        .id
+        .checked_add(1)
+        .unwrap()
+        .lt(&snapshot_frame.total_entries)
+    {
+        // This frame has more entries. Move on to the next one.
+        let next_delegation_pubkey =
+            Delegation::pubkey(worker.key(), delegation.id.checked_add(1).unwrap());
+        let next_snapshot_entry_pubkey = SnapshotEntry::pubkey(
+            snapshot_frame.key(),
+            snapshot_entry.id.checked_add(1).unwrap(),
+        );
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(next_delegation_pubkey, false),
+                AccountMetaData::new_readonly(epoch.key(), false),
+                AccountMetaData::new(fee.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(snapshot.key(), false),
+                AccountMetaData::new_readonly(snapshot_frame.key(), false),
+                AccountMetaData::new_readonly(next_snapshot_entry_pubkey, false),
+                AccountMetaData::new_readonly(worker.key(), false),
+            ],
+            data: anchor_sighash("fee_distribute").to_vec(),
+        })
+    } else if snapshot_frame
+        .id
+        .checked_add(1)
+        .unwrap()
+        .lt(&snapshot.total_frames)
+    {
+        // This frame has no more entries. Move on to the next worker.
+        let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
+        let next_snapshot_frame_pubkey =
+            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(epoch.key(), false),
+                AccountMetaData::new(fee.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(snapshot.key(), false),
+                AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
+                AccountMetaData::new_readonly(next_worker_pubkey, false),
+            ],
+            data: anchor_sighash("worker_distribute_fees").to_vec(),
+        })
+    } else {
+        // TODO If this frame has no more entires and it is the last frame, move on to the next job.
+
+        None
+    };
+
+    Ok(CrankResponse { next_instruction })
 }
