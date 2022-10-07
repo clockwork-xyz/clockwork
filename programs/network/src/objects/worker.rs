@@ -1,15 +1,12 @@
 use {
     crate::errors::*,
     anchor_lang::{prelude::*, AnchorDeserialize},
-    std::{collections::HashSet, convert::TryFrom},
+    std::convert::TryFrom,
 };
 
 pub const SEED_WORKER: &[u8] = b"worker";
 
-/**
- * Worker
- */
-
+/// Worker
 #[account]
 #[derive(Debug)]
 pub struct Worker {
@@ -40,19 +37,14 @@ impl TryFrom<Vec<u8>> for Worker {
     }
 }
 
-/**
- * WorkerSettings
- */
+/// WorkerSettings
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WorkerSettings {
     pub commission_rate: u64,
     pub signatory: Pubkey,
 }
 
-/**
- * WorkerAccount
- */
-
+/// WorkerAccount
 pub trait WorkerAccount {
     fn pubkey(&self) -> Pubkey;
 

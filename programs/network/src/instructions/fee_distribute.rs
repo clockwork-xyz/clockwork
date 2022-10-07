@@ -81,8 +81,8 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
     let snapshot_frame = &ctx.accounts.snapshot_frame;
     let worker = &ctx.accounts.worker;
 
-    // Calculate the yield balance of this particular delegation, based on the weight of its stake with this worker.
-    let yield_balance = fee
+    // Calculate the balance of this particular delegation, based on the weight of its stake with this worker.
+    let distribution_balance = fee
         .distributable_balance
         .checked_mul(snapshot_entry.stake_amount)
         .unwrap()
@@ -93,16 +93,19 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
     **fee.to_account_info().try_borrow_mut_lamports()? = fee
         .to_account_info()
         .lamports()
-        .checked_sub(yield_balance)
+        .checked_sub(distribution_balance)
         .unwrap();
     **delegation.to_account_info().try_borrow_mut_lamports()? = worker
         .to_account_info()
         .lamports()
-        .checked_add(yield_balance)
+        .checked_add(distribution_balance)
         .unwrap();
 
     // Increment the delegation's yield balance.
-    delegation.yield_balance = delegation.yield_balance.checked_add(yield_balance).unwrap();
+    delegation.claimable_balance = delegation
+        .claimable_balance
+        .checked_add(distribution_balance)
+        .unwrap();
 
     // Build the next instruction for the queue.
     let next_instruction = if snapshot_entry
@@ -159,9 +162,17 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
             data: anchor_sighash("worker_distribute_fees").to_vec(),
         })
     } else {
-        // TODO If this frame has no more entires and it is the last frame, move on to the next job.
-
-        None
+        // This frame has no more entires and it is the last frame. Move on to staking delegations.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(Worker::pubkey(0), false),
+            ],
+            data: anchor_sighash("worker_stake_delegations").to_vec(),
+        })
     };
 
     Ok(CrankResponse { next_instruction })

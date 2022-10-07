@@ -9,7 +9,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct DelegationLock<'info> {
+pub struct DelegationStake<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -60,7 +60,7 @@ pub struct DelegationLock<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -71,7 +71,7 @@ pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
     let worker = &ctx.accounts.worker;
     let worker_stake = &ctx.accounts.worker_stake;
 
-    // Transfer tokens from delegation stake account to worker stake account.
+    // Transfer tokens from delegation to worker account.
     let amount = delegation_stake.amount;
     let bump = *ctx.bumps.get("delegation").unwrap();
     transfer(
@@ -92,7 +92,7 @@ pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
         amount,
     )?;
 
-    // Update the delegation's locked stake balance.
+    // Update the delegation's stake amount.
     delegation.locked_stake_amount = delegation.locked_stake_amount.checked_add(amount).unwrap();
 
     // Build next instruction for the queue.
@@ -120,7 +120,7 @@ pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(worker.key(), false),
                 AccountMetaData::new(worker_stake.key(), false),
             ],
-            data: anchor_sighash("delegation_lock").to_vec(),
+            data: anchor_sighash("delegation_stake").to_vec(),
         })
     } else if worker
         .id
@@ -137,7 +137,7 @@ pub fn handler(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_lock_delegations").to_vec(),
+            data: anchor_sighash("worker_stake_delegations").to_vec(),
         })
     } else {
         // This worker has no more delegations and it is the last worker. Start the snapshot!

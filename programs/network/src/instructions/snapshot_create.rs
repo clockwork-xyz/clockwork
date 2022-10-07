@@ -6,9 +6,6 @@ use {
     std::mem::size_of,
 };
 
-// TODO Add condition to check if enough time has passed since the last snapshot.
-//      There should be some concept of a minimum epoch duration (measured in slots).
-
 #[derive(Accounts)]
 pub struct SnapshotCreate<'info> {
     #[account(address = Config::pubkey())]

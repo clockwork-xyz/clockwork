@@ -1,16 +1,11 @@
 use {
-    super::{SnapshotFrame, SnapshotFrameAccount, Worker},
     anchor_lang::{prelude::*, AnchorDeserialize},
-    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
 pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
-/**
- * Snapshot
- */
-
+/// Snapshot
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
@@ -32,10 +27,7 @@ impl TryFrom<Vec<u8>> for Snapshot {
     }
 }
 
-/**
- * SnapshotAccount
- */
-
+/// SnapshotAccount
 pub trait SnapshotAccount {
     fn pubkey(&self) -> Pubkey;
 

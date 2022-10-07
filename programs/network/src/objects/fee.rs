@@ -5,8 +5,6 @@ use {
 
 pub const SEED_FEE: &[u8] = b"fee";
 
-// TODO Write functions to distribute the claimable balance out to Delegations
-
 /// Escrows the lamport balance owed to a particular worker.
 #[account]
 #[derive(Debug)]

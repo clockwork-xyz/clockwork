@@ -5,9 +5,6 @@ use {
 
 pub const SEED_SNAPSHOT_FRAME: &[u8] = b"snapshot_frame";
 
-// TODO Create a leaf-node account off of the SnapshotFrame to track user-level delegation distribution.
-//      This is needed to distribute fees according to their stake weight.
-
 /**
  * SnapshotFrame
  */

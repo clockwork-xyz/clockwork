@@ -4,10 +4,10 @@ use {
     clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
 };
 
-// TODO Payout yield.
+// DONE Payout yield.
 //      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
 
-// TODO Process unstake requests.
+// DONE Process unstake requests.
 //      For each "unstake request" transfer tokens from the Worker stake account to the Delegation authority's token account.
 //      Decrement the Delegation's stake balance by the amount unstaked.
 
@@ -21,8 +21,6 @@ use {
 //      SnapshotEntries capture delegation-level individual stake balances.
 
 // DONE Cutover from current epoch to new epoch.
-
-// TODO (optional) For cost-efficiency, close the snapshot accounts and return the lamports to a queue.
 
 #[derive(Accounts)]
 pub struct EpochKickoff<'info> {

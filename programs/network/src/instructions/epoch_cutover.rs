@@ -13,15 +13,15 @@ pub struct EpochCutover<'info> {
     )]
     pub epoch: Account<'info, Epoch>,
 
+    #[account(address = config.authorized_queue)]
+    pub queue: Signer<'info>,
+
     #[account(
         mut,
         seeds = [SEED_REGISTRY],
         bump,
     )]
     pub registry: Account<'info, Registry>,
-
-    #[account(address = config.authorized_queue)]
-    pub queue: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
@@ -33,6 +33,7 @@ pub fn handler(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
     registry.current_epoch_id = epoch.id;
 
     // TODO Build next instruction for queue.
+    // TODO (optional) For cost-efficiency, close the snapshot accounts and return the lamports to a queue.
 
     Ok(CrankResponse {
         next_instruction: None,

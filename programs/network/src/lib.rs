@@ -22,8 +22,20 @@ pub mod network_program {
         delegation_create::handler(ctx)
     }
 
-    pub fn delegation_lock(ctx: Context<DelegationLock>) -> Result<CrankResponse> {
-        delegation_lock::handler(ctx)
+    pub fn delegation_deposit(ctx: Context<DelegationDeposit>, amount: u64) -> Result<()> {
+        delegation_deposit::handler(ctx, amount)
+    }
+
+    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
+        delegation_stake::handler(ctx)
+    }
+
+    pub fn delegation_withdraw(ctx: Context<DelegationWithdraw>, amount: u64) -> Result<()> {
+        delegation_withdraw::handler(ctx, amount)
+    }
+
+    pub fn delegation_yield(ctx: Context<DelegationYield>, amount: u64) -> Result<()> {
+        delegation_yield::handler(ctx, amount)
     }
 
     pub fn epoch_create(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
@@ -74,16 +86,28 @@ pub mod network_program {
         snapshot_frame_create::handler(ctx)
     }
 
+    pub fn unstake_create(ctx: Context<UnstakeCreate>, amount: u64) -> Result<()> {
+        unstake_create::handler(ctx, amount)
+    }
+
+    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
+        unstake_preprocess::handler(ctx)
+    }
+
+    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
+        unstake_process::handler(ctx)
+    }
+
+    pub fn worker_create(ctx: Context<WorkerCreate>) -> Result<()> {
+        worker_create::handler(ctx)
+    }
+
     pub fn worker_distribute_fees(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
         worker_distribute_fees::handler(ctx)
     }
 
-    pub fn worker_lock_delegations(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
-        worker_lock_delegations::handler(ctx)
-    }
-
-    pub fn worker_register(ctx: Context<WorkerRegister>) -> Result<()> {
-        worker_register::handler(ctx)
+    pub fn worker_stake_delegations(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
+        worker_stake_delegations::handler(ctx)
     }
 
     pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {

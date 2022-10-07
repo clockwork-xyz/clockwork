@@ -69,7 +69,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
     // Get accounts
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
-    let epoch = &ctx.accounts.epoch;
+    let epoch = &mut ctx.accounts.epoch;
     let rotator = &mut ctx.accounts.rotator;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
@@ -77,11 +77,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Res
 
     // Initialize accounts.
     config.init(admin.key(), mint.key())?;
+    epoch.init(0)?;
     registry.init()?;
     rotator.init()?;
-
-    // TODO Initialize the 0th epoch.
-    // TOOD Initialize the 0th snapshot.
+    snapshot.init(epoch.key())?;
 
     Ok(())
 }

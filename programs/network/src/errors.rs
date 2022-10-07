@@ -23,6 +23,9 @@ pub enum ClockworkError {
     #[msg("One of the provided pool accounts is invalid or missing")]
     InvalidPool,
 
+    #[msg("You cannot request to unstake more tokens than are currently locked")]
+    InvalidUnstakeAmount,
+
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
 

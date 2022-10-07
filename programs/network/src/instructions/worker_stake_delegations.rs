@@ -6,7 +6,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct WorkerLockDelegations<'info> {
+pub struct WorkerStakeDelegations<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -30,7 +30,7 @@ pub struct WorkerLockDelegations<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let queue = &ctx.accounts.queue;
@@ -39,7 +39,7 @@ pub fn handler(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
 
     // Build the next instruction for the queue.
     let next_instruction = if worker.total_delegations.gt(&0) {
-        // This worker has delegations. Lock their stakes.
+        // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         Some(InstructionData {
             program_id: crate::ID,
@@ -59,7 +59,7 @@ pub fn handler(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
                     false,
                 ),
             ],
-            data: anchor_sighash("delegation_lock").to_vec(),
+            data: anchor_sighash("delegation_stake").to_vec(),
         })
     } else if worker
         .id
@@ -76,7 +76,7 @@ pub fn handler(ctx: Context<WorkerLockDelegations>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_lock_delegations").to_vec(),
+            data: anchor_sighash("worker_stake_delegations").to_vec(),
         })
     } else {
         // This worker has no delegations and it is the last worker. Move on to the snapshot job!

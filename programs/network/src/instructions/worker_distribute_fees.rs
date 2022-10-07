@@ -137,9 +137,31 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("worker_distribute_fees").to_vec(),
         })
+    } else if registry.total_unstakes.gt(&0) {
+        // This frame has no entries and it is the last frame. Move on to processing unstake requests.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(Unstake::pubkey(0), false),
+            ],
+            data: anchor_sighash("unstake_preprocess").to_vec(),
+        })
     } else {
-        // TODO This frame has no entries and it is the last frame. Move on to the next job! (Processing unstake requests)
-        None
+        // This frame has no entries and it is the last frame.
+        // The registry has no unstake requests, so we can move on to staking delegations.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new(Worker::pubkey(0), false),
+            ],
+            data: anchor_sighash("worker_stake_delegations").to_vec(),
+        })
     };
 
     Ok(CrankResponse { next_instruction })

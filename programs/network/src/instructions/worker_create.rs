@@ -7,10 +7,9 @@ use {
     std::mem::size_of,
 };
 
-// TODO Create worker stake account
 
 #[derive(Accounts)]
-pub struct WorkerRegister<'info> {
+pub struct WorkerCreate<'info> {
     #[account(mut, constraint = authority.key() != worker.key())]
     pub authority: Signer<'info>,
 
@@ -29,6 +28,18 @@ pub struct WorkerRegister<'info> {
         space = 8 + size_of::<SnapshotEntry>(),
     )]
     pub entry: Account<'info, SnapshotEntry>,
+
+    #[account(
+        init,
+        seeds = [
+            SEED_FEE,
+            worker.key().as_ref(),
+        ],
+        bump,
+        payer = authority,
+        space = 8 + size_of::<Fee>(),
+    )]
+    pub fee: Account<'info, Fee>,
 
     #[account(
         mut, 
@@ -68,15 +79,19 @@ pub struct WorkerRegister<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerRegister>) -> Result<()> {
+pub fn handler(ctx: Context<WorkerCreate>) -> Result<()> {
     // Get accounts
     let authority = &mut ctx.accounts.authority;
+    let fee = &mut ctx.accounts.fee;
     let registry = &mut ctx.accounts.registry;
     let signatory = &mut ctx.accounts.signatory;
     let worker = &mut ctx.accounts.worker;
 
     // Initialize the worker account.
     worker.init(authority, registry.total_workers, signatory)?;
+
+    // Initialize the fee account.
+    fee.init(worker.key())?;
 
     // Update the registry.
     registry.total_workers = registry.total_workers.checked_add(1).unwrap();

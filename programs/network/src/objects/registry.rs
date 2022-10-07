@@ -14,6 +14,7 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 pub struct Registry {
     pub current_epoch_id: u64,
     pub locked: bool,
+    pub total_unstakes: u64,
     pub total_workers: u64,
 }
 

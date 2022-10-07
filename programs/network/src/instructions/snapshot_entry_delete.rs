@@ -1,7 +1,7 @@
 use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-pub struct EntryClose<'info> {
+pub struct SnapshotEntryDelete<'info> {
     #[account(
         mut,
         seeds = [
@@ -28,7 +28,7 @@ pub struct EntryClose<'info> {
     pub signer: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<EntryClose>) -> Result<()> {
+pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<()> {
     // Get accounts
     // let entry = &mut ctx.accounts.entry;
     let signer = &mut ctx.accounts.signer;

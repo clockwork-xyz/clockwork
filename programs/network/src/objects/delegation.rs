@@ -9,6 +9,9 @@ pub struct Delegation {
     /// The authority of this delegation account.
     pub authority: Pubkey,
 
+    /// The number of lamports claimable as yield by the authority.
+    pub claimable_balance: u64,
+
     /// The id of this delegation (auto-incrementing integer relative to worker)
     pub id: u64,
 
@@ -17,9 +20,6 @@ pub struct Delegation {
 
     /// The worker to delegate stake to.
     pub worker: Pubkey,
-
-    /// The number of lamports claimable as yield by the authority.
-    pub yield_balance: u64,
 }
 
 impl Delegation {
@@ -39,18 +39,24 @@ impl TryFrom<Vec<u8>> for Delegation {
     }
 }
 
-/**
- * DelegationAccount
- */
-
+/// DelegationAccount
 pub trait DelegationAccount {
     fn pubkey(&self) -> Pubkey;
 
-    // TODO init
+    fn init(&mut self, authority: Pubkey, id: u64, worker: Pubkey) -> Result<()>;
 }
 
 impl DelegationAccount for Account<'_, Delegation> {
     fn pubkey(&self) -> Pubkey {
         Delegation::pubkey(self.worker, self.id)
+    }
+
+    fn init(&mut self, authority: Pubkey, id: u64, worker: Pubkey) -> Result<()> {
+        self.authority = authority;
+        self.claimable_balance = 0;
+        self.id = id;
+        self.locked_stake_amount = 0;
+        self.worker = worker;
+        Ok(())
     }
 }
