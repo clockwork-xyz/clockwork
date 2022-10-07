@@ -2,7 +2,11 @@ use {
     crate::objects::*,
     anchor_lang::{
         prelude::*,
-        solana_program::{system_program},
+        solana_program::{system_program, sysvar},
+    },
+    anchor_spl::{
+        associated_token::AssociatedToken,
+        token::{Mint, Token, TokenAccount},
     },
     std::mem::size_of,
 };
@@ -10,24 +14,14 @@ use {
 
 #[derive(Accounts)]
 pub struct WorkerCreate<'info> {
+    #[account(address = anchor_spl::associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+
     #[account(mut, constraint = authority.key() != worker.key())]
     pub authority: Signer<'info>,
 
     #[account(address = Config::pubkey())]
     pub config: Box<Account<'info, Config>>,
-
-    #[account(
-        init,
-        seeds = [
-            SEED_SNAPSHOT_ENTRY,
-            snapshot.key().as_ref(),
-            snapshot.total_frames.to_be_bytes().as_ref(),
-        ],
-        bump,
-        payer = authority,
-        space = 8 + size_of::<SnapshotEntry>(),
-    )]
-    pub entry: Account<'info, SnapshotEntry>,
 
     #[account(
         init,
@@ -41,6 +35,9 @@ pub struct WorkerCreate<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
+    #[account(address = config.mint)]
+    pub mint: Account<'info, Mint>,
+
     #[account(
         mut, 
         seeds = [SEED_REGISTRY],
@@ -49,22 +46,17 @@ pub struct WorkerCreate<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
+    #[account(address = sysvar::rent::ID)]
+    pub rent: Sysvar<'info, Rent>,
+
     #[account()]
     pub signatory: Signer<'info>,
 
-    #[account(
-        mut,
-        seeds = [
-            SEED_SNAPSHOT,
-            snapshot.epoch.as_ref(),
-        ],
-        bump,
-        constraint = snapshot.total_frames == registry.total_workers
-    )]
-    pub snapshot: Account<'info, Snapshot>,
-
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
+    pub token_program: Program<'info, Token>,
 
     #[account(
         init,
@@ -77,6 +69,15 @@ pub struct WorkerCreate<'info> {
         space = 8 + size_of::<Worker>(),
     )]
     pub worker: Account<'info, Worker>,
+
+    #[account(
+        init,
+        payer = authority,
+        associated_token::authority = worker,
+        associated_token::mint = mint,
+    )]
+    pub worker_tokens: Account<'info, TokenAccount>,
+
 }
 
 pub fn handler(ctx: Context<WorkerCreate>) -> Result<()> {

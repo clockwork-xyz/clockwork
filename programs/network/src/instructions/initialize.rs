@@ -28,6 +28,9 @@ pub struct Initialize<'info> {
     )]
     pub epoch: Account<'info, Epoch>,
 
+    #[account()]
+    pub mint: Account<'info, Mint>,
+
     #[account(
         init,
         seeds = [SEED_ROTATOR],
@@ -36,9 +39,6 @@ pub struct Initialize<'info> {
         space = 8 + size_of::<Rotator>(),
     )]
     pub rotator: Account<'info, Rotator>,
-
-    #[account()]
-    pub mint: Account<'info, Mint>,
 
     #[account(
         init,

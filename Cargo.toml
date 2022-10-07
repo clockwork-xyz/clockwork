@@ -1,7 +1,7 @@
 [workspace]
 members = [
     # "cli",
-    # "client",
+    "client",
     "cron",
     # "plugin",
     "programs/*",
