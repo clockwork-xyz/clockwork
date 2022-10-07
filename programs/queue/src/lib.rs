@@ -19,16 +19,6 @@ declare_id!("AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H");
 pub mod queue_program {
     use super::*;
 
-    /// Admin instruction for updating the program config.
-    pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {
-        config_update::handler(ctx, settings)
-    }
-
-    /// Admin instruction for initializing the program after deployment.
-    pub fn initialize(ctx: Context<Initialize>, worker_pool: Pubkey) -> Result<()> {
-        initialize::handler(ctx, worker_pool)
-    }
-
     /// Cranks a transaction queue.
     pub fn queue_crank(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
         queue_crank::handler(ctx, data_hash)

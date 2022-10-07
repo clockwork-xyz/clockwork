@@ -7,19 +7,16 @@ use {
         system_program, InstructionData,
     },
     clockwork_network_program::objects::Pool,
-    clockwork_queue_program::objects::{Config, Fee},
 };
 
-pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, worker: Pubkey) -> Instruction {
+pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, signatory: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_queue_program::ID,
         accounts: vec![
-            AccountMeta::new_readonly(Config::pubkey(), false),
-            AccountMeta::new(Fee::pubkey(worker), false),
             AccountMeta::new_readonly(Pool::pubkey("queue".into()), false),
             AccountMeta::new(queue, false),
+            AccountMeta::new(signatory, true),
             AccountMeta::new(system_program::ID, false),
-            AccountMeta::new(worker, true),
         ],
         data: clockwork_queue_program::instruction::QueueCrank { data_hash }.data(),
     }

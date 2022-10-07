@@ -7,7 +7,6 @@ use {
     std::{
         collections::hash_map::DefaultHasher,
         hash::{Hash, Hasher},
-        mem::size_of,
         str::FromStr,
     },
 };
@@ -19,25 +18,8 @@ const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
-    /// The program config account.
-    #[account(address = Config::pubkey())]
-    pub config: Box<Account<'info, Config>>,
-
-    /// The worker's fee account.
-    #[account(
-        init_if_needed,
-        seeds = [
-            SEED_FEE,
-            worker.key().as_ref(),
-        ],
-        bump,
-        payer = worker,
-        space = 8 + size_of::<Fee>(),
-    )]
-    pub fee: Box<Account<'info, Fee>>,
-
     /// The active worker pool.
-    #[account(address = config.worker_pool)]
+    #[account(address = Pool::pubkey("queue".to_string()))]
     pub pool: Box<Account<'info, Pool>>,
 
     /// The queue to crank.
@@ -53,22 +35,20 @@ pub struct QueueCrank<'info> {
     )]
     pub queue: Box<Account<'info, Queue>>,
 
+    /// The signatory.
+    #[account(mut)]
+    pub signatory: Signer<'info>,
+
     /// The Solana system program.
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
-
-    /// The worker.
-    #[account(mut)]
-    pub worker: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // Get accounts
-    let config = &ctx.accounts.config;
-    let fee = &mut ctx.accounts.fee;
-    let pool = &ctx.accounts.pool;
+    let _pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
-    let worker = &ctx.accounts.worker;
+    let signatory = &ctx.accounts.signatory;
 
     // If this queue does not have a next_instruction, verify the queue's trigger has been met and a new exec_context can be created.
     let current_slot = Clock::get().unwrap().slot;
@@ -200,15 +180,17 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
     // Crank the queue
     let bump = ctx.bumps.get("queue").unwrap();
-    queue.crank(ctx.remaining_accounts, *bump, worker)?;
+    queue.crank(ctx.remaining_accounts, *bump, signatory)?;
 
-    // If worker is in the pool, pay automation fees.
-    let is_authorized_worker = pool.clone().into_inner().workers.contains(&worker.key());
-    if is_authorized_worker {
-        fee.escrow_balance(config.crank_fee, queue)?;
-    } else {
-        fee.escrow_withholding(config.crank_fee, queue)?;
-    }
+    // TODO If worker is in the pool, pay automation fees.
+    //      CPI into the network program to pay the fees.
+    //
+    // let is_authorized_worker = pool.clone().into_inner().workers.contains(&signatory.key());
+    // if is_authorized_worker {
+    //     fee.escrow_balance(queue.fee, queue)?;
+    // } else {
+    //     fee.escrow_withholding(queue.fee, queue)?;
+    // }
 
     // If the queue has no more work or the number of cranks since the last payout has reached the rate limit,
     // reimburse the worker for the transaction base fee.
@@ -218,7 +200,19 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
             if queue.next_instruction.is_none()
                 || exec_context.cranks_since_reimbursement >= queue.rate_limit
             {
-                fee.escrow_balance(TRANSACTION_BASE_FEE_REIMBURSEMENT, queue)?;
+                // Pay reimbursment for base transaction fee
+                **queue.to_account_info().try_borrow_mut_lamports()? = queue
+                    .to_account_info()
+                    .lamports()
+                    .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                    .unwrap();
+                **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+                    .to_account_info()
+                    .lamports()
+                    .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                    .unwrap();
+
+                // Update the exec context to mark that a reimbursement happened this slot.
                 queue.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: 0,
                     ..exec_context
