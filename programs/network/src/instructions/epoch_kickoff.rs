@@ -1,6 +1,6 @@
 use {
     crate::objects::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
+    anchor_lang::prelude::*,
     clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
 };
 
@@ -91,7 +91,7 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
             data: anchor_sighash("worker_stake_delegations").to_vec(),
         })
     } else {
-        // Cutover from to the new epoch.
+        // Cutover to the next epoch.
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
