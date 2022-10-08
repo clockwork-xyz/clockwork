@@ -105,12 +105,11 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("register", matches)) => Ok(CliCommand::WorkerCreate {
-            signatory: parse_keypair_file("worker", matches)?,
+        Some(("create", matches)) => Ok(CliCommand::WorkerCreate {
+            signatory: parse_keypair_file("signatory_keypair", matches)?,
         }),
-        Some(("delegate-stake", matches)) => Ok(CliCommand::WorkerDelegateStake {
-            amount: parse_u64("amount", matches)?,
-            worker_pubkey: parse_pubkey("worker_pubkey", matches)?,
+        Some(("get", matches)) => Ok(CliCommand::WorkerGet {
+            id: parse_u64("id", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -121,7 +120,7 @@ fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", matches)) => Ok(CliCommand::PoolGet {
-            id: parse_u64("pool_id", matches)?,
+            id: parse_u64("id", matches)?,
         }),
         Some(("list", _)) => Ok(CliCommand::PoolList {}),
         _ => Err(CliError::CommandNotRecognized(

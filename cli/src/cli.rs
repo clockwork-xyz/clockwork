@@ -58,9 +58,8 @@ pub enum CliCommand {
     WorkerCreate {
         signatory: Keypair,
     },
-    WorkerDelegateStake {
-        amount: u64,
-        worker_pubkey: Pubkey,
+    WorkerGet {
+        id: u64,
     },
 }
 
@@ -140,11 +139,11 @@ pub fn app() -> Command<'static> {
                         .about("Get a pool")
                         .arg_required_else_help(true)
                         .arg(
-                            Arg::new("pool_id")
+                            Arg::new("id")
                                 .index(1)
                                 .takes_value(true)
                                 .required(false)
-                                .help("The ID of the pool to get"),
+                                .help("The ID of the pool to lookup"),
                         ),
                 )
                 .subcommand(Command::new("list").about("List the pools")),
@@ -170,26 +169,14 @@ pub fn app() -> Command<'static> {
                                 .short('r')
                                 .takes_value(true)
                                 .required(false)
-                                .help("The maximum allowed cranks per slot"),
+                                .help(
+                                    "The maximum number of cranks allowed per slot for this queue",
+                                ),
                         ),
                 ),
         )
-        .subcommand(Command::new("registry").about("Get the registry account"))
-        .subcommand(
-            Command::new("snapshot")
-                .about("Lookup the current Clockwork network registry")
-                .subcommand(
-                    Command::new("entry")
-                        .about("Lookup an entry in the snapshot")
-                        .arg(
-                            Arg::new("id")
-                                .index(1)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The id of an entry in the snapshot"),
-                        ),
-                ),
-        )
+        .subcommand(Command::new("registry").about("Lookup the Clockwork network registry"))
+        .subcommand(Command::new("snapshot").about("Lookup the current Clockwork network registry"))
         .subcommand(
             Command::new("worker")
                 .about("Manage your workers")
@@ -198,7 +185,7 @@ pub fn app() -> Command<'static> {
                     Command::new("create")
                         .about("Register a new worker with the Clockwork network")
                         .arg(
-                            Arg::new("signatory-keypair")
+                            Arg::new("signatory_keypair")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
@@ -206,21 +193,14 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("delegate-stake")
-                        .about("Stake CLOCK tokens with a Clockwork worker")
+                    Command::new("get")
+                        .about("Lookup a worker on the Clockwork network")
                         .arg(
-                            Arg::new("amount")
+                            Arg::new("id")
                                 .index(1)
                                 .takes_value(true)
                                 .required(true)
-                                .help("The number of tokens to stake"),
-                        )
-                        .arg(
-                            Arg::new("worker-pubkey")
-                                .index(2)
-                                .takes_value(true)
-                                .required(true)
-                                .help("The pubkey of the worker to delegate stake to"),
+                                .help("The ID of the worker to lookup"),
                         ),
                 ),
         )

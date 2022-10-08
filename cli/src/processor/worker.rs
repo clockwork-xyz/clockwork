@@ -2,11 +2,17 @@ use {
     crate::errors::CliError,
     clockwork_client::network::objects::{Config, Registry, Worker},
     clockwork_client::Client,
-    solana_sdk::{
-        pubkey::Pubkey,
-        signature::{Keypair, Signer},
-    },
+    solana_sdk::signature::{Keypair, Signer},
 };
+
+pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
+    let worker_pubkey = Worker::pubkey(id);
+    let worker = client
+        .get::<Worker>(&worker_pubkey)
+        .map_err(|_err| CliError::AccountDataNotParsable(worker_pubkey.to_string()))?;
+    println!("{:#?}", worker);
+    Ok(())
+}
 
 pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
     // Get config data
@@ -37,29 +43,5 @@ pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
         .send_and_confirm(&[ix], &[client.payer(), &signatory])
         .unwrap();
 
-    Ok(())
-}
-
-pub fn delegate_stake(client: &Client, amount: u64, worker_pubkey: Pubkey) -> Result<(), CliError> {
-    // // Get config data
-    // let config_pubkey = Config::pubkey();
-    // let config_data = client
-    //     .get_account_data(&config_pubkey)
-    //     .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    // let config_data = Config::try_from(config_data)
-    //     .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
-
-    // // Build ix
-    // let signer = client.payer();
-    // // let node_pubkey = Node::pubkey(worker);
-    // let ix = clockwork_client::network::instruction::node_stake(
-    //     amount,
-    //     config_pubkey,
-    //     address,
-    //     config_data.mint,
-    //     signer.pubkey(),
-    // );
-
-    // client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     Ok(())
 }

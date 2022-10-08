@@ -1,10 +1,9 @@
-use clockwork_client::network::objects::Registry;
-
-use crate::processor::registry;
-
 use {
     crate::errors::CliError,
-    clockwork_client::{network::objects::Pool, Client},
+    clockwork_client::{
+        network::objects::{Pool, Registry},
+        Client,
+    },
 };
 
 pub fn get(client: &Client, id: u64) -> Result<(), CliError> {

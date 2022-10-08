@@ -36,9 +36,6 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::queue::update(&client, &address, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory),
-        CliCommand::WorkerDelegateStake {
-            amount,
-            worker_pubkey,
-        } => super::worker::delegate_stake(&client, amount, worker_pubkey),
+        CliCommand::WorkerGet { id } => super::worker::get(&client, id),
     }
 }

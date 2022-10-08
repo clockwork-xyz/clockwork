@@ -1,8 +1,8 @@
 #[allow(deprecated)]
 use {
-    crate::{cli, errors::CliError, parser::ProgramInfo},
+    crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::{network::objects::Worker, Client},
+    clockwork_client::Client,
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -27,7 +27,7 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
     let mint_pubkey =
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
-    // register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
+    register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed.
     _ = validator_process.wait();
@@ -96,8 +96,7 @@ fn register_worker(client: &Client) -> Result<()> {
     let signatory = read_keypair_file(keypath).unwrap();
     client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
     super::worker::create(client, signatory)?;
-    let worker_pubkey = Worker::pubkey(0);
-    // super::worker::stake(client, worker_pubkey, 100)?;
+    // super::worker::stake(client, Worker::pubkey(0), 100)?;
     Ok(())
 }
 

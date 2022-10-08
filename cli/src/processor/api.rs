@@ -2,7 +2,11 @@ use crate::errors::CliError;
 use clockwork_client::Client;
 use solana_sdk::pubkey::Pubkey;
 
-pub fn api_new(client: &Client, ack_authority: Pubkey, base_url: String) -> Result<(), CliError> {
+pub fn api_new(
+    _client: &Client,
+    _ack_authority: Pubkey,
+    _base_url: String,
+) -> Result<(), CliError> {
     // TODO Come back to this when we do webhooks!
     //
     // let authority_pubkey = client.payer_pubkey();
