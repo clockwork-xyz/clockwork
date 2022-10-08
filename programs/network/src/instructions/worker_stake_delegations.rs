@@ -97,5 +97,8 @@ pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
         })
     };
 
-    Ok(CrankResponse { next_instruction })
+    Ok(CrankResponse {
+        next_instruction,
+        ..CrankResponse::default()
+    })
 }

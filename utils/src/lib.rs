@@ -84,13 +84,17 @@ impl TryFrom<Vec<u8>> for ClockData {
 /// A response value target programs can return to update the queue.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct CrankResponse {
-    /// The next instruction to set on the queue.
+    /// The kickoff instruction to use on the next triggering of the queue.
+    /// If none, the kickoff instruction remains unchanged.
+    pub kickoff_instruction: Option<InstructionData>,
+    /// The next instruction to use on the next crank of the queue.
     pub next_instruction: Option<InstructionData>,
 }
 
 impl Default for CrankResponse {
     fn default() -> Self {
         return Self {
+            kickoff_instruction: None,
             next_instruction: None,
         };
     }

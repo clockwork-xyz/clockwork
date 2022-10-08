@@ -30,5 +30,6 @@ pub fn handler(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
 
     Ok(CrankResponse {
         next_instruction: None,
+        ..CrankResponse::default()
     })
 }

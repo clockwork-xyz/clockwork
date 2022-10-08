@@ -51,5 +51,6 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("unstake_process").to_vec(),
         }),
+        ..CrankResponse::default()
     })
 }

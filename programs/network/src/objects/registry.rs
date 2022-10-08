@@ -5,12 +5,7 @@ use {
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
 
-// TODO Add total_pools to registry schema
-//      Remove pool names and only use ID's
-
-/**
- * Registry
- */
+/// Registry
 
 #[account]
 #[derive(Debug)]

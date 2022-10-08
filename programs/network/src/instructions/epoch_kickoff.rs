@@ -32,6 +32,12 @@ pub struct EpochKickoff<'info> {
 
     #[account(address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
+
+    #[account(
+        address = snapshot.pubkey(),
+        constraint = snapshot.id.eq(&registry.current_epoch)
+    )]
+    pub snapshot: Account<'info, Snapshot>,
 }
 
 pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
@@ -39,19 +45,66 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
     let config = &ctx.accounts.config;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
+    let snapshot = &ctx.accounts.snapshot;
 
-    // Build the next instruction for queue.
-    let next_instruction = Some(InstructionData {
+    // Set the next kickoff instruction to use the next snapshot
+    let kickoff_instruction = Some(InstructionData {
         program_id: crate::ID,
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
             AccountMetaData::new_readonly(queue.key(), true),
             AccountMetaData::new_readonly(registry.key(), false),
-            AccountMetaData::new_readonly(system_program::ID, false),
+            AccountMetaData::new_readonly(
+                Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
+                false,
+            ),
         ],
-        data: anchor_sighash("epoch_create").to_vec(),
+        data: anchor_sighash("epoch_kickoff").to_vec(),
     });
 
-    Ok(CrankResponse { next_instruction })
+    // Build the next instruction for queue.
+    let next_instruction = if snapshot.total_frames.gt(&0) {
+        // The current snapshot has frames. Distribute fees collected by workers.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(Fee::pubkey(Worker::pubkey(0)), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(snapshot.key(), false),
+                AccountMetaData::new_readonly(SnapshotFrame::pubkey(0, snapshot.key()), false),
+                AccountMetaData::new_readonly(Worker::pubkey(0), false),
+            ],
+            data: anchor_sighash("worker_distribute_fees").to_vec(),
+        })
+    } else if registry.total_workers.gt(&0) {
+        // The registry has workers. Begin delegating stakes to workers.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(Worker::pubkey(0), false),
+            ],
+            data: anchor_sighash("worker_stake_delegations").to_vec(),
+        })
+    } else {
+        // Cutover from to the new epoch.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new(registry.key(), false),
+            ],
+            data: anchor_sighash("epoch_cutover").to_vec(),
+        })
+    };
+
+    Ok(CrankResponse {
+        kickoff_instruction,
+        next_instruction,
+    })
 }

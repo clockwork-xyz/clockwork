@@ -183,6 +183,12 @@ impl QueueAccount for Account<'_, Queue> {
                 );
                 let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
                     .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
+
+                // Update the queue with the crank response.
+                match crank_response.kickoff_instruction {
+                    None => {}
+                    Some(kickoff_instruction) => self.kickoff_instruction = kickoff_instruction,
+                }
                 self.next_instruction = crank_response.next_instruction;
             }
         };

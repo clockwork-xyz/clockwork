@@ -1,10 +1,8 @@
-use clockwork_client::network::objects::{Epoch, Registry};
-
 use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
     anchor_lang::prelude::AccountMeta,
     clockwork_client::{
-        network::objects::{Pool, Rotator, Snapshot, SnapshotEntry, Worker},
+        network::objects::{Pool, Registry, Rotator, Snapshot, SnapshotEntry, Worker},
         Client as ClockworkClient,
     },
     log::info,

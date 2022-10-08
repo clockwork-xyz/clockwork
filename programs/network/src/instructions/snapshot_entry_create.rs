@@ -175,5 +175,8 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
         return Err(ClockworkError::InvalidSnapshot.into());
     };
 
-    Ok(CrankResponse { next_instruction })
+    Ok(CrankResponse {
+        next_instruction,
+        ..CrankResponse::default()
+    })
 }

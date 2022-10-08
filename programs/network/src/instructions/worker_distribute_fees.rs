@@ -155,5 +155,8 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
         })
     };
 
-    Ok(CrankResponse { next_instruction })
+    Ok(CrankResponse {
+        next_instruction,
+        ..CrankResponse::default()
+    })
 }
