@@ -5,6 +5,9 @@ use {
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
 
+// TODO Add total_pools to registry schema
+//      Remove pool names and only use ID's
+
 /**
  * Registry
  */
@@ -14,6 +17,7 @@ pub const SEED_REGISTRY: &[u8] = b"registry";
 pub struct Registry {
     pub current_epoch_id: u64,
     pub locked: bool,
+    pub total_pools: u64,
     pub total_unstakes: u64,
     pub total_workers: u64,
 }

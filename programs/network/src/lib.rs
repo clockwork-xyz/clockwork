@@ -8,7 +8,7 @@ use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP");
+declare_id!("HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3");
 
 #[program]
 pub mod network_program {
@@ -54,12 +54,12 @@ pub mod network_program {
         fee_distribute::handler(ctx)
     }
 
-    pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
     }
 
-    pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
-        pool_create::handler(ctx, name, size)
+    pub fn pool_create(ctx: Context<PoolCreate>) -> Result<()> {
+        pool_create::handler(ctx)
     }
 
     pub fn pool_rotate(ctx: Context<PoolRotate>) -> Result<()> {

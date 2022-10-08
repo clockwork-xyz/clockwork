@@ -14,12 +14,14 @@ use {
 /// Number of lamports to reimburse the worker with after they've submitted a transaction's worth of cranks.
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 
+const POOL_ID: u64 = 0;
+
 /// Accounts required by the `queue_crank` instruction.
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
     /// The active worker pool.
-    #[account(address = Pool::pubkey("queue".to_string()))]
+    #[account(address = Pool::pubkey(POOL_ID))]
     pub pool: Box<Account<'info, Pool>>,
 
     /// The queue to crank.

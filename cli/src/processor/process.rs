@@ -27,7 +27,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::webhook::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
-        CliCommand::PoolGet => super::pool::get(&client),
+        CliCommand::PoolGet { id } => super::pool::get(&client, id),
+        CliCommand::PoolList {} => super::pool::list(&client),
         CliCommand::QueueGet { address } => super::queue::get(&client, &address),
         CliCommand::QueueUpdate {
             address,

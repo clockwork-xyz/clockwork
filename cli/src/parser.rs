@@ -20,7 +20,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
-            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
+            Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
             Some(("worker", matches)) => parse_worker_command(matches),
@@ -112,6 +112,18 @@ fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             amount: parse_u64("amount", matches)?,
             worker_pubkey: parse_pubkey("worker_pubkey", matches)?,
         }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::PoolGet {
+            id: parse_u64("pool_id", matches)?,
+        }),
+        Some(("list", _)) => Ok(CliCommand::PoolList {}),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

@@ -1,11 +1,8 @@
 #[allow(deprecated)]
 use {
-    crate::{errors::CliError, parser::ProgramInfo},
+    crate::{cli, errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::{
-        network::objects::{Pool, Worker},
-        Client,
-    },
+    clockwork_client::{network::objects::Worker, Client},
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -30,9 +27,9 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
     let mint_pubkey =
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
-    register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
+    // register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
-    // Wait for process to be killed
+    // Wait for process to be killed.
     _ = validator_process.wait();
 
     Ok(())
@@ -72,14 +69,14 @@ fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
             &client.payer_pubkey(),
             &mint_keypair.pubkey(),
         ),
-        // Mint 1000 tokens to the local user
+        // Mint 10 tokens to the local user
         mint_to(
             &spl_token::ID,
             &mint_keypair.pubkey(),
             &token_account_pubkey,
             &client.payer_pubkey(),
             &[&client.payer_pubkey()],
-            100000000000,
+            1000000000,
         )
         .unwrap(),
     ];
@@ -100,12 +97,13 @@ fn register_worker(client: &Client) -> Result<()> {
     client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
     super::worker::create(client, signatory)?;
     let worker_pubkey = Worker::pubkey(0);
-    let pool_pubkey = Pool::pubkey("crank".into());
     // super::worker::stake(client, worker_pubkey, 100)?;
     Ok(())
 }
 
 fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<Child> {
+    println!("Starting test validator");
+
     // Get Clockwork home path
     let cfg = get_clockwork_config()?;
     let home_dir = cfg["home"].as_str().unwrap();
@@ -122,15 +120,21 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
         .expect("Failed to start local test validator");
 
     // Wait for the validator to become healthy
-    let ms_wait = 10000;
+    let ms_wait = 10_000;
     let mut count = 0;
     while count < ms_wait {
-        let r = client.get_latest_blockhash();
-        if r.is_ok() {
-            break;
+        match client.get_block_height() {
+            Err(_err) => {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                count += 1;
+            }
+            Ok(slot) => {
+                if slot > 0 {
+                    println!("Got a slot: {}", slot);
+                    break;
+                }
+            }
         }
-        std::thread::sleep(std::time::Duration::from_millis(1));
-        count += 1;
     }
     if count == ms_wait {
         process.kill()?;
@@ -138,7 +142,8 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     }
 
     // Wait 1 extra second for safety before submitting txs
-    std::thread::sleep(std::time::Duration::from_millis(1000));
+    std::thread::sleep(std::time::Duration::from_secs(1));
+
     Ok(process)
 }
 

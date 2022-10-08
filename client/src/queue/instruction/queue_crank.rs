@@ -13,7 +13,7 @@ pub fn queue_crank(data_hash: Option<u64>, queue: Pubkey, signatory: Pubkey) -> 
     Instruction {
         program_id: clockwork_queue_program::ID,
         accounts: vec![
-            AccountMeta::new_readonly(Pool::pubkey("queue".into()), false),
+            AccountMeta::new_readonly(Pool::pubkey(0), false),
             AccountMeta::new(queue, false),
             AccountMeta::new(signatory, true),
             AccountMeta::new(system_program::ID, false),

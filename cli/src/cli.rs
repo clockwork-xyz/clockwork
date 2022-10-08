@@ -32,7 +32,10 @@ pub enum CliCommand {
     },
 
     // Pool commands
-    PoolGet,
+    PoolGet {
+        id: u64,
+    },
+    PoolList {},
 
     // Queue commands
     QueueGet {
@@ -64,12 +67,12 @@ pub enum CliCommand {
 pub fn app() -> Command<'static> {
     Command::new("Clockwork")
         .bin_name("clockwork")
-        .about("Automation infrastructure for Solana")
+        .about("An automation engine for the Solana blockchain")
         .version(version!())
         .arg_required_else_help(true)
         .subcommand(
             Command::new("config")
-                .about("Manage the Clockwork configs")
+                .about("Manage the Clockwork network config")
                 .arg_required_else_help(true)
                 .subcommand(Command::new("get").about("Get a config value"))
                 .subcommand(
@@ -79,12 +82,6 @@ pub fn app() -> Command<'static> {
                             Arg::new("admin")
                                 .long("admin")
                                 .value_name("PUBKEY")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("worker_fee")
-                                .long("worker_fee")
-                                .value_name("NUM_LAMPORTS")
                                 .takes_value(true),
                         )
                         .arg(
@@ -108,7 +105,7 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(
             Command::new("initialize")
-                .about("Initialize the Clockwork programs")
+                .about("Initialize the Clockwork network program")
                 .arg(
                     Arg::new("mint")
                         .long("mint")
@@ -120,7 +117,7 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(
             Command::new("localnet")
-                .about("Launch a local Clockwork node for development and testing")
+                .about("Launch a local Clockwork worker for app development and testing")
                 .arg(
                     Arg::with_name("bpf_program")
                         .long("bpf-program")
@@ -135,10 +132,26 @@ pub fn app() -> Command<'static> {
                         ),
                 ),
         )
-        .subcommand(Command::new("pool").about("Get the worker pool info"))
+        .subcommand(
+            Command::new("pool")
+                .about("Manage the Clockwork network worker pools")
+                .subcommand(
+                    Command::new("get")
+                        .about("Get a pool")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("pool_id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the pool to get"),
+                        ),
+                )
+                .subcommand(Command::new("list").about("List the pools")),
+        )
         .subcommand(
             Command::new("queue")
-                .about("Manage your queues")
+                .about("Manage your Clockwork transaction queues")
                 .arg_required_else_help(true)
                 .arg(
                     Arg::new("address")
@@ -150,7 +163,7 @@ pub fn app() -> Command<'static> {
                 .subcommand(Command::new("get").about("Get a queue"))
                 .subcommand(
                     Command::new("update")
-                        .about("Update a property on a queue")
+                        .about("Update a property of a queue")
                         .arg(
                             Arg::new("rate_limit")
                                 .long("rate_limit")
@@ -164,7 +177,7 @@ pub fn app() -> Command<'static> {
         .subcommand(Command::new("registry").about("Get the registry account"))
         .subcommand(
             Command::new("snapshot")
-                .about("Lookup the current snapshot")
+                .about("Lookup the current Clockwork network registry")
                 .subcommand(
                     Command::new("entry")
                         .about("Lookup an entry in the snapshot")

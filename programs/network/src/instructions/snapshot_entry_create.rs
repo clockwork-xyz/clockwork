@@ -22,7 +22,7 @@ pub struct SnapshotEntryCreate<'info> {
         constraint = delegation.id.eq(&snapshot_frame.total_entries),
         has_one = worker,
     )]
-    pub delegation: Account<'info, Delegation>,
+    pub delegation: Box<Account<'info, Delegation>>,
 
     #[account(
         associated_token::authority = delegation,
@@ -34,7 +34,7 @@ pub struct SnapshotEntryCreate<'info> {
         address = epoch.pubkey(),
         constraint = current_epoch.id.checked_add(1).unwrap().eq(&epoch.id),
     )]
-    pub epoch: Account<'info, Epoch>,
+    pub epoch: Box<Account<'info, Epoch>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -46,13 +46,13 @@ pub struct SnapshotEntryCreate<'info> {
         address = Registry::pubkey(),
         constraint = registry.locked
     )]
-    pub registry: Account<'info, Registry>,
+    pub registry: Box<Account<'info, Registry>>,
 
     #[account(
         address = snapshot.pubkey(),
         has_one = epoch,
     )]
-    pub snapshot: Account<'info, Snapshot>,
+    pub snapshot: Box<Account<'info, Snapshot>>,
 
     #[account(
         init,
@@ -78,7 +78,7 @@ pub struct SnapshotEntryCreate<'info> {
         has_one = snapshot,
         constraint = snapshot_frame.id.eq(&snapshot.total_frames),
     )]
-    pub snapshot_frame: Account<'info, SnapshotFrame>,
+    pub snapshot_frame: Box<Account<'info, SnapshotFrame>>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
@@ -87,7 +87,7 @@ pub struct SnapshotEntryCreate<'info> {
         address = worker.pubkey(),
         constraint = worker.id.eq(&snapshot_frame.id),
     )]
-    pub worker: Account<'info, Worker>,
+    pub worker: Box<Account<'info, Worker>>,
 }
 
 pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {

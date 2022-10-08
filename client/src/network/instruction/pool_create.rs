@@ -10,13 +10,7 @@ use {
     clockwork_network_program::objects::*,
 };
 
-pub fn pool_create(
-    admin: Pubkey,
-    name: String,
-    payer: Pubkey,
-    pool: Pubkey,
-    size: usize,
-) -> Instruction {
+pub fn pool_create(admin: Pubkey, payer: Pubkey, pool: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_network_program::ID,
         accounts: vec![
@@ -24,8 +18,9 @@ pub fn pool_create(
             AccountMeta::new_readonly(Config::pubkey(), false),
             AccountMeta::new(payer, true),
             AccountMeta::new(pool, false),
+            AccountMeta::new(Registry::pubkey(), false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_network_program::instruction::PoolCreate { name, size }.data(),
+        data: clockwork_network_program::instruction::PoolCreate {}.data(),
     }
 }

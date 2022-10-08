@@ -8,13 +8,7 @@ pub fn initialize(client: &Client, mint: Pubkey) -> Result<(), CliError> {
     // Initialize the programs
     let admin = client.payer_pubkey();
     let ix_a = clockwork_client::network::instruction::initialize(admin, mint);
-    let ix_b = clockwork_client::network::instruction::pool_create(
-        admin,
-        "queue".into(),
-        admin,
-        Pool::pubkey("queue".into()),
-        1,
-    );
+    let ix_b = clockwork_client::network::instruction::pool_create(admin, admin, Pool::pubkey(0));
 
     // Submit tx
     client

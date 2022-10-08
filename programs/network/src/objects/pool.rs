@@ -5,6 +5,8 @@ use {
 
 pub const SEED_POOL: &[u8] = b"pool";
 
+const DEFAULT_POOL_SIZE: usize = 1;
+
 /**
  * Pool
  */
@@ -12,14 +14,14 @@ pub const SEED_POOL: &[u8] = b"pool";
 #[account]
 #[derive(Debug)]
 pub struct Pool {
-    pub name: String,
+    pub id: u64,
     pub size: usize,
     pub workers: VecDeque<Pubkey>,
 }
 
 impl Pool {
-    pub fn pubkey(name: String) -> Pubkey {
-        Pubkey::find_program_address(&[SEED_POOL, name.as_bytes()], &crate::ID).0
+    pub fn pubkey(id: u64) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_POOL, id.to_be_bytes().as_ref()], &crate::ID).0
     }
 }
 
@@ -46,7 +48,7 @@ pub struct PoolSettings {
 pub trait PoolAccount {
     fn pubkey(&self) -> Pubkey;
 
-    fn init(&mut self, name: String, size: usize) -> Result<()>;
+    fn init(&mut self, id: u64) -> Result<()>;
 
     fn rotate(&mut self, worker: Pubkey) -> Result<()>;
 
@@ -55,12 +57,12 @@ pub trait PoolAccount {
 
 impl PoolAccount for Account<'_, Pool> {
     fn pubkey(&self) -> Pubkey {
-        Pool::pubkey(self.name.clone())
+        Pool::pubkey(self.id)
     }
 
-    fn init(&mut self, name: String, size: usize) -> Result<()> {
-        self.name = name;
-        self.size = size;
+    fn init(&mut self, id: u64) -> Result<()> {
+        self.id = id;
+        self.size = DEFAULT_POOL_SIZE;
         self.workers = VecDeque::new();
         Ok(())
     }

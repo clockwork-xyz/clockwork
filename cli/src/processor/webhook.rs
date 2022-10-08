@@ -4,11 +4,11 @@ use solana_sdk::pubkey::Pubkey;
 use crate::errors::CliError;
 
 pub fn request_new(
-    client: &Client,
-    api: Pubkey,
-    id: String,
-    method: HttpMethod,
-    route: String,
+    _client: &Client,
+    _api: Pubkey,
+    _id: String,
+    _method: HttpMethod,
+    _route: String,
 ) -> Result<(), CliError> {
     // TODO Come back to this!
 

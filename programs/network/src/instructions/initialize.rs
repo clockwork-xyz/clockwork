@@ -33,15 +33,6 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        seeds = [SEED_ROTATOR],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<Rotator>(),
-    )]
-    pub rotator: Account<'info, Rotator>,
-
-    #[account(
-        init,
         seeds = [SEED_REGISTRY],
         bump,
         payer = admin,
@@ -51,9 +42,18 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
+        seeds = [SEED_ROTATOR],
+        bump,
+        payer = admin,
+        space = 8 + size_of::<Rotator>(),
+    )]
+    pub rotator: Account<'info, Rotator>,
+
+    #[account(
+        init,
         seeds = [
             SEED_SNAPSHOT,
-            (0 as u64).to_be_bytes().as_ref(),
+            epoch.key().as_ref(),
         ],
         bump,
         payer = admin,
@@ -65,7 +65,7 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     // Get accounts
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;

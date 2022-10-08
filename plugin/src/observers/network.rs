@@ -54,6 +54,7 @@ impl NetworkObserver {
             registry: RwLock::new(Registry {
                 current_epoch_id: 0,
                 locked: false,
+                total_pools: 0,
                 total_unstakes: 0,
                 total_workers: 0,
             }),
@@ -94,14 +95,14 @@ impl NetworkObserver {
             };
 
             // Update the pool positions struct
-            match pool.name.as_str() {
-                "queue" => {
+            match pool.id {
+                0 => {
                     *w_pool_positions = PoolPositions {
                         queue_pool: pool_position,
                         ..w_pool_positions.clone()
                     };
                 }
-                "webhook" => {
+                1 => {
                     *w_pool_positions = PoolPositions {
                         webhook_pool: pool_position,
                         ..w_pool_positions.clone()
