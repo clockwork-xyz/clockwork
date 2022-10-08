@@ -26,23 +26,17 @@ pub struct NetworkObserver {
     // RwLock for this node's position in the worker pools.
     pub pool_positions: Arc<RwLock<PoolPositions>>,
 
-    // Pub worker address
-    pub pubkey: Pubkey,
-
-    // The current Clockwork registry.
+    // A cache of the network registry.
     pub registry: RwLock<Registry>,
 
-    // A copy of the current rotator account data.
+    // A cache of the current rotator.
     pub rotator: RwLock<Rotator>,
+
+    // The worker's signatory address
+    pub signatory: Pubkey,
 
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
-
-    // Current snapshot of the node-stake cumulative distribution.
-    // pub snapshot: RwLock<Snapshot>,
-
-    // Sorted entries of the current snapshot.
-    pub snapshot_entries: RwLock<Vec<SnapshotEntry>>,
 }
 
 impl NetworkObserver {
@@ -50,10 +44,10 @@ impl NetworkObserver {
         Self {
             config: config.clone(),
             pool_positions: Arc::new(RwLock::new(PoolPositions::default())),
-            pubkey: read_or_new_keypair(config.keypath).pubkey(),
             registry: RwLock::new(Registry {
-                current_epoch_id: 0,
+                current_epoch: 0,
                 locked: false,
+                nonce: 0,
                 total_pools: 0,
                 total_unstakes: 0,
                 total_workers: 0,
@@ -62,8 +56,8 @@ impl NetworkObserver {
                 last_rotation_at: 0,
                 nonce: 0,
             }),
+            signatory: read_or_new_keypair(config.keypath).pubkey(),
             runtime,
-            snapshot_entries: RwLock::new(vec![]),
         }
     }
 
@@ -89,7 +83,7 @@ impl NetworkObserver {
                 current_position: pool
                     .workers
                     .iter()
-                    .position(|k| k.eq(&this.pubkey))
+                    .position(|k| k.eq(&this.signatory))
                     .map(|i| i as u64),
                 workers: workers.make_contiguous().to_vec().clone(),
             };

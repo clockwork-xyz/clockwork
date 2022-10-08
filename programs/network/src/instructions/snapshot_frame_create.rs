@@ -11,12 +11,6 @@ pub struct SnapshotFrameCreate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(
-        address = epoch.pubkey(),
-        constraint = registry.current_epoch_id.checked_add(1).unwrap().eq(&epoch.id),
-    )]
-    pub epoch: Account<'info, Epoch>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -33,10 +27,10 @@ pub struct SnapshotFrameCreate<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.epoch.as_ref(),
+            snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
-        has_one = epoch,
+        constraint = registry.current_epoch.checked_add(1).unwrap().eq(&snapshot.id),
         constraint = snapshot.total_frames < registry.total_workers,
     )]
     pub snapshot: Account<'info, Snapshot>,
@@ -73,7 +67,6 @@ pub struct SnapshotFrameCreate<'info> {
 pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
@@ -113,7 +106,6 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
                     get_associated_token_address(&zeroth_delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -134,7 +126,6 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -155,9 +146,8 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(epoch.key(), false),
-                AccountMetaData::new(registry.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new(registry.key(), false),
             ],
             data: anchor_sighash("epoch_cutover").to_vec(),
         })

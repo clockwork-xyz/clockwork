@@ -5,6 +5,9 @@ pub struct SnapshotDelete<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
+    #[account(address = Registry::pubkey())]
+    pub registry: Account<'info, Registry>,
+
     #[account(address = config.authorized_queue)]
     pub signer: Signer<'info>,
 
@@ -12,10 +15,10 @@ pub struct SnapshotDelete<'info> {
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.epoch.as_ref(),
+            snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
-        // constraint = snapshot.status == SnapshotStatus::Archived
+        constraint = snapshot.id.ne(&registry.current_epoch)
     )]
     pub snapshot: Account<'info, Snapshot>,
 }

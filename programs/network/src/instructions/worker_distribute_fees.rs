@@ -10,12 +10,6 @@ pub struct WorkerDistributeFees<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        address = epoch.pubkey(),
-        constraint = registry.current_epoch_id.eq(&epoch.id),
-    )]
-    pub epoch: Account<'info, Epoch>,
-
-    #[account(
         mut,
         seeds = [
             SEED_FEE,
@@ -34,7 +28,7 @@ pub struct WorkerDistributeFees<'info> {
 
     #[account(
         address = snapshot.pubkey(),
-        has_one = epoch,
+        constraint = snapshot.id.eq(&registry.current_epoch)
     )]
     pub snapshot: Account<'info, Snapshot>,
 
@@ -52,7 +46,6 @@ pub struct WorkerDistributeFees<'info> {
 pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let epoch = &ctx.accounts.epoch;
     let fee = &mut ctx.accounts.fee;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
@@ -102,7 +95,6 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(delegation_pubkey, false),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(fee.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -127,7 +119,6 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(fee.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),

@@ -141,17 +141,17 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
         })
     } else {
         // This worker has no more delegations and it is the last worker. Start the snapshot!
-        let epoch_pubkey = Epoch::pubkey(registry.current_epoch_id.checked_add(1).unwrap());
-        let snapshot_pubkey = Snapshot::pubkey(epoch_pubkey);
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(epoch_pubkey, false),
                 AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot_pubkey, false),
+                AccountMetaData::new(
+                    Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
+                    false,
+                ),
                 AccountMetaData::new_readonly(system_program::ID, false),
             ],
             data: anchor_sighash("snapshot_create").to_vec(),

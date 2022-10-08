@@ -12,12 +12,6 @@ pub struct SnapshotEntryCreate<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        address = current_epoch.pubkey(),
-        constraint = current_epoch.id.eq(&registry.current_epoch_id)
-    )]
-    pub current_epoch: Account<'info, Epoch>,
-
-    #[account(
         address = delegation.pubkey(),
         constraint = delegation.id.eq(&snapshot_frame.total_entries),
         has_one = worker,
@@ -29,12 +23,6 @@ pub struct SnapshotEntryCreate<'info> {
         associated_token::mint = config.mint,
     )]
     pub delegation_stake: Account<'info, TokenAccount>,
-
-    #[account(
-        address = epoch.pubkey(),
-        constraint = current_epoch.id.checked_add(1).unwrap().eq(&epoch.id),
-    )]
-    pub epoch: Box<Account<'info, Epoch>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -50,7 +38,7 @@ pub struct SnapshotEntryCreate<'info> {
 
     #[account(
         address = snapshot.pubkey(),
-        has_one = epoch,
+        constraint = registry.current_epoch.checked_add(1).unwrap().eq(&snapshot.id)
     )]
     pub snapshot: Box<Account<'info, Snapshot>>,
 
@@ -93,10 +81,8 @@ pub struct SnapshotEntryCreate<'info> {
 pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let current_epoch = &ctx.accounts.current_epoch;
     let delegation = &ctx.accounts.delegation;
     let delegation_stake = &ctx.accounts.delegation_stake;
-    let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
@@ -130,13 +116,11 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(current_epoch.key(), false),
                 AccountMetaData::new_readonly(next_delegation_pubkey, false),
                 AccountMetaData::new_readonly(
                     get_associated_token_address(&next_delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -159,8 +143,6 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(current_epoch.key(), false),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -183,11 +165,10 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(current_epoch.key(), false),
-                AccountMetaData::new(epoch.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new(registry.key(), false),
             ],
-            data: anchor_sighash("epoch_start").to_vec(),
+            data: anchor_sighash("epoch_cutover").to_vec(),
         })
     } else {
         // Something is wrong...

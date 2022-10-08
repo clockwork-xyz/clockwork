@@ -41,12 +41,10 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
     let registry = &ctx.accounts.registry;
 
     // Build the next instruction for queue.
-    let epoch_pubkey = Epoch::pubkey(registry.current_epoch_id.checked_add(1).unwrap());
     let next_instruction = Some(InstructionData {
         program_id: crate::ID,
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new(epoch_pubkey, false),
             AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
             AccountMetaData::new_readonly(queue.key(), true),
             AccountMetaData::new_readonly(registry.key(), false),

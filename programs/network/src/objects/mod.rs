@@ -1,6 +1,6 @@
 mod config;
 mod delegation;
-mod epoch;
+// mod epoch;
 mod fee;
 mod pool;
 mod registry;
@@ -13,7 +13,7 @@ mod worker;
 
 pub use config::*;
 pub use delegation::*;
-pub use epoch::*;
+// pub use epoch::*;
 pub use fee::*;
 pub use pool::*;
 pub use registry::*;

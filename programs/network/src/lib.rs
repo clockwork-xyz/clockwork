@@ -38,10 +38,6 @@ pub mod network_program {
         delegation_yield::handler(ctx, amount)
     }
 
-    pub fn epoch_create(ctx: Context<EpochCreate>) -> Result<CrankResponse> {
-        epoch_create::handler(ctx)
-    }
-
     pub fn epoch_cutover(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
         epoch_cutover::handler(ctx)
     }

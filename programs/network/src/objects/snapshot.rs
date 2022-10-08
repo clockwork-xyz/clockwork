@@ -9,14 +9,14 @@ pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
-    pub epoch: Pubkey,
+    pub id: u64,
     pub total_frames: u64,
     pub total_stake: u64,
 }
 
 impl Snapshot {
-    pub fn pubkey(epoch: Pubkey) -> Pubkey {
-        Pubkey::find_program_address(&[SEED_SNAPSHOT, epoch.as_ref()], &crate::ID).0
+    pub fn pubkey(id: u64) -> Pubkey {
+        Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID).0
     }
 }
 
@@ -31,16 +31,16 @@ impl TryFrom<Vec<u8>> for Snapshot {
 pub trait SnapshotAccount {
     fn pubkey(&self) -> Pubkey;
 
-    fn init(&mut self, epoch: Pubkey) -> Result<()>;
+    fn init(&mut self, id: u64) -> Result<()>;
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
     fn pubkey(&self) -> Pubkey {
-        Snapshot::pubkey(self.epoch)
+        Snapshot::pubkey(self.id)
     }
 
-    fn init(&mut self, epoch: Pubkey) -> Result<()> {
-        self.epoch = epoch;
+    fn init(&mut self, id: u64) -> Result<()> {
+        self.id = id;
         self.total_frames = 0;
         self.total_stake = 0;
         Ok(())

@@ -11,12 +11,6 @@ pub struct SnapshotCreate<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(
-        address = epoch.pubkey(),
-        constraint = registry.current_epoch_id.checked_add(1).unwrap().eq(&epoch.id)
-    )]
-    pub epoch: Account<'info, Epoch>,
-
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -33,7 +27,7 @@ pub struct SnapshotCreate<'info> {
         init,
         seeds = [
             SEED_SNAPSHOT,
-            epoch.key().as_ref(),
+            registry.current_epoch.checked_add(1).unwrap().to_be_bytes().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Snapshot>(),
@@ -48,7 +42,6 @@ pub struct SnapshotCreate<'info> {
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let epoch = &ctx.accounts.epoch;
     let payer = &ctx.accounts.payer;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
@@ -56,7 +49,7 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     let system_program = &ctx.accounts.system_program;
 
     // Start a new snapshot.
-    snapshot.init(epoch.key())?;
+    snapshot.init(registry.current_epoch.checked_add(1).unwrap())?;
 
     // Build next instruction for queue.
     let next_instruction = if registry.total_workers.gt(&0) {
@@ -67,7 +60,6 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(epoch.key(), false),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
@@ -88,7 +80,6 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(epoch.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new(registry.key(), false),
             ],

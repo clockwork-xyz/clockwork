@@ -19,15 +19,6 @@ pub struct Initialize<'info> {
     )]
     pub config: Account<'info, Config>,
 
-    #[account(
-        init,
-        seeds = [SEED_EPOCH, (0 as u64).to_be_bytes().as_ref()],
-        bump,
-        payer = admin,
-        space = 8 + size_of::<Epoch>(),
-    )]
-    pub epoch: Account<'info, Epoch>,
-
     #[account()]
     pub mint: Account<'info, Mint>,
 
@@ -53,7 +44,7 @@ pub struct Initialize<'info> {
         init,
         seeds = [
             SEED_SNAPSHOT,
-            epoch.key().as_ref(),
+            (0 as u64).to_be_bytes().as_ref(),
         ],
         bump,
         payer = admin,
@@ -69,7 +60,6 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     // Get accounts
     let admin = &ctx.accounts.admin;
     let config = &mut ctx.accounts.config;
-    let epoch = &mut ctx.accounts.epoch;
     let rotator = &mut ctx.accounts.rotator;
     let mint = &ctx.accounts.mint;
     let registry = &mut ctx.accounts.registry;
@@ -77,10 +67,9 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
 
     // Initialize accounts.
     config.init(admin.key(), mint.key())?;
-    epoch.init(0)?;
     registry.init()?;
     rotator.init()?;
-    snapshot.init(epoch.key())?;
+    snapshot.init(0)?;
 
     Ok(())
 }
