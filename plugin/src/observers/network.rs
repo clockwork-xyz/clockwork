@@ -2,7 +2,7 @@ use {
     crate::{config::PluginConfig, utils::read_or_new_keypair},
     anchor_lang::prelude::AccountMeta,
     clockwork_client::{
-        network::objects::{Pool, Registry, Rotator, Snapshot, SnapshotEntry, Worker},
+        network::objects::{Pool, Registry, Snapshot, SnapshotEntry, Worker},
         Client as ClockworkClient,
     },
     log::info,
@@ -27,9 +27,6 @@ pub struct NetworkObserver {
     // A cache of the network registry.
     pub registry: RwLock<Registry>,
 
-    // A cache of the current rotator.
-    pub rotator: RwLock<Rotator>,
-
     // The worker's signatory address
     pub signatory: Pubkey,
 
@@ -50,22 +47,9 @@ impl NetworkObserver {
                 total_unstakes: 0,
                 total_workers: 0,
             }),
-            rotator: RwLock::new(Rotator {
-                last_rotation_at: 0,
-                nonce: 0,
-            }),
             signatory: read_or_new_keypair(config.keypath).pubkey(),
             runtime,
         }
-    }
-
-    pub fn handle_updated_rotator(self: Arc<Self>, rotator: Rotator) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            let mut w_rotator = this.rotator.write().await;
-            *w_rotator = rotator;
-            drop(w_rotator);
-            Ok(())
-        })
     }
 
     pub fn handle_updated_pool(self: Arc<Self>, pool: Pool, _slot: u64) -> PluginResult<()> {
@@ -130,12 +114,9 @@ impl NetworkObserver {
 
     pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let r_rotator = this.rotator.read().await;
-            info!(
-                "slot: {} last_rotation: {} nonce: {}",
-                confirmed_slot, r_rotator.last_rotation_at, r_rotator.nonce
-            );
-            drop(r_rotator);
+            let r_registry = this.registry.read().await;
+            info!("slot: {} nonce: {}", confirmed_slot, r_registry.nonce);
+            drop(r_registry);
             Ok(())
         })
     }

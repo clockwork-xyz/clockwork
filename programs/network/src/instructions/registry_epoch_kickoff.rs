@@ -23,11 +23,11 @@ use {
 // DONE Cutover from current epoch to new epoch.
 
 #[derive(Accounts)]
-pub struct EpochKickoff<'info> {
+pub struct RegistryEpochKickoff<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(address = Registry::pubkey())]
@@ -40,14 +40,14 @@ pub struct EpochKickoff<'info> {
     pub snapshot: Account<'info, Snapshot>,
 }
 
-pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let queue = &ctx.accounts.queue;
     let registry = &ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
 
-    // Set the next kickoff instruction to use the next snapshot
+    // Setup the next kickoff instruction to use the next snapshot.
     let kickoff_instruction = Some(InstructionData {
         program_id: crate::ID,
         accounts: vec![
@@ -76,7 +76,7 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(SnapshotFrame::pubkey(0, snapshot.key()), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
-            data: anchor_sighash("worker_distribute_fees").to_vec(),
+            data: anchor_sighash("worker_fees_distribute").to_vec(),
         })
     } else if registry.total_workers.gt(&0) {
         // The registry has workers. Begin delegating stakes to workers.
@@ -88,7 +88,7 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     } else {
         // Cutover to the next epoch.
@@ -99,7 +99,7 @@ pub fn handler(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new(registry.key(), false),
             ],
-            data: anchor_sighash("epoch_cutover").to_vec(),
+            data: anchor_sighash("registry_epoch_cutover").to_vec(),
         })
     };
 

@@ -17,17 +17,9 @@ pub struct PoolRotate<'info> {
         address = snapshot_frame.pubkey(),
         has_one = snapshot,
         has_one = worker,
-        constraint = is_valid_frame(&rotator, &snapshot, &snapshot_frame).unwrap()
+        // constraint = is_valid_frame(&rotator, &snapshot, &snapshot_frame).unwrap()
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
-
-    #[account(
-        mut,
-        seeds = [SEED_ROTATOR], 
-        bump,
-        constraint = Clock::get().unwrap().slot >= rotator.last_rotation_at.checked_add(config.slots_per_rotation).unwrap()
-    )]
-    pub rotator: Account<'info, Rotator>,
 
     #[account(
         address = snapshot.pubkey(),
@@ -52,15 +44,15 @@ pub fn handler(_ctx: Context<PoolRotate>) -> Result<()> {
     Ok(())
 }
 
-fn is_valid_frame(
-    rotator: &Account<Rotator>,
-    snapshot: &Account<Snapshot>,
-    snapshot_frame: &Account<SnapshotFrame>,
-) -> Result<bool> {
-    // Return true if the sample is within the entry's stake range
-    match rotator.nonce.checked_rem(snapshot.total_stake) {
-        None => Ok(false),
-        Some(sample) => Ok(sample >= snapshot_frame.stake_offset
-            && sample < snapshot_frame.stake_offset.checked_add(snapshot_frame.stake_amount).unwrap()),
-    }
-}
+// fn is_valid_frame(
+//     rotator: &Account<Rotator>,
+//     snapshot: &Account<Snapshot>,
+//     snapshot_frame: &Account<SnapshotFrame>,
+// ) -> Result<bool> {
+//     // Return true if the sample is within the entry's stake range
+//     match rotator.nonce.checked_rem(snapshot.total_stake) {
+//         None => Ok(false),
+//         Some(sample) => Ok(sample >= snapshot_frame.stake_offset
+//             && sample < snapshot_frame.stake_offset.checked_add(snapshot_frame.stake_amount).unwrap()),
+//     }
+// }

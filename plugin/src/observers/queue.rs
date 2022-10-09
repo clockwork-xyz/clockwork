@@ -1,4 +1,7 @@
+use clockwork_client::network::objects::Worker;
+
 use {
+    crate::config::PluginConfig,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_client::{
         queue::objects::{Queue, Trigger, TriggerContext},
@@ -37,6 +40,9 @@ pub struct QueueObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: DashMap<u64, Clock>,
 
+    // Plugin config values.
+    pub config: PluginConfig,
+
     // The set of the queues that are currently crankable (i.e. have a next_instruction)
     pub crankable_queues: DashSet<Pubkey>,
 
@@ -51,9 +57,10 @@ pub struct QueueObserver {
 }
 
 impl QueueObserver {
-    pub fn new(runtime: Arc<Runtime>) -> Self {
+    pub fn new(config: PluginConfig, runtime: Arc<Runtime>) -> Self {
         Self {
             clocks: DashMap::new(),
+            config: config.clone(),
             crankable_queues: DashSet::new(),
             cron_queues: DashMap::new(),
             listener_queues: DashMap::new(),
@@ -240,19 +247,19 @@ impl QueueObserver {
         let blockhash = client
             .get_latest_blockhash()
             .map_err(|_err| GeyserPluginError::Custom("Failed to get latest blockhash".into()))?;
-        let worker_pubkey = client.payer_pubkey();
+        let signatory_pubkey = client.payer_pubkey();
 
         // Pre-simulate crank ixs and pack into tx
         let mut ixs: Vec<Instruction> =
             vec![self
                 .clone()
-                .build_crank_ix(client.clone(), queue, worker_pubkey)?];
+                .build_crank_ix(client.clone(), queue, signatory_pubkey)?];
 
         // Pre-simulate crank ixs and pack as many as possible into tx.
-        let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&worker_pubkey));
+        let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&signatory_pubkey));
         let now = std::time::Instant::now();
         loop {
-            let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&worker_pubkey));
+            let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
             sim_tx.sign(&[client.payer()], blockhash);
 
             // Exit early if tx exceeds Solana's size limit.
@@ -311,7 +318,7 @@ impl QueueObserver {
                                         ixs.push(self.clone().build_crank_ix(
                                             client.clone(),
                                             sim_queue,
-                                            worker_pubkey,
+                                            signatory_pubkey,
                                         )?);
                                     } else {
                                         break;
@@ -339,7 +346,7 @@ impl QueueObserver {
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         queue: Queue,
-        worker_pubkey: Pubkey,
+        signatory_pubkey: Pubkey,
     ) -> PluginResult<Instruction> {
         // TODO If this queue is an account listener, grab the account and create the data_hash.
         let mut trigger_account_pubkey: Option<Pubkey> = None;
@@ -389,7 +396,8 @@ impl QueueObserver {
         let mut crank_ix = clockwork_client::queue::instruction::queue_crank(
             data_hash,
             queue_pubkey,
-            worker_pubkey,
+            signatory_pubkey,
+            Worker::pubkey(self.config.worker_id),
         );
 
         // Inject the trigger account.
@@ -410,7 +418,7 @@ impl QueueObserver {
         // Inject the worker pubkey as the Clockwork "payer" account
         for acc in inner_ix.clone().accounts {
             let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
-                worker_pubkey
+                signatory_pubkey
             } else {
                 acc.pubkey
             };

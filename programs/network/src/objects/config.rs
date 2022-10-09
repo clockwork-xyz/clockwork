@@ -5,8 +5,6 @@ use {
 
 pub const SEED_CONFIG: &[u8] = b"config";
 
-static DEFAULT_SLOTS_PER_ROTATION: u64 = 10;
-
 /**
  * Config
  */
@@ -15,9 +13,9 @@ static DEFAULT_SLOTS_PER_ROTATION: u64 = 10;
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub authorized_queue: Pubkey,
+    pub epoch_queue: Pubkey,
+    pub hasher_queue: Pubkey,
     pub mint: Pubkey,
-    pub slots_per_rotation: u64, // Target number of slots between each rotation
 }
 
 impl Config {
@@ -40,8 +38,9 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
+    pub epoch_queue: Pubkey,
+    pub hasher_queue: Pubkey,
     pub mint: Pubkey,
-    pub slots_per_rotation: u64,
 }
 
 /**
@@ -58,14 +57,12 @@ impl ConfigAccount for Account<'_, Config> {
     fn init(&mut self, admin: Pubkey, mint: Pubkey) -> Result<()> {
         self.admin = admin;
         self.mint = mint;
-        self.slots_per_rotation = DEFAULT_SLOTS_PER_ROTATION;
         Ok(())
     }
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
         self.mint = settings.mint;
-        self.slots_per_rotation = settings.slots_per_rotation;
         Ok(())
     }
 }

@@ -38,16 +38,16 @@ pub mod network_program {
         delegation_yield::handler(ctx, amount)
     }
 
-    pub fn epoch_cutover(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
-        epoch_cutover::handler(ctx)
-    }
-
-    pub fn epoch_kickoff(ctx: Context<EpochKickoff>) -> Result<CrankResponse> {
-        epoch_kickoff::handler(ctx)
+    pub fn fee_collect(ctx: Context<FeeCollect>, amount: u64) -> Result<()> {
+        fee_collect::handler(ctx, amount)
     }
 
     pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         fee_distribute::handler(ctx)
+    }
+
+    pub fn fee_penalize(ctx: Context<FeePenalize>, amount: u64) -> Result<()> {
+        fee_penalize::handler(ctx, amount)
     }
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -64,6 +64,18 @@ pub mod network_program {
 
     pub fn pool_update(ctx: Context<PoolUpdate>, settings: PoolSettings) -> Result<()> {
         pool_update::handler(ctx, settings)
+    }
+
+    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
+        registry_epoch_cutover::handler(ctx)
+    }
+
+    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
+        registry_epoch_kickoff::handler(ctx)
+    }
+
+    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<CrankResponse> {
+        registry_nonce_hash::handler(ctx)
     }
 
     pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<()> {
@@ -98,12 +110,12 @@ pub mod network_program {
         worker_create::handler(ctx)
     }
 
-    pub fn worker_distribute_fees(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
-        worker_distribute_fees::handler(ctx)
+    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+        worker_fees_distribute::handler(ctx)
     }
 
-    pub fn worker_stake_delegations(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
-        worker_stake_delegations::handler(ctx)
+    pub fn worker_delegations_stake(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
+        worker_delegations_stake::handler(ctx)
     }
 
     pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {

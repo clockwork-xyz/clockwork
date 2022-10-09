@@ -31,7 +31,7 @@ pub struct DelegationStake<'info> {
     )]
     pub delegation_stake: Account<'info, TokenAccount>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(
@@ -137,7 +137,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     } else {
         // This worker has no more delegations and it is the last worker. Start the snapshot!

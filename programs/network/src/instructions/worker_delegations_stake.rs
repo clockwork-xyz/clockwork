@@ -10,7 +10,7 @@ pub struct WorkerStakeDelegations<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(
@@ -76,7 +76,7 @@ pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     } else {
         // This worker has no delegations and it is the last worker. Move on to the snapshot job!

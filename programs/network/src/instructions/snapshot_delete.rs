@@ -8,7 +8,7 @@ pub struct SnapshotDelete<'info> {
     #[account(address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub signer: Signer<'info>,
 
     #[account(

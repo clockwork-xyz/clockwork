@@ -11,7 +11,7 @@ pub struct UnstakePreprocess<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(

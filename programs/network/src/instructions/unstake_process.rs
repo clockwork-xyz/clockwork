@@ -35,7 +35,7 @@ pub struct UnstakeProcess<'info> {
     )]
     pub delegation: Account<'info, Delegation>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(
@@ -164,7 +164,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(Worker::pubkey(0), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     };
 

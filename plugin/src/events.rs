@@ -2,7 +2,7 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::objects::{Pool, Registry, Rotator},
+        network::objects::{Pool, Registry},
         queue::objects::Queue,
         webhook::objects::Request,
     },
@@ -18,7 +18,6 @@ pub enum AccountUpdateEvent {
     Pool { pool: Pool },
     Queue { queue: Queue },
     Registry { registry: Registry },
-    Rotator { rotator: Rotator },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -53,15 +52,6 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                     registry: Registry::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
                             msg: "Failed to parse Clockwork registry account".into(),
-                        }
-                    })?,
-                });
-            } else if d.eq(&Rotator::discriminator()) {
-                // If the account is the rotator, return it
-                return Ok(AccountUpdateEvent::Rotator {
-                    rotator: Rotator::try_from(account_info.data.to_vec()).map_err(|_| {
-                        GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork rotator account".into(),
                         }
                     })?,
                 });

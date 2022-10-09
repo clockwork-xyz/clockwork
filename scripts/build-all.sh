@@ -101,8 +101,9 @@ touch "$installDir"/lib/geyser-plugin-config.json
 echo "{
   \"libpath\": \"$installDir/lib/libclockwork_plugin.$libExt\",
   \"keypath\": \"$installDir/lib/clockwork-worker-keypair.json\",
-  \"slot_timeout_threshold\": 150,
-  \"worker_threads\": 10
+  \"transaction_timeout_threshold\": 150,
+  \"thread_count\": 10,
+  \"worker_id\": 0
 }" > "$installDir"/lib/geyser-plugin-config.json
 
 # Create a worker keypair

@@ -27,7 +27,7 @@ pub struct SnapshotEntryCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(
@@ -168,7 +168,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new(registry.key(), false),
             ],
-            data: anchor_sighash("epoch_cutover").to_vec(),
+            data: anchor_sighash("registry_epoch_cutover").to_vec(),
         })
     } else {
         // Something is wrong...

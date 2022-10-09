@@ -20,7 +20,7 @@ pub struct WorkerDistributeFees<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(address = Registry::pubkey())]
@@ -55,7 +55,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
 
     // Calculate the commission to be retained by the worker.
     let commission_balance = fee
-        .accumulated_balance
+        .collected_balance
         .checked_mul(worker.commission_rate)
         .unwrap()
         .checked_div(100)
@@ -81,7 +81,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
 
     // Record the balance that is distributable to delegations.
     fee.distributable_balance = fee
-        .accumulated_balance
+        .collected_balance
         .checked_sub(commission_balance)
         .unwrap();
 
@@ -126,7 +126,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
                 AccountMetaData::new_readonly(next_worker_pubkey, false),
             ],
-            data: anchor_sighash("worker_distribute_fees").to_vec(),
+            data: anchor_sighash("worker_fees_distribute").to_vec(),
         })
     } else if registry.total_unstakes.gt(&0) {
         // This frame has no entries and it is the last frame. Move on to processing unstake requests.
@@ -151,7 +151,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(Worker::pubkey(0), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     };
 

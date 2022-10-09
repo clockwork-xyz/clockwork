@@ -99,11 +99,6 @@ impl GeyserPlugin for ClockworkPlugin {
                     .network
                     .clone()
                     .handle_updated_registry(registry),
-                AccountUpdateEvent::Rotator { rotator } => self
-                    .observers
-                    .network
-                    .clone()
-                    .handle_updated_rotator(rotator),
             },
             Err(_err) => Ok(()),
         }
@@ -166,7 +161,7 @@ impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
         let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
-        let queue_observer = Arc::new(QueueObserver::new(runtime.clone()));
+        let queue_observer = Arc::new(QueueObserver::new(config.clone(), runtime.clone()));
         let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
@@ -240,8 +235,8 @@ fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
         Builder::new_multi_thread()
             .enable_all()
             .thread_name("clockwork-plugin")
-            .worker_threads(config.worker_threads)
-            .max_blocking_threads(config.worker_threads)
+            .worker_threads(config.thread_count)
+            .max_blocking_threads(config.thread_count)
             .build()
             .unwrap(),
     )

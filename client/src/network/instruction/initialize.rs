@@ -18,7 +18,6 @@ pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(Config::pubkey(), false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new(Registry::pubkey(), false),
-            AccountMeta::new(Rotator::pubkey(), false),
             AccountMeta::new(Snapshot::pubkey(0), false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],

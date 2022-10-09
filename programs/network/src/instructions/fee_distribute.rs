@@ -33,7 +33,7 @@ pub struct FeeDistribute<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(address = Registry::pubkey())]
@@ -58,7 +58,7 @@ pub struct FeeDistribute<'info> {
     )]
     pub snapshot_entry: Account<'info, SnapshotEntry>,
 
-    #[account()]
+    #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
@@ -150,7 +150,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
                 AccountMetaData::new_readonly(next_worker_pubkey, false),
             ],
-            data: anchor_sighash("worker_distribute_fees").to_vec(),
+            data: anchor_sighash("worker_fees_distribute").to_vec(),
         })
     } else {
         // This frame has no more entires and it is the last frame. Move on to staking delegations.
@@ -162,7 +162,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
-            data: anchor_sighash("worker_stake_delegations").to_vec(),
+            data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
     };
 

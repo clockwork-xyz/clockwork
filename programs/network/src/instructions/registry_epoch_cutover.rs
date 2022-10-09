@@ -3,11 +3,11 @@ use clockwork_utils::CrankResponse;
 use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
-pub struct EpochCutover<'info> {
+pub struct RegistryEpochCutover<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.authorized_queue)]
+    #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
     #[account(
@@ -18,7 +18,7 @@ pub struct EpochCutover<'info> {
     pub registry: Account<'info, Registry>,
 }
 
-pub fn handler(ctx: Context<EpochCutover>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
     // Get accounts.
     let registry = &mut ctx.accounts.registry;
 

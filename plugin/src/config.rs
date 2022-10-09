@@ -6,25 +6,25 @@ use {
     std::{fs::File, path::Path},
 };
 
-static DEFAULT_SLOT_TIMEOUT_THRESHOLD: u64 = 150;
-static DEFAULT_WORKER_THREADS: usize = 10;
+static DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD: u64 = 150;
+static DEFAULT_THREAD_COUNT: usize = 10;
 
 /// Plugin config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
-    pub bugsnag_api_key: Option<String>,
     pub keypath: Option<String>,
-    pub slot_timeout_threshold: u64,
-    pub worker_threads: usize,
+    pub transaction_timeout_threshold: u64,
+    pub thread_count: usize,
+    pub worker_id: u64,
 }
 
 impl Default for PluginConfig {
     fn default() -> Self {
         Self {
-            bugsnag_api_key: None,
             keypath: None,
-            slot_timeout_threshold: DEFAULT_SLOT_TIMEOUT_THRESHOLD,
-            worker_threads: DEFAULT_WORKER_THREADS,
+            transaction_timeout_threshold: DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD,
+            thread_count: DEFAULT_THREAD_COUNT,
+            worker_id: 0,
         }
     }
 }

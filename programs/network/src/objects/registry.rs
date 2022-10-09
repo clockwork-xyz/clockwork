@@ -1,6 +1,10 @@
 use {
     anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
+    std::{
+        collections::hash_map::DefaultHasher,
+        convert::TryFrom,
+        hash::{Hash, Hasher},
+    },
 };
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
@@ -38,6 +42,8 @@ impl TryFrom<Vec<u8>> for Registry {
 pub trait RegistryAccount {
     fn init(&mut self) -> Result<()>;
 
+    fn hash_nonce(&mut self) -> Result<()>;
+
     fn lock(&mut self) -> Result<()>;
 
     fn unlock(&mut self) -> Result<()>;
@@ -48,6 +54,14 @@ impl RegistryAccount for Account<'_, Registry> {
         self.current_epoch = 0;
         self.locked = false;
         self.total_workers = 0;
+        Ok(())
+    }
+
+    fn hash_nonce(&mut self) -> Result<()> {
+        let mut hasher = DefaultHasher::new();
+        Clock::get().unwrap().slot.hash(&mut hasher);
+        self.nonce.hash(&mut hasher);
+        self.nonce = hasher.finish();
         Ok(())
     }
 
