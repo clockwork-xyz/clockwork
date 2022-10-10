@@ -86,7 +86,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
 
     // Verify the unstake amount is valid.
     require!(
-        unstake.amount.le(&delegation.locked_stake_amount),
+        unstake.amount.le(&delegation.stake_amount),
         ClockworkError::InvalidUnstakeAmount
     );
 
@@ -105,10 +105,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
     )?;
 
     // Decrement the delegations locked stake balacne by the requested unstake amount.
-    delegation.locked_stake_amount = delegation
-        .locked_stake_amount
-        .checked_sub(unstake.amount)
-        .unwrap();
+    delegation.stake_amount = delegation.stake_amount.checked_sub(unstake.amount).unwrap();
 
     // Close the unstake account by transfering all lamports to the authority.
     let balance = unstake.to_account_info().lamports();

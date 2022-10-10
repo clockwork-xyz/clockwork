@@ -95,8 +95,8 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         .unwrap();
 
     // Increment the delegation's yield balance.
-    delegation.claimable_balance = delegation
-        .claimable_balance
+    delegation.yield_balance = delegation
+        .yield_balance
         .checked_add(distribution_balance)
         .unwrap();
 

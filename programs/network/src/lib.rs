@@ -23,6 +23,10 @@ pub mod network_program {
         config_update::handler(ctx, settings)
     }
 
+    pub fn delegation_claim(ctx: Context<DelegationClaim>, amount: u64) -> Result<()> {
+        delegation_claim::handler(ctx, amount)
+    }
+
     pub fn delegation_create(ctx: Context<DelegationCreate>) -> Result<()> {
         delegation_create::handler(ctx)
     }
@@ -37,10 +41,6 @@ pub mod network_program {
 
     pub fn delegation_withdraw(ctx: Context<DelegationWithdraw>, amount: u64) -> Result<()> {
         delegation_withdraw::handler(ctx, amount)
-    }
-
-    pub fn delegation_yield(ctx: Context<DelegationYield>, amount: u64) -> Result<()> {
-        delegation_yield::handler(ctx, amount)
     }
 
     pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
@@ -105,6 +105,10 @@ pub mod network_program {
 
     pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
         unstake_process::handler(ctx)
+    }
+
+    pub fn worker_claim(ctx: Context<WorkerClaim>, amount: u64) -> Result<()> {
+        worker_claim::handler(ctx, amount)
     }
 
     pub fn worker_create(ctx: Context<WorkerCreate>) -> Result<()> {

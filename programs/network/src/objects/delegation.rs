@@ -9,17 +9,17 @@ pub struct Delegation {
     /// The authority of this delegation account.
     pub authority: Pubkey,
 
-    /// The number of lamports claimable as yield by the authority.
-    pub claimable_balance: u64,
-
     /// The id of this delegation (auto-incrementing integer relative to worker)
     pub id: u64,
 
     /// The number of delegated tokens currently locked with the worker.
-    pub locked_stake_amount: u64,
+    pub stake_amount: u64,
 
     /// The worker to delegate stake to.
     pub worker: Pubkey,
+
+    /// The number of lamports claimable as yield by the authority.
+    pub yield_balance: u64,
 }
 
 impl Delegation {
@@ -53,10 +53,10 @@ impl DelegationAccount for Account<'_, Delegation> {
 
     fn init(&mut self, authority: Pubkey, id: u64, worker: Pubkey) -> Result<()> {
         self.authority = authority;
-        self.claimable_balance = 0;
         self.id = id;
-        self.locked_stake_amount = 0;
+        self.stake_amount = 0;
         self.worker = worker;
+        self.yield_balance = 0;
         Ok(())
     }
 }

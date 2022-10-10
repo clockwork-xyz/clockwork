@@ -86,7 +86,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
     )?;
 
     // Update the delegation's stake amount.
-    delegation.locked_stake_amount = delegation.locked_stake_amount.checked_add(amount).unwrap();
+    delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
     // Build next instruction for the queue.
     let next_instruction = if delegation

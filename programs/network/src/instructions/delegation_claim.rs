@@ -2,9 +2,12 @@ use {crate::objects::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
-pub struct DelegationYield<'info> {
-    #[account(mut)]
+pub struct DelegationClaim<'info> {
+    #[account()]
     pub authority: Signer<'info>,
+
+    #[account(mut)]
+    pub pay_to: SystemAccount<'info>,
 
     #[account(
         mut,
@@ -19,13 +22,13 @@ pub struct DelegationYield<'info> {
     pub delegation: Account<'info, Delegation>,
 }
 
-pub fn handler(ctx: Context<DelegationYield>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<DelegationClaim>, amount: u64) -> Result<()> {
     // Get accounts.
-    let authority = &mut ctx.accounts.authority;
+    let pay_to = &mut ctx.accounts.pay_to;
     let delegation = &mut ctx.accounts.delegation;
 
     // Decrement the delegation's claimable balance.
-    delegation.claimable_balance = delegation.claimable_balance.checked_sub(amount).unwrap();
+    delegation.yield_balance = delegation.yield_balance.checked_sub(amount).unwrap();
 
     // Transfer commission to the worker.
     **delegation.to_account_info().try_borrow_mut_lamports()? = delegation
@@ -33,7 +36,7 @@ pub fn handler(ctx: Context<DelegationYield>, amount: u64) -> Result<()> {
         .lamports()
         .checked_sub(amount)
         .unwrap();
-    **authority.to_account_info().try_borrow_mut_lamports()? = authority
+    **pay_to.to_account_info().try_borrow_mut_lamports()? = pay_to
         .to_account_info()
         .lamports()
         .checked_add(amount)
