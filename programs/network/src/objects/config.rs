@@ -62,6 +62,8 @@ impl ConfigAccount for Account<'_, Config> {
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
+        self.epoch_queue = settings.epoch_queue;
+        self.hasher_queue = settings.hasher_queue;
         self.mint = settings.mint;
         Ok(())
     }

@@ -36,8 +36,8 @@ impl WebhookExecutor {
     }
 
     pub fn execute_requests(self: Arc<Self>) -> PluginResult<()> {
-        for http_request in self.clone().observers.webhook.confirmed_requests.iter() {
-            self.clone().execute_request(http_request.clone())?;
+        for request in self.clone().observers.webhook.webhook_requests.iter() {
+            self.clone().execute_request(request.clone())?;
         }
         Ok(())
     }
@@ -60,7 +60,7 @@ impl WebhookExecutor {
             }
             this.observers
                 .webhook
-                .confirmed_requests
+                .webhook_requests
                 .remove(&http_request);
             Ok(())
         })

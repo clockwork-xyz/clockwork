@@ -2,7 +2,11 @@
 use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::Client,
+    clockwork_client::{
+        network::objects::ConfigSettings,
+        queue::objects::{Queue, Trigger},
+        Client,
+    },
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -28,6 +32,8 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
+    create_queues(client, mint_pubkey)
+        .map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed.
     _ = validator_process.wait();
@@ -97,6 +103,59 @@ fn register_worker(client: &Client) -> Result<()> {
     client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
     super::worker::create(client, signatory)?;
     // super::worker::stake(client, Worker::pubkey(0), 100)?;
+    Ok(())
+}
+
+fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
+    // TODO Create the nonce_hasher queue
+
+    let epoch_queue_id = "clockwork.network.epoch";
+    let epoch_queue_pubkey = Queue::pubkey(client.payer_pubkey(), epoch_queue_id.into());
+
+    let hasher_queue_id = "clockwork.network.nonce_hasher";
+    let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
+
+    println!("Creating queue: {:#?}", hasher_queue_id);
+
+    // InstructionData {
+    //     program_id: clockwork_client::queue::ID,
+    //     accounts: vec![],
+    //     data: anchor_sighash("registry_nonce_hash").to_vec(),
+    // },
+
+    let ix_a = clockwork_client::queue::instruction::queue_create(
+        client.payer_pubkey(),
+        hasher_queue_id.into(),
+        clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey).into(),
+        client.payer_pubkey(),
+        hasher_queue_pubkey,
+        Trigger::Cron {
+            schedule: "*/15 * * * * * *".into(),
+            skippable: true,
+        },
+    );
+
+    let ix_b = clockwork_client::network::instruction::config_update(
+        client.payer_pubkey(),
+        ConfigSettings {
+            admin: client.payer_pubkey(),
+            epoch_queue: epoch_queue_pubkey,
+            hasher_queue: hasher_queue_pubkey,
+            mint: mint_pubkey,
+        },
+    );
+
+    println!("Creating queue: {:#?}", hasher_queue_pubkey);
+
+    client.send_and_confirm(&vec![ix_a, ix_b], &[client.payer()])?;
+
+    // TODO Create hasher queue.
+    // TODO Create epoch queue.
+
+    // Update the config to hold onto the queue ids
+
+    // super::config::set(client, epoch_queue, hasher_queue)
+
     Ok(())
 }
 

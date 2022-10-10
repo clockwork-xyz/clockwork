@@ -1,3 +1,5 @@
+use clockwork_client::network::objects::SnapshotFrame;
+
 use {
     anchor_lang::Discriminator,
     bincode::deserialize,
@@ -18,6 +20,7 @@ pub enum AccountUpdateEvent {
     Pool { pool: Pool },
     Queue { queue: Queue },
     Registry { registry: Registry },
+    SnapshotFrame { snapshot_frame: SnapshotFrame },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -54,6 +57,14 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                             msg: "Failed to parse Clockwork registry account".into(),
                         }
                     })?,
+                });
+            } else if d.eq(&SnapshotFrame::discriminator()) {
+                return Ok(AccountUpdateEvent::SnapshotFrame {
+                    snapshot_frame: SnapshotFrame::try_from(account_info.data.to_vec()).map_err(
+                        |_| GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork snapshot frame account".into(),
+                        },
+                    )?,
                 });
             }
         }

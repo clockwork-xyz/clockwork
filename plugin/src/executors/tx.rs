@@ -20,7 +20,7 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10; // Number of slots to wait before retryi
  */
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub clockwork_client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
+    pub client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
     pub message_history: DashMap<Hash, u64>, // Map from message hashes to the slot when that message was sent
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
@@ -30,14 +30,14 @@ pub struct TxExecutor {
 impl TxExecutor {
     pub fn new(
         config: PluginConfig,
-        clockwork_client: Arc<ClockworkClient>,
+        client: Arc<ClockworkClient>,
         observers: Arc<Observers>,
         runtime: Arc<Runtime>,
         tpu_client: Arc<TpuClient>,
     ) -> Self {
         Self {
             config: config.clone(),
-            clockwork_client,
+            client,
             message_history: DashMap::new(),
             observers,
             runtime,
@@ -50,8 +50,10 @@ impl TxExecutor {
             // Rotate worker pools
             // this.clone().rotate_pools(slot).await.ok();
 
-            // Crank queues
-            this.clone().crank_queues(slot).await.ok();
+            info!("slot: {} Executing txs...", slot);
+
+            // Queue crank queues
+            this.clone().execute_queue_crank_txs(slot).await.ok();
 
             // Purge message history that is beyond the dedupe period
             this.message_history
@@ -67,7 +69,7 @@ impl TxExecutor {
         // self.observers
         //     .network
         //     .clone()
-        //     .build_rotation_tx(self.clockwork_client.clone(), slot)
+        //     .build_rotation_tx(self.client.clone(), slot)
         //     .await
         //     .and_then(|tx| match self.execute_tx(slot, &tx) {
         //         Ok(()) => Ok(()),
@@ -80,7 +82,9 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn crank_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    async fn execute_queue_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        info!("Execute queue crank txs... slot: {}", slot);
+
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let queue_pool = r_pool_positions.queue_pool.clone();
@@ -91,26 +95,31 @@ impl TxExecutor {
             ));
         }
 
-        self.observers
-            .queue
-            .clone()
-            .build_crank_txs(self.clockwork_client.clone(), slot)
-            .await
-            .iter()
-            .for_each(|tx| {
-                self.clone()
-                    .execute_tx(slot, tx)
-                    .map_err(|err| {
-                        info!("Failed to crank queue: {}", err);
-                        err
-                    })
-                    .ok();
-            });
+        // Build crank txs.
+        crate::builders::build_crank_txs(
+            self.client.clone(),
+            self.observers.queue.crankable_queues.clone(),
+            self.observers.queue.cron_queues.clone(),
+            self.config.worker_id,
+        )
+        .await
+        .iter()
+        .for_each(|tx| {
+            self.clone()
+                .execute_tx(slot, tx)
+                .map_err(|err| {
+                    info!("Failed to crank queue: {}", err);
+                    err
+                })
+                .ok();
+        });
 
         Ok(())
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
+        info!("Executing tx: {:#?} slot: {}", tx.signatures[0], slot);
+
         // Exit early if this message was sent recently
         if let Some(entry) = self
             .message_history
@@ -124,14 +133,17 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            .submit_tx(tx)
+            // .simulate_tx(tx)
+            // .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
+
+        info!("Simulating tx: {:#?}", tx.signatures[0]);
 
         self.tpu_client
             .rpc_client()
@@ -159,6 +171,8 @@ impl TxExecutor {
     }
 
     fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        info!("Submitting tx... {}", tx.signatures[0]);
+
         if !self.tpu_client.send_transaction(tx) {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),

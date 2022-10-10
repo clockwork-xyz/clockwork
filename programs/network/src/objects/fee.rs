@@ -9,12 +9,8 @@ pub const SEED_FEE: &[u8] = b"fee";
 #[account]
 #[derive(Debug)]
 pub struct Fee {
-    /// Running balance of the fees (lamports) collected by the worker.
-    pub collected_balance: u64,
     /// The number of lamports that are distributable for this epoch period.
     pub distributable_balance: u64,
-    /// The number of lamports that are withheld as penalty because the worker submitted spam.
-    pub penalty_balance: u64,
     /// The worker who received the fees.
     pub worker: Pubkey,
 }
@@ -40,12 +36,6 @@ pub trait FeeAccount {
 
     /// Initialize the account to hold fee object.
     fn init(&mut self, worker: Pubkey) -> Result<()>;
-
-    // Debits lamports from the queue and increments the collected counter.
-    // fn collect(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()>;
-
-    // Debits lamports from the queue and increments the penalty counter.
-    // fn penalize(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()>;
 }
 
 impl FeeAccount for Account<'_, Fee> {
@@ -54,86 +44,8 @@ impl FeeAccount for Account<'_, Fee> {
     }
 
     fn init(&mut self, worker: Pubkey) -> Result<()> {
-        self.collected_balance = 0;
         self.distributable_balance = 0;
-        self.penalty_balance = 0;
         self.worker = worker;
         Ok(())
     }
-
-    // fn claim_balance(&mut self, amount: u64, pay_to: &mut SystemAccount) -> Result<()> {
-    //     // Withdraw from the worker amount
-    //     self.balance = self.balance.checked_sub(amount).unwrap();
-
-    //     // Transfer lamports to the pay_to acccount
-    //     **self.to_account_info().try_borrow_mut_lamports()? = self
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_sub(amount)
-    //         .unwrap();
-    //     **pay_to.to_account_info().try_borrow_mut_lamports()? = pay_to
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(amount)
-    //         .unwrap();
-
-    //     Ok(())
-    // }
-
-    // fn claim_penalty(&mut self, amount: u64, pay_to: &mut SystemAccount) -> Result<()> {
-    //     // Withdraw from the admin balance
-    //     self.penalty = self.penalty.checked_sub(amount).unwrap();
-
-    //     // Transfer lamports to the pay_to acccount
-    //     **self.to_account_info().try_borrow_mut_lamports()? = self
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_sub(amount)
-    //         .unwrap();
-    //     **pay_to.to_account_info().try_borrow_mut_lamports()? = pay_to
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(amount)
-    //         .unwrap();
-
-    //     Ok(())
-    // }
-
-    // fn collect(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()> {
-    //     // Transfer balance from queue to fee account
-    //     self.collected = self.collected.checked_add(amount).unwrap();
-
-    //     // Transfer lamports
-    //     **queue.to_account_info().try_borrow_mut_lamports()? = queue
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_sub(amount)
-    //         .unwrap();
-    //     **self.to_account_info().try_borrow_mut_lamports()? = self
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(amount)
-    //         .unwrap();
-
-    //     Ok(())
-    // }
-
-    // fn penalize(&mut self, amount: u64, queue: &mut Account<Queue>) -> Result<()> {
-    //     // Transfer balance from queue to fee account
-    //     self.penalty = self.penalty.checked_add(amount).unwrap();
-
-    //     // Transfer lamports
-    //     **queue.to_account_info().try_borrow_mut_lamports()? = queue
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_sub(amount)
-    //         .unwrap();
-    //     **self.to_account_info().try_borrow_mut_lamports()? = self
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(amount)
-    //         .unwrap();
-
-    //     Ok(())
-    // }
 }

@@ -17,10 +17,10 @@ pub struct UnstakeProcess<'info> {
         associated_token::authority = delegation.authority,
         associated_token::mint = config.mint,
     )]
-    pub authority_tokens: Account<'info, TokenAccount>,
+    pub authority_tokens: Box<Account<'info, TokenAccount>>,
 
     #[account(address = Config::pubkey())]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(
         mut,
@@ -33,7 +33,7 @@ pub struct UnstakeProcess<'info> {
         has_one = authority,
         has_one = worker,
     )]
-    pub delegation: Account<'info, Delegation>,
+    pub delegation: Box<Account<'info, Delegation>>,
 
     #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
@@ -43,7 +43,7 @@ pub struct UnstakeProcess<'info> {
         seeds = [SEED_REGISTRY],
         bump,
     )]
-    pub registry: Account<'info, Registry>,
+    pub registry: Box<Account<'info, Registry>>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -58,7 +58,7 @@ pub struct UnstakeProcess<'info> {
         has_one = authority,
         has_one = delegation
     )]
-    pub unstake: Account<'info, Unstake>,
+    pub unstake: Box<Account<'info, Unstake>>,
 
     #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
@@ -68,7 +68,7 @@ pub struct UnstakeProcess<'info> {
         associated_token::authority = worker,
         associated_token::mint = config.mint,
     )]
-    pub worker_tokens: Account<'info, TokenAccount>,
+    pub worker_tokens: Box<Account<'info, TokenAccount>>,
 }
 
 pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {

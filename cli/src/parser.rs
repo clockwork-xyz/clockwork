@@ -130,11 +130,12 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 }
 
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    let address = parse_pubkey("address", matches)?;
     match matches.subcommand() {
-        Some(("get", _)) => Ok(CliCommand::QueueGet { address }),
+        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+            id: parse_string("id", matches)?,
+        }),
         Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
-            address: address,
+            id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(

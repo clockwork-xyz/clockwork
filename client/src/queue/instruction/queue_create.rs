@@ -14,7 +14,7 @@ use {
 pub fn queue_create(
     authority: Pubkey,
     id: String,
-    kickoff_instruction: Instruction,
+    kickoff_instruction: ClockworkInstructionData,
     payer: Pubkey,
     queue: Pubkey,
     trigger: Trigger,
@@ -29,7 +29,7 @@ pub fn queue_create(
         ],
         data: clockwork_queue_program::instruction::QueueCreate {
             id,
-            kickoff_instruction: ClockworkInstructionData::from(kickoff_instruction),
+            kickoff_instruction,
             trigger,
         }
         .data(),

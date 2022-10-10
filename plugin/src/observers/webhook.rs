@@ -1,6 +1,6 @@
 use {
     clockwork_client::webhook::objects::Request,
-    dashmap::{DashMap, DashSet},
+    dashmap::DashSet,
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
@@ -14,10 +14,7 @@ use {
 
 pub struct WebhookObserver {
     // The set of http request pubkeys that can be processed.
-    pub confirmed_requests: DashSet<HttpRequest>,
-
-    // Map from slot numbers to the list of http requests that arrived at that slot.
-    pub unconfirmed_requests: DashMap<u64, DashSet<HttpRequest>>,
+    pub webhook_requests: DashSet<HttpRequest>,
 
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
@@ -26,47 +23,15 @@ pub struct WebhookObserver {
 impl WebhookObserver {
     pub fn new(runtime: Arc<Runtime>) -> Self {
         Self {
-            confirmed_requests: DashSet::new(),
-            unconfirmed_requests: DashMap::new(),
+            webhook_requests: DashSet::new(),
             runtime,
         }
     }
 
-    pub fn handle_confirmed_slot(self: Arc<Self>, confirmed_slot: u64) -> PluginResult<()> {
+    pub fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
         self.spawn(|this| async move {
-            this.unconfirmed_requests.retain(|slot, request_pubkeys| {
-                if *slot <= confirmed_slot {
-                    request_pubkeys.iter().for_each(|request| {
-                        this.confirmed_requests.insert(request.clone());
-                    });
-                    false
-                } else {
-                    true
-                }
-            });
-
-            Ok(())
-        })
-    }
-
-    pub fn handle_updated_http_request(
-        self: Arc<Self>,
-        request: HttpRequest,
-        slot: u64,
-    ) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            info!("Caching http request: {:#?}", request.pubkey);
-            this.confirmed_requests.remove(&request);
-            this.unconfirmed_requests
-                .entry(slot)
-                .and_modify(|v| {
-                    v.insert(request.clone());
-                })
-                .or_insert_with(|| {
-                    let v = DashSet::new();
-                    v.insert(request);
-                    v
-                });
+            info!("Caching webhook request: {:#?}", request.pubkey);
+            this.webhook_requests.insert(request);
             Ok(())
         })
     }

@@ -39,10 +39,10 @@ pub enum CliCommand {
 
     // Queue commands
     QueueGet {
-        address: Pubkey,
+        id: String,
     },
     QueueUpdate {
-        address: Pubkey,
+        id: String,
         rate_limit: Option<u64>,
     },
 
@@ -152,17 +152,25 @@ pub fn app() -> Command<'static> {
             Command::new("queue")
                 .about("Manage your Clockwork transaction queues")
                 .arg_required_else_help(true)
-                .arg(
-                    Arg::new("address")
-                        .index(1)
-                        .takes_value(true)
-                        .required(false)
-                        .help("Public address of a queue"),
+                .subcommand(
+                    Command::new("get").about("Lookup the queue").arg(
+                        Arg::new("id")
+                            .index(1)
+                            .takes_value(true)
+                            .required(false)
+                            .help("The id of the queue to lookup"),
+                    ),
                 )
-                .subcommand(Command::new("get").about("Get a queue"))
                 .subcommand(
                     Command::new("update")
                         .about("Update a property of a queue")
+                        .arg(
+                            Arg::new("id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The id of the queue to lookup"),
+                        )
                         .arg(
                             Arg::new("rate_limit")
                                 .long("rate_limit")

@@ -29,11 +29,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
-        CliCommand::QueueGet { address } => super::queue::get(&client, &address),
-        CliCommand::QueueUpdate {
-            address,
-            rate_limit,
-        } => super::queue::update(&client, &address, rate_limit),
+        CliCommand::QueueGet { id } => super::queue::get(&client, id),
+        CliCommand::QueueUpdate { id, rate_limit } => super::queue::update(&client, id, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory),
         CliCommand::WorkerGet { id } => super::worker::get(&client, id),

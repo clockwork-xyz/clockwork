@@ -1,6 +1,7 @@
 mod config;
 mod delegation;
 mod fee;
+mod penalty;
 mod pool;
 mod registry;
 mod snapshot;
@@ -12,6 +13,7 @@ mod worker;
 pub use config::*;
 pub use delegation::*;
 pub use fee::*;
+pub use penalty::*;
 pub use pool::*;
 pub use registry::*;
 pub use snapshot::*;

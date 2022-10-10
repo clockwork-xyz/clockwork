@@ -1,9 +1,9 @@
 use {
     crate::{errors::*, objects::*},
-    anchor_lang::{prelude::*, system_program},
+    anchor_lang::prelude::*,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_network_program::objects::{Fee, FeeAccount, Pool, Worker, WorkerAccount},
+    clockwork_network_program::objects::{Fee, Penalty, Pool, Worker, WorkerAccount},
     std::{
         collections::hash_map::DefaultHasher,
         hash::{Hash, Hasher},
@@ -14,20 +14,38 @@ use {
 /// Number of lamports to reimburse the worker with after they've submitted a transaction's worth of cranks.
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 
+/// The ID of the pool workers must be a member of to collect fees.
 const POOL_ID: u64 = 0;
 
 /// Accounts required by the `queue_crank` instruction.
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
+    /// The worker's fee account.
     #[account(
-        address = fee.pubkey(),
+        mut,
+        seeds = [
+            clockwork_network_program::objects::SEED_FEE,
+            worker.key().as_ref(),
+        ],
+        bump,
+        seeds::program = clockwork_network_program::ID,
         has_one = worker,
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(address = clockwork_network_program::ID)]
-    pub network_program: Program<'info, clockwork_network_program::program::NetworkProgram>,
+    /// The worker's penalty account.
+    #[account(
+        mut,
+        seeds = [
+            clockwork_network_program::objects::SEED_PENALTY,
+            worker.key().as_ref(),
+        ],
+        bump,
+        seeds::program = clockwork_network_program::ID,
+        has_one = worker,
+    )]
+    pub penalty: Account<'info, Penalty>,
 
     /// The active worker pool.
     #[account(address = Pool::pubkey(POOL_ID))]
@@ -50,10 +68,6 @@ pub struct QueueCrank<'info> {
     #[account(mut)]
     pub signatory: Signer<'info>,
 
-    /// The Solana system program.
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
-
     /// The worker.
     #[account(
         address = worker.pubkey(),
@@ -64,12 +78,11 @@ pub struct QueueCrank<'info> {
 
 pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // Get accounts
-    let fee = &ctx.accounts.fee;
-    let network_program = &ctx.accounts.network_program;
+    let fee = &mut ctx.accounts.fee;
+    let penalty = &ctx.accounts.penalty;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
     let signatory = &ctx.accounts.signatory;
-    let system_program = &ctx.accounts.system_program;
     let worker = &ctx.accounts.worker;
 
     // If this queue does not have a next_instruction, verify the queue's trigger has been met and a new exec_context can be created.
@@ -204,43 +217,27 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     let bump = ctx.bumps.get("queue").unwrap();
     queue.crank(ctx.remaining_accounts, *bump, signatory)?;
 
-    // If worker is in the pool, collect the automation fees. Otherwise, penalize the worker for spam.
+    // Debit the crank fee from the queue account.
+    **queue.to_account_info().try_borrow_mut_lamports()? = queue
+        .to_account_info()
+        .lamports()
+        .checked_sub(queue.fee)
+        .unwrap();
+
+    // If the worker is in the pool, pay fee to the worker's fee account.
+    // Otherwise, pay fee to the worker's penalty account.
     if pool.clone().into_inner().workers.contains(&worker.key()) {
-        clockwork_network_program::cpi::fee_collect(
-            CpiContext::new_with_signer(
-                network_program.to_account_info(),
-                clockwork_network_program::cpi::accounts::FeeCollect {
-                    fee: fee.to_account_info(),
-                    payer: queue.to_account_info(),
-                    system_program: system_program.to_account_info(),
-                },
-                &[&[
-                    SEED_QUEUE,
-                    queue.authority.as_ref(),
-                    queue.id.as_bytes(),
-                    &[*bump],
-                ]],
-            ),
-            queue.fee,
-        )?;
+        **fee.to_account_info().try_borrow_mut_lamports()? = fee
+            .to_account_info()
+            .lamports()
+            .checked_add(queue.fee)
+            .unwrap();
     } else {
-        clockwork_network_program::cpi::fee_penalize(
-            CpiContext::new_with_signer(
-                network_program.to_account_info(),
-                clockwork_network_program::cpi::accounts::FeePenalize {
-                    fee: fee.to_account_info(),
-                    payer: queue.to_account_info(),
-                    system_program: system_program.to_account_info(),
-                },
-                &[&[
-                    SEED_QUEUE,
-                    queue.authority.as_ref(),
-                    queue.id.as_bytes(),
-                    &[*bump],
-                ]],
-            ),
-            queue.fee,
-        )?;
+        **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
+            .to_account_info()
+            .lamports()
+            .checked_add(queue.fee)
+            .unwrap();
     }
 
     // If the queue has no more work or the number of cranks since the last payout has reached the rate limit,

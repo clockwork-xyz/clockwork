@@ -1,14 +1,10 @@
 use {
-    crate::objects::*,
-    anchor_lang::{
-        prelude::*,
-        solana_program::system_program,
-        system_program::{transfer, Transfer},
-    },
+    crate::{errors::*, objects::*},
+    anchor_lang::prelude::*,
 };
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
+#[instruction(amount: u64, penalty: bool)]
 pub struct FeeCollect<'info> {
     #[account(
         mut,
@@ -20,33 +16,43 @@ pub struct FeeCollect<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
+    #[account()]
+    pub signer: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<FeeCollect>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<FeeCollect>, amount: u64, penalty: bool) -> Result<()> {
     // Get accounts.
     let fee = &mut ctx.accounts.fee;
-    let payer = &mut ctx.accounts.payer;
-    let system_program = &ctx.accounts.system_program;
 
     // Increment the collected fee counter.
-    fee.collected_balance = fee.collected_balance.checked_add(amount).unwrap();
+    if penalty {
+        fee.penalty_balance = fee.penalty_balance.checked_add(amount).unwrap();
+    } else {
+        fee.collected_balance = fee.collected_balance.checked_add(amount).unwrap();
+    }
 
-    // Transfer lamports from the payer to the fee acount.
-    transfer(
-        CpiContext::new(
-            system_program.to_account_info(),
-            Transfer {
-                from: payer.to_account_info(),
-                to: fee.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
+    // Verify there are enough lamports to distribute at the end of the epoch.
+    let lamport_balance = fee.to_account_info().lamports();
+    let data_len = 8 + fee.try_to_vec()?.len();
+    let min_rent_balance = Rent::get().unwrap().minimum_balance(data_len);
+
+    msg!(
+        "Fee collection! lamports: {} collected: {} penalty: {} rent: {}",
+        lamport_balance,
+        fee.collected_balance,
+        fee.penalty_balance,
+        min_rent_balance
+    );
+
+    require!(
+        fee.collected_balance
+            .checked_add(fee.penalty_balance)
+            .unwrap()
+            .checked_add(min_rent_balance)
+            .unwrap()
+            .ge(&lamport_balance),
+        ClockworkError::InsufficientFeeBalance
+    );
 
     Ok(())
 }

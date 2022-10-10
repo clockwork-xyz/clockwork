@@ -24,6 +24,7 @@ pub fn worker_create(
             AccountMeta::new(authority, true),
             AccountMeta::new_readonly(Config::pubkey(), false),
             AccountMeta::new(Fee::pubkey(worker), false),
+            AccountMeta::new(Penalty::pubkey(worker), false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new(Registry::pubkey(), false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),

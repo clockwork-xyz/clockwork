@@ -26,6 +26,9 @@ pub enum ClockworkError {
     #[msg("You cannot request to unstake more tokens than are currently locked")]
     InvalidUnstakeAmount,
 
+    #[msg("The penalty account has an insufficient balance for this operation")]
+    InsufficientPenaltyBalance,
+
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
 

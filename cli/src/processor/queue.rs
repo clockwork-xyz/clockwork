@@ -1,22 +1,24 @@
 use {
     crate::errors::CliError,
     clockwork_client::{queue::objects::Queue, Client},
-    solana_sdk::pubkey::Pubkey,
 };
 
-pub fn get(client: &Client, address: &Pubkey) -> Result<(), CliError> {
+pub fn get(client: &Client, id: String) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
     let queue = client
-        .get::<Queue>(&address)
-        .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
-    println!("{:#?}", queue);
+        .get::<Queue>(&queue_pubkey)
+        .map_err(|_err| CliError::AccountDataNotParsable(queue_pubkey.to_string()))?;
+
+    println!("Address: {}\n{:#?}", queue_pubkey, queue);
 
     Ok(())
 }
 
-pub fn update(client: &Client, address: &Pubkey, rate_limit: Option<u64>) -> Result<(), CliError> {
+pub fn update(client: &Client, id: String, rate_limit: Option<u64>) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
     let ix = clockwork_client::queue::instruction::queue_update(
         client.payer_pubkey(),
-        *address,
+        queue_pubkey,
         None,
         rate_limit,
         None,

@@ -67,38 +67,36 @@ impl GeyserPlugin for ClockworkPlugin {
         self.observers
             .queue
             .clone()
-            .handle_updated_account(account_pubkey, account_info.clone())?;
+            .observe_account(account_pubkey, account_info.clone())?;
 
         // Parse and process specific update events.
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.observers.queue.clone().handle_updated_clock(clock)
+                    self.observers.queue.clone().observe_clock(clock)
                 }
                 AccountUpdateEvent::HttpRequest { request } => {
-                    self.observers.webhook.clone().handle_updated_http_request(
-                        HttpRequest {
-                            pubkey: account_pubkey,
-                            request,
-                        },
-                        slot,
-                    )
+                    self.observers.webhook.clone().observe_request(HttpRequest {
+                        pubkey: account_pubkey,
+                        request,
+                    })
                 }
-                AccountUpdateEvent::Pool { pool } => self
-                    .observers
-                    .network
-                    .clone()
-                    .handle_updated_pool(pool, slot),
+                AccountUpdateEvent::Pool { pool } => {
+                    self.observers.network.clone().observe_pool(pool, slot)
+                }
                 AccountUpdateEvent::Queue { queue } => self
                     .observers
                     .queue
                     .clone()
-                    .handle_updated_queue(queue, account_pubkey),
-                AccountUpdateEvent::Registry { registry } => self
+                    .observe_queue(queue, account_pubkey),
+                AccountUpdateEvent::Registry { registry } => {
+                    self.observers.network.clone().observe_registry(registry)
+                }
+                AccountUpdateEvent::SnapshotFrame { snapshot_frame } => self
                     .observers
                     .network
                     .clone()
-                    .handle_updated_registry(registry),
+                    .observe_snapshot_frame(snapshot_frame),
             },
             Err(_err) => Ok(()),
         }
@@ -115,16 +113,17 @@ impl GeyserPlugin for ClockworkPlugin {
         _parent: Option<u64>,
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
-        // Re-check health and attempt to build the executor if we're still not caught up
+        // If they don't exist yet, try to build the executors.
         if self.executors.is_none() {
             self.try_build_executors()
         }
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
-            SlotStatus::Confirmed => match &self.executors {
+            SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
-                    executors.clone().handle_confirmed_slot(slot)?;
+                    self.observers.queue.clone().observe_slot(slot)?;
+                    executors.clone().execute_work(slot)?;
                 }
                 None => (),
             },
@@ -217,7 +216,6 @@ impl ClockworkPlugin {
         ));
         self.executors = Some(Arc::new(Executors {
             tx: tx_executor,
-            observers: self.observers.clone(),
             runtime: self.runtime.clone(),
             webhook: webhook_executor,
         }))

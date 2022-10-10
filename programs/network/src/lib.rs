@@ -38,20 +38,16 @@ pub mod network_program {
         delegation_yield::handler(ctx, amount)
     }
 
-    pub fn fee_collect(ctx: Context<FeeCollect>, amount: u64) -> Result<()> {
-        fee_collect::handler(ctx, amount)
-    }
-
     pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         fee_distribute::handler(ctx)
     }
 
-    pub fn fee_penalize(ctx: Context<FeePenalize>, amount: u64) -> Result<()> {
-        fee_penalize::handler(ctx, amount)
-    }
-
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
+    }
+
+    pub fn penalty_claim(ctx: Context<PenaltyClaim>) -> Result<()> {
+        penalty_claim::handler(ctx)
     }
 
     pub fn pool_create(ctx: Context<PoolCreate>) -> Result<()> {

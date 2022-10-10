@@ -53,9 +53,14 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
     let snapshot_frame = &ctx.accounts.snapshot_frame;
     let worker = &mut ctx.accounts.worker;
 
+    // Calculate the fee account's usuable balance.
+    let fee_lamport_balance = fee.to_account_info().lamports();
+    let fee_data_len = 8 + fee.try_to_vec()?.len();
+    let fee_rent_balance = Rent::get().unwrap().minimum_balance(fee_data_len);
+    let fee_usable_balance = fee_lamport_balance.checked_sub(fee_rent_balance).unwrap();
+
     // Calculate the commission to be retained by the worker.
-    let commission_balance = fee
-        .collected_balance
+    let commission_balance = fee_usable_balance
         .checked_mul(worker.commission_rate)
         .unwrap()
         .checked_div(100)
@@ -80,10 +85,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
         .unwrap();
 
     // Record the balance that is distributable to delegations.
-    fee.distributable_balance = fee
-        .collected_balance
-        .checked_sub(commission_balance)
-        .unwrap();
+    fee.distributable_balance = fee_usable_balance.checked_sub(commission_balance).unwrap();
 
     // Build next instruction for the queue.
     let next_instruction = if snapshot_frame.total_entries.gt(&0) {
