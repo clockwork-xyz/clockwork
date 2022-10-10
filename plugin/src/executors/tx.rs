@@ -47,10 +47,10 @@ impl TxExecutor {
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Rotate worker pools
-            // this.clone().rotate_pools(slot).await.ok();
-
             info!("slot: {} Executing txs...", slot);
+
+            // Rotate worker pools
+            this.clone().execute_pool_rotate_txs(slot).await.ok();
 
             // Queue crank queues
             this.clone().execute_queue_crank_txs(slot).await.ok();
@@ -63,22 +63,28 @@ impl TxExecutor {
         })
     }
 
-    async fn _rotate_pools(self: Arc<Self>, _slot: u64) -> PluginResult<()> {
-        // TODO Come back to this!
-
-        // self.observers
-        //     .network
-        //     .clone()
-        //     .build_rotation_tx(self.client.clone(), slot)
-        //     .await
-        //     .and_then(|tx| match self.execute_tx(slot, &tx) {
-        //         Ok(()) => Ok(()),
-        //         Err(err) => {
-        //             info!("Failed to rotate pools: {}", err);
-        //             Ok(())
-        //         }
-        //     })
-
+    async fn execute_pool_rotate_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        let r_registry = self.observers.network.registry.read().await;
+        let r_snapshot = self.observers.network.snapshot.read().await;
+        let r_snapshot_frame = self.observers.network.snapshot_frame.read().await;
+        match crate::builders::build_pool_rotation_tx(
+            self.client.clone(),
+            r_registry,
+            r_snapshot,
+            r_snapshot_frame,
+            self.config.worker_id,
+        ) {
+            None => {}
+            Some(tx) => {
+                self.clone()
+                    .execute_tx(slot, &tx)
+                    .map_err(|err| {
+                        info!("Failed to rotate into pool: {}", err);
+                        err
+                    })
+                    .ok();
+            }
+        };
         Ok(())
     }
 
@@ -91,11 +97,11 @@ impl TxExecutor {
         drop(r_pool_positions);
         if queue_pool.current_position.is_none() && !queue_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
-                "This node is not an authorized worker".into(),
+                "This node is not in the worker pool".into(),
             ));
         }
 
-        // Build crank txs.
+        // Execute queue_crank txs.
         crate::builders::build_crank_txs(
             self.client.clone(),
             self.observers.queue.crankable_queues.clone(),
@@ -139,7 +145,7 @@ impl TxExecutor {
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
-    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
 

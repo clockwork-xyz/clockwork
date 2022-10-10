@@ -19,6 +19,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             base_url,
         } => super::api::api_new(&client, ack_authority, base_url),
         CliCommand::ConfigGet => super::config::get(&client),
+        CliCommand::DelegationGet {
+            delegation_id,
+            worker_id,
+        } => super::delegation::get(&client, delegation_id, worker_id),
         CliCommand::HttpRequestNew {
             api,
             id,

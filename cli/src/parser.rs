@@ -17,6 +17,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
+            Some(("delegation", matches)) => parse_delegation_command(matches),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
@@ -82,6 +83,18 @@ fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::DelegationGet {
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

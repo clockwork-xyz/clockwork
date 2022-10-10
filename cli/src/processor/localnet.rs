@@ -94,6 +94,7 @@ fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
 }
 
 fn register_worker(client: &Client) -> Result<()> {
+    // Create the worker
     let cfg = get_clockwork_config()?;
     let keypath = format!(
         "{}/lib/clockwork-worker-keypair.json",
@@ -102,7 +103,10 @@ fn register_worker(client: &Client) -> Result<()> {
     let signatory = read_keypair_file(keypath).unwrap();
     client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
     super::worker::create(client, signatory)?;
-    // super::worker::stake(client, Worker::pubkey(0), 100)?;
+
+    // Delegate stake to the worker
+    super::delegation::create(client, 0)?;
+    super::delegation::deposit(client, 100000000, 0, 0)?;
     Ok(())
 }
 
@@ -114,14 +118,6 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
 
     let hasher_queue_id = "clockwork.network.nonce_hasher";
     let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
-
-    println!("Creating queue: {:#?}", hasher_queue_id);
-
-    // InstructionData {
-    //     program_id: clockwork_client::queue::ID,
-    //     accounts: vec![],
-    //     data: anchor_sighash("registry_nonce_hash").to_vec(),
-    // },
 
     let ix_a = clockwork_client::queue::instruction::queue_create(
         client.payer_pubkey(),
@@ -144,8 +140,6 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
             mint: mint_pubkey,
         },
     );
-
-    println!("Creating queue: {:#?}", hasher_queue_pubkey);
 
     client.send_and_confirm(&vec![ix_a, ix_b], &[client.payer()])?;
 

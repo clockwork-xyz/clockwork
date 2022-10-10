@@ -14,6 +14,12 @@ pub enum CliCommand {
     // Config commands
     ConfigGet,
 
+    // Delegation
+    DelegationGet {
+        delegation_id: u64,
+        worker_id: u64,
+    },
+
     // Http
     HttpRequestNew {
         api: Pubkey,
@@ -99,6 +105,29 @@ pub fn app() -> Command<'static> {
                             ArgGroup::new("config_settings")
                                 .args(&["admin", "worker_fee", "grace_period", "spam_penalty"])
                                 .multiple(true),
+                        ),
+                ),
+        )
+        .subcommand(
+            Command::new("delegation")
+                .about("Manage a stake delegation to a Clockwork worker")
+                .subcommand(
+                    Command::new("get")
+                        .about("Get a delegation")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("delegation_id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the delegation"),
+                        )
+                        .arg(
+                            Arg::new("worker_id")
+                                .index(2)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the worker"),
                         ),
                 ),
         )

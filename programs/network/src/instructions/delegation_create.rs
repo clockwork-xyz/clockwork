@@ -26,6 +26,7 @@ pub struct DelegationCreate<'info> {
         init,
         seeds = [
             SEED_DELEGATION,
+            worker.key().as_ref(),
             worker.total_delegations.to_be_bytes().as_ref(),
         ],
         bump,

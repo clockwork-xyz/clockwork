@@ -1,21 +1,24 @@
+use log::info;
+
 use {
-    crate::observers::network::PoolPositions,
     clockwork_client::{
         network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
     },
     solana_sdk::transaction::Transaction,
-    std::sync::{Arc, RwLockReadGuard},
+    std::sync::Arc,
+    tokio::sync::RwLockReadGuard,
 };
 
-pub async fn build_pool_rotation_tx<'a>(
+pub fn build_pool_rotation_tx<'a>(
     client: Arc<ClockworkClient>,
-    r_pool_positions: RwLockReadGuard<'a, PoolPositions>,
     r_registry: RwLockReadGuard<'a, Registry>,
     r_snapshot: RwLockReadGuard<'a, Snapshot>,
     r_snapshot_frame: RwLockReadGuard<'a, Option<SnapshotFrame>>,
     worker_id: u64,
 ) -> Option<Transaction> {
+    info!("Building pool rotation tx...");
+
     // Exit early if the rotator is not intialized
     if r_registry.nonce == 0 {
         return None;
@@ -60,7 +63,6 @@ pub async fn build_pool_rotation_tx<'a>(
     );
 
     // Drop read locks.
-    drop(r_pool_positions);
     drop(r_registry);
     drop(r_snapshot);
     drop(r_snapshot_frame);
