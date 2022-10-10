@@ -47,8 +47,6 @@ impl TxExecutor {
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("slot: {} Executing txs...", slot);
-
             // Rotate worker pools
             this.clone().execute_pool_rotate_txs(slot).await.ok();
 
@@ -76,21 +74,13 @@ impl TxExecutor {
         ) {
             None => {}
             Some(tx) => {
-                self.clone()
-                    .execute_tx(slot, &tx)
-                    .map_err(|err| {
-                        info!("Failed to rotate into pool: {}", err);
-                        err
-                    })
-                    .ok();
+                self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             }
         };
         Ok(())
     }
 
     async fn execute_queue_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        info!("Execute queue crank txs... slot: {}", slot);
-
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let queue_pool = r_pool_positions.queue_pool.clone();
@@ -105,27 +95,18 @@ impl TxExecutor {
         crate::builders::build_crank_txs(
             self.client.clone(),
             self.observers.queue.crankable_queues.clone(),
-            self.observers.queue.cron_queues.clone(),
             self.config.worker_id,
         )
         .await
         .iter()
         .for_each(|tx| {
-            self.clone()
-                .execute_tx(slot, tx)
-                .map_err(|err| {
-                    info!("Failed to crank queue: {}", err);
-                    err
-                })
-                .ok();
+            self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
         });
 
         Ok(())
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
-        info!("Executing tx: {:#?} slot: {}", tx.signatures[0], slot);
-
         // Exit early if this message was sent recently
         if let Some(entry) = self
             .message_history
@@ -148,8 +129,6 @@ impl TxExecutor {
     fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
-
-        info!("Simulating tx: {:#?}", tx.signatures[0]);
 
         self.tpu_client
             .rpc_client()
@@ -177,8 +156,6 @@ impl TxExecutor {
     }
 
     fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        info!("Submitting tx... {}", tx.signatures[0]);
-
         if !self.tpu_client.send_transaction(tx) {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),

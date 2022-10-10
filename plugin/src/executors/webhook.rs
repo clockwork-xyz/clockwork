@@ -55,8 +55,8 @@ impl WebhookExecutor {
             .send()
             .await;
             match res {
-                Ok(res) => info!("Http response: {:#?}", res),
-                Err(err) => info!("Http request failed with error: {}", err),
+                Ok(res) => info!("Webhook response: {:#?}", res),
+                Err(err) => info!("Webhook request failed with error: {}", err),
             }
             this.observers
                 .webhook

@@ -92,6 +92,9 @@ impl GeyserPlugin for ClockworkPlugin {
                 AccountUpdateEvent::Registry { registry } => {
                     self.observers.network.clone().observe_registry(registry)
                 }
+                AccountUpdateEvent::Snapshot { snapshot } => {
+                    self.observers.network.clone().observe_snapshot(snapshot)
+                }
                 AccountUpdateEvent::SnapshotFrame { snapshot_frame } => self
                     .observers
                     .network
@@ -122,6 +125,12 @@ impl GeyserPlugin for ClockworkPlugin {
         match status {
             SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
+                    info!(
+                        "slot: {} crankable_queues: {} cron_queues: {}",
+                        slot,
+                        self.observers.queue.crankable_queues.len(),
+                        self.observers.queue.cron_queues.len()
+                    );
                     self.observers.queue.clone().observe_slot(slot)?;
                     executors.clone().execute_work(slot)?;
                 }

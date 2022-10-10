@@ -1,10 +1,8 @@
-use clockwork_client::network::objects::SnapshotFrame;
-
 use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::objects::{Pool, Registry},
+        network::objects::{Pool, Registry, Snapshot, SnapshotFrame},
         queue::objects::Queue,
         webhook::objects::Request,
     },
@@ -20,6 +18,7 @@ pub enum AccountUpdateEvent {
     Pool { pool: Pool },
     Queue { queue: Queue },
     Registry { registry: Registry },
+    Snapshot { snapshot: Snapshot },
     SnapshotFrame { snapshot_frame: SnapshotFrame },
 }
 
@@ -55,6 +54,14 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                     registry: Registry::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
                             msg: "Failed to parse Clockwork registry account".into(),
+                        }
+                    })?,
+                });
+            } else if d.eq(&Snapshot::discriminator()) {
+                return Ok(AccountUpdateEvent::Snapshot {
+                    snapshot: Snapshot::try_from(account_info.data.to_vec()).map_err(|_| {
+                        GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse Clockwork snapshot account".into(),
                         }
                     })?,
                 });

@@ -1,3 +1,5 @@
+use clockwork_client::network::objects::Snapshot;
+
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
@@ -111,15 +113,29 @@ fn register_worker(client: &Client) -> Result<()> {
 }
 
 fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
-    // TODO Create the nonce_hasher queue
-
+    // Create epoch queue.
     let epoch_queue_id = "clockwork.network.epoch";
     let epoch_queue_pubkey = Queue::pubkey(client.payer_pubkey(), epoch_queue_id.into());
-
-    let hasher_queue_id = "clockwork.network.nonce_hasher";
-    let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
-
     let ix_a = clockwork_client::queue::instruction::queue_create(
+        client.payer_pubkey(),
+        epoch_queue_id.into(),
+        clockwork_client::network::instruction::registry_epoch_kickoff(
+            epoch_queue_pubkey,
+            Snapshot::pubkey(0),
+        )
+        .into(),
+        client.payer_pubkey(),
+        epoch_queue_pubkey,
+        Trigger::Cron {
+            schedule: "0 * * * * * *".into(),
+            skippable: true,
+        },
+    );
+
+    // Create hasher queue.
+    let hasher_queue_id = "clockwork.network.hasher";
+    let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
+    let ix_b = clockwork_client::queue::instruction::queue_create(
         client.payer_pubkey(),
         hasher_queue_id.into(),
         clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey).into(),
@@ -131,7 +147,8 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
-    let ix_b = clockwork_client::network::instruction::config_update(
+    // Update config with queue pubkeys
+    let ix_c = clockwork_client::network::instruction::config_update(
         client.payer_pubkey(),
         ConfigSettings {
             admin: client.payer_pubkey(),
@@ -141,14 +158,9 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
-    client.send_and_confirm(&vec![ix_a, ix_b], &[client.payer()])?;
-
-    // TODO Create hasher queue.
-    // TODO Create epoch queue.
-
-    // Update the config to hold onto the queue ids
-
-    // super::config::set(client, epoch_queue, hasher_queue)
+    client.send_and_confirm(&vec![ix_a, ix_b, ix_c], &[client.payer()])?;
+    client.airdrop(&epoch_queue_pubkey, LAMPORTS_PER_SOL)?;
+    client.airdrop(&hasher_queue_pubkey, LAMPORTS_PER_SOL)?;
 
     Ok(())
 }

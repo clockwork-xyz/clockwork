@@ -43,14 +43,7 @@ pub struct DelegationStake<'info> {
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 
-    #[account(
-        mut,
-        seeds = [
-            SEED_WORKER,
-            worker.id.to_be_bytes().as_ref()
-        ],
-        bump,
-    )]
+    #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 
     #[account(

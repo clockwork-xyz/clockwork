@@ -43,10 +43,6 @@ pub trait RegistryAccount {
     fn init(&mut self) -> Result<()>;
 
     fn hash_nonce(&mut self) -> Result<()>;
-
-    fn lock(&mut self) -> Result<()>;
-
-    fn unlock(&mut self) -> Result<()>;
 }
 
 impl RegistryAccount for Account<'_, Registry> {
@@ -62,16 +58,6 @@ impl RegistryAccount for Account<'_, Registry> {
         Clock::get().unwrap().slot.hash(&mut hasher);
         self.nonce.hash(&mut hasher);
         self.nonce = hasher.finish();
-        Ok(())
-    }
-
-    fn lock(&mut self) -> Result<()> {
-        self.locked = true;
-        Ok(())
-    }
-
-    fn unlock(&mut self) -> Result<()> {
-        self.locked = false;
         Ok(())
     }
 }

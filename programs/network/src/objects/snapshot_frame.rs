@@ -20,12 +20,12 @@ pub struct SnapshotFrame {
 }
 
 impl SnapshotFrame {
-    pub fn pubkey(id: u64, snapshot: Pubkey) -> Pubkey {
+    pub fn pubkey(snapshot: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_FRAME,
-                id.to_be_bytes().as_ref(),
                 snapshot.as_ref(),
+                id.to_be_bytes().as_ref(),
             ],
             &crate::ID,
         )
@@ -59,7 +59,7 @@ pub trait SnapshotFrameAccount {
 
 impl SnapshotFrameAccount for Account<'_, SnapshotFrame> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotFrame::pubkey(self.id, self.snapshot)
+        SnapshotFrame::pubkey(self.snapshot, self.id)
     }
 
     fn init(

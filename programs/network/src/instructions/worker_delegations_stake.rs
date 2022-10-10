@@ -19,14 +19,7 @@ pub struct WorkerStakeDelegations<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(
-        mut,
-        seeds = [
-            SEED_WORKER,
-            worker.id.to_be_bytes().as_ref()
-        ],
-        bump,
-    )]
+    #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 

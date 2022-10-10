@@ -88,7 +88,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         .lamports()
         .checked_sub(distribution_balance)
         .unwrap();
-    **delegation.to_account_info().try_borrow_mut_lamports()? = worker
+    **delegation.to_account_info().try_borrow_mut_lamports()? = delegation
         .to_account_info()
         .lamports()
         .checked_add(distribution_balance)
@@ -138,7 +138,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         // This frame has no more entries. Move on to the next worker.
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
-            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+            SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -148,7 +148,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(next_worker_pubkey, false),
+                AccountMetaData::new(next_worker_pubkey, false),
             ],
             data: anchor_sighash("worker_fees_distribute").to_vec(),
         })

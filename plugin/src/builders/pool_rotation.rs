@@ -1,5 +1,3 @@
-use log::info;
-
 use {
     clockwork_client::{
         network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
@@ -17,8 +15,6 @@ pub fn build_pool_rotation_tx<'a>(
     r_snapshot_frame: RwLockReadGuard<'a, Option<SnapshotFrame>>,
     worker_id: u64,
 ) -> Option<Transaction> {
-    info!("Building pool rotation tx...");
-
     // Exit early if the rotator is not intialized
     if r_registry.nonce == 0 {
         return None;
@@ -58,7 +54,7 @@ pub fn build_pool_rotation_tx<'a>(
         Pool::pubkey(0),
         client.payer_pubkey(),
         snapshot_pubkey,
-        SnapshotFrame::pubkey(r_snapshot.id, snapshot_pubkey),
+        SnapshotFrame::pubkey(snapshot_pubkey, worker_id),
         Worker::pubkey(worker_id),
     );
 

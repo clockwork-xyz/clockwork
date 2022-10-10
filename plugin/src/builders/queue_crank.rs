@@ -4,7 +4,7 @@ use {
         queue::objects::{Queue, Trigger, TriggerContext},
         Client as ClockworkClient,
     },
-    dashmap::{DashMap, DashSet},
+    dashmap::DashSet,
     log::info,
     solana_account_decoder::UiAccountEncoding,
     solana_client::rpc_config::{
@@ -28,14 +28,8 @@ static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized t
 pub async fn build_crank_txs(
     client: Arc<ClockworkClient>,
     crankable_queues: DashSet<Pubkey>,
-    cron_queues: DashMap<i64, DashSet<Pubkey>>,
     worker_id: u64,
 ) -> Vec<Transaction> {
-    info!(
-        "Building txs... crankable: {:#?} cron: {:#?}",
-        crankable_queues, cron_queues
-    );
-
     // Build the set of crank transactions
     // TODO Use rayon to parallelize this operation
     let txs = crankable_queues
@@ -44,9 +38,6 @@ pub async fn build_crank_txs(
             build_crank_tx(client.clone(), *queue_pubkey_ref.key(), worker_id)
         })
         .collect::<Vec<Transaction>>();
-
-    info!("All crank txs: {}", txs.len());
-
     txs
 }
 
@@ -55,11 +46,6 @@ fn build_crank_tx(
     queue_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
-    info!(
-        "Building tx... queue_pubkey: {:#?} worker_id: {:#?}",
-        queue_pubkey, worker_id
-    );
-
     // Build the first crank ix
     let queue = client.get::<Queue>(&queue_pubkey).unwrap();
     let blockhash = client.get_latest_blockhash().unwrap();
@@ -80,15 +66,9 @@ fn build_crank_tx(
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
         sim_tx.sign(&[client.payer()], blockhash);
 
-        info!("Sim transaction: {:#?}", sim_tx);
-
         // Exit early if tx exceeds Solana's size limit.
         // TODO With QUIC and Transaction v2 lookup tables, Solana will soon support much larger transaction sizes.
         if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
-            info!(
-                "Transaction message exceeded size limit with {} bytes",
-                sim_tx.message_data().len()
-            );
             break;
         }
 
@@ -106,8 +86,7 @@ fn build_crank_tx(
             },
         ) {
             // If there was an error, stop packing and continue with the cranks up until this one.
-            Err(err) => {
-                info!("Error during simulation:: {:#?}", err);
+            Err(_err) => {
                 break;
             }
 
@@ -115,8 +94,11 @@ fn build_crank_tx(
             Ok(response) => {
                 // If there was an error, then stop packing.
                 if response.value.err.is_some() {
-                    info!("Response error: {:#?}", response.value.err);
-                    info!("Response logs: {:#?}", response.value.logs);
+                    info!(
+                        "Error simulating tx: {} logs: {:#?}",
+                        response.value.err.unwrap(),
+                        response.value.logs
+                    );
                     break;
                 }
 
@@ -155,11 +137,10 @@ fn build_crank_tx(
         }
     }
 
-    info!("Time spent packing cranks: {:#?}", now.elapsed());
     info!(
-        "Built tx with {} instructions: {:#?}",
+        "Time spent packing {} cranks: {:#?}",
         tx.message.instructions.len(),
-        tx
+        now.elapsed()
     );
 
     if tx.message.instructions.len() == 0 {
@@ -252,8 +233,6 @@ fn build_crank_ix(
             false => AccountMeta::new_readonly(acc_pubkey, false),
         })
     }
-
-    info!("The crank ix: {:#?}", crank_ix);
 
     crank_ix
 }

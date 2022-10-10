@@ -4,7 +4,6 @@ use {
     clockwork_client::queue::objects::{Queue, Trigger, TriggerContext},
     clockwork_cron::Schedule,
     dashmap::{DashMap, DashSet},
-    log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
     },
@@ -56,13 +55,8 @@ impl QueueObserver {
                 Some(clock) => {
                     // Index all of the scheduled queues that are now due.
                     // Cache retains all queues that are not yet due.
-                    // info!("Got clock! {}", clock.)
                     this.cron_queues.retain(|target_timestamp, queue_pubkeys| {
                         let is_due = clock.unix_timestamp >= *target_timestamp;
-                        info!(
-                            "Retaining cron queues... {} {} {}",
-                            is_due, clock.unix_timestamp, target_timestamp
-                        );
                         if is_due {
                             for queue_pubkey_ref in queue_pubkeys.iter() {
                                 this.crankable_queues.insert(*queue_pubkey_ref.key());
@@ -79,7 +73,6 @@ impl QueueObserver {
 
     pub fn observe_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Observed clock update: {:#?}", clock);
             this.clocks.insert(clock.slot, clock.clone());
             Ok(())
         })
@@ -112,8 +105,6 @@ impl QueueObserver {
 
     pub fn observe_queue(self: Arc<Self>, queue: Queue, queue_pubkey: Pubkey) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Caching queue {:#?} {:#?}", queue_pubkey, queue);
-
             // Remove queue from crankable set
             this.crankable_queues.remove(&queue_pubkey);
 
@@ -182,12 +173,6 @@ impl QueueObserver {
                     }
                 }
             }
-
-            info!(
-                "Queues – crankable: {:#?} cron: {:#?}",
-                this.crankable_queues.len(),
-                this.cron_queues.len()
-            );
 
             Ok(())
         })

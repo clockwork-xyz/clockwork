@@ -116,7 +116,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
         // This frame has no entries. Move on to the next frame.
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
-            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+            SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -126,7 +126,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(next_worker_pubkey, false),
+                AccountMetaData::new(next_worker_pubkey, false),
             ],
             data: anchor_sighash("worker_fees_distribute").to_vec(),
         })
@@ -151,7 +151,7 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(Worker::pubkey(0), false),
+                AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),
         })

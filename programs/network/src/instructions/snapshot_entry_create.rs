@@ -64,7 +64,7 @@ pub struct SnapshotEntryCreate<'info> {
         ],
         bump,
         has_one = snapshot,
-        constraint = snapshot_frame.id.eq(&snapshot.total_frames),
+        constraint = snapshot_frame.id.checked_add(1).unwrap().eq(&snapshot.total_frames),
     )]
     pub snapshot_frame: Box<Account<'info, SnapshotFrame>>,
 
@@ -137,7 +137,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     {
         // This frame has captured all its entries. Create a frame for the next worker.
         let next_snapshot_frame_pubkey =
-            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+            SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         Some(InstructionData {
             program_id: crate::ID,

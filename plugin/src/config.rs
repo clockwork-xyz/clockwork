@@ -13,8 +13,8 @@ static DEFAULT_THREAD_COUNT: usize = 10;
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
     pub keypath: Option<String>,
-    pub transaction_timeout_threshold: u64,
     pub thread_count: usize,
+    pub transaction_timeout_threshold: u64,
     pub worker_id: u64,
 }
 

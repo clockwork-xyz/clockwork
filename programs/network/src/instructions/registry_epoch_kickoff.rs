@@ -30,7 +30,11 @@ pub struct RegistryEpochKickoff<'info> {
     #[account(address = config.epoch_queue)]
     pub queue: Signer<'info>,
 
-    #[account(address = Registry::pubkey())]
+    #[account(
+        mut,
+        seeds = [SEED_REGISTRY],
+        bump,
+    )]
     pub registry: Account<'info, Registry>,
 
     #[account(
@@ -44,8 +48,11 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let queue = &ctx.accounts.queue;
-    let registry = &ctx.accounts.registry;
+    let registry = &mut ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
+
+    // Lock the registry
+    registry.locked = true;
 
     // Setup the next kickoff instruction to use the next snapshot.
     let kickoff_instruction = Some(InstructionData {
@@ -53,13 +60,13 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
             AccountMetaData::new_readonly(queue.key(), true),
-            AccountMetaData::new_readonly(registry.key(), false),
+            AccountMetaData::new(registry.key(), false),
             AccountMetaData::new_readonly(
                 Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
                 false,
             ),
         ],
-        data: anchor_sighash("epoch_kickoff").to_vec(),
+        data: anchor_sighash("registry_epoch_kickoff").to_vec(),
     });
 
     // Build the next instruction for queue.
@@ -73,8 +80,8 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new_readonly(SnapshotFrame::pubkey(0, snapshot.key()), false),
-                AccountMetaData::new_readonly(Worker::pubkey(0), false),
+                AccountMetaData::new_readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                AccountMetaData::new(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_fees_distribute").to_vec(),
         })

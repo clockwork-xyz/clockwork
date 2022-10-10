@@ -162,7 +162,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(Worker::pubkey(0), false),
+                AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),
         })

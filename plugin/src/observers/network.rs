@@ -1,10 +1,8 @@
 use {
-    crate::{config::PluginConfig, utils::read_or_new_keypair},
-    clockwork_client::network::objects::{Pool, Registry, Snapshot, SnapshotFrame},
-    log::info,
+    crate::config::PluginConfig,
+    clockwork_client::network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
-    solana_sdk::signer::Signer,
     std::{fmt::Debug, sync::Arc},
     tokio::{runtime::Runtime, sync::RwLock},
 };
@@ -18,9 +16,6 @@ pub struct NetworkObserver {
 
     // A cache of the network registry.
     pub registry: Arc<RwLock<Registry>>,
-
-    // The worker's signatory address
-    pub signatory: Pubkey,
 
     // A cache of the worker's current snapshot frame.
     pub snapshot: Arc<RwLock<Snapshot>>,
@@ -45,7 +40,6 @@ impl NetworkObserver {
                 total_unstakes: 0,
                 total_workers: 0,
             })),
-            signatory: read_or_new_keypair(config.keypath).pubkey(),
             snapshot: Arc::new(RwLock::new(Snapshot {
                 id: 0,
                 total_frames: 0,
@@ -58,16 +52,15 @@ impl NetworkObserver {
 
     pub fn observe_pool(self: Arc<Self>, pool: Pool, _slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            info!("Updated pool: {:#?}", pool);
-
             // Build the new pool_position
+            let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let mut w_pool_positions = this.pool_positions.write().await;
             let workers = &mut pool.workers.clone();
             let pool_position = PoolPosition {
                 current_position: pool
                     .workers
                     .iter()
-                    .position(|k| k.eq(&this.signatory))
+                    .position(|k| k.eq(&worker_pubkey))
                     .map(|i| i as u64),
                 workers: workers.make_contiguous().to_vec().clone(),
             };
@@ -90,6 +83,17 @@ impl NetworkObserver {
             }
 
             drop(w_pool_positions);
+            Ok(())
+        })
+    }
+
+    pub fn observe_snapshot(self: Arc<Self>, snapshot: Snapshot) -> PluginResult<()> {
+        self.spawn(|this| async move {
+            let mut w_snapshot = this.snapshot.write().await;
+            if snapshot.id.gt(&(*w_snapshot).id) {
+                *w_snapshot = snapshot;
+            }
+            drop(w_snapshot);
             Ok(())
         })
     }

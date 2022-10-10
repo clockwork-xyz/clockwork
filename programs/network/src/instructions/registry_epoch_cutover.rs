@@ -24,6 +24,7 @@ pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
 
     // Move the current epoch forward.
     registry.current_epoch = registry.current_epoch.checked_add(1).unwrap();
+    registry.locked = false;
 
     // TODO Build next instruction for queue.
     // TODO (optional) For cost-efficiency, close the snapshot accounts and return the lamports to a queue.

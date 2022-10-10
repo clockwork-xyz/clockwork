@@ -27,6 +27,6 @@ pub fn pool_rotate(
             AccountMeta::new_readonly(snapshot_frame, false),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: clockwork_network_program::instruction::PoolCreate {}.data(),
+        data: clockwork_network_program::instruction::PoolRotate {}.data(),
     }
 }

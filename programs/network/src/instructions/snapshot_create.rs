@@ -19,7 +19,7 @@ pub struct SnapshotCreate<'info> {
 
     #[account(
         address = Registry::pubkey(),
-        constraint = !registry.locked
+        constraint = registry.locked
     )]
     pub registry: Account<'info, Registry>,
 
@@ -54,7 +54,7 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Build next instruction for queue.
     let next_instruction = if registry.total_workers.gt(&0) {
         // The registry has workers. Create a snapshot frame for the zeroth worker.
-        let snapshot_frame_pubkey = SnapshotFrame::pubkey(0, snapshot.key());
+        let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
         let worker_pubkey = Worker::pubkey(0);
         Some(InstructionData {
             program_id: crate::ID,

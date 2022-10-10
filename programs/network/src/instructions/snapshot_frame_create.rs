@@ -120,7 +120,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
     } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This worker has no delegations. Create a snapshot frame for the next worker.
         let next_snapshot_frame_pubkey =
-            SnapshotFrame::pubkey(snapshot_frame.id.checked_add(1).unwrap(), snapshot.key());
+            SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         Some(InstructionData {
             program_id: crate::ID,
