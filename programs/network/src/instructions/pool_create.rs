@@ -1,5 +1,5 @@
 use {
-    crate::objects::*,
+    crate::{errors::*, objects::*},
     anchor_lang::{prelude::*,  solana_program::system_program},
     std::mem::size_of,
 };
@@ -34,7 +34,7 @@ pub struct PoolCreate<'info> {
         mut,
         seeds = [SEED_REGISTRY],
         bump,
-        constraint = !registry.locked
+        constraint = !registry.locked @ ClockworkError::RegistryLocked
     )]
     pub registry: Box<Account<'info, Registry>>,
 

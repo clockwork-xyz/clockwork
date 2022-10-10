@@ -1,5 +1,5 @@
 use {
-    crate::{errors::ClockworkError, objects::*},
+    crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount},
     clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
@@ -132,9 +132,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("snapshot_entry_create").to_vec(),
         })
-    } else if snapshot_frame.total_entries.eq(&worker.total_delegations)
-        && snapshot.total_frames.lt(&registry.total_workers)
-    {
+    } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This frame has captured all its entries. Create a frame for the next worker.
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
@@ -157,9 +155,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("snapshot_frame_create").to_vec(),
         })
-    } else if snapshot_frame.total_entries.eq(&worker.total_delegations)
-        && snapshot.total_frames.eq(&registry.total_workers)
-    {
+    } else {
         // All entries in this frame have been captured, and it is the last frame. The snapshot is done!
         Some(InstructionData {
             program_id: crate::ID,
@@ -170,9 +166,6 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             ],
             data: anchor_sighash("registry_epoch_cutover").to_vec(),
         })
-    } else {
-        // Something is wrong...
-        return Err(ClockworkError::InvalidSnapshot.into());
     };
 
     Ok(CrankResponse {

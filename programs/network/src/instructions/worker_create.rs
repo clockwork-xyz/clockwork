@@ -1,5 +1,5 @@
 use {
-    crate::objects::*,
+    crate::{errors::*, objects::*},
     anchor_lang::{
         prelude::*,
         solana_program::{system_program, sysvar},
@@ -54,7 +54,7 @@ pub struct WorkerCreate<'info> {
         mut, 
         seeds = [SEED_REGISTRY],
         bump,
-        constraint = !registry.locked
+        constraint = !registry.locked @ ClockworkError::RegistryLocked
     )]
     pub registry: Account<'info, Registry>,
 
