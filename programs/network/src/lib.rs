@@ -13,7 +13,7 @@ use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3");
+declare_id!("F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa");
 
 #[program]
 pub mod network_program {
