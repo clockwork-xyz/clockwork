@@ -3,22 +3,19 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
-network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
-pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
-queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
-webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
+network = "HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3"
+queue = "8TNeGEARHMpu2A9K8UY8dxoqqMU1kL9uLjgdbSRgPAWj"
+webhook = "7EXYgNfD2araHsrNiCXhjFzrxmNLyuudfousTL3HNadF"
 
 [programs.testnet]
-network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
-pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
-queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
-webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
+network = "HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3"
+queue = "8TNeGEARHMpu2A9K8UY8dxoqqMU1kL9uLjgdbSRgPAWj"
+webhook = "7EXYgNfD2araHsrNiCXhjFzrxmNLyuudfousTL3HNadF"
 
 [programs.mainnet]
-network = "7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP"
-pool = "AzrhZ1Dy3ywhYjYEopEjyVvPeNVjn2qCi1jALqpb2wnm"
-queue = "AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H"
-webhook = "73GuxSDV57eWPiPpo4yE2sas4VDFsr6qvq9tEEJiB6o8"
+network = "HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3"
+queue = "8TNeGEARHMpu2A9K8UY8dxoqqMU1kL9uLjgdbSRgPAWj"
+webhook = "7EXYgNfD2araHsrNiCXhjFzrxmNLyuudfousTL3HNadF"
 
 [registry]
 url = "https://anchor.projectserum.com"

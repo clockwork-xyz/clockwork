@@ -1,24 +1,17 @@
 use {
-    super::{Node, SnapshotEntry},
-    crate::objects::SnapshotEntryAccount,
     anchor_lang::{prelude::*, AnchorDeserialize},
-    anchor_spl::token::TokenAccount,
     std::convert::TryFrom,
 };
 
 pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
-/**
- * Snapshot
- */
-
+/// Snapshot
 #[account]
 #[derive(Debug)]
 pub struct Snapshot {
     pub id: u64,
-    pub node_count: u64,
-    pub stake_total: u64,
-    pub status: SnapshotStatus,
+    pub total_frames: u64,
+    pub total_stake: u64,
 }
 
 impl Snapshot {
@@ -34,21 +27,11 @@ impl TryFrom<Vec<u8>> for Snapshot {
     }
 }
 
-/**
- * SnapshotAccount
- */
-
+/// SnapshotAccount
 pub trait SnapshotAccount {
     fn pubkey(&self) -> Pubkey;
 
     fn init(&mut self, id: u64) -> Result<()>;
-
-    fn capture(
-        &mut self,
-        entry: &mut Account<SnapshotEntry>,
-        node: &Account<Node>,
-        stake: &Account<TokenAccount>,
-    ) -> Result<()>;
 }
 
 impl SnapshotAccount for Account<'_, Snapshot> {
@@ -58,43 +41,8 @@ impl SnapshotAccount for Account<'_, Snapshot> {
 
     fn init(&mut self, id: u64) -> Result<()> {
         self.id = id;
-        self.node_count = 0;
-        self.status = SnapshotStatus::InProgress;
+        self.total_frames = 0;
+        self.total_stake = 0;
         Ok(())
     }
-
-    fn capture(
-        &mut self,
-        entry: &mut Account<SnapshotEntry>,
-        node: &Account<Node>,
-        stake: &Account<TokenAccount>,
-    ) -> Result<()> {
-        // Record the new snapshot entry
-        entry.init(
-            self.node_count,
-            self.key(),
-            self.stake_total,
-            stake.amount,
-            node.worker,
-        )?;
-
-        // Update the snapshot's entry count
-        self.node_count = self.node_count.checked_add(1).unwrap();
-
-        // Update the sum stake amount
-        self.stake_total = self.stake_total.checked_add(stake.amount).unwrap();
-
-        Ok(())
-    }
-}
-
-/**
- * SnapshotStatus
- */
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
-pub enum SnapshotStatus {
-    Archived,
-    Closing,
-    Current,
-    InProgress,
 }

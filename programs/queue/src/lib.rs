@@ -4,30 +4,20 @@
 
 pub mod errors;
 pub mod objects;
-pub mod utils;
 
 mod instructions;
 
 use anchor_lang::prelude::*;
+use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H");
+declare_id!("8TNeGEARHMpu2A9K8UY8dxoqqMU1kL9uLjgdbSRgPAWj");
 
 /// Program for creating transaction queues on Solana.
 #[program]
 pub mod queue_program {
     use super::*;
-
-    /// Admin instruction for updating the program config.
-    pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {
-        config_update::handler(ctx, settings)
-    }
-
-    /// Admin instruction for initializing the program after deployment.
-    pub fn initialize(ctx: Context<Initialize>, worker_pool: Pubkey) -> Result<()> {
-        initialize::handler(ctx, worker_pool)
-    }
 
     /// Cranks a transaction queue.
     pub fn queue_crank(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {

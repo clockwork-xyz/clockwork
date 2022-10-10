@@ -5,8 +5,11 @@ pub enum ClockworkError {
     #[msg("This account has already been initialized")]
     AccountAlreadyInitialized,
 
+    #[msg("The commission must be between 0 and 100")]
+    InvalidCommission,
+
     #[msg("The provided node is cannot be used for this operation")]
-    InvalidNode,
+    InvalidWorker,
 
     #[msg("The provided snapshot entry cannot be used for this operation")]
     InvalidSnapshotEntry,
@@ -14,8 +17,17 @@ pub enum ClockworkError {
     #[msg("The stake account cannot be used for this operation")]
     InvalidStakeAccount,
 
+    #[msg("The snapshot has reached an invalid state. This should not happen.")]
+    InvalidSnapshot,
+
     #[msg("One of the provided pool accounts is invalid or missing")]
     InvalidPool,
+
+    #[msg("You cannot request to unstake more tokens than are currently locked")]
+    InvalidUnstakeAmount,
+
+    #[msg("The penalty account has an insufficient balance for this operation")]
+    InsufficientPenaltyBalance,
 
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,

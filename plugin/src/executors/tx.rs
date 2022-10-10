@@ -20,7 +20,7 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10; // Number of slots to wait before retryi
  */
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub clockwork_client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
+    pub client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
     pub message_history: DashMap<Hash, u64>, // Map from message hashes to the slot when that message was sent
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
@@ -30,14 +30,14 @@ pub struct TxExecutor {
 impl TxExecutor {
     pub fn new(
         config: PluginConfig,
-        clockwork_client: Arc<ClockworkClient>,
+        client: Arc<ClockworkClient>,
         observers: Arc<Observers>,
         runtime: Arc<Runtime>,
         tpu_client: Arc<TpuClient>,
     ) -> Self {
         Self {
             config: config.clone(),
-            clockwork_client,
+            client,
             message_history: DashMap::new(),
             observers,
             runtime,
@@ -48,10 +48,10 @@ impl TxExecutor {
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Rotate worker pools
-            this.clone().rotate_pools(slot).await.ok();
+            this.clone().execute_pool_rotate_txs(slot).await.ok();
 
-            // Crank queues
-            this.clone().crank_queues(slot).await.ok();
+            // Queue crank queues
+            this.clone().execute_queue_crank_txs(slot).await.ok();
 
             // Purge message history that is beyond the dedupe period
             this.message_history
@@ -61,47 +61,47 @@ impl TxExecutor {
         })
     }
 
-    async fn rotate_pools(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.observers
-            .pool
-            .clone()
-            .build_rotation_tx(self.clockwork_client.clone(), slot)
-            .await
-            .and_then(|tx| match self.execute_tx(slot, &tx) {
-                Ok(()) => Ok(()),
-                Err(err) => {
-                    info!("Failed to rotate pools: {}", err);
-                    Ok(())
-                }
-            })
+    async fn execute_pool_rotate_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        let r_registry = self.observers.network.registry.read().await;
+        let r_snapshot = self.observers.network.snapshot.read().await;
+        let r_snapshot_frame = self.observers.network.snapshot_frame.read().await;
+        match crate::builders::build_pool_rotation_tx(
+            self.client.clone(),
+            r_registry,
+            r_snapshot,
+            r_snapshot_frame,
+            self.config.worker_id,
+        ) {
+            None => {}
+            Some(tx) => {
+                self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+            }
+        };
+        Ok(())
     }
 
-    async fn crank_queues(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    async fn execute_queue_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
-        let r_pool_positions = self.observers.pool.pool_positions.read().await;
-        let crank_pool = r_pool_positions.crank_pool.clone();
+        let r_pool_positions = self.observers.network.pool_positions.read().await;
+        let queue_pool = r_pool_positions.queue_pool.clone();
         drop(r_pool_positions);
-        if crank_pool.current_position.is_none() && !crank_pool.workers.is_empty() {
+        if queue_pool.current_position.is_none() && !queue_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
-                "This node is not an authorized worker".into(),
+                "This node is not in the worker pool".into(),
             ));
         }
 
-        self.observers
-            .queue
-            .clone()
-            .build_crank_txs(self.clockwork_client.clone(), slot)
-            .await
-            .iter()
-            .for_each(|tx| {
-                self.clone()
-                    .execute_tx(slot, tx)
-                    .map_err(|err| {
-                        info!("Failed to crank queue: {}", err);
-                        err
-                    })
-                    .ok();
-            });
+        // Execute queue_crank txs.
+        crate::builders::build_crank_txs(
+            self.client.clone(),
+            self.observers.queue.crankable_queues.clone(),
+            self.config.worker_id,
+        )
+        .await
+        .iter()
+        .for_each(|tx| {
+            self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
+        });
 
         Ok(())
     }
@@ -120,12 +120,13 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            .submit_tx(tx)
+            // .simulate_tx(tx)
+            // .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
-    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
 

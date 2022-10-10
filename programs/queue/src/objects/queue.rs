@@ -1,5 +1,4 @@
 use {
-    super::{ClockData, InstructionData},
     crate::errors::ClockworkError,
     anchor_lang::{
         prelude::*,
@@ -9,15 +8,24 @@ use {
         },
         AnchorDeserialize, AnchorSerialize,
     },
+    clockwork_utils::*,
     std::{
         convert::TryFrom,
         hash::{Hash, Hasher},
     },
 };
 
+// TODO Add support for lookup tables.
+//      If the value is set, then use that lookup table when building the transaction.
+//      Add a property to CrankResponse to allow updating the lookup table.
+//      I believe Transaction.v0 only supports one lookup table at a time. So if this value changes between cranks,
+//      workers will need to stop packing the transaction and submit.
+
 pub const SEED_QUEUE: &[u8] = b"queue";
 
 const DEFAULT_RATE_LIMIT: u64 = 10;
+
+const MINIMUM_FEE: u64 = 1000;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
@@ -29,6 +37,8 @@ pub struct Queue {
     pub created_at: ClockData,
     /// The context of the current thread execution state.
     pub exec_context: Option<ExecContext>,
+    /// The number of lamports to payout to workers per crank.
+    pub fee: u64,
     /// The id of the queue, given by the authority.
     pub id: String,
     /// The instruction to kick-off the thread.
@@ -108,6 +118,7 @@ impl QueueAccount for Account<'_, Queue> {
         self.authority = authority.key();
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
+        self.fee = MINIMUM_FEE;
         self.id = id;
         self.kickoff_instruction = kickoff_instruction;
         self.next_instruction = None;
@@ -117,20 +128,20 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()> {
+    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, signatory: &Signer) -> Result<()> {
         // Record the worker's lamports before invoking inner ixs
-        let worker_lamports_pre = worker.lamports();
+        let signatory_lamports_pre = signatory.lamports();
 
         // Get the instruction to crank
         let kickoff_instruction: &InstructionData = &self.clone().kickoff_instruction;
         let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
         let instruction = next_instruction.as_ref().unwrap_or(kickoff_instruction);
 
-        // Inject the worker's pubkey for the Clockwork payer ID
+        // Inject the signatory's pubkey for the Clockwork payer ID
         let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
         instruction.accounts.iter().for_each(|acc| {
-            let acc_pubkey = if acc.pubkey == crate::utils::PAYER_PUBKEY {
-                worker.key()
+            let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
+                signatory.key()
             } else {
                 acc.pubkey
             };
@@ -157,8 +168,8 @@ impl QueueAccount for Account<'_, Queue> {
             ]],
         )?;
 
-        // Verify that the inner ix did not write data to the worker address
-        require!(worker.data_is_empty(), ClockworkError::UnauthorizedWrite);
+        // Verify that the inner ix did not write data to the signatory address
+        require!(signatory.data_is_empty(), ClockworkError::UnauthorizedWrite);
 
         // Parse the crank response
         match get_return_data() {
@@ -172,6 +183,12 @@ impl QueueAccount for Account<'_, Queue> {
                 );
                 let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
                     .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
+
+                // Update the queue with the crank response.
+                match crank_response.kickoff_instruction {
+                    None => {}
+                    Some(kickoff_instruction) => self.kickoff_instruction = kickoff_instruction,
+                }
                 self.next_instruction = crank_response.next_instruction;
             }
         };
@@ -201,20 +218,20 @@ impl QueueAccount for Account<'_, Queue> {
         // Realloc the queue account
         self.realloc()?;
 
-        // Reimbursement worker for lamports paid during inner ix
-        let worker_lamports_post = worker.lamports();
-        let worker_reimbursement = worker_lamports_pre
-            .checked_sub(worker_lamports_post)
+        // Reimbursement signatory for lamports paid during inner ix
+        let signatory_lamports_post = signatory.lamports();
+        let signatory_reimbursement = signatory_lamports_pre
+            .checked_sub(signatory_lamports_post)
             .unwrap();
         **self.to_account_info().try_borrow_mut_lamports()? = self
             .to_account_info()
             .lamports()
-            .checked_sub(worker_reimbursement)
+            .checked_sub(signatory_reimbursement)
             .unwrap();
-        **worker.to_account_info().try_borrow_mut_lamports()? = worker
+        **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
             .to_account_info()
             .lamports()
-            .checked_add(worker_reimbursement)
+            .checked_add(signatory_reimbursement)
             .unwrap();
 
         Ok(())
@@ -225,21 +242,6 @@ impl QueueAccount for Account<'_, Queue> {
         let data_len = 8 + self.try_to_vec()?.len();
         self.to_account_info().realloc(data_len, false)?;
         Ok(())
-    }
-}
-
-/// A response value target programs can return to update the queue.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-pub struct CrankResponse {
-    /// The next instruction to set on the queue.
-    pub next_instruction: Option<InstructionData>,
-}
-
-impl Default for CrankResponse {
-    fn default() -> Self {
-        return Self {
-            next_instruction: None,
-        };
     }
 }
 

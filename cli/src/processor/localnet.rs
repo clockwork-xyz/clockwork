@@ -1,10 +1,12 @@
+use clockwork_client::network::objects::Snapshot;
+
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
     clockwork_client::{
-        network::objects::{Node, NodeSettings},
-        pool::objects::Pool,
+        network::objects::ConfigSettings,
+        queue::objects::{Queue, Trigger},
         Client,
     },
     solana_sdk::{
@@ -19,10 +21,7 @@ use {
         instruction::{initialize_mint, mint_to},
         state::Mint,
     },
-    std::{
-        collections::HashSet,
-        process::{Child, Command},
-    },
+    std::process::{Child, Command},
 };
 
 pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
@@ -35,8 +34,10 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
+    create_queues(client, mint_pubkey)
+        .map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
-    // Wait for process to be killed
+    // Wait for process to be killed.
     _ = validator_process.wait();
 
     Ok(())
@@ -76,14 +77,14 @@ fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
             &client.payer_pubkey(),
             &mint_keypair.pubkey(),
         ),
-        // Mint 1000 tokens to the local user
+        // Mint 10 tokens to the local user
         mint_to(
             &spl_token::ID,
             &mint_keypair.pubkey(),
             &token_account_pubkey,
             &client.payer_pubkey(),
             &[&client.payer_pubkey()],
-            100000000000,
+            1000000000,
         )
         .unwrap(),
     ];
@@ -95,28 +96,78 @@ fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
 }
 
 fn register_worker(client: &Client) -> Result<()> {
+    // Create the worker
     let cfg = get_clockwork_config()?;
     let keypath = format!(
         "{}/lib/clockwork-worker-keypair.json",
         cfg["home"].as_str().unwrap()
     );
-    let worker_keypair = read_keypair_file(keypath).unwrap();
-    client.airdrop(&worker_keypair.pubkey(), LAMPORTS_PER_SOL)?;
-    super::node::register(client, worker_keypair)?;
-    let node_pubkey = Node::pubkey(0);
-    let pool_pubkey = Pool::pubkey("crank".into());
-    super::node::stake(client, node_pubkey, 100)?;
-    super::node::update(
-        client,
-        node_pubkey,
-        NodeSettings {
-            supported_pools: HashSet::from([pool_pubkey]),
+    let signatory = read_keypair_file(keypath).unwrap();
+    client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
+    super::worker::create(client, signatory)?;
+
+    // Delegate stake to the worker
+    super::delegation::create(client, 0)?;
+    super::delegation::deposit(client, 100000000, 0, 0)?;
+    Ok(())
+}
+
+fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
+    // Create epoch queue.
+    let epoch_queue_id = "clockwork.network.epoch";
+    let epoch_queue_pubkey = Queue::pubkey(client.payer_pubkey(), epoch_queue_id.into());
+    let ix_a = clockwork_client::queue::instruction::queue_create(
+        client.payer_pubkey(),
+        epoch_queue_id.into(),
+        clockwork_client::network::instruction::registry_epoch_kickoff(
+            epoch_queue_pubkey,
+            Snapshot::pubkey(0),
+        )
+        .into(),
+        client.payer_pubkey(),
+        epoch_queue_pubkey,
+        Trigger::Cron {
+            schedule: "0 * * * * * *".into(),
+            skippable: true,
         },
-    )?;
+    );
+
+    // Create hasher queue.
+    let hasher_queue_id = "clockwork.network.hasher";
+    let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
+    let ix_b = clockwork_client::queue::instruction::queue_create(
+        client.payer_pubkey(),
+        hasher_queue_id.into(),
+        clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey).into(),
+        client.payer_pubkey(),
+        hasher_queue_pubkey,
+        Trigger::Cron {
+            schedule: "*/15 * * * * * *".into(),
+            skippable: true,
+        },
+    );
+
+    // Update config with queue pubkeys
+    let ix_c = clockwork_client::network::instruction::config_update(
+        client.payer_pubkey(),
+        ConfigSettings {
+            admin: client.payer_pubkey(),
+            epoch_queue: epoch_queue_pubkey,
+            hasher_queue: hasher_queue_pubkey,
+            mint: mint_pubkey,
+        },
+    );
+
+    client.send_and_confirm(&vec![ix_a, ix_b, ix_c], &[client.payer()])?;
+    client.airdrop(&epoch_queue_pubkey, LAMPORTS_PER_SOL)?;
+    client.airdrop(&hasher_queue_pubkey, LAMPORTS_PER_SOL)?;
+
     Ok(())
 }
 
 fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<Child> {
+    println!("Starting test validator");
+
     // Get Clockwork home path
     let cfg = get_clockwork_config()?;
     let home_dir = cfg["home"].as_str().unwrap();
@@ -125,7 +176,6 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
-        .bpf_program(home_dir, clockwork_client::pool::ID, "pool")
         .bpf_program(home_dir, clockwork_client::queue::ID, "queue")
         .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
         .add_programs_with_path(program_infos)
@@ -134,15 +184,21 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
         .expect("Failed to start local test validator");
 
     // Wait for the validator to become healthy
-    let ms_wait = 10000;
+    let ms_wait = 10_000;
     let mut count = 0;
     while count < ms_wait {
-        let r = client.get_latest_blockhash();
-        if r.is_ok() {
-            break;
+        match client.get_block_height() {
+            Err(_err) => {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                count += 1;
+            }
+            Ok(slot) => {
+                if slot > 0 {
+                    println!("Got a slot: {}", slot);
+                    break;
+                }
+            }
         }
-        std::thread::sleep(std::time::Duration::from_millis(1));
-        count += 1;
     }
     if count == ms_wait {
         process.kill()?;
@@ -150,7 +206,8 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     }
 
     // Wait 1 extra second for safety before submitting txs
-    std::thread::sleep(std::time::Duration::from_millis(1000));
+    std::thread::sleep(std::time::Duration::from_secs(1));
+
     Ok(process)
 }
 

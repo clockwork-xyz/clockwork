@@ -1,13 +1,19 @@
+mod config_update;
+mod delegation_create;
+mod delegation_deposit;
 mod initialize;
-mod node_register;
-mod node_stake;
-mod node_update;
 mod pool_create;
-mod pools_rotate;
+mod pool_rotate;
+mod registry_epoch_kickoff;
+mod registry_nonce_hash;
+mod worker_create;
 
+pub use config_update::*;
+pub use delegation_create::*;
+pub use delegation_deposit::*;
 pub use initialize::*;
-pub use node_register::*;
-pub use node_stake::*;
-pub use node_update::*;
 pub use pool_create::*;
-pub use pools_rotate::*;
+pub use pool_rotate::*;
+pub use registry_epoch_kickoff::*;
+pub use registry_nonce_hash::*;
+pub use worker_create::*;

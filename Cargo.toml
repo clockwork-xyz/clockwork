@@ -1,12 +1,12 @@
 [workspace]
 members = [
-    "bench",
     "cli",
     "client",
     "cron",
     "plugin",
     "programs/*",
-    "sdk"
+    "sdk",
+    "utils"
 ]
 
 # [patch.crates-io]

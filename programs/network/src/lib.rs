@@ -4,11 +4,11 @@ pub mod objects;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_queue_program::objects::CrankResponse;
+use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP");
+declare_id!("HTKVtLQ4jSC1LPzbgji2mQcVKBTpUM72hDzsDWeXfrP3");
 
 #[program]
 pub mod network_program {
@@ -18,63 +18,103 @@ pub mod network_program {
         config_update::handler(ctx, settings)
     }
 
-    pub fn entry_close(ctx: Context<EntryClose>) -> Result<CrankResponse> {
-        entry_close::handler(ctx)
+    pub fn delegation_create(ctx: Context<DelegationCreate>) -> Result<()> {
+        delegation_create::handler(ctx)
     }
 
-    pub fn entry_create(ctx: Context<EntryCreate>) -> Result<CrankResponse> {
-        entry_create::handler(ctx)
+    pub fn delegation_deposit(ctx: Context<DelegationDeposit>, amount: u64) -> Result<()> {
+        delegation_deposit::handler(ctx, amount)
     }
 
-    pub fn initialize<'info>(ctx: Context<'_, '_, '_, 'info, Initialize<'info>>) -> Result<()> {
+    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
+        delegation_stake::handler(ctx)
+    }
+
+    pub fn delegation_withdraw(ctx: Context<DelegationWithdraw>, amount: u64) -> Result<()> {
+        delegation_withdraw::handler(ctx, amount)
+    }
+
+    pub fn delegation_yield(ctx: Context<DelegationYield>, amount: u64) -> Result<()> {
+        delegation_yield::handler(ctx, amount)
+    }
+
+    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
+        fee_distribute::handler(ctx)
+    }
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         initialize::handler(ctx)
     }
 
-    pub fn node_register(ctx: Context<NodeRegister>) -> Result<()> {
-        node_register::handler(ctx)
+    pub fn penalty_claim(ctx: Context<PenaltyClaim>) -> Result<()> {
+        penalty_claim::handler(ctx)
     }
 
-    pub fn node_stake(ctx: Context<NodeStake>, amount: u64) -> Result<()> {
-        node_stake::handler(ctx, amount)
+    pub fn pool_create(ctx: Context<PoolCreate>) -> Result<()> {
+        pool_create::handler(ctx)
     }
 
-    pub fn node_update(ctx: Context<NodeUpdate>, settings: NodeSettings) -> Result<()> {
-        node_update::handler(ctx, settings)
+    pub fn pool_rotate(ctx: Context<PoolRotate>) -> Result<()> {
+        pool_rotate::handler(ctx)
     }
 
-    pub fn node_unstake(ctx: Context<NodeUnstake>, amount: u64) -> Result<()> {
-        node_unstake::handler(ctx, amount)
+    pub fn pool_update(ctx: Context<PoolUpdate>, settings: PoolSettings) -> Result<()> {
+        pool_update::handler(ctx, settings)
     }
 
-    pub fn pool_create(ctx: Context<PoolCreate>, name: String, size: usize) -> Result<()> {
-        pool_create::handler(ctx, name, size)
+    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
+        registry_epoch_cutover::handler(ctx)
     }
 
-    pub fn pools_rotate<'info>(ctx: Context<'_, '_, '_, 'info, PoolsRotate<'info>>) -> Result<()> {
-        pools_rotate::handler(ctx)
+    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
+        registry_epoch_kickoff::handler(ctx)
     }
 
-    pub fn snapshot_close(ctx: Context<SnapshotClose>) -> Result<CrankResponse> {
-        snapshot_close::handler(ctx)
+    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<CrankResponse> {
+        registry_nonce_hash::handler(ctx)
+    }
+
+    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<()> {
+        snapshot_delete::handler(ctx)
     }
 
     pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
         snapshot_create::handler(ctx)
     }
 
-    pub fn snapshot_kickoff(ctx: Context<SnapshotKickoff>) -> Result<CrankResponse> {
-        snapshot_kickoff::handler(ctx)
+    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
+        snapshot_entry_create::handler(ctx)
     }
 
-    pub fn snapshot_pause(ctx: Context<SnapshotPause>) -> Result<()> {
-        snapshot_pause::handler(ctx)
+    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
+        snapshot_frame_create::handler(ctx)
     }
 
-    pub fn snapshot_resume(ctx: Context<SnapshotResume>) -> Result<()> {
-        snapshot_resume::handler(ctx)
+    pub fn unstake_create(ctx: Context<UnstakeCreate>, amount: u64) -> Result<()> {
+        unstake_create::handler(ctx, amount)
     }
 
-    pub fn snapshot_rotate(ctx: Context<SnapshotRotate>) -> Result<CrankResponse> {
-        snapshot_rotate::handler(ctx)
+    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
+        unstake_preprocess::handler(ctx)
+    }
+
+    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
+        unstake_process::handler(ctx)
+    }
+
+    pub fn worker_create(ctx: Context<WorkerCreate>) -> Result<()> {
+        worker_create::handler(ctx)
+    }
+
+    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+        worker_fees_distribute::handler(ctx)
+    }
+
+    pub fn worker_delegations_stake(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
+        worker_delegations_stake::handler(ctx)
+    }
+
+    pub fn worker_update(ctx: Context<WorkerUpdate>, settings: WorkerSettings) -> Result<()> {
+        worker_update::handler(ctx, settings)
     }
 }

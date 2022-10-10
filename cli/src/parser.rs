@@ -17,14 +17,14 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
+            Some(("delegation", matches)) => parse_delegation_command(matches),
             Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
-            Some(("node", matches)) => parse_node_command(matches),
-            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
+            Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
-            Some(("snapshot", matches)) => parse_snapshot_command(matches),
+            Some(("worker", matches)) => parse_worker_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
@@ -83,9 +83,17 @@ fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
-        Some(("set", matches)) => Ok(CliCommand::ConfigSet {
-            admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
-            crank_fee: parse_u64("crank_fee", matches).map_or(None, |v| Some(v)),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::DelegationGet {
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -108,17 +116,13 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
     })
 }
 
-fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::NodeGet {
-            worker: parse_pubkey("worker_address", matches)?,
+        Some(("create", matches)) => Ok(CliCommand::WorkerCreate {
+            signatory: parse_keypair_file("signatory_keypair", matches)?,
         }),
-        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
-            worker: parse_keypair_file("worker", matches)?,
-        }),
-        Some(("stake", matches)) => Ok(CliCommand::NodeStake {
-            address: parse_pubkey("address", matches)?,
-            amount: parse_u64("amount", matches)?,
+        Some(("get", matches)) => Ok(CliCommand::WorkerGet {
+            id: parse_u64("id", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -126,12 +130,25 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    let address = parse_pubkey("address", matches)?;
+fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", _)) => Ok(CliCommand::QueueGet { address }),
+        Some(("get", matches)) => Ok(CliCommand::PoolGet {
+            id: parse_u64("id", matches)?,
+        }),
+        Some(("list", _)) => Ok(CliCommand::PoolList {}),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+            id: parse_string("id", matches)?,
+        }),
         Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
-            address: address,
+            id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
@@ -140,14 +157,14 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::SnapshotGet {
-        entry_id: match matches.subcommand() {
-            Some(("entry", matches)) => Some(parse_u64("id", matches)?),
-            _ => None,
-        },
-    })
-}
+// fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+//     Ok(CliCommand::SnapshotGet {
+//         entry_id: match matches.subcommand() {
+//             Some(("entry", matches)) => Some(parse_u64("id", matches)?),
+//             _ => None,
+//         },
+//     })
+// }
 
 // Arg parsers
 

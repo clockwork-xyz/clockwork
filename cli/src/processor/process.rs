@@ -19,7 +19,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             base_url,
         } => super::api::api_new(&client, ack_authority, base_url),
         CliCommand::ConfigGet => super::config::get(&client),
-        CliCommand::ConfigSet { admin, crank_fee } => super::config::set(&client, admin, crank_fee),
+        CliCommand::DelegationGet {
+            delegation_id,
+            worker_id,
+        } => super::delegation::get(&client, delegation_id, worker_id),
         CliCommand::HttpRequestNew {
             api,
             id,
@@ -28,16 +31,12 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::webhook::request_new(&client, api, id, method, route),
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
-        CliCommand::NodeGet { worker } => super::node::get(&client, worker),
-        CliCommand::NodeRegister { worker } => super::node::register(&client, worker),
-        CliCommand::NodeStake { address, amount } => super::node::stake(&client, address, amount),
-        CliCommand::PoolGet => super::pool::get(&client),
-        CliCommand::QueueGet { address } => super::queue::get(&client, &address),
-        CliCommand::QueueUpdate {
-            address,
-            rate_limit,
-        } => super::queue::update(&client, &address, rate_limit),
+        CliCommand::PoolGet { id } => super::pool::get(&client, id),
+        CliCommand::PoolList {} => super::pool::list(&client),
+        CliCommand::QueueGet { id } => super::queue::get(&client, id),
+        CliCommand::QueueUpdate { id, rate_limit } => super::queue::update(&client, id, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),
-        CliCommand::SnapshotGet { entry_id } => super::snapshot::get(&client, entry_id),
+        CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory),
+        CliCommand::WorkerGet { id } => super::worker::get(&client, id),
     }
 }
