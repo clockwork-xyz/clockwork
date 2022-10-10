@@ -25,6 +25,8 @@ pub const SEED_QUEUE: &[u8] = b"queue";
 
 const DEFAULT_RATE_LIMIT: u64 = 10;
 
+const MAX_RATE_LIMIT: u64 = 32;
+
 const MINIMUM_FEE: u64 = 1000;
 
 /// Tracks the current state of a transaction thread on Solana.
@@ -82,6 +84,15 @@ impl PartialEq for Queue {
 
 impl Eq for Queue {}
 
+/// The properties of queues which are updatable.
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct QueueSettings {
+    pub fee: Option<u64>,
+    pub kickoff_instruction: Option<InstructionData>,
+    pub rate_limit: Option<u64>,
+    pub trigger: Option<Trigger>,
+}
+
 /// Trait for reading and writing to a queue account.
 pub trait QueueAccount {
     /// Get the pubkey of the queue account.
@@ -101,6 +112,8 @@ pub trait QueueAccount {
 
     /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
+
+    fn update(&mut self, settings: QueueSettings) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -241,6 +254,35 @@ impl QueueAccount for Account<'_, Queue> {
         // Realloc memory for the queue account
         let data_len = 8 + self.try_to_vec()?.len();
         self.to_account_info().realloc(data_len, false)?;
+        Ok(())
+    }
+
+    fn update(&mut self, settings: QueueSettings) -> Result<()> {
+        // If provided, update the queue's fee.
+        if let Some(fee) = settings.fee {
+            self.fee = fee;
+        }
+
+        // If provided, update the queue's first instruction
+        if let Some(kickoff_instruction) = settings.kickoff_instruction {
+            self.kickoff_instruction = kickoff_instruction;
+        }
+
+        // If provided, update the rate_limit
+        if let Some(rate_limit) = settings.rate_limit {
+            require!(
+                rate_limit.le(&MAX_RATE_LIMIT),
+                ClockworkError::RateLimitTooLarge
+            );
+            self.rate_limit = rate_limit;
+        }
+
+        // If provided, update the queue's trigger and reset the exec context
+        if let Some(trigger) = settings.trigger {
+            self.trigger = trigger;
+            self.exec_context = None;
+        }
+
         Ok(())
     }
 }

@@ -50,13 +50,8 @@ pub mod queue_program {
     }
 
     /// Allows an owner to update the mutable properties of a queue.
-    pub fn queue_update(
-        ctx: Context<QueueUpdate>,
-        kickoff_instruction: Option<InstructionData>,
-        rate_limit: Option<u64>,
-        trigger: Option<Trigger>,
-    ) -> Result<()> {
-        queue_update::handler(ctx, kickoff_instruction, rate_limit, trigger)
+    pub fn queue_update(ctx: Context<QueueUpdate>, settings: QueueSettings) -> Result<()> {
+        queue_update::handler(ctx, settings)
     }
 
     /// Allows an owner to withdraw from a queue's lamport balance.

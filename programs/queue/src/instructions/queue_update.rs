@@ -1,18 +1,15 @@
 use {
-    crate::{errors::ClockworkError, objects::*},
-    anchor_lang::{prelude::*, system_program::{transfer, Transfer}, solana_program::system_program},
-    clockwork_utils::*,
+    crate::objects::*,
+    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+        system_program::{transfer, Transfer},
+    },
 };
-
-const MAX_RATE_LIMIT: u64 = 32; 
 
 /// Accounts required by the `queue_update` instruction.
 #[derive(Accounts)]
-#[instruction(
-    kickoff_instruction: Option<InstructionData>, 
-    rate_limit: Option<u64>, 
-    trigger: Option<Trigger>
-)]
+#[instruction(settings: QueueSettings)]
 pub struct QueueUpdate<'info> {
     /// The authority (owner) of the queue.
     #[account(mut)]
@@ -36,34 +33,14 @@ pub struct QueueUpdate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<QueueUpdate>, 
-    kickoff_instruction: Option<InstructionData>, 
-    rate_limit: Option<u64>, 
-    trigger: Option<Trigger>
-) -> Result<()> {
-    
+pub fn handler(ctx: Context<QueueUpdate>, settings: QueueSettings) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
     let system_program = &ctx.accounts.system_program;
 
-    // If provided, update the queue's first instruction
-    if let Some(kickoff_instruction) = kickoff_instruction {
-        queue.kickoff_instruction = kickoff_instruction;
-    }
-
-    // If provided, update the rate_limit
-    if let Some(rate_limit) = rate_limit {
-        require!(rate_limit.le(&MAX_RATE_LIMIT), ClockworkError::RateLimitTooLarge);
-        queue.rate_limit = rate_limit;
-    }
-
-    // If provided, update the queue's trigger and reset the exec context
-    if let Some(trigger) = trigger {
-        queue.trigger = trigger;
-        queue.exec_context = None;
-    }
+    // Update the queue.
+    queue.update(settings)?;
 
     // Reallocate mem for the queue account
     queue.realloc()?;
