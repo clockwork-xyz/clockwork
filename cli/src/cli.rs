@@ -55,6 +55,9 @@ pub enum CliCommand {
         kickoff_instruction: InstructionData,
         trigger: Trigger,
     },
+    QueueDelete {
+        id: String,
+    },
     QueueGet {
         id: String,
     },
@@ -284,7 +287,16 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("get").about("Lookup the queue").arg(
+                    Command::new("delete").about("Delete a queue").arg(
+                        Arg::new("id")
+                            .index(1)
+                            .takes_value(true)
+                            .required(false)
+                            .help("The id of the queue to delete"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("get").about("Lookup a queue").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)

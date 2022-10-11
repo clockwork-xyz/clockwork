@@ -43,6 +43,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             kickoff_instruction,
             trigger,
         } => super::queue::create(&client, id, kickoff_instruction, trigger),
+        CliCommand::QueueDelete { id } => super::queue::delete(&client, id),
         CliCommand::QueueGet { id } => super::queue::get(&client, id),
         CliCommand::QueueUpdate { id, rate_limit } => super::queue::update(&client, id, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),

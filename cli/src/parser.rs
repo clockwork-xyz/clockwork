@@ -139,6 +139,9 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
             trigger: parse_trigger(matches)?,
         }),
+        Some(("delete", matches)) => Ok(CliCommand::QueueDelete {
+            id: parse_string("id", matches)?,
+        }),
         Some(("get", matches)) => Ok(CliCommand::QueueGet {
             id: parse_string("id", matches)?,
         }),

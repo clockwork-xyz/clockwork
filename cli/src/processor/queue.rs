@@ -27,6 +27,17 @@ pub fn create(
     Ok(())
 }
 
+pub fn delete(client: &Client, id: String) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
+    let ix = clockwork_client::queue::instruction::queue_delete(
+        client.payer_pubkey(),
+        client.payer_pubkey(),
+        queue_pubkey,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    Ok(())
+}
+
 pub fn get(client: &Client, id: String) -> Result<(), CliError> {
     let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
     let queue = client
