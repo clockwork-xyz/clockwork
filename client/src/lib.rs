@@ -4,4 +4,3 @@ pub mod webhook;
 
 mod client;
 pub use client::{Client, ClientError, ClientResult, SplToken};
-pub use queue::*;
