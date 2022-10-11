@@ -4,17 +4,17 @@ wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
 clockwork_network_program = "F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa"
-clockwork_queue_program = "3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv"
+clockwork_queue_program = "FLBzGUuyhShn7SRtPfveggrBkNp3hjvySBurx5QpWDrV"
 clockwork_webhook_program = "E7p5KFo8kKCDm6BUnWtnVFkQSYh6ZA6xaGAuvpv8NXTa"
 
 [programs.testnet]
 clockwork_network_program = "F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa"
-clockwork_queue_program = "3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv"
+clockwork_queue_program = "FLBzGUuyhShn7SRtPfveggrBkNp3hjvySBurx5QpWDrV"
 clockwork_webhook_program = "E7p5KFo8kKCDm6BUnWtnVFkQSYh6ZA6xaGAuvpv8NXTa"
 
 [programs.mainnet]
 clockwork_network_program = "F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa"
-clockwork_queue_program = "3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv"
+clockwork_queue_program = "FLBzGUuyhShn7SRtPfveggrBkNp3hjvySBurx5QpWDrV"
 clockwork_webhook_program = "E7p5KFo8kKCDm6BUnWtnVFkQSYh6ZA6xaGAuvpv8NXTa"
 
 [registry]

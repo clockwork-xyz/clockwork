@@ -17,9 +17,9 @@ sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_queue}'");/g' pro
 sed -i '' -e 's/^declare_id!(".*");/declare_id!("'${program_id_webhook}'");/g' programs/webhook/src/lib.rs
 
 # Update Anchor config
-sed -i '' -e 's/^network = ".*"/network = "'${program_id_network}'"/g' Anchor.toml
-sed -i '' -e 's/^queue = ".*"/queue = "'${program_id_queue}'"/g' Anchor.toml
-sed -i '' -e 's/^webhook = ".*"/webhook = "'${program_id_webhook}'"/g' Anchor.toml
+sed -i '' -e 's/^clockwork_network_program = ".*"/clockwork_network_program = "'${program_id_network}'"/g' Anchor.toml
+sed -i '' -e 's/^clockwork_queue_program = ".*"/clockwork_queue_program = "'${program_id_queue}'"/g' Anchor.toml
+sed -i '' -e 's/^clockwork_webhook_program = ".*"/clockwork_webhook_program = "'${program_id_webhook}'"/g' Anchor.toml
 
 # Rebuild
 anchor build
