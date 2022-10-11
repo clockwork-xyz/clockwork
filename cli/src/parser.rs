@@ -18,12 +18,12 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
             Some(("delegation", matches)) => parse_delegation_command(matches),
-            Some(("http", matches)) => parse_http_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
+            Some(("webhook", matches)) => parse_webhook_command(matches),
             Some(("worker", matches)) => parse_worker_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
@@ -91,6 +91,14 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("create", matches)) => Ok(CliCommand::DelegationCreate {
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
+        Some(("deposit", matches)) => Ok(CliCommand::DelegationDeposit {
+            amount: parse_u64("amount", matches)?,
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
         Some(("get", matches)) => Ok(CliCommand::DelegationGet {
             delegation_id: parse_u64("delegation_id", matches)?,
             worker_id: parse_u64("worker_id", matches)?,
@@ -101,18 +109,18 @@ fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
     }
 }
 
-fn parse_http_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::HttpRequestNew {
+fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::Initialize {
+        mint: parse_pubkey("mint", matches)?,
+    })
+}
+
+fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::WebhookRequestNew {
         api: parse_pubkey("api", matches)?,
         id: parse_string("id", matches)?,
         method: parse_http_method("method", matches)?,
         route: parse_string("route", matches)?,
-    })
-}
-
-fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::Initialize {
-        mint: parse_pubkey("mint", matches)?,
     })
 }
 

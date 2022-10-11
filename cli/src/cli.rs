@@ -15,17 +15,17 @@ pub enum CliCommand {
     ConfigGet,
 
     // Delegation
-    DelegationGet {
+    DelegationCreate {
+        worker_id: u64,
+    },
+    DelegationDeposit {
+        amount: u64,
         delegation_id: u64,
         worker_id: u64,
     },
-
-    // Http
-    HttpRequestNew {
-        api: Pubkey,
-        id: String,
-        method: HttpMethod,
-        route: String,
+    DelegationGet {
+        delegation_id: u64,
+        worker_id: u64,
     },
 
     Initialize {
@@ -55,10 +55,13 @@ pub enum CliCommand {
     // Registry
     RegistryGet,
 
-    // Snapshot
-    // SnapshotGet {
-    //     entry_id: Option<u64>,
-    // },
+    // Http
+    WebhookRequestNew {
+        api: Pubkey,
+        id: String,
+        method: HttpMethod,
+        route: String,
+    },
 
     // Worker commands
     WorkerCreate {
@@ -111,6 +114,44 @@ pub fn app() -> Command<'static> {
         .subcommand(
             Command::new("delegation")
                 .about("Manage a stake delegation to a Clockwork worker")
+                .subcommand(
+                    Command::new("create")
+                        .about("Create a new delegation")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("worker_id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the worker to create a delegation with"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("deposit")
+                        .about("Deposit CLOCK to a delegation account")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("amount")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The number of tokens to deposit"),
+                        )
+                        .arg(
+                            Arg::new("delegation_id")
+                                .index(2)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the delegation to deposit into"),
+                        )
+                        .arg(
+                            Arg::new("worker_id")
+                                .index(3)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the worker"),
+                        ),
+                )
                 .subcommand(
                     Command::new("get")
                         .about("Get a delegation")
