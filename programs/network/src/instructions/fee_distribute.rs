@@ -75,12 +75,15 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
     let worker = &ctx.accounts.worker;
 
     // Calculate the balance of this particular delegation, based on the weight of its stake with this worker.
-    let distribution_balance = fee
-        .distributable_balance
-        .checked_mul(snapshot_entry.stake_amount)
-        .unwrap()
-        .checked_div(snapshot_frame.stake_amount)
-        .unwrap();
+    let distribution_balance = if snapshot_frame.stake_amount.gt(&0) {
+        fee.distributable_balance
+            .checked_mul(snapshot_entry.stake_amount)
+            .unwrap()
+            .checked_div(snapshot_frame.stake_amount)
+            .unwrap()
+    } else {
+        0
+    };
 
     // Transfer yield to the worker.
     **fee.to_account_info().try_borrow_mut_lamports()? = fee
