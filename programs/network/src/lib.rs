@@ -79,7 +79,7 @@ pub mod network_program {
         registry_nonce_hash::handler(ctx)
     }
 
-    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<()> {
+    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<CrankResponse> {
         snapshot_delete::handler(ctx)
     }
 
@@ -91,8 +91,16 @@ pub mod network_program {
         snapshot_entry_create::handler(ctx)
     }
 
+    pub fn snapshot_entry_delete(ctx: Context<SnapshotEntryDelete>) -> Result<CrankResponse> {
+        snapshot_entry_delete::handler(ctx)
+    }
+
     pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
         snapshot_frame_create::handler(ctx)
+    }
+
+    pub fn snapshot_frame_delete(ctx: Context<SnapshotFrameDelete>) -> Result<CrankResponse> {
+        snapshot_frame_delete::handler(ctx)
     }
 
     pub fn unstake_create(ctx: Context<UnstakeCreate>, amount: u64) -> Result<()> {

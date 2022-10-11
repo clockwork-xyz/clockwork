@@ -14,7 +14,7 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
+pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), CliError> {
     // Get config data
     let config_pubkey = Config::pubkey();
     let config_data = client
@@ -43,6 +43,8 @@ pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
     client
         .send_and_confirm(&[ix], &[client.payer(), &signatory])
         .unwrap();
-    get(client, worker_id)?;
+    if !silent {
+        get(client, worker_id)?;
+    }
     Ok(())
 }

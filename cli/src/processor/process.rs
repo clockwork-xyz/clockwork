@@ -53,7 +53,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             method,
             route,
         } => super::webhook::request_new(&client, api, id, method, route),
-        CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory),
+        CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory, false),
         CliCommand::WorkerGet { id } => super::worker::get(&client, id),
     }
 }

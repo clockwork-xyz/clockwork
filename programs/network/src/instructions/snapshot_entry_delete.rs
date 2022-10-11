@@ -1,65 +1,133 @@
-use {crate::objects::*, anchor_lang::prelude::*};
+use clockwork_utils::{InstructionData, AccountMetaData, anchor_sighash};
+
+use {crate::objects::*, anchor_lang::prelude::*, clockwork_utils::CrankResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotEntryDelete<'info> {
+    #[account(address = Config::pubkey())]
+    pub config: Account<'info, Config>,
+
+    #[account(
+        mut, 
+        address = config.epoch_queue
+    )]
+    pub queue: Signer<'info>,
+
+    #[account(
+        address = Registry::pubkey(),
+        constraint = !registry.locked
+    )]
+    pub registry: Account<'info, Registry>,
+
     #[account(
         mut,
         seeds = [
             SEED_SNAPSHOT,
-            snapshot.epoch.as_ref(),
+            snapshot.id.to_be_bytes().as_ref(),
         ],
         bump,
-        // constraint = snapshot.status == SnapshotStatus::Closing,
+        constraint = snapshot.id.lt(&registry.current_epoch)
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    // #[account(
-    //     mut,
-    //     seeds = [
-    //         SEED_SNAPSHOT_ENTRY,
-    //         snapshot_frame.snapshot.as_ref(),
-    //         snapshot_frame.id.to_be_bytes().as_ref(),
-    //     ],
-    //     bump,
-    //     has_one = snapshot,
-    // )]
-    // pub snapshot_frame: Account<'info, SnapshotEntry>,
-    #[account(mut)]
-    pub signer: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [
+            SEED_SNAPSHOT_ENTRY,
+            snapshot_entry.snapshot_frame.as_ref(),
+            snapshot_entry.id.to_be_bytes().as_ref(),
+        ],
+        bump,
+        has_one = snapshot_frame
+    )]
+    pub snapshot_entry: Account<'info, SnapshotEntry>,
+
+    #[account(
+        mut,
+        seeds = [
+            SEED_SNAPSHOT_FRAME,
+            snapshot_frame.snapshot.as_ref(),
+            snapshot_frame.id.to_be_bytes().as_ref(),
+        ],
+        bump,
+        has_one = snapshot,
+    )]
+    pub snapshot_frame: Account<'info, SnapshotFrame>,
 }
 
-pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<()> {
+pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<CrankResponse> {
     // Get accounts
-    // let entry = &mut ctx.accounts.entry;
-    let signer = &mut ctx.accounts.signer;
+    let config = &ctx.accounts.config;
+    let queue = &mut ctx.accounts.queue;
+    let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
+    let snapshot_entry = &mut ctx.accounts.snapshot_entry;
+    let snapshot_frame = &mut ctx.accounts.snapshot_frame;
 
-    // If snapshot is not closing, then noop and try again on next invocation.
-    // if snapshot.status != SnapshotStatus::Closing {
-    //     return Ok(());
-    // }
+    // Close the snapshot entry account.
+    let snapshot_entry_lamports = snapshot_entry.to_account_info().lamports();
+    **snapshot_entry.to_account_info().lamports.borrow_mut() = 0;
+    **queue.to_account_info().lamports.borrow_mut() = queue
+        .to_account_info()
+        .lamports()
+        .checked_add(snapshot_entry_lamports)
+        .unwrap();
 
-    // Close the entry account.
-    // let entry_id = entry.id.clone();
-    // let entry_lamports = entry.to_account_info().lamports();
-    // **entry.to_account_info().lamports.borrow_mut() = 0;
-    // **signer.to_account_info().lamports.borrow_mut() = signer
-    //     .to_account_info()
-    //     .lamports()
-    //     .checked_add(entry_lamports)
-    //     .unwrap();
+    // If this frame has no more entries, then close the frame account.
+    if snapshot_entry.id.checked_add(1).unwrap().eq(&snapshot_frame.total_entries) {
+        let snapshot_frame_lamports = snapshot_frame.to_account_info().lamports();
+        **snapshot_frame.to_account_info().lamports.borrow_mut() = 0;
+        **queue.to_account_info().lamports.borrow_mut() = queue
+            .to_account_info()
+            .lamports()
+            .checked_add(snapshot_frame_lamports)
+            .unwrap();
 
-    // If this is the last entry of the snapshot, then also close the snapshot account.
-    // let snapshot_total_workers = snapshot.total_workers.clone();
-    // if entry_id == snapshot_total_workers.checked_sub(1).unwrap() {
-    //     let snapshot_lamports = snapshot.to_account_info().lamports();
-    //     **snapshot.to_account_info().lamports.borrow_mut() = 0;
-    //     **signer.to_account_info().lamports.borrow_mut() = signer
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(snapshot_lamports)
-    //         .unwrap();
-    // }
 
-    Ok(())
+        // If this is also the last frame in the snapshot, then close the snapshot account.
+        if snapshot_frame.id.checked_add(1).unwrap().eq(&snapshot.total_frames) {
+            let snapshot_lamports = snapshot.to_account_info().lamports();
+            **snapshot.to_account_info().lamports.borrow_mut() = 0;
+            **queue.to_account_info().lamports.borrow_mut() = queue
+                .to_account_info()
+                .lamports()
+                .checked_add(snapshot_lamports)
+                .unwrap();
+        }
+    }
+
+    // Build the next instruction
+    let next_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
+        // Move on to the next entry.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new(snapshot.key(), false),
+                AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
+                AccountMetaData::new(snapshot_frame.key(), false),
+            ],
+            data: anchor_sighash("snapshot_entry_delete").to_vec(),
+        })
+    } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
+        // This frame has no more entries. Move onto the next frame.
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new(snapshot.key(), false),
+                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot.id.checked_add(1).unwrap()), false),
+            ],
+            data: anchor_sighash("snapshot_frame_delete").to_vec(),
+        })
+    } else {
+        // This frame as no more entires and it was the last frame in the snapshot. We are done!
+        None
+    };
+
+    Ok( CrankResponse { next_instruction, ..CrankResponse::default() } )
 }

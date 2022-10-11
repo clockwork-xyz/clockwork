@@ -104,7 +104,7 @@ fn register_worker(client: &Client) -> Result<()> {
     );
     let signatory = read_keypair_file(keypath).unwrap();
     client.airdrop(&signatory.pubkey(), LAMPORTS_PER_SOL)?;
-    super::worker::create(client, signatory)?;
+    super::worker::create(client, signatory, true)?;
 
     // Delegate stake to the worker
     super::delegation::create(client, 0)?;
@@ -146,10 +146,6 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
             skippable: true,
         },
     );
-
-    let ix = clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey);
-
-    println!("Instruction: {:#?}", ix);
 
     // Update config with queue pubkeys
     let ix_c = clockwork_client::network::instruction::config_update(
