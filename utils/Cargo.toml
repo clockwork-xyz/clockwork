@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-utils"
-version = "1.2.2"
+version = "1.2.3"
 description = "Utils for building automated programs on Solana"
 edition = "2021"
 license = "AGPL-3.0-or-later"
