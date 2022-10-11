@@ -33,6 +33,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
+        CliCommand::QueueCreate {
+            id,
+            kickoff_instruction,
+            trigger,
+        } => super::queue::create(&client, id, kickoff_instruction, trigger),
         CliCommand::QueueGet { id } => super::queue::get(&client, id),
         CliCommand::QueueUpdate { id, rate_limit } => super::queue::update(&client, id, rate_limit),
         CliCommand::RegistryGet => super::registry::get(&client),

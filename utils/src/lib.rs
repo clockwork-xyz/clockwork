@@ -1,6 +1,3 @@
-// mod payer;
-// pub use payer::*;
-
 use {
     anchor_lang::{
         prelude::borsh::BorshSchema,

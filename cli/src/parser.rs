@@ -1,9 +1,9 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use clockwork_client::webhook::objects::HttpMethod;
+use clockwork_client::{queue::objects::Trigger, webhook::objects::HttpMethod};
+use clockwork_utils::{AccountMetaData, InstructionData};
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
     signature::{read_keypair_file, Keypair},
     signer::Signer,
@@ -152,6 +152,11 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("create", matches)) => Ok(CliCommand::QueueCreate {
+            id: parse_string("id", matches)?,
+            kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
+            trigger: parse_trigger(matches)?,
+        }),
         Some(("get", matches)) => Ok(CliCommand::QueueGet {
             id: parse_string("id", matches)?,
         }),
@@ -175,6 +180,31 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 // }
 
 // Arg parsers
+
+fn parse_trigger(matches: &ArgMatches) -> Result<Trigger, CliError> {
+    if matches.is_present("account") {
+        return Ok(Trigger::Account {
+            pubkey: parse_pubkey("address", matches)?,
+        });
+    } else if matches.is_present("cron") {
+        return Ok(Trigger::Cron {
+            schedule: parse_string("cron", matches)?,
+            skippable: true,
+        });
+    } else if matches.is_present("immediate") {
+        return Ok(Trigger::Immediate);
+    }
+
+    Err(CliError::BadParameter("trigger".into()))
+}
+
+fn parse_instruction_file(arg: &str, matches: &ArgMatches) -> Result<InstructionData, CliError> {
+    let filepath = parse_string(arg, matches)?;
+    let text = fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter(arg.into()))?;
+    let ix: JsonInstructionData =
+        serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
+    InstructionData::try_from(&ix)
+}
 
 fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
     Ok(read_keypair_file(parse_string(arg, matches)?)
@@ -221,30 +251,30 @@ pub struct JsonInstructionData {
     pub data: Vec<u8>,
 }
 
-impl TryFrom<&JsonInstructionData> for Instruction {
+impl TryFrom<&JsonInstructionData> for InstructionData {
     type Error = CliError;
 
     fn try_from(value: &JsonInstructionData) -> Result<Self, Self::Error> {
-        Ok(Instruction {
+        Ok(InstructionData {
             program_id: Pubkey::from_str(value.program_id.as_str())
-                .map_err(|_err| CliError::BadParameter("asdf".into()))?,
+                .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             accounts: value
                 .accounts
                 .iter()
-                .map(|ix| AccountMeta::try_from(ix).unwrap())
-                .collect::<Vec<AccountMeta>>(),
+                .map(|ix| AccountMetaData::try_from(ix).unwrap())
+                .collect::<Vec<AccountMetaData>>(),
             data: value.data.clone(),
         })
     }
 }
 
-pub fn _parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
-    let text =
-        fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter("filepath".into()))?;
-    let ix: JsonInstructionData =
-        serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
-    Instruction::try_from(&ix)
-}
+// pub fn _parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
+//     let text =
+//         fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter("filepath".into()))?;
+//     let ix: JsonInstructionData =
+//         serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
+//     Instruction::try_from(&ix)
+// }
 
 #[derive(Debug, JsonDeserialize, JsonSerialize, PartialEq)]
 pub struct JsonAccountMetaData {
@@ -253,13 +283,13 @@ pub struct JsonAccountMetaData {
     pub is_writable: bool,
 }
 
-impl TryFrom<&JsonAccountMetaData> for AccountMeta {
+impl TryFrom<&JsonAccountMetaData> for AccountMetaData {
     type Error = CliError;
 
     fn try_from(value: &JsonAccountMetaData) -> Result<Self, Self::Error> {
-        Ok(AccountMeta {
+        Ok(AccountMetaData {
             pubkey: Pubkey::from_str(value.pubkey.as_str())
-                .map_err(|_err| CliError::BadParameter("asdf".into()))?,
+                .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             is_signer: value.is_signer,
             is_writable: value.is_writable,
         })

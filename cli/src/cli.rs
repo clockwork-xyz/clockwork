@@ -1,6 +1,7 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
-use clockwork_client::webhook::objects::HttpMethod;
+use clockwork_client::{queue::objects::Trigger, webhook::objects::HttpMethod};
+use clockwork_utils::InstructionData;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
@@ -44,6 +45,11 @@ pub enum CliCommand {
     PoolList {},
 
     // Queue commands
+    QueueCreate {
+        id: String,
+        kickoff_instruction: InstructionData,
+        trigger: Trigger,
+    },
     QueueGet {
         id: String,
     },
@@ -220,8 +226,58 @@ pub fn app() -> Command<'static> {
         )
         .subcommand(
             Command::new("queue")
-                .about("Manage your Clockwork transaction queues")
+                .about("Manage your transaction queues")
                 .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("create")
+                        .about("Create a new queue")
+                        .arg(
+                            Arg::new("id")
+                                .long("id")
+                                .short('i')
+                                .value_name("ID")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The ID of the queue to be created"),
+                        )
+                        .arg(
+                            Arg::new("kickoff_instruction")
+                                .long("kickoff_instruction")
+                                .short('k')
+                                .value_name("FILEPATH")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Filepath to a description of the kickoff instruction"),
+                        )
+                        .arg(
+                            Arg::new("account")
+                                .long("account")
+                                .short('a')
+                                .value_name("ADDRESS")
+                                .takes_value(true)
+                                .help("An account-based trigger"),
+                        )
+                        .arg(
+                            Arg::new("cron")
+                                .long("cron")
+                                .short('c')
+                                .value_name("SCHEDULE")
+                                .takes_value(true)
+                                .help("A cron-based trigger"),
+                        )
+                        .arg(
+                            Arg::new("immediate")
+                                .long("immediate")
+                                .short('m')
+                                .takes_value(false)
+                                .help("An immediate trigger"),
+                        )
+                        .group(
+                            ArgGroup::new("trigger")
+                                .args(&["account", "cron", "immediate"])
+                                .required(true),
+                        ),
+                )
                 .subcommand(
                     Command::new("get").about("Lookup the queue").arg(
                         Arg::new("id")

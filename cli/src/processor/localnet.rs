@@ -147,6 +147,10 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
+    let ix = clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey);
+
+    println!("Instruction: {:#?}", ix);
+
     // Update config with queue pubkeys
     let ix_c = clockwork_client::network::instruction::config_update(
         client.payer_pubkey(),

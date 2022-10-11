@@ -288,7 +288,7 @@ impl QueueAccount for Account<'_, Queue> {
 }
 
 /// The triggering conditions of a queue.
-#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
+#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
 pub enum Trigger {
     /// Allows a queue to subscribe to an accout and be cranked whenever the data of that account changes.
     Account {
