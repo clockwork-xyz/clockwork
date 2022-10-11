@@ -25,10 +25,10 @@
 
 ## Deployments
 
-| Program | Address| Devnet | Testnet | Mainnet Beta |
-| ------- | ------ | ------ | ------- | ------------ |
-| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.2.3](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | Soon | Soon |
-| Queue | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.2.3](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | Soon | Soon |
+| Program | Address| Devnet | Mainnet |
+| ------- | ------ | ------ | ------- |
+| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.2.3](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | Soon |
+| Queue | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.2.3](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | Soon |
 
 
 ## Notes
