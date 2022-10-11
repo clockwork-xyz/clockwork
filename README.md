@@ -25,10 +25,10 @@
 
 ## Deployments
 
-| Program | Address| Devnet | Testnet | Mainnet Beta |
-| ------- | ------ | ------ | ------- | ------------ |
-| Network | `7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP` | [v1.1.4](https://explorer.solana.com/address/7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP?cluster=devnet) | Soon | Soon |
-| Queue | `AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H` | [v1.1.4](https://explorer.solana.com/address/AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H?cluster=devnet) | Soon | Soon |
+| Program | Address| Devnet | Mainnet |
+| ------- | ------ | ------ | ------- |
+| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.2.4](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | Soon |
+| Queue | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.2.4](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | Soon |
 
 
 ## Notes
@@ -88,8 +88,9 @@ Then, setup the plugin config file in a folder where your validator startup scri
   "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
   "keypath": "/home/sol/clockwork-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
-  "slot_timeout_threshold": 150,
-  "worker_threads": 10
+  "transaction_timeout_threshold": 150,
+  "thread_count": 10,
+  "worker_id": 0,  // Set this to your worker ID!
 }
 ```
 

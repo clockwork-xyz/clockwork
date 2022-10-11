@@ -16,47 +16,51 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 # Bump programs
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/queue/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/pool/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/webhook/Cargo.toml
 
-# Bump inter-program dependencies
+# Bump network program dependencies
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/network/Cargo.toml
+
+# Bump queue program dependencies
 sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/queue/Cargo.toml
-sed -i '' -e 's/^clockwork-pool-proram =.*/clockwork-pool-proram = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^clockwork-pool-program =.*/clockwork-pool-program = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/queue/Cargo.toml
-sed -i '' -e 's/^clockwork-pool-program =.*/clockwork-pool-program = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^clockwork-queue-program =.*/clockwork-queue-program = { path = "..\/queue", features = ["cpi"], version = "'${new_version}'" }/g' programs/network/Cargo.toml
-sed -i '' -e 's/^clockwork-pool-program =.*/clockwork-pool-program = { path = "..\/pool", features = ["cpi"], version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
+sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/queue/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/queue/Cargo.toml
+
+# Bump webhook program dependencies
+sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
 
 # Bump clockwork-client
 sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
-sed -i '' -e 's/^clockwork-pool-program =.*/clockwork-pool-program = { path = "..\/programs\/pool", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^clockwork-queue-program =.*/clockwork-queue-program = { path = "..\/programs\/queue", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e 's/^clockwork-webhook-program =.*/clockwork-webhook-program = { path = "..\/programs\/webhook", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' client/Cargo.toml
 
-# Bump clockwork-bench
-sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' bench/Cargo.toml
-sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/cron", version = "'${new_version}'" }/g' bench/Cargo.toml
-sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' bench/Cargo.toml
-
 # Bump clockwork-cli
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' cli/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' cli/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
 
 # Bump clockwork-plugin
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/cron", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' plugin/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
 
 # Bump clockwork-sdk
-sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { optional = true, path = "..\/client", version = "'${new_version}'" }/g' sdk/Cargo.toml
-sed -i '' -e 's/^clockwork-queue-program =.*/clockwork-queue-program = { path = "..\/programs\/queue", features = ["cpi"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-queue-program =.*/clockwork-queue-program = { path = "..\/programs\/queue", features = ["cpi"], version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
+
+# Bump clockwork-utils
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' utils/Cargo.toml
 
 # Update version
 echo $new_version > VERSION
 
-# Wait for Cargo.toml update
-sleep 25
+# Rebuild
+cargo build
 
 # Git commit 
 echo "$(git diff --stat | tail -n1)"

@@ -1,29 +1,26 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
 
 pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 
 /**
  * SnapshotEntry
  */
+
 #[account]
 #[derive(Debug)]
 pub struct SnapshotEntry {
+    pub delegation: Pubkey,
     pub id: u64,
-    pub snapshot: Pubkey,
+    pub snapshot_frame: Pubkey,
     pub stake_amount: u64,
-    pub stake_offset: u64,
-    pub worker: Pubkey,
 }
 
 impl SnapshotEntry {
-    pub fn pubkey(snapshot: Pubkey, id: u64) -> Pubkey {
+    pub fn pubkey(snapshot_frame: Pubkey, id: u64) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 SEED_SNAPSHOT_ENTRY,
-                snapshot.as_ref(),
+                snapshot_frame.as_ref(),
                 id.to_be_bytes().as_ref(),
             ],
             &crate::ID,
@@ -48,32 +45,29 @@ pub trait SnapshotEntryAccount {
 
     fn init(
         &mut self,
+        delegation: Pubkey,
         id: u64,
-        snapshot: Pubkey,
-        stake_offset: u64,
+        snapshot_frame: Pubkey,
         stake_amount: u64,
-        worker: Pubkey,
     ) -> Result<()>;
 }
 
 impl SnapshotEntryAccount for Account<'_, SnapshotEntry> {
     fn pubkey(&self) -> Pubkey {
-        SnapshotEntry::pubkey(self.snapshot, self.id)
+        SnapshotEntry::pubkey(self.snapshot_frame, self.id)
     }
 
     fn init(
         &mut self,
+        delegation: Pubkey,
         id: u64,
-        snapshot: Pubkey,
-        stake_offset: u64,
+        snapshot_frame: Pubkey,
         stake_amount: u64,
-        worker: Pubkey,
     ) -> Result<()> {
+        self.delegation = delegation;
         self.id = id;
-        self.snapshot = snapshot;
-        self.stake_offset = stake_offset;
+        self.snapshot_frame = snapshot_frame;
         self.stake_amount = stake_amount;
-        self.worker = worker;
         Ok(())
     }
 }

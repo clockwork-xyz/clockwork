@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-utils"
-version = "1.1.4"
+version = "1.2.4"
 description = "Utils for building automated programs on Solana"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -15,7 +15,5 @@ name = "clockwork_utils"
 
 [dependencies]
 anchor-lang = "0.25.0"
-
-[dev-dependencies]
-chrono-tz = "0.6.1"
 static-pubkey = "1.0.3"
+

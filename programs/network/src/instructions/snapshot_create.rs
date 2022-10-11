@@ -1,31 +1,33 @@
-use anchor_spl::associated_token::get_associated_token_address;
-
 use {
     crate::objects::*,
-    anchor_lang::{prelude::*, solana_program::instruction::Instruction},
-    clockwork_queue_program::objects::{CrankResponse, Queue, QueueAccount},
+    anchor_lang::{prelude::*, solana_program::system_program},
+    anchor_spl::associated_token::get_associated_token_address,
+    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
     std::mem::size_of,
 };
 
 #[derive(Accounts)]
 pub struct SnapshotCreate<'info> {
-    #[account(address = Authority::pubkey())]
-    pub authority: Box<Account<'info, Authority>>,
-
     #[account(address = Config::pubkey())]
-    pub config: Box<Account<'info, Config>>,
+    pub config: Account<'info, Config>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, seeds = [SEED_REGISTRY], bump)]
+    #[account(address = config.epoch_queue)]
+    pub queue: Signer<'info>,
+
+    #[account(
+        address = Registry::pubkey(),
+        constraint = registry.locked
+    )]
     pub registry: Account<'info, Registry>,
 
     #[account(
         init,
         seeds = [
             SEED_SNAPSHOT,
-            registry.snapshot_count.to_be_bytes().as_ref(),
+            registry.current_epoch.checked_add(1).unwrap().to_be_bytes().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Snapshot>(),
@@ -33,73 +35,60 @@ pub struct SnapshotCreate<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(
-        address = snapshot_queue.pubkey(),
-        constraint = snapshot_queue.id.eq("snapshot"),
-        has_one = authority,
-        signer,
-    )]
-    pub snapshot_queue: Account<'info, Queue>,
-
-    #[account()]
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
     // Get accounts
-    let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
-    let registry = &mut ctx.accounts.registry;
+    let payer = &ctx.accounts.payer;
+    let queue = &ctx.accounts.queue;
+    let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
-    let snapshot_queue = &ctx.accounts.snapshot_queue;
     let system_program = &ctx.accounts.system_program;
 
-    // Start a new snapshot
-    registry.new_snapshot(snapshot)?;
+    // Start a new snapshot.
+    snapshot.init(registry.current_epoch.checked_add(1).unwrap())?;
 
-    // Build the next crank instruction
-    let next_instruction = if registry.node_count > 0 {
-        // There are nodes in the registry. Begin creating snapshot entries.
-        let node_pubkey = Node::pubkey(0);
-        let entry_pubkey = SnapshotEntry::pubkey(snapshot.key(), 0);
-        let stake_pubkey = get_associated_token_address(&node_pubkey, &config.mint);
-        Some(
-            Instruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMeta::new_readonly(authority.key(), false),
-                    AccountMeta::new_readonly(config.key(), false),
-                    AccountMeta::new(entry_pubkey, false),
-                    AccountMeta::new_readonly(node_pubkey, false),
-                    AccountMeta::new(clockwork_queue_program::utils::PAYER_PUBKEY, true),
-                    AccountMeta::new_readonly(registry.key(), false),
-                    AccountMeta::new(snapshot.key(), false),
-                    AccountMeta::new_readonly(snapshot_queue.key(), true),
-                    AccountMeta::new_readonly(stake_pubkey, false),
-                    AccountMeta::new_readonly(system_program.key(), false),
-                ],
-                data: clockwork_queue_program::utils::anchor_sighash("entry_create").into(),
-            }
-            .into(),
-        )
+    // Build next instruction for queue.
+    let next_instruction = if registry.total_workers.gt(&0) {
+        // The registry has workers. Create a snapshot frame for the zeroth worker.
+        let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
+        let worker_pubkey = Worker::pubkey(0);
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new(snapshot.key(), false),
+                AccountMetaData::new(snapshot_frame_pubkey, false),
+                AccountMetaData::new_readonly(system_program.key(), false),
+                AccountMetaData::new_readonly(worker_pubkey, false),
+                AccountMetaData::new_readonly(
+                    get_associated_token_address(&worker_pubkey, &config.mint),
+                    false,
+                ),
+            ],
+            data: anchor_sighash("snapshot_frame_create").to_vec(),
+        })
     } else {
-        // There are no nodes in the registry. Activate the new snapshot.
-        Some(
-            Instruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMeta::new_readonly(authority.key(), false),
-                    AccountMeta::new_readonly(config.key(), false),
-                    AccountMeta::new(Snapshot::pubkey(snapshot.id.checked_sub(1).unwrap()), false), // The current active snapshot
-                    AccountMeta::new(snapshot.key(), false), // The next active snapshot
-                    AccountMeta::new(registry.key(), false),
-                    AccountMeta::new_readonly(snapshot_queue.key(), true),
-                ],
-                data: clockwork_queue_program::utils::anchor_sighash("snapshot_rotate").into(),
-            }
-            .into(),
-        )
+        // The registry has no workers, so the snapshot is done. Start the epoch!
+        Some(InstructionData {
+            program_id: crate::ID,
+            accounts: vec![
+                AccountMetaData::new_readonly(config.key(), false),
+                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new(registry.key(), false),
+            ],
+            data: anchor_sighash("registry_epoch_cutover").to_vec(),
+        })
     };
 
-    Ok(CrankResponse { next_instruction })
+    Ok(CrankResponse {
+        next_instruction,
+        ..CrankResponse::default()
+    })
 }

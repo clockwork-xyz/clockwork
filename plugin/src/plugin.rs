@@ -4,9 +4,9 @@ use {
         events::AccountUpdateEvent,
         executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
-            http::{HttpObserver, HttpRequest},
-            pool::PoolObserver,
+            network::NetworkObserver,
             queue::QueueObserver,
+            webhook::{HttpRequest, WebhookObserver},
             Observers,
         },
         tpu_client::TpuClient,
@@ -67,39 +67,39 @@ impl GeyserPlugin for ClockworkPlugin {
         self.observers
             .queue
             .clone()
-            .handle_updated_account(account_pubkey, account_info.clone())?;
+            .observe_account(account_pubkey, account_info.clone())?;
 
         // Parse and process specific update events.
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.observers.queue.clone().handle_updated_clock(clock)
+                    self.observers.queue.clone().observe_clock(clock)
                 }
                 AccountUpdateEvent::HttpRequest { request } => {
-                    self.observers.http.clone().handle_updated_http_request(
-                        HttpRequest {
-                            pubkey: account_pubkey,
-                            request,
-                        },
-                        slot,
-                    )
+                    self.observers.webhook.clone().observe_request(HttpRequest {
+                        pubkey: account_pubkey,
+                        request,
+                    })
                 }
                 AccountUpdateEvent::Pool { pool } => {
-                    self.observers.pool.clone().handle_updated_pool(pool, slot)
+                    self.observers.network.clone().observe_pool(pool, slot)
                 }
                 AccountUpdateEvent::Queue { queue } => self
                     .observers
                     .queue
                     .clone()
-                    .handle_updated_queue(queue, account_pubkey),
-                AccountUpdateEvent::Rotator { rotator } => {
-                    self.observers.pool.clone().handle_updated_rotator(rotator)
+                    .observe_queue(queue, account_pubkey),
+                AccountUpdateEvent::Registry { registry } => {
+                    self.observers.network.clone().observe_registry(registry)
                 }
-                AccountUpdateEvent::Snapshot { snapshot } => self
+                AccountUpdateEvent::Snapshot { snapshot } => {
+                    self.observers.network.clone().observe_snapshot(snapshot)
+                }
+                AccountUpdateEvent::SnapshotFrame { snapshot_frame } => self
                     .observers
-                    .pool
+                    .network
                     .clone()
-                    .handle_updated_snapshot(snapshot),
+                    .observe_snapshot_frame(snapshot_frame),
             },
             Err(_err) => Ok(()),
         }
@@ -116,16 +116,23 @@ impl GeyserPlugin for ClockworkPlugin {
         _parent: Option<u64>,
         status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
     ) -> PluginResult<()> {
-        // Re-check health and attempt to build the executor if we're still not caught up
+        // If they don't exist yet, try to build the executors.
         if self.executors.is_none() {
             self.try_build_executors()
         }
 
         // Update the plugin state and execute transactions with the confirmed slot number
         match status {
-            SlotStatus::Confirmed => match &self.executors {
+            SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
-                    executors.clone().handle_confirmed_slot(slot)?;
+                    info!(
+                        "slot: {} crankable_queues: {} cron_queues: {}",
+                        slot,
+                        self.observers.queue.crankable_queues.len(),
+                        self.observers.queue.cron_queues.len()
+                    );
+                    self.observers.queue.clone().observe_slot(slot)?;
+                    executors.clone().execute_work(slot)?;
                 }
                 None => (),
             },
@@ -161,16 +168,16 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let pool_observer = Arc::new(PoolObserver::new(config.clone(), runtime.clone()));
-        let queue_observer = Arc::new(QueueObserver::new(runtime.clone()));
-        let http_observer = Arc::new(HttpObserver::new(runtime.clone()));
+        let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
+        let queue_observer = Arc::new(QueueObserver::new(config.clone(), runtime.clone()));
+        let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
-                http: http_observer,
-                pool: pool_observer,
+                network: network_observer,
                 queue: queue_observer,
+                webhook: webhook_observer,
             }),
             runtime,
         }
@@ -218,7 +225,6 @@ impl ClockworkPlugin {
         ));
         self.executors = Some(Arc::new(Executors {
             tx: tx_executor,
-            observers: self.observers.clone(),
             runtime: self.runtime.clone(),
             webhook: webhook_executor,
         }))
@@ -236,8 +242,8 @@ fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
         Builder::new_multi_thread()
             .enable_all()
             .thread_name("clockwork-plugin")
-            .worker_threads(config.worker_threads)
-            .max_blocking_threads(config.worker_threads)
+            .worker_threads(config.thread_count)
+            .max_blocking_threads(config.thread_count)
             .build()
             .unwrap(),
     )

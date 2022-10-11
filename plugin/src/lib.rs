@@ -1,5 +1,6 @@
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
+mod builders;
 mod config;
 mod events;
 mod executors;

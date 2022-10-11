@@ -92,7 +92,6 @@ if command -v anchor &> /dev/null; then
 
   # Copy program binaries into lib folder
   cp -fv "target/deploy/clockwork_network_program.so" "$installDir"/lib
-  cp -fv "target/deploy/clockwork_pool_program.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_queue_program.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir"/lib
 fi
@@ -102,8 +101,9 @@ touch "$installDir"/lib/geyser-plugin-config.json
 echo "{
   \"libpath\": \"$installDir/lib/libclockwork_plugin.$libExt\",
   \"keypath\": \"$installDir/lib/clockwork-worker-keypair.json\",
-  \"slot_timeout_threshold\": 150,
-  \"worker_threads\": 10
+  \"transaction_timeout_threshold\": 150,
+  \"thread_count\": 10,
+  \"worker_id\": 0
 }" > "$installDir"/lib/geyser-plugin-config.json
 
 # Create a worker keypair
@@ -113,7 +113,7 @@ if command -v solana-keygen &> /dev/null; then
   echo
 fi
 
-# Create global Clockwork config file
+# Create local Clockwork config file
 mkdir -p ~/.config/solana/clockwork
 touch ~/.config/solana/clockwork/config.yml
 echo "home: $installDir" > ~/.config/solana/clockwork/config.yml

@@ -1,7 +1,7 @@
 use {
     crate::{
         config::PluginConfig,
-        observers::{http::HttpRequest, Observers},
+        observers::{webhook::HttpRequest, Observers},
     },
     clockwork_client::webhook::objects::HttpMethod,
     log::info,
@@ -36,8 +36,8 @@ impl WebhookExecutor {
     }
 
     pub fn execute_requests(self: Arc<Self>) -> PluginResult<()> {
-        for http_request in self.clone().observers.http.confirmed_requests.iter() {
-            self.clone().execute_request(http_request.clone())?;
+        for request in self.clone().observers.webhook.webhook_requests.iter() {
+            self.clone().execute_request(request.clone())?;
         }
         Ok(())
     }
@@ -55,10 +55,13 @@ impl WebhookExecutor {
             .send()
             .await;
             match res {
-                Ok(res) => info!("Http response: {:#?}", res),
-                Err(err) => info!("Http request failed with error: {}", err),
+                Ok(res) => info!("Webhook response: {:#?}", res),
+                Err(err) => info!("Webhook request failed with error: {}", err),
             }
-            this.observers.http.confirmed_requests.remove(&http_request);
+            this.observers
+                .webhook
+                .webhook_requests
+                .remove(&http_request);
             Ok(())
         })
     }

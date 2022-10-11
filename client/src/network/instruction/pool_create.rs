@@ -1,26 +1,26 @@
-use anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
+use {
+    anchor_lang::{
+        solana_program::{
+            instruction::{AccountMeta, Instruction},
+            pubkey::Pubkey,
+            system_program,
+        },
+        InstructionData,
     },
-    system_program, InstructionData,
+    clockwork_network_program::objects::*,
 };
 
-pub fn pool_create(admin: Pubkey, name: String, size: usize) -> Instruction {
+pub fn pool_create(admin: Pubkey, payer: Pubkey, pool: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_network_program::ID,
         accounts: vec![
-            AccountMeta::new(admin, true),
-            AccountMeta::new_readonly(clockwork_network_program::objects::Config::pubkey(), false),
-            AccountMeta::new(
-                clockwork_pool_program::objects::Pool::pubkey(name.clone()),
-                false,
-            ),
-            AccountMeta::new_readonly(clockwork_pool_program::ID, false),
-            AccountMeta::new_readonly(clockwork_pool_program::objects::Config::pubkey(), false),
-            AccountMeta::new(clockwork_network_program::objects::Rotator::pubkey(), false),
+            AccountMeta::new_readonly(admin, true),
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(payer, true),
+            AccountMeta::new(pool, false),
+            AccountMeta::new(Registry::pubkey(), false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_network_program::instruction::PoolCreate { name, size }.data(),
+        data: clockwork_network_program::instruction::PoolCreate {}.data(),
     }
 }

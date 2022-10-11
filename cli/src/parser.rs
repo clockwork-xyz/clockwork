@@ -1,9 +1,9 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use clockwork_client::webhook::objects::HttpMethod;
+use clockwork_client::{queue::objects::Trigger, webhook::objects::HttpMethod};
+use clockwork_utils::{AccountMetaData, InstructionData};
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
     signature::{read_keypair_file, Keypair},
     signer::Signer,
@@ -17,14 +17,14 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
-            Some(("http", matches)) => parse_http_command(matches),
+            Some(("delegation", matches)) => parse_delegation_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
-            Some(("node", matches)) => parse_node_command(matches),
-            Some(("pool", _)) => Ok(CliCommand::PoolGet {}),
+            Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
-            Some(("snapshot", matches)) => parse_snapshot_command(matches),
+            Some(("webhook", matches)) => parse_webhook_command(matches),
+            Some(("worker", matches)) => parse_worker_command(matches),
             _ => Err(CliError::CommandNotRecognized(
                 matches.subcommand().unwrap().0.into(),
             )),
@@ -84,8 +84,9 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
-            admin: parse_pubkey("admin", matches).map_or(None, |v| Some(v)),
-            crank_fee: parse_u64("crank_fee", matches).map_or(None, |v| Some(v)),
+            admin: parse_pubkey("admin", matches).ok(),
+            epoch_queue: parse_pubkey("epoch_queue", matches).ok(),
+            hasher_queue: parse_pubkey("hasher_queue", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -93,13 +94,24 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_http_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::HttpRequestNew {
-        api: parse_pubkey("api", matches)?,
-        id: parse_string("id", matches)?,
-        method: parse_http_method("method", matches)?,
-        route: parse_string("route", matches)?,
-    })
+fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("create", matches)) => Ok(CliCommand::DelegationCreate {
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
+        Some(("deposit", matches)) => Ok(CliCommand::DelegationDeposit {
+            amount: parse_u64("amount", matches)?,
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
+        Some(("get", matches)) => Ok(CliCommand::DelegationGet {
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
 }
 
 fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
@@ -108,18 +120,12 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
     })
 }
 
-fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::NodeGet {
-            worker: parse_pubkey("worker_address", matches)?,
+        Some(("get", matches)) => Ok(CliCommand::PoolGet {
+            id: parse_u64("id", matches)?,
         }),
-        Some(("register", matches)) => Ok(CliCommand::NodeRegister {
-            worker: parse_keypair_file("worker", matches)?,
-        }),
-        Some(("stake", matches)) => Ok(CliCommand::NodeStake {
-            address: parse_pubkey("address", matches)?,
-            amount: parse_u64("amount", matches)?,
-        }),
+        Some(("list", _)) => Ok(CliCommand::PoolList {}),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
@@ -127,11 +133,20 @@ fn parse_node_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 }
 
 fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    let address = parse_pubkey("address", matches)?;
     match matches.subcommand() {
-        Some(("get", _)) => Ok(CliCommand::QueueGet { address }),
+        Some(("create", matches)) => Ok(CliCommand::QueueCreate {
+            id: parse_string("id", matches)?,
+            kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
+            trigger: parse_trigger(matches)?,
+        }),
+        Some(("delete", matches)) => Ok(CliCommand::QueueDelete {
+            id: parse_string("id", matches)?,
+        }),
+        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+            id: parse_string("id", matches)?,
+        }),
         Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
-            address: address,
+            id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).map_or(None, |v| Some(v)),
         }),
         _ => Err(CliError::CommandNotRecognized(
@@ -140,16 +155,55 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::SnapshotGet {
-        entry_id: match matches.subcommand() {
-            Some(("entry", matches)) => Some(parse_u64("id", matches)?),
-            _ => None,
-        },
+fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::WebhookRequestNew {
+        api: parse_pubkey("api", matches)?,
+        id: parse_string("id", matches)?,
+        method: parse_http_method("method", matches)?,
+        route: parse_string("route", matches)?,
     })
 }
 
+fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("create", matches)) => Ok(CliCommand::WorkerCreate {
+            signatory: parse_keypair_file("signatory_keypair", matches)?,
+        }),
+        Some(("get", matches)) => Ok(CliCommand::WorkerGet {
+            id: parse_u64("id", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
 // Arg parsers
+
+fn parse_trigger(matches: &ArgMatches) -> Result<Trigger, CliError> {
+    if matches.is_present("account") {
+        return Ok(Trigger::Account {
+            pubkey: parse_pubkey("address", matches)?,
+        });
+    } else if matches.is_present("cron") {
+        return Ok(Trigger::Cron {
+            schedule: parse_string("cron", matches)?,
+            skippable: true,
+        });
+    } else if matches.is_present("immediate") {
+        return Ok(Trigger::Immediate);
+    }
+
+    Err(CliError::BadParameter("trigger".into()))
+}
+
+fn parse_instruction_file(arg: &str, matches: &ArgMatches) -> Result<InstructionData, CliError> {
+    let filepath = parse_string(arg, matches)?;
+    let text = fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter(arg.into()))?;
+    let ix: JsonInstructionData =
+        serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
+    InstructionData::try_from(&ix)
+}
 
 fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
     Ok(read_keypair_file(parse_string(arg, matches)?)
@@ -196,30 +250,30 @@ pub struct JsonInstructionData {
     pub data: Vec<u8>,
 }
 
-impl TryFrom<&JsonInstructionData> for Instruction {
+impl TryFrom<&JsonInstructionData> for InstructionData {
     type Error = CliError;
 
     fn try_from(value: &JsonInstructionData) -> Result<Self, Self::Error> {
-        Ok(Instruction {
+        Ok(InstructionData {
             program_id: Pubkey::from_str(value.program_id.as_str())
-                .map_err(|_err| CliError::BadParameter("asdf".into()))?,
+                .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             accounts: value
                 .accounts
                 .iter()
-                .map(|ix| AccountMeta::try_from(ix).unwrap())
-                .collect::<Vec<AccountMeta>>(),
+                .map(|ix| AccountMetaData::try_from(ix).unwrap())
+                .collect::<Vec<AccountMetaData>>(),
             data: value.data.clone(),
         })
     }
 }
 
-pub fn _parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
-    let text =
-        fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter("filepath".into()))?;
-    let ix: JsonInstructionData =
-        serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
-    Instruction::try_from(&ix)
-}
+// pub fn _parse_instruction(filepath: &String) -> Result<Instruction, CliError> {
+//     let text =
+//         fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter("filepath".into()))?;
+//     let ix: JsonInstructionData =
+//         serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
+//     Instruction::try_from(&ix)
+// }
 
 #[derive(Debug, JsonDeserialize, JsonSerialize, PartialEq)]
 pub struct JsonAccountMetaData {
@@ -228,13 +282,13 @@ pub struct JsonAccountMetaData {
     pub is_writable: bool,
 }
 
-impl TryFrom<&JsonAccountMetaData> for AccountMeta {
+impl TryFrom<&JsonAccountMetaData> for AccountMetaData {
     type Error = CliError;
 
     fn try_from(value: &JsonAccountMetaData) -> Result<Self, Self::Error> {
-        Ok(AccountMeta {
+        Ok(AccountMetaData {
             pubkey: Pubkey::from_str(value.pubkey.as_str())
-                .map_err(|_err| CliError::BadParameter("asdf".into()))?,
+                .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             is_signer: value.is_signer,
             is_writable: value.is_writable,
         })

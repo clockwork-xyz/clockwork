@@ -1,22 +1,15 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program,
-        },
-        InstructionData,
+use clockwork_queue_program::objects::QueueSettings;
+
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program,
     },
-    clockwork_queue_program::objects::{InstructionData as ClockworkInstructionData, Trigger},
+    InstructionData,
 };
 
-pub fn queue_update(
-    authority: Pubkey,
-    queue: Pubkey,
-    kickoff_instruction: Option<ClockworkInstructionData>,
-    rate_limit: Option<u64>,
-    trigger: Option<Trigger>,
-) -> Instruction {
+pub fn queue_update(authority: Pubkey, queue: Pubkey, settings: QueueSettings) -> Instruction {
     Instruction {
         program_id: clockwork_queue_program::ID,
         accounts: vec![
@@ -24,11 +17,6 @@ pub fn queue_update(
             AccountMeta::new(queue, false),
             AccountMeta::new_readonly(system_program::ID, false),
         ],
-        data: clockwork_queue_program::instruction::QueueUpdate {
-            kickoff_instruction,
-            rate_limit,
-            trigger,
-        }
-        .data(),
+        data: clockwork_queue_program::instruction::QueueUpdate { settings }.data(),
     }
 }

@@ -1,13 +1,12 @@
 use {
     crate::{errors::*, objects::*},
-    anchor_lang::{prelude::*, system_program},
+    anchor_lang::prelude::*,
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_pool_program::objects::Pool,
+    clockwork_network_program::objects::{Fee, Penalty, Pool, Worker, WorkerAccount},
     std::{
         collections::hash_map::DefaultHasher,
         hash::{Hash, Hasher},
-        mem::size_of,
         str::FromStr,
     },
 };
@@ -15,29 +14,41 @@ use {
 /// Number of lamports to reimburse the worker with after they've submitted a transaction's worth of cranks.
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5000;
 
+/// The ID of the pool workers must be a member of to collect fees.
+const POOL_ID: u64 = 0;
+
 /// Accounts required by the `queue_crank` instruction.
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct QueueCrank<'info> {
-    /// The program config account.
-    #[account(address = Config::pubkey())]
-    pub config: Box<Account<'info, Config>>,
-
     /// The worker's fee account.
     #[account(
-        init_if_needed,
+        mut,
         seeds = [
-            SEED_FEE,
+            clockwork_network_program::objects::SEED_FEE,
             worker.key().as_ref(),
         ],
         bump,
-        payer = worker,
-        space = 8 + size_of::<Fee>(),
+        seeds::program = clockwork_network_program::ID,
+        has_one = worker,
     )]
-    pub fee: Box<Account<'info, Fee>>,
+    pub fee: Account<'info, Fee>,
+
+    /// The worker's penalty account.
+    #[account(
+        mut,
+        seeds = [
+            clockwork_network_program::objects::SEED_PENALTY,
+            worker.key().as_ref(),
+        ],
+        bump,
+        seeds::program = clockwork_network_program::ID,
+        has_one = worker,
+    )]
+    pub penalty: Account<'info, Penalty>,
 
     /// The active worker pool.
-    #[account(address = config.worker_pool)]
+    #[account(address = Pool::pubkey(POOL_ID))]
     pub pool: Box<Account<'info, Pool>>,
 
     /// The queue to crank.
@@ -53,21 +64,25 @@ pub struct QueueCrank<'info> {
     )]
     pub queue: Box<Account<'info, Queue>>,
 
-    /// The Solana system program.
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
+    /// The signatory.
+    #[account(mut)]
+    pub signatory: Signer<'info>,
 
     /// The worker.
-    #[account(mut)]
-    pub worker: Signer<'info>,
+    #[account(
+        address = worker.pubkey(),
+        has_one = signatory
+    )]
+    pub worker: Account<'info, Worker>,
 }
 
 pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // Get accounts
-    let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
+    let penalty = &ctx.accounts.penalty;
     let pool = &ctx.accounts.pool;
     let queue = &mut ctx.accounts.queue;
+    let signatory = &ctx.accounts.signatory;
     let worker = &ctx.accounts.worker;
 
     // If this queue does not have a next_instruction, verify the queue's trigger has been met and a new exec_context can be created.
@@ -200,14 +215,29 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
 
     // Crank the queue
     let bump = ctx.bumps.get("queue").unwrap();
-    queue.crank(ctx.remaining_accounts, *bump, worker)?;
+    queue.crank(ctx.remaining_accounts, *bump, signatory)?;
 
-    // If worker is in the pool, pay automation fees.
-    let is_authorized_worker = pool.clone().into_inner().workers.contains(&worker.key());
-    if is_authorized_worker {
-        fee.escrow_balance(config.crank_fee, queue)?;
+    // Debit the crank fee from the queue account.
+    **queue.to_account_info().try_borrow_mut_lamports()? = queue
+        .to_account_info()
+        .lamports()
+        .checked_sub(queue.fee)
+        .unwrap();
+
+    // If the worker is in the pool, pay fee to the worker's fee account.
+    // Otherwise, pay fee to the worker's penalty account.
+    if pool.clone().into_inner().workers.contains(&worker.key()) {
+        **fee.to_account_info().try_borrow_mut_lamports()? = fee
+            .to_account_info()
+            .lamports()
+            .checked_add(queue.fee)
+            .unwrap();
     } else {
-        fee.escrow_withholding(config.crank_fee, queue)?;
+        **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
+            .to_account_info()
+            .lamports()
+            .checked_add(queue.fee)
+            .unwrap();
     }
 
     // If the queue has no more work or the number of cranks since the last payout has reached the rate limit,
@@ -218,7 +248,19 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
             if queue.next_instruction.is_none()
                 || exec_context.cranks_since_reimbursement >= queue.rate_limit
             {
-                fee.escrow_balance(TRANSACTION_BASE_FEE_REIMBURSEMENT, queue)?;
+                // Pay reimbursment for base transaction fee
+                **queue.to_account_info().try_borrow_mut_lamports()? = queue
+                    .to_account_info()
+                    .lamports()
+                    .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                    .unwrap();
+                **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+                    .to_account_info()
+                    .lamports()
+                    .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                    .unwrap();
+
+                // Update the exec context to mark that a reimbursement happened this slot.
                 queue.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: 0,
                     ..exec_context
