@@ -88,8 +88,9 @@ Then, setup the plugin config file in a folder where your validator startup scri
   "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
   "keypath": "/home/sol/clockwork-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
-  "slot_timeout_threshold": 150,
-  "worker_threads": 10
+  "transaction_timeout_threshold": 150,
+  "thread_count": 10,
+  "worker_id": 0,  // Set this to your worker ID!
 }
 ```
 
