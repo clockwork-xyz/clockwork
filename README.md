@@ -27,8 +27,8 @@
 
 | Program | Address| Devnet | Testnet | Mainnet Beta |
 | ------- | ------ | ------ | ------- | ------------ |
-| Network | `7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP` | [v1.1.4](https://explorer.solana.com/address/7PVusEAWWF55ExBBpwQdQfPCaHMUXXbHAP2iSVtNeAvP?cluster=devnet) | Soon | Soon |
-| Queue | `AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H` | [v1.1.4](https://explorer.solana.com/address/AfWZ9PyWW3E3G1TVYkKCe5w6BUC6w5Rim1DcmbAeaU3H?cluster=devnet) | Soon | Soon |
+| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.2.3](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | Soon | Soon |
+| Queue | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.2.3](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | Soon | Soon |
 
 
 ## Notes
