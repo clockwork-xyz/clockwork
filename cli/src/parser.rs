@@ -83,6 +83,11 @@ fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
+        Some(("set", matches)) => Ok(CliCommand::ConfigSet {
+            admin: parse_pubkey("admin", matches).ok(),
+            epoch_queue: parse_pubkey("epoch_queue", matches).ok(),
+            hasher_queue: parse_pubkey("hasher_queue", matches).ok(),
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
@@ -113,29 +118,6 @@ fn parse_initialize_command(matches: &ArgMatches) -> Result<CliCommand, CliError
     Ok(CliCommand::Initialize {
         mint: parse_pubkey("mint", matches)?,
     })
-}
-
-fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::WebhookRequestNew {
-        api: parse_pubkey("api", matches)?,
-        id: parse_string("id", matches)?,
-        method: parse_http_method("method", matches)?,
-        route: parse_string("route", matches)?,
-    })
-}
-
-fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("create", matches)) => Ok(CliCommand::WorkerCreate {
-            signatory: parse_keypair_file("signatory_keypair", matches)?,
-        }),
-        Some(("get", matches)) => Ok(CliCommand::WorkerGet {
-            id: parse_u64("id", matches)?,
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
 }
 
 fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
@@ -170,14 +152,28 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-// fn parse_snapshot_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-//     Ok(CliCommand::SnapshotGet {
-//         entry_id: match matches.subcommand() {
-//             Some(("entry", matches)) => Some(parse_u64("id", matches)?),
-//             _ => None,
-//         },
-//     })
-// }
+fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::WebhookRequestNew {
+        api: parse_pubkey("api", matches)?,
+        id: parse_string("id", matches)?,
+        method: parse_http_method("method", matches)?,
+        route: parse_string("route", matches)?,
+    })
+}
+
+fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("create", matches)) => Ok(CliCommand::WorkerCreate {
+            signatory: parse_keypair_file("signatory_keypair", matches)?,
+        }),
+        Some(("get", matches)) => Ok(CliCommand::WorkerGet {
+            id: parse_u64("id", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
 
 // Arg parsers
 

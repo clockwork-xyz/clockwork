@@ -19,6 +19,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             base_url,
         } => super::api::api_new(&client, ack_authority, base_url),
         CliCommand::ConfigGet => super::config::get(&client),
+        CliCommand::ConfigSet {
+            admin,
+            epoch_queue,
+            hasher_queue,
+        } => super::config::set(&client, admin, epoch_queue, hasher_queue),
         CliCommand::DelegationCreate { worker_id } => super::delegation::create(&client, worker_id),
         CliCommand::DelegationDeposit {
             amount,

@@ -1,9 +1,10 @@
-use clockwork_client::network::objects::ConfigSettings;
-use solana_sdk::pubkey::Pubkey;
-
 use {
     crate::errors::CliError,
-    clockwork_client::{network::objects::Config, Client},
+    clockwork_client::{
+        network::objects::{Config, ConfigSettings},
+        Client,
+    },
+    solana_sdk::pubkey::Pubkey,
 };
 
 pub fn get(client: &Client) -> Result<(), CliError> {
@@ -14,8 +15,9 @@ pub fn get(client: &Client) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn _set(
+pub fn set(
     client: &Client,
+    admin: Option<Pubkey>,
     epoch_queue: Option<Pubkey>,
     hasher_queue: Option<Pubkey>,
 ) -> Result<(), CliError> {
@@ -26,7 +28,7 @@ pub fn _set(
 
     // Build new config. settings
     let settings = ConfigSettings {
-        admin: config.admin,
+        admin: admin.unwrap_or(config.admin),
         epoch_queue: epoch_queue.unwrap_or(config.epoch_queue),
         hasher_queue: hasher_queue.unwrap_or(config.hasher_queue),
         mint: config.mint,
@@ -35,7 +37,6 @@ pub fn _set(
     // Submit tx
     let ix = clockwork_client::network::instruction::config_update(client.payer_pubkey(), settings);
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-
-    println!("{:#?}", config);
+    get(client)?;
     Ok(())
 }

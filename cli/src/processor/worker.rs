@@ -28,11 +28,12 @@ pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
-    let registry_data = Registry::try_from(registry_data)
+    let registry = Registry::try_from(registry_data)
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     // Build ix
-    let worker_pubkey = Worker::pubkey(registry_data.total_workers);
+    let worker_id = registry.total_workers;
+    let worker_pubkey = Worker::pubkey(worker_id);
     let ix = clockwork_client::network::instruction::worker_create(
         client.payer_pubkey(),
         config.mint,
@@ -42,6 +43,6 @@ pub fn create(client: &Client, signatory: Keypair) -> Result<(), CliError> {
     client
         .send_and_confirm(&[ix], &[client.payer(), &signatory])
         .unwrap();
-
+    get(client, worker_id)?;
     Ok(())
 }

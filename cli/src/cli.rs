@@ -14,6 +14,11 @@ pub enum CliCommand {
 
     // Config commands
     ConfigGet,
+    ConfigSet {
+        admin: Option<Pubkey>,
+        epoch_queue: Option<Pubkey>,
+        hasher_queue: Option<Pubkey>,
+    },
 
     // Delegation
     DelegationCreate {
@@ -95,24 +100,24 @@ pub fn app() -> Command<'static> {
                         .arg(
                             Arg::new("admin")
                                 .long("admin")
-                                .value_name("PUBKEY")
+                                .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("grace_period")
-                                .long("grace_period")
-                                .value_name("NUM_SECONDS")
+                            Arg::new("epoch_queue")
+                                .long("epoch_queue")
+                                .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("spam_penalty")
-                                .long("spam_penalty")
-                                .value_name("NUM_LAMPORTS")
+                            Arg::new("hasher_queue")
+                                .long("hasher_queue")
+                                .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .group(
                             ArgGroup::new("config_settings")
-                                .args(&["admin", "worker_fee", "grace_period", "spam_penalty"])
+                                .args(&["admin", "epoch_queue", "hasher_queue"])
                                 .multiple(true),
                         ),
                 ),
