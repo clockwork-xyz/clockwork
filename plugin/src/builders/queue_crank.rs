@@ -47,7 +47,10 @@ fn build_crank_tx(
     worker_id: u64,
 ) -> Option<Transaction> {
     // Build the first crank ix
-    let queue = client.get::<Queue>(&queue_pubkey).unwrap();
+    let queue = match client.get::<Queue>(&queue_pubkey) {
+        Err(_err) => return None,
+        Ok(queue) => queue,
+    };
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
