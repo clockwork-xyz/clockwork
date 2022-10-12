@@ -1,3 +1,5 @@
+use anchor_lang::solana_program::program::set_return_data;
+
 use {
     crate::{errors::*, objects::*},
     anchor_lang::prelude::*,
@@ -222,7 +224,11 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     let bump = ctx.bumps.get("queue").unwrap();
     queue.crank(ctx.remaining_accounts, *bump, signatory)?;
 
-    msg!("B");
+    msg!("B1");
+
+    set_return_data(&[]);
+
+    msg!("B2");
 
     // set_return_data(data)
 
