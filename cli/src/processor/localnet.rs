@@ -166,15 +166,6 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
 }
 
 fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<Child> {
-    // set solana config to localhost
-    Command::new("solana")
-        .arg("config")
-        .arg("set")
-        .arg("--url")
-        .arg("http://localhost:8899")
-        .spawn()
-        .expect("failed to set solana config");
-
     println!("Starting test validator");
 
     // Get Clockwork home path
