@@ -264,7 +264,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                 queue.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: 0,
                     ..exec_context
-                })
+                });
             }
         }
     }
