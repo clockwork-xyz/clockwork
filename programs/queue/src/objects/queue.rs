@@ -271,7 +271,7 @@ impl QueueAccount for Account<'_, Queue> {
         if let Some(rate_limit) = settings.rate_limit {
             require!(
                 rate_limit.le(&MAX_RATE_LIMIT),
-                ClockworkError::RateLimitTooLarge
+                ClockworkError::MaxRateLimitExceeded
             );
             self.rate_limit = rate_limit;
         }

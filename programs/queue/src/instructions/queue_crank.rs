@@ -60,7 +60,7 @@ pub struct QueueCrank<'info> {
             queue.id.as_bytes(),
         ],
         bump,
-        constraint = !queue.paused @ ClockworkError::PausedQueue
+        constraint = !queue.paused @ ClockworkError::QueuePaused
     )]
     pub queue: Box<Account<'info, Queue>>,
 
@@ -92,7 +92,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
             Trigger::Account { pubkey } => {
                 // Require the provided data hash is non-null.
                 let data_hash = match data_hash {
-                    None => return Err(ClockworkError::InvalidQueueState.into()),
+                    None => return Err(ClockworkError::DataHashNotPresent.into()),
                     Some(data_hash) => data_hash,
                 };
 
@@ -101,7 +101,10 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                     None => {}
                     Some(account_info) => {
                         // Verify the remaining account is the account this queue is listening for.
-                        require!(pubkey.eq(account_info.key), ClockworkError::InvalidTrigger);
+                        require!(
+                            pubkey.eq(account_info.key),
+                            ClockworkError::TriggerNotActive
+                        );
 
                         // Begin computing the data hash of this account.
                         let mut hasher = DefaultHasher::new();
@@ -133,7 +136,7 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                         // This proves the account has been updated since the last crank and the worker has seen the new data.
                         require!(
                             data_hash.eq(&expected_data_hash),
-                            ClockworkError::InvalidTrigger
+                            ClockworkError::TriggerNotActive
                         );
 
                         // Set a new exec context with the new data hash and slot number.
@@ -162,17 +165,17 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                 // Verify the current timestamp is greater than or equal to the threshold timestamp.
                 let current_timestamp = Clock::get().unwrap().unix_timestamp;
                 let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone())
-                    .ok_or(ClockworkError::InvalidTrigger)?;
+                    .ok_or(ClockworkError::TriggerNotActive)?;
                 require!(
                     current_timestamp >= threshold_timestamp,
-                    ClockworkError::InvalidTrigger
+                    ClockworkError::TriggerNotActive
                 );
 
                 // If the schedule is marked as skippable, set the started_at of the exec context
                 // to be the threshold moment just before the current timestamp.
                 let started_at = if skippable && current_timestamp > threshold_timestamp {
                     prev_timestamp(current_timestamp, schedule)
-                        .ok_or(ClockworkError::InvalidTrigger)?
+                        .ok_or(ClockworkError::TriggerNotActive)?
                 } else {
                     threshold_timestamp
                 };
@@ -220,6 +223,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     queue.crank(ctx.remaining_accounts, *bump, signatory)?;
 
     msg!("B");
+
+    // set_return_data(data)
 
     // Debit the crank fee from the queue account.
     **queue.to_account_info().try_borrow_mut_lamports()? = queue
