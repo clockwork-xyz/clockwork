@@ -69,16 +69,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 }
 
 fn set_solana_config() -> Result<()> {
-    println!("Setting solana config");
-
     let mut process = std::process::Command::new("solana")
-        .args(&["config", "set", "--url", "http://localhost:8899"])
+        .args(&["config", "set", "--url", "l"])
         .spawn()
-        .expect("failed to set solana config");
-
+        .expect("Failed to set solana config");
     process.wait()?;
-
     std::thread::sleep(std::time::Duration::from_secs(1));
-
     Ok(())
 }
