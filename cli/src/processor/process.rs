@@ -1,4 +1,5 @@
 use crate::{cli::CliCommand, config::CliConfig, errors::CliError};
+use anyhow::Result;
 use clap::ArgMatches;
 use clockwork_client::Client;
 use solana_sdk::signature::read_keypair_file;
@@ -6,6 +7,15 @@ use solana_sdk::signature::read_keypair_file;
 pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     // Parse command and config
     let command = CliCommand::try_from(matches)?;
+
+    match command {
+        // Set solana config if using localnet command
+        CliCommand::Localnet { program_infos: _ } => {
+            set_solana_config().map_err(|err| CliError::FailedLocalnet(err.to_string()))?
+        }
+        _ => {}
+    }
+
     let config = CliConfig::load();
 
     // Build the RPC client
@@ -56,4 +66,14 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::WorkerCreate { signatory } => super::worker::create(&client, signatory, false),
         CliCommand::WorkerGet { id } => super::worker::get(&client, id),
     }
+}
+
+fn set_solana_config() -> Result<()> {
+    let mut process = std::process::Command::new("solana")
+        .args(&["config", "set", "--url", "l"])
+        .spawn()
+        .expect("Failed to set solana config");
+    process.wait()?;
+    std::thread::sleep(std::time::Duration::from_secs(1));
+    Ok(())
 }
