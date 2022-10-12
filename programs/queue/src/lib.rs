@@ -12,7 +12,7 @@ use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
-declare_id!("FLBzGUuyhShn7SRtPfveggrBkNp3hjvySBurx5QpWDrV");
+declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 
 /// Program for creating transaction queues on Solana.
 #[program]
