@@ -165,8 +165,6 @@ impl QueueAccount for Account<'_, Queue> {
             });
         });
 
-        msg!("A");
-
         // Invoke the provided instruction
         invoke_signed(
             &Instruction {
@@ -183,30 +181,22 @@ impl QueueAccount for Account<'_, Queue> {
             ]],
         )?;
 
-        msg!("B");
-
         // Verify that the inner ix did not write data to the signatory address
         require!(signatory.data_is_empty(), ClockworkError::UnauthorizedWrite);
-
-        msg!("C");
 
         // Parse the crank response
         match get_return_data() {
             None => {
-                msg!("D");
                 self.next_instruction = None;
             }
             Some((program_id, return_data)) => {
-                msg!("E");
                 require!(
                     program_id.eq(&instruction.program_id),
                     ClockworkError::InvalidCrankResponse
                 );
-                msg!("F");
                 let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
                     .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
 
-                msg!("G");
                 // Update the queue with the crank response.
                 if let Some(kickoff_instruction) = crank_response.kickoff_instruction {
                     self.kickoff_instruction = kickoff_instruction;
@@ -215,15 +205,12 @@ impl QueueAccount for Account<'_, Queue> {
             }
         };
 
-        msg!("H");
-
         // Increment the crank count
         let current_slot = Clock::get().unwrap().slot;
         match self.exec_context {
             None => return Err(ClockworkError::InvalidQueueState.into()),
             Some(exec_context) => {
                 // Update the exec context
-                msg!("I");
                 self.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: exec_context
                         .cranks_since_reimbursement
@@ -240,12 +227,8 @@ impl QueueAccount for Account<'_, Queue> {
             }
         }
 
-        msg!("J");
-
         // Realloc the queue account
         self.realloc()?;
-
-        msg!("K");
 
         // Reimbursement signatory for lamports paid during inner ix
         let signatory_lamports_post = signatory.lamports();
@@ -262,8 +245,6 @@ impl QueueAccount for Account<'_, Queue> {
             .lamports()
             .checked_add(signatory_reimbursement)
             .unwrap();
-
-        msg!("L");
 
         Ok(())
     }

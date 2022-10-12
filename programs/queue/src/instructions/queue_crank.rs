@@ -213,9 +213,13 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
         }
     }
 
+    msg!("A");
+
     // Crank the queue
     let bump = ctx.bumps.get("queue").unwrap();
     queue.crank(ctx.remaining_accounts, *bump, signatory)?;
+
+    msg!("B");
 
     // Debit the crank fee from the queue account.
     **queue.to_account_info().try_borrow_mut_lamports()? = queue
@@ -224,15 +228,19 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
         .checked_sub(queue.fee)
         .unwrap();
 
+    msg!("C");
+
     // If the worker is in the pool, pay fee to the worker's fee account.
     // Otherwise, pay fee to the worker's penalty account.
     if pool.clone().into_inner().workers.contains(&worker.key()) {
+        msg!("D");
         **fee.to_account_info().try_borrow_mut_lamports()? = fee
             .to_account_info()
             .lamports()
             .checked_add(queue.fee)
             .unwrap();
     } else {
+        msg!("E");
         **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
             .to_account_info()
             .lamports()
@@ -243,11 +251,16 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
     // If the queue has no more work or the number of cranks since the last payout has reached the rate limit,
     // reimburse the worker for the transaction base fee.
     match queue.exec_context {
-        None => return Err(ClockworkError::InvalidQueueState.into()),
+        None => {
+            msg!("F");
+            return Err(ClockworkError::InvalidQueueState.into());
+        }
         Some(exec_context) => {
+            msg!("G");
             if queue.next_instruction.is_none()
                 || exec_context.cranks_since_reimbursement >= queue.rate_limit
             {
+                msg!("H");
                 // Pay reimbursment for base transaction fee
                 **queue.to_account_info().try_borrow_mut_lamports()? = queue
                     .to_account_info()
@@ -260,6 +273,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
                     .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
                     .unwrap();
 
+                msg!("I");
+
                 // Update the exec context to mark that a reimbursement happened this slot.
                 queue.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: 0,
@@ -268,6 +283,8 @@ pub fn handler(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
             }
         }
     }
+
+    msg!("J");
 
     Ok(())
 }
