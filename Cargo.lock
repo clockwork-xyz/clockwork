@@ -792,7 +792,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anyhow",
  "clap 3.2.22",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -834,7 +834,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "chrono",
  "nom",
@@ -843,7 +843,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -852,7 +852,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-queue-program"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -864,7 +864,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-sdk"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "chrono",
  "clockwork-client",
@@ -876,7 +876,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-utils"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "static-pubkey",
@@ -884,7 +884,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-webhook-program"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "clockwork-network-program",
@@ -892,7 +892,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork_plugin"
-version = "1.2.7"
+version = "1.2.8"
 dependencies = [
  "anchor-lang",
  "bincode",
