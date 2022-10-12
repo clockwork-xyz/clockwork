@@ -22,7 +22,6 @@ use {
     },
 };
 
-static COMPUTE_BUDGET_LIMIT: u64 = 1_400_000; // Max number of compute units per transaction
 static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized transaction
 
 pub async fn build_crank_txs(
@@ -102,15 +101,6 @@ fn build_crank_tx(
                         response.value.err.unwrap(),
                         response.value.logs
                     );
-                    break;
-                }
-
-                // If the compute budget limit was exceeded, then stop packing.
-                if response
-                    .value
-                    .units_consumed
-                    .ge(&Some(COMPUTE_BUDGET_LIMIT))
-                {
                     break;
                 }
 
