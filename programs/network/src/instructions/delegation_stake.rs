@@ -128,7 +128,10 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(worker.key(), false),
+                AccountMetaData::new_readonly(
+                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
+                    false,
+                ),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),
         })
