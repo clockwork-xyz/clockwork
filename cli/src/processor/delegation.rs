@@ -50,6 +50,8 @@ pub fn deposit(
     let config = Config::try_from(config_data)
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
+    // TODO Map the amount using the mint's decimals.
+
     // Build ix
     let worker_pubkey = Worker::pubkey(worker_id);
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
