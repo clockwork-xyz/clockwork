@@ -98,7 +98,7 @@ pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<CrankResponse> {
                 AccountMetaData::new(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot.id.checked_add(1).unwrap()), false),
+                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
             ],
             data: anchor_sighash("snapshot_frame_delete").to_vec(),
         })
