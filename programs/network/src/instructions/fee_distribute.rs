@@ -146,7 +146,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(fee.key(), false),
+                AccountMetaData::new(Fee::pubkey(next_worker_pubkey), false),
                 AccountMetaData::new_readonly(queue.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
