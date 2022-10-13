@@ -61,6 +61,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             schedule,
         } => super::queue::update(&client, id, rate_limit, schedule),
         CliCommand::RegistryGet => super::registry::get(&client),
+        CliCommand::RegistryUnlock => super::registry::unlock(&client),
         CliCommand::WebhookRequestNew {
             api,
             id,

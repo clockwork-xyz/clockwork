@@ -79,6 +79,10 @@ pub mod network_program {
         registry_nonce_hash::handler(ctx)
     }
 
+    pub fn registry_unlock(ctx: Context<RegistryUnlock>) -> Result<()> {
+        registry_unlock::handler(ctx)
+    }
+
     pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<CrankResponse> {
         snapshot_delete::handler(ctx)
     }

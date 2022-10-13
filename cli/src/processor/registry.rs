@@ -10,3 +10,10 @@ pub fn get(client: &Client) -> Result<(), CliError> {
     println!("{:#?}", registry);
     Ok(())
 }
+
+pub fn unlock(client: &Client) -> Result<(), CliError> {
+    let ix = clockwork_client::network::instruction::registry_unlock(client.payer_pubkey());
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client)?;
+    Ok(())
+}

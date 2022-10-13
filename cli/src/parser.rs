@@ -22,7 +22,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
-            Some(("registry", _matches)) => Ok(CliCommand::RegistryGet {}),
+            Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
             Some(("worker", matches)) => parse_worker_command(matches),
             _ => Err(CliError::CommandNotRecognized(
@@ -150,6 +150,16 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             rate_limit: parse_u64("rate_limit", matches).ok(),
             schedule: parse_string("schedule", matches).ok(),
         }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_registry_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", _)) => Ok(CliCommand::RegistryGet {}),
+        Some(("unlock", _)) => Ok(CliCommand::RegistryUnlock {}),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

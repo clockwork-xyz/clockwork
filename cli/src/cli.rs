@@ -69,6 +69,7 @@ pub enum CliCommand {
 
     // Registry
     RegistryGet,
+    RegistryUnlock,
 
     // Http
     WebhookRequestNew {
@@ -335,7 +336,13 @@ pub fn app() -> Command<'static> {
                         ),
                 ),
         )
-        .subcommand(Command::new("registry").about("Lookup the Clockwork network registry"))
+        .subcommand(
+            Command::new("registry")
+                .about("Manage the Clockwork network registry")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("get").about("Lookup the registry"))
+                .subcommand(Command::new("unlock").about("Manually unlock the registry")),
+        )
         .subcommand(Command::new("snapshot").about("Lookup the current Clockwork network registry"))
         .subcommand(
             Command::new("worker")

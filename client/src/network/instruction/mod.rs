@@ -6,6 +6,7 @@ mod pool_create;
 mod pool_rotate;
 mod registry_epoch_kickoff;
 mod registry_nonce_hash;
+mod registry_unlock;
 mod worker_create;
 
 pub use config_update::*;
@@ -16,4 +17,5 @@ pub use pool_create::*;
 pub use pool_rotate::*;
 pub use registry_epoch_kickoff::*;
 pub use registry_nonce_hash::*;
+pub use registry_unlock::*;
 pub use worker_create::*;
