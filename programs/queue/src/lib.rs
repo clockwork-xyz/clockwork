@@ -54,6 +54,11 @@ pub mod queue_program {
         queue_resume::handler(ctx)
     }
 
+    /// Resumes a paused queue.
+    pub fn queue_stop(ctx: Context<QueueStop>) -> Result<()> {
+        queue_stop::handler(ctx)
+    }
+
     /// Allows an owner to update the mutable properties of a queue.
     pub fn queue_update(ctx: Context<QueueUpdate>, settings: QueueSettings) -> Result<()> {
         queue_update::handler(ctx, settings)
