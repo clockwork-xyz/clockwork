@@ -55,6 +55,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::queue::create(&client, id, kickoff_instruction, trigger),
         CliCommand::QueueDelete { id } => super::queue::delete(&client, id),
         CliCommand::QueueGet { id } => super::queue::get(&client, id),
+        CliCommand::QueuePause { id } => super::queue::pause(&client, id),
+        CliCommand::QueueResume { id } => super::queue::resume(&client, id),
+        CliCommand::QueueStop { id } => super::queue::stop(&client, id),
         CliCommand::QueueUpdate {
             id,
             rate_limit,

@@ -145,6 +145,15 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", matches)) => Ok(CliCommand::QueueGet {
             id: parse_string("id", matches)?,
         }),
+        Some(("pause", matches)) => Ok(CliCommand::QueuePause {
+            id: parse_string("id", matches)?,
+        }),
+        Some(("resume", matches)) => Ok(CliCommand::QueueResume {
+            id: parse_string("id", matches)?,
+        }),
+        Some(("stop", matches)) => Ok(CliCommand::QueueStop {
+            id: parse_string("id", matches)?,
+        }),
         Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
             id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).ok(),

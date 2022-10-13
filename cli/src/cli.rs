@@ -61,6 +61,15 @@ pub enum CliCommand {
     QueueGet {
         id: String,
     },
+    QueuePause {
+        id: String,
+    },
+    QueueResume {
+        id: String,
+    },
+    QueueStop {
+        id: String,
+    },
     QueueUpdate {
         id: String,
         rate_limit: Option<u64>,
@@ -310,6 +319,33 @@ pub fn app() -> Command<'static> {
                             .takes_value(true)
                             .required(false)
                             .help("The id of the queue to lookup"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("pause").about("Pause a queue").arg(
+                        Arg::new("id")
+                            .index(1)
+                            .takes_value(true)
+                            .required(false)
+                            .help("The id of the queue to pause"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("resume").about("Resume a queue").arg(
+                        Arg::new("id")
+                            .index(1)
+                            .takes_value(true)
+                            .required(false)
+                            .help("The id of the queue to resume"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("stop").about("Stop a queue").arg(
+                        Arg::new("id")
+                            .index(1)
+                            .takes_value(true)
+                            .required(false)
+                            .help("The id of the queue to stop"),
                     ),
                 )
                 .subcommand(

@@ -47,14 +47,38 @@ pub fn get(client: &Client, id: String) -> Result<(), CliError> {
     Ok(())
 }
 
+pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id.clone());
+    let ix = clockwork_client::queue::instruction::queue_pause(client.payer_pubkey(), queue_pubkey);
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, id)?;
+    Ok(())
+}
+
+pub fn resume(client: &Client, id: String) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id.clone());
+    let ix =
+        clockwork_client::queue::instruction::queue_resume(client.payer_pubkey(), queue_pubkey);
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, id)?;
+    Ok(())
+}
+
+pub fn stop(client: &Client, id: String) -> Result<(), CliError> {
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id.clone());
+    let ix = clockwork_client::queue::instruction::queue_stop(client.payer_pubkey(), queue_pubkey);
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, id)?;
+    Ok(())
+}
+
 pub fn update(
     client: &Client,
     id: String,
     rate_limit: Option<u64>,
     schedule: Option<String>,
 ) -> Result<(), CliError> {
-    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
-
+    let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id.clone());
     let trigger = if let Some(schedule) = schedule {
         Some(Trigger::Cron {
             schedule,
@@ -75,5 +99,6 @@ pub fn update(
         settings,
     );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, id)?;
     Ok(())
 }
