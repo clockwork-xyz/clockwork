@@ -20,8 +20,8 @@ pub mod queue_program {
     use super::*;
 
     /// Cranks a transaction queue.
-    pub fn queue_crank(ctx: Context<QueueCrank>, data_hash: Option<u64>) -> Result<()> {
-        queue_crank::handler(ctx, data_hash)
+    pub fn queue_crank(ctx: Context<QueueCrank>) -> Result<()> {
+        queue_crank::handler(ctx)
     }
 
     /// Creates a new transaction queue.
@@ -37,6 +37,11 @@ pub mod queue_program {
     /// Closes an existing queue account and returns the lamports to the owner.
     pub fn queue_delete(ctx: Context<QueueDelete>) -> Result<()> {
         queue_delete::handler(ctx)
+    }
+
+    /// Kicks off a queue if its trigger condition is active.
+    pub fn queue_kickoff(ctx: Context<QueueKickoff>, data_hash: Option<u64>) -> Result<()> {
+        queue_kickoff::handler(ctx, data_hash)
     }
 
     /// Pauses an active queue.

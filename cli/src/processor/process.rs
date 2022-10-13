@@ -55,7 +55,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => super::queue::create(&client, id, kickoff_instruction, trigger),
         CliCommand::QueueDelete { id } => super::queue::delete(&client, id),
         CliCommand::QueueGet { id } => super::queue::get(&client, id),
-        CliCommand::QueueUpdate { id, rate_limit } => super::queue::update(&client, id, rate_limit),
+        CliCommand::QueueUpdate {
+            id,
+            rate_limit,
+            schedule,
+        } => super::queue::update(&client, id, rate_limit, schedule),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::WebhookRequestNew {
             api,

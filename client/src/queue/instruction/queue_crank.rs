@@ -9,12 +9,7 @@ use {
     clockwork_network_program::objects::{Fee, Penalty, Pool},
 };
 
-pub fn queue_crank(
-    data_hash: Option<u64>,
-    queue: Pubkey,
-    signatory: Pubkey,
-    worker: Pubkey,
-) -> Instruction {
+pub fn queue_crank(queue: Pubkey, signatory: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_queue_program::ID,
         accounts: vec![
@@ -25,6 +20,6 @@ pub fn queue_crank(
             AccountMeta::new(signatory, true),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: clockwork_queue_program::instruction::QueueCrank { data_hash }.data(),
+        data: clockwork_queue_program::instruction::QueueCrank {}.data(),
     }
 }

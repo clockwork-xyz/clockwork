@@ -64,6 +64,7 @@ pub enum CliCommand {
     QueueUpdate {
         id: String,
         rate_limit: Option<u64>,
+        schedule: Option<String>,
     },
 
     // Registry
@@ -323,6 +324,14 @@ pub fn app() -> Command<'static> {
                                 .help(
                                     "The maximum number of cranks allowed per slot for this queue",
                                 ),
+                        )
+                        .arg(
+                            Arg::new("schedule")
+                                .long("schedule")
+                                .short('s')
+                                .takes_value(true)
+                                .required(false)
+                                .help("The cron schedule of the queue"),
                         ),
                 ),
         )

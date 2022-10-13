@@ -10,6 +10,7 @@ use {
     },
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
+    clockwork_network_program::objects::{Fee, Penalty, Pool, Worker},
     clockwork_utils::*,
     std::{
         collections::hash_map::DefaultHasher,
@@ -19,19 +20,19 @@ use {
     },
 };
 
-// TODO Add support for lookup tables.
-//      If the value is set, then use that lookup table when building the transaction.
-//      Add a property to CrankResponse to allow updating the lookup table.
-//      I believe Transaction.v0 only supports one lookup table at a time. So if this value changes between cranks,
-//      workers will need to stop packing the transaction and submit.
-
 pub const SEED_QUEUE: &[u8] = b"queue";
 
+/// The default rate limit to initialize queues with
 const DEFAULT_RATE_LIMIT: u64 = 10;
 
+/// The maximum rate limit which may be set on queue.
 const MAX_RATE_LIMIT: u64 = 32;
 
+/// The Minimum crank fee that may be set on a queue.
 const MINIMUM_FEE: u64 = 1000;
+
+/// The Number of lamports to reimburse the worker with after they've submitted a transaction's worth of cranks.
+const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
@@ -112,18 +113,24 @@ pub trait QueueAccount {
     ) -> Result<()>;
 
     /// Crank the queue. Call out to the target program and parse the response for a next instruction.
-    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, worker: &Signer) -> Result<()>;
+    fn crank(
+        &mut self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        fee: &mut Account<Fee>,
+        penalty: &mut Account<Penalty>,
+        pool: &Account<Pool>,
+        signatory: &mut Signer,
+        worker: &Account<Worker>,
+    ) -> Result<()>;
+
+    fn kickoff(&mut self, data_hash: Option<u64>, remaining_accounts: &[AccountInfo])
+        -> Result<()>;
 
     /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
 
     fn update(&mut self, settings: QueueSettings) -> Result<()>;
-
-    fn verify_trigger(
-        &mut self,
-        data_hash: Option<u64>,
-        remaining_accounts: &[AccountInfo],
-    ) -> Result<()>;
 }
 
 impl QueueAccount for Account<'_, Queue> {
@@ -151,7 +158,16 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn crank(&mut self, account_infos: &[AccountInfo], bump: u8, signatory: &Signer) -> Result<()> {
+    fn crank(
+        &mut self,
+        account_infos: &[AccountInfo],
+        bump: u8,
+        fee: &mut Account<Fee>,
+        penalty: &mut Account<Penalty>,
+        pool: &Account<Pool>,
+        signatory: &mut Signer,
+        worker: &Account<Worker>,
+    ) -> Result<()> {
         // Record the worker's lamports before invoking inner ixs
         let signatory_lamports_pre = signatory.lamports();
 
@@ -256,6 +272,59 @@ impl QueueAccount for Account<'_, Queue> {
             .checked_add(signatory_reimbursement)
             .unwrap();
 
+        // Debit the crank fee from the queue account.
+        // If the worker is in the pool, pay fee to the worker's fee account.
+        // Otherwise, pay fee to the worker's penalty account.
+        **self.to_account_info().try_borrow_mut_lamports()? = self
+            .to_account_info()
+            .lamports()
+            .checked_sub(self.fee)
+            .unwrap();
+        if pool.clone().into_inner().workers.contains(&worker.key()) {
+            **fee.to_account_info().try_borrow_mut_lamports()? = fee
+                .to_account_info()
+                .lamports()
+                .checked_add(self.fee)
+                .unwrap();
+        } else {
+            **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
+                .to_account_info()
+                .lamports()
+                .checked_add(self.fee)
+                .unwrap();
+        }
+
+        // If the self has no more work or the number of cranks since the last payout has reached the rate limit,
+        // reimburse the worker for the transaction base fee.
+        match self.exec_context {
+            None => {
+                return Err(ClockworkError::InvalidQueueState.into());
+            }
+            Some(exec_context) => {
+                if self.next_instruction.is_none()
+                    || exec_context.cranks_since_reimbursement >= self.rate_limit
+                {
+                    // Pay reimbursment for base transaction fee
+                    **self.to_account_info().try_borrow_mut_lamports()? = self
+                        .to_account_info()
+                        .lamports()
+                        .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                        .unwrap();
+                    **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+                        .to_account_info()
+                        .lamports()
+                        .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                        .unwrap();
+
+                    // Update the exec context to mark that a reimbursement happened this slot.
+                    self.exec_context = Some(ExecContext {
+                        cranks_since_reimbursement: 0,
+                        ..exec_context
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -295,7 +364,7 @@ impl QueueAccount for Account<'_, Queue> {
         Ok(())
     }
 
-    fn verify_trigger(
+    fn kickoff(
         &mut self,
         data_hash: Option<u64>,
         remaining_accounts: &[AccountInfo],

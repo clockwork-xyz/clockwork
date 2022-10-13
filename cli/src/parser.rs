@@ -147,7 +147,8 @@ fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         }),
         Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
             id: parse_string("id", matches)?,
-            rate_limit: parse_u64("rate_limit", matches).map_or(None, |v| Some(v)),
+            rate_limit: parse_u64("rate_limit", matches).ok(),
+            schedule: parse_string("schedule", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

@@ -13,6 +13,8 @@ use {
     std::{convert::TryFrom, hash::Hash},
 };
 
+// TODO Add support for lookup tables.
+
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
 

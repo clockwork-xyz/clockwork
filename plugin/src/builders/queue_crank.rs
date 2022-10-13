@@ -54,7 +54,7 @@ fn build_crank_tx(
     let signatory_pubkey = client.payer_pubkey();
 
     // Pre-simulate crank ixs and pack into tx
-    let mut ixs: Vec<Instruction> = vec![build_crank_ix(
+    let mut ixs: Vec<Instruction> = vec![build_kickoff_ix(
         client.clone(),
         queue,
         signatory_pubkey,
@@ -143,7 +143,7 @@ fn build_crank_tx(
     Some(tx)
 }
 
-fn build_crank_ix(
+fn build_kickoff_ix(
     client: Arc<ClockworkClient>,
     queue: Queue,
     signatory_pubkey: Pubkey,
@@ -188,11 +188,7 @@ fn build_crank_ix(
 
     // Build the instruction.
     let queue_pubkey = Queue::pubkey(queue.authority, queue.id);
-    let inner_ix = queue
-        .next_instruction
-        .clone()
-        .unwrap_or(queue.kickoff_instruction);
-    let mut crank_ix = clockwork_client::queue::instruction::queue_crank(
+    let mut kickoff_ix = clockwork_client::queue::instruction::queue_kickoff(
         data_hash,
         queue_pubkey,
         signatory_pubkey,
@@ -202,29 +198,49 @@ fn build_crank_ix(
     // Inject the trigger account.
     match trigger_account_pubkey {
         None => {}
-        Some(pubkey) => crank_ix.accounts.push(AccountMeta {
+        Some(pubkey) => kickoff_ix.accounts.push(AccountMeta {
             pubkey,
             is_signer: false,
             is_writable: false,
         }),
     }
 
-    // Inject the target program account to the ix.
-    crank_ix
-        .accounts
-        .push(AccountMeta::new_readonly(inner_ix.program_id, false));
+    kickoff_ix
+}
 
-    // Inject the worker pubkey as the Clockwork "payer" account
-    for acc in inner_ix.clone().accounts {
-        let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
-            signatory_pubkey
-        } else {
-            acc.pubkey
-        };
-        crank_ix.accounts.push(match acc.is_writable {
-            true => AccountMeta::new(acc_pubkey, false),
-            false => AccountMeta::new_readonly(acc_pubkey, false),
-        })
+fn build_crank_ix(
+    _client: Arc<ClockworkClient>,
+    queue: Queue,
+    signatory_pubkey: Pubkey,
+    worker_id: u64,
+) -> Instruction {
+    // Build the instruction.
+    let queue_pubkey = Queue::pubkey(queue.authority, queue.id);
+    let mut crank_ix = clockwork_client::queue::instruction::queue_crank(
+        queue_pubkey,
+        signatory_pubkey,
+        Worker::pubkey(worker_id),
+    );
+
+    if let Some(next_instruction) = queue.next_instruction {
+        // Inject the target program account to the ix.
+        crank_ix.accounts.push(AccountMeta::new_readonly(
+            next_instruction.program_id,
+            false,
+        ));
+
+        // Inject the worker pubkey as the Clockwork "payer" account
+        for acc in next_instruction.clone().accounts {
+            let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
+                signatory_pubkey
+            } else {
+                acc.pubkey
+            };
+            crank_ix.accounts.push(match acc.is_writable {
+                true => AccountMeta::new(acc_pubkey, false),
+                false => AccountMeta::new_readonly(acc_pubkey, false),
+            })
+        }
     }
 
     crank_ix

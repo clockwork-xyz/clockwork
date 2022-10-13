@@ -47,13 +47,27 @@ pub fn get(client: &Client, id: String) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn update(client: &Client, id: String, rate_limit: Option<u64>) -> Result<(), CliError> {
+pub fn update(
+    client: &Client,
+    id: String,
+    rate_limit: Option<u64>,
+    schedule: Option<String>,
+) -> Result<(), CliError> {
     let queue_pubkey = Queue::pubkey(client.payer_pubkey(), id);
+
+    let trigger = if let Some(schedule) = schedule {
+        Some(Trigger::Cron {
+            schedule,
+            skippable: true,
+        })
+    } else {
+        None
+    };
     let settings = QueueSettings {
         fee: None,
         kickoff_instruction: None,
         rate_limit,
-        trigger: None,
+        trigger,
     };
     let ix = clockwork_client::queue::instruction::queue_update(
         client.payer_pubkey(),
