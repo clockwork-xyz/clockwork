@@ -132,6 +132,12 @@ fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
+    let ix = clockwork_client::network::instruction::registry_epoch_kickoff(
+        epoch_queue_pubkey,
+        Snapshot::pubkey(850),
+    );
+    println!("IX: {:#?}", ix);
+
     // Create hasher queue.
     let hasher_queue_id = "clockwork.network.hasher";
     let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());

@@ -136,7 +136,8 @@ pub fn app() -> Command<'static> {
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("worker_id")
-                                .index(1)
+                                .long("worker_id")
+                                .short('w')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the worker to create a delegation with"),
@@ -148,21 +149,24 @@ pub fn app() -> Command<'static> {
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("amount")
-                                .index(1)
+                                .long("amount")
+                                .short('a')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The number of tokens to deposit"),
                         )
                         .arg(
                             Arg::new("delegation_id")
-                                .index(2)
+                                .long("delegation_id")
+                                .short('i')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the delegation to deposit into"),
                         )
                         .arg(
                             Arg::new("worker_id")
-                                .index(3)
+                                .long("worker_id")
+                                .short('w')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the worker"),
@@ -174,14 +178,16 @@ pub fn app() -> Command<'static> {
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("delegation_id")
-                                .index(1)
+                                .long("delegation_id")
+                                .short('i')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the delegation"),
                         )
                         .arg(
                             Arg::new("worker_id")
-                                .index(2)
+                                .long("worker_id")
+                                .short('w')
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the worker"),
