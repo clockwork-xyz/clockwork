@@ -1,7 +1,7 @@
 [package]
 name = "clockwork-utils"
 version = "1.2.9"
-description = "Utils for building automated programs on Solana"
+description = "Tools for building blocks on Solana"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
