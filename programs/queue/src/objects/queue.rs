@@ -452,20 +452,12 @@ impl QueueAccount for Account<'_, Queue> {
                     ClockworkError::TriggerNotActive
                 );
 
-                // Set the trigger context started_at to be the threshold timestamp that had to be met.
-                let mut started_at = threshold_timestamp;
-
-                // If the schedule is marked as skippable and kickoff thresholds have been missed,
-                // set the started_at of the trigger context to be the threshold moment just before the current timestamp.
-                if skippable {
-                    if let Some(next_threshold_timestamp) =
-                        next_timestamp(threshold_timestamp, schedule.clone())
-                    {
-                        if clock.unix_timestamp.gt(&next_threshold_timestamp) {
-                            started_at = prev_timestamp(clock.unix_timestamp, schedule)
-                                .ok_or(ClockworkError::TriggerNotActive)?
-                        }
-                    }
+                // If the schedule is marked as skippable, set the started_at of the exec context
+                // to be the current timestamp. Otherwise, the exec context must iterate through each scheduled kickoff moment.
+                let started_at = if skippable {
+                    clock.unix_timestamp
+                } else {
+                    threshold_timestamp
                 };
 
                 // Set the exec context.
