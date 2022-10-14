@@ -248,7 +248,7 @@ impl QueueAccount for Account<'_, Queue> {
                         1
                     },
                     last_crank_at: current_slot,
-                    trigger_context: exec_context.trigger_context,
+                    ..exec_context
                 });
             }
         }
@@ -357,6 +357,8 @@ impl QueueAccount for Account<'_, Queue> {
 
         // If provided, update the queue's trigger and reset the exec context
         if let Some(trigger) = settings.trigger {
+            // Require the queue is not in the middle of processing.
+            require!(self.next_instruction.is_none(), ClockworkError::QueueBusy);
             self.trigger = trigger;
             self.exec_context = None;
         }
@@ -459,6 +461,15 @@ impl QueueAccount for Account<'_, Queue> {
                 } else {
                     threshold_timestamp
                 };
+
+                msg!(
+                    "created_at: {} now: {} reference: {} threshold: {} started_at: {}",
+                    self.created_at.unix_timestamp,
+                    clock.unix_timestamp,
+                    reference_timestamp,
+                    threshold_timestamp,
+                    started_at
+                );
 
                 // Set the exec context.
                 self.exec_context = Some(ExecContext {

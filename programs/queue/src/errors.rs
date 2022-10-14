@@ -21,6 +21,9 @@ pub enum ClockworkError {
     #[msg("The trigger condition has not been activated")]
     TriggerNotActive,
 
+    #[msg("This operation cannot be processes because the queue is currently busy")]
+    QueueBusy,
+
     /// Thrown if a request is invalid because the queue is currently paused.
     #[msg("The queue is currently paused")]
     QueuePaused,
