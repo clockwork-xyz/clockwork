@@ -561,14 +561,3 @@ fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
         .take()
         .map(|datetime| datetime.timestamp())
 }
-
-fn prev_timestamp(before: i64, schedule: String) -> Option<i64> {
-    Schedule::from_str(&schedule)
-        .unwrap()
-        .prev_before(&DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(before, 0),
-            Utc,
-        ))
-        .take()
-        .map(|datetime| datetime.timestamp())
-}
