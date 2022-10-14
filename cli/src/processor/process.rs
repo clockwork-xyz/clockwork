@@ -11,6 +11,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     match command {
         // Set solana config if using localnet command
         CliCommand::Localnet { program_infos: _ } => {
+            // TODO Verify the Solana CLI version is compatable with this build.
             set_solana_config().map_err(|err| CliError::FailedLocalnet(err.to_string()))?
         }
         _ => {}
