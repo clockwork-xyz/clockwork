@@ -462,15 +462,6 @@ impl QueueAccount for Account<'_, Queue> {
                     threshold_timestamp
                 };
 
-                msg!(
-                    "created_at: {} now: {} reference: {} threshold: {} started_at: {}",
-                    self.created_at.unix_timestamp,
-                    clock.unix_timestamp,
-                    reference_timestamp,
-                    threshold_timestamp,
-                    started_at
-                );
-
                 // Set the exec context.
                 self.exec_context = Some(ExecContext {
                     cranks_since_reimbursement: 0,
