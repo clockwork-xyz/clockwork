@@ -35,7 +35,7 @@ pub struct QueueKickoff<'info> {
 }
 
 pub fn handler(ctx: Context<QueueKickoff>, data_hash: Option<u64>) -> Result<()> {
-    // Get accounts
+    // Get accounts.
     let queue = &mut ctx.accounts.queue;
 
     // If this queue does not have a next_instruction, verify the queue's trigger condition is active.

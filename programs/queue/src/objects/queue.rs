@@ -448,12 +448,12 @@ impl QueueAccount for Account<'_, Queue> {
                 let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone())
                     .ok_or(ClockworkError::TriggerNotActive)?;
                 require!(
-                    clock.unix_timestamp >= threshold_timestamp,
+                    clock.unix_timestamp.ge(&threshold_timestamp),
                     ClockworkError::TriggerNotActive
                 );
 
-                // If the schedule is marked as skippable, set the started_at of the exec context
-                // to be the current timestamp. Otherwise, the exec context must iterate through each scheduled kickoff moment.
+                // If the schedule is marked as skippable, set the started_at of the exec context to be the current timestamp.
+                // Otherwise, the exec context must iterate through each scheduled kickoff moment.
                 let started_at = if skippable {
                     clock.unix_timestamp
                 } else {
