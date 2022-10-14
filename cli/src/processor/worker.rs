@@ -10,7 +10,7 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let worker = client
         .get::<Worker>(&worker_pubkey)
         .map_err(|_err| CliError::AccountDataNotParsable(worker_pubkey.to_string()))?;
-    println!("{:#?}", worker);
+    println!("Address:{}\n{:#?}", worker_pubkey, worker);
     Ok(())
 }
 

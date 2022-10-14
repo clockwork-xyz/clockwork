@@ -1,3 +1,5 @@
+use clockwork_client::network::objects::PoolSettings;
+
 use {
     crate::errors::CliError,
     clockwork_client::{
@@ -29,5 +31,18 @@ pub fn list(client: &Client) -> Result<(), CliError> {
         println!("{:#?}", pool);
     }
 
+    Ok(())
+}
+
+pub fn update(client: &Client, id: u64, size: usize) -> Result<(), CliError> {
+    let pool_pubkey = Pool::pubkey(id);
+    let ix = clockwork_client::network::instruction::pool_update(
+        client.payer_pubkey(),
+        client.payer_pubkey(),
+        pool_pubkey,
+        PoolSettings { size },
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, id)?;
     Ok(())
 }

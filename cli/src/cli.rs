@@ -48,6 +48,10 @@ pub enum CliCommand {
         id: u64,
     },
     PoolList {},
+    PoolUpdate {
+        id: u64,
+        size: usize,
+    },
 
     // Queue commands
     QueueCreate {
@@ -247,7 +251,27 @@ pub fn app() -> Command<'static> {
                                 .help("The ID of the pool to lookup"),
                         ),
                 )
-                .subcommand(Command::new("list").about("List the pools")),
+                .subcommand(Command::new("list").about("List the pools"))
+                .subcommand(
+                    Command::new("update")
+                        .about("Update a pool")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the pool to update"),
+                        )
+                        .arg(
+                            Arg::new("size")
+                                .long("size")
+                                .short('s')
+                                .takes_value(true)
+                                .required(false)
+                                .help("The size of the pool"),
+                        ),
+                ),
         )
         .subcommand(
             Command::new("queue")

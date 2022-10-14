@@ -48,6 +48,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
+        CliCommand::PoolUpdate { id, size } => super::pool::update(&client, id, size),
         CliCommand::QueueCreate {
             id,
             kickoff_instruction,

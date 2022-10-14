@@ -125,6 +125,10 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", matches)) => Ok(CliCommand::PoolGet {
             id: parse_u64("id", matches)?,
         }),
+        Some(("update", matches)) => Ok(CliCommand::PoolUpdate {
+            id: parse_u64("id", matches)?,
+            size: parse_usize("size", matches)?,
+        }),
         Some(("list", _)) => Ok(CliCommand::PoolList {}),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -257,6 +261,13 @@ pub fn _parse_i64(arg: &str, matches: &ArgMatches) -> Result<i64, CliError> {
 pub fn parse_u64(arg: &str, matches: &ArgMatches) -> Result<u64, CliError> {
     Ok(parse_string(arg, matches)?
         .parse::<u64>()
+        .map_err(|_err| CliError::BadParameter(arg.into()))
+        .unwrap())
+}
+
+pub fn parse_usize(arg: &str, matches: &ArgMatches) -> Result<usize, CliError> {
+    Ok(parse_string(arg, matches)?
+        .parse::<usize>()
         .map_err(|_err| CliError::BadParameter(arg.into()))
         .unwrap())
 }
