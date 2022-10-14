@@ -14,7 +14,9 @@ keywords = ["solana"]
 anyhow = "1.0.61"
 clap = { version = "3.1.2", features = ["derive"] }
 clockwork-client = { path = "../client", version = "1.2.12" }
+clockwork-cron = { path = "../cron", version = "1.2.12" }
 clockwork-utils = { path = "../utils", version = "1.2.12" }
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 dirs-next = "2.0.0"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"

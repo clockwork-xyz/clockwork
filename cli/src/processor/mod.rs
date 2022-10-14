@@ -1,5 +1,6 @@
 mod api;
 mod config;
+mod crontab;
 mod delegation;
 mod initialize;
 mod localnet;

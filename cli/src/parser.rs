@@ -17,6 +17,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
         match matches.subcommand() {
             Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
+            Some(("crontab", matches)) => parse_crontab_command(matches),
             Some(("delegation", matches)) => parse_delegation_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
@@ -92,6 +93,12 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             matches.subcommand().unwrap().0.into(),
         )),
     }
+}
+
+fn parse_crontab_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    Ok(CliCommand::Crontab {
+        schedule: parse_string("schedule", matches)?,
+    })
 }
 
 fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {

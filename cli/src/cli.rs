@@ -20,6 +20,11 @@ pub enum CliCommand {
         hasher_queue: Option<Pubkey>,
     },
 
+    // Crontab
+    Crontab {
+        schedule: String,
+    },
+
     // Delegation
     DelegationCreate {
         worker_id: u64,
@@ -138,6 +143,18 @@ pub fn app() -> Command<'static> {
                                 .args(&["admin", "epoch_queue", "hasher_queue"])
                                 .multiple(true),
                         ),
+                ),
+        )
+        .subcommand(
+            Command::new("crontab")
+                .about("Generate a cron firing table from schedule")
+                .arg_required_else_help(true)
+                .arg(
+                    Arg::new("schedule")
+                        .index(1)
+                        .takes_value(true)
+                        .required(true)
+                        .help("The schedule to generate a cron table for"),
                 ),
         )
         .subcommand(

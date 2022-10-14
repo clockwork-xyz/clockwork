@@ -35,6 +35,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             epoch_queue,
             hasher_queue,
         } => super::config::set(&client, admin, epoch_queue, hasher_queue),
+        CliCommand::Crontab { schedule } => super::crontab::get(&client, schedule),
         CliCommand::DelegationCreate { worker_id } => super::delegation::create(&client, worker_id),
         CliCommand::DelegationDeposit {
             amount,
