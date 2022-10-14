@@ -18,7 +18,7 @@ pub struct QueueKickoff<'info> {
         ],
         bump,
         constraint = !queue.paused @ ClockworkError::QueuePaused,
-        constraint = queue.next_instruction.is_none()
+        constraint = queue.next_instruction.is_none() @ ClockworkError::QueueBusy,
     )]
     pub queue: Box<Account<'info, Queue>>,
 
