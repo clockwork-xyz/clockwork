@@ -54,12 +54,12 @@ fn build_crank_tx(
     let signatory_pubkey = client.payer_pubkey();
 
     // Pre-simulate crank ixs and pack into tx
-    let mut ixs: Vec<Instruction> = vec![build_kickoff_ix(
-        client.clone(),
-        queue,
-        signatory_pubkey,
-        worker_id,
-    )];
+    let first_instruction = if queue.next_instruction.is_some() {
+        build_crank_ix(client.clone(), queue, signatory_pubkey, worker_id)
+    } else {
+        build_kickoff_ix(client.clone(), queue, signatory_pubkey, worker_id)
+    };
+    let mut ixs: Vec<Instruction> = vec![first_instruction];
 
     // Pre-simulate crank ixs and pack as many as possible into tx.
     let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&signatory_pubkey));
