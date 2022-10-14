@@ -81,6 +81,12 @@ impl PoolAccount for Account<'_, Pool> {
 
     fn update(&mut self, settings: &PoolSettings) -> Result<()> {
         self.size = settings.size;
+
+        // Drain pool to the configured size limit.
+        while self.workers.len() > self.size {
+            self.workers.pop_front();
+        }
+
         Ok(())
     }
 }
