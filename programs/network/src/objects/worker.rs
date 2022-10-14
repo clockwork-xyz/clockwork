@@ -74,6 +74,11 @@ impl WorkerAccount for Account<'_, Worker> {
             ClockworkError::InvalidCommissionRate
         );
         self.commission_rate = settings.commission_rate;
+
+        require!(
+            settings.signatory.ne(&self.authority),
+            ClockworkError::InvalidSignatory
+        );
         self.signatory = settings.signatory;
         Ok(())
     }

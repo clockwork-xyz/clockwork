@@ -11,6 +11,9 @@ pub enum ClockworkError {
     #[msg("The penalty account has an insufficient balance for this operation")]
     InsufficientPenaltyBalance,
 
+    #[msg("The authority address cannot be used as the worker signatory")]
+    InvalidSignatory,
+
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
 

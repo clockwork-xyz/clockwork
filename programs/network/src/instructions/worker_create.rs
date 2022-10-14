@@ -17,7 +17,7 @@ pub struct WorkerCreate<'info> {
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    #[account(mut, constraint = authority.key() != worker.key())]
+    #[account(mut)]
     pub authority: Signer<'info>,
 
     #[account(address = Config::pubkey())]
@@ -61,7 +61,7 @@ pub struct WorkerCreate<'info> {
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
 
-    #[account()]
+    #[account(constraint = signatory.key().ne(&authority.key()) @ ClockworkError::InvalidSignatory)]
     pub signatory: Signer<'info>,
 
     #[account(address = system_program::ID)]
