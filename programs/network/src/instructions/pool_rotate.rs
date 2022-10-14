@@ -1,4 +1,7 @@
-use {crate::objects::*, anchor_lang::prelude::*};
+use {
+    crate::{errors::*, objects::*},
+    anchor_lang::prelude::*,
+};
 
 // TODO Make pool rotation a function of the epoch pubkey.
 //      Workers should self-select into the delegate pool on deterministic epochs.
@@ -34,7 +37,6 @@ pub struct PoolRotate<'info> {
 
     #[account(
         address = snapshot_frame.pubkey(),
-        constraint = is_rotation_window_open(&registry, &snapshot, &snapshot_frame).unwrap(),
         has_one = snapshot,
         has_one = worker
     )]
@@ -50,7 +52,17 @@ pub struct PoolRotate<'info> {
 pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
     // Get accounts
     let pool = &mut ctx.accounts.pool;
+    let registry = &ctx.accounts.registry;
+    let snapshot = &ctx.accounts.snapshot;
+    let snapshot_frame = &ctx.accounts.snapshot_frame;
     let worker = &ctx.accounts.worker;
+
+    // Verify the pool has excess space or the worker can rotate in at this time.
+    require!(
+        pool.workers.len().lt(&pool.size)
+            || is_rotation_window_open(&registry, &snapshot, &snapshot_frame).unwrap(),
+        ClockworkError::PoolFull
+    );
 
     // Rotate the worker into the pool.
     pool.rotate(worker.key())?;

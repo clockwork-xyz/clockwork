@@ -68,13 +68,10 @@ impl PoolAccount for Account<'_, Pool> {
     }
 
     fn rotate(&mut self, worker: Pubkey) -> Result<()> {
-        // Pop a worker out of the pool
-        self.workers.pop_front();
-
-        // Push provided worker into the pool
+        // Push new worker into the pool.
         self.workers.push_back(worker);
 
-        // Drain pool to the configured size limit
+        // Drain pool to the configured size limit.
         while self.workers.len() > self.size {
             self.workers.pop_front();
         }

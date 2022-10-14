@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ClockworkError {
-    #[msg("The commission must be between 0 and 100")]
-    InvalidCommission,
+    #[msg("The commission rate must be an integer between 0 and 100")]
+    InvalidCommissionRate,
 
     #[msg("You cannot request to unstake more tokens than are currently locked")]
     InvalidUnstakeAmount,
@@ -13,4 +13,7 @@ pub enum ClockworkError {
 
     #[msg("The registry is locked and may not be updated right now")]
     RegistryLocked,
+
+    #[msg("The worker cannot rotate into the pool right now")]
+    PoolFull,
 }

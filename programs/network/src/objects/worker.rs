@@ -71,7 +71,7 @@ impl WorkerAccount for Account<'_, Worker> {
     fn update(&mut self, settings: WorkerSettings) -> Result<()> {
         require!(
             settings.commission_rate.ge(&0) && settings.commission_rate.le(&100),
-            ClockworkError::InvalidCommission
+            ClockworkError::InvalidCommissionRate
         );
         self.commission_rate = settings.commission_rate;
         self.signatory = settings.signatory;
