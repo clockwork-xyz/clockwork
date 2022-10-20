@@ -8,7 +8,6 @@ pub mod objects;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_utils::*;
 use instructions::*;
 use objects::*;
 
@@ -28,7 +27,7 @@ pub mod queue_program {
     pub fn queue_create(
         ctx: Context<QueueCreate>,
         id: String,
-        kickoff_instruction: InstructionData,
+        kickoff_instruction: clockwork_utils::InstructionData,
         trigger: Trigger,
     ) -> Result<()> {
         queue_create::handler(ctx, id, kickoff_instruction, trigger)

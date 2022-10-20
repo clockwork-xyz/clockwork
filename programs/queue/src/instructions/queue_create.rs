@@ -1,14 +1,13 @@
 use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
-    clockwork_utils::*,
     std::mem::size_of,
 };
 
 
 /// Accounts required by the `queue_create` instruction.
 #[derive(Accounts)]
-#[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
+#[instruction(id: String, kickoff_instruction: clockwork_utils::InstructionData, trigger: Trigger)]
 pub struct QueueCreate<'info> {
     /// The authority (owner) of the queue.
     #[account()]
@@ -43,7 +42,7 @@ pub struct QueueCreate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<QueueCreate>, id: String, kickoff_instruction: InstructionData, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<QueueCreate>, id: String, kickoff_instruction: clockwork_utils::InstructionData, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let queue = &mut ctx.accounts.queue;
