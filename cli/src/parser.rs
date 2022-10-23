@@ -21,6 +21,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("delegation", matches)) => parse_delegation_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
+            Some(("network", matches)) => parse_network_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
             Some(("queue", matches)) => parse_queue_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
@@ -137,6 +138,19 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             size: parse_usize("size", matches)?,
         }),
         Some(("list", _)) => Ok(CliCommand::PoolList {}),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_network_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("inititalize", matches)) => Ok(CliCommand::Initialize {
+            mint: parse_pubkey("mint", matches)?,
+        }),
+        Some(("pool", matches)) => parse_pool_command(matches),
+        Some(("worker", matches)) => parse_worker_command(matches),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

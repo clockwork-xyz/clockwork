@@ -118,7 +118,7 @@ pub fn app() -> Command<'static> {
                 .arg_required_else_help(true)
                 .subcommand(Command::new("get").about("Get a config value"))
                 .subcommand(
-                    Command::new("set")
+                    Command::new("update")
                         .about("Set a config value")
                         .arg(
                             Arg::new("admin")
@@ -289,6 +289,14 @@ pub fn app() -> Command<'static> {
                                 .help("The size of the pool"),
                         ),
                 ),
+        )
+        .subcommand(
+            Command::new("network")
+                .about("Manage network")
+                .arg_required_else_help(true)
+                .subcommand(Command::new("initialize").about("Create a new network"))
+                .subcommand(Command::new("worker"))
+                .subcommand(Command::new("pool")),
         )
         .subcommand(
             Command::new("queue")
