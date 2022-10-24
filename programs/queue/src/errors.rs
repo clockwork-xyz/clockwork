@@ -17,6 +17,10 @@ pub enum ClockworkError {
     #[msg("The queue is in an invalid state")]
     InvalidQueueState,
 
+    /// Thrown if an account trigger has an invalid range.
+    #[msg("The range is larger than the account size")]
+    InvalidRange,
+
     /// Thrown if a crank instruction is invalid because the queue's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]
     TriggerNotActive,
