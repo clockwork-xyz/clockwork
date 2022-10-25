@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<PoolRotate>) -> Result<()> {
     // Verify the worker is not already in the pool.
     require!(
         !pool.workers.contains(&worker.key()),
-        ClockworkError::PoolFull
+        ClockworkError::AlreadyInPool
     );
 
     // Rotate the worker into the pool.
