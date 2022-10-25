@@ -27,8 +27,8 @@ pub struct RegistryEpochKickoff<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         mut,
@@ -47,7 +47,7 @@ pub struct RegistryEpochKickoff<'info> {
 pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &mut ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
 
@@ -59,7 +59,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
         program_id: crate::ID,
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new_readonly(queue.key(), true),
+            AccountMetaData::new_readonly(thread.key(), true),
             AccountMetaData::new(registry.key(), false),
             AccountMetaData::new_readonly(
                 Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
@@ -69,7 +69,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
         data: anchor_sighash("registry_epoch_kickoff").to_vec(),
     });
 
-    // Build the next instruction for queue.
+    // Build the next instruction for thread.
     let next_instruction = if snapshot.total_frames.gt(&0) {
         // The current snapshot has frames. Distribute fees collected by workers.
         Some(InstructionData {
@@ -77,7 +77,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(Fee::pubkey(Worker::pubkey(0)), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
@@ -91,7 +91,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
@@ -103,7 +103,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(registry.key(), false),
             ],
             data: anchor_sighash("registry_epoch_cutover").to_vec(),

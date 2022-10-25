@@ -69,7 +69,7 @@ impl NetworkObserver {
             match pool.id {
                 0 => {
                     *w_pool_positions = PoolPositions {
-                        queue_pool: pool_position,
+                        thread_pool: pool_position,
                         ..w_pool_positions.clone()
                     };
                 }
@@ -153,14 +153,14 @@ impl Default for PoolPosition {
 
 #[derive(Clone)]
 pub struct PoolPositions {
-    pub queue_pool: PoolPosition,
+    pub thread_pool: PoolPosition,
     pub webhook_pool: PoolPosition,
 }
 
 impl Default for PoolPositions {
     fn default() -> Self {
         PoolPositions {
-            queue_pool: PoolPosition::default(),
+            thread_pool: PoolPosition::default(),
             webhook_pool: PoolPosition::default(),
         }
     }

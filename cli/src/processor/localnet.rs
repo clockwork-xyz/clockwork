@@ -6,7 +6,7 @@ use {
     anyhow::Result,
     clockwork_client::{
         network::objects::ConfigSettings,
-        queue::objects::{Queue, Trigger},
+        thread::objects::{Thread, Trigger},
         Client,
     },
     solana_sdk::{
@@ -34,7 +34,7 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
-    create_queues(client, mint_pubkey)
+    create_threads(client, mint_pubkey)
         .map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed.
@@ -112,55 +112,55 @@ fn register_worker(client: &Client) -> Result<()> {
     Ok(())
 }
 
-fn create_queues(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
-    // Create epoch queue.
-    let epoch_queue_id = "clockwork.network.epoch";
-    let epoch_queue_pubkey = Queue::pubkey(client.payer_pubkey(), epoch_queue_id.into());
-    let ix_a = clockwork_client::queue::instruction::queue_create(
+fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
+    // Create epoch thread.
+    let epoch_thread_id = "clockwork.network.epoch";
+    let epoch_thread_pubkey = Thread::pubkey(client.payer_pubkey(), epoch_thread_id.into());
+    let ix_a = clockwork_client::thread::instruction::thread_create(
         client.payer_pubkey(),
-        epoch_queue_id.into(),
+        epoch_thread_id.into(),
         clockwork_client::network::instruction::registry_epoch_kickoff(
-            epoch_queue_pubkey,
+            epoch_thread_pubkey,
             Snapshot::pubkey(0),
         )
         .into(),
         client.payer_pubkey(),
-        epoch_queue_pubkey,
+        epoch_thread_pubkey,
         Trigger::Cron {
             schedule: "0 * * * * * *".into(),
             skippable: true,
         },
     );
 
-    // Create hasher queue.
-    let hasher_queue_id = "clockwork.network.hasher";
-    let hasher_queue_pubkey = Queue::pubkey(client.payer_pubkey(), hasher_queue_id.into());
-    let ix_b = clockwork_client::queue::instruction::queue_create(
+    // Create hasher thread.
+    let hasher_thread_id = "clockwork.network.hasher";
+    let hasher_thread_pubkey = Thread::pubkey(client.payer_pubkey(), hasher_thread_id.into());
+    let ix_b = clockwork_client::thread::instruction::thread_create(
         client.payer_pubkey(),
-        hasher_queue_id.into(),
-        clockwork_client::network::instruction::registry_nonce_hash(hasher_queue_pubkey).into(),
+        hasher_thread_id.into(),
+        clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey).into(),
         client.payer_pubkey(),
-        hasher_queue_pubkey,
+        hasher_thread_pubkey,
         Trigger::Cron {
             schedule: "*/15 * * * * * *".into(),
             skippable: true,
         },
     );
 
-    // Update config with queue pubkeys
+    // Update config with thread pubkeys
     let ix_c = clockwork_client::network::instruction::config_update(
         client.payer_pubkey(),
         ConfigSettings {
             admin: client.payer_pubkey(),
-            epoch_queue: epoch_queue_pubkey,
-            hasher_queue: hasher_queue_pubkey,
+            epoch_thread: epoch_thread_pubkey,
+            hasher_thread: hasher_thread_pubkey,
             mint: mint_pubkey,
         },
     );
 
     client.send_and_confirm(&vec![ix_a, ix_b, ix_c], &[client.payer()])?;
-    client.airdrop(&epoch_queue_pubkey, LAMPORTS_PER_SOL)?;
-    client.airdrop(&hasher_queue_pubkey, LAMPORTS_PER_SOL)?;
+    client.airdrop(&epoch_thread_pubkey, LAMPORTS_PER_SOL)?;
+    client.airdrop(&hasher_thread_pubkey, LAMPORTS_PER_SOL)?;
 
     Ok(())
 }
@@ -176,7 +176,7 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
-        .bpf_program(home_dir, clockwork_client::queue::ID, "queue")
+        .bpf_program(home_dir, clockwork_client::thread::ID, "thread")
         .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
         .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)

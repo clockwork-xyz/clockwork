@@ -9,12 +9,12 @@ use {
     clockwork_network_program::objects::*,
 };
 
-pub fn registry_nonce_hash(queue: Pubkey) -> Instruction {
+pub fn registry_nonce_hash(thread: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_network_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(Config::pubkey(), false),
-            AccountMeta::new_readonly(queue, true),
+            AccountMeta::new_readonly(thread, true),
             AccountMeta::new(Registry::pubkey(), false),
         ],
         data: clockwork_network_program::instruction::RegistryNonceHash {}.data(),

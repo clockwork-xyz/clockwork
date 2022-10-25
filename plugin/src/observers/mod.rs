@@ -1,16 +1,16 @@
 pub mod network;
-pub mod queue;
+pub mod thread;
 pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
 use network::NetworkObserver;
-use queue::QueueObserver;
+use thread::ThreadObserver;
 use webhook::WebhookObserver;
 
 pub struct Observers {
     pub network: Arc<NetworkObserver>,
-    pub queue: Arc<QueueObserver>,
+    pub thread: Arc<ThreadObserver>,
     pub webhook: Arc<WebhookObserver>,
 }
 

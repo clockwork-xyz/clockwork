@@ -27,8 +27,8 @@ pub struct SnapshotEntryCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         address = Registry::pubkey(),
@@ -84,7 +84,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     let delegation = &ctx.accounts.delegation;
     let delegation_stake = &ctx.accounts.delegation_stake;
     let payer = &ctx.accounts.payer;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
@@ -103,7 +103,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
     // Update the snapshot frame.
     snapshot_frame.total_entries = snapshot_frame.total_entries.checked_add(1).unwrap();
 
-    // Build the next instruction for the queue.
+    // Build the next instruction for the thread.
     let next_instruction = if snapshot_frame.total_entries.lt(&worker.total_delegations) {
         // Create a snapshot entry for the next delegation.
         let next_delegation_pubkey =
@@ -122,7 +122,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
                     false,
                 ),
                 AccountMetaData::new(payer.key(), true),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_entry_pubkey, false),
@@ -142,7 +142,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(payer.key(), true),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
@@ -161,7 +161,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(registry.key(), false),
             ],
             data: anchor_sighash("registry_epoch_cutover").to_vec(),

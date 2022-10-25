@@ -1,6 +1,6 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
-use clockwork_client::{queue::objects::Trigger, webhook::objects::HttpMethod};
+use clockwork_client::{thread::objects::Trigger, webhook::objects::HttpMethod};
 use clockwork_utils::InstructionData;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
@@ -16,8 +16,8 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        epoch_queue: Option<Pubkey>,
-        hasher_queue: Option<Pubkey>,
+        epoch_thread: Option<Pubkey>,
+        hasher_thread: Option<Pubkey>,
     },
 
     // Crontab
@@ -58,28 +58,28 @@ pub enum CliCommand {
         size: usize,
     },
 
-    // Queue commands
-    QueueCreate {
+    // Thread commands
+    ThreadCreate {
         id: String,
         kickoff_instruction: InstructionData,
         trigger: Trigger,
     },
-    QueueDelete {
+    ThreadDelete {
         id: String,
     },
-    QueueGet {
+    ThreadGet {
         id: String,
     },
-    QueuePause {
+    ThreadPause {
         id: String,
     },
-    QueueResume {
+    ThreadResume {
         id: String,
     },
-    QueueStop {
+    ThreadStop {
         id: String,
     },
-    QueueUpdate {
+    ThreadUpdate {
         id: String,
         rate_limit: Option<u64>,
         schedule: Option<String>,
@@ -127,20 +127,20 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("epoch_queue")
-                                .long("epoch_queue")
+                            Arg::new("epoch_thread")
+                                .long("epoch_thread")
                                 .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("hasher_queue")
-                                .long("hasher_queue")
+                            Arg::new("hasher_thread")
+                                .long("hasher_thread")
                                 .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .group(
                             ArgGroup::new("config_settings")
-                                .args(&["admin", "epoch_queue", "hasher_queue"])
+                                .args(&["admin", "epoch_thread", "hasher_thread"])
                                 .multiple(true),
                         ),
                 ),
@@ -291,12 +291,12 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
-            Command::new("queue")
-                .about("Manage your transaction queues")
+            Command::new("thread")
+                .about("Manage your transaction threads")
                 .arg_required_else_help(true)
                 .subcommand(
                     Command::new("create")
-                        .about("Create a new queue")
+                        .about("Create a new thread")
                         .arg(
                             Arg::new("id")
                                 .long("id")
@@ -304,7 +304,7 @@ pub fn app() -> Command<'static> {
                                 .value_name("ID")
                                 .takes_value(true)
                                 .required(true)
-                                .help("The ID of the queue to be created"),
+                                .help("The ID of the thread to be created"),
                         )
                         .arg(
                             Arg::new("kickoff_instruction")
@@ -345,59 +345,59 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("delete").about("Delete a queue").arg(
+                    Command::new("delete").about("Delete a thread").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the queue to delete"),
+                            .help("The id of the thread to delete"),
                     ),
                 )
                 .subcommand(
-                    Command::new("get").about("Lookup a queue").arg(
+                    Command::new("get").about("Lookup a thread").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the queue to lookup"),
+                            .help("The id of the thread to lookup"),
                     ),
                 )
                 .subcommand(
-                    Command::new("pause").about("Pause a queue").arg(
+                    Command::new("pause").about("Pause a thread").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the queue to pause"),
+                            .help("The id of the thread to pause"),
                     ),
                 )
                 .subcommand(
-                    Command::new("resume").about("Resume a queue").arg(
+                    Command::new("resume").about("Resume a thread").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the queue to resume"),
+                            .help("The id of the thread to resume"),
                     ),
                 )
                 .subcommand(
-                    Command::new("stop").about("Stop a queue").arg(
+                    Command::new("stop").about("Stop a thread").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the queue to stop"),
+                            .help("The id of the thread to stop"),
                     ),
                 )
                 .subcommand(
                     Command::new("update")
-                        .about("Update a property of a queue")
+                        .about("Update a property of a thread")
                         .arg(
                             Arg::new("id")
                                 .index(1)
                                 .takes_value(true)
                                 .required(false)
-                                .help("The id of the queue to lookup"),
+                                .help("The id of the thread to lookup"),
                         )
                         .arg(
                             Arg::new("rate_limit")
@@ -406,7 +406,7 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(false)
                                 .help(
-                                    "The maximum number of cranks allowed per slot for this queue",
+                                    "The maximum number of cranks allowed per slot for this thread",
                                 ),
                         )
                         .arg(
@@ -415,7 +415,7 @@ pub fn app() -> Command<'static> {
                                 .short('s')
                                 .takes_value(true)
                                 .required(false)
-                                .help("The cron schedule of the queue"),
+                                .help("The cron schedule of the thread"),
                         ),
                 ),
         )

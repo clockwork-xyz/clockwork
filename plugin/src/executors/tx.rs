@@ -50,8 +50,8 @@ impl TxExecutor {
             // Rotate worker pools
             this.clone().execute_pool_rotate_txs(slot).await.ok();
 
-            // Queue crank queues
-            this.clone().execute_queue_crank_txs(slot).await.ok();
+            // Thread crank threads
+            this.clone().execute_thread_crank_txs(slot).await.ok();
 
             // Purge message history that is beyond the dedupe period
             this.message_history
@@ -82,21 +82,21 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn execute_queue_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    async fn execute_thread_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.network.pool_positions.read().await;
-        let queue_pool = r_pool_positions.queue_pool.clone();
+        let thread_pool = r_pool_positions.thread_pool.clone();
         drop(r_pool_positions);
-        if queue_pool.current_position.is_none() && !queue_pool.workers.is_empty() {
+        if thread_pool.current_position.is_none() && !thread_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
                 "This node is not in the worker pool".into(),
             ));
         }
 
-        // Execute queue_crank txs.
+        // Execute thread_crank txs.
         crate::builders::build_crank_txs(
             self.client.clone(),
-            self.observers.queue.crankable_queues.clone(),
+            self.observers.thread.crankable_threads.clone(),
             self.config.worker_id,
         )
         .await

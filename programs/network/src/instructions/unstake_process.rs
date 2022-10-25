@@ -35,8 +35,8 @@ pub struct UnstakeProcess<'info> {
     )]
     pub delegation: Box<Account<'info, Delegation>>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         mut,
@@ -77,7 +77,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
     let authority_tokens = &ctx.accounts.authority_tokens;
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &mut ctx.accounts.registry;
     let token_program = &ctx.accounts.token_program;
     let unstake = &ctx.accounts.unstake;
@@ -130,7 +130,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
         registry.total_unstakes = 0;
     }
 
-    // Build next instruction for the queue.
+    // Build next instruction for the thread.
     let next_instruction = if unstake
         .id
         .checked_add(1)
@@ -142,7 +142,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(next_unstake_pubkey, false),
             ],
@@ -157,7 +157,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],

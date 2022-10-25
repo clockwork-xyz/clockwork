@@ -1,5 +1,5 @@
 pub mod network;
-pub mod queue;
+pub mod thread;
 pub mod webhook;
 
 mod client;

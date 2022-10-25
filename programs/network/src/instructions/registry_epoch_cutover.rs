@@ -7,8 +7,8 @@ pub struct RegistryEpochCutover<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         mut,
@@ -21,20 +21,20 @@ pub struct RegistryEpochCutover<'info> {
 pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &mut ctx.accounts.registry;
 
     // Move the current epoch forward.
     registry.current_epoch = registry.current_epoch.checked_add(1).unwrap();
     registry.locked = false;
 
-    // Build next instruction for the queue.
-    // For cost-efficiency, close the prior snapshot accounts and return the lamports to the epoch queue.
+    // Build next instruction for the thread.
+    // For cost-efficiency, close the prior snapshot accounts and return the lamports to the epoch thread.
     let next_instruction = Some(InstructionData {
         program_id: crate::ID,
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new(queue.key(), true),
+            AccountMetaData::new(thread.key(), true),
             AccountMetaData::new_readonly(registry.key(), false),
             AccountMetaData::new(
                 Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
