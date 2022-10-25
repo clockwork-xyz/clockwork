@@ -62,11 +62,13 @@ impl TxExecutor {
     }
 
     async fn execute_pool_rotate_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        let r_pool_positions = self.observers.network.pool_positions.read().await;
         let r_registry = self.observers.network.registry.read().await;
         let r_snapshot = self.observers.network.snapshot.read().await;
         let r_snapshot_frame = self.observers.network.snapshot_frame.read().await;
         match crate::builders::build_pool_rotation_tx(
             self.client.clone(),
+            r_pool_positions,
             r_registry,
             r_snapshot,
             r_snapshot_frame,

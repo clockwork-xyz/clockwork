@@ -1,4 +1,5 @@
 use {
+    crate::observers::network::PoolPositions,
     clockwork_client::{
         network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
@@ -10,6 +11,7 @@ use {
 
 pub fn build_pool_rotation_tx<'a>(
     client: Arc<ClockworkClient>,
+    r_pool_positions: RwLockReadGuard<'a, PoolPositions>,
     r_registry: RwLockReadGuard<'a, Registry>,
     r_snapshot: RwLockReadGuard<'a, Snapshot>,
     r_snapshot_frame: RwLockReadGuard<'a, Option<SnapshotFrame>>,
@@ -22,6 +24,11 @@ pub fn build_pool_rotation_tx<'a>(
 
     // Exit early the snapshot has no stake
     if r_snapshot.total_stake == 0 {
+        return None;
+    }
+
+    // Exit early if the worker is already in the pool.
+    if r_pool_positions.queue_pool.current_position.is_some() {
         return None;
     }
 
