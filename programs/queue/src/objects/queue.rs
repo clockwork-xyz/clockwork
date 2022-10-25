@@ -401,7 +401,7 @@ impl QueueAccount for Account<'_, Queue> {
                         if data.len().gt(&range_end) {
                             data[offset..range_end].hash(&mut hasher);
                         } else {
-                            return Err(ClockworkError::InvalidRange.into());
+                            return Err(ClockworkError::RangeOutOfBounds.into());
                         }
 
                         // Check the exec context for the prior data hash.

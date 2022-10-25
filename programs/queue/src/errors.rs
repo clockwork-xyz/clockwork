@@ -19,7 +19,7 @@ pub enum ClockworkError {
 
     /// Thrown if an account trigger has an invalid range.
     #[msg("The range is larger than the account size")]
-    InvalidRange,
+    RangeOutOfBounds,
 
     /// Thrown if a crank instruction is invalid because the queue's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]
