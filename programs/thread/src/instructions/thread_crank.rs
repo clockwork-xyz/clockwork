@@ -40,6 +40,10 @@ pub struct ThreadCrank<'info> {
     #[account(address = Pool::pubkey(POOL_ID))]
     pub pool: Box<Account<'info, Pool>>,
 
+    /// The signatory.
+    #[account(mut)]
+    pub signatory: Signer<'info>,
+
     /// The thread to crank.
     #[account(
         mut,
@@ -54,10 +58,6 @@ pub struct ThreadCrank<'info> {
     )]
     pub thread: Box<Account<'info, Thread>>,
 
-    /// The signatory.
-    #[account(mut)]
-    pub signatory: Signer<'info>,
-
     /// The worker.
     #[account(
         address = worker.pubkey(),
@@ -71,8 +71,8 @@ pub fn handler(ctx: Context<ThreadCrank>) -> Result<()> {
     let fee = &mut ctx.accounts.fee;
     let penalty = &mut ctx.accounts.penalty;
     let pool = &ctx.accounts.pool;
-    let thread = &mut ctx.accounts.thread;
     let signatory = &mut ctx.accounts.signatory;
+    let thread = &mut ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
     // If the rate limit has been met, exit early.

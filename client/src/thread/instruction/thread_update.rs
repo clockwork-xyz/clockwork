@@ -14,8 +14,8 @@ pub fn thread_update(authority: Pubkey, thread: Pubkey, settings: ThreadSettings
         program_id: clockwork_thread_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
-            AccountMeta::new(thread, false),
             AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(thread, false),
         ],
         data: clockwork_thread_program::instruction::ThreadUpdate { settings }.data(),
     }

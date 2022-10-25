@@ -15,22 +15,22 @@ pub struct ThreadUpdate<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
-    /// The thread to be updated.
-    #[account(
-        mut,
-        seeds = [
-            SEED_THREAD,
-            thread.authority.as_ref(),
-            thread.id.as_bytes(),
-        ],
-        bump,
-        has_one = authority,
-    )]
-    pub thread: Account<'info, Thread>,
-
     /// The Solana system program
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    /// The thread to be updated.
+    #[account(
+            mut,
+            seeds = [
+                SEED_THREAD,
+                thread.authority.as_ref(),
+                thread.id.as_bytes(),
+            ],
+            bump,
+            has_one = authority,
+        )]
+    pub thread: Account<'info, Thread>,
 }
 
 pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<()> {

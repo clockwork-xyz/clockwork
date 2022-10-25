@@ -8,15 +8,15 @@ use anchor_lang::{
 
 pub fn thread_kickoff(
     data_hash: Option<u64>,
-    thread: Pubkey,
     signatory: Pubkey,
+    thread: Pubkey,
     worker: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id: clockwork_thread_program::ID,
         accounts: vec![
-            AccountMeta::new(thread, false),
             AccountMeta::new(signatory, true),
+            AccountMeta::new(thread, false),
             AccountMeta::new_readonly(worker, false),
         ],
         data: clockwork_thread_program::instruction::ThreadKickoff { data_hash }.data(),

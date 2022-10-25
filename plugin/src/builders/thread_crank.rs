@@ -196,8 +196,8 @@ fn build_kickoff_ix(
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
         data_hash,
-        thread_pubkey,
         signatory_pubkey,
+        thread_pubkey,
         Worker::pubkey(worker_id),
     );
 
@@ -223,8 +223,8 @@ fn build_crank_ix(
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut crank_ix = clockwork_client::thread::instruction::thread_crank(
-        thread_pubkey,
         signatory_pubkey,
+        thread_pubkey,
         Worker::pubkey(worker_id),
     );
 

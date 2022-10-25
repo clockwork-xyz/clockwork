@@ -17,6 +17,10 @@ pub struct ThreadCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    /// The Solana system program.
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+
     /// The thread to be created.
     #[account(
         init,
@@ -36,10 +40,6 @@ pub struct ThreadCreate<'info> {
         ].iter().sum()
     )]
     pub thread: Account<'info, Thread>,
-
-    /// The Solana system program.
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<ThreadCreate>, id: String, kickoff_instruction: clockwork_utils::InstructionData, trigger: Trigger) -> Result<()> {

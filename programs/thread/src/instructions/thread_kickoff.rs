@@ -8,6 +8,10 @@ use {
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct ThreadKickoff<'info> {
+    /// The signatory.
+    #[account(mut)]
+    pub signatory: Signer<'info>,
+
     /// The thread to crank.
     #[account(
         mut,
@@ -21,10 +25,6 @@ pub struct ThreadKickoff<'info> {
         constraint = thread.next_instruction.is_none() @ ClockworkError::ThreadBusy,
     )]
     pub thread: Box<Account<'info, Thread>>,
-
-    /// The signatory.
-    #[account(mut)]
-    pub signatory: Signer<'info>,
 
     /// The worker.
     #[account(
