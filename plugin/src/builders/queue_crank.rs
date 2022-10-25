@@ -153,14 +153,20 @@ fn build_kickoff_ix(
     let mut trigger_account_pubkey: Option<Pubkey> = None;
     let mut data_hash: Option<u64> = None;
     match queue.trigger {
-        Trigger::Account { pubkey } => {
+        Trigger::Account {
+            address,
+            offset,
+            size,
+        } => {
             // Save the trigger account.
-            trigger_account_pubkey = Some(pubkey);
+            trigger_account_pubkey = Some(address);
 
             // Begin computing the data hash of this account.
-            let data = client.get_account_data(&pubkey).unwrap();
+            let data = client.get_account_data(&address).unwrap();
             let mut hasher = DefaultHasher::new();
-            data.hash(&mut hasher);
+            if offset + size < data.len() {
+                data[offset..(offset + size)].hash(&mut hasher);
+            }
 
             // Check the exec context for the prior data hash.
             match queue.exec_context.clone() {

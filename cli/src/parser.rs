@@ -214,7 +214,9 @@ fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 fn parse_trigger(matches: &ArgMatches) -> Result<Trigger, CliError> {
     if matches.is_present("account") {
         return Ok(Trigger::Account {
-            pubkey: parse_pubkey("address", matches)?,
+            address: parse_pubkey("address", matches)?,
+            offset: 0, // TODO
+            size: 32,  // TODO
         });
     } else if matches.is_present("cron") {
         return Ok(Trigger::Cron {

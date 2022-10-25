@@ -120,11 +120,13 @@ impl QueueObserver {
                 // Otherwise, index the queue according to its trigger type.
                 match queue.trigger {
                     Trigger::Account {
-                        pubkey: account_pubkey,
+                        address,
+                        offset: _,
+                        size: _,
                     } => {
                         // Index the queue by its trigger's account pubkey.
                         this.listener_queues
-                            .entry(account_pubkey)
+                            .entry(address)
                             .and_modify(|v| {
                                 v.insert(queue_pubkey);
                             })

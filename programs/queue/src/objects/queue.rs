@@ -373,7 +373,11 @@ impl QueueAccount for Account<'_, Queue> {
     ) -> Result<()> {
         let clock = Clock::get().unwrap();
         match self.trigger.clone() {
-            Trigger::Account { pubkey } => {
+            Trigger::Account {
+                address,
+                offset,
+                size,
+            } => {
                 // Require the provided data hash is non-null.
                 let data_hash = match data_hash {
                     None => return Err(ClockworkError::DataHashNotPresent.into()),
@@ -386,14 +390,19 @@ impl QueueAccount for Account<'_, Queue> {
                     Some(account_info) => {
                         // Verify the remaining account is the account this queue is listening for.
                         require!(
-                            pubkey.eq(account_info.key),
+                            address.eq(account_info.key),
                             ClockworkError::TriggerNotActive
                         );
 
                         // Begin computing the data hash of this account.
                         let mut hasher = DefaultHasher::new();
                         let data = &account_info.try_borrow_data().unwrap();
-                        data.to_vec().hash(&mut hasher);
+                        let range_end = offset.checked_add(size).unwrap();
+                        if data.len().gt(&range_end) {
+                            data[offset..range_end].hash(&mut hasher);
+                        } else {
+                            return Err(ClockworkError::RangeOutOfBounds.into());
+                        }
 
                         // Check the exec context for the prior data hash.
                         let expected_data_hash = match self.exec_context.clone() {
@@ -498,10 +507,14 @@ impl QueueAccount for Account<'_, Queue> {
 /// The triggering conditions of a queue.
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
 pub enum Trigger {
-    /// Allows a queue to subscribe to an accout and be cranked whenever the data of that account changes.
+    /// Allows a queue to be kicked off whenever the data of an account changes.
     Account {
-        /// The address of the account to subscribe to.
-        pubkey: Pubkey,
+        /// The address of the account to monitor.
+        address: Pubkey,
+        /// The byte offset of the account data to monitor.
+        offset: usize,
+        /// The size of the byte slice to monitor (must be less than 1kb)
+        size: usize,
     },
 
     /// Allows a queue to be cranked according to a one-time or recurring schedule.
