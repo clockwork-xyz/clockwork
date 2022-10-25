@@ -9,9 +9,9 @@ pub struct SnapshotDelete<'info> {
 
     #[account(
         mut, 
-        address = config.epoch_queue
+        address = config.epoch_thread
     )]
-    pub queue: Signer<'info>,
+    pub thread: Signer<'info>,
 
     #[account(
         address = Registry::pubkey(),
@@ -34,7 +34,7 @@ pub struct SnapshotDelete<'info> {
 pub fn handler(ctx: Context<SnapshotDelete>) -> Result<CrankResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let queue = &mut ctx.accounts.queue;
+    let thread = &mut ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
 
@@ -42,21 +42,21 @@ pub fn handler(ctx: Context<SnapshotDelete>) -> Result<CrankResponse> {
     if snapshot.total_frames.eq(&0) {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
-        **queue.to_account_info().lamports.borrow_mut() = queue
+        **thread.to_account_info().lamports.borrow_mut() = thread
             .to_account_info()
             .lamports()
             .checked_add(snapshot_lamports)
             .unwrap();
     }
 
-    // Build next instruction the queue.
+    // Build next instruction the thread.
     let next_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(queue.key(), true),
+                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),

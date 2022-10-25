@@ -33,8 +33,8 @@ pub struct FeeDistribute<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let fee = &mut ctx.accounts.fee;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_entry = &ctx.accounts.snapshot_entry;
@@ -103,7 +103,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
         .checked_add(distribution_balance)
         .unwrap();
 
-    // Build the next instruction for the queue.
+    // Build the next instruction for the thread.
     let next_instruction = if snapshot_entry
         .id
         .checked_add(1)
@@ -123,7 +123,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(next_delegation_pubkey, false),
                 AccountMetaData::new(fee.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(snapshot_frame.key(), false),
@@ -147,7 +147,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(Fee::pubkey(next_worker_pubkey), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
@@ -161,7 +161,7 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],

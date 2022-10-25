@@ -5,7 +5,7 @@ use {
         executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
             network::NetworkObserver,
-            queue::QueueObserver,
+            thread::ThreadObserver,
             webhook::{HttpRequest, WebhookObserver},
             Observers,
         },
@@ -63,9 +63,9 @@ impl GeyserPlugin for ClockworkPlugin {
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
-        // Send all account updates to the queue observer for account listeners.
+        // Send all account updates to the thread observer for account listeners.
         self.observers
-            .queue
+            .thread
             .clone()
             .observe_account(account_pubkey, account_info.clone())?;
 
@@ -73,7 +73,7 @@ impl GeyserPlugin for ClockworkPlugin {
         match AccountUpdateEvent::try_from(account_info) {
             Ok(event) => match event {
                 AccountUpdateEvent::Clock { clock } => {
-                    self.observers.queue.clone().observe_clock(clock)
+                    self.observers.thread.clone().observe_clock(clock)
                 }
                 AccountUpdateEvent::HttpRequest { request } => {
                     self.observers.webhook.clone().observe_request(HttpRequest {
@@ -84,11 +84,11 @@ impl GeyserPlugin for ClockworkPlugin {
                 AccountUpdateEvent::Pool { pool } => {
                     self.observers.network.clone().observe_pool(pool, slot)
                 }
-                AccountUpdateEvent::Queue { queue } => self
+                AccountUpdateEvent::Thread { thread } => self
                     .observers
-                    .queue
+                    .thread
                     .clone()
-                    .observe_queue(queue, account_pubkey),
+                    .observe_thread(thread, account_pubkey),
                 AccountUpdateEvent::Registry { registry } => {
                     self.observers.network.clone().observe_registry(registry)
                 }
@@ -126,12 +126,12 @@ impl GeyserPlugin for ClockworkPlugin {
             SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
                     info!(
-                        "slot: {} crankable_queues: {} cron_queues: {}",
+                        "slot: {} crankable_threads: {} cron_threads: {}",
                         slot,
-                        self.observers.queue.crankable_queues.len(),
-                        self.observers.queue.cron_queues.len()
+                        self.observers.thread.crankable_threads.len(),
+                        self.observers.thread.cron_threads.len()
                     );
-                    self.observers.queue.clone().observe_slot(slot)?;
+                    self.observers.thread.clone().observe_slot(slot)?;
                     executors.clone().execute_work(slot)?;
                 }
                 None => (),
@@ -169,14 +169,14 @@ impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
         let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
-        let queue_observer = Arc::new(QueueObserver::new(config.clone(), runtime.clone()));
+        let thread_observer = Arc::new(ThreadObserver::new(config.clone(), runtime.clone()));
         let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
                 network: network_observer,
-                queue: queue_observer,
+                thread: thread_observer,
                 webhook: webhook_observer,
             }),
             runtime,

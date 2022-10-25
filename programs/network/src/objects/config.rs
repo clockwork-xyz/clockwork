@@ -13,8 +13,8 @@ pub const SEED_CONFIG: &[u8] = b"config";
 #[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
-    pub epoch_queue: Pubkey,
-    pub hasher_queue: Pubkey,
+    pub epoch_thread: Pubkey,
+    pub hasher_thread: Pubkey,
     pub mint: Pubkey,
 }
 
@@ -38,8 +38,8 @@ impl TryFrom<Vec<u8>> for Config {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigSettings {
     pub admin: Pubkey,
-    pub epoch_queue: Pubkey,
-    pub hasher_queue: Pubkey,
+    pub epoch_thread: Pubkey,
+    pub hasher_thread: Pubkey,
     pub mint: Pubkey,
 }
 
@@ -62,8 +62,8 @@ impl ConfigAccount for Account<'_, Config> {
 
     fn update(&mut self, settings: ConfigSettings) -> Result<()> {
         self.admin = settings.admin;
-        self.epoch_queue = settings.epoch_queue;
-        self.hasher_queue = settings.hasher_queue;
+        self.epoch_thread = settings.epoch_thread;
+        self.hasher_thread = settings.hasher_thread;
         self.mint = settings.mint;
         Ok(())
     }

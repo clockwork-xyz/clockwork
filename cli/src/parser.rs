@@ -1,6 +1,6 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use clockwork_client::{queue::objects::Trigger, webhook::objects::HttpMethod};
+use clockwork_client::{thread::objects::Trigger, webhook::objects::HttpMethod};
 use clockwork_utils::{AccountMetaData, InstructionData};
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
@@ -22,7 +22,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
-            Some(("queue", matches)) => parse_queue_command(matches),
+            Some(("thread", matches)) => parse_thread_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
             Some(("worker", matches)) => parse_worker_command(matches),
@@ -86,8 +86,8 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).ok(),
-            epoch_queue: parse_pubkey("epoch_queue", matches).ok(),
-            hasher_queue: parse_pubkey("hasher_queue", matches).ok(),
+            epoch_thread: parse_pubkey("epoch_thread", matches).ok(),
+            hasher_thread: parse_pubkey("hasher_thread", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -143,29 +143,29 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_queue_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("create", matches)) => Ok(CliCommand::QueueCreate {
+        Some(("create", matches)) => Ok(CliCommand::ThreadCreate {
             id: parse_string("id", matches)?,
             kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
             trigger: parse_trigger(matches)?,
         }),
-        Some(("delete", matches)) => Ok(CliCommand::QueueDelete {
+        Some(("delete", matches)) => Ok(CliCommand::ThreadDelete {
             id: parse_string("id", matches)?,
         }),
-        Some(("get", matches)) => Ok(CliCommand::QueueGet {
+        Some(("get", matches)) => Ok(CliCommand::ThreadGet {
             id: parse_string("id", matches)?,
         }),
-        Some(("pause", matches)) => Ok(CliCommand::QueuePause {
+        Some(("pause", matches)) => Ok(CliCommand::ThreadPause {
             id: parse_string("id", matches)?,
         }),
-        Some(("resume", matches)) => Ok(CliCommand::QueueResume {
+        Some(("resume", matches)) => Ok(CliCommand::ThreadResume {
             id: parse_string("id", matches)?,
         }),
-        Some(("stop", matches)) => Ok(CliCommand::QueueStop {
+        Some(("stop", matches)) => Ok(CliCommand::ThreadStop {
             id: parse_string("id", matches)?,
         }),
-        Some(("update", matches)) => Ok(CliCommand::QueueUpdate {
+        Some(("update", matches)) => Ok(CliCommand::ThreadUpdate {
             id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).ok(),
             schedule: parse_string("schedule", matches).ok(),

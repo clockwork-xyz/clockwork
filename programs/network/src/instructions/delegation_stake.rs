@@ -31,8 +31,8 @@ pub struct DelegationStake<'info> {
     )]
     pub delegation_stake: Account<'info, TokenAccount>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         address = Registry::pubkey(),
@@ -58,7 +58,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let delegation_stake = &mut ctx.accounts.delegation_stake;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let token_program = &ctx.accounts.token_program;
     let worker = &ctx.accounts.worker;
@@ -88,7 +88,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
     // Update the delegation's stake amount.
     delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
-    // Build next instruction for the queue.
+    // Build next instruction for the thread.
     let next_instruction = if delegation
         .id
         .checked_add(1)
@@ -107,7 +107,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
                     get_associated_token_address(&next_delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(token_program.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
@@ -126,7 +126,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
@@ -142,7 +142,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(
                     Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),

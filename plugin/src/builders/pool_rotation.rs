@@ -28,7 +28,7 @@ pub fn build_pool_rotation_tx<'a>(
     }
 
     // Exit early if the worker is already in the pool.
-    if r_pool_positions.queue_pool.current_position.is_some() {
+    if r_pool_positions.thread_pool.current_position.is_some() {
         return None;
     }
 

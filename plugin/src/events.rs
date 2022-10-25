@@ -3,7 +3,7 @@ use {
     bincode::deserialize,
     clockwork_client::{
         network::objects::{Pool, Registry, Snapshot, SnapshotFrame},
-        queue::objects::Queue,
+        thread::objects::Thread,
         webhook::objects::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -16,7 +16,7 @@ pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },
     Pool { pool: Pool },
-    Queue { queue: Queue },
+    Thread { thread: Thread },
     Registry { registry: Registry },
     Snapshot { snapshot: Snapshot },
     SnapshotFrame { snapshot_frame: SnapshotFrame },
@@ -76,14 +76,14 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             }
         }
 
-        if owner_pubkey.eq(&clockwork_client::queue::ID) && account_info.data.len() > 8 {
+        if owner_pubkey.eq(&clockwork_client::thread::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Queue::discriminator()) {
-                // If the account is a queue, return it
-                return Ok(AccountUpdateEvent::Queue {
-                    queue: Queue::try_from(account_info.data.to_vec()).map_err(|_| {
+            if d.eq(&Thread::discriminator()) {
+                // If the account is a thread, return it
+                return Ok(AccountUpdateEvent::Thread {
+                    thread: Thread::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork queue account".into(),
+                            msg: "Failed to parse Clockwork thread account".into(),
                         }
                     })?,
                 });

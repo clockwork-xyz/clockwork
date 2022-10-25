@@ -7,8 +7,8 @@ pub struct RegistryNonceHash<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.hasher_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.hasher_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         mut,

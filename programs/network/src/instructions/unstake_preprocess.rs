@@ -11,8 +11,8 @@ pub struct UnstakePreprocess<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.epoch_queue)]
-    pub queue: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         address = Registry::pubkey(),
@@ -27,11 +27,11 @@ pub struct UnstakePreprocess<'info> {
 pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let queue = &ctx.accounts.queue;
+    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let unstake = &ctx.accounts.unstake;
 
-    // Return next instruction for queue.
+    // Return next instruction for thread.
     Ok(CrankResponse {
         next_instruction: Some(InstructionData {
             program_id: crate::ID,
@@ -39,7 +39,7 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
                 AccountMetaData::new_readonly(unstake.authority, false),
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(unstake.delegation, false),
-                AccountMetaData::new_readonly(queue.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(registry.key(), false),
                 AccountMetaData::new_readonly(anchor_spl::token::ID, false),
                 AccountMetaData::new(unstake.key(), false),
