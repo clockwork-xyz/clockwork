@@ -1,6 +1,6 @@
-pub mod thread_crank;
 pub mod thread_create;
 pub mod thread_delete;
+pub mod thread_exec;
 pub mod thread_kickoff;
 pub mod thread_pause;
 pub mod thread_resume;
@@ -8,9 +8,9 @@ pub mod thread_stop;
 pub mod thread_update;
 pub mod thread_withdraw;
 
-pub use thread_crank::*;
 pub use thread_create::*;
 pub use thread_delete::*;
+pub use thread_exec::*;
 pub use thread_kickoff::*;
 pub use thread_pause::*;
 pub use thread_resume::*;

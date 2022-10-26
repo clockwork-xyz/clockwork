@@ -1,4 +1,4 @@
-use clockwork_utils::CrankResponse;
+use clockwork_utils::ExecResponse;
 
 use {crate::objects::*, anchor_lang::prelude::*};
 
@@ -18,8 +18,8 @@ pub struct RegistryNonceHash<'info> {
     pub registry: Account<'info, Registry>,
 }
 
-pub fn handler(ctx: Context<RegistryNonceHash>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<RegistryNonceHash>) -> Result<ExecResponse> {
     let registry = &mut ctx.accounts.registry;
     registry.hash_nonce()?;
-    Ok(CrankResponse::default())
+    Ok(ExecResponse::default())
 }

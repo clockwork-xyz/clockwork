@@ -1,7 +1,7 @@
 use {
     crate::objects::*,
     anchor_lang::prelude::*,
-    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
 };
 
 #[derive(Accounts)]
@@ -43,7 +43,7 @@ pub struct WorkerDistributeFees<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
@@ -157,8 +157,8 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
         })
     };
 
-    Ok(CrankResponse {
+    Ok(ExecResponse {
         next_instruction,
-        ..CrankResponse::default()
+        ..ExecResponse::default()
     })
 }

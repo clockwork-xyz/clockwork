@@ -7,9 +7,9 @@ use {
 /// The ID of the pool workers must be a member of to collect fees.
 const POOL_ID: u64 = 0;
 
-/// Accounts required by the `thread_crank` instruction.
+/// Accounts required by the `thread_exec` instruction.
 #[derive(Accounts)]
-pub struct ThreadCrank<'info> {
+pub struct ThreadExec<'info> {
     /// The worker's fee account.
     #[account(
         mut,
@@ -44,7 +44,7 @@ pub struct ThreadCrank<'info> {
     #[account(mut)]
     pub signatory: Signer<'info>,
 
-    /// The thread to crank.
+    /// The thread to execute.
     #[account(
         mut,
         seeds = [
@@ -66,7 +66,7 @@ pub struct ThreadCrank<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<ThreadCrank>) -> Result<()> {
+pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     // Get accounts
     let fee = &mut ctx.accounts.fee;
     let penalty = &mut ctx.accounts.penalty;
@@ -79,17 +79,17 @@ pub fn handler(ctx: Context<ThreadCrank>) -> Result<()> {
     match thread.exec_context {
         None => return Err(ClockworkError::InvalidThreadState.into()),
         Some(exec_context) => {
-            if exec_context.last_crank_at == Clock::get().unwrap().slot
-                && exec_context.cranks_since_slot >= thread.rate_limit
+            if exec_context.last_exec_at == Clock::get().unwrap().slot
+                && exec_context.execs_since_slot >= thread.rate_limit
             {
                 return Err(ClockworkError::RateLimitExeceeded.into());
             }
         }
     }
 
-    // Crank the thread
+    // Execute the thread
     let bump = ctx.bumps.get("thread").unwrap();
-    thread.crank(
+    thread.exec(
         ctx.remaining_accounts,
         *bump,
         fee,

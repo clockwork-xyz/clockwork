@@ -50,8 +50,8 @@ impl TxExecutor {
             // Rotate worker pools
             this.clone().execute_pool_rotate_txs(slot).await.ok();
 
-            // Thread crank threads
-            this.clone().execute_thread_crank_txs(slot).await.ok();
+            // Thread exec txs
+            this.clone().execute_thread_exec_txs(slot).await.ok();
 
             // Purge message history that is beyond the dedupe period
             this.message_history
@@ -82,7 +82,7 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn execute_thread_crank_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    async fn execute_thread_exec_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let thread_pool = r_pool_positions.thread_pool.clone();
@@ -93,10 +93,10 @@ impl TxExecutor {
             ));
         }
 
-        // Execute thread_crank txs.
-        crate::builders::build_crank_txs(
+        // Execute thread_exec txs.
+        crate::builders::build_thread_exec_txs(
             self.client.clone(),
-            self.observers.thread.crankable_threads.clone(),
+            self.observers.thread.executable_threads.clone(),
             self.config.worker_id,
         )
         .await

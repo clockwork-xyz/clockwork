@@ -24,28 +24,28 @@ use {
 
 static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized transaction
 
-pub async fn build_crank_txs(
+pub async fn build_thread_exec_txs(
     client: Arc<ClockworkClient>,
-    crankable_threads: DashSet<Pubkey>,
+    executable_threads: DashSet<Pubkey>,
     worker_id: u64,
 ) -> Vec<Transaction> {
-    // Build the set of crank transactions
+    // Build the set of exec transactions
     // TODO Use rayon to parallelize this operation
-    let txs = crankable_threads
+    let txs = executable_threads
         .iter()
         .filter_map(|thread_pubkey_ref| {
-            build_crank_tx(client.clone(), *thread_pubkey_ref.key(), worker_id)
+            build_thread_exec_tx(client.clone(), *thread_pubkey_ref.key(), worker_id)
         })
         .collect::<Vec<Transaction>>();
     txs
 }
 
-fn build_crank_tx(
+fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
     thread_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
-    // Build the first crank ix
+    // Build the first ix
     let thread = match client.get::<Thread>(&thread_pubkey) {
         Err(_err) => return None,
         Ok(thread) => thread,
@@ -53,15 +53,15 @@ fn build_crank_tx(
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
-    // Pre-simulate crank ixs and pack into tx
+    // Pre-simulate exec ixs and pack into tx
     let first_instruction = if thread.next_instruction.is_some() {
-        build_crank_ix(client.clone(), thread, signatory_pubkey, worker_id)
+        build_exec_ix(client.clone(), thread, signatory_pubkey, worker_id)
     } else {
         build_kickoff_ix(client.clone(), thread, signatory_pubkey, worker_id)
     };
     let mut ixs: Vec<Instruction> = vec![first_instruction];
 
-    // Pre-simulate crank ixs and pack as many as possible into tx.
+    // Pre-simulate exec ixs and pack as many as possible into tx.
     let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&signatory_pubkey));
     let now = std::time::Instant::now();
     loop {
@@ -87,12 +87,12 @@ fn build_crank_tx(
                 ..RpcSimulateTransactionConfig::default()
             },
         ) {
-            // If there was an error, stop packing and continue with the cranks up until this one.
+            // If there was an error, stop packing and continue with the ixs up until this one.
             Err(_err) => {
                 break;
             }
 
-            // If the simulation was successful, pack the crank ix into the tx.
+            // If the simulation was successful, pack the ix into the tx.
             Ok(response) => {
                 // If there was an error, then stop packing.
                 if response.value.err.is_some() {
@@ -107,13 +107,13 @@ fn build_crank_tx(
                 // Save the simulated tx. It is okay to submit.
                 tx = sim_tx;
 
-                // Parse the resulting thread account for the next crank ix to simulate.
+                // Parse the resulting thread account for the next ix to simulate.
                 if let Some(ui_accounts) = response.value.accounts {
                     if let Some(Some(ui_account)) = ui_accounts.get(0) {
                         if let Some(account) = ui_account.decode::<Account>() {
                             if let Ok(sim_thread) = Thread::try_from(account.data) {
                                 if sim_thread.next_instruction.is_some() {
-                                    ixs.push(build_crank_ix(
+                                    ixs.push(build_exec_ix(
                                         client.clone(),
                                         sim_thread,
                                         signatory_pubkey,
@@ -131,7 +131,7 @@ fn build_crank_tx(
     }
 
     info!(
-        "Time spent packing {} cranks: {:#?}",
+        "Time spent packing {} instructions: {:#?}",
         tx.message.instructions.len(),
         now.elapsed()
     );
@@ -214,7 +214,7 @@ fn build_kickoff_ix(
     kickoff_ix
 }
 
-fn build_crank_ix(
+fn build_exec_ix(
     _client: Arc<ClockworkClient>,
     thread: Thread,
     signatory_pubkey: Pubkey,
@@ -222,7 +222,7 @@ fn build_crank_ix(
 ) -> Instruction {
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
-    let mut crank_ix = clockwork_client::thread::instruction::thread_crank(
+    let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
         signatory_pubkey,
         thread_pubkey,
         Worker::pubkey(worker_id),
@@ -230,7 +230,7 @@ fn build_crank_ix(
 
     if let Some(next_instruction) = thread.next_instruction {
         // Inject the target program account to the ix.
-        crank_ix.accounts.push(AccountMeta::new_readonly(
+        exec_ix.accounts.push(AccountMeta::new_readonly(
             next_instruction.program_id,
             false,
         ));
@@ -242,12 +242,12 @@ fn build_crank_ix(
             } else {
                 acc.pubkey
             };
-            crank_ix.accounts.push(match acc.is_writable {
+            exec_ix.accounts.push(match acc.is_writable {
                 true => AccountMeta::new(acc_pubkey, false),
                 false => AccountMeta::new_readonly(acc_pubkey, false),
             })
         }
     }
 
-    crank_ix
+    exec_ix
 }

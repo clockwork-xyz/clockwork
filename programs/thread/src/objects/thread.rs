@@ -28,10 +28,10 @@ const DEFAULT_RATE_LIMIT: u64 = 10;
 /// The maximum rate limit which may be set on thread.
 const MAX_RATE_LIMIT: u64 = 32;
 
-/// The Minimum crank fee that may be set on a thread.
+/// The minimum exec fee that may be set on a thread.
 const MINIMUM_FEE: u64 = 1000;
 
-/// The Number of lamports to reimburse the worker with after they've submitted a transaction's worth of cranks.
+/// The number of lamports to reimburse the worker with after they've submitted a transaction's worth of exec instructions.
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
 
 /// Tracks the current state of a transaction thread on Solana.
@@ -42,9 +42,9 @@ pub struct Thread {
     pub authority: Pubkey,
     /// The cluster clock at the moment the thread was created.
     pub created_at: ClockData,
-    /// The context of the current thread execution state.
+    /// The context of the thread's current execution state.
     pub exec_context: Option<ExecContext>,
-    /// The number of lamports to payout to workers per crank.
+    /// The number of lamports to payout to workers per execution.
     pub fee: u64,
     /// The id of the thread, given by the authority.
     pub id: String,
@@ -54,7 +54,7 @@ pub struct Thread {
     pub next_instruction: Option<InstructionData>,
     /// Whether or not the thread is currently paused.
     pub paused: bool,
-    /// The maximum number of cranks allowed per slot.
+    /// The maximum number of execs allowed per slot.
     pub rate_limit: u64,
     /// The triggering event to kickoff a thread.
     pub trigger: Trigger,
@@ -116,8 +116,8 @@ pub trait ThreadAccount {
         trigger: Trigger,
     ) -> Result<()>;
 
-    /// Crank the thread. Call out to the target program and parse the response for a next instruction.
-    fn crank(
+    /// Execute the next instruction on the thread.
+    fn exec(
         &mut self,
         account_infos: &[AccountInfo],
         bump: u8,
@@ -162,7 +162,7 @@ impl ThreadAccount for Account<'_, Thread> {
         Ok(())
     }
 
-    fn crank(
+    fn exec(
         &mut self,
         account_infos: &[AccountInfo],
         bump: u8,
@@ -175,7 +175,8 @@ impl ThreadAccount for Account<'_, Thread> {
         // Record the worker's lamports before invoking inner ixs
         let signatory_lamports_pre = signatory.lamports();
 
-        // Get the instruction to crank
+        // Get the instruction to execute
+        // TODO Just grab the next_instruction here. We have already verified that it is not null.
         let kickoff_instruction: &InstructionData = &self.clone().kickoff_instruction;
         let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
         let instruction = next_instruction.as_ref().unwrap_or(kickoff_instruction);
@@ -214,7 +215,7 @@ impl ThreadAccount for Account<'_, Thread> {
         // Verify that the inner ix did not write data to the signatory address
         require!(signatory.data_is_empty(), ClockworkError::UnauthorizedWrite);
 
-        // Parse the crank response
+        // Parse the exec response
         match get_return_data() {
             None => {
                 self.next_instruction = None;
@@ -222,36 +223,36 @@ impl ThreadAccount for Account<'_, Thread> {
             Some((program_id, return_data)) => {
                 require!(
                     program_id.eq(&instruction.program_id),
-                    ClockworkError::InvalidCrankResponse
+                    ClockworkError::InvalidExecResponse
                 );
-                let crank_response = CrankResponse::try_from_slice(return_data.as_slice())
-                    .map_err(|_err| ClockworkError::InvalidCrankResponse)?;
+                let exec_response = ExecResponse::try_from_slice(return_data.as_slice())
+                    .map_err(|_err| ClockworkError::InvalidExecResponse)?;
 
-                // Update the thread with the crank response.
-                if let Some(kickoff_instruction) = crank_response.kickoff_instruction {
+                // Update the thread with the exec response.
+                if let Some(kickoff_instruction) = exec_response.kickoff_instruction {
                     self.kickoff_instruction = kickoff_instruction;
                 }
-                self.next_instruction = crank_response.next_instruction;
+                self.next_instruction = exec_response.next_instruction;
             }
         };
 
-        // Increment the crank count
+        // Increment the exec count
         let current_slot = Clock::get().unwrap().slot;
         match self.exec_context {
             None => return Err(ClockworkError::InvalidThreadState.into()),
             Some(exec_context) => {
                 // Update the exec context
                 self.exec_context = Some(ExecContext {
-                    cranks_since_reimbursement: exec_context
-                        .cranks_since_reimbursement
+                    execs_since_reimbursement: exec_context
+                        .execs_since_reimbursement
                         .checked_add(1)
                         .unwrap(),
-                    cranks_since_slot: if current_slot == exec_context.last_crank_at {
-                        exec_context.cranks_since_slot.checked_add(1).unwrap()
+                    execs_since_slot: if current_slot == exec_context.last_exec_at {
+                        exec_context.execs_since_slot.checked_add(1).unwrap()
                     } else {
                         1
                     },
-                    last_crank_at: current_slot,
+                    last_exec_at: current_slot,
                     ..exec_context
                 });
             }
@@ -276,7 +277,7 @@ impl ThreadAccount for Account<'_, Thread> {
             .checked_add(signatory_reimbursement)
             .unwrap();
 
-        // Debit the crank fee from the thread account.
+        // Debit the fee from the thread account.
         // If the worker is in the pool, pay fee to the worker's fee account.
         // Otherwise, pay fee to the worker's penalty account.
         **self.to_account_info().try_borrow_mut_lamports()? = self
@@ -298,7 +299,7 @@ impl ThreadAccount for Account<'_, Thread> {
                 .unwrap();
         }
 
-        // If the self has no more work or the number of cranks since the last payout has reached the rate limit,
+        // If the self has no more work or the number of execs since the last payout has reached the rate limit,
         // reimburse the worker for the transaction base fee.
         match self.exec_context {
             None => {
@@ -306,7 +307,7 @@ impl ThreadAccount for Account<'_, Thread> {
             }
             Some(exec_context) => {
                 if self.next_instruction.is_none()
-                    || exec_context.cranks_since_reimbursement >= self.rate_limit
+                    || exec_context.execs_since_reimbursement >= self.rate_limit
                 {
                     // Pay reimbursment for base transaction fee
                     **self.to_account_info().try_borrow_mut_lamports()? = self
@@ -322,7 +323,7 @@ impl ThreadAccount for Account<'_, Thread> {
 
                     // Update the exec context to mark that a reimbursement happened this slot.
                     self.exec_context = Some(ExecContext {
-                        cranks_since_reimbursement: 0,
+                        execs_since_reimbursement: 0,
                         ..exec_context
                     });
                 }
@@ -430,7 +431,7 @@ impl ThreadAccount for Account<'_, Thread> {
                         };
 
                         // Verify the data hash provided by the worker is equal to the expected data hash.
-                        // This proves the account has been updated since the last crank and the worker has seen the new data.
+                        // This proves the account has been updated since the last exec and the worker has seen the new data.
                         require!(
                             data_hash.eq(&expected_data_hash),
                             ClockworkError::TriggerNotActive
@@ -438,9 +439,9 @@ impl ThreadAccount for Account<'_, Thread> {
 
                         // Set a new exec context with the new data hash and slot number.
                         self.exec_context = Some(ExecContext {
-                            cranks_since_reimbursement: 0,
-                            cranks_since_slot: 0,
-                            last_crank_at: clock.slot,
+                            execs_since_reimbursement: 0,
+                            execs_since_slot: 0,
+                            last_exec_at: clock.slot,
                             trigger_context: TriggerContext::Account { data_hash },
                         })
                     }
@@ -477,9 +478,9 @@ impl ThreadAccount for Account<'_, Thread> {
 
                 // Set the exec context.
                 self.exec_context = Some(ExecContext {
-                    cranks_since_reimbursement: 0,
-                    cranks_since_slot: 0,
-                    last_crank_at: clock.slot,
+                    execs_since_reimbursement: 0,
+                    execs_since_slot: 0,
+                    last_exec_at: clock.slot,
                     trigger_context: TriggerContext::Cron { started_at },
                 });
             }
@@ -490,9 +491,9 @@ impl ThreadAccount for Account<'_, Thread> {
                     ClockworkError::InvalidThreadState
                 );
                 self.exec_context = Some(ExecContext {
-                    cranks_since_reimbursement: 0,
-                    cranks_since_slot: 0,
-                    last_crank_at: clock.slot,
+                    execs_since_reimbursement: 0,
+                    execs_since_slot: 0,
+                    last_exec_at: clock.slot,
                     trigger_context: TriggerContext::Immediate,
                 });
             }
@@ -521,31 +522,31 @@ pub enum Trigger {
         size: usize,
     },
 
-    /// Allows a thread to be cranked according to a one-time or recurring schedule.
+    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
 
         /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
-        /// If false, any "missed" triggering moments will simply be cranked as soon as the network comes back online.
+        /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
         skippable: bool,
     },
 
-    /// Allows a thread to be cranked as soon as it's created.
+    /// Allows a thread to be kicked off as soon as it's created.
     Immediate,
 }
 
 /// The execution context of a particular transaction thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct ExecContext {
-    /// Number of cranks since the last tx reimbursement.
-    pub cranks_since_reimbursement: u64,
+    /// Number of execs since the last tx reimbursement.
+    pub execs_since_reimbursement: u64,
 
-    /// Number of cranks in this slot.
-    pub cranks_since_slot: u64,
+    /// Number of execs in this slot.
+    pub execs_since_slot: u64,
 
-    /// Slot of the last crank
-    pub last_crank_at: u64,
+    /// Slot of the last exec
+    pub last_exec_at: u64,
 
     /// Context for the triggering condition
     pub trigger_context: TriggerContext,
