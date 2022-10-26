@@ -4,7 +4,7 @@ use {
     clockwork_network_program::objects::{Worker, WorkerAccount},
 };
 
-/// Accounts required by the `thread_crank` instruction.
+/// Accounts required by the `thread_kickoff` instruction.
 #[derive(Accounts)]
 #[instruction(data_hash: Option<u64>)]
 pub struct ThreadKickoff<'info> {
@@ -12,7 +12,7 @@ pub struct ThreadKickoff<'info> {
     #[account(mut)]
     pub signatory: Signer<'info>,
 
-    /// The thread to crank.
+    /// The thread to kickoff.
     #[account(
         mut,
         seeds = [
