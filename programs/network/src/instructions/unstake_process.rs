@@ -35,15 +35,15 @@ pub struct UnstakeProcess<'info> {
     )]
     pub delegation: Box<Account<'info, Delegation>>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
-
     #[account(
         mut,
         seeds = [SEED_REGISTRY],
         bump,
     )]
     pub registry: Box<Account<'info, Registry>>,
+
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -77,8 +77,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
     let authority_tokens = &ctx.accounts.authority_tokens;
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
-    let thread = &ctx.accounts.thread;
     let registry = &mut ctx.accounts.registry;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let unstake = &ctx.accounts.unstake;
     let worker = &ctx.accounts.worker;
@@ -142,8 +142,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(next_unstake_pubkey, false),
             ],
             data: anchor_sighash("unstake_preprocess").to_vec(),
@@ -157,8 +157,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),

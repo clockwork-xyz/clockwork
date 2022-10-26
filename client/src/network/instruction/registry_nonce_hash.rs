@@ -14,8 +14,8 @@ pub fn registry_nonce_hash(thread: Pubkey) -> Instruction {
         program_id: clockwork_network_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(Config::pubkey(), false),
-            AccountMeta::new_readonly(thread, true),
             AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(thread, true),
         ],
         data: clockwork_network_program::instruction::RegistryNonceHash {}.data(),
     }

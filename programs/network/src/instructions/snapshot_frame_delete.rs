@@ -8,12 +8,6 @@ pub struct SnapshotFrameDelete<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        mut, 
-        address = config.epoch_thread
-    )]
-    pub thread: Signer<'info>,
-
-    #[account(
         address = Registry::pubkey(),
         constraint = !registry.locked
     )]
@@ -41,15 +35,21 @@ pub struct SnapshotFrameDelete<'info> {
         has_one = snapshot,
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
+
+    #[account(
+        mut, 
+        address = config.epoch_thread
+    )]
+    pub thread: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ExecResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let thread = &mut ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
+    let thread = &mut ctx.accounts.thread;
 
     // If this frame has no entries, then close the frame account.
     if snapshot_frame.total_entries.eq(&0) {
@@ -81,11 +81,11 @@ pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), 0), false),
                 AccountMetaData::new(snapshot_frame.key(), false),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("snapshot_entry_delete").to_vec(),
         })
@@ -95,10 +95,10 @@ pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("snapshot_frame_delete").to_vec(),
         })
