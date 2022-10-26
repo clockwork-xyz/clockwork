@@ -17,8 +17,8 @@ pub fn get(client: &Client) -> Result<(), CliError> {
         .get::<Snapshot>(&snapshot_pubkey)
         .map_err(|_err| CliError::AccountDataNotParsable(snapshot_pubkey.to_string()))?;
 
-    println!("{:#?}", registry);
-    println!("{:#?}", snapshot);
+    println!("{}\n{:#?}", registry_pubkey, registry);
+    println!("{}\n{:#?}", snapshot_pubkey, snapshot);
     Ok(())
 }
 
