@@ -27,9 +27,6 @@ pub struct RegistryEpochKickoff<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
-
     #[account(
         mut,
         seeds = [SEED_REGISTRY],
@@ -42,14 +39,17 @@ pub struct RegistryEpochKickoff<'info> {
         constraint = snapshot.id.eq(&registry.current_epoch)
     )]
     pub snapshot: Account<'info, Snapshot>,
+
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let thread = &ctx.accounts.thread;
     let registry = &mut ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
+    let thread = &ctx.accounts.thread;
 
     // Lock the registry
     registry.locked = true;
@@ -59,12 +59,12 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
         program_id: crate::ID,
         accounts: vec![
             AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new_readonly(thread.key(), true),
             AccountMetaData::new(registry.key(), false),
             AccountMetaData::new_readonly(
                 Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
                 false,
             ),
+            AccountMetaData::new_readonly(thread.key(), true),
         ],
         data: anchor_sighash("registry_epoch_kickoff").to_vec(),
     });
@@ -77,10 +77,10 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(Fee::pubkey(Worker::pubkey(0)), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_fees_distribute").to_vec(),
@@ -91,8 +91,8 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),
@@ -103,8 +103,8 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
             ],
             data: anchor_sighash("registry_epoch_cutover").to_vec(),
         })

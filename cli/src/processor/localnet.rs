@@ -120,8 +120,8 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         client.payer_pubkey(),
         epoch_thread_id.into(),
         clockwork_client::network::instruction::registry_epoch_kickoff(
-            epoch_thread_pubkey,
             Snapshot::pubkey(0),
+            epoch_thread_pubkey,
         )
         .into(),
         client.payer_pubkey(),

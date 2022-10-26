@@ -8,12 +8,6 @@ pub struct SnapshotDelete<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        mut, 
-        address = config.epoch_thread
-    )]
-    pub thread: Signer<'info>,
-
-    #[account(
         address = Registry::pubkey(),
         constraint = !registry.locked
     )]
@@ -29,14 +23,21 @@ pub struct SnapshotDelete<'info> {
         constraint = snapshot.id.lt(&registry.current_epoch)
     )]
     pub snapshot: Account<'info, Snapshot>,
+
+    #[account(
+        mut, 
+        address = config.epoch_thread
+    )]
+    pub thread: Signer<'info>,
+
 }
 
 pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let thread = &mut ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
+    let thread = &mut ctx.accounts.thread;
 
     // If this snapshot has no entries, then close immediately
     if snapshot.total_frames.eq(&0) {
@@ -56,10 +57,10 @@ pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("snapshot_frame_delete").to_vec(),
         })

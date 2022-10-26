@@ -8,12 +8,6 @@ pub struct SnapshotEntryDelete<'info> {
     pub config: Account<'info, Config>,
 
     #[account(
-        mut, 
-        address = config.epoch_thread
-    )]
-    pub thread: Signer<'info>,
-
-    #[account(
         address = Registry::pubkey(),
         constraint = !registry.locked
     )]
@@ -53,16 +47,22 @@ pub struct SnapshotEntryDelete<'info> {
         has_one = snapshot,
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
+
+    #[account(
+        mut, 
+        address = config.epoch_thread
+    )]
+    pub thread: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ExecResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let thread = &mut ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
+    let thread = &mut ctx.accounts.thread;
 
     // Close the snapshot entry account.
     let snapshot_entry_lamports = snapshot_entry.to_account_info().lamports();
@@ -103,11 +103,11 @@ pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
                 AccountMetaData::new(snapshot_frame.key(), false),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("snapshot_entry_delete").to_vec(),
         })
@@ -117,10 +117,10 @@ pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("snapshot_frame_delete").to_vec(),
         })

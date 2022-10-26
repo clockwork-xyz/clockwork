@@ -20,9 +20,6 @@ pub struct WorkerDistributeFees<'info> {
     )]
     pub fee: Account<'info, Fee>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
-
     #[account(address = Registry::pubkey())]
     pub registry: Account<'info, Registry>,
 
@@ -39,6 +36,9 @@ pub struct WorkerDistributeFees<'info> {
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
 
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
+
     #[account(mut)]
     pub worker: Account<'info, Worker>,
 }
@@ -47,10 +47,10 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
-    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_frame = &ctx.accounts.snapshot_frame;
+    let thread = &ctx.accounts.thread;
     let worker = &mut ctx.accounts.worker;
 
     // Calculate the fee account's usuable balance.
@@ -98,11 +98,11 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(delegation_pubkey, false),
                 AccountMetaData::new(fee.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(snapshot_frame.key(), false),
                 AccountMetaData::new_readonly(snapshot_entry_pubkey.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
             data: anchor_sighash("fee_distribute").to_vec(),
@@ -122,10 +122,10 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(Fee::pubkey(next_worker_pubkey), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(next_worker_pubkey, false),
             ],
             data: anchor_sighash("worker_fees_distribute").to_vec(),
@@ -136,8 +136,8 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(Unstake::pubkey(0), false),
             ],
             data: anchor_sighash("unstake_preprocess").to_vec(),
@@ -149,8 +149,8 @@ pub fn handler(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(Worker::pubkey(0), false),
             ],
             data: anchor_sighash("worker_delegations_stake").to_vec(),

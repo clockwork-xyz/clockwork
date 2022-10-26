@@ -14,9 +14,6 @@ pub struct SnapshotCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
-
     #[account(
         address = Registry::pubkey(),
         constraint = registry.locked
@@ -37,16 +34,19 @@ pub struct SnapshotCreate<'info> {
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let payer = &ctx.accounts.payer;
-    let thread = &ctx.accounts.thread;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let system_program = &ctx.accounts.system_program;
+    let thread = &ctx.accounts.thread;
 
     // Start a new snapshot.
     snapshot.init(registry.current_epoch.checked_add(1).unwrap())?;
@@ -61,11 +61,11 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(payer.key(), true),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(snapshot_frame_pubkey, false),
                 AccountMetaData::new_readonly(system_program.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(worker_pubkey, false),
                 AccountMetaData::new_readonly(
                     get_associated_token_address(&worker_pubkey, &config.mint),
@@ -80,8 +80,8 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(registry.key(), false),
+                AccountMetaData::new_readonly(thread.key(), true),
             ],
             data: anchor_sighash("registry_epoch_cutover").to_vec(),
         })
