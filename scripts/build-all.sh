@@ -81,7 +81,7 @@ done
 # Copy binaries
 cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
 for bin in "${BINS}"; do
-  rm -v "$installDir/bin/$bin"
+  rm -fv "$installDir/bin/$bin"
   cp -fv "target/$buildVariant/$bin" "$installDir"/bin
 done
 
