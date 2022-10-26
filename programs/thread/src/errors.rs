@@ -5,13 +5,13 @@ use anchor_lang::prelude::*;
 /// Errors for the the Clockwork thread program.
 #[error_code]
 pub enum ClockworkError {
-    /// Thrown if a crank instruction requires a `data_hash` argument and one was not provided by the worker.
+    /// Thrown if a exec instruction requires a `data_hash` argument and one was not provided by the worker.
     #[msg("This trigger requires a data hash observation")]
     DataHashNotPresent,
 
-    /// Thrown if a crank response has an invalid program ID or cannot be parsed.
-    #[msg("The crank response could not be parsed")]
-    InvalidCrankResponse,
+    /// Thrown if a exec response has an invalid program ID or cannot be parsed.
+    #[msg("The exec response could not be parsed")]
+    InvalidExecResponse,
 
     /// Thrown if a thread has an invalid state and cannot complete the operation.
     #[msg("The thread is in an invalid state")]
@@ -21,7 +21,7 @@ pub enum ClockworkError {
     #[msg("The range is larger than the account size")]
     RangeOutOfBounds,
 
-    /// Thrown if a crank instruction is invalid because the thread's trigger condition has not been met.
+    /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]
     TriggerNotActive,
 
@@ -32,7 +32,7 @@ pub enum ClockworkError {
     #[msg("The thread is currently paused")]
     ThreadPaused,
 
-    /// Thrown if a crank instruction would cause a thread to exceed its rate limit.
+    /// Thrown if a exec instruction would cause a thread to exceed its rate limit.
     #[msg("The thread's rate limit has been reached")]
     RateLimitExeceeded,
 

@@ -406,7 +406,7 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(false)
                                 .help(
-                                    "The maximum number of cranks allowed per slot for this thread",
+                                    "The maximum number of instructions this thread can execute per slot",
                                 ),
                         )
                         .arg(

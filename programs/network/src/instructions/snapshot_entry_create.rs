@@ -2,7 +2,7 @@ use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount},
-    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
     std::mem::size_of,
 };
 
@@ -78,7 +78,7 @@ pub struct SnapshotEntryCreate<'info> {
     pub worker: Box<Account<'info, Worker>>,
 }
 
-pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ExecResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
@@ -168,8 +168,8 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
         })
     };
 
-    Ok(CrankResponse {
+    Ok(ExecResponse {
         next_instruction,
-        ..CrankResponse::default()
+        ..ExecResponse::default()
     })
 }

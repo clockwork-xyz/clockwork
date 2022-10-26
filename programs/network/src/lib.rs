@@ -35,7 +35,7 @@ pub mod network_program {
         delegation_deposit::handler(ctx, amount)
     }
 
-    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<CrankResponse> {
+    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<ExecResponse> {
         delegation_stake::handler(ctx)
     }
 
@@ -43,7 +43,7 @@ pub mod network_program {
         delegation_withdraw::handler(ctx, amount)
     }
 
-    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<CrankResponse> {
+    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<ExecResponse> {
         fee_distribute::handler(ctx)
     }
 
@@ -67,15 +67,15 @@ pub mod network_program {
         pool_update::handler(ctx, settings)
     }
 
-    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<CrankResponse> {
+    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<ExecResponse> {
         registry_epoch_cutover::handler(ctx)
     }
 
-    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<CrankResponse> {
+    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
         registry_epoch_kickoff::handler(ctx)
     }
 
-    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<CrankResponse> {
+    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<ExecResponse> {
         registry_nonce_hash::handler(ctx)
     }
 
@@ -83,27 +83,27 @@ pub mod network_program {
         registry_unlock::handler(ctx)
     }
 
-    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<CrankResponse> {
+    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
         snapshot_delete::handler(ctx)
     }
 
-    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<CrankResponse> {
+    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
         snapshot_create::handler(ctx)
     }
 
-    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<CrankResponse> {
+    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<ExecResponse> {
         snapshot_entry_create::handler(ctx)
     }
 
-    pub fn snapshot_entry_delete(ctx: Context<SnapshotEntryDelete>) -> Result<CrankResponse> {
+    pub fn snapshot_entry_delete(ctx: Context<SnapshotEntryDelete>) -> Result<ExecResponse> {
         snapshot_entry_delete::handler(ctx)
     }
 
-    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<CrankResponse> {
+    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<ExecResponse> {
         snapshot_frame_create::handler(ctx)
     }
 
-    pub fn snapshot_frame_delete(ctx: Context<SnapshotFrameDelete>) -> Result<CrankResponse> {
+    pub fn snapshot_frame_delete(ctx: Context<SnapshotFrameDelete>) -> Result<ExecResponse> {
         snapshot_frame_delete::handler(ctx)
     }
 
@@ -111,11 +111,11 @@ pub mod network_program {
         unstake_create::handler(ctx, amount)
     }
 
-    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<CrankResponse> {
+    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<ExecResponse> {
         unstake_preprocess::handler(ctx)
     }
 
-    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<CrankResponse> {
+    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
         unstake_process::handler(ctx)
     }
 
@@ -127,11 +127,11 @@ pub mod network_program {
         worker_create::handler(ctx)
     }
 
-    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<CrankResponse> {
+    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
         worker_fees_distribute::handler(ctx)
     }
 
-    pub fn worker_delegations_stake(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
+    pub fn worker_delegations_stake(ctx: Context<WorkerStakeDelegations>) -> Result<ExecResponse> {
         worker_delegations_stake::handler(ctx)
     }
 

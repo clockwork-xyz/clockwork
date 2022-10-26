@@ -18,9 +18,9 @@ declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 pub mod thread_program {
     use super::*;
 
-    /// Cranks a transaction thread.
-    pub fn thread_crank(ctx: Context<ThreadCrank>) -> Result<()> {
-        thread_crank::handler(ctx)
+    /// Executes the next instruction on thread.
+    pub fn thread_exec(ctx: Context<ThreadExec>) -> Result<()> {
+        thread_exec::handler(ctx)
     }
 
     /// Creates a new transaction thread.

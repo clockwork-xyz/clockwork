@@ -2,7 +2,7 @@ use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::associated_token::get_associated_token_address,
-    clockwork_utils::{anchor_sighash, AccountMetaData, CrankResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
 };
 
 #[derive(Accounts)]
@@ -23,7 +23,7 @@ pub struct WorkerStakeDelegations<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
+pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<ExecResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let thread = &ctx.accounts.thread;
@@ -93,8 +93,8 @@ pub fn handler(ctx: Context<WorkerStakeDelegations>) -> Result<CrankResponse> {
         })
     };
 
-    Ok(CrankResponse {
+    Ok(ExecResponse {
         next_instruction,
-        ..CrankResponse::default()
+        ..ExecResponse::default()
     })
 }

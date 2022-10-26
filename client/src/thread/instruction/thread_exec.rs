@@ -9,7 +9,7 @@ use {
     clockwork_network_program::objects::{Fee, Penalty, Pool},
 };
 
-pub fn thread_crank(signatory: Pubkey, thread: Pubkey, worker: Pubkey) -> Instruction {
+pub fn thread_exec(signatory: Pubkey, thread: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_thread_program::ID,
         accounts: vec![
@@ -20,6 +20,6 @@ pub fn thread_crank(signatory: Pubkey, thread: Pubkey, worker: Pubkey) -> Instru
             AccountMeta::new(thread, false),
             AccountMeta::new_readonly(worker, false),
         ],
-        data: clockwork_thread_program::instruction::ThreadCrank {}.data(),
+        data: clockwork_thread_program::instruction::ThreadExec {}.data(),
     }
 }
