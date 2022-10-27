@@ -61,6 +61,7 @@ pub enum CliCommand {
     },
 
     // Thread commands
+    ThreadCrateInfo,
     ThreadCreate {
         id: String,
         kickoff_instruction: InstructionData,
@@ -297,6 +298,10 @@ pub fn app() -> Command<'static> {
             Command::new("thread")
                 .about("Manage your transaction threads")
                 .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("crate-info")
+                        .about("Crate Information")
+                )
                 .subcommand(
                     Command::new("create")
                         .about("Create a new thread")
