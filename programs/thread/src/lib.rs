@@ -1,6 +1,8 @@
 //! This program allows users to create transaction threads on Solana. Threads are dynamic, long-running
 //! transaction threads that can persist across blocks and even run indefinitely. Developers can use threads
 //! to schedule transactions and automate smart-contracts without relying on centralized infrastructure.
+#[macro_use]
+extern crate version;
 
 pub mod errors;
 pub mod objects;
@@ -10,6 +12,7 @@ mod instructions;
 use anchor_lang::prelude::*;
 use instructions::*;
 use objects::*;
+use clockwork_utils::CrateInfo;
 
 declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 
@@ -17,6 +20,11 @@ declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 #[program]
 pub mod thread_program {
     use super::*;
+
+    /// Return the crate information via `sol_set_return_data/sol_get_return_data`
+    pub fn get_crate_info(ctx: Context<GetCrateInfo>) -> Result<CrateInfo> {
+        get_crate_info::handler(ctx)
+    }
 
     /// Executes the next instruction on thread.
     pub fn thread_exec(ctx: Context<ThreadExec>) -> Result<()> {
