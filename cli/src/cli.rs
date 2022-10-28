@@ -298,6 +298,7 @@ pub fn app() -> Command<'static> {
                 .subcommand(
                     Command::new("create")
                         .about("Create a new thread")
+                        .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .long("id")
@@ -346,7 +347,10 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("delete").about("Delete a thread").arg(
+                    Command::new("delete")
+                        .about("Delete a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -374,7 +378,10 @@ pub fn app() -> Command<'static> {
                         )
                 )
                 .subcommand(
-                    Command::new("pause").about("Pause a thread").arg(
+                    Command::new("pause")
+                        .about("Pause a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -403,6 +410,7 @@ pub fn app() -> Command<'static> {
                 .subcommand(
                     Command::new("update")
                         .about("Update a property of a thread")
+                        .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .index(1)
