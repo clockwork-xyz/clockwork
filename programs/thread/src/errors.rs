@@ -5,10 +5,6 @@ use anchor_lang::prelude::*;
 /// Errors for the the Clockwork thread program.
 #[error_code]
 pub enum ClockworkError {
-    /// Thrown if a exec instruction requires a `data_hash` argument and one was not provided by the worker.
-    #[msg("This trigger requires a data hash observation")]
-    DataHashNotPresent,
-
     /// Thrown if a exec response has an invalid program ID or cannot be parsed.
     #[msg("The exec response could not be parsed")]
     InvalidExecResponse,
@@ -16,10 +12,6 @@ pub enum ClockworkError {
     /// Thrown if a thread has an invalid state and cannot complete the operation.
     #[msg("The thread is in an invalid state")]
     InvalidThreadState,
-
-    /// Thrown if an account trigger has an invalid range.
-    #[msg("The range is larger than the account size")]
-    RangeOutOfBounds,
 
     /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]

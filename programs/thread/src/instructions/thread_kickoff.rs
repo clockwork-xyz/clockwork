@@ -6,7 +6,6 @@ use {
 
 /// Accounts required by the `thread_kickoff` instruction.
 #[derive(Accounts)]
-#[instruction(data_hash: Option<u64>)]
 pub struct ThreadKickoff<'info> {
     /// The signatory.
     #[account(mut)]
@@ -34,12 +33,12 @@ pub struct ThreadKickoff<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<ThreadKickoff>, data_hash: Option<u64>) -> Result<()> {
+pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
     // Get accounts.
     let thread = &mut ctx.accounts.thread;
 
     // If this thread does not have a next_instruction, verify the thread's trigger condition is active.
-    thread.kickoff(data_hash, ctx.remaining_accounts)?;
+    thread.kickoff(ctx.remaining_accounts)?;
 
     Ok(())
 }

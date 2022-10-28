@@ -86,20 +86,11 @@ impl ThreadObserver {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Move all threads listening to this account into the executable set.
-            this.listener_threads.retain(|pubkey, thread_pubkeys| {
-                if account_pubkey.eq(pubkey) {
-                    for thread_pubkey in thread_pubkeys.iter() {
-                        this.executable_threads.insert(*thread_pubkey.key());
-                    }
-                    false
-                } else {
-                    true
+            if let Some(entry) = this.listener_threads.get(&account_pubkey) {
+                for thread_pubkey in entry.value().iter() {
+                    this.executable_threads.insert(*thread_pubkey);
                 }
-            });
-
-            // TODO This account update could have just been a lamport change (not a data update).
-            // TODO To optimize, we need to fetch the thread accounts to verify the data update
-
+            }
             Ok(())
         })
     }
