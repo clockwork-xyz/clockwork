@@ -68,7 +68,8 @@ pub enum CliCommand {
         id: String,
     },
     ThreadGet {
-        id: String,
+        id: Option<String>,
+        address: Option<Pubkey>,
     },
     ThreadPause {
         id: String,
@@ -349,18 +350,28 @@ pub fn app() -> Command<'static> {
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
-                            .required(false)
+                            .required(true)
                             .help("The id of the thread to delete"),
                     ),
                 )
                 .subcommand(
-                    Command::new("get").about("Lookup a thread").arg(
+                    Command::new("get")
+                        .about("Lookup a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to lookup"),
-                    ),
+                            .help("The label of the thread to lookup")
+                        )
+                        .arg(
+                            Arg::new("address")
+                                .short('k')
+                                .long("address")
+                                .takes_value(true)
+                                .help("The address of the thread to lookup"),
+                        )
                 )
                 .subcommand(
                     Command::new("pause").about("Pause a thread").arg(
