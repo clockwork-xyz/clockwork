@@ -354,7 +354,7 @@ pub fn app() -> Command<'static> {
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
-                            .required(true)
+                            .required(false)
                             .help("The id of the thread to delete"),
                     ),
                 )
