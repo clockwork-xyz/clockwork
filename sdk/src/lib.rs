@@ -8,6 +8,7 @@ pub mod client {
         thread as thread_program, Client, ClientError, ClientResult, SplToken,
     };
 }
+
 // For programs that need to CPI into Clockwork.
 #[cfg(feature = "thread")]
 pub mod thread_program {
