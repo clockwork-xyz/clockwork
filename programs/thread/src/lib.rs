@@ -27,7 +27,7 @@ pub mod thread_program {
     pub fn thread_create(
         ctx: Context<ThreadCreate>,
         id: String,
-        kickoff_instruction: clockwork_utils::InstructionData,
+        kickoff_instruction: InstructionData,
         trigger: Trigger,
     ) -> Result<()> {
         thread_create::handler(ctx, id, kickoff_instruction, trigger)

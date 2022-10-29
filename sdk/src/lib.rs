@@ -1,5 +1,7 @@
 // For everyone
-pub use clockwork_utils::*;
+pub use clockwork_thread_program::objects::{
+    anchor_sighash, AccountMetaData, ClockData, ExecResponse, InstructionData, PAYER_PUBKEY,
+};
 
 // For clients
 #[cfg(feature = "client")]
@@ -14,7 +16,8 @@ pub mod client {
 pub mod thread_program {
     pub use clockwork_thread_program::{cpi, errors, program::ThreadProgram, ID};
     pub mod accounts {
-        pub use clockwork_thread_program::accounts::*;
-        pub use clockwork_thread_program::objects::*;
+        pub use clockwork_thread_program::accounts::{
+            ExecContext, Thread, ThreadSettings, Trigger, TriggerContext,
+        };
     }
 }

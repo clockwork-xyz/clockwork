@@ -1,7 +1,9 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
-use clockwork_client::{thread::objects::Trigger, webhook::objects::HttpMethod};
-use clockwork_utils::{AccountMetaData, InstructionData};
+use clockwork_client::{
+    thread::objects::{AccountMetaData, InstructionData, Trigger},
+    webhook::objects::HttpMethod,
+};
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
 use solana_sdk::{
     pubkey::Pubkey,

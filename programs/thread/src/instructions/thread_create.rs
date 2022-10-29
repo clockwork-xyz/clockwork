@@ -7,7 +7,7 @@ use {
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
-#[instruction(id: String, kickoff_instruction: clockwork_utils::InstructionData, trigger: Trigger)]
+#[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
 pub struct ThreadCreate<'info> {
     /// The authority (owner) of the thread.
     #[account()]
@@ -42,7 +42,7 @@ pub struct ThreadCreate<'info> {
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, id: String, kickoff_instruction: clockwork_utils::InstructionData, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<ThreadCreate>, id: String, kickoff_instruction: InstructionData, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let thread = &mut ctx.accounts.thread;

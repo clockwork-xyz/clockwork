@@ -7,8 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_thread_program::objects::Trigger,
-    clockwork_utils::InstructionData as ClockworkInstructionData,
+    clockwork_thread_program::objects::{InstructionData as ClockworkInstructionData, Trigger},
 };
 
 pub fn thread_create(
