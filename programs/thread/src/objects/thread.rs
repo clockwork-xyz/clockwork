@@ -265,16 +265,18 @@ impl ThreadAccount for Account<'_, Thread> {
         let signatory_reimbursement = signatory_lamports_pre
             .checked_sub(signatory_lamports_post)
             .unwrap();
-        **self.to_account_info().try_borrow_mut_lamports()? = self
-            .to_account_info()
-            .lamports()
-            .checked_sub(signatory_reimbursement)
-            .unwrap();
-        **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-            .to_account_info()
-            .lamports()
-            .checked_add(signatory_reimbursement)
-            .unwrap();
+        if signatory_reimbursement.gt(&0) {
+            **self.to_account_info().try_borrow_mut_lamports()? = self
+                .to_account_info()
+                .lamports()
+                .checked_sub(signatory_reimbursement)
+                .unwrap();
+            **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+                .to_account_info()
+                .lamports()
+                .checked_add(signatory_reimbursement)
+                .unwrap();
+        }
 
         // Debit the fee from the thread account.
         // If the worker is in the pool, pay fee to the worker's fee account.
