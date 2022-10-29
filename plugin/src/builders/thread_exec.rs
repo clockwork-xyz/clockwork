@@ -150,26 +150,6 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
         } => {
             // Save the trigger account.
             trigger_account_pubkey = Some(address);
-
-            // Begin computing the data hash of this account.
-            // let data = client.get_account_data(&address).unwrap();
-            // let mut hasher = DefaultHasher::new();
-            // if offset + size < data.len() {
-            //     data[offset..(offset + size)].hash(&mut hasher);
-            // }
-            // let data_hash = hasher.finish();
-
-            // // Check the exec context for the prior data hash.
-            // if let Some(exec_context) = thread.exec_context {
-            //     match exec_context.trigger_context {
-            //         TriggerContext::Account {
-            //             data_hash: prior_data_hash,
-            //         } => {
-            //             // Inject the prior data hash as a seed.
-            //         }
-            //         _ => {}
-            //     }
-            // }
         }
         _ => {}
     }
