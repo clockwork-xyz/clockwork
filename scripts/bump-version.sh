@@ -49,8 +49,7 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 
 # Bump clockwork-sdk
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
-sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["cpi"], version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
-sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["cpi"], version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
 
 # Bump clockwork-utils
@@ -63,8 +62,8 @@ echo $new_version > VERSION
 cargo build
 
 # Git commit 
-echo "$(git diff --stat | tail -n1)"
-git add .
-git commit -m "Bump from $current_version to $new_version"
-git tag "v$new_version"
-git push && git push --tags
+# echo "$(git diff --stat | tail -n1)"
+# git add .
+# git commit -m "Bump from $current_version to $new_version"
+# git tag "v$new_version"
+# git push && git push --tags
