@@ -62,8 +62,8 @@ echo $new_version > VERSION
 cargo build
 
 # Git commit 
-# echo "$(git diff --stat | tail -n1)"
-# git add .
-# git commit -m "Bump from $current_version to $new_version"
-# git tag "v$new_version"
-# git push && git push --tags
+echo "$(git diff --stat | tail -n1)"
+git add .
+git commit -m "Bump from $current_version to $new_version"
+git tag "v$new_version"
+git push && git push --tags
