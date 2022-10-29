@@ -1,5 +1,3 @@
-use log::info;
-
 use {
     crate::config::PluginConfig,
     clockwork_client::network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
@@ -83,8 +81,6 @@ impl NetworkObserver {
                 }
                 _ => {}
             }
-
-            info!("Pool positions: {}", w_pool_positions);
 
             drop(w_pool_positions);
             Ok(())

@@ -86,6 +86,7 @@ impl TxExecutor {
         // Exit early if we are not in the worker pool.
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let thread_pool = r_pool_positions.thread_pool.clone();
+        info!("Pool position: {:#?}", thread_pool.current_position);
         drop(r_pool_positions);
         if thread_pool.current_position.is_none() && !thread_pool.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
