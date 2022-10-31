@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-cron"
-version = "1.3.4"
+version = "1.3.5"
 description = "A cron expression parser that's safe to use in the Solana runtime"
 edition = "2021"
 license = "AGPL-3.0-or-later"
