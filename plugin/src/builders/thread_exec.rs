@@ -110,11 +110,19 @@ fn build_thread_exec_tx(
                         if let Some(account) = ui_account.decode::<Account>() {
                             if let Ok(sim_thread) = Thread::try_from(account.data) {
                                 if sim_thread.next_instruction.is_some() {
-                                    ixs.push(build_exec_ix(
-                                        sim_thread,
-                                        signatory_pubkey,
-                                        worker_id,
-                                    ));
+                                    if let Some(exec_context) = sim_thread.exec_context {
+                                        if exec_context.execs_since_slot.lt(&sim_thread.rate_limit)
+                                        {
+                                            ixs.push(build_exec_ix(
+                                                sim_thread,
+                                                signatory_pubkey,
+                                                worker_id,
+                                            ));
+                                        } else {
+                                            // Exit early if the thread has reached its rate limit.
+                                            break;
+                                        }
+                                    }
                                 } else {
                                     break;
                                 }
