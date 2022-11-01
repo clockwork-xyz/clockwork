@@ -16,7 +16,7 @@ pub mod client {
 pub mod thread_program {
     pub use clockwork_thread_program::{cpi, errors, program::ThreadProgram, ID};
     pub mod accounts {
-        pub use clockwork_thread_program::accounts::{
+        pub use clockwork_thread_program::objects::{
             ExecContext, Thread, ThreadSettings, Trigger, TriggerContext,
         };
     }
