@@ -234,9 +234,6 @@ impl<T> ProgramLogsDeserializable for T
         let decoded = base64::decode(get_return_data_base64)
             .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?;
 
-        Ok(
-            T::try_from_slice(&decoded)
-                .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?
-        )
+        T::try_from_slice(&decoded).map_err(|_err| ErrorCode::AccountDidNotDeserialize)
     }
 }

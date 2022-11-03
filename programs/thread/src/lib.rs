@@ -10,9 +10,9 @@ pub mod objects;
 mod instructions;
 
 use anchor_lang::prelude::*;
+use clockwork_utils::CrateInfo;
 use instructions::*;
 use objects::*;
-use clockwork_utils::CrateInfo;
 
 declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 
