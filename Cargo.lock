@@ -648,6 +648,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo_toml"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa0e3586af56b3bfa51fca452bd56e8dbbbd5d8d81cbf0b7e4e35b695b537eb8"
+dependencies = [
+ "serde",
+ "toml",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -756,6 +766,7 @@ name = "clockwork-cli"
 version = "1.3.8"
 dependencies = [
  "anyhow",
+ "cargo_toml",
  "chrono",
  "clap 3.2.22",
  "clockwork-client",
@@ -860,6 +871,7 @@ dependencies = [
  "bincode",
  "bs58 0.4.0",
  "bugsnag",
+ "cargo_toml",
  "chrono",
  "clockwork-client",
  "clockwork-cron",
