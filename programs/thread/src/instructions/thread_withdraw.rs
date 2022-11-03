@@ -1,4 +1,7 @@
-use {crate::objects::*, anchor_lang::prelude::*};
+use {
+    crate::{errors::*, objects::*},
+    anchor_lang::prelude::*,
+};
 
 /// Accounts required by the `thread_withdraw` instruction.
 #[derive(Accounts)]
@@ -30,6 +33,19 @@ pub fn handler(ctx: Context<ThreadWithdraw>, amount: u64) -> Result<()> {
     // Get accounts
     let pay_to = &mut ctx.accounts.pay_to;
     let thread = &mut ctx.accounts.thread;
+
+    // Calculate the minimum rent threshold
+    let data_len = 8 + thread.try_to_vec()?.len();
+    let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
+    let post_balance = thread
+        .to_account_info()
+        .lamports()
+        .checked_sub(amount)
+        .unwrap();
+    require!(
+        post_balance.gt(&minimum_rent),
+        ClockworkError::WithdrawalTooLarge
+    );
 
     // Withdraw balance from thread to the pay_to account
     **thread.to_account_info().try_borrow_mut_lamports()? = thread

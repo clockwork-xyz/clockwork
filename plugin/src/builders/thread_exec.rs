@@ -1,7 +1,7 @@
 use {
     clockwork_client::{
         network::objects::Worker,
-        thread::objects::{Thread, Trigger, TriggerContext},
+        thread::objects::{Thread, Trigger},
         Client as ClockworkClient,
     },
     dashmap::DashSet,
@@ -15,11 +15,7 @@ use {
         pubkey::Pubkey,
     },
     solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
-    std::{
-        collections::hash_map::DefaultHasher,
-        hash::{Hash, Hasher},
-        sync::Arc,
-    },
+    std::sync::Arc,
 };
 
 static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized transaction
@@ -55,9 +51,9 @@ fn build_thread_exec_tx(
 
     // Pre-simulate exec ixs and pack into tx
     let first_instruction = if thread.next_instruction.is_some() {
-        build_exec_ix(client.clone(), thread, signatory_pubkey, worker_id)
+        build_exec_ix(thread, signatory_pubkey, worker_id)
     } else {
-        build_kickoff_ix(client.clone(), thread, signatory_pubkey, worker_id)
+        build_kickoff_ix(thread, signatory_pubkey, worker_id)
     };
     let mut ixs: Vec<Instruction> = vec![first_instruction];
 
@@ -97,7 +93,8 @@ fn build_thread_exec_tx(
                 // If there was an error, then stop packing.
                 if response.value.err.is_some() {
                     info!(
-                        "Error simulating tx: {} logs: {:#?}",
+                        "Error simulating thread: {} tx: {} logs: {:#?}",
+                        thread_pubkey,
                         response.value.err.unwrap(),
                         response.value.logs
                     );
@@ -113,12 +110,19 @@ fn build_thread_exec_tx(
                         if let Some(account) = ui_account.decode::<Account>() {
                             if let Ok(sim_thread) = Thread::try_from(account.data) {
                                 if sim_thread.next_instruction.is_some() {
-                                    ixs.push(build_exec_ix(
-                                        client.clone(),
-                                        sim_thread,
-                                        signatory_pubkey,
-                                        worker_id,
-                                    ));
+                                    if let Some(exec_context) = sim_thread.exec_context {
+                                        if exec_context.execs_since_slot.lt(&sim_thread.rate_limit)
+                                        {
+                                            ixs.push(build_exec_ix(
+                                                sim_thread,
+                                                signatory_pubkey,
+                                                worker_id,
+                                            ));
+                                        } else {
+                                            // Exit early if the thread has reached its rate limit.
+                                            break;
+                                        }
+                                    }
                                 } else {
                                     break;
                                 }
@@ -143,51 +147,17 @@ fn build_thread_exec_tx(
     Some(tx)
 }
 
-fn build_kickoff_ix(
-    client: Arc<ClockworkClient>,
-    thread: Thread,
-    signatory_pubkey: Pubkey,
-    worker_id: u64,
-) -> Instruction {
+fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
     // If this thread is an account listener, grab the account and create the data_hash.
     let mut trigger_account_pubkey: Option<Pubkey> = None;
-    let mut data_hash: Option<u64> = None;
     match thread.trigger {
         Trigger::Account {
             address,
-            offset,
-            size,
+            offset: _,
+            size: _,
         } => {
             // Save the trigger account.
             trigger_account_pubkey = Some(address);
-
-            // Begin computing the data hash of this account.
-            let data = client.get_account_data(&address).unwrap();
-            let mut hasher = DefaultHasher::new();
-            if offset + size < data.len() {
-                data[offset..(offset + size)].hash(&mut hasher);
-            }
-
-            // Check the exec context for the prior data hash.
-            match thread.exec_context.clone() {
-                None => {
-                    // This thread has not begun executing yet.
-                    // There is no prior data hash to include in our hash.
-                    data_hash = Some(hasher.finish());
-                }
-                Some(exec_context) => {
-                    match exec_context.trigger_context {
-                        TriggerContext::Account {
-                            data_hash: prior_data_hash,
-                        } => {
-                            // Inject the prior data hash as a seed.
-                            prior_data_hash.hash(&mut hasher);
-                            data_hash = Some(hasher.finish());
-                        }
-                        _ => {}
-                    }
-                }
-            };
         }
         _ => {}
     }
@@ -195,7 +165,6 @@ fn build_kickoff_ix(
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
-        data_hash,
         signatory_pubkey,
         thread_pubkey,
         Worker::pubkey(worker_id),
@@ -214,12 +183,7 @@ fn build_kickoff_ix(
     kickoff_ix
 }
 
-fn build_exec_ix(
-    _client: Arc<ClockworkClient>,
-    thread: Thread,
-    signatory_pubkey: Pubkey,
-    worker_id: u64,
-) -> Instruction {
+fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut exec_ix = clockwork_client::thread::instruction::thread_exec(

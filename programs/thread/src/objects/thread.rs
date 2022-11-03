@@ -1,5 +1,6 @@
 use {
     crate::errors::ClockworkError,
+    crate::objects::*,
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -11,7 +12,6 @@ use {
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
     clockwork_network_program::objects::{Fee, Penalty, Pool, Worker},
-    clockwork_utils::*,
     std::{
         collections::hash_map::DefaultHasher,
         convert::TryFrom,
@@ -128,8 +128,7 @@ pub trait ThreadAccount {
         worker: &Account<Worker>,
     ) -> Result<()>;
 
-    fn kickoff(&mut self, data_hash: Option<u64>, remaining_accounts: &[AccountInfo])
-        -> Result<()>;
+    fn kickoff(&mut self, remaining_accounts: &[AccountInfo]) -> Result<()>;
 
     /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
@@ -266,16 +265,18 @@ impl ThreadAccount for Account<'_, Thread> {
         let signatory_reimbursement = signatory_lamports_pre
             .checked_sub(signatory_lamports_post)
             .unwrap();
-        **self.to_account_info().try_borrow_mut_lamports()? = self
-            .to_account_info()
-            .lamports()
-            .checked_sub(signatory_reimbursement)
-            .unwrap();
-        **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-            .to_account_info()
-            .lamports()
-            .checked_add(signatory_reimbursement)
-            .unwrap();
+        if signatory_reimbursement.gt(&0) {
+            **self.to_account_info().try_borrow_mut_lamports()? = self
+                .to_account_info()
+                .lamports()
+                .checked_sub(signatory_reimbursement)
+                .unwrap();
+            **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+                .to_account_info()
+                .lamports()
+                .checked_add(signatory_reimbursement)
+                .unwrap();
+        }
 
         // Debit the fee from the thread account.
         // If the worker is in the pool, pay fee to the worker's fee account.
@@ -371,11 +372,7 @@ impl ThreadAccount for Account<'_, Thread> {
         Ok(())
     }
 
-    fn kickoff(
-        &mut self,
-        data_hash: Option<u64>,
-        remaining_accounts: &[AccountInfo],
-    ) -> Result<()> {
+    fn kickoff(&mut self, remaining_accounts: &[AccountInfo]) -> Result<()> {
         let clock = Clock::get().unwrap();
         match self.trigger.clone() {
             Trigger::Account {
@@ -383,12 +380,6 @@ impl ThreadAccount for Account<'_, Thread> {
                 offset,
                 size,
             } => {
-                // Require the provided data hash is non-null.
-                let data_hash = match data_hash {
-                    None => return Err(ClockworkError::DataHashNotPresent.into()),
-                    Some(data_hash) => data_hash,
-                };
-
                 // Verify proof that account data has been updated.
                 match remaining_accounts.first() {
                     None => {}
@@ -406,36 +397,24 @@ impl ThreadAccount for Account<'_, Thread> {
                         if data.len().gt(&range_end) {
                             data[offset..range_end].hash(&mut hasher);
                         } else {
-                            return Err(ClockworkError::RangeOutOfBounds.into());
+                            data[offset..].hash(&mut hasher)
                         }
+                        let data_hash = hasher.finish();
 
-                        // Check the exec context for the prior data hash.
-                        let expected_data_hash = match self.exec_context.clone() {
-                            None => {
-                                // This thread has not begun executing yet.
-                                // There is no prior data hash to include in our hash.
-                                hasher.finish()
-                            }
-                            Some(exec_context) => {
-                                match exec_context.trigger_context {
-                                    TriggerContext::Account {
-                                        data_hash: prior_data_hash,
-                                    } => {
-                                        // Inject the prior data hash as a seed.
-                                        prior_data_hash.hash(&mut hasher);
-                                        hasher.finish()
-                                    }
-                                    _ => return Err(ClockworkError::InvalidThreadState.into()),
+                        // Verify the data hash is different than the prior data hash.
+                        if let Some(exec_context) = self.exec_context {
+                            match exec_context.trigger_context {
+                                TriggerContext::Account {
+                                    data_hash: prior_data_hash,
+                                } => {
+                                    require!(
+                                        data_hash.ne(&prior_data_hash),
+                                        ClockworkError::TriggerNotActive
+                                    )
                                 }
+                                _ => return Err(ClockworkError::InvalidThreadState.into()),
                             }
-                        };
-
-                        // Verify the data hash provided by the worker is equal to the expected data hash.
-                        // This proves the account has been updated since the last exec and the worker has seen the new data.
-                        require!(
-                            data_hash.eq(&expected_data_hash),
-                            ClockworkError::TriggerNotActive
-                        );
+                        }
 
                         // Set a new exec context with the new data hash and slot number.
                         self.exec_context = Some(ExecContext {

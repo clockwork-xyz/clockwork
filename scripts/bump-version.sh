@@ -49,8 +49,7 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 
 # Bump clockwork-sdk
 sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
-sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["cpi"], version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
-sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["cpi"], version = "'${new_version}'" }/g' sdk/Cargo.toml
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
 
 # Bump clockwork-utils

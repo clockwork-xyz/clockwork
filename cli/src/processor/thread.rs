@@ -1,10 +1,9 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        thread::objects::{Thread, ThreadSettings, Trigger},
+        thread::objects::{InstructionData, Thread, ThreadSettings, Trigger},
         Client,
     },
-    clockwork_utils::InstructionData,
     solana_sdk::pubkey::Pubkey,
 };
 

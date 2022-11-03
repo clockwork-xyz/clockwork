@@ -9,6 +9,6 @@ members = [
     "utils"
 ]
 
-# [patch.crates-io]
-# anchor-lang = { git = "https://github.com/clockwork-xyz/anchor", branch = "v0.25.0-solana.1.10.29" }
-# anchor-spl = { git = "https://github.com/clockwork-xyz/anchor", branch = "v0.25.0-solana.1.10.29" }
+[patch.crates-io]
+anchor-lang = { git = "https://github.com/clockwork-xyz/anchor", branch = "0.25.0-solana.1.13.4" }
+anchor-spl = { git = "https://github.com/clockwork-xyz/anchor", branch = "0.25.0-solana.1.13.4" }

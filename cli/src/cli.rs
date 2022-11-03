@@ -1,7 +1,9 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
-use clockwork_client::{thread::objects::Trigger, webhook::objects::HttpMethod};
-use clockwork_utils::InstructionData;
+use clockwork_client::{
+    thread::objects::{InstructionData, Trigger},
+    webhook::objects::HttpMethod,
+};
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]

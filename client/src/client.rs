@@ -309,6 +309,7 @@ impl SplToken for Client {
                     &funder.pubkey(),
                     recipient,
                     token_mint,
+                    &anchor_spl::token::ID,
                 ),
             ],
             Some(&self.payer_pubkey()),

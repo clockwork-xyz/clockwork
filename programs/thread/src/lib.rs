@@ -27,7 +27,7 @@ pub mod thread_program {
     pub fn thread_create(
         ctx: Context<ThreadCreate>,
         id: String,
-        kickoff_instruction: clockwork_utils::InstructionData,
+        kickoff_instruction: InstructionData,
         trigger: Trigger,
     ) -> Result<()> {
         thread_create::handler(ctx, id, kickoff_instruction, trigger)
@@ -39,8 +39,8 @@ pub mod thread_program {
     }
 
     /// Kicks off a thread if its trigger condition is active.
-    pub fn thread_kickoff(ctx: Context<ThreadKickoff>, data_hash: Option<u64>) -> Result<()> {
-        thread_kickoff::handler(ctx, data_hash)
+    pub fn thread_kickoff(ctx: Context<ThreadKickoff>) -> Result<()> {
+        thread_kickoff::handler(ctx)
     }
 
     /// Pauses an active thread.
