@@ -156,7 +156,8 @@ fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             id: parse_string("id", matches)?,
         }),
         Some(("get", matches)) => Ok(CliCommand::ThreadGet {
-            id: parse_string("id", matches)?,
+            id: parse_string("id", matches).ok(),
+            address: parse_pubkey("address", matches).ok(),
         }),
         Some(("pause", matches)) => Ok(CliCommand::ThreadPause {
             id: parse_string("id", matches)?,

@@ -1,4 +1,7 @@
-use crate::{cli::CliCommand, config::CliConfig, errors::CliError};
+use crate::{
+    cli::CliCommand, config::CliConfig, errors::CliError,
+    processor::thread::parse_pubkey_from_id_or_address,
+};
 use anyhow::Result;
 use clap::ArgMatches;
 use clockwork_client::Client;
@@ -59,10 +62,13 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             trigger,
         } => super::thread::create(&client, id, kickoff_instruction, trigger),
         CliCommand::ThreadDelete { id } => super::thread::delete(&client, id),
-        CliCommand::ThreadGet { id } => super::thread::get(&client, id),
         CliCommand::ThreadPause { id } => super::thread::pause(&client, id),
         CliCommand::ThreadResume { id } => super::thread::resume(&client, id),
         CliCommand::ThreadStop { id } => super::thread::stop(&client, id),
+        CliCommand::ThreadGet { id, address } => {
+            let pubkey = parse_pubkey_from_id_or_address(client.payer_pubkey(), id, address)?;
+            super::thread::get(&client, pubkey)
+        }
         CliCommand::ThreadUpdate {
             id,
             rate_limit,
