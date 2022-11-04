@@ -773,6 +773,7 @@ dependencies = [
  "clockwork-cron",
  "clockwork-utils",
  "dirs-next",
+ "regex",
  "serde",
  "serde_json",
  "serde_yaml 0.9.13",

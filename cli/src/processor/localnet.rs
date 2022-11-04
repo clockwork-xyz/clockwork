@@ -1,4 +1,5 @@
 use clockwork_client::network::objects::Snapshot;
+use std::io::Write;
 
 #[allow(deprecated)]
 use {
@@ -25,6 +26,7 @@ use {
 };
 
 pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
+    check_test_validator_version();
     // Start the validator
     let validator_process = &mut start_test_validator(client, program_infos)
         .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
@@ -41,6 +43,28 @@ pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), Cli
     _ = validator_process.wait();
 
     Ok(())
+}
+
+fn check_test_validator_version() {
+    // add link to the FAQ about solana version instead
+    let validator_version = env!("VALIDATOR_VERSION");
+    let clockwork_version = env!("GEYSER_INTERFACE_VERSION");
+
+    if validator_version != clockwork_version {
+        let mut line = String::new();
+
+        let err = format!(
+            "Your Solana version, and the Clockwork Engine's Solana version differs, \
+            this behavior is undefined. \
+            You have {} installed, but the Clockwork Engine's requires {} \
+            We recommend you to run `solana-install init {}`\n Do you want to continue anyway?",
+            validator_version, clockwork_version, clockwork_version
+        );
+        println!("⚠️  \x1b[93m{}️\x1b[0m", err);
+
+        std::io::stdout().flush().unwrap();
+        std::io::stdin().read_line(&mut line).unwrap_or_default();
+    }
 }
 
 fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
