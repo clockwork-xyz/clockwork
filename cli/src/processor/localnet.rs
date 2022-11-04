@@ -57,7 +57,7 @@ fn check_test_validator_version() {
             "Your Solana version, and the Clockwork Engine's Solana version differs, \
             this behavior is undefined. \
             You have {} installed, but the Clockwork Engine's requires {} \
-            We recommend you to run `solana-install init {}`\n Do you want to continue anyway?",
+            We recommend you to run `solana-install init {}`\nDo you want to continue anyway?",
             validator_version, clockwork_version, clockwork_version
         );
         println!("⚠️  \x1b[93m{}️\x1b[0m", err);
