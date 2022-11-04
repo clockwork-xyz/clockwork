@@ -54,9 +54,9 @@ fn check_test_validator_version() {
         let mut line = String::new();
 
         let err = format!(
-            "Your Solana version, and the Clockwork Engine's Solana version differs, \
-            this behavior is undefined. \
-            You have {} installed, but the Clockwork Engine's requires {} \
+            "Your Solana version and the Clockwork Engine's Solana version differs. \
+            This behavior is undefined. \
+            You have {} installed, but the Clockwork Engine requires {} \
             We recommend you to run `solana-install init {}`\nDo you want to continue anyway?",
             validator_version, clockwork_version, clockwork_version
         );
