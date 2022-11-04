@@ -20,8 +20,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
     let config = CliConfig::load();
 
     // Build the RPC client
-    // TODO If reading the keypair fails, provide a clearer error message for users to set their `solana address`
-    let payer = read_keypair_file(config.keypair_path).unwrap();
+    let payer = read_keypair_file(&config.keypair_path)
+        .map_err(|_| CliError::KeypairNotFound(config.keypair_path))?;
+
     let client = Client::new(payer, config.json_rpc_url);
 
     // Process the command

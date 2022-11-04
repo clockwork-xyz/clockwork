@@ -11,6 +11,9 @@ use cli::app;
 use errors::CliError;
 use processor::process;
 
-fn main() -> Result<(), CliError> {
-    process(&app().get_matches())
+fn main() -> Result<(), CliError>{
+    process(&app().get_matches()).map_err(|e|{
+        println!("{}", e);
+        e
+    })
 }
