@@ -1,7 +1,7 @@
 use {
     crate::objects::*,
     anchor_lang::prelude::*,
-    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
 };
 
 // DONE Payout yield.
@@ -44,7 +44,7 @@ pub struct RegistryEpochKickoff<'info> {
     pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &mut ctx.accounts.registry;
@@ -110,7 +110,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
         })
     };
 
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         kickoff_instruction,
         next_instruction,
     })

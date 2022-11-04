@@ -77,7 +77,7 @@ impl TryFrom<Vec<u8>> for ClockData {
 
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-pub struct ExecResponse {
+pub struct ThreadResponse {
     /// The kickoff instruction to use on the next triggering of the thread.
     /// If none, the kickoff instruction remains unchanged.
     pub kickoff_instruction: Option<InstructionData>,
@@ -85,7 +85,7 @@ pub struct ExecResponse {
     pub next_instruction: Option<InstructionData>,
 }
 
-impl Default for ExecResponse {
+impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
             kickoff_instruction: None,

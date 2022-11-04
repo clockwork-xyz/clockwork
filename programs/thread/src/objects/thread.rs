@@ -222,10 +222,10 @@ impl ThreadAccount for Account<'_, Thread> {
             Some((program_id, return_data)) => {
                 require!(
                     program_id.eq(&instruction.program_id),
-                    ClockworkError::InvalidExecResponse
+                    ClockworkError::InvalidThreadResponse
                 );
-                let exec_response = ExecResponse::try_from_slice(return_data.as_slice())
-                    .map_err(|_err| ClockworkError::InvalidExecResponse)?;
+                let exec_response = ThreadResponse::try_from_slice(return_data.as_slice())
+                    .map_err(|_err| ClockworkError::InvalidThreadResponse)?;
 
                 // Update the thread with the exec response.
                 if let Some(kickoff_instruction) = exec_response.kickoff_instruction {

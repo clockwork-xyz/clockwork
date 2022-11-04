@@ -1,4 +1,4 @@
-use clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData};
+use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse};
 
 use {crate::objects::*, anchor_lang::prelude::*};
 
@@ -18,7 +18,7 @@ pub struct RegistryEpochCutover<'info> {
     pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &mut ctx.accounts.registry;
@@ -44,8 +44,8 @@ pub fn handler(ctx: Context<RegistryEpochCutover>) -> Result<ExecResponse> {
         data: anchor_sighash("snapshot_delete").to_vec(),
     });
 
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         next_instruction,
-        ..ExecResponse::default()
+        ..ThreadResponse::default()
     })
 }

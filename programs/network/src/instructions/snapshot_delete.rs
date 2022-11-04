@@ -1,6 +1,6 @@
 use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData};
 
-use {crate::objects::*, anchor_lang::prelude::*, clockwork_utils::ExecResponse};
+use {crate::objects::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotDelete<'info> {
@@ -32,7 +32,7 @@ pub struct SnapshotDelete<'info> {
 
 }
 
-pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -69,5 +69,5 @@ pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
         None
     };
 
-    Ok(ExecResponse { next_instruction, ..ExecResponse::default() })
+    Ok(ThreadResponse { next_instruction, ..ThreadResponse::default() })
 }

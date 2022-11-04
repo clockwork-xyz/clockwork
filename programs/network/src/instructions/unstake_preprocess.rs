@@ -3,7 +3,7 @@ use anchor_spl::associated_token::get_associated_token_address;
 use {
     crate::objects::*,
     anchor_lang::prelude::*,
-    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
 };
 
 #[derive(Accounts)]
@@ -24,7 +24,7 @@ pub struct UnstakePreprocess<'info> {
     pub unstake: Account<'info, Unstake>,
 }
 
-pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -32,7 +32,7 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ExecResponse> {
     let unstake = &ctx.accounts.unstake;
 
     // Return next instruction for thread.
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         next_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -51,6 +51,6 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ExecResponse> {
             ],
             data: anchor_sighash("unstake_process").to_vec(),
         }),
-        ..ExecResponse::default()
+        ..ThreadResponse::default()
     })
 }
