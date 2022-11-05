@@ -1,6 +1,6 @@
 // Utils
 pub use clockwork_thread_program::objects::{
-    anchor_sighash, AccountMetaData, ClockData, ExecResponse, InstructionData, PAYER_PUBKEY,
+    anchor_sighash, AccountMetaData, ClockData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
 
 // For clients

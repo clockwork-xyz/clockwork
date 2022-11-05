@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 pub enum ClockworkError {
     /// Thrown if a exec response has an invalid program ID or cannot be parsed.
     #[msg("The exec response could not be parsed")]
-    InvalidExecResponse,
+    InvalidThreadResponse,
 
     /// Thrown if a thread has an invalid state and cannot complete the operation.
     #[msg("The thread is in an invalid state")]

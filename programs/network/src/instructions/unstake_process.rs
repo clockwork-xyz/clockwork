@@ -4,7 +4,7 @@ use {
     crate::{errors::*, objects::*},
     anchor_lang::prelude::*,
     anchor_spl::token::{transfer, Token, TokenAccount, Transfer},
-    clockwork_utils::ExecResponse,
+    clockwork_utils::ThreadResponse,
 };
 
 #[derive(Accounts)]
@@ -71,7 +71,7 @@ pub struct UnstakeProcess<'info> {
     pub worker_tokens: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
     // Get accounts.
     let authority = &ctx.accounts.authority;
     let authority_tokens = &ctx.accounts.authority_tokens;
@@ -165,8 +165,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
         })
     };
 
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         next_instruction,
-        ..ExecResponse::default()
+        ..ThreadResponse::default()
     })
 }

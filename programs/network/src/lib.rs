@@ -35,7 +35,7 @@ pub mod network_program {
         delegation_deposit::handler(ctx, amount)
     }
 
-    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<ExecResponse> {
+    pub fn delegation_stake(ctx: Context<DelegationStake>) -> Result<ThreadResponse> {
         delegation_stake::handler(ctx)
     }
 
@@ -43,7 +43,7 @@ pub mod network_program {
         delegation_withdraw::handler(ctx, amount)
     }
 
-    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<ExecResponse> {
+    pub fn fee_distribute(ctx: Context<FeeDistribute>) -> Result<ThreadResponse> {
         fee_distribute::handler(ctx)
     }
 
@@ -67,15 +67,15 @@ pub mod network_program {
         pool_update::handler(ctx, settings)
     }
 
-    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<ExecResponse> {
+    pub fn registry_epoch_cutover(ctx: Context<RegistryEpochCutover>) -> Result<ThreadResponse> {
         registry_epoch_cutover::handler(ctx)
     }
 
-    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<ExecResponse> {
+    pub fn registry_epoch_kickoff(ctx: Context<RegistryEpochKickoff>) -> Result<ThreadResponse> {
         registry_epoch_kickoff::handler(ctx)
     }
 
-    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<ExecResponse> {
+    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<ThreadResponse> {
         registry_nonce_hash::handler(ctx)
     }
 
@@ -83,27 +83,27 @@ pub mod network_program {
         registry_unlock::handler(ctx)
     }
 
-    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<ExecResponse> {
+    pub fn snapshot_delete(ctx: Context<SnapshotDelete>) -> Result<ThreadResponse> {
         snapshot_delete::handler(ctx)
     }
 
-    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
+    pub fn snapshot_create(ctx: Context<SnapshotCreate>) -> Result<ThreadResponse> {
         snapshot_create::handler(ctx)
     }
 
-    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<ExecResponse> {
+    pub fn snapshot_entry_create(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
         snapshot_entry_create::handler(ctx)
     }
 
-    pub fn snapshot_entry_delete(ctx: Context<SnapshotEntryDelete>) -> Result<ExecResponse> {
+    pub fn snapshot_entry_delete(ctx: Context<SnapshotEntryDelete>) -> Result<ThreadResponse> {
         snapshot_entry_delete::handler(ctx)
     }
 
-    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<ExecResponse> {
+    pub fn snapshot_frame_create(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
         snapshot_frame_create::handler(ctx)
     }
 
-    pub fn snapshot_frame_delete(ctx: Context<SnapshotFrameDelete>) -> Result<ExecResponse> {
+    pub fn snapshot_frame_delete(ctx: Context<SnapshotFrameDelete>) -> Result<ThreadResponse> {
         snapshot_frame_delete::handler(ctx)
     }
 
@@ -111,11 +111,11 @@ pub mod network_program {
         unstake_create::handler(ctx, amount)
     }
 
-    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<ExecResponse> {
+    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
         unstake_preprocess::handler(ctx)
     }
 
-    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<ExecResponse> {
+    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
         unstake_process::handler(ctx)
     }
 
@@ -127,11 +127,13 @@ pub mod network_program {
         worker_create::handler(ctx)
     }
 
-    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<ExecResponse> {
+    pub fn worker_fees_distribute(ctx: Context<WorkerDistributeFees>) -> Result<ThreadResponse> {
         worker_fees_distribute::handler(ctx)
     }
 
-    pub fn worker_delegations_stake(ctx: Context<WorkerStakeDelegations>) -> Result<ExecResponse> {
+    pub fn worker_delegations_stake(
+        ctx: Context<WorkerStakeDelegations>,
+    ) -> Result<ThreadResponse> {
         worker_delegations_stake::handler(ctx)
     }
 

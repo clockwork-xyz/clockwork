@@ -5,7 +5,7 @@ use {
         associated_token::get_associated_token_address,
         token::{transfer, Token, TokenAccount, Transfer},
     },
-    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
 };
 
 #[derive(Accounts)]
@@ -53,7 +53,7 @@ pub struct DelegationStake<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<DelegationStake>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<DelegationStake>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -154,8 +154,8 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<ExecResponse> {
         })
     };
 
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         next_instruction,
-        ..ExecResponse::default()
+        ..ThreadResponse::default()
     })
 }
