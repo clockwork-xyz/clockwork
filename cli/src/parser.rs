@@ -147,6 +147,7 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("crate-info", _)) => Ok(CliCommand::ThreadCrateInfo {}),
         Some(("create", matches)) => Ok(CliCommand::ThreadCreate {
             id: parse_string("id", matches)?,
             kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,

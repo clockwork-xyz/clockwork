@@ -4,8 +4,16 @@ use {
         thread::objects::{InstructionData, Thread, ThreadSettings, Trigger},
         Client,
     },
+    clockwork_utils::CrateInfo,
     solana_sdk::pubkey::Pubkey,
 };
+
+pub fn crate_info(client: &Client) -> Result<(), CliError> {
+    let ix = clockwork_client::thread::instruction::get_crate_info();
+    let crate_info: CrateInfo = client.get_return_data(ix).unwrap();
+    println!("{:#?}", crate_info);
+    Ok(())
+}
 
 pub fn create(
     client: &Client,

@@ -3,7 +3,11 @@ use anchor_spl::token::{
     spl_token::{self, state::Account as TokenAccount},
     Mint,
 };
-use solana_client::{client_error, rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig};
+use clockwork_utils::ProgramLogsDeserializable;
+use solana_client::{
+    client_error, rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig,
+    rpc_response::RpcSimulateTransactionResult,
+};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     hash::Hash,
@@ -50,15 +54,37 @@ impl Client {
 
     pub fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
         let data = self.client.get_account_data(pubkey)?;
-        Ok(T::try_deserialize(&mut data.as_slice())
-            .map_err(|_| ClientError::DeserializationError)?)
+        T::try_deserialize(&mut data.as_slice()).map_err(|_| ClientError::DeserializationError)
     }
 
     pub fn get_clock(&self) -> ClientResult<Clock> {
         let clock_pubkey = Pubkey::from_str("SysvarC1ock11111111111111111111111111111111").unwrap();
         let clock_data = self.client.get_account_data(&clock_pubkey)?;
-        Ok(bincode::deserialize::<Clock>(&clock_data)
-            .map_err(|_| ClientError::DeserializationError)?)
+        bincode::deserialize::<Clock>(&clock_data).map_err(|_| ClientError::DeserializationError)
+    }
+
+    pub fn get_return_data<T: ProgramLogsDeserializable>(
+        &self,
+        ix: Instruction,
+    ) -> ClientResult<T> {
+        // let result = self.simulate_transaction(&[ix.clone()], &[self.payer()])?;
+
+        // After we can upgrade our Solana SDK version to 1.14.0 we can just use the below code:
+        // let data = result.logs;
+        // Ok(T::try_from_slice(logs, &data)
+        //     .map_err(|_| ClientError::DeserializationError)?)
+        //
+        // But for the time being since RpcSimulateTransactionResult.data does not exist yet,
+        // We can only parse the logs ourselves to find the return_data
+        let logs = self.get_instruction_logs(ix.clone())?;
+        T::try_from_program_logs(logs, &ix.program_id)
+            .map_err(|_| ClientError::DeserializationError)
+    }
+
+    pub fn get_instruction_logs(&self, ix: Instruction) -> ClientResult<Vec<String>> {
+        let result = self.simulate_transaction(&[ix], &[self.payer()])?;
+        let logs = result.logs.ok_or(ClientError::DeserializationError)?;
+        Ok(logs)
     }
 
     pub fn payer(&self) -> &Keypair {
@@ -92,8 +118,7 @@ impl Client {
         signers: &T,
         config: RpcSendTransactionConfig,
     ) -> ClientResult<Signature> {
-        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
-        tx.sign(signers, self.latest_blockhash()?);
+        let tx = self.transaction(ixs, signers)?;
         Ok(self.client.send_transaction_with_config(&tx, config)?)
     }
 
@@ -102,9 +127,33 @@ impl Client {
         ixs: &[Instruction],
         signers: &T,
     ) -> ClientResult<Signature> {
-        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
-        tx.sign(signers, self.latest_blockhash()?);
+        let tx = self.transaction(ixs, signers)?;
         Ok(self.send_and_confirm_transaction(&tx)?)
+    }
+
+    pub fn simulate_transaction<T: Signers>(
+        &self,
+        ixs: &[Instruction],
+        signers: &T,
+    ) -> ClientResult<RpcSimulateTransactionResult> {
+        let tx = self.transaction(ixs, signers)?;
+        let result = self.client.simulate_transaction(&tx)?;
+        if result.value.err.is_some() {
+            Err(ClientError::DeserializationError)
+        } else {
+            Ok(result.value)
+        }
+    }
+
+    fn transaction<T: Signers>(&self,
+                               ixs: &[Instruction],
+                               signers: &T) -> ClientResult<Transaction> {
+        let mut tx = Transaction::new_with_payer(
+            ixs,
+            Some(&self.payer_pubkey()),
+        );
+        tx.sign(signers, self.latest_blockhash()?);
+        Ok(tx)
     }
 }
 

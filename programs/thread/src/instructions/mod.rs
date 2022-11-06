@@ -1,3 +1,4 @@
+pub mod get_crate_info;
 pub mod thread_create;
 pub mod thread_delete;
 pub mod thread_exec;
@@ -8,6 +9,7 @@ pub mod thread_stop;
 pub mod thread_update;
 pub mod thread_withdraw;
 
+pub use get_crate_info::*;
 pub use thread_create::*;
 pub use thread_delete::*;
 pub use thread_exec::*;
