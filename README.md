@@ -37,8 +37,12 @@
 - Smart contracts are automatically scanned by [Sec3](https://www.sec3.dev/)'s auto-auditing software, but have not been reviewed by a paid auditing firm.
 - Use at your own risk.
 
+## Getting Started
+- ["I am a validator and I want to deploy the Clockwork Engine"](#deploying-a-worker)
+- ["I don't have a validator or I just want to do some tests on localhost"](#local-development)
 
-## Getting started
+
+## Local Development
 
 Download the source code:
 ```sh
