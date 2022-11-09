@@ -48,7 +48,8 @@ cd clockwork
 
 The `main` branch is under active development and subject to bugs. To work with a stable version, checkout a release branch:
 ```sh
-git checkout tags/v1.0.2
+git describe --tags `git rev-list --tags --max-count=1`
+git checkout tags/...
 ```
 
 Build the repo:
