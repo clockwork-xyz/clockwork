@@ -1,7 +1,7 @@
 use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
-    anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount},
+    anchor_spl::associated_token::get_associated_token_address,
     clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
     std::mem::size_of,
 };
@@ -17,12 +17,6 @@ pub struct SnapshotEntryCreate<'info> {
         has_one = worker,
     )]
     pub delegation: Box<Account<'info, Delegation>>,
-
-    #[account(
-        associated_token::authority = delegation,
-        associated_token::mint = config.mint,
-    )]
-    pub delegation_stake: Account<'info, TokenAccount>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -82,7 +76,6 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
-    let delegation_stake = &ctx.accounts.delegation_stake;
     let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
@@ -97,7 +90,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
         delegation.key(),
         snapshot_frame.total_entries,
         snapshot_frame.key(),
-        delegation_stake.amount,
+        delegation.stake_amount,
     )?;
 
     // Update the snapshot frame.
@@ -117,10 +110,6 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(next_delegation_pubkey, false),
-                AccountMetaData::new_readonly(
-                    get_associated_token_address(&next_delegation_pubkey, &config.mint),
-                    false,
-                ),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),

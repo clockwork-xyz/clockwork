@@ -102,10 +102,6 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(zeroth_delegation_pubkey, false),
-                AccountMetaData::new_readonly(
-                    get_associated_token_address(&zeroth_delegation_pubkey, &config.mint),
-                    false,
-                ),
                 AccountMetaData::new(payer.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
