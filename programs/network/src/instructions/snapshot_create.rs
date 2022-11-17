@@ -2,7 +2,7 @@ use {
     crate::objects::*,
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::associated_token::get_associated_token_address,
-    clockwork_utils::{anchor_sighash, AccountMetaData, ExecResponse, InstructionData},
+    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
     std::mem::size_of,
 };
 
@@ -39,7 +39,7 @@ pub struct SnapshotCreate<'info> {
     pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
+pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let payer = &ctx.accounts.payer;
@@ -87,8 +87,8 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ExecResponse> {
         })
     };
 
-    Ok(ExecResponse {
+    Ok(ThreadResponse {
         next_instruction,
-        ..ExecResponse::default()
+        ..ThreadResponse::default()
     })
 }

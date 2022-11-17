@@ -61,6 +61,7 @@ pub enum CliCommand {
     },
 
     // Thread commands
+    ThreadCrateInfo,
     ThreadCreate {
         id: String,
         kickoff_instruction: InstructionData,
@@ -70,7 +71,8 @@ pub enum CliCommand {
         id: String,
     },
     ThreadGet {
-        id: String,
+        id: Option<String>,
+        address: Option<Pubkey>,
     },
     ThreadPause {
         id: String,
@@ -297,8 +299,13 @@ pub fn app() -> Command<'static> {
                 .about("Manage your transaction threads")
                 .arg_required_else_help(true)
                 .subcommand(
+                    Command::new("crate-info")
+                        .about("Crate Information")
+                )
+                .subcommand(
                     Command::new("create")
                         .about("Create a new thread")
+                        .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .long("id")
@@ -347,7 +354,10 @@ pub fn app() -> Command<'static> {
                         ),
                 )
                 .subcommand(
-                    Command::new("delete").about("Delete a thread").arg(
+                    Command::new("delete")
+                        .about("Delete a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -356,16 +366,29 @@ pub fn app() -> Command<'static> {
                     ),
                 )
                 .subcommand(
-                    Command::new("get").about("Lookup a thread").arg(
+                    Command::new("get")
+                        .about("Lookup a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to lookup"),
-                    ),
+                            .help("The label of the thread to lookup")
+                        )
+                        .arg(
+                            Arg::new("address")
+                                .short('k')
+                                .long("address")
+                                .takes_value(true)
+                                .help("The address of the thread to lookup"),
+                        )
                 )
                 .subcommand(
-                    Command::new("pause").about("Pause a thread").arg(
+                    Command::new("pause")
+                        .about("Pause a thread")
+                        .arg_required_else_help(true)
+                        .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -394,6 +417,7 @@ pub fn app() -> Command<'static> {
                 .subcommand(
                     Command::new("update")
                         .about("Update a property of a thread")
+                        .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .index(1)

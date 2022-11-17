@@ -4,7 +4,16 @@ use {
         thread::objects::{InstructionData, Thread, ThreadSettings, Trigger},
         Client,
     },
+    clockwork_utils::CrateInfo,
+    solana_sdk::pubkey::Pubkey,
 };
+
+pub fn crate_info(client: &Client) -> Result<(), CliError> {
+    let ix = clockwork_client::thread::instruction::get_crate_info();
+    let crate_info: CrateInfo = client.get_return_data(ix).unwrap();
+    println!("{:#?}", crate_info);
+    Ok(())
+}
 
 pub fn create(
     client: &Client,
@@ -22,7 +31,7 @@ pub fn create(
         trigger,
     );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, id)?;
+    get(client, thread_pubkey)?;
     Ok(())
 }
 
@@ -37,12 +46,11 @@ pub fn delete(client: &Client, id: String) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn get(client: &Client, id: String) -> Result<(), CliError> {
-    let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id);
+pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     let thread = client
-        .get::<Thread>(&thread_pubkey)
-        .map_err(|_err| CliError::AccountDataNotParsable(thread_pubkey.to_string()))?;
-    println!("Address: {}\n{:#?}", thread_pubkey, thread);
+        .get::<Thread>(&address)
+        .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
+    println!("Address: {}\n{:#?}", address, thread);
     Ok(())
 }
 
@@ -51,7 +59,7 @@ pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
     let ix =
         clockwork_client::thread::instruction::thread_pause(client.payer_pubkey(), thread_pubkey);
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, id)?;
+    get(client, thread_pubkey)?;
     Ok(())
 }
 
@@ -60,7 +68,7 @@ pub fn resume(client: &Client, id: String) -> Result<(), CliError> {
     let ix =
         clockwork_client::thread::instruction::thread_resume(client.payer_pubkey(), thread_pubkey);
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, id)?;
+    get(client, thread_pubkey)?;
     Ok(())
 }
 
@@ -69,7 +77,7 @@ pub fn stop(client: &Client, id: String) -> Result<(), CliError> {
     let ix =
         clockwork_client::thread::instruction::thread_stop(client.payer_pubkey(), thread_pubkey);
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, id)?;
+    get(client, thread_pubkey)?;
     Ok(())
 }
 
@@ -100,6 +108,16 @@ pub fn update(
         settings,
     );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
-    get(client, id)?;
+    get(client, thread_pubkey)?;
     Ok(())
+}
+
+pub fn parse_pubkey_from_id_or_address(
+    authority: Pubkey,
+    id: Option<String>,
+    address: Option<Pubkey>,
+) -> Result<Pubkey, CliError> {
+    let address_from_id = id.map(|str| Thread::pubkey(authority, str.into()));
+
+    address.or(address_from_id).ok_or(CliError::InvalidAddress)
 }
