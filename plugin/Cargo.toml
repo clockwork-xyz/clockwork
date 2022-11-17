@@ -41,7 +41,6 @@ thiserror = "1.0.30"
 tokio = "~1.14.1"
 
 [build-dependencies]
-prost-build = "0.10.0"
 cargo_toml = "0.13.0"
 
 [package.metadata.docs.rs]
