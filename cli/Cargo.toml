@@ -35,3 +35,7 @@ version = "3.0.0"
 [[bin]]
 name = "clockwork"
 path = "src/main.rs"
+
+[build-dependencies]
+cargo_toml = "0.13.0"
+regex = "1.6.0"

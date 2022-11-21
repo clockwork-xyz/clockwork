@@ -44,6 +44,11 @@ impl GeyserPlugin for ClockworkPlugin {
 
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
+        info!(
+            "clockwork-plugin crate-info - spec: {}, geyser_interface_version: {}",
+            env!("SPEC"),
+            env!("GEYSER_INTERFACE_VERSION")
+        );
         info!("Loading snapshot...");
         *self = ClockworkPlugin::new_from_config(PluginConfig::read_from(config_file)?);
         Ok(())
