@@ -832,6 +832,7 @@ dependencies = [
  "chrono",
  "clockwork-client",
  "clockwork-thread-program",
+ "clockwork-utils",
  "nom",
  "once_cell",
 ]

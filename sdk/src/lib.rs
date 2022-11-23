@@ -21,3 +21,8 @@ pub mod thread_program {
         };
     }
 }
+
+#[cfg(feature = "utils")]
+pub mod utils {
+    pub use clockwork_utils::{explorer};
+}

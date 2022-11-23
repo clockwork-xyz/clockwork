@@ -1,3 +1,5 @@
+pub mod explorer;
+
 use {
     anchor_lang::{
         prelude::borsh::BorshSchema,
