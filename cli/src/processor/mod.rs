@@ -3,6 +3,7 @@ mod config;
 mod crontab;
 mod delegation;
 mod initialize;
+mod explorer;
 mod localnet;
 mod pool;
 mod process;

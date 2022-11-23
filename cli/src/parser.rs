@@ -21,6 +21,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("config", matches)) => parse_config_command(matches),
             Some(("crontab", matches)) => parse_crontab_command(matches),
             Some(("delegation", matches)) => parse_delegation_command(matches),
+            Some(("explorer", matches)) => parse_explorer_command(matches),
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
@@ -116,6 +117,18 @@ fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
         Some(("get", matches)) => Ok(CliCommand::DelegationGet {
             delegation_id: parse_u64("delegation_id", matches)?,
             worker_id: parse_u64("worker_id", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_explorer_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::ExplorerGetThread {
+            id: parse_string("id", matches).ok(),
+            address: parse_pubkey("address", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

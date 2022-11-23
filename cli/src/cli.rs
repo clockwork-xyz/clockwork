@@ -41,6 +41,11 @@ pub enum CliCommand {
         worker_id: u64,
     },
 
+    ExplorerGetThread {
+        id: Option<String>,
+        address: Option<Pubkey>,
+    },
+
     Initialize {
         mint: Pubkey,
     },
@@ -229,6 +234,31 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
+            Command::new("explorer")
+                .about("Prints Explorer Urls")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("get")
+                        .about("Prints thread explorer url")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(false)
+                                .help("The label of the thread to lookup (only works if you \
+                                are the signer of that thread)")
+                        )
+                        .arg(
+                            Arg::new("address")
+                                .short('k')
+                                .long("address")
+                                .takes_value(true)
+                                .help("The address of the thread to lookup"),
+                        ),
+                )
+        )
+        .subcommand(
             Command::new("initialize")
                 .about("Initialize the Clockwork network program")
                 .arg(
@@ -374,7 +404,8 @@ pub fn app() -> Command<'static> {
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The label of the thread to lookup")
+                            .help("The label of the thread to lookup (only works if you \
+                                are the signer of that thread)")
                         )
                         .arg(
                             Arg::new("address")

@@ -51,6 +51,10 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             delegation_id,
             worker_id,
         } => super::delegation::get(&client, delegation_id, worker_id),
+        CliCommand::ExplorerGetThread { id, address } => {
+            let pubkey = parse_pubkey_from_id_or_address(client.payer_pubkey(), id, address)?;
+            super::explorer::thread_url(pubkey)
+        }
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
