@@ -1,37 +1,52 @@
 const EXPLORER_URL: &str = "https://explorer.solana.com";
 const CK_EXPLORER_URL: &str = "https://explorer.clockwork.xyz";
 
+
+#[derive(Default)]
 pub struct Explorer {
-    cluster: &'static str,
-    custom_rpc: &'static str,
+    cluster: String,
+    custom_rpc: Option<String>,
+}
+
+impl From<String> for Explorer {
+    fn from(json_rpc_url: String) -> Self {
+        match &json_rpc_url.to_lowercase() {
+            url if url.contains("devnet") => Explorer::devnet(),
+            url if url.contains("testnet") => Explorer::testnet(),
+            url if url.contains("mainnet") => Explorer::mainnet(),
+            _ => {
+                Explorer::custom(json_rpc_url)
+            }
+        }
+    }
 }
 
 impl Explorer {
-    pub const fn mainnet() -> Self {
+    pub fn mainnet() -> Self {
         Self {
-            cluster: "mainnet-beta",
-            custom_rpc: "",
+            cluster: "mainnet-beta".into(),
+            ..Default::default()
         }
     }
 
-    pub const fn testnet() -> Self {
+    pub fn testnet() -> Self {
         Self {
-            cluster: "testnet",
-            custom_rpc: "",
+            cluster: "testnet".into(),
+            ..Default::default()
         }
     }
 
-    pub const fn devnet() -> Self {
+    pub fn devnet() -> Self {
         Self {
-            cluster: "devnet",
-            custom_rpc: "",
+            cluster: "devnet".into(),
+            ..Default::default()
         }
     }
 
-    pub const fn custom() -> Self {
+    pub fn custom(custom_rpc: String) -> Self {
         Self {
-            cluster: "custom",
-            custom_rpc: "http://localhost:8899",
+            cluster: "custom".into(),
+            custom_rpc: Some(custom_rpc),
         }
     }
 
@@ -41,7 +56,7 @@ impl Explorer {
     pub fn tx_url<T: std::fmt::Display>(&self, tx: T) -> String {
         let url = format!("{}/tx/{}?cluster={}", EXPLORER_URL, tx, self.cluster);
         if self.cluster == "custom" {
-            url + "&customUrl=" + self.custom_rpc
+            url + "&customUrl=" + self.custom_rpc.as_ref().unwrap()
         } else {
             url
         }
@@ -51,10 +66,11 @@ impl Explorer {
     ///     ?network=custom
     ///     &customRPC=http://localhost:8899
     pub fn thread_url<T: std::fmt::Display, U: std::fmt::Display>(&self, thread: T, program_id: U) -> String {
-        let url = format!("{}/thread/{}?network={}&programID={}", CK_EXPLORER_URL, thread, self
-            .cluster, program_id);
+        let url = format!("{}/thread/{}?programID={}&network={}", CK_EXPLORER_URL,
+                          thread, program_id, self
+            .cluster);
         if self.cluster == "custom" {
-            url + "&customRPC=" + self.custom_rpc
+            url + "&customRPC=" + self.custom_rpc.as_ref().unwrap()
         } else {
             url
         }
