@@ -66,7 +66,7 @@ impl Explorer {
     ///     ?network=custom
     ///     &customRPC=http://localhost:8899
     pub fn thread_url<T: std::fmt::Display, U: std::fmt::Display>(&self, thread: T, program_id: U) -> String {
-        let url = format!("{}/thread/{}?programID={}&network={}", CK_EXPLORER_URL,
+        let url = format!("{}/address/{}?programID={}&network={}", CK_EXPLORER_URL,
                           thread, program_id, self
             .cluster);
         if self.cluster == "custom" {
