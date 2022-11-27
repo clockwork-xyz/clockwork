@@ -14,7 +14,7 @@ fn main() {
 }
 
 fn get_validator_version() -> String {
-    let output = Command::new("solana-test-validator")
+    let output = Command::new("solana-validator")
         .arg("--version")
         .output()
         .unwrap();
@@ -23,7 +23,7 @@ fn get_validator_version() -> String {
     let caps = re.captures(&version).unwrap();
     caps.get(1)
         .map_or(
-            "unknown (error parsing solana-test-validator version)",
+            "unknown (error parsing solana-validator version)",
             |m| m.as_str(),
         )
         .into()
