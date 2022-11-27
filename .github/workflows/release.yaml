@@ -44,8 +44,8 @@ jobs:
       - name: Grant permissions to build-all.sh
         run: chmod +x ./scripts/build-all.sh
 
-      - name: Install libudev-dev
-        run: sudo apt-get install libudev-dev
+      # - name: Install libudev-dev
+      #   run: sudo apt-get install libudev-dev
 
       - name: Build release tarball
         run: ./scripts/ci/create-tarball.sh
