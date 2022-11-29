@@ -1,6 +1,6 @@
 use clockwork_utils::ThreadResponse;
 
-use {crate::objects::*, anchor_lang::prelude::*};
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct RegistryNonceHash<'info> {

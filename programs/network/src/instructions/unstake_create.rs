@@ -1,5 +1,5 @@
 use {
-    crate::{errors::*, objects::*}, 
+    crate::{errors::*, state::*}, 
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of
 };

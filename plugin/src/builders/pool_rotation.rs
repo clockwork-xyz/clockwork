@@ -1,7 +1,7 @@
 use {
     crate::observers::network::PoolPositions,
     clockwork_client::{
-        network::objects::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+        network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
     },
     solana_sdk::transaction::Transaction,

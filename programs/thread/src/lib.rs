@@ -5,14 +5,14 @@
 extern crate version;
 
 pub mod errors;
-pub mod objects;
+pub mod state;
 
 mod instructions;
 
 use anchor_lang::prelude::*;
 use clockwork_utils::CrateInfo;
 use instructions::*;
-use objects::*;
+use state::*;
 
 declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
 

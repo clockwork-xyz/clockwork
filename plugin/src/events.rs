@@ -2,9 +2,9 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::objects::{Pool, Registry, Snapshot, SnapshotFrame},
-        thread::objects::Thread,
-        webhook::objects::Request,
+        network::state::{Pool, Registry, Snapshot, SnapshotFrame},
+        thread::state::Thread,
+        webhook::state::Request,
     },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, ReplicaAccountInfo,

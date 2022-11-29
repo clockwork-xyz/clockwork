@@ -14,7 +14,7 @@ fn main() {
 }
 
 fn get_validator_version() -> String {
-    let output = Command::new("solana-validator")
+    let output = Command::new("solana-test-validator")
         .arg("--version")
         .output()
         .unwrap();
@@ -22,10 +22,9 @@ fn get_validator_version() -> String {
     let re = Regex::new(r"(\d{1}\.\d{2}\.\d{1})").unwrap();
     let caps = re.captures(&version).unwrap();
     caps.get(1)
-        .map_or(
-            "unknown (error parsing solana-validator version)",
-            |m| m.as_str(),
-        )
+        .map_or("unknown (error parsing solana-validator version)", |m| {
+            m.as_str()
+        })
         .into()
 }
 

@@ -1,6 +1,6 @@
 use {
     crate::errors::ClockworkError,
-    crate::objects::*,
+    crate::state::*,
     anchor_lang::{
         prelude::*,
         solana_program::{
@@ -11,7 +11,7 @@ use {
     },
     chrono::{DateTime, NaiveDateTime, Utc},
     clockwork_cron::Schedule,
-    clockwork_network_program::objects::{Fee, Penalty, Pool, Worker},
+    clockwork_network_program::state::{Fee, Penalty, Pool, Worker},
     std::{
         collections::hash_map::DefaultHasher,
         convert::TryFrom,

@@ -1,5 +1,5 @@
 use {
-    crate::objects::{Config, Fee, FeeAccount, SEED_FEE},
+    crate::state::{Config, Fee, FeeAccount, SEED_FEE},
     anchor_lang::prelude::*,
 };
 

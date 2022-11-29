@@ -1,9 +1,9 @@
-use clockwork_client::network::objects::PoolSettings;
+use clockwork_client::network::state::PoolSettings;
 
 use {
     crate::errors::CliError,
     clockwork_client::{
-        network::objects::{Pool, Registry},
+        network::state::{Pool, Registry},
         Client,
     },
 };

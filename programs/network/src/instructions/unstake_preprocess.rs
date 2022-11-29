@@ -1,7 +1,7 @@
 use anchor_spl::associated_token::get_associated_token_address;
 
 use {
-    crate::objects::*,
+    crate::state::*,
     anchor_lang::prelude::*,
     clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
 };

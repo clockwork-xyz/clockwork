@@ -1,7 +1,7 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        thread::objects::{InstructionData, Thread, ThreadSettings, Trigger},
+        thread::state::{InstructionData, Thread, ThreadSettings, Trigger},
         Client,
     },
     clockwork_utils::CrateInfo,

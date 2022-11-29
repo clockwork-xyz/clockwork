@@ -6,7 +6,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_network_program::objects::*,
+    clockwork_network_program::state::*,
 };
 
 pub fn registry_epoch_kickoff(snapshot: Pubkey, thread: Pubkey) -> Instruction {

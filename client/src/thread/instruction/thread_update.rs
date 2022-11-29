@@ -1,4 +1,4 @@
-use clockwork_thread_program::objects::ThreadSettings;
+use clockwork_thread_program::state::ThreadSettings;
 
 use anchor_lang::{
     solana_program::{

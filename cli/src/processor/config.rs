@@ -1,7 +1,7 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        network::objects::{Config, ConfigSettings},
+        network::state::{Config, ConfigSettings},
         Client,
     },
     solana_sdk::pubkey::Pubkey,

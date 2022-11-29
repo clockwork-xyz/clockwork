@@ -1,5 +1,5 @@
 use {
-    crate::objects::{Config, Fee, FeeAccount, Request, SEED_FEE, SEED_REQUEST},
+    crate::state::{Config, Fee, FeeAccount, Request, SEED_FEE, SEED_REQUEST},
     anchor_lang::{prelude::*, system_program},
     std::mem::size_of,
 };

@@ -1,4 +1,4 @@
-use clockwork_client::network::objects::Snapshot;
+use clockwork_client::network::state::Snapshot;
 use std::io::Write;
 
 #[allow(deprecated)]
@@ -6,8 +6,8 @@ use {
     crate::{errors::CliError, parser::ProgramInfo},
     anyhow::Result,
     clockwork_client::{
-        network::objects::ConfigSettings,
-        thread::objects::{Thread, Trigger},
+        network::state::ConfigSettings,
+        thread::state::{Thread, Trigger},
         Client,
     },
     solana_sdk::{

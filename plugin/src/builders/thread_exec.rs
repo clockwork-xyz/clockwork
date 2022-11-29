@@ -1,7 +1,7 @@
 use {
     clockwork_client::{
-        network::objects::Worker,
-        thread::objects::{Thread, Trigger},
+        network::state::Worker,
+        thread::state::{Thread, Trigger},
         Client as ClockworkClient,
     },
     dashmap::DashSet,

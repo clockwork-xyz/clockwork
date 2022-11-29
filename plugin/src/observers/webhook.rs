@@ -1,5 +1,5 @@
 use {
-    clockwork_client::webhook::objects::Request,
+    clockwork_client::webhook::state::Request,
     dashmap::DashSet,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
