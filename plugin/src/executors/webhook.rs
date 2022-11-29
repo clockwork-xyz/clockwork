@@ -3,7 +3,7 @@ use {
         config::PluginConfig,
         observers::{webhook::HttpRequest, Observers},
     },
-    clockwork_client::webhook::objects::HttpMethod,
+    clockwork_client::webhook::state::HttpMethod,
     log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,

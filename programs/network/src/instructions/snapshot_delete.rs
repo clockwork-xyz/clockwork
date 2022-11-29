@@ -1,6 +1,6 @@
 use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData};
 
-use {crate::objects::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
+use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
 
 #[derive(Accounts)]
 pub struct SnapshotDelete<'info> {

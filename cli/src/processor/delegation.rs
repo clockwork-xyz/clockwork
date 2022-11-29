@@ -2,7 +2,7 @@ use spl_associated_token_account::get_associated_token_address;
 
 use {
     crate::errors::CliError,
-    clockwork_client::network::objects::{Config, Delegation, Worker},
+    clockwork_client::network::state::{Config, Delegation, Worker},
     clockwork_client::Client,
 };
 

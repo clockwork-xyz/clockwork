@@ -1,4 +1,4 @@
-use clockwork_client::{webhook::objects::HttpMethod, Client};
+use clockwork_client::{webhook::state::HttpMethod, Client};
 use solana_sdk::pubkey::Pubkey;
 
 use crate::errors::CliError;

@@ -1,7 +1,7 @@
 use {
-    crate::{errors::*, objects::*},
+    crate::{errors::*, state::*},
     anchor_lang::prelude::*,
-    clockwork_network_program::objects::{Worker, WorkerAccount},
+    clockwork_network_program::state::{Worker, WorkerAccount},
 };
 
 /// Accounts required by the `thread_kickoff` instruction.

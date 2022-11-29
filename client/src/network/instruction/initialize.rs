@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_network_program::objects::*,
+    clockwork_network_program::state::*,
 };
 
 pub fn initialize(admin: Pubkey, mint: Pubkey) -> Instruction {

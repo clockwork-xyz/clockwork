@@ -1,7 +1,7 @@
 use {
-    crate::{errors::*, objects::*},
+    crate::{errors::*, state::*},
     anchor_lang::prelude::*,
-    clockwork_network_program::objects::{Fee, Penalty, Pool, Worker, WorkerAccount},
+    clockwork_network_program::state::{Fee, Penalty, Pool, Worker, WorkerAccount},
 };
 
 /// The ID of the pool workers must be a member of to collect fees.
@@ -14,7 +14,7 @@ pub struct ThreadExec<'info> {
     #[account(
         mut,
         seeds = [
-            clockwork_network_program::objects::SEED_FEE,
+            clockwork_network_program::state::SEED_FEE,
             worker.key().as_ref(),
         ],
         bump,
@@ -27,7 +27,7 @@ pub struct ThreadExec<'info> {
     #[account(
         mut,
         seeds = [
-            clockwork_network_program::objects::SEED_PENALTY,
+            clockwork_network_program::state::SEED_PENALTY,
             worker.key().as_ref(),
         ],
         bump,

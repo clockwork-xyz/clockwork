@@ -8,7 +8,7 @@ use {
         InstructionData,
     },
     anchor_spl::{associated_token, associated_token::get_associated_token_address, token},
-    clockwork_network_program::objects::*,
+    clockwork_network_program::state::*,
 };
 
 pub fn worker_create(

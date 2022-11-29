@@ -1,5 +1,5 @@
 use {
-    crate::objects::{
+    crate::state::{
         Api, ApiAccount, Config, HttpMethod, Request, RequestAccount, SEED_REQUEST,
     },
     anchor_lang::{
@@ -7,7 +7,7 @@ use {
         solana_program::system_program,
         system_program::{transfer, Transfer},
     },
-    clockwork_network_program::objects::Pool,
+    clockwork_network_program::state::Pool,
     std::{collections::HashMap, mem::size_of},
 };
 

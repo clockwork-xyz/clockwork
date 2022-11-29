@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_network_program::objects::*,
+    clockwork_network_program::state::*,
 };
 
 pub fn pool_create(admin: Pubkey, payer: Pubkey, pool: Pubkey) -> Instruction {

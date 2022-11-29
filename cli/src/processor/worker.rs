@@ -1,8 +1,8 @@
-use clockwork_client::network::objects::Penalty;
+use clockwork_client::network::state::Penalty;
 
 use {
     crate::errors::CliError,
-    clockwork_client::network::objects::{Config, Fee, Registry, Snapshot, SnapshotFrame, Worker},
+    clockwork_client::network::state::{Config, Fee, Registry, Snapshot, SnapshotFrame, Worker},
     clockwork_client::Client,
     solana_sdk::signature::{Keypair, Signer},
 };

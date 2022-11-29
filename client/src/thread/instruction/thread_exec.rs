@@ -6,7 +6,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_network_program::objects::{Fee, Penalty, Pool},
+    clockwork_network_program::state::{Fee, Penalty, Pool},
 };
 
 pub fn thread_exec(signatory: Pubkey, thread: Pubkey, worker: Pubkey) -> Instruction {

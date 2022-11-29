@@ -1,7 +1,7 @@
 use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData};
 
 use {
-    crate::{errors::*, objects::*},
+    crate::{errors::*, state::*},
     anchor_lang::prelude::*,
     anchor_spl::token::{transfer, Token, TokenAccount, Transfer},
     clockwork_utils::ThreadResponse,

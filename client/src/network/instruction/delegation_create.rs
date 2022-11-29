@@ -7,7 +7,7 @@ use {
         },
         InstructionData,
     },
-    clockwork_network_program::objects::*,
+    clockwork_network_program::state::*,
     spl_associated_token_account::get_associated_token_address,
 };
 

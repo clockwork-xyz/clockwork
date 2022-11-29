@@ -1,7 +1,7 @@
 use {
     crate::config::PluginConfig,
     chrono::{DateTime, NaiveDateTime, Utc},
-    clockwork_client::thread::objects::{Thread, Trigger, TriggerContext},
+    clockwork_client::thread::state::{Thread, Trigger, TriggerContext},
     clockwork_cron::Schedule,
     dashmap::{DashMap, DashSet},
     solana_geyser_plugin_interface::geyser_plugin_interface::{

@@ -4,14 +4,14 @@
 //! and distribute those fees to delegators.
 
 pub mod errors;
-pub mod objects;
+pub mod state;
 
 mod instructions;
 
 use anchor_lang::prelude::*;
 use clockwork_utils::*;
 use instructions::*;
-use objects::*;
+use state::*;
 
 declare_id!("F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa");
 

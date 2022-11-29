@@ -1,5 +1,5 @@
 // Utils
-pub use clockwork_thread_program::objects::{
+pub use clockwork_thread_program::state::{
     anchor_sighash, AccountMetaData, ClockData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
 
@@ -16,7 +16,7 @@ pub mod client {
 pub mod thread_program {
     pub use clockwork_thread_program::{cpi, errors, program::ThreadProgram, ID};
     pub mod accounts {
-        pub use clockwork_thread_program::objects::{
+        pub use clockwork_thread_program::state::{
             ExecContext, Thread, ThreadAccount, ThreadSettings, Trigger, TriggerContext,
         };
     }
@@ -24,5 +24,5 @@ pub mod thread_program {
 
 #[cfg(feature = "utils")]
 pub mod utils {
-    pub use clockwork_utils::{explorer};
+    pub use clockwork_utils::explorer;
 }

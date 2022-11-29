@@ -1,5 +1,5 @@
 use {
-    crate::objects::{Config, ConfigAccount, SEED_CONFIG},
+    crate::state::{Config, ConfigAccount, SEED_CONFIG},
     anchor_lang::{prelude::*, solana_program::system_program},
     std::mem::size_of,
 };
