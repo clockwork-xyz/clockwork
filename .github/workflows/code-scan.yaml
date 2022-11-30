@@ -3,7 +3,8 @@ name: Code scan
 on:
   push:
   pull_request:
-    types: [opened]
+    branches:
+      - main
 env:
   CARGO_TERM_COLOR: always
 
