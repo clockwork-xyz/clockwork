@@ -36,8 +36,8 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let penalty_total = penalty_balance - penalty_min_rent;
 
     println!(
-        "Address: {}\nFees: {}\nPenalty: {}\n{:#?}",
-        worker_pubkey, fees_total, penalty_total, worker
+        "Address: {}\nFees: {}\nFee account: {}\nPenalty: {}\nPenalty account: {}\n{:#?}",
+        worker_pubkey, fees_total, fee_pubkey, penalty_total, penalty_pubkey, worker
     );
 
     // Get registry
