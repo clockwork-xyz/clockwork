@@ -65,7 +65,6 @@ impl GeyserPlugin for ClockworkPlugin {
         // Fetch account info
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
-            ReplicaAccountInfoVersions::V0_0_2(_) => todo!(),
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
 
