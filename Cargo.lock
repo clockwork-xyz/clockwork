@@ -829,10 +829,9 @@ dependencies = [
 name = "clockwork-sdk"
 version = "1.3.9"
 dependencies = [
+ "anchor-lang",
  "chrono",
- "clockwork-client",
  "clockwork-thread-program",
- "clockwork-utils",
  "nom",
  "once_cell",
 ]
