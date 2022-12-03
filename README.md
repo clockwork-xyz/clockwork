@@ -4,7 +4,7 @@
   <h1>Clockwork</h1>
 
   <p>
-    <strong>Automation SDK for Solana programs</strong>
+    <strong>Automation SDK for Solana developers</strong>
   </p>
 
   <p>
