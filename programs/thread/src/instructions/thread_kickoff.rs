@@ -26,10 +26,7 @@ pub struct ThreadKickoff<'info> {
     pub thread: Box<Account<'info, Thread>>,
 
     /// The worker.
-    #[account(
-        address = worker.pubkey(),
-        has_one = signatory
-    )]
+    #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
