@@ -1,33 +1,12 @@
 use cargo_toml::{Dependency, Manifest};
 use regex::Regex;
-use std::process::Command;
 
 fn main() {
-    let validator_version = get_validator_version().ok();
     let geyser_interface_version = get_geyser_interface_version();
-
-    println!("cargo:rustc-env=VALIDATOR_VERSION={:#?}", validator_version);
     println!(
         "cargo:rustc-env=GEYSER_INTERFACE_VERSION={}",
         geyser_interface_version
     );
-}
-
-fn get_validator_version() -> Result<String, std::io::Error> {
-    Command::new("solana-test-validator")
-        .arg("--version")
-        .output()
-        .and_then(|output| {
-            let version = String::from_utf8_lossy(&output.stdout);
-            let re = Regex::new(r"(\d{1}\.\d{2}\.\d{1})").unwrap();
-            let caps = re.captures(&version).unwrap();
-            Ok(caps
-                .get(1)
-                .map_or("unknown (error parsing solana-validator version)", |m| {
-                    m.as_str()
-                })
-                .into())
-        })
 }
 
 fn get_geyser_interface_version() -> String {
@@ -37,9 +16,18 @@ fn get_geyser_interface_version() -> String {
         .get("solana-geyser-plugin-interface")
         .unwrap();
 
-    match plugin_interface {
+    let semver = match plugin_interface {
         Dependency::Simple(version) => version.into(),
         Dependency::Detailed(detail) => detail.version.as_ref().unwrap().into(),
-        _ => "unknown (error parsing Cargo.toml)".to_string(),
-    }
+        _ => "unknown (error parsing Plugin's Cargo.toml)".to_string(),
+    };
+
+    let re = Regex::new(r"(\d\.\d{2}\.\d)").unwrap();
+    re.captures(&semver)
+        .unwrap()
+        .get(1)
+        .map_or("unknown (error parsing solana-geyser-plugin-interface version)", |m| {
+            m.as_str()
+        })
+        .into()
 }
