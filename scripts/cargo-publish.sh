@@ -14,9 +14,12 @@ sleep 25
 cargo publish -p clockwork-webhook-program
 sleep 25
 
+# Publish SDK
+cargo publish -p clockwork-sdk
+sleep 25
+
 # Publish downstream bins and libs
+# These are most likely to fail due to Anchor dependency issues.
 cargo publish -p clockwork-client
 sleep 25
 cargo publish -p clockwork-cli
-sleep 25 
-cargo publish -p clockwork-sdk
