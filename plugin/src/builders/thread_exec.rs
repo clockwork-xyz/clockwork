@@ -1,3 +1,5 @@
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
+
 use {
     clockwork_client::{
         network::state::Worker,
@@ -49,16 +51,23 @@ fn build_thread_exec_tx(
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
-    // Pre-simulate exec ixs and pack into tx
+    // Get the first instruction to pack into the tx.
     let first_instruction = if thread.next_instruction.is_some() {
         build_exec_ix(thread, signatory_pubkey, worker_id)
     } else {
         build_kickoff_ix(thread, signatory_pubkey, worker_id)
     };
-    let mut ixs: Vec<Instruction> = vec![first_instruction];
+
+    // Request max compute units.
+    // TODO When https://github.com/solana-labs/solana/issues/28751 is implemented,
+    //      transactions will be penalized for requesting more compute units than they need.
+    //      It will then be important to request the optimal amount of compute units.
+    let compute_unit_ix = ComputeBudgetInstruction::set_compute_unit_limit(1_400_000);
 
     // Pre-simulate exec ixs and pack as many as possible into tx.
-    let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&signatory_pubkey));
+    let mut ixs: Vec<Instruction> = vec![compute_unit_ix.clone(), first_instruction];
+    let mut tx: Transaction =
+        Transaction::new_with_payer(&vec![compute_unit_ix], Some(&signatory_pubkey));
     let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
