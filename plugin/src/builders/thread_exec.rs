@@ -14,11 +14,18 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
     },
-    solana_sdk::{account::Account, commitment_config::CommitmentConfig, transaction::Transaction},
+    solana_sdk::{
+        account::Account, commitment_config::CommitmentConfig,
+        compute_budget::ComputeBudgetInstruction, transaction::Transaction,
+    },
     std::sync::Arc,
 };
 
-static TRANSACTION_SIZE_LIMIT: usize = 1_232; // Max byte size of a serialized transaction
+/// Max byte size of a serialized transaction.
+static TRANSACTION_SIZE_LIMIT: usize = 1_232;
+
+/// Max compute units that may be used by transaction.
+static COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
 pub async fn build_thread_exec_txs(
     client: Arc<ClockworkClient>,
@@ -49,28 +56,30 @@ fn build_thread_exec_tx(
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
-    // Pre-simulate exec ixs and pack into tx
+    // Grab the first instruction.
     let first_instruction = if thread.next_instruction.is_some() {
         build_exec_ix(thread, signatory_pubkey, worker_id)
     } else {
         build_kickoff_ix(thread, signatory_pubkey, worker_id)
     };
-    let mut ixs: Vec<Instruction> = vec![first_instruction];
 
-    // Pre-simulate exec ixs and pack as many as possible into tx.
-    let mut tx: Transaction = Transaction::new_with_payer(&vec![], Some(&signatory_pubkey));
+    // Simulate thread instructions and pack as many as possible into the transaction until we hit mem/cpu limits.
+    // TODO Migrate to versioned transactions.
+    let compute_unit_ix = ComputeBudgetInstruction::set_compute_unit_limit(COMPUTE_UNIT_LIMIT);
+    let mut units_consumed: Option<u64> = None;
+    let mut ixs: Vec<Instruction> = vec![compute_unit_ix.clone(), first_instruction];
+    let mut did_simulation_succeed: bool = false;
     let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
         sim_tx.sign(&[client.payer()], blockhash);
 
-        // Exit early if tx exceeds Solana's size limit.
-        // TODO With QUIC and Transaction v2 lookup tables, Solana will soon support much larger transaction sizes.
+        // Exit early if the transaction exceeds the size limit.
         if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
             break;
         }
 
-        // Simulate the complete packed tx.
+        // Run the simulation.
         match client.simulate_transaction_with_config(
             &sim_tx,
             RpcSimulateTransactionConfig {
@@ -83,14 +92,13 @@ fn build_thread_exec_tx(
                 ..RpcSimulateTransactionConfig::default()
             },
         ) {
-            // If there was an error, stop packing and continue with the ixs up until this one.
+            // If there was a simulation error, stop packing and exit now.
             Err(_err) => {
                 break;
             }
 
             // If the simulation was successful, pack the ix into the tx.
             Ok(response) => {
-                // If there was an error, then stop packing.
                 if response.value.err.is_some() {
                     info!(
                         "Error simulating thread: {} tx: {} logs: {:#?}",
@@ -101,8 +109,13 @@ fn build_thread_exec_tx(
                     break;
                 }
 
-                // Save the simulated tx. It is okay to submit.
-                tx = sim_tx;
+                // Update flag tracking if at least one instruction succeed.
+                did_simulation_succeed = true;
+
+                // Record the compute units consumed by the simulation.
+                if response.value.units_consumed.is_some() {
+                    units_consumed = response.value.units_consumed;
+                }
 
                 // Parse the resulting thread account for the next ix to simulate.
                 if let Some(ui_accounts) = response.value.accounts {
@@ -135,15 +148,32 @@ fn build_thread_exec_tx(
     }
 
     info!(
-        "Time spent packing {} instructions: {:#?}",
-        tx.message.instructions.len(),
-        now.elapsed()
+        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?}",
+        now.elapsed(),
+        ixs.len(),
+        units_consumed
     );
 
-    if tx.message.instructions.len() == 0 {
+    // If the simulation never succeeded, exit early. There is nothing to do.
+    if !did_simulation_succeed {
         return None;
     }
 
+    // Set the compute unit limit to be slightly above what was used in the simulation.
+    if let Some(units_consumed) = units_consumed {
+        // TODO Is this buffer needed? It is intended to account for variations in PDA derivation cost.
+        let compute_unit_buffer = 1_000;
+        _ = std::mem::replace(
+            &mut ixs[0],
+            ComputeBudgetInstruction::set_compute_unit_limit(
+                (units_consumed + compute_unit_buffer) as u32,
+            ),
+        );
+    }
+
+    // Build and return the signed tx.
+    let mut tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
+    tx.sign(&[client.payer()], blockhash);
     Some(tx)
 }
 
