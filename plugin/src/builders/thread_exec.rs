@@ -68,7 +68,7 @@ fn build_thread_exec_tx(
     let compute_unit_ix = ComputeBudgetInstruction::set_compute_unit_limit(COMPUTE_UNIT_LIMIT);
     let mut units_consumed: Option<u64> = None;
     let mut ixs: Vec<Instruction> = vec![compute_unit_ix.clone(), first_instruction];
-    let mut did_simulation_succeed: bool = false;
+    let mut successful_ixs: Vec<Instruction> = vec![];
     let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
@@ -110,8 +110,8 @@ fn build_thread_exec_tx(
                 }
 
                 // Update flag tracking if at least one instruction succeed.
-                did_simulation_succeed = true;
-
+                successful_ixs = ixs.clone();
+                
                 // Record the compute units consumed by the simulation.
                 if response.value.units_consumed.is_some() {
                     units_consumed = response.value.units_consumed;
@@ -147,15 +147,8 @@ fn build_thread_exec_tx(
         }
     }
 
-    info!(
-        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?}",
-        now.elapsed(),
-        ixs.len(),
-        units_consumed
-    );
-
-    // If the simulation never succeeded, exit early. There is nothing to do.
-    if !did_simulation_succeed {
+    // If there were no successful ixs, then exit early. There is nothing to do.
+    if successful_ixs.is_empty() {
         return None;
     }
 
@@ -172,8 +165,15 @@ fn build_thread_exec_tx(
     }
 
     // Build and return the signed tx.
-    let mut tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
+    let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[client.payer()], blockhash);
+    info!(
+        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?} sig: {:#?}",
+        now.elapsed(),
+        successful_ixs.len(),
+        units_consumed,
+        tx.signatures[0]
+    );
     Some(tx)
 }
 
