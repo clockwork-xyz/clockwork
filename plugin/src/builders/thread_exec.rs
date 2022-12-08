@@ -22,10 +22,10 @@ use {
 };
 
 /// Max byte size of a serialized transaction.
-static TRANSACTION_SIZE_LIMIT: usize = 1_232;
+static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 
 /// Max compute units that may be used by transaction.
-static COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
+static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
 pub async fn build_thread_exec_txs(
     client: Arc<ClockworkClient>,
@@ -65,17 +65,19 @@ fn build_thread_exec_tx(
 
     // Simulate thread instructions and pack as many as possible into the transaction until we hit mem/cpu limits.
     // TODO Migrate to versioned transactions.
-    let compute_unit_ix = ComputeBudgetInstruction::set_compute_unit_limit(COMPUTE_UNIT_LIMIT);
-    let mut units_consumed: Option<u64> = None;
-    let mut ixs: Vec<Instruction> = vec![compute_unit_ix.clone(), first_instruction];
+    let mut ixs: Vec<Instruction> = vec![
+        ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
+        first_instruction,
+    ];
     let mut successful_ixs: Vec<Instruction> = vec![];
+    let mut units_consumed: Option<u64> = None;
     let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
         sim_tx.sign(&[client.payer()], blockhash);
 
         // Exit early if the transaction exceeds the size limit.
-        if sim_tx.message_data().len() > TRANSACTION_SIZE_LIMIT {
+        if sim_tx.message_data().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
             break;
         }
 
@@ -101,7 +103,7 @@ fn build_thread_exec_tx(
             Ok(response) => {
                 if response.value.err.is_some() {
                     info!(
-                        "Error simulating thread: {} tx: {} logs: {:#?}",
+                        "Error simulating thread: {} error: {} logs: {:#?}",
                         thread_pubkey,
                         response.value.err.unwrap(),
                         response.value.logs
@@ -168,7 +170,7 @@ fn build_thread_exec_tx(
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[client.payer()], blockhash);
     info!(
-        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?} sig: {:#?}",
+        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?} tx_sig: {:#?}",
         now.elapsed(),
         successful_ixs.len(),
         units_consumed,
