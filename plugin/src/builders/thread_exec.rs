@@ -111,7 +111,7 @@ fn build_thread_exec_tx(
 
                 // Update flag tracking if at least one instruction succeed.
                 successful_ixs = ixs.clone();
-
+                
                 // Record the compute units consumed by the simulation.
                 if response.value.units_consumed.is_some() {
                     units_consumed = response.value.units_consumed;
