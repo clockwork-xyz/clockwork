@@ -170,7 +170,7 @@ fn build_thread_exec_tx(
     info!(
         "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?} sig: {:#?}",
         now.elapsed(),
-        ixs.len(),
+        successful_ixs.len(),
         units_consumed,
         tx.signatures[0]
     );
