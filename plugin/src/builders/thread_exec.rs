@@ -111,7 +111,7 @@ fn build_thread_exec_tx(
 
                 // Update flag tracking if at least one instruction succeed.
                 successful_ixs = ixs.clone();
-                
+
                 // Record the compute units consumed by the simulation.
                 if response.value.units_consumed.is_some() {
                     units_consumed = response.value.units_consumed;
@@ -157,7 +157,7 @@ fn build_thread_exec_tx(
         // TODO Is this buffer needed? It is intended to account for variations in PDA derivation cost.
         let compute_unit_buffer = 1_000;
         _ = std::mem::replace(
-            &mut ixs[0],
+            &mut successful_ixs[0],
             ComputeBudgetInstruction::set_compute_unit_limit(
                 (units_consumed + compute_unit_buffer) as u32,
             ),
