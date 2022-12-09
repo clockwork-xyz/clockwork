@@ -1,3 +1,5 @@
+use dashmap::DashMap;
+
 use {
     crate::config::PluginConfig,
     clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
@@ -17,11 +19,11 @@ pub struct NetworkObserver {
     // A cache of the network registry.
     pub registry: Arc<RwLock<Registry>>,
 
-    // A cache of the worker's current snapshot frame.
-    pub snapshot: Arc<RwLock<Snapshot>>,
+    // A cache of the network's snapshot accounts, indexed by epoch.
+    pub snapshots: DashMap<u64, Snapshot>,
 
-    // A cache of the worker's current snapshot frame.
-    pub snapshot_frame: Arc<RwLock<Option<SnapshotFrame>>>,
+    // A cache of the worker's snapshot frames, indexed by snapshot address.
+    pub snapshot_frames: DashMap<Pubkey, SnapshotFrame>,
 
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
@@ -40,12 +42,8 @@ impl NetworkObserver {
                 total_unstakes: 0,
                 total_workers: 0,
             })),
-            snapshot: Arc::new(RwLock::new(Snapshot {
-                id: 0,
-                total_frames: 0,
-                total_stake: 0,
-            })),
-            snapshot_frame: Arc::new(RwLock::new(None)),
+            snapshots: DashMap::new(),
+            snapshot_frames: DashMap::new(),
             runtime,
         }
     }
@@ -89,11 +87,7 @@ impl NetworkObserver {
 
     pub fn observe_snapshot(self: Arc<Self>, snapshot: Snapshot) -> PluginResult<()> {
         self.spawn(|this| async move {
-            let mut w_snapshot = this.snapshot.write().await;
-            if snapshot.id.gt(&(*w_snapshot).id) {
-                *w_snapshot = snapshot;
-            }
-            drop(w_snapshot);
+            this.snapshots.insert(snapshot.id, snapshot);
             Ok(())
         })
     }
@@ -104,9 +98,8 @@ impl NetworkObserver {
     ) -> PluginResult<()> {
         self.spawn(|this| async move {
             if snapshot_frame.id.eq(&this.config.worker_id) {
-                let mut w_snapshot_frame = this.snapshot_frame.write().await;
-                *w_snapshot_frame = Some(snapshot_frame);
-                drop(w_snapshot_frame);
+                this.snapshot_frames
+                    .insert(snapshot_frame.snapshot, snapshot_frame);
             }
             Ok(())
         })
@@ -114,9 +107,22 @@ impl NetworkObserver {
 
     pub fn observe_registry(self: Arc<Self>, registry: Registry) -> PluginResult<()> {
         self.spawn(|this| async move {
+            // Update the registry.
             let mut w_registry = this.registry.write().await;
-            *w_registry = registry;
+            *w_registry = registry.clone();
             drop(w_registry);
+
+            // Drop old snapshots and snapshot frames.
+            this.snapshots.retain(|id, _| {
+                if registry.current_epoch > *id {
+                    let snapshot_pubkey = Snapshot::pubkey(*id);
+                    this.snapshot_frames.remove(&snapshot_pubkey);
+                    false
+                } else {
+                    true
+                }
+            });
+
             Ok(())
         })
     }
