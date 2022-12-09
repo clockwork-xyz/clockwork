@@ -42,7 +42,6 @@ pub struct SnapshotCreate<'info> {
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let system_program = &ctx.accounts.system_program;
@@ -60,7 +59,7 @@ pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ThreadResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(snapshot_frame_pubkey, false),

@@ -67,7 +67,6 @@ pub struct SnapshotFrameCreate<'info> {
 pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
@@ -102,7 +101,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(zeroth_delegation_pubkey, false),
-                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new(zeroth_snapshot_entry_pubkey, false),
@@ -122,7 +121,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
