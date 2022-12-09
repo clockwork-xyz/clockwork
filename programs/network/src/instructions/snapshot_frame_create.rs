@@ -67,7 +67,6 @@ pub struct SnapshotFrameCreate<'info> {
 pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
-    let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;

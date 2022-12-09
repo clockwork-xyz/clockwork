@@ -76,7 +76,6 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
-    let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;

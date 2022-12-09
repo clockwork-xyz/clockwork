@@ -42,7 +42,6 @@ pub struct SnapshotCreate<'info> {
 pub fn handler(ctx: Context<SnapshotCreate>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
-    let payer = &ctx.accounts.payer;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let system_program = &ctx.accounts.system_program;
