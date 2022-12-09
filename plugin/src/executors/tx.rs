@@ -1,3 +1,5 @@
+use clockwork_client::network::state::Snapshot;
+
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
     clockwork_client::Client as ClockworkClient,
@@ -64,21 +66,36 @@ impl TxExecutor {
     async fn execute_pool_rotate_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let r_registry = self.observers.network.registry.read().await;
-        let r_snapshot = self.observers.network.snapshot.read().await;
-        let r_snapshot_frame = self.observers.network.snapshot_frame.read().await;
-        match crate::builders::build_pool_rotation_tx(
-            self.client.clone(),
-            r_pool_positions,
-            r_registry,
-            r_snapshot,
-            r_snapshot_frame,
-            self.config.worker_id,
-        ) {
-            None => {}
-            Some(tx) => {
-                self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+
+        if let Some(snapshot) = self
+            .observers
+            .network
+            .snapshots
+            .get(&r_registry.current_epoch)
+        {
+            let snapshot_pubkey = Snapshot::pubkey(snapshot.id);
+            if let Some(snapshot_frame) =
+                self.observers.network.snapshot_frames.get(&snapshot_pubkey)
+            {
+                match crate::builders::build_pool_rotation_tx(
+                    self.client.clone(),
+                    r_pool_positions.clone(),
+                    r_registry.clone(),
+                    snapshot.value(),
+                    snapshot_frame.value(),
+                    self.config.worker_id,
+                ) {
+                    None => {}
+                    Some(tx) => {
+                        self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+                    }
+                };
             }
-        };
+        }
+
+        drop(r_pool_positions);
+        drop(r_registry);
+
         Ok(())
     }
 
