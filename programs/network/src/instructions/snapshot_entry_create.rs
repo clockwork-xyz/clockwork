@@ -110,7 +110,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(next_delegation_pubkey, false),
-                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
@@ -130,7 +130,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(payer.key(), true),
+                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
