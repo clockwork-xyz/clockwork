@@ -67,12 +67,6 @@ impl TxExecutor {
         let r_pool_positions = self.observers.network.pool_positions.read().await;
         let r_registry = self.observers.network.registry.read().await;
 
-        info!("Snapshots: {:#?}", self.observers.network.snapshots);
-        info!(
-            "Snapshot frames: {:#?}",
-            self.observers.network.snapshot_frames
-        );
-
         if let Some(snapshot) = self
             .observers
             .network
