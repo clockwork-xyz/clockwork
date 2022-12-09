@@ -154,7 +154,7 @@ fn build_thread_exec_tx(
         return None;
     }
 
-    // Set the compute unit limit to be slightly above what was used in the simulation.
+    // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
     if let Some(units_consumed) = units_consumed {
         _ = std::mem::replace(
             &mut successful_ixs[0],
