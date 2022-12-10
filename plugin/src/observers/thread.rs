@@ -192,12 +192,14 @@ impl Debug for ThreadObserver {
 }
 
 fn next_moment(after: i64, schedule: String) -> Option<i64> {
-    Schedule::from_str(&schedule)
-        .unwrap()
-        .next_after(&DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(after, 0),
-            Utc,
-        ))
-        .take()
-        .map(|datetime| datetime.timestamp())
+    match Schedule::from_str(&schedule) {
+        Err(_) => None,
+        Ok(schedule) => schedule
+            .next_after(&DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp(after, 0),
+                Utc,
+            ))
+            .take()
+            .map(|datetime| datetime.timestamp()),
+    }
 }
