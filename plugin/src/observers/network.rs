@@ -1,3 +1,5 @@
+use log::info;
+
 use {
     crate::config::PluginConfig,
     clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
@@ -49,6 +51,8 @@ impl NetworkObserver {
 
     pub fn observe_pool(self: Arc<Self>, pool: Pool, _slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
+            info!("Observed pool: {:#?}", pool);
+
             // Build the new pool_position
             let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let mut w_pool_positions = this.pool_positions.write().await;
@@ -78,6 +82,8 @@ impl NetworkObserver {
                 }
                 _ => {}
             }
+
+            info!("New pool positions: {:#?}", w_pool_positions.clone());
 
             drop(w_pool_positions);
             Ok(())
@@ -141,7 +147,7 @@ impl Debug for NetworkObserver {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PoolPosition {
     pub current_position: Option<u64>,
     pub workers: Vec<Pubkey>,
@@ -156,7 +162,7 @@ impl Default for PoolPosition {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PoolPositions {
     pub thread_pool: PoolPosition,
     pub webhook_pool: PoolPosition,
