@@ -56,6 +56,9 @@ impl NetworkObserver {
             // Build the new pool_position
             let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let mut w_pool_positions = this.pool_positions.write().await;
+
+            info!("Acquired write lock: {:#?}", w_pool_positions.clone());
+
             let workers = &mut pool.workers.clone();
             let pool_position = PoolPosition {
                 current_position: pool
