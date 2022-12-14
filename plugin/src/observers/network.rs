@@ -1,9 +1,8 @@
-use log::info;
-
 use {
     crate::config::PluginConfig,
     clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     dashmap::DashMap,
+    log::info,
     solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
     solana_program::pubkey::Pubkey,
     std::{fmt::Debug, sync::Arc},
