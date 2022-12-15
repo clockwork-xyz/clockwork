@@ -1,10 +1,6 @@
-use std::collections::BTreeMap;
-
-use clockwork_client::network::state::Snapshot;
-
 use {
     crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
-    clockwork_client::Client as ClockworkClient,
+    clockwork_client::{network::state::Snapshot, Client as ClockworkClient},
     dashmap::DashMap,
     log::info,
     solana_client::rpc_config::RpcSimulateTransactionConfig,
