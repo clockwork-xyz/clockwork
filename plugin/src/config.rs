@@ -13,6 +13,7 @@ static DEFAULT_THREAD_COUNT: usize = 10;
 #[derive(Clone, Debug, Deserialize)]
 pub struct PluginConfig {
     pub keypath: Option<String>,
+    pub sentry_url: Option<String>,
     pub thread_count: usize,
     pub transaction_timeout_threshold: u64,
     pub worker_id: u64,
@@ -22,6 +23,7 @@ impl Default for PluginConfig {
     fn default() -> Self {
         Self {
             keypath: None,
+            sentry_url: None,
             transaction_timeout_threshold: DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD,
             thread_count: DEFAULT_THREAD_COUNT,
             worker_id: 0,

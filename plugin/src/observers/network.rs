@@ -51,13 +51,14 @@ impl NetworkObserver {
     pub fn observe_pool(self: Arc<Self>, pool: Pool, _slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             info!("Observed pool: {:#?}", pool);
+            sentry::capture_message(
+                format!("Observed pool: {:#?}", pool).as_str(),
+                sentry::Level::Debug,
+            );
 
             // Build the new pool_position
             let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let mut w_pool_positions = this.pool_positions.write().await;
-
-            info!("Acquired write lock: {:#?}", w_pool_positions.clone());
-
             let workers = &mut pool.workers.clone();
             let pool_position = PoolPosition {
                 current_position: pool
@@ -86,6 +87,10 @@ impl NetworkObserver {
             }
 
             info!("New pool positions: {:#?}", w_pool_positions.clone());
+            sentry::capture_message(
+                format!("New pool position: {:#?}", w_pool_positions.clone()).as_str(),
+                sentry::Level::Debug,
+            );
 
             drop(w_pool_positions);
             Ok(())

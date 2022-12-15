@@ -50,7 +50,23 @@ impl GeyserPlugin for ClockworkPlugin {
             env!("GEYSER_INTERFACE_VERSION")
         );
         info!("Loading snapshot...");
-        *self = ClockworkPlugin::new_from_config(PluginConfig::read_from(config_file)?);
+
+        let config = PluginConfig::read_from(config_file)?;
+
+        // If url is provided in config, initialize Sentry.
+        if let Some(sentry_url) = config.clone().sentry_url {
+            let _guard = sentry::init((
+                sentry_url,
+                sentry::ClientOptions {
+                    release: sentry::release_name!(),
+                    ..Default::default()
+                },
+            ));
+        }
+
+        sentry::capture_message("Testing sentry", sentry::Level::Debug);
+
+        *self = ClockworkPlugin::new_from_config(config);
         Ok(())
     }
 
