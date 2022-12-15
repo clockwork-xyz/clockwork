@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use clockwork_client::network::state::Snapshot;
 
 use {
@@ -190,10 +192,6 @@ impl TxExecutor {
             .insert(tx.message().blockhash_agnostic_hash(), slot);
         let sig = tx.signatures[0];
         info!("slot: {} sig: {}", slot, sig);
-        sentry::capture_message(
-            format!("Submitting tx: {:#?}", sig).as_str(),
-            sentry::Level::Debug,
-        );
         Ok(())
     }
 
