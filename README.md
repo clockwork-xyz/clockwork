@@ -27,15 +27,13 @@
 
 | Program | Address| Devnet | Mainnet |
 | ------- | ------ | ------ | ------- |
-| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.3.14](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | [v1.3.15](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa) |
-| Thread | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.3.14](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | [v1.3.15](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv) |
+| Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.3.15](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | [v1.3.15](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa) |
+| Thread | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.3.15](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | [v1.3.15](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv) |
 
 
 ## Notes
 
-- Clockwork is under active development. All interfaces and implementations are subject to change.
-- Smart contracts are automatically scanned by [Sec3](https://www.sec3.dev/)'s auto-auditing software, but have not been reviewed by a paid auditing firm.
-- Use at your own risk.
+Clockwork is under active development. All interfaces and implementations are subject to change. The on-chain programs are upgradable by a team of maintainers whose primary goal is to scale the network and optimize the core protocols. Occassionally, an upgrade may require dependent programs to migrate to a new program integration. These cases will be marked with a new major version (e.g. `v2.x`, `v3.x`, `v4.x`, etc.). The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software, and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. Use at your own risk!
 
 ## Getting Started
 - ["I am a validator and I want to deploy the Clockwork Engine"](#deploying-a-worker)
@@ -102,33 +100,16 @@ Then, setup the plugin config file in a folder where your validator startup scri
 Finally, add an additional line to your startup script to run your validator with the Clockwork plugin (often located at `/home/sol/bin/validator.sh`):
 ```sh
 #!/bin/bash
-
 exec solana-validator \
-    --identity /home/sol/validator-keypair.json \
-    --known-validator dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92 \
-    --known-validator dv2eQHeP4RFrJZ6UeiZWoc3XTtmtZCUKxxCApCDcRNV \
-    --known-validator dv4ACNkpYPcE3aKmYDqZm9G5EB3J4MRoeE7WNDRBVJB \
-    --known-validator dv3qDFk1DTF36Z62bNvrCXe9sKATA6xvVy6A798xxAS \
-    --only-known-rpc \
-    --full-rpc-api \
-    --no-voting \
-    --ledger /mnt/ledger \
-    --accounts /mnt/accounts \
-    --log /home/sol/solana-rpc.log \
-    --rpc-port 8899 \
-    --rpc-bind-address 0.0.0.0 \
-    --dynamic-port-range 8000-8020 \
-    --entrypoint entrypoint.devnet.solana.com:8001 \
-    --entrypoint entrypoint2.devnet.solana.com:8001 \
-    --entrypoint entrypoint3.devnet.solana.com:8001 \
-    --entrypoint entrypoint4.devnet.solana.com:8001 \
-    --entrypoint entrypoint5.devnet.solana.com:8001 \
-    --expected-genesis-hash EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG \
-    --wal-recovery-mode skip_any_corrupted_record \
-    --limit-ledger-size \
-    
-    # Add this line! 👇🏼
-    --geyser-plugin-config /home/sol/geyser-plugin-config.json
+  --identity ~/validator-keypair.json \
+  --rpc-port 8899 \
+  --entrypoint entrypoint.devnet.solana.com:8001 \
+  --no-voting \
+  --full-rpc-api \
+  --limit-ledger-size \
+  
+  # Add this line! 👇🏼
+  --geyser-plugin-config ~/clockwork-geyser-config.json
 ```
 
 Now simply restart your validator however you normally would!
