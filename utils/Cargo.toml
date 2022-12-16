@@ -14,7 +14,7 @@ keywords = ["solana"]
 name = "clockwork_utils"
 
 [dependencies]
-anchor-lang = "0.25.0"
+anchor-lang = "0.26.0"
 base64 = "~0.13"
 static-pubkey = "1.0.3"
 
