@@ -44,7 +44,7 @@ impl ThreadObserver {
         }
     }
 
-    pub fn observe_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    pub fn observe_processed_slot(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             this.clocks
                 .retain(|cached_slot, _clock| *cached_slot >= slot);

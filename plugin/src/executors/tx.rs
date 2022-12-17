@@ -84,7 +84,7 @@ impl TxExecutor {
                 .await
                 .ok();
 
-            // Purge message history that is beyond the dedupe period
+            // Purge message history that is beyond the dedupe period.
             this.message_history
                 .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
 
@@ -117,7 +117,6 @@ impl TxExecutor {
                 };
             }
         }
-
         Ok(())
     }
 
@@ -126,14 +125,15 @@ impl TxExecutor {
         slot: u64,
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
-        // Exit early if we are not in the worker pool.
+        // Exit early if this worker is not in the delegate pool.
+        // TODO Implement a "timeout window" where workers will execute overdue threads even if they're not in the delegate pool.
         if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
-                "This node is not in the worker pool".into(),
+                "This node is not in the delegate pool".into(),
             ));
         }
 
-        // Execute thread_exec txs.
+        // Execute thread transactions.
         crate::builders::build_thread_exec_txs(
             self.client.clone(),
             self.observers.thread.executable_threads.clone(),
