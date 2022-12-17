@@ -1,0 +1,44 @@
+
+name: Verifiable Build
+
+on:
+  push:
+    branches:
+      -  mat/securitytxt
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verifiable-build:
+    name: VerifiableBuild
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set env vars
+        run: |
+          source scripts/ci/rust-version.sh
+          echo "RUST_STABLE=$rust_stable" | tee -a $GITHUB_ENV
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_STABLE }}
+          override: true
+          profile: minimal
+          components: rustfmt
+
+      - name: Check Solana version
+        run: |
+          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+          echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
+          SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
+          SOLANA_VERSION="v${SOLANA_VERSION#=}"
+          echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"
+      - name: Grant permissions to create-tarball.sh
+        run: chmod +x ./scripts/ci/create-tarball.sh
+
+      - name: Grant permissions to build-all.sh
+        run: chmod +x ./scripts/build-all.sh
+
+      - name: Build release tarball
+        run: ./scripts/ci/create-tarball.sh GITHUB_SHA=${{ github.sha }} GITHUB_REF_NAME=${{ github.ref_name }}
