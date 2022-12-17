@@ -1,6 +1,13 @@
 use {
-    crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient},
-    clockwork_client::{network::state::Snapshot, Client as ClockworkClient},
+    crate::{
+        config::PluginConfig,
+        observers::{network::PoolPosition, Observers},
+        tpu_client::TpuClient,
+    },
+    clockwork_client::{
+        network::state::{Pool, Registry, Snapshot, Worker},
+        Client as ClockworkClient,
+    },
     dashmap::DashMap,
     log::info,
     solana_client::rpc_config::RpcSimulateTransactionConfig,
@@ -13,7 +20,8 @@ use {
     tokio::runtime::Runtime,
 };
 
-static MESSAGE_DEDUPE_PERIOD: u64 = 10; // Number of slots to wait before retrying a message
+/// Number of slots to wait before retrying a message
+static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 
 /**
  * TxExecutor
@@ -47,11 +55,35 @@ impl TxExecutor {
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Rotate worker pools
-            this.clone().execute_pool_rotate_txs(slot).await.ok();
+            // Get this worker's position in the delegate pool.
+            let worker_pubkey = Worker::pubkey(this.config.worker_id);
+            let pool_position = this
+                .client
+                .get::<Pool>(&Pool::pubkey(0))
+                .map(|pool| {
+                    let workers = &mut pool.workers.clone();
+                    PoolPosition {
+                        current_position: pool
+                            .workers
+                            .iter()
+                            .position(|k| k.eq(&worker_pubkey))
+                            .map(|i| i as u64),
+                        workers: workers.make_contiguous().to_vec().clone(),
+                    }
+                })
+                .unwrap();
 
-            // Thread exec txs
-            this.clone().execute_thread_exec_txs(slot).await.ok();
+            // Rotate into the worker pool.
+            this.clone()
+                .execute_pool_rotate_txs(slot, pool_position.clone())
+                .await
+                .ok();
+
+            // Execute thread transactions.
+            this.clone()
+                .execute_thread_exec_txs(slot, pool_position)
+                .await
+                .ok();
 
             // Purge message history that is beyond the dedupe period
             this.message_history
@@ -61,14 +93,12 @@ impl TxExecutor {
         })
     }
 
-    async fn execute_pool_rotate_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        let r_pool_positions = self.observers.network.pool_positions.read().await;
-        let r_registry = self.observers.network.registry.read().await;
-        let pool_positions = r_pool_positions.clone();
-        let registry = r_registry.clone();
-        drop(r_pool_positions);
-        drop(r_registry);
-
+    async fn execute_pool_rotate_txs(
+        self: Arc<Self>,
+        slot: u64,
+        pool_position: PoolPosition,
+    ) -> PluginResult<()> {
+        let registry = self.client.get::<Registry>(&Registry::pubkey()).unwrap();
         if let Some(snapshot) = self
             .observers
             .network
@@ -81,7 +111,7 @@ impl TxExecutor {
             {
                 match crate::builders::build_pool_rotation_tx(
                     self.client.clone(),
-                    pool_positions,
+                    pool_position,
                     registry,
                     snapshot.value(),
                     snapshot_frame.value(),
@@ -98,13 +128,13 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn execute_thread_exec_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+    async fn execute_thread_exec_txs(
+        self: Arc<Self>,
+        slot: u64,
+        pool_position: PoolPosition,
+    ) -> PluginResult<()> {
         // Exit early if we are not in the worker pool.
-        let r_pool_positions = self.observers.network.pool_positions.read().await;
-        let thread_pool = r_pool_positions.thread_pool.clone();
-        info!("Thread pool: {:#?}", thread_pool);
-        drop(r_pool_positions);
-        if thread_pool.current_position.is_none() && !thread_pool.workers.is_empty() {
+        if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
             return Err(GeyserPluginError::Custom(
                 "This node is not in the worker pool".into(),
             ));

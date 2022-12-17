@@ -67,7 +67,7 @@ impl GeyserPlugin for ClockworkPlugin {
     fn update_account(
         &mut self,
         account: ReplicaAccountInfoVersions,
-        slot: u64,
+        _slot: u64,
         _is_startup: bool,
     ) -> PluginResult<()> {
         // Fetch account info
@@ -93,9 +93,6 @@ impl GeyserPlugin for ClockworkPlugin {
                         pubkey: account_pubkey,
                         request,
                     })
-                }
-                AccountUpdateEvent::Pool { pool } => {
-                    self.observers.network.clone().observe_pool(pool, slot)
                 }
                 AccountUpdateEvent::Thread { thread } => self
                     .observers

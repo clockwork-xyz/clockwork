@@ -2,7 +2,7 @@ use {
     anchor_lang::Discriminator,
     bincode::deserialize,
     clockwork_client::{
-        network::state::{Pool, Registry, Snapshot, SnapshotFrame},
+        network::state::{Registry, Snapshot, SnapshotFrame},
         thread::state::Thread,
         webhook::state::Request,
     },
@@ -15,7 +15,6 @@ use {
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },
-    Pool { pool: Pool },
     Thread { thread: Thread },
     Registry { registry: Registry },
     Snapshot { snapshot: Snapshot },
@@ -41,15 +40,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
 
         if owner_pubkey.eq(&clockwork_client::network::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Pool::discriminator()) {
-                return Ok(AccountUpdateEvent::Pool {
-                    pool: Pool::try_from(account_info.data.to_vec()).map_err(|_| {
-                        GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork pool account".into(),
-                        }
-                    })?,
-                });
-            } else if d.eq(&Registry::discriminator()) {
+            if d.eq(&Registry::discriminator()) {
                 return Ok(AccountUpdateEvent::Registry {
                     registry: Registry::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {

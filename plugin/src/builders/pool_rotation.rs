@@ -1,5 +1,5 @@
 use {
-    crate::observers::network::PoolPositions,
+    crate::observers::network::PoolPosition,
     clockwork_client::{
         network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
@@ -10,7 +10,7 @@ use {
 
 pub fn build_pool_rotation_tx<'a>(
     client: Arc<ClockworkClient>,
-    pool_positions: PoolPositions,
+    pool_position: PoolPosition,
     registry: Registry,
     snapshot: &Snapshot,
     snapshot_frame: &SnapshotFrame,
@@ -27,7 +27,7 @@ pub fn build_pool_rotation_tx<'a>(
     }
 
     // Exit early if the worker is already in the pool.
-    if pool_positions.thread_pool.current_position.is_some() {
+    if pool_position.current_position.is_some() {
         return None;
     }
 
