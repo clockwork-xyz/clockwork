@@ -9,7 +9,7 @@ usage() {
     echo "Error: $*"
   fi
   cat <<EOF
-usage: $0 [+<cargo version>] [--debug] <install directory>
+usage: $0 [+<cargo version>] [--debug|--verifiable] <install directory>
 EOF
   exit $exitcode
 }
@@ -19,11 +19,15 @@ maybeRustVersion=
 installDir=
 buildVariant=release
 maybeReleaseFlag=--release
+verifiableFlag=
 while [[ -n $1 ]]; do
   if [[ ${1:0:1} = - ]]; then
     if [[ $1 = --debug ]]; then
       maybeReleaseFlag=
       buildVariant=debug
+      shift
+    elif [[ $1 = --verifiable ]]; then
+     verifiableFlag='--verifiable'
       shift
     else
       usage "Unknown option: $1"
@@ -89,7 +93,7 @@ done
 # Build programs
 if command -v anchor &> /dev/null; then
   set -x
-  anchor build
+  anchor build $verifiableFlag
 
   # Copy program binaries into lib folder
   cp -fv "target/deploy/clockwork_network_program.so" "$installDir"/lib

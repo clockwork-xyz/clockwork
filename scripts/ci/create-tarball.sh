@@ -47,7 +47,7 @@ echo --- Creating release tarball
   echo "The current working directory $var."
 
   source ./scripts/ci/rust-version.sh stable
-  ./scripts/build-all.sh stable "${RELEASE_BASENAME}"
+  ./scripts/build-all.sh stable --verifiable "${RELEASE_BASENAME}"
 
   tar cvf "${TARBALL_BASENAME}"-$TARGET.tar "${RELEASE_BASENAME}"
   bzip2 "${TARBALL_BASENAME}"-$TARGET.tar
