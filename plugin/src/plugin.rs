@@ -4,7 +4,6 @@ use {
         events::AccountUpdateEvent,
         executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
-            network::NetworkObserver,
             thread::ThreadObserver,
             webhook::{HttpRequest, WebhookObserver},
             Observers,
@@ -99,17 +98,6 @@ impl GeyserPlugin for ClockworkPlugin {
                     .thread
                     .clone()
                     .observe_thread(thread, account_pubkey),
-                AccountUpdateEvent::Registry { registry } => {
-                    self.observers.network.clone().observe_registry(registry)
-                }
-                AccountUpdateEvent::Snapshot { snapshot } => {
-                    self.observers.network.clone().observe_snapshot(snapshot)
-                }
-                AccountUpdateEvent::SnapshotFrame { snapshot_frame } => self
-                    .observers
-                    .network
-                    .clone()
-                    .observe_snapshot_frame(snapshot_frame),
             },
             Err(_err) => Ok(()),
         }
@@ -178,14 +166,12 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
         let thread_observer = Arc::new(ThreadObserver::new(config.clone(), runtime.clone()));
         let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
-                network: network_observer,
                 thread: thread_observer,
                 webhook: webhook_observer,
             }),

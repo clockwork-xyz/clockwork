@@ -1,5 +1,5 @@
 use {
-    crate::observers::network::PoolPosition,
+    crate::pool_position::PoolPosition,
     clockwork_client::{
         network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
@@ -12,8 +12,8 @@ pub fn build_pool_rotation_tx<'a>(
     client: Arc<ClockworkClient>,
     pool_position: PoolPosition,
     registry: Registry,
-    snapshot: &Snapshot,
-    snapshot_frame: &SnapshotFrame,
+    snapshot: Snapshot,
+    snapshot_frame: SnapshotFrame,
     worker_id: u64,
 ) -> Option<Transaction> {
     // Exit early if the rotator is not intialized

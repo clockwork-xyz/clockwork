@@ -1,11 +1,10 @@
 use {
     crate::{
-        config::PluginConfig,
-        observers::{network::PoolPosition, Observers},
+        config::PluginConfig, observers::Observers, pool_position::PoolPosition,
         tpu_client::TpuClient,
     },
     clockwork_client::{
-        network::state::{Pool, Registry, Snapshot, Worker},
+        network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
     },
     dashmap::DashMap,
@@ -99,22 +98,16 @@ impl TxExecutor {
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
         let registry = self.client.get::<Registry>(&Registry::pubkey()).unwrap();
-        if let Some(snapshot) = self
-            .observers
-            .network
-            .snapshots
-            .get(&registry.current_epoch)
-        {
-            let snapshot_pubkey = Snapshot::pubkey(snapshot.id);
-            if let Some(snapshot_frame) =
-                self.observers.network.snapshot_frames.get(&snapshot_pubkey)
-            {
+        let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
+        let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
+        if let Ok(snapshot) = self.client.get::<Snapshot>(&snapshot_pubkey) {
+            if let Ok(snapshot_frame) = self.client.get::<SnapshotFrame>(&snapshot_frame_pubkey) {
                 match crate::builders::build_pool_rotation_tx(
                     self.client.clone(),
                     pool_position,
                     registry,
-                    snapshot.value(),
-                    snapshot_frame.value(),
+                    snapshot,
+                    snapshot_frame,
                     self.config.worker_id,
                 ) {
                     None => {}
