@@ -1,7 +1,7 @@
 [package]
 name = "clockwork-sdk"
-version = "1.3.15"
-description = "An SDK for building dapps with the Clockwork automation engine"
+version = "1.3.16"
+description = "An SDK for building automated programs on Solana"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
@@ -14,9 +14,9 @@ keywords = ["solana"]
 name = "clockwork_sdk"
 
 [dependencies]
-anchor-lang = "0.25.0"
+anchor-lang = "0.26.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-thread-program = { path = "../programs/thread", features = ["cpi"], version = "1.3.15" }
+clockwork-thread-program = { path = "../programs/thread", features = ["cpi"], version = "1.3.16" }
 nom = "~7"
 once_cell = "1.5.2"
 
