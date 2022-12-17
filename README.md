@@ -33,7 +33,8 @@
 
 ## Notes
 
-Clockwork is under active development. All interfaces and implementations are subject to change. The on-chain programs are upgradable by a team of maintainers whose primary goal is to scale the network and optimize the core protocols. Occassionally, an upgrade may require dependent programs to migrate to a new program integration. These cases will be marked with a new major version (e.g. `v2.x`, `v3.x`, `v4.x`, etc.). The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software, and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. Use at your own risk!
+Clockwork is under active development. All interfaces and implementations are subject to change. The on-chain programs are upgradable by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) controlled by a core team of maintainers. Occassionally, an upgrade may require a migration to a new program. These releases will be marked with a new major version (e.g. `v2.x`, `v3.x`, etc.). The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software, and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. Use at your own risk!
+
 
 ## Getting Started
 - ["I am a validator and I want to deploy the Clockwork Engine"](#deploying-a-worker)
