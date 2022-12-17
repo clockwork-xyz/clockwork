@@ -6,6 +6,7 @@ mod events;
 mod executors;
 mod observers;
 mod plugin;
+mod pool_position;
 mod tpu_client;
 mod utils;
 

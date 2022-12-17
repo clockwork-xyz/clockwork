@@ -4,7 +4,6 @@ use {
         events::AccountUpdateEvent,
         executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
         observers::{
-            network::NetworkObserver,
             thread::ThreadObserver,
             webhook::{HttpRequest, WebhookObserver},
             Observers,
@@ -50,7 +49,15 @@ impl GeyserPlugin for ClockworkPlugin {
             env!("GEYSER_INTERFACE_VERSION")
         );
         info!("Loading snapshot...");
-        *self = ClockworkPlugin::new_from_config(PluginConfig::read_from(config_file)?);
+        let config = PluginConfig::read_from(config_file)?;
+        let _guard = sentry::init((
+            config.clone().sentry_url,
+            sentry::ClientOptions {
+                release: sentry::release_name!(),
+                ..Default::default()
+            },
+        ));
+        *self = ClockworkPlugin::new_from_config(config);
         Ok(())
     }
 
@@ -59,7 +66,7 @@ impl GeyserPlugin for ClockworkPlugin {
     fn update_account(
         &mut self,
         account: ReplicaAccountInfoVersions,
-        slot: u64,
+        _slot: u64,
         _is_startup: bool,
     ) -> PluginResult<()> {
         // Fetch account info
@@ -86,25 +93,11 @@ impl GeyserPlugin for ClockworkPlugin {
                         request,
                     })
                 }
-                AccountUpdateEvent::Pool { pool } => {
-                    self.observers.network.clone().observe_pool(pool, slot)
-                }
                 AccountUpdateEvent::Thread { thread } => self
                     .observers
                     .thread
                     .clone()
                     .observe_thread(thread, account_pubkey),
-                AccountUpdateEvent::Registry { registry } => {
-                    self.observers.network.clone().observe_registry(registry)
-                }
-                AccountUpdateEvent::Snapshot { snapshot } => {
-                    self.observers.network.clone().observe_snapshot(snapshot)
-                }
-                AccountUpdateEvent::SnapshotFrame { snapshot_frame } => self
-                    .observers
-                    .network
-                    .clone()
-                    .observe_snapshot_frame(snapshot_frame),
             },
             Err(_err) => Ok(()),
         }
@@ -173,14 +166,12 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let network_observer = Arc::new(NetworkObserver::new(config.clone(), runtime.clone()));
         let thread_observer = Arc::new(ThreadObserver::new(config.clone(), runtime.clone()));
         let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
         Self {
             config,
             executors: None,
             observers: Arc::new(Observers {
-                network: network_observer,
                 thread: thread_observer,
                 webhook: webhook_observer,
             }),
