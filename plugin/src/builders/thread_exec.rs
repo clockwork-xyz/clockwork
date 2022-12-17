@@ -48,7 +48,7 @@ fn build_thread_exec_tx(
     thread_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
-    // Build the first ix
+    // Grab the thread and relevant data.
     let thread = match client.get::<Thread>(&thread_pubkey) {
         Err(_err) => return None,
         Ok(thread) => thread,
@@ -56,14 +56,14 @@ fn build_thread_exec_tx(
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
-    // Grab the first instruction.
+    // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction.is_some() {
         build_exec_ix(thread, signatory_pubkey, worker_id)
     } else {
         build_kickoff_ix(thread, signatory_pubkey, worker_id)
     };
 
-    // Simulate thread instructions and pack as many as possible into the transaction until we hit mem/cpu limits.
+    // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
     // TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
@@ -119,7 +119,7 @@ fn build_thread_exec_tx(
                     units_consumed = response.value.units_consumed;
                 }
 
-                // Parse the resulting thread account for the next ix to simulate.
+                // Parse the resulting thread account for the next instruction to simulate.
                 if let Some(ui_accounts) = response.value.accounts {
                     if let Some(Some(ui_account)) = ui_accounts.get(0) {
                         if let Some(account) = ui_account.decode::<Account>() {
@@ -149,7 +149,7 @@ fn build_thread_exec_tx(
         }
     }
 
-    // If there were no successful ixs, then exit early. There is nothing to do.
+    // If there were no successful instructions, then exit early. There is nothing to do.
     if successful_ixs.is_empty() {
         return None;
     }
@@ -162,7 +162,7 @@ fn build_thread_exec_tx(
         );
     }
 
-    // Build and return the signed tx.
+    // Build and return the signed transaction.
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[client.payer()], blockhash);
     info!(
@@ -176,20 +176,6 @@ fn build_thread_exec_tx(
 }
 
 fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
-    // If this thread is an account listener, grab the account and create the data_hash.
-    let mut trigger_account_pubkey: Option<Pubkey> = None;
-    match thread.trigger {
-        Trigger::Account {
-            address,
-            offset: _,
-            size: _,
-        } => {
-            // Save the trigger account.
-            trigger_account_pubkey = Some(address);
-        }
-        _ => {}
-    }
-
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
@@ -198,14 +184,18 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
         Worker::pubkey(worker_id),
     );
 
-    // Inject the trigger account.
-    match trigger_account_pubkey {
-        None => {}
-        Some(pubkey) => kickoff_ix.accounts.push(AccountMeta {
-            pubkey,
+    // If the thread's trigger is account-based, inject the triggering account.
+    match thread.trigger {
+        Trigger::Account {
+            address,
+            offset: _,
+            size: _,
+        } => kickoff_ix.accounts.push(AccountMeta {
+            pubkey: address,
             is_signer: false,
             is_writable: false,
         }),
+        _ => {}
     }
 
     kickoff_ix
@@ -221,13 +211,13 @@ fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> In
     );
 
     if let Some(next_instruction) = thread.next_instruction {
-        // Inject the target program account to the ix.
+        // Inject the target program account.
         exec_ix.accounts.push(AccountMeta::new_readonly(
             next_instruction.program_id,
             false,
         ));
 
-        // Inject the worker pubkey as the Clockwork "payer" account
+        // Inject the worker pubkey as the dynamic "payer" account.
         for acc in next_instruction.clone().accounts {
             let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
                 signatory_pubkey

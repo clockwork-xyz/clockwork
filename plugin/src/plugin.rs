@@ -119,7 +119,7 @@ impl GeyserPlugin for ClockworkPlugin {
             self.try_build_executors()
         }
 
-        // Update the plugin state and execute transactions with the confirmed slot number
+        // Update the plugin state and execute transactions with the processed slot number.
         match status {
             SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
@@ -129,7 +129,7 @@ impl GeyserPlugin for ClockworkPlugin {
                         self.observers.thread.executable_threads.len(),
                         self.observers.thread.cron_threads.len()
                     );
-                    self.observers.thread.clone().observe_slot(slot)?;
+                    self.observers.thread.clone().observe_processed_slot(slot)?;
                     executors.clone().execute_work(slot)?;
                 }
                 None => (),
