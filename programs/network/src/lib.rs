@@ -141,3 +141,16 @@ pub mod network_program {
         worker_update::handler(ctx, settings)
     }
 }
+
+#[cfg(not(feature = "no-entrypoint"))]
+solana_security_txt::security_txt! {
+    // Required fields
+    name: "Clockwork Network Program",
+    project_url: "https://github.com/clockwork-xyz/clockwork",
+    contacts: "link:https://discord.com/channels/889725689543143425/1029516796304306247",
+    policy: "",
+
+    // Optional Fields
+    preferred_languages: "en",
+    source_code: "https://github.com/clockwork-xyz/clockwork/tree/main/programs/network"
+}

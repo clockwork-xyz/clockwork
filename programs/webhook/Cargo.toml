@@ -24,3 +24,4 @@ default = []
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.26.0" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "1.3.16" }
+solana-security-txt = "1.0.2"

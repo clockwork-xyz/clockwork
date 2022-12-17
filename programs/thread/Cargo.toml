@@ -27,5 +27,6 @@ chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 clockwork-cron = { path = "../../cron", version = "1.3.16" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "1.3.16" }
 clockwork-utils = { path = "../../utils", version = "1.3.16" }
+solana-security-txt = "1.0.2"
 static-pubkey = "1.0.3"
 version = "3.0.0"

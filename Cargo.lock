@@ -835,6 +835,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "clockwork-utils",
+ "solana-security-txt",
 ]
 
 [[package]]
@@ -857,6 +858,7 @@ dependencies = [
  "clockwork-cron",
  "clockwork-network-program",
  "clockwork-utils",
+ "solana-security-txt",
  "static-pubkey",
  "version",
 ]
@@ -876,6 +878,7 @@ version = "1.3.16"
 dependencies = [
  "anchor-lang",
  "clockwork-network-program",
+ "solana-security-txt",
 ]
 
 [[package]]
@@ -3779,6 +3782,12 @@ dependencies = [
  "rustversion",
  "syn 1.0.102",
 ]
+
+[[package]]
+name = "solana-security-txt"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73e93d99928eeb25c103033a015667a93ac49c243852270c01a3ea1d61341ab8"
 
 [[package]]
 name = "solana-streamer"
