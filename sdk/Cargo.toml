@@ -22,4 +22,3 @@ once_cell = "1.5.2"
 
 [features]
 default = []
-cpi = []
