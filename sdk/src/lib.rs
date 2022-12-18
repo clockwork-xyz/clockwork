@@ -1,5 +1,5 @@
 pub use clockwork_thread_program::errors;
-
+pub use clockwork_thread_program::program::ThreadProgram;
 pub use clockwork_thread_program::ID;
 
 pub mod state {
@@ -14,7 +14,6 @@ pub mod utils {
     pub use clockwork_thread_program::state::PAYER_PUBKEY;
 }
 
-// #[cfg(feature = "cpi")]
 pub mod cpi {
     use anchor_lang::prelude::{CpiContext, Result};
 
