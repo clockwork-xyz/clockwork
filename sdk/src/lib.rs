@@ -1,5 +1,5 @@
 pub use clockwork_thread_program::errors;
-
+pub use clockwork_thread_program::program::ThreadProgram;
 pub use clockwork_thread_program::ID;
 
 pub mod state {
