@@ -48,9 +48,9 @@ pub struct Thread {
     pub fee: u64,
     /// The id of the thread, given by the authority.
     pub id: String,
-    /// The instruction to kick-off the thread.
-    pub kickoff_instruction: InstructionData,
-    /// The next instruction in the thread.
+    /// The instructions to be executed.
+    pub instructions: Vec<InstructionData>,
+    /// The next instruction to be executed.
     pub next_instruction: Option<InstructionData>,
     /// Whether or not the thread is currently paused.
     pub paused: bool,
@@ -97,7 +97,7 @@ impl Eq for Thread {}
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ThreadSettings {
     pub fee: Option<u64>,
-    pub kickoff_instruction: Option<InstructionData>,
+    pub instructions: Option<Vec<InstructionData>>,
     pub rate_limit: Option<u64>,
     pub trigger: Option<Trigger>,
 }
@@ -112,7 +112,7 @@ pub trait ThreadAccount {
         &mut self,
         authority: Pubkey,
         id: String,
-        kickoff_instruction: InstructionData,
+        instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()>;
 
@@ -145,7 +145,7 @@ impl ThreadAccount for Account<'_, Thread> {
         &mut self,
         authority: Pubkey,
         id: String,
-        kickoff_instruction: InstructionData,
+        instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
@@ -153,7 +153,7 @@ impl ThreadAccount for Account<'_, Thread> {
         self.exec_context = None;
         self.fee = MINIMUM_FEE;
         self.id = id;
-        self.kickoff_instruction = kickoff_instruction;
+        self.instructions = instructions;
         self.next_instruction = None;
         self.paused = false;
         self.rate_limit = DEFAULT_RATE_LIMIT;
@@ -174,11 +174,10 @@ impl ThreadAccount for Account<'_, Thread> {
         // Record the worker's lamports before invoking inner ixs
         let signatory_lamports_pre = signatory.lamports();
 
-        // Get the instruction to execute
-        // TODO Just grab the next_instruction here. We have already verified that it is not null.
-        let kickoff_instruction: &InstructionData = &self.clone().kickoff_instruction;
+        // Get the instruction to execute.
+        // We have already verified that it is not null during account validation.
         let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
-        let instruction = next_instruction.as_ref().unwrap_or(kickoff_instruction);
+        let instruction = next_instruction.as_ref().unwrap();
 
         // Inject the signatory's pubkey for the Clockwork payer ID
         let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
@@ -227,10 +226,7 @@ impl ThreadAccount for Account<'_, Thread> {
                 let exec_response = ThreadResponse::try_from_slice(return_data.as_slice())
                     .map_err(|_err| ClockworkError::InvalidThreadResponse)?;
 
-                // Update the thread with the exec response.
-                if let Some(kickoff_instruction) = exec_response.kickoff_instruction {
-                    self.kickoff_instruction = kickoff_instruction;
-                }
+                // Update the next instruction.
                 self.next_instruction = exec_response.next_instruction;
             }
         };
@@ -347,12 +343,12 @@ impl ThreadAccount for Account<'_, Thread> {
             self.fee = fee;
         }
 
-        // If provided, update the thread's first instruction
-        if let Some(kickoff_instruction) = settings.kickoff_instruction {
-            self.kickoff_instruction = kickoff_instruction;
+        // If provided, update the thread's instruction set.
+        if let Some(instructions) = settings.instructions {
+            self.instructions = instructions;
         }
 
-        // If provided, update the rate_limit
+        // If provided, update the rate limit.
         if let Some(rate_limit) = settings.rate_limit {
             require!(
                 rate_limit.le(&MAX_RATE_LIMIT),
@@ -361,7 +357,7 @@ impl ThreadAccount for Account<'_, Thread> {
             self.rate_limit = rate_limit;
         }
 
-        // If provided, update the thread's trigger and reset the exec context
+        // If provided, update the thread's trigger and reset the exec context.
         if let Some(trigger) = settings.trigger {
             // Require the thread is not in the middle of processing.
             require!(self.next_instruction.is_none(), ClockworkError::ThreadBusy);
@@ -479,7 +475,9 @@ impl ThreadAccount for Account<'_, Thread> {
         }
 
         // If we make it here, the trigger is active. Update the next instruction and be done.
-        self.next_instruction = Some(self.kickoff_instruction.clone());
+        if let Some(kickoff_instruction) = self.instructions.first() {
+            self.next_instruction = Some(kickoff_instruction.clone());
+        }
 
         // Realloc the thread account
         self.realloc()?;

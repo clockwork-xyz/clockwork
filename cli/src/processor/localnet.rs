@@ -76,8 +76,7 @@ fn get_validator_version() -> String {
             let version = String::from_utf8_lossy(&output.stdout);
             let re = Regex::new(r"(\d\.\d{2}\.\d)").unwrap();
             let caps = re.captures(&version).unwrap();
-            caps
-                .get(1)
+            caps.get(1)
                 .map_or("unknown (error parsing solana-validator version)", |m| {
                     m.as_str()
                 })
@@ -161,11 +160,13 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     let ix_a = clockwork_client::thread::instruction::thread_create(
         client.payer_pubkey(),
         epoch_thread_id.into(),
-        clockwork_client::network::instruction::registry_epoch_kickoff(
-            Snapshot::pubkey(0),
-            epoch_thread_pubkey,
-        )
-        .into(),
+        vec![
+            clockwork_client::network::instruction::registry_epoch_kickoff(
+                Snapshot::pubkey(0),
+                epoch_thread_pubkey,
+            )
+            .into(),
+        ],
         client.payer_pubkey(),
         epoch_thread_pubkey,
         Trigger::Cron {
@@ -180,7 +181,10 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     let ix_b = clockwork_client::thread::instruction::thread_create(
         client.payer_pubkey(),
         hasher_thread_id.into(),
-        clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey).into(),
+        vec![
+            clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey)
+                .into(),
+        ],
         client.payer_pubkey(),
         hasher_thread_pubkey,
         Trigger::Cron {

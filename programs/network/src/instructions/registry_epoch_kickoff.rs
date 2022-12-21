@@ -54,20 +54,22 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ThreadResponse> {
     // Lock the registry
     registry.locked = true;
 
+    // TODO Rewrite the network program thread to use the new execution model.
+    //
     // Setup the next kickoff instruction to use the next snapshot.
-    let kickoff_instruction = Some(InstructionData {
-        program_id: crate::ID,
-        accounts: vec![
-            AccountMetaData::new_readonly(config.key(), false),
-            AccountMetaData::new(registry.key(), false),
-            AccountMetaData::new_readonly(
-                Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
-                false,
-            ),
-            AccountMetaData::new_readonly(thread.key(), true),
-        ],
-        data: anchor_sighash("registry_epoch_kickoff").to_vec(),
-    });
+    // let kickoff_instruction = Some(InstructionData {
+    //     program_id: crate::ID,
+    //     accounts: vec![
+    //         AccountMetaData::new_readonly(config.key(), false),
+    //         AccountMetaData::new(registry.key(), false),
+    //         AccountMetaData::new_readonly(
+    //             Snapshot::pubkey(snapshot.id.checked_add(1).unwrap()),
+    //             false,
+    //         ),
+    //         AccountMetaData::new_readonly(thread.key(), true),
+    //     ],
+    //     data: anchor_sighash("registry_epoch_kickoff").to_vec(),
+    // });
 
     // Build the next instruction for thread.
     let next_instruction = if snapshot.total_frames.gt(&0) {
@@ -111,7 +113,7 @@ pub fn handler(ctx: Context<RegistryEpochKickoff>) -> Result<ThreadResponse> {
     };
 
     Ok(ThreadResponse {
-        kickoff_instruction,
+        // kickoff_instruction,
         next_instruction,
     })
 }
