@@ -68,15 +68,6 @@ impl PartialEq for Thread {
 
 impl Eq for Thread {}
 
-/// The properties of threads which are updatable.
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct ThreadSettings {
-    pub fee: Option<u64>,
-    pub instructions: Option<Vec<InstructionData>>,
-    pub rate_limit: Option<u64>,
-    pub trigger: Option<Trigger>,
-}
-
 /// Trait for reading and writing to a thread account.
 pub trait ThreadAccount {
     /// Get the pubkey of the thread account.
@@ -162,6 +153,34 @@ impl ThreadAccount for Account<'_, Thread> {
     }
 }
 
+/// The execution context of a particular transaction thread.
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExecContext {
+    /// Index of the next instruction to be executed.
+    pub exec_index: u64,
+
+    /// Number of execs since the last tx reimbursement.
+    pub execs_since_reimbursement: u64,
+
+    /// Number of execs in this slot.
+    pub execs_since_slot: u64,
+
+    /// Slot of the last exec
+    pub last_exec_at: u64,
+
+    /// Context for the triggering condition
+    pub trigger_context: TriggerContext,
+}
+
+/// The properties of threads which are updatable.
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ThreadSettings {
+    pub fee: Option<u64>,
+    pub instructions: Option<Vec<InstructionData>>,
+    pub rate_limit: Option<u64>,
+    pub trigger: Option<Trigger>,
+}
+
 /// The triggering conditions of a thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
 pub enum Trigger {
@@ -187,25 +206,6 @@ pub enum Trigger {
 
     /// Allows a thread to be kicked off as soon as it's created.
     Immediate,
-}
-
-/// The execution context of a particular transaction thread.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ExecContext {
-    /// Index of the next instruction to be executed.
-    pub exec_index: u64,
-
-    /// Number of execs since the last tx reimbursement.
-    pub execs_since_reimbursement: u64,
-
-    /// Number of execs in this slot.
-    pub execs_since_slot: u64,
-
-    /// Slot of the last exec
-    pub last_exec_at: u64,
-
-    /// Context for the triggering condition
-    pub trigger_context: TriggerContext,
 }
 
 /// The event which allowed a particular transaction thread to be triggered.
