@@ -1,15 +1,7 @@
 use {
     crate::errors::ClockworkError,
     crate::state::*,
-    anchor_lang::{
-        prelude::*,
-        solana_program::{
-            instruction::Instruction,
-            program::{get_return_data, invoke_signed},
-        },
-        AnchorDeserialize, AnchorSerialize,
-    },
-    clockwork_network_program::state::{Fee, Penalty, Pool, Worker},
+    anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize},
     std::convert::TryFrom,
 };
 
@@ -23,9 +15,6 @@ const MAX_RATE_LIMIT: u64 = 32;
 
 /// The minimum exec fee that may be set on a thread.
 const MINIMUM_FEE: u64 = 1000;
-
-/// The number of lamports to reimburse the worker with after they've submitted a transaction's worth of exec instructions.
-const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
@@ -102,18 +91,6 @@ pub trait ThreadAccount {
         trigger: Trigger,
     ) -> Result<()>;
 
-    /// Execute the next instruction on the thread.
-    fn exec(
-        &mut self,
-        account_infos: &[AccountInfo],
-        bump: u8,
-        fee: &mut Account<Fee>,
-        penalty: &mut Account<Penalty>,
-        pool: &Account<Pool>,
-        signatory: &mut Signer,
-        worker: &Account<Worker>,
-    ) -> Result<()>;
-
     /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
 
@@ -142,175 +119,6 @@ impl ThreadAccount for Account<'_, Thread> {
         self.paused = false;
         self.rate_limit = DEFAULT_RATE_LIMIT;
         self.trigger = trigger;
-        Ok(())
-    }
-
-    fn exec(
-        &mut self,
-        account_infos: &[AccountInfo],
-        bump: u8,
-        fee: &mut Account<Fee>,
-        penalty: &mut Account<Penalty>,
-        pool: &Account<Pool>,
-        signatory: &mut Signer,
-        worker: &Account<Worker>,
-    ) -> Result<()> {
-        // Record the worker's lamports before invoking inner ixs
-        let signatory_lamports_pre = signatory.lamports();
-
-        // Get the instruction to execute.
-        // We have already verified that it is not null during account validation.
-        let next_instruction: &Option<InstructionData> = &self.clone().next_instruction;
-        let instruction = next_instruction.as_ref().unwrap();
-
-        // Inject the signatory's pubkey for the Clockwork payer ID
-        let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
-        instruction.accounts.iter().for_each(|acc| {
-            let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
-                signatory.key()
-            } else {
-                acc.pubkey
-            };
-            normalized_accounts.push(AccountMeta {
-                pubkey: acc_pubkey,
-                is_signer: acc.is_signer,
-                is_writable: acc.is_writable,
-            });
-        });
-
-        // Invoke the provided instruction
-        invoke_signed(
-            &Instruction {
-                program_id: instruction.program_id,
-                data: instruction.data.clone(),
-                accounts: normalized_accounts.to_vec(),
-            },
-            account_infos,
-            &[&[
-                SEED_THREAD,
-                self.authority.as_ref(),
-                self.id.as_bytes(),
-                &[bump],
-            ]],
-        )?;
-
-        // Verify that the inner ix did not write data to the signatory address
-        require!(signatory.data_is_empty(), ClockworkError::UnauthorizedWrite);
-
-        // Parse the exec response
-        match get_return_data() {
-            None => {
-                self.next_instruction = None;
-            }
-            Some((program_id, return_data)) => {
-                require!(
-                    program_id.eq(&instruction.program_id),
-                    ClockworkError::InvalidThreadResponse
-                );
-                let exec_response = ThreadResponse::try_from_slice(return_data.as_slice())
-                    .map_err(|_err| ClockworkError::InvalidThreadResponse)?;
-
-                // Update the next instruction.
-                self.next_instruction = exec_response.next_instruction;
-            }
-        };
-
-        // Increment the exec count
-        let current_slot = Clock::get().unwrap().slot;
-        match self.exec_context {
-            None => return Err(ClockworkError::InvalidThreadState.into()),
-            Some(exec_context) => {
-                // Update the exec context
-                self.exec_context = Some(ExecContext {
-                    execs_since_reimbursement: exec_context
-                        .execs_since_reimbursement
-                        .checked_add(1)
-                        .unwrap(),
-                    execs_since_slot: if current_slot == exec_context.last_exec_at {
-                        exec_context.execs_since_slot.checked_add(1).unwrap()
-                    } else {
-                        1
-                    },
-                    last_exec_at: current_slot,
-                    ..exec_context
-                });
-            }
-        }
-
-        // Realloc the thread account
-        self.realloc()?;
-
-        // Reimbursement signatory for lamports paid during inner ix
-        let signatory_lamports_post = signatory.lamports();
-        let signatory_reimbursement = signatory_lamports_pre
-            .checked_sub(signatory_lamports_post)
-            .unwrap();
-        if signatory_reimbursement.gt(&0) {
-            **self.to_account_info().try_borrow_mut_lamports()? = self
-                .to_account_info()
-                .lamports()
-                .checked_sub(signatory_reimbursement)
-                .unwrap();
-            **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-                .to_account_info()
-                .lamports()
-                .checked_add(signatory_reimbursement)
-                .unwrap();
-        }
-
-        // Debit the fee from the thread account.
-        // If the worker is in the pool, pay fee to the worker's fee account.
-        // Otherwise, pay fee to the worker's penalty account.
-        **self.to_account_info().try_borrow_mut_lamports()? = self
-            .to_account_info()
-            .lamports()
-            .checked_sub(self.fee)
-            .unwrap();
-        if pool.clone().into_inner().workers.contains(&worker.key()) {
-            **fee.to_account_info().try_borrow_mut_lamports()? = fee
-                .to_account_info()
-                .lamports()
-                .checked_add(self.fee)
-                .unwrap();
-        } else {
-            **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
-                .to_account_info()
-                .lamports()
-                .checked_add(self.fee)
-                .unwrap();
-        }
-
-        // If the self has no more work or the number of execs since the last payout has reached the rate limit,
-        // reimburse the worker for the transaction base fee.
-        match self.exec_context {
-            None => {
-                return Err(ClockworkError::InvalidThreadState.into());
-            }
-            Some(exec_context) => {
-                if self.next_instruction.is_none()
-                    || exec_context.execs_since_reimbursement >= self.rate_limit
-                {
-                    // Pay reimbursment for base transaction fee
-                    **self.to_account_info().try_borrow_mut_lamports()? = self
-                        .to_account_info()
-                        .lamports()
-                        .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-                        .unwrap();
-                    **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-                        .to_account_info()
-                        .lamports()
-                        .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-                        .unwrap();
-
-                    // Update the exec context to mark that a reimbursement happened this slot.
-                    self.exec_context = Some(ExecContext {
-                        execs_since_reimbursement: 0,
-                        ..exec_context
-                    });
-                }
-            }
-        }
-
         Ok(())
     }
 
