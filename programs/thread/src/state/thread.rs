@@ -157,7 +157,7 @@ impl ThreadAccount for Account<'_, Thread> {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ExecContext {
     /// Index of the next instruction to be executed.
-    pub exec_index: u64,
+    pub exec_index: usize,
 
     /// Number of execs since the last tx reimbursement.
     pub execs_since_reimbursement: u64,

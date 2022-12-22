@@ -85,9 +85,8 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     let worker = &ctx.accounts.worker;
 
     // If the rate limit has been met, exit early.
-    let exec_context = thread.exec_context.unwrap();
-    if exec_context.last_exec_at == Clock::get().unwrap().slot
-        && exec_context.execs_since_slot >= thread.rate_limit
+    if thread.exec_context.unwrap().last_exec_at == Clock::get().unwrap().slot
+        && thread.exec_context.unwrap().execs_since_slot >= thread.rate_limit
     {
         return Err(ClockworkError::RateLimitExeceeded.into());
     }
@@ -132,48 +131,64 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         ]],
     )?;
 
-    // Verify that the inner ix did not write data to the signatory address.
+    // Verify the inner instruction did not write data to the signatory address.
     require!(signatory.data_is_empty(), ClockworkError::UnauthorizedWrite);
 
-    // Parse the exec response.
-    match get_return_data() {
-        None => {
-            thread.next_instruction = None;
-        }
+    // Parse the thread response
+    let thread_response: Option<ThreadResponse> = match get_return_data() {
+        None => None,
         Some((program_id, return_data)) => {
             require!(
                 program_id.eq(&instruction.program_id),
                 ClockworkError::InvalidThreadResponse
             );
-            let exec_response = ThreadResponse::try_from_slice(return_data.as_slice())
-                .map_err(|_err| ClockworkError::InvalidThreadResponse)?;
-
-            // Update the next instruction.
-            if exec_response.next_instruction.is_some() {
-                thread.next_instruction = exec_response.next_instruction;
-            } else {
-                // TODO Select the next instruction from the instructions list
-            }
+            ThreadResponse::try_from_slice(return_data.as_slice()).ok()
         }
     };
+
+    // Grab the next instruction from the thread response.
+    let mut next_instruction = None;
+    if let Some(thread_response) = thread_response {
+        next_instruction = thread_response.next_instruction;
+    }
+
+    // If there is no dynamic next instruction, get the next instruction from the instruction set.
+    let mut exec_index = thread.exec_context.unwrap().exec_index;
+    if next_instruction.is_none() {
+        if let Some(ix) = thread.instructions.get(exec_index + 1) {
+            next_instruction = Some(ix.clone());
+            exec_index = exec_index + 1;
+        }
+    }
+
+    // Update the next instruction.
+    thread.next_instruction = next_instruction;
 
     // Update the exec context.
     let current_slot = Clock::get().unwrap().slot;
     thread.exec_context = Some(ExecContext {
-        execs_since_reimbursement: exec_context
+        exec_index,
+        execs_since_reimbursement: thread
+            .exec_context
+            .unwrap()
             .execs_since_reimbursement
             .checked_add(1)
             .unwrap(),
-        execs_since_slot: if current_slot == exec_context.last_exec_at {
-            exec_context.execs_since_slot.checked_add(1).unwrap()
+        execs_since_slot: if current_slot == thread.exec_context.unwrap().last_exec_at {
+            thread
+                .exec_context
+                .unwrap()
+                .execs_since_slot
+                .checked_add(1)
+                .unwrap()
         } else {
             1
         },
         last_exec_at: current_slot,
-        ..exec_context
+        ..thread.exec_context.unwrap()
     });
 
-    // Realloc the thread account.
+    // Realloc memory for the thread account.
     thread.realloc()?;
 
     // Reimbursement signatory for lamports paid during inner ix.
@@ -218,9 +233,8 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
 
     // If the thread has no more work or the number of execs since the last payout has reached the rate limit,
     // reimburse the worker for the transaction base fee.
-    let exec_context = thread.exec_context.unwrap();
     if thread.next_instruction.is_none()
-        || exec_context.execs_since_reimbursement >= thread.rate_limit
+        || thread.exec_context.unwrap().execs_since_reimbursement >= thread.rate_limit
     {
         // Pay reimbursment for base transaction fee.
         **thread.to_account_info().try_borrow_mut_lamports()? = thread
@@ -237,7 +251,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         // Update the exec context to mark that a reimbursement happened this slot.
         thread.exec_context = Some(ExecContext {
             execs_since_reimbursement: 0,
-            ..exec_context
+            ..thread.exec_context.unwrap()
         });
     }
 
