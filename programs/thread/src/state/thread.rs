@@ -82,7 +82,7 @@ pub trait ThreadAccount {
     /// Get the pubkey of the thread account.
     fn pubkey(&self) -> Pubkey;
 
-    /// Initialize the account to hold thread object.
+    /// Initialize the thread account.
     fn init(
         &mut self,
         authority: Pubkey,
@@ -91,9 +91,10 @@ pub trait ThreadAccount {
         trigger: Trigger,
     ) -> Result<()>;
 
-    /// Reallocate the memory allocation for the account.
+    /// Allocate more memory for the account.
     fn realloc(&mut self) -> Result<()>;
 
+    /// Update the thread account.
     fn update(&mut self, settings: ThreadSettings) -> Result<()>;
 }
 
@@ -191,6 +192,9 @@ pub enum Trigger {
 /// The execution context of a particular transaction thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ExecContext {
+    /// Index of the next instruction to be executed.
+    pub exec_index: u64,
+
     /// Number of execs since the last tx reimbursement.
     pub execs_since_reimbursement: u64,
 

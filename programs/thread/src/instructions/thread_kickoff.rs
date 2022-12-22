@@ -86,6 +86,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
 
                     // Set a new exec context with the new data hash and slot number.
                     thread.exec_context = Some(ExecContext {
+                        exec_index: 0,
                         execs_since_reimbursement: 0,
                         execs_since_slot: 0,
                         last_exec_at: clock.slot,
@@ -125,6 +126,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
 
             // Set the exec context.
             thread.exec_context = Some(ExecContext {
+                exec_index: 0,
                 execs_since_reimbursement: 0,
                 execs_since_slot: 0,
                 last_exec_at: clock.slot,
@@ -138,6 +140,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 ClockworkError::InvalidThreadState
             );
             thread.exec_context = Some(ExecContext {
+                exec_index: 0,
                 execs_since_reimbursement: 0,
                 execs_since_slot: 0,
                 last_exec_at: clock.slot,
