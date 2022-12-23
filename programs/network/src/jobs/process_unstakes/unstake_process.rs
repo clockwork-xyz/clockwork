@@ -149,24 +149,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
             data: anchor_sighash("unstake_preprocess").to_vec(),
         })
     } else {
-        // This is the last unstake. Reset the registry's unstake counter.
-        registry.total_unstakes = 0;
-
-        // Move on to staking delegations.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(Worker::pubkey(0), false),
-            ],
-            data: anchor_sighash("worker_delegations_stake").to_vec(),
-        })
+        None
     };
 
-    Ok(ThreadResponse {
-        next_instruction,
-        ..ThreadResponse::default()
-    })
+    Ok(ThreadResponse { next_instruction })
 }

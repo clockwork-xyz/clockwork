@@ -1,4 +1,3 @@
-use clockwork_client::network::state::Snapshot;
 use std::io::Write;
 
 #[allow(deprecated)]
@@ -161,11 +160,12 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         client.payer_pubkey(),
         epoch_thread_id.into(),
         vec![
-            clockwork_client::network::instruction::registry_epoch_kickoff(
-                Snapshot::pubkey(0),
-                epoch_thread_pubkey,
-            )
-            .into(),
+            clockwork_client::network::job::distribute_fees(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::process_unstakes(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::stake_delegations(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::take_snapshot(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::increment_epoch(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::delete_snapshot(epoch_thread_pubkey).into(),
         ],
         client.payer_pubkey(),
         epoch_thread_pubkey,
@@ -204,7 +204,8 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
-    client.send_and_confirm(&vec![ix_a, ix_b, ix_c], &[client.payer()])?;
+    client.send_and_confirm(&vec![ix_a], &[client.payer()])?;
+    client.send_and_confirm(&vec![ix_b, ix_c], &[client.payer()])?;
     client.airdrop(&epoch_thread_pubkey, LAMPORTS_PER_SOL)?;
     client.airdrop(&hasher_thread_pubkey, LAMPORTS_PER_SOL)?;
 

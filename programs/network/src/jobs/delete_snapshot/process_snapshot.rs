@@ -1,9 +1,8 @@
-use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData};
 
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
+use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse}};
 
 #[derive(Accounts)]
-pub struct SnapshotDelete<'info> {
+pub struct DeleteSnapshotProcessSnapshot<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -29,10 +28,9 @@ pub struct SnapshotDelete<'info> {
         address = config.epoch_thread
     )]
     pub thread: Signer<'info>,
-
 }
 
-pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -62,12 +60,12 @@ pub fn handler(ctx: Context<SnapshotDelete>) -> Result<ThreadResponse> {
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),
                 AccountMetaData::new(thread.key(), true),
             ],
-            data: anchor_sighash("snapshot_frame_delete").to_vec(),
+            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
     } else {
         // This snaphot has no frames. We are done!
         None
     };
 
-    Ok(ThreadResponse { next_instruction, ..ThreadResponse::default() })
+    Ok(ThreadResponse { next_instruction })
 }
