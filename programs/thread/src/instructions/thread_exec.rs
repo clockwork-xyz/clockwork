@@ -115,7 +115,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     });
 
     // Invoke the provided instruction.
-    let bump = ctx.bumps.get("thread").unwrap();
     invoke_signed(
         &Instruction {
             program_id: instruction.program_id,
@@ -127,7 +126,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             SEED_THREAD,
             thread.authority.as_ref(),
             thread.id.as_bytes(),
-            &[*bump],
+            &[thread.bump],
         ]],
     )?;
 
