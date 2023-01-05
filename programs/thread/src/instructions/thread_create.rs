@@ -48,7 +48,8 @@ pub fn handler(ctx: Context<ThreadCreate>, id: String, instructions: Vec<Instruc
     let thread = &mut ctx.accounts.thread;
 
     // Initialize the thread
-    thread.init(authority.key(), id, instructions, trigger)?;
+    let bump = ctx.bumps.get("thread").unwrap();
+    thread.init(authority.key(), *bump, id, instructions, trigger)?;
 
     Ok(())
 }

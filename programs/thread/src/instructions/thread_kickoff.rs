@@ -26,7 +26,7 @@ pub struct ThreadKickoff<'info> {
             thread.authority.as_ref(),
             thread.id.as_bytes(),
         ],
-        bump,
+        bump = thread.bump,
         constraint = !thread.paused @ ClockworkError::ThreadPaused,
         constraint = thread.next_instruction.is_none() @ ClockworkError::ThreadBusy,
     )]

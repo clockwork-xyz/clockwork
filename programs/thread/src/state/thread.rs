@@ -22,6 +22,8 @@ const MINIMUM_FEE: u64 = 1000;
 pub struct Thread {
     /// The owner of this thread.
     pub authority: Pubkey,
+    /// The bump, used for PDA validation.
+    pub bump: u8,
     /// The cluster clock at the moment the thread was created.
     pub created_at: ClockData,
     /// The context of the thread's current execution state.
@@ -77,6 +79,7 @@ pub trait ThreadAccount {
     fn init(
         &mut self,
         authority: Pubkey,
+        bump: u8,
         id: String,
         instructions: Vec<InstructionData>,
         trigger: Trigger,
@@ -97,11 +100,13 @@ impl ThreadAccount for Account<'_, Thread> {
     fn init(
         &mut self,
         authority: Pubkey,
+        bump: u8,
         id: String,
         instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()> {
         self.authority = authority.key();
+        self.bump = bump;
         self.created_at = Clock::get().unwrap().into();
         self.exec_context = None;
         self.fee = MINIMUM_FEE;
