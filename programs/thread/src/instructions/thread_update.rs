@@ -27,7 +27,7 @@ pub struct ThreadUpdate<'info> {
                 thread.authority.as_ref(),
                 thread.id.as_bytes(),
             ],
-            bump,
+            bump = thread.bump,
             has_one = authority,
         )]
     pub thread: Account<'info, Thread>,

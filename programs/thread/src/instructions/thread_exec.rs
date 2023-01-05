@@ -63,7 +63,7 @@ pub struct ThreadExec<'info> {
             thread.authority.as_ref(),
             thread.id.as_bytes(),
         ],
-        bump,
+        bump = thread.bump,
         constraint = !thread.paused @ ClockworkError::ThreadPaused,
         constraint = thread.next_instruction.is_some(),
         constraint = thread.exec_context.is_some()

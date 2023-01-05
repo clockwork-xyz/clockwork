@@ -19,7 +19,7 @@ pub struct ThreadDelete<'info> {
             thread.authority.as_ref(),
             thread.id.as_bytes(),
         ],
-        bump,
+        bump = thread.bump,
         has_one = authority,
         close = close_to
     )]
