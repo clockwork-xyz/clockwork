@@ -5,7 +5,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct FeeDistribute<'info> {
+pub struct DistributeFeesProcessEntry<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -43,17 +43,17 @@ pub struct FeeDistribute<'info> {
     pub snapshot: Account<'info, Snapshot>,
 
     #[account(
+        address = snapshot_entry.pubkey(),
+        has_one = snapshot_frame,
+    )]
+    pub snapshot_entry: Account<'info, SnapshotEntry>,
+
+    #[account(
         address = snapshot_frame.pubkey(),
         has_one = snapshot,
         has_one = worker,
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
-
-    #[account(
-        address = snapshot_entry.pubkey(),
-        has_one = snapshot_frame,
-    )]
-    pub snapshot_entry: Account<'info, SnapshotEntry>,
 
     #[account(address = config.epoch_thread)]
     pub thread: Signer<'info>,
@@ -62,7 +62,7 @@ pub struct FeeDistribute<'info> {
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<FeeDistribute>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -125,12 +125,12 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<ThreadResponse> {
                 AccountMetaData::new(fee.key(), false),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new_readonly(snapshot_frame.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_entry_pubkey, false),
+                AccountMetaData::new_readonly(snapshot_frame.key(), false),
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("fee_distribute").to_vec(),
+            data: anchor_sighash("distribute_fees_process_entry").to_vec(),
         })
     } else if snapshot_frame
         .id
@@ -153,24 +153,11 @@ pub fn handler(ctx: Context<FeeDistribute>) -> Result<ThreadResponse> {
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new(next_worker_pubkey, false),
             ],
-            data: anchor_sighash("worker_fees_distribute").to_vec(),
+            data: anchor_sighash("distribute_fees_process_frame").to_vec(),
         })
     } else {
-        // This frame has no more entires and it is the last frame. Move on to staking delegations.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(Worker::pubkey(0), false),
-            ],
-            data: anchor_sighash("worker_delegations_stake").to_vec(),
-        })
+        None
     };
 
-    Ok(ThreadResponse {
-        next_instruction,
-        ..ThreadResponse::default()
-    })
+    Ok(ThreadResponse { next_instruction })
 }

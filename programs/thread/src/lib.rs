@@ -35,10 +35,10 @@ pub mod thread_program {
     pub fn thread_create(
         ctx: Context<ThreadCreate>,
         id: String,
-        kickoff_instruction: InstructionData,
+        instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()> {
-        thread_create::handler(ctx, id, kickoff_instruction, trigger)
+        thread_create::handler(ctx, id, instructions, trigger)
     }
 
     /// Closes an existing thread account and returns the lamports to the owner.

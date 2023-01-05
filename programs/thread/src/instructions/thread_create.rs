@@ -7,7 +7,7 @@ use {
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
-#[instruction(id: String, kickoff_instruction: InstructionData, trigger: Trigger)]
+#[instruction(id: String, instructions: Vec<InstructionData>, trigger: Trigger)]
 pub struct ThreadCreate<'info> {
     /// The authority (owner) of the thread.
     #[account()]
@@ -35,20 +35,20 @@ pub struct ThreadCreate<'info> {
             8, 
             size_of::<Thread>(), 
             id.as_bytes().len(),
-            kickoff_instruction.try_to_vec()?.len(),  
+            instructions.try_to_vec()?.len(),  
             trigger.try_to_vec()?.len()
         ].iter().sum()
     )]
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, id: String, kickoff_instruction: InstructionData, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<ThreadCreate>, id: String, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let thread = &mut ctx.accounts.thread;
 
     // Initialize the thread
-    thread.init(authority.key(), id, kickoff_instruction, trigger)?;
+    thread.init(authority.key(), id, instructions, trigger)?;
 
     Ok(())
 }

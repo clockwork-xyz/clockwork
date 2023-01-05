@@ -13,7 +13,7 @@ use {
 pub fn thread_create(
     authority: Pubkey,
     id: String,
-    kickoff_instruction: ClockworkInstructionData,
+    instructions: Vec<ClockworkInstructionData>,
     payer: Pubkey,
     thread: Pubkey,
     trigger: Trigger,
@@ -28,7 +28,7 @@ pub fn thread_create(
         ],
         data: clockwork_thread_program::instruction::ThreadCreate {
             id,
-            kickoff_instruction,
+            instructions,
             trigger,
         }
         .data(),

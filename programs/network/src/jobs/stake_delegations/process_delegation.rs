@@ -1,6 +1,6 @@
 use {
     crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
+    anchor_lang::prelude::*,
     anchor_spl::{
         associated_token::get_associated_token_address,
         token::{transfer, Token, TokenAccount, Transfer},
@@ -9,7 +9,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct DelegationStake<'info> {
+pub struct StakeDelegationsProcessDelegation<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -53,7 +53,7 @@ pub struct DelegationStake<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<DelegationStake>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -113,7 +113,7 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<ThreadResponse> {
                 AccountMetaData::new_readonly(worker.key(), false),
                 AccountMetaData::new(worker_stake.key(), false),
             ],
-            data: anchor_sighash("delegation_stake").to_vec(),
+            data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
         })
     } else if worker
         .id
@@ -133,29 +133,11 @@ pub fn handler(ctx: Context<DelegationStake>) -> Result<ThreadResponse> {
                     false,
                 ),
             ],
-            data: anchor_sighash("worker_delegations_stake").to_vec(),
+            data: anchor_sighash("stake_delegations_process_worker").to_vec(),
         })
     } else {
-        // This worker has no more delegations and it is the last worker. Start the snapshot!
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(
-                    Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
-                    false,
-                ),
-                AccountMetaData::new_readonly(system_program::ID, false),
-                AccountMetaData::new_readonly(thread.key(), true),
-            ],
-            data: anchor_sighash("snapshot_create").to_vec(),
-        })
+        None
     };
 
-    Ok(ThreadResponse {
-        next_instruction,
-        ..ThreadResponse::default()
-    })
+    Ok(ThreadResponse { next_instruction })
 }

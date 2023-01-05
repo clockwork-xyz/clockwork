@@ -3,7 +3,7 @@ use clockwork_utils::{InstructionData, AccountMetaData, anchor_sighash};
 use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
 
 #[derive(Accounts)]
-pub struct SnapshotFrameDelete<'info> {
+pub struct DeleteSnapshotProcessFrame<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -43,7 +43,7 @@ pub struct SnapshotFrameDelete<'info> {
     pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -87,7 +87,7 @@ pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ThreadResponse> {
                 AccountMetaData::new(snapshot_frame.key(), false),
                 AccountMetaData::new(thread.key(), true),
             ],
-            data: anchor_sighash("snapshot_entry_delete").to_vec(),
+            data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // There are no more entries in this frame. Move on to the next frame.
@@ -100,7 +100,7 @@ pub fn handler(ctx: Context<SnapshotFrameDelete>) -> Result<ThreadResponse> {
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
                 AccountMetaData::new(thread.key(), true),
             ],
-            data: anchor_sighash("snapshot_frame_delete").to_vec(),
+            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
     } else {
         // This frame has no entries, and it was the last frame. We are done!

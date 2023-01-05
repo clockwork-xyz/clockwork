@@ -18,14 +18,14 @@ pub fn crate_info(client: &Client) -> Result<(), CliError> {
 pub fn create(
     client: &Client,
     id: String,
-    kickoff_instruction: InstructionData,
+    instructions: Vec<InstructionData>,
     trigger: Trigger,
 ) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.clone());
     let ix = clockwork_client::thread::instruction::thread_create(
         client.payer_pubkey(),
         id.clone(),
-        kickoff_instruction,
+        instructions,
         client.payer_pubkey(),
         thread_pubkey,
         trigger,
@@ -98,7 +98,7 @@ pub fn update(
     };
     let settings = ThreadSettings {
         fee: None,
-        kickoff_instruction: None,
+        instructions: None,
         rate_limit,
         trigger,
     };

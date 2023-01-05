@@ -7,7 +7,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct SnapshotFrameCreate<'info> {
+pub struct TakeSnapshotCreateFrame<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -64,7 +64,7 @@ pub struct SnapshotFrameCreate<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -110,7 +110,7 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("snapshot_entry_create").to_vec(),
+            data: anchor_sighash("take_snapshot_create_entry").to_vec(),
         })
     } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This worker has no delegations. Create a snapshot frame for the next worker.
@@ -133,23 +133,11 @@ pub fn handler(ctx: Context<SnapshotFrameCreate>) -> Result<ThreadResponse> {
                     false,
                 ),
             ],
-            data: anchor_sighash("snapshot_frame_create").to_vec(),
+            data: anchor_sighash("take_snapshot_create_frame").to_vec(),
         })
     } else {
-        // This worker has no delegations and this is the last frame, so the snapshot is done. Cutover to the next epoch!
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-            ],
-            data: anchor_sighash("registry_epoch_cutover").to_vec(),
-        })
+        None
     };
 
-    Ok(ThreadResponse {
-        next_instruction,
-        ..ThreadResponse::default()
-    })
+    Ok(ThreadResponse { next_instruction })
 }
