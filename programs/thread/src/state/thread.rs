@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use {
     crate::errors::ClockworkError,
     crate::state::*,
     anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize},
+    std::collections::HashMap,
     std::convert::TryFrom,
 };
 

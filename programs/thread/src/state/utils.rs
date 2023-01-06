@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use {
     anchor_lang::{
         prelude::borsh::BorshSchema,
@@ -9,6 +7,7 @@ use {
         AnchorDeserialize,
     },
     static_pubkey::static_pubkey,
+    std::collections::HashMap,
     std::{convert::TryFrom, hash::Hash},
 };
 
