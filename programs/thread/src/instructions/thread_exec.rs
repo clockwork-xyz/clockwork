@@ -149,6 +149,11 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     let mut next_instruction = None;
     if let Some(thread_response) = thread_response {
         next_instruction = thread_response.next_instruction;
+
+        // Insert values into the cache.
+        for (k, v) in thread_response.cache {
+            thread.cache.insert(k, v);
+        }
     }
 
     // If there is no dynamic next instruction, get the next instruction from the instruction set.

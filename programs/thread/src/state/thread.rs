@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use {
     crate::errors::ClockworkError,
     crate::state::*,
@@ -22,8 +24,10 @@ const MINIMUM_FEE: u64 = 1000;
 pub struct Thread {
     /// The owner of this thread.
     pub authority: Pubkey,
-    /// The bump, used for PDA validation.
+    /// The bump for PDA validation.
     pub bump: u8,
+    /// A key-value cache of data.
+    pub cache: HashMap<String, Vec<u8>>,
     /// The cluster clock at the moment the thread was created.
     pub created_at: ClockData,
     /// The context of the thread's current execution state.
