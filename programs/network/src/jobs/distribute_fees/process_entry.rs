@@ -159,5 +159,8 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         None
     };
 
-    Ok(ThreadResponse { next_instruction })
+    Ok(ThreadResponse {
+        next_instruction,
+        ..Default::default()
+    })
 }

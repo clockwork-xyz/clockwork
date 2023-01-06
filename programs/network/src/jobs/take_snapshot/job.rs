@@ -41,5 +41,6 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
             ],
             data: anchor_sighash("take_snapshot_create_snapshot").to_vec(),
         }),
+        ..Default::default()
     })
 }

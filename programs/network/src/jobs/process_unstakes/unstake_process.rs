@@ -152,5 +152,8 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
         None
     };
 
-    Ok(ThreadResponse { next_instruction })
+    Ok(ThreadResponse {
+        next_instruction,
+        ..Default::default()
+    })
 }

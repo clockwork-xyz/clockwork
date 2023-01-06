@@ -11,6 +11,7 @@ use {
     base64,
     static_pubkey::static_pubkey,
     std::{
+        collections::HashMap,
         convert::TryFrom,
         fmt::{Debug, Display, Formatter},
         hash::Hash,
@@ -85,6 +86,9 @@ impl TryFrom<Vec<u8>> for ClockData {
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
+    /// Data values to save to the cache.
+    pub cache: HashMap<String, Vec<u8>>,
+
     /// The next instruction to execute.
     pub next_instruction: Option<InstructionData>,
 }
@@ -92,6 +96,7 @@ pub struct ThreadResponse {
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
+            cache: HashMap::default(),
             next_instruction: None,
         };
     }

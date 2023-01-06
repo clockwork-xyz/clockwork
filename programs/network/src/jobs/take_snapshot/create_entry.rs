@@ -149,6 +149,6 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> 
 
     Ok(ThreadResponse {
         next_instruction,
-        ..ThreadResponse::default()
+        ..Default::default()
     })
 }

@@ -41,5 +41,6 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<ThreadResponse> {
             ],
             data: anchor_sighash("distribute_fees_process_snapshot").to_vec(),
         }),
+        ..Default::default()
     })
 }

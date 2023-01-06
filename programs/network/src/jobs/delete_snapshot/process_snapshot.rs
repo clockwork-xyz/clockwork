@@ -67,5 +67,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResp
         None
     };
 
-    Ok(ThreadResponse { next_instruction })
+    Ok(ThreadResponse { next_instruction, ..Default::default() })
 }

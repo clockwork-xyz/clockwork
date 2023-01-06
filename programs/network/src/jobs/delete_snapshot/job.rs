@@ -38,5 +38,6 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<ThreadResponse> {
             ],
             data: anchor_sighash("delete_snapshot_process_snapshot").to_vec(),
         }),
+        ..Default::default()
     })
 }

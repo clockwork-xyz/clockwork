@@ -51,6 +51,6 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
             ],
             data: anchor_sighash("unstake_process").to_vec(),
         }),
-        ..ThreadResponse::default()
+        ..Default::default()
     })
 }
