@@ -20,12 +20,11 @@ ignore_older_secs = 60
 include = ["/home/sol/solana-rpc.log"]
 
 # Parse Solana logs
-[transforms.parse_solana]
+[transforms.parse_solana_logs]
 type = "remap"
 drop_on_error = true
 inputs = ["solana_logs"]
 source = '''
-  del(.dt) 
   .grok_results = parse_groks!(
     .message, 
     patterns: [
@@ -38,7 +37,7 @@ source = '''
       "_source": "%{DATA:source}"
     }
   )
-  .timestamp = .grok_results.timestamp
+  .dt = .grok_results.timestamp
   .level = .grok_results.level
   .source = strip_whitespace!(.grok_results.source)
   .message = .grok_results.message
@@ -46,8 +45,8 @@ source = '''
 '''
 
 # Filter Solana logs for Clockwork logs 
-[transforms.filter_solana]
-inputs = ["parse_solana"]
+[transforms.filter_solana_logs]
+inputs = ["parse_solana_logs"]
 type = "filter"
 condition = '''
   .source == "clockwork_plugin::builders::thread_exec" ||
@@ -57,9 +56,9 @@ condition = '''
 '''
 
 # Parse program logs into JSON
-[transforms.parse_clockwork]
+[transforms.parse_clockwork_logs]
 type = "remap"
-inputs = ["filter_solana"]
+inputs = ["filter_solana_logs"]
 source = '''
   if .source == "clockwork_plugin::builders::thread_exec" {
     .grok_results = parse_groks!(
@@ -80,6 +79,22 @@ source = '''
   }
 '''
 
+# Filter for only Clockwork simulation logs
+[transforms.filter_clockwork_simulation_logs]
+type = "filter"
+inputs = ["parse_clockwork_logs"]
+condition = '''
+  .source == "clockwork_plugin::builders::thread_exec" &&
+    !is_null(.error_msg)
+'''
+
+# Throttle Clockwork simulation logs
+[transforms.throttle_clockwork_simulation_logs]
+type = "throttle"
+inputs = ["filter_clockwork_simulation_logs"]
+key_field = "{{ thread }}"
+threshold = 1
+window_secs = 30
 
 # Pipe to Logtail
 [sinks.logtail]
@@ -87,25 +102,25 @@ type = "http"
 uri = "https://in.logtail.com/"
 encoding.codec = "json"
 auth.strategy = "bearer"
-auth.token = "YOUR_AUTH_TOKEN"
-inputs = ["parse_clockwork"]
+auth.token = "YOUR_AUTH_KEY"
+inputs = ["throttle_clockwork_simulation_logs"]
 
 # Test Solana log parser
 [[tests]]
 name = "solana_metrics_test"
 
 [[tests.inputs]]
-insert_at = "parse_solana"
+insert_at = "parse_solana_logs"
 type = "raw"
 value = "[2023-01-10T17:21:42.218012551Z INFO  solana_metrics::metrics] datapoint: pubsub_notifications created_to_queue_time_us=20i"
 
 [[tests.outputs]]
-extract_from = "parse_solana"
+extract_from = "parse_solana_logs"
 
 [[tests.outputs.conditions]]
 type = "vrl"
 source = '''
-  assert_eq!(.timestamp, "2023-01-10T17:21:42.218012551Z")
+  assert_eq!(.dt, "2023-01-10T17:21:42.218012551Z")
   assert_eq!(.level, "INFO")
   assert_eq!(.source, "solana_metrics::metrics")
   assert_eq!(.message, "datapoint: pubsub_notifications created_to_queue_time_us=20i")
@@ -116,17 +131,17 @@ source = '''
 name = "clockwork_simulation_test"
 
 [[tests.inputs]]
-insert_at = "parse_solana"
+insert_at = "parse_solana_logs"
 type = "raw"
 value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] Error simulating thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
 
 [[tests.outputs]]
-extract_from = "parse_clockwork"
+extract_from = "parse_clockwork_logs"
 
 [[tests.outputs.conditions]]
 type = "vrl"
 source = '''
-  assert_eq!(.timestamp, "2023-01-11T04:37:09.059509973Z")
+  assert_eq!(.dt, "2023-01-11T04:37:09.059509973Z")
   assert_eq!(.level, "INFO")
   assert_eq!(.source, "clockwork_plugin::builders::thread_exec")
   assert_eq!(.thread, "9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K")
