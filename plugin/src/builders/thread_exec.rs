@@ -103,10 +103,10 @@ fn build_thread_exec_tx(
             Ok(response) => {
                 if response.value.err.is_some() {
                     info!(
-                        "Error simulating thread: {} error: {} logs: {:#?}",
+                        "Error simulating thread: {} error: \"{}\" logs: {:?}",
                         thread_pubkey,
                         response.value.err.unwrap(),
-                        response.value.logs
+                        response.value.logs.unwrap_or(vec![])
                     );
                     break;
                 }
