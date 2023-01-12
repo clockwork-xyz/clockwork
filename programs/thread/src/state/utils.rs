@@ -88,6 +88,10 @@ pub struct ThreadResponse {
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
+            #[deprecated(
+                since = "1.4.2",
+                note = "In v2, the kickoff_instruction property will be removed. Users should instead write static kickoff instructions that can derive any needed dynamic accounts addresses and return them in the next_instruction."
+            )]
             kickoff_instruction: None,
             next_instruction: None,
         };
