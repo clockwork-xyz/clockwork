@@ -1,10 +1,11 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_UNSTAKE: &[u8] = b"unstake";
 
 /// Unstake
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Unstake {
     pub amount: u64,
     pub authority: Pubkey,
@@ -16,13 +17,6 @@ pub struct Unstake {
 impl Unstake {
     pub fn pubkey(id: u64) -> Pubkey {
         Pubkey::find_program_address(&[SEED_UNSTAKE, id.to_be_bytes().as_ref()], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Unstake {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Unstake::try_deserialize(&mut data.as_slice())
     }
 }
 

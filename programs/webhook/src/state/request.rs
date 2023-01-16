@@ -1,15 +1,14 @@
-use super::Api;
-
-use {
-    crate::errors::ClockworkError,
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::{
-        collections::HashMap,
-        convert::TryFrom,
-        fmt::{Display, Formatter},
-        str::FromStr,
-    },
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+    str::FromStr,
 };
+
+use super::Api;
+use crate::errors::ClockworkError;
+
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_REQUEST: &[u8] = b"request";
 
@@ -18,7 +17,7 @@ pub const SEED_REQUEST: &[u8] = b"request";
  */
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Request {
     pub api: Pubkey,
     pub caller: Pubkey,
@@ -39,13 +38,6 @@ impl Request {
             &crate::ID,
         )
         .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Request {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Request::try_deserialize(&mut data.as_slice())
     }
 }
 

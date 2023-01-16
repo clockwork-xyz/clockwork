@@ -23,4 +23,5 @@ default = []
 
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.26.0" }
+clockwork-macros = { path = "../../macros", version = "1.4.0" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "1.4.0" }

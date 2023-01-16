@@ -829,11 +829,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-macros"
+version = "1.4.0"
+dependencies = [
+ "proc-macro2 1.0.46",
+ "quote 1.0.21",
+ "syn 1.0.102",
+]
+
+[[package]]
 name = "clockwork-network-program"
 version = "1.4.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "clockwork-macros",
  "clockwork-utils",
 ]
 
@@ -855,6 +865,7 @@ dependencies = [
  "anchor-lang",
  "chrono",
  "clockwork-cron",
+ "clockwork-macros",
  "clockwork-network-program",
  "clockwork-utils",
  "static-pubkey",
@@ -875,6 +886,7 @@ name = "clockwork-webhook-program"
 version = "1.4.0"
 dependencies = [
  "anchor-lang",
+ "clockwork-macros",
  "clockwork-network-program",
 ]
 

@@ -1,14 +1,13 @@
-use {
-    crate::errors::*,
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
+
+use crate::errors::*;
 
 pub const SEED_WORKER: &[u8] = b"worker";
 
 /// Worker
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Worker {
     /// The worker's authority (owner).
     pub authority: Pubkey,
@@ -27,13 +26,6 @@ pub struct Worker {
 impl Worker {
     pub fn pubkey(id: u64) -> Pubkey {
         Pubkey::find_program_address(&[SEED_WORKER, id.to_be_bytes().as_ref()], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Worker {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Worker::try_deserialize(&mut data.as_slice())
     }
 }
 

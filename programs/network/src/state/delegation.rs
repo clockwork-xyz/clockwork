@@ -1,10 +1,11 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_DELEGATION: &[u8] = b"delegation";
 
 /// An account to manage a token holder's stake delegation with a particiular a worker.
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Delegation {
     /// The authority of this delegation account.
     pub authority: Pubkey,
@@ -29,13 +30,6 @@ impl Delegation {
             &crate::ID,
         )
         .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Delegation {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Delegation::try_deserialize(&mut data.as_slice())
     }
 }
 

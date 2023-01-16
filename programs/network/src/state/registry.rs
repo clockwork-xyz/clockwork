@@ -1,18 +1,17 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::{
-        collections::hash_map::DefaultHasher,
-        convert::TryFrom,
-        hash::{Hash, Hasher},
-    },
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
 };
+
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
 
 /// Registry
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Registry {
     pub current_epoch: u64,
     pub locked: bool,
@@ -25,13 +24,6 @@ pub struct Registry {
 impl Registry {
     pub fn pubkey() -> Pubkey {
         Pubkey::find_program_address(&[SEED_REGISTRY], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Registry {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Registry::try_deserialize(&mut data.as_slice())
     }
 }
 
