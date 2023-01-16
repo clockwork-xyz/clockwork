@@ -24,4 +24,5 @@ default = []
 [dependencies]
 anchor-lang = "0.26.0"
 anchor-spl = { features = ["mint", "token"], version = "0.26.0" }
+clockwork-macros = { path = "../../macros", version = "1.4.0" }
 clockwork-utils = { path = "../../utils", version = "1.4.0" }

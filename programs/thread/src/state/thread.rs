@@ -1,9 +1,9 @@
-use {
-    crate::errors::ClockworkError,
-    crate::state::*,
-    anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize},
-    std::convert::TryFrom,
-};
+use std::convert::TryFrom;
+
+use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
+use clockwork_macros::TryFromData;
+
+use crate::{errors::ClockworkError, state::*};
 
 pub const SEED_THREAD: &[u8] = b"thread";
 
@@ -18,7 +18,7 @@ const MINIMUM_FEE: u64 = 1000;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Thread {
     /// The owner of this thread.
     pub authority: Pubkey,
@@ -52,13 +52,6 @@ impl Thread {
             &crate::ID,
         )
         .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Thread {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Thread::try_deserialize(&mut data.as_slice())
     }
 }
 

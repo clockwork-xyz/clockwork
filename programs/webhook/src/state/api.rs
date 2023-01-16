@@ -1,7 +1,5 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_API: &[u8] = b"api";
 
@@ -10,7 +8,7 @@ pub const SEED_API: &[u8] = b"api";
  */
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Api {
     pub ack_authority: Pubkey,
     pub authority: Pubkey,
@@ -25,13 +23,6 @@ impl Api {
             &crate::ID,
         )
         .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Api {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Api::try_deserialize(&mut data.as_slice())
     }
 }
 

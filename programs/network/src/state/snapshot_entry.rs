@@ -1,4 +1,5 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
 
@@ -7,7 +8,7 @@ pub const SEED_SNAPSHOT_ENTRY: &[u8] = b"snapshot_entry";
  */
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct SnapshotEntry {
     pub delegation: Pubkey,
     pub id: u64,
@@ -26,13 +27,6 @@ impl SnapshotEntry {
             &crate::ID,
         )
         .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for SnapshotEntry {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        SnapshotEntry::try_deserialize(&mut data.as_slice())
     }
 }
 

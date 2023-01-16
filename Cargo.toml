@@ -3,6 +3,7 @@ members = [
     "cli",
     "client",
     "cron",
+    "macros",
     "plugin",
     "programs/*",
     "sdk",
