@@ -84,10 +84,27 @@ tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
-Next, create a new keypair for signing Clockwork txs. Load this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the tasks your worker executes. Automation fees (rewards) are implemented and will soon be enabled.
+Next, create a new keypair for signing Clockwork txs:
 ```sh
 solana-keygen new -o clockwork-worker-keypair.json
 ```
+
+Load this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the tasks your worker executes. Automation fees (rewards) are implemented and will soon be enabled.
+
+Let's register your worker and get a `worker_id`: 
+```sh
+clockwork worker create clockwork-worker-keypair
+```
+
+Get your `worker_id` from the above output:
+```
+...
+Worker {
+    id: ...
+}
+...
+```
+
 
 Then, setup the plugin config file in a folder where your validator startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
 ```js
