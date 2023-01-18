@@ -93,7 +93,7 @@ Load this keypair with a small amount of SOL (~0.01 ◎). You will be compensate
 
 Let's register your worker and get a `worker_id`: 
 ```sh
-clockwork worker create clockwork-worker-keypair
+clockwork worker create clockwork-worker-keypair.json
 ```
 
 Get your `worker_id` from the above output:
