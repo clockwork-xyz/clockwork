@@ -66,6 +66,36 @@ pub fn deposit(
     Ok(())
 }
 
+pub fn withdraw(
+    client: &Client,
+    amount: u64,
+    delegation_id: u64,
+    worker_id: u64,
+) -> Result<(), CliError> {
+    // Get config data
+    let config_pubkey = Config::pubkey();
+    let config_data = client
+        .get_account_data(&config_pubkey)
+        .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
+    let config = Config::try_from(config_data)
+        .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
+
+    // TODO Map the amount using the mint's decimals.
+
+    // Build ix
+    let worker_pubkey = Worker::pubkey(worker_id);
+    let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
+    let ix = clockwork_client::network::instruction::delegation_withdraw(
+        amount,
+        client.payer_pubkey(),
+        delegation_pubkey,
+        config.mint,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+
+    Ok(())
+}
+
 pub fn get(client: &Client, delegation_id: u64, worker_id: u64) -> Result<(), CliError> {
     // Get config account
     let config_pubkey = Config::pubkey();
