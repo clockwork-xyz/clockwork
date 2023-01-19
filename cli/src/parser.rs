@@ -118,6 +118,11 @@ fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
             delegation_id: parse_u64("delegation_id", matches)?,
             worker_id: parse_u64("worker_id", matches)?,
         }),
+        Some(("withdraw", matches)) => Ok(CliCommand::DelegationWithdraw {
+            amount: parse_u64("amount", matches)?,
+            delegation_id: parse_u64("delegation_id", matches)?,
+            worker_id: parse_u64("worker_id", matches)?,
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
