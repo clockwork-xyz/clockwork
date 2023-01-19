@@ -40,6 +40,11 @@ pub enum CliCommand {
         delegation_id: u64,
         worker_id: u64,
     },
+    DelegationWithdraw {
+        amount: u64,
+        delegation_id: u64,
+        worker_id: u64,
+    },
 
     ExplorerGetThread {
         id: Option<String>,
@@ -222,6 +227,35 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(false)
                                 .help("The ID of the delegation"),
+                        )
+                        .arg(
+                            Arg::new("worker_id")
+                                .long("worker_id")
+                                .short('w')
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the worker"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("withdraw")
+                        .about("Withdraw CLOCK from a delegation account")
+                        .arg_required_else_help(true)
+                        .arg(
+                            Arg::new("amount")
+                                .long("amount")
+                                .short('a')
+                                .takes_value(true)
+                                .required(false)
+                                .help("The number of tokens to withdraw"),
+                        )
+                        .arg(
+                            Arg::new("delegation_id")
+                                .long("delegation_id")
+                                .short('i')
+                                .takes_value(true)
+                                .required(false)
+                                .help("The ID of the delegation to withdraw from"),
                         )
                         .arg(
                             Arg::new("worker_id")

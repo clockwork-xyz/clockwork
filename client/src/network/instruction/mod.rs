@@ -1,6 +1,7 @@
 mod config_update;
 mod delegation_create;
 mod delegation_deposit;
+mod delegation_withdraw;
 mod initialize;
 mod pool_create;
 mod pool_rotate;
@@ -12,6 +13,7 @@ mod worker_create;
 pub use config_update::*;
 pub use delegation_create::*;
 pub use delegation_deposit::*;
+pub use delegation_withdraw::*;
 pub use initialize::*;
 pub use pool_create::*;
 pub use pool_rotate::*;
