@@ -192,9 +192,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
 
     // Reimbursement signatory for lamports paid during inner ix.
     let signatory_lamports_post = signatory.lamports();
-    let signatory_reimbursement = signatory_lamports_pre
-        .checked_sub(signatory_lamports_post)
-        .unwrap();
+    let signatory_reimbursement = signatory_lamports_pre.saturating_sub(signatory_lamports_post);
     if signatory_reimbursement.gt(&0) {
         **thread.to_account_info().try_borrow_mut_lamports()? = thread
             .to_account_info()
