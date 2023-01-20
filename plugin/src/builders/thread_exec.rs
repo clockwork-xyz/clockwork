@@ -1,24 +1,23 @@
-use {
-    clockwork_client::{
-        network::state::Worker,
-        thread::state::{Thread, Trigger},
-        Client as ClockworkClient,
-    },
-    dashmap::DashSet,
-    log::info,
-    solana_account_decoder::UiAccountEncoding,
-    solana_client::rpc_config::{
-        RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
-    },
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-    },
-    solana_sdk::{
-        account::Account, commitment_config::CommitmentConfig,
-        compute_budget::ComputeBudgetInstruction, transaction::Transaction,
-    },
-    std::sync::Arc,
+use std::sync::Arc;
+
+use clockwork_client::{
+    network::state::Worker,
+    thread::state::{Thread, Trigger},
+    Client as ClockworkClient,
+};
+use dashmap::DashMap;
+use log::info;
+use solana_account_decoder::UiAccountEncoding;
+use solana_client::rpc_config::{
+    RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
+};
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+};
+use solana_sdk::{
+    account::Account, commitment_config::CommitmentConfig,
+    compute_budget::ComputeBudgetInstruction, transaction::Transaction,
 };
 
 /// Max byte size of a serialized transaction.
@@ -29,7 +28,7 @@ static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
 pub async fn build_thread_exec_txs(
     client: Arc<ClockworkClient>,
-    executable_threads: DashSet<Pubkey>,
+    executable_threads: DashMap<Pubkey, u64>,
     worker_id: u64,
 ) -> Vec<Transaction> {
     // Build the set of exec transactions
@@ -43,7 +42,7 @@ pub async fn build_thread_exec_txs(
     txs
 }
 
-fn build_thread_exec_tx(
+pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
     thread_pubkey: Pubkey,
     worker_id: u64,
