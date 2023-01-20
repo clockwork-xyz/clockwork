@@ -22,6 +22,9 @@ use {
 /// Number of slots to wait before retrying a message
 static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 
+/// Number of slots to wait before trying to execute a thread while not in the pool.
+static THREAD_TIMEOUT_WINDOW: u64 = 10;
+
 /**
  * TxExecutor
  */
@@ -126,11 +129,25 @@ impl TxExecutor {
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
         // Exit early if this worker is not in the delegate pool.
-        // TODO Implement a "timeout window" where workers will execute overdue threads even if they're not in the delegate pool.
         if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
-            return Err(GeyserPluginError::Custom(
-                "This node is not in the delegate pool".into(),
-            ));
+            // Attempt executing threads that have been executable for more than the time window.
+            self.observers
+                .thread
+                .executable_threads
+                .iter()
+                .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
+                .filter_map(|entry| {
+                    crate::builders::build_thread_exec_tx(
+                        self.client.clone(),
+                        *entry.key(),
+                        self.config.worker_id,
+                    )
+                })
+                .for_each(|tx| {
+                    self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+                });
+
+            return Ok(());
         }
 
         // Execute thread transactions.
