@@ -25,7 +25,7 @@ pub struct ThreadObserver {
     // Map from unix timestamps to the list of threads scheduled for that moment.
     pub cron_threads: DashMap<i64, DashSet<Pubkey>>,
 
-    // Map from account pubkeys to the set of threads listeninr for an account update.
+    // Map from account pubkeys to the set of threads listening for an account update.
     pub listener_threads: DashMap<Pubkey, DashSet<Pubkey>>,
 
     // Tokio runtime for processing async tasks.
