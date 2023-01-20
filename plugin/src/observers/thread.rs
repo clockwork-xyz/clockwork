@@ -1,16 +1,16 @@
-use {
-    crate::config::PluginConfig,
-    chrono::{DateTime, NaiveDateTime, Utc},
-    clockwork_client::thread::state::{Thread, Trigger, TriggerContext},
-    clockwork_cron::Schedule,
-    dashmap::{DashMap, DashSet},
-    solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
-    },
-    solana_program::{clock::Clock, pubkey::Pubkey},
-    std::{fmt::Debug, str::FromStr, sync::Arc},
-    tokio::runtime::Runtime,
+use std::{fmt::Debug, str::FromStr, sync::Arc};
+
+use chrono::{DateTime, NaiveDateTime, Utc};
+use clockwork_client::thread::state::{Thread, Trigger, TriggerContext};
+use clockwork_cron::Schedule;
+use dashmap::{DashMap, DashSet};
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
 };
+use solana_program::{clock::Clock, pubkey::Pubkey};
+use tokio::runtime::Runtime;
+
+use crate::config::PluginConfig;
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
@@ -19,7 +19,7 @@ pub struct ThreadObserver {
     // Plugin config values.
     pub config: PluginConfig,
 
-    // The set of the threads that are currently executable (i.e. have a next_instruction)
+    // Map from pubkeys of executable threads (i.e. have a next_instruction) to the slots when they became executable.
     pub executable_threads: DashMap<Pubkey, u64>,
 
     // Map from unix timestamps to the list of threads scheduled for that moment.
