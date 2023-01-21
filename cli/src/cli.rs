@@ -57,9 +57,9 @@ pub enum CliCommand {
 
     // Localnet commands
     Localnet {
-        program_infos: Vec<ProgramInfo>,
         clone_addresses: Vec<Pubkey>,
-        url: Option<String>,
+        network_url: Option<String>,
+        program_infos: Vec<ProgramInfo>,
     },
 
     // Pool commands

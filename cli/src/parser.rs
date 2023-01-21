@@ -82,9 +82,9 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 
     Ok(CliCommand::Localnet {
-        program_infos,
         clone_addresses,
-        url: parse_string("url", matches).ok(),
+        network_url: parse_string("url", matches).ok(),
+        program_infos,
     })
 }
 

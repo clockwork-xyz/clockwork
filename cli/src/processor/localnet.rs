@@ -27,9 +27,9 @@ use {
 
 pub fn start(
     client: &Client,
-    program_infos: Vec<ProgramInfo>,
-    network_url: Option<String>,
     clone_addresses: Vec<Pubkey>,
+    network_url: Option<String>,
+    program_infos: Vec<ProgramInfo>,
 ) -> Result<(), CliError> {
     check_test_validator_version();
     // Start the validator
