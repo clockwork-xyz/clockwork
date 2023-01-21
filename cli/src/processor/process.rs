@@ -13,7 +13,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     match command {
         // Set solana config if using localnet command
-        CliCommand::Localnet { program_infos: _ } => {
+        CliCommand::Localnet {
+            program_infos: _,
+            url: _,
+            clone_addresses: _,
+        } => {
             // TODO Verify the Solana CLI version is compatable with this build.
             set_solana_config().map_err(|err| CliError::FailedLocalnet(err.to_string()))?
         }
@@ -61,7 +65,11 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             super::explorer::thread_url(pubkey, config)
         }
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
-        CliCommand::Localnet { program_infos } => super::localnet::start(&client, program_infos),
+        CliCommand::Localnet {
+            program_infos,
+            clone_addresses,
+            url,
+        } => super::localnet::start(&client, program_infos, url, clone_addresses),
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
         CliCommand::PoolUpdate { id, size } => super::pool::update(&client, id, size),

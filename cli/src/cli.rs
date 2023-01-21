@@ -58,6 +58,8 @@ pub enum CliCommand {
     // Localnet commands
     Localnet {
         program_infos: Vec<ProgramInfo>,
+        clone_addresses: Vec<Pubkey>,
+        url: Option<String>,
     },
 
     // Pool commands
@@ -319,7 +321,27 @@ pub fn app() -> Command<'static> {
                        If the ledger already exists then this parameter is silently ignored. \
                        First argument can be a pubkey string or path to a keypair",
                         ),
-                ),
+                )
+                .arg(
+                    Arg::with_name("clone")
+                    .long("clone")
+                    .short('c')
+                    .value_names(&["ADDRESS"])
+                    .takes_value(true)
+                    .number_of_values(1)
+                    .multiple(true)
+                    .help("Copy an account from the cluster referenced by the --url argument the genesis configuration. If the ledger already exists then this parameter is silently ignored")
+                )
+                .arg(
+                    Arg::with_name("url")
+                    .long("url")
+                    .short('u')
+                    .value_names(&["URL_OR_MONIKER"])
+                    .takes_value(true)
+                    .number_of_values(1)
+                    .multiple(false)
+                    .help("URL for Solana's JSON RPC or moniker (or their first letter): [mainnet-beta, testnet, devnet, localhost]")
+                )
         )
         .subcommand(
             Command::new("pool")
