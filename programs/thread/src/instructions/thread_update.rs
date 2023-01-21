@@ -1,3 +1,5 @@
+use crate::errors::ClockworkError;
+
 use {
     crate::state::*,
     anchor_lang::{
@@ -6,6 +8,18 @@ use {
         system_program::{transfer, Transfer},
     },
 };
+
+/// The maximum rate limit which may be set on thread.
+const MAX_RATE_LIMIT: u64 = 32;
+
+/// The properties of threads which are updatable.
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ThreadSettings {
+    pub fee: Option<u64>,
+    pub instructions: Option<Vec<InstructionData>>,
+    pub rate_limit: Option<u64>,
+    pub trigger: Option<Trigger>,
+}
 
 /// Accounts required by the `thread_update` instruction.
 #[derive(Accounts)]
@@ -40,7 +54,34 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
     let system_program = &ctx.accounts.system_program;
 
     // Update the thread.
-    thread.update(settings)?;
+    if let Some(fee) = settings.fee {
+        thread.fee = fee;
+    }
+
+    // If provided, update the thread's instruction set.
+    if let Some(instructions) = settings.instructions {
+        thread.instructions = instructions;
+    }
+
+    // If provided, update the rate limit.
+    if let Some(rate_limit) = settings.rate_limit {
+        require!(
+            rate_limit.le(&MAX_RATE_LIMIT),
+            ClockworkError::MaxRateLimitExceeded
+        );
+        thread.rate_limit = rate_limit;
+    }
+
+    // If provided, update the thread's trigger and reset the exec context.
+    if let Some(trigger) = settings.trigger {
+        // Require the thread is not in the middle of processing.
+        require!(
+            thread.next_instruction.is_none(),
+            ClockworkError::ThreadBusy
+        );
+        thread.trigger = trigger;
+        thread.exec_context = None;
+    }
 
     // Reallocate mem for the thread account
     thread.realloc()?;

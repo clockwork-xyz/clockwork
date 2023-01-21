@@ -4,6 +4,11 @@ use {
     std::mem::size_of,
 };
 
+/// The default rate limit to initialize threads with
+const DEFAULT_RATE_LIMIT: u64 = 10;
+
+/// The minimum exec fee that may be set on a thread.
+const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
@@ -48,8 +53,18 @@ pub fn handler(ctx: Context<ThreadCreate>, id: String, instructions: Vec<Instruc
     let thread = &mut ctx.accounts.thread;
 
     // Initialize the thread
-    let bump = ctx.bumps.get("thread").unwrap();
-    thread.init(authority.key(), *bump, id, instructions, trigger)?;
+    let bump = *ctx.bumps.get("thread").unwrap();
+    thread.authority = authority.key();
+    thread.bump = bump;
+    thread.created_at = Clock::get().unwrap().into();
+    thread.exec_context = None;
+    thread.fee = MINIMUM_FEE;
+    thread.id = id;
+    thread.instructions = instructions;
+    thread.next_instruction = None;
+    thread.paused = false;
+    thread.rate_limit = DEFAULT_RATE_LIMIT;
+    thread.trigger = trigger;
 
     Ok(())
 }
