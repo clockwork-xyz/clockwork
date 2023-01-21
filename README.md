@@ -1,5 +1,5 @@
 <div align="center">
-  <img height="240" src="https://user-images.githubusercontent.com/8634334/212625080-bac3c38d-9e20-43d7-bb9d-83e4d2e2e974.svg" />
+  <img height="240" src="https://user-images.githubusercontent.com/8634334/213889894-8a976ab8-52ff-4b8c-b411-7da067d2a57b.svg" />
 
   <h1>Clockwork</h1>
 
