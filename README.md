@@ -23,7 +23,7 @@
 </div>
 
 
-## Deployments
+# Deployments
 
 | Program | Address| Devnet | Mainnet |
 | ------- | ------ | ------ | ------- |
@@ -31,94 +31,84 @@
 | Thread | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.4.0](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | [v1.4.0](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv) |
 
 
-## Notes
 
+# Notes
 - Clockwork is under active development. All interfaces and implementations are subject to change. 
-- The on-chain programs are upgradable by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) controlled by a core team of maintainers. 
-- Occassionally, an upgrade may require a migration to a new program. These releases will be marked with a new major version (e.g. `v2.x`, `v3.x`, etc.). 
+- Program deployments are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by a core team of maintainers. 
+- Solana mainnet currently has 3 independent worker node operators. To join the workernet, you can [install](#deploying-a-worker) the Clockwork plugin and request an earlybird token delegation in the workernet [Discord channel](https://discord.gg/mwmFtU5BtA).
+- Occassionally, a new release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
 - The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. 
 
+# Getting Started
+- ["I am a developer, and I want to build a program on localnet"](#local-development)
+- ["I am a node operator, and I want to deploy a Clockwork worker"](#deploying-a-worker)
 
-## Getting Started
-- ["I am a validator and I want to deploy the Clockwork Engine"](#deploying-a-worker)
-- ["I don't have a validator or I just want to do some tests on localhost"](#local-development)
+# Local Development
 
-
-## Local Development
-
-Download the source code:
+#### 1. Download the source code.
 ```sh
 git clone https://github.com/clockwork-xyz/clockwork
 cd clockwork
 ```
 
-The `main` branch is under active development and subject to bugs. To work with a stable version, checkout a release branch:
+#### 2. Checkout the latest stable release branch.
 ```sh
 git describe --tags `git rev-list --tags --max-count=1`
 git checkout tags/...
 ```
 
-Build the repo:
+#### 3. Build the repo.
 ```sh
 ./scripts/build-all.sh .
 export PATH=$PWD/bin:$PATH
 ```
 
-Start a local node for development:
+#### 4. Start a localnet for development.
 ```sh
 clockwork localnet
 ```
 
-To stream program logs:
+#### 5. Stream program logs.
 ```sh
 solana logs --url localhost
 ```
 
 
-## Deploying a worker
+# Deploying a worker
 
-To run the Clockwork plugin on your Solana validator, you can either build from scratch (shown above) or install the pre-built binary:
+#### 1. Either build from scratch (see above) or install the pre-built binary.
 ```sh
 curl -s https://api.github.com/repos/clockwork-xyz/clockwork/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
 tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 ```
 
-Next, create a new keypair for signing Clockwork txs:
+#### 2. Next, create a new keypair for signing Clockwork txs.
 ```sh
 solana-keygen new -o clockwork-worker-keypair.json
 ```
 
-Load this keypair with a small amount of SOL (~0.01 ◎). You will be compensated for lamports spent by the tasks your worker executes. Automation fees (rewards) are implemented and will soon be enabled.
+#### 3. Load this keypair with a small amount of SOL (~0.01 ◎). 
 
-Let's register your worker and get a `worker_id`: 
+#### 4. Register your worker and get a worker ID: 
 ```sh
 clockwork worker create clockwork-worker-keypair.json
 ```
 
-Get your `worker_id` from the above output:
-```
-...
-Worker {
-    id: ...
-}
-...
-```
 
-
-Then, setup the plugin config file in a folder where your validator startup script can reference it. Note, the `libpath` and `keypath` values should point to the binary and keypair mentioned in the steps above.
-```js
+#### 5. Setup the plugin config file.
+```json
 {
   "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
   "keypath": "/home/sol/clockwork-worker-keypair.json",
   "rpc_url": "http://127.0.0.1:8899",
   "transaction_timeout_threshold": 150,
   "thread_count": 10,
-  "worker_id": 0,  // Set this to your worker ID!
+  "worker_id": 0, 
 }
 ```
 
-Finally, add an additional line to your startup script to run your validator with the Clockwork plugin (often located at `/home/sol/bin/validator.sh`):
+#### 6. Configure your validator to run with the Clockwork plugin.
 ```sh
 #!/bin/bash
 exec solana-validator \
@@ -133,5 +123,7 @@ exec solana-validator \
   --geyser-plugin-config ~/clockwork-geyser-config.json
 ```
 
-Now simply restart your validator however you normally would!
-
+#### 7. Restart your validator however you normally would!
+```sh
+sudo systemctl restart sol
+```
