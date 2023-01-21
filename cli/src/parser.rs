@@ -39,6 +39,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
 // Command parsers
 fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     let mut program_infos = Vec::<ProgramInfo>::new();
+    let mut clone_addresses = Vec::<Pubkey>::new();
 
     if let Some(values) = matches.values_of("bpf_program") {
         let values: Vec<&str> = values.collect::<Vec<_>>();
@@ -69,7 +70,22 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         }
     }
 
-    Ok(CliCommand::Localnet { program_infos })
+    if let Some(values) = matches.values_of("clone") {
+        let values: Vec<&str> = values.collect::<Vec<_>>();
+        for value in values {
+            let address = value
+                .parse::<Pubkey>()
+                .map_err(|_| CliError::InvalidAddress)
+                .unwrap();
+            clone_addresses.push(address);
+        }
+    }
+
+    Ok(CliCommand::Localnet {
+        clone_addresses,
+        network_url: parse_string("url", matches).ok(),
+        program_infos,
+    })
 }
 
 fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {

@@ -25,11 +25,17 @@ use {
     std::process::{Child, Command},
 };
 
-pub fn start(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<(), CliError> {
+pub fn start(
+    client: &Client,
+    clone_addresses: Vec<Pubkey>,
+    network_url: Option<String>,
+    program_infos: Vec<ProgramInfo>,
+) -> Result<(), CliError> {
     check_test_validator_version();
     // Start the validator
-    let validator_process = &mut start_test_validator(client, program_infos)
-        .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
+    let validator_process =
+        &mut start_test_validator(client, program_infos, network_url, clone_addresses)
+            .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
 
     // Initialize Clockwork
     let mint_pubkey =
@@ -212,7 +218,12 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     Ok(())
 }
 
-fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Result<Child> {
+fn start_test_validator(
+    client: &Client,
+    program_infos: Vec<ProgramInfo>,
+    network_url: Option<String>,
+    clone_addresses: Vec<Pubkey>,
+) -> Result<Child> {
     println!("Starting test validator");
 
     // Get Clockwork home path
@@ -225,6 +236,8 @@ fn start_test_validator(client: &Client, program_infos: Vec<ProgramInfo>) -> Res
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
         .bpf_program(home_dir, clockwork_client::thread::ID, "thread")
         .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
+        .network_url(network_url)
+        .clone_addresses(clone_addresses)
         .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)
         .spawn()
@@ -283,6 +296,8 @@ trait TestValidatorHelpers {
         program_name: &str,
     ) -> &mut Command;
     fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command;
+    fn network_url(&mut self, url: Option<String>) -> &mut Command;
+    fn clone_addresses(&mut self, clone_addresses: Vec<Pubkey>) -> &mut Command;
 }
 
 impl TestValidatorHelpers for Command {
@@ -310,5 +325,19 @@ impl TestValidatorHelpers for Command {
     fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command {
         self.arg("--geyser-plugin-config")
             .arg(lib_path(home_dir, "geyser-plugin-config.json"))
+    }
+
+    fn network_url(&mut self, url: Option<String>) -> &mut Command {
+        if let Some(url) = url {
+            self.arg("--url").arg(url);
+        }
+        self
+    }
+
+    fn clone_addresses(&mut self, clone_addresses: Vec<Pubkey>) -> &mut Command {
+        for clone_address in clone_addresses {
+            self.arg("--clone").arg(clone_address.to_string());
+        }
+        self
     }
 }
