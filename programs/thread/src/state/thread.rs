@@ -1,18 +1,9 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_macros::TryFromData;
 
-use crate::{errors::ClockworkError, state::*};
+use crate::state::*;
 
 pub const SEED_THREAD: &[u8] = b"thread";
-
-/// The default rate limit to initialize threads with
-const DEFAULT_RATE_LIMIT: u64 = 10;
-
-/// The maximum rate limit which may be set on thread.
-const MAX_RATE_LIMIT: u64 = 32;
-
-/// The minimum exec fee that may be set on a thread.
-const MINIMUM_FEE: u64 = 1000;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
@@ -66,21 +57,8 @@ pub trait ThreadAccount {
     /// Get the pubkey of the thread account.
     fn pubkey(&self) -> Pubkey;
 
-    /// Initialize the thread account.
-    fn init(
-        &mut self,
-        authority: Pubkey,
-        bump: u8,
-        id: String,
-        instructions: Vec<InstructionData>,
-        trigger: Trigger,
-    ) -> Result<()>;
-
     /// Allocate more memory for the account.
     fn realloc(&mut self) -> Result<()>;
-
-    /// Update the thread account.
-    fn update(&mut self, settings: ThreadSettings) -> Result<()>;
 }
 
 impl ThreadAccount for Account<'_, Thread> {
@@ -88,63 +66,10 @@ impl ThreadAccount for Account<'_, Thread> {
         Thread::pubkey(self.authority, self.id.clone())
     }
 
-    fn init(
-        &mut self,
-        authority: Pubkey,
-        bump: u8,
-        id: String,
-        instructions: Vec<InstructionData>,
-        trigger: Trigger,
-    ) -> Result<()> {
-        self.authority = authority.key();
-        self.bump = bump;
-        self.created_at = Clock::get().unwrap().into();
-        self.exec_context = None;
-        self.fee = MINIMUM_FEE;
-        self.id = id;
-        self.instructions = instructions;
-        self.next_instruction = None;
-        self.paused = false;
-        self.rate_limit = DEFAULT_RATE_LIMIT;
-        self.trigger = trigger;
-        Ok(())
-    }
-
     fn realloc(&mut self) -> Result<()> {
         // Realloc memory for the thread account
         let data_len = 8 + self.try_to_vec()?.len();
         self.to_account_info().realloc(data_len, false)?;
-        Ok(())
-    }
-
-    fn update(&mut self, settings: ThreadSettings) -> Result<()> {
-        // If provided, update the thread's fee.
-        if let Some(fee) = settings.fee {
-            self.fee = fee;
-        }
-
-        // If provided, update the thread's instruction set.
-        if let Some(instructions) = settings.instructions {
-            self.instructions = instructions;
-        }
-
-        // If provided, update the rate limit.
-        if let Some(rate_limit) = settings.rate_limit {
-            require!(
-                rate_limit.le(&MAX_RATE_LIMIT),
-                ClockworkError::MaxRateLimitExceeded
-            );
-            self.rate_limit = rate_limit;
-        }
-
-        // If provided, update the thread's trigger and reset the exec context.
-        if let Some(trigger) = settings.trigger {
-            // Require the thread is not in the middle of processing.
-            require!(self.next_instruction.is_none(), ClockworkError::ThreadBusy);
-            self.trigger = trigger;
-            self.exec_context = None;
-        }
-
         Ok(())
     }
 }
@@ -166,15 +91,6 @@ pub struct ExecContext {
 
     /// Context for the triggering condition
     pub trigger_context: TriggerContext,
-}
-
-/// The properties of threads which are updatable.
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct ThreadSettings {
-    pub fee: Option<u64>,
-    pub instructions: Option<Vec<InstructionData>>,
-    pub rate_limit: Option<u64>,
-    pub trigger: Option<Trigger>,
 }
 
 /// The triggering conditions of a thread.
@@ -221,4 +137,13 @@ pub enum TriggerContext {
 
     /// The immediate trigger context.
     Immediate,
+}
+
+/// The properties of threads which are updatable.
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ThreadSettings {
+    pub fee: Option<u64>,
+    pub instructions: Option<Vec<InstructionData>>,
+    pub rate_limit: Option<u64>,
+    pub trigger: Option<Trigger>,
 }
