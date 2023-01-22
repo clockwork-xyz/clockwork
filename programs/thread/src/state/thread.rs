@@ -138,3 +138,12 @@ pub enum TriggerContext {
     /// The immediate trigger context.
     Immediate,
 }
+
+/// The properties of threads which are updatable.
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ThreadSettings {
+    pub fee: Option<u64>,
+    pub instructions: Option<Vec<InstructionData>>,
+    pub rate_limit: Option<u64>,
+    pub trigger: Option<Trigger>,
+}

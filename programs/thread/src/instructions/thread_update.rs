@@ -12,15 +12,6 @@ use {
 /// The maximum rate limit which may be set on thread.
 const MAX_RATE_LIMIT: u64 = 32;
 
-/// The properties of threads which are updatable.
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct ThreadSettings {
-    pub fee: Option<u64>,
-    pub instructions: Option<Vec<InstructionData>>,
-    pub rate_limit: Option<u64>,
-    pub trigger: Option<Trigger>,
-}
-
 /// Accounts required by the `thread_update` instruction.
 #[derive(Accounts)]
 #[instruction(settings: ThreadSettings)]
