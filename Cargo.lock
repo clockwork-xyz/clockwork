@@ -894,6 +894,7 @@ dependencies = [
  "dashmap",
  "log 0.4.17",
  "prost",
+ "rayon",
  "reqwest",
  "sentry",
  "serde",
@@ -1147,6 +1148,7 @@ dependencies = [
  "lock_api",
  "once_cell",
  "parking_lot_core 0.9.3",
+ "rayon",
 ]
 
 [[package]]

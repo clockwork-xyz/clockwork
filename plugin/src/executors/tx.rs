@@ -7,13 +7,14 @@ use {
         network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
         Client as ClockworkClient,
     },
-    dashmap::DashMap,
-    log::info,
+    dashmap::{DashMap},
+    log::{info, trace},
+    rayon::prelude::*,
     solana_client::rpc_config::RpcSimulateTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
-    solana_program::{hash::Hash, message::Message},
+    solana_program::{hash::Hash, message::Message, pubkey::Pubkey},
     solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction},
     std::{fmt::Debug, sync::Arc},
     tokio::runtime::Runtime,
@@ -25,6 +26,9 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 /// Number of slots to wait before trying to execute a thread while not in the pool.
 static THREAD_TIMEOUT_WINDOW: u64 = 10;
 
+/// Number of times to retry a thread
+static THREAD_MAX_RETRIES: u32 = 3;
+
 /**
  * TxExecutor
  */
@@ -35,6 +39,7 @@ pub struct TxExecutor {
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
+    pub threads_retries: DashMap<Pubkey, u32>,
 }
 
 impl TxExecutor {
@@ -52,6 +57,7 @@ impl TxExecutor {
             observers,
             runtime,
             tpu_client,
+            threads_retries: DashMap::new(),
         }
     }
 
@@ -134,14 +140,10 @@ impl TxExecutor {
             self.observers
                 .thread
                 .executable_threads
-                .iter()
+                .par_iter()
                 .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
                 .filter_map(|entry| {
-                    crate::builders::build_thread_exec_tx(
-                        self.client.clone(),
-                        *entry.key(),
-                        self.config.worker_id,
-                    )
+                    self.clone().try_build_thread_exec_tx(*entry.key())
                 })
                 .for_each(|tx| {
                     self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
@@ -150,19 +152,41 @@ impl TxExecutor {
             return Ok(());
         }
 
-        // Execute thread transactions.
-        crate::builders::build_thread_exec_txs(
-            self.client.clone(),
-            self.observers.thread.executable_threads.clone(),
-            self.config.worker_id,
-        )
-        .await
-        .iter()
-        .for_each(|tx| {
-            self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
-        });
+        self.observers.thread.executable_threads.clone()
+            .par_iter()
+            .filter_map(|thread_pubkey_ref| {
+                self.clone().try_build_thread_exec_tx(*thread_pubkey_ref.key())
+            })
+            .collect::<Vec<Transaction>>()
+            .iter()
+            .for_each(|tx| {
+                self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
+            });
 
         Ok(())
+    }
+
+    pub fn try_build_thread_exec_tx(
+        self: Arc<Self>,
+        thread_pubkey: Pubkey,
+    ) -> Option<Transaction> {
+        trace!("Failed threads: {:#?}", self.threads_retries);
+        if self.clone().remove_failing_thread_if_needed(thread_pubkey) == true {
+            trace!(
+                "Thread '{}' has already been retried ({}) times; removing it from the executable threads list.",
+                thread_pubkey, THREAD_MAX_RETRIES,
+            );
+            return None
+        }
+
+        crate::builders::build_thread_exec_tx(
+            self.client.clone(),
+            thread_pubkey,
+            self.config.worker_id,
+        ).or_else(|| {
+            self.clone().record_thread_status(thread_pubkey);
+            None
+        })
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
@@ -237,6 +261,25 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         self.runtime.spawn(f(self.clone()));
         Ok(())
+    }
+
+    fn remove_failing_thread_if_needed(self: Arc<Self>, thread_pubkey: Pubkey) -> bool {
+        let failures = self.threads_retries.get(&thread_pubkey).map_or(0, |v| *v.value());
+        if failures >= THREAD_MAX_RETRIES {
+            self.observers.thread.executable_threads.remove(&thread_pubkey);
+            self.threads_retries.remove(&thread_pubkey);
+            return true
+        }
+        false
+    }
+    
+    fn record_thread_status(self: Arc<Self>, thread_pubkey: Pubkey) {
+        self.threads_retries
+            .entry(thread_pubkey)
+            .and_modify(|v| {
+                *v += 1
+            })
+            .or_insert(1);
     }
 }
 

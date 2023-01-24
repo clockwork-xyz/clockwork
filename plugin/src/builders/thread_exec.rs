@@ -5,7 +5,6 @@ use clockwork_client::{
     thread::state::{Thread, Trigger},
     Client as ClockworkClient,
 };
-use dashmap::DashMap;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::{
@@ -26,21 +25,6 @@ static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 /// Max compute units that may be used by transaction.
 static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
-pub async fn build_thread_exec_txs(
-    client: Arc<ClockworkClient>,
-    executable_threads: DashMap<Pubkey, u64>,
-    worker_id: u64,
-) -> Vec<Transaction> {
-    // Build the set of exec transactions
-    // TODO Use rayon to parallelize this operation
-    let txs = executable_threads
-        .iter()
-        .filter_map(|thread_pubkey_ref| {
-            build_thread_exec_tx(client.clone(), *thread_pubkey_ref.key(), worker_id)
-        })
-        .collect::<Vec<Transaction>>();
-    txs
-}
 
 pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
