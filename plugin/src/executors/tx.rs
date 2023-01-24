@@ -9,6 +9,7 @@ use {
     },
     dashmap::{DashMap},
     log::{info, trace},
+    rayon::prelude::*,
     solana_client::rpc_config::RpcSimulateTransactionConfig,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
@@ -139,7 +140,7 @@ impl TxExecutor {
             self.observers
                 .thread
                 .executable_threads
-                .iter()
+                .par_iter()
                 .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
                 .filter_map(|entry| {
                     self.clone().try_build_thread_exec_tx(*entry.key())
@@ -152,15 +153,15 @@ impl TxExecutor {
         }
 
         self.observers.thread.executable_threads.clone()
-        .iter()
-        .filter_map(|thread_pubkey_ref| {
-            self.clone().try_build_thread_exec_tx(*thread_pubkey_ref.key())
-        })
-        .collect::<Vec<Transaction>>()
-        .iter()
-        .for_each(|tx| {
-            self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
-        });
+            .par_iter()
+            .filter_map(|thread_pubkey_ref| {
+                self.clone().try_build_thread_exec_tx(*thread_pubkey_ref.key())
+            })
+            .collect::<Vec<Transaction>>()
+            .iter()
+            .for_each(|tx| {
+                self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
+            });
 
         Ok(())
     }
