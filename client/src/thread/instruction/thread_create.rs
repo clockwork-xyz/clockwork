@@ -12,7 +12,7 @@ use {
 
 pub fn thread_create(
     authority: Pubkey,
-    id: String,
+    id: Vec<u8>,
     instructions: Vec<ClockworkInstructionData>,
     payer: Pubkey,
     thread: Pubkey,

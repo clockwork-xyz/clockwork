@@ -13,7 +13,7 @@ pub struct ThreadStop<'info> {
         seeds = [
             SEED_THREAD,
             thread.authority.as_ref(),
-            thread.id.as_bytes(),
+            thread.id.as_slice(),
         ],
         bump = thread.bump,
         has_one = authority

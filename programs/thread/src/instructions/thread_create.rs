@@ -12,7 +12,7 @@ const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
-#[instruction(id: String, instructions: Vec<InstructionData>, trigger: Trigger)]
+#[instruction(id: Vec<u8>, instructions: Vec<InstructionData>,  trigger: Trigger)]
 pub struct ThreadCreate<'info> {
     /// The authority (owner) of the thread.
     #[account()]
@@ -32,14 +32,14 @@ pub struct ThreadCreate<'info> {
         seeds = [
             SEED_THREAD,
             authority.key().as_ref(),
-            id.as_bytes(),
+            id.as_slice(),
         ],
         bump,
         payer = payer,
         space = vec![
             8, 
             size_of::<Thread>(), 
-            id.as_bytes().len(),
+            id.len(),
             instructions.try_to_vec()?.len(),  
             trigger.try_to_vec()?.len()
         ].iter().sum()
@@ -47,7 +47,7 @@ pub struct ThreadCreate<'info> {
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, id: String, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<ThreadCreate>, id: Vec<u8>, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let thread = &mut ctx.accounts.thread;
@@ -61,6 +61,7 @@ pub fn handler(ctx: Context<ThreadCreate>, id: String, instructions: Vec<Instruc
     thread.fee = MINIMUM_FEE;
     thread.id = id;
     thread.instructions = instructions;
+    thread.name = String::new();
     thread.next_instruction = None;
     thread.paused = false;
     thread.rate_limit = DEFAULT_RATE_LIMIT;

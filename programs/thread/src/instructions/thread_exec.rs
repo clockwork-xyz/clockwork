@@ -61,7 +61,7 @@ pub struct ThreadExec<'info> {
         seeds = [
             SEED_THREAD,
             thread.authority.as_ref(),
-            thread.id.as_bytes(),
+            thread.id.as_slice(),
         ],
         bump = thread.bump,
         constraint = !thread.paused @ ClockworkError::ThreadPaused,
@@ -125,7 +125,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         &[&[
             SEED_THREAD,
             thread.authority.as_ref(),
-            thread.id.as_bytes(),
+            thread.id.as_slice(),
             &[thread.bump],
         ]],
     )?;
