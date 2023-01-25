@@ -234,8 +234,9 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            .submit_tx(tx)
+            // .simulate_tx(tx)
+            // .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
