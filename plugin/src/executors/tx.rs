@@ -140,8 +140,11 @@ impl TxExecutor {
                     snapshot_frame,
                     self.config.worker_id,
                 ) {
-                    None => {}
+                    None => {
+                        info!("No pool rotation transaction...");
+                    }
                     Some(tx) => {
+                        info!("Pool rotation tx: {:?}", tx.signatures[0]);
                         self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                     }
                 };
