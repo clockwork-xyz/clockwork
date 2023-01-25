@@ -169,8 +169,13 @@ impl TxExecutor {
             .thread
             .executable_threads
             .par_iter()
-            .filter_map(|entry| self.clone().try_build_thread_exec_tx(*entry.key()))
-            .for_each(|tx| {
+            .filter_map(|entry| {
+                self.clone()
+                    .try_build_thread_exec_tx(*entry.key())
+                    .map(|tx| (tx, *entry.key()))
+            })
+            .for_each(|(tx, thread_pubkey)| {
+                self.clone().threads_simulations.remove(&thread_pubkey);
                 self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
         Ok(())
