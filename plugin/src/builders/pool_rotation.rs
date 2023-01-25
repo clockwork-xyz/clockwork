@@ -1,12 +1,13 @@
-use {
-    crate::pool_position::PoolPosition,
-    clockwork_client::{
-        network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
-        Client as ClockworkClient,
-    },
-    solana_sdk::transaction::Transaction,
-    std::sync::Arc,
+use std::sync::Arc;
+
+use clockwork_client::{
+    network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+    Client as ClockworkClient,
 };
+use log::info;
+use solana_sdk::transaction::Transaction;
+
+use crate::pool_position::PoolPosition;
 
 pub fn build_pool_rotation_tx<'a>(
     client: Arc<ClockworkClient>,
@@ -16,6 +17,14 @@ pub fn build_pool_rotation_tx<'a>(
     snapshot_frame: SnapshotFrame,
     worker_id: u64,
 ) -> Option<Transaction> {
+    info!("building_pool_rotation nonce: {:?} total_stake: {:?} current_position: {:?} stake_offset: {:?} stake_amount: {:?}", 
+        registry.nonce.checked_rem(snapshot.total_stake),
+        snapshot.total_stake,
+        pool_position.current_position,
+        snapshot_frame.stake_offset,
+        snapshot_frame.stake_amount,
+    );
+
     // Exit early if the rotator is not intialized
     if registry.nonce == 0 {
         return None;
