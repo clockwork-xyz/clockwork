@@ -24,7 +24,7 @@ pub struct ThreadKickoff<'info> {
         seeds = [
             SEED_THREAD,
             thread.authority.as_ref(),
-            thread.id.as_bytes(),
+            thread.id.as_slice(),
         ],
         bump = thread.bump,
         constraint = !thread.paused @ ClockworkError::ThreadPaused,

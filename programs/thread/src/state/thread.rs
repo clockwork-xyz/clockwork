@@ -20,9 +20,11 @@ pub struct Thread {
     /// The number of lamports to payout to workers per execution.
     pub fee: u64,
     /// The id of the thread, given by the authority.
-    pub id: String,
+    pub id: Vec<u8>,
     /// The instructions to be executed.
     pub instructions: Vec<InstructionData>,
+    /// The name of the thread.
+    pub name: String,
     /// The next instruction to be executed.
     pub next_instruction: Option<InstructionData>,
     /// Whether or not the thread is currently paused.
@@ -35,9 +37,9 @@ pub struct Thread {
 
 impl Thread {
     /// Derive the pubkey of a thread account.
-    pub fn pubkey(authority: Pubkey, id: String) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, id: Vec<u8>) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_THREAD, authority.as_ref(), id.as_bytes()],
+            &[SEED_THREAD, authority.as_ref(), id.as_slice()],
             &crate::ID,
         )
         .0
@@ -144,6 +146,7 @@ pub enum TriggerContext {
 pub struct ThreadSettings {
     pub fee: Option<u64>,
     pub instructions: Option<Vec<InstructionData>>,
+    pub name: Option<String>,
     pub rate_limit: Option<u64>,
     pub trigger: Option<Trigger>,
 }

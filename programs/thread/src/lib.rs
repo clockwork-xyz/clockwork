@@ -34,7 +34,7 @@ pub mod thread_program {
     /// Creates a new transaction thread.
     pub fn thread_create(
         ctx: Context<ThreadCreate>,
-        id: String,
+        id: Vec<u8>,
         instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()> {
