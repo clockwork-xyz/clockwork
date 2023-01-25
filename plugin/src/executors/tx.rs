@@ -4,7 +4,7 @@ use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     Client as ClockworkClient,
 };
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use log::info;
 use rayon::prelude::*;
 use solana_client::rpc_config::RpcSimulateTransactionConfig;
@@ -36,7 +36,8 @@ pub struct TxExecutor {
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
-    pub threads_simulations: DashMap<Pubkey, u32>,
+    pub simulation_failures: DashMap<Pubkey, u32>,
+    pub simulation_locks: DashSet<Pubkey>,
 }
 
 impl TxExecutor {
@@ -54,7 +55,8 @@ impl TxExecutor {
             observers,
             runtime,
             tpu_client,
-            threads_simulations: DashMap::new(),
+            simulation_failures: DashMap::new(),
+            simulation_locks: DashSet::new(),
         }
     }
 
@@ -78,11 +80,14 @@ impl TxExecutor {
                 })
                 .unwrap();
 
-            info!("failed_simulations: {:?}", this.clone().threads_simulations);
+            info!(
+                "simulation_failures: {:?}",
+                this.clone().simulation_failures
+            );
 
             // Drop threads that have failed simulation the max number of times.
             this.clone()
-                .threads_simulations
+                .simulation_failures
                 .retain(|thread_pubkey, failed_simulations| {
                     if *failed_simulations >= MAX_THREAD_SIMULATIONS {
                         this.clone()
@@ -164,7 +169,7 @@ impl TxExecutor {
                         .map(|tx| (tx, *entry.key()))
                 })
                 .for_each(|(tx, thread_pubkey)| {
-                    self.clone().threads_simulations.remove(&thread_pubkey);
+                    self.clone().simulation_failures.remove(&thread_pubkey);
                     self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                 });
             return Ok(());
@@ -180,26 +185,36 @@ impl TxExecutor {
                     .map(|tx| (tx, *entry.key()))
             })
             .for_each(|(tx, thread_pubkey)| {
-                self.clone().threads_simulations.remove(&thread_pubkey);
+                self.clone().simulation_failures.remove(&thread_pubkey);
                 self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
         Ok(())
     }
 
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
-        crate::builders::build_thread_exec_tx(
+        // Acquire lock on thread for simulation.
+        if !self.simulation_locks.insert(thread_pubkey) {
+            return None;
+        }
+
+        // Build the thread_exec transaction.
+        let tx = crate::builders::build_thread_exec_tx(
             self.client.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
         .or_else(|| {
             self.clone()
-                .threads_simulations
+                .simulation_failures
                 .entry(thread_pubkey)
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
             None
-        })
+        });
+
+        // Drop simulation lock.
+        self.simulation_locks.remove(&thread_pubkey);
+        tx
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
