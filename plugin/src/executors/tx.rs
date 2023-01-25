@@ -78,6 +78,8 @@ impl TxExecutor {
                 })
                 .unwrap();
 
+            info!("failed_simulations: {:?}", this.clone().threads_simulations);
+
             // Drop threads that have failed simulation the max number of times.
             this.clone()
                 .threads_simulations
@@ -149,23 +151,17 @@ impl TxExecutor {
                 .for_each(|tx| {
                     self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                 });
-
             return Ok(());
         }
 
         self.observers
             .thread
             .executable_threads
-            .clone()
             .par_iter()
-            .filter_map(|thread_pubkey_ref| {
-                self.clone()
-                    .try_build_thread_exec_tx(*thread_pubkey_ref.key())
-            })
+            .filter_map(|entry| self.clone().try_build_thread_exec_tx(*entry.key()))
             .for_each(|tx| {
                 self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
-
         Ok(())
     }
 
@@ -199,13 +195,12 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .submit_tx(tx)
-            // .simulate_tx(tx)
-            // .and_then(|tx| self.clone().submit_tx(&tx))
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
-    fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
 
