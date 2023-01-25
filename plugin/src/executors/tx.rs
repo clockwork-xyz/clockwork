@@ -83,7 +83,18 @@ impl TxExecutor {
             // Drop threads that have failed simulation the max number of times.
             this.clone()
                 .threads_simulations
-                .retain(|_, v| *v < MAX_THREAD_SIMULATIONS);
+                .retain(|thread_pubkey, failed_simulations| {
+                    if *failed_simulations >= MAX_THREAD_SIMULATIONS {
+                        this.clone()
+                            .observers
+                            .thread
+                            .executable_threads
+                            .remove(thread_pubkey);
+                        false
+                    } else {
+                        true
+                    }
+                });
 
             // Purge message history that is beyond the dedupe period.
             this.clone()
