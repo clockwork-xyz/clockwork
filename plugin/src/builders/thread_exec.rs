@@ -25,7 +25,6 @@ static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 /// Max compute units that may be used by transaction.
 static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
-
 pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
     thread_pubkey: Pubkey,
@@ -149,7 +148,7 @@ pub fn build_thread_exec_tx(
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[client.payer()], blockhash);
     info!(
-        "sim_duration: {:#?} instruction_count: {:#?} compute_units: {:#?} tx_sig: {:#?}",
+        "sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
         now.elapsed(),
         successful_ixs.len(),
         units_consumed,
