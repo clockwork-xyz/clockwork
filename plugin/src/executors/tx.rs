@@ -1,37 +1,34 @@
-use {
-    crate::{
-        config::PluginConfig, observers::Observers, pool_position::PoolPosition,
-        tpu_client::TpuClient,
-    },
-    clockwork_client::{
-        network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
-        Client as ClockworkClient,
-    },
-    dashmap::{DashMap},
-    log::{info, trace},
-    rayon::prelude::*,
-    solana_client::rpc_config::RpcSimulateTransactionConfig,
-    solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, Result as PluginResult,
-    },
-    solana_program::{hash::Hash, message::Message, pubkey::Pubkey},
-    solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction},
-    std::{fmt::Debug, sync::Arc},
-    tokio::runtime::Runtime,
+use std::{fmt::Debug, sync::Arc};
+
+use clockwork_client::{
+    network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+    Client as ClockworkClient,
+};
+use dashmap::DashMap;
+use log::info;
+use rayon::prelude::*;
+use solana_client::rpc_config::RpcSimulateTransactionConfig;
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, Result as PluginResult,
+};
+use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
+use solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction};
+use tokio::runtime::Runtime;
+
+use crate::{
+    config::PluginConfig, observers::Observers, pool_position::PoolPosition, tpu_client::TpuClient,
 };
 
-/// Number of slots to wait before retrying a message
+/// Number of slots to wait before attempting to resend a message.
 static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 
 /// Number of slots to wait before trying to execute a thread while not in the pool.
 static THREAD_TIMEOUT_WINDOW: u64 = 10;
 
-/// Number of times to retry a thread
-static THREAD_MAX_RETRIES: u32 = 3;
+/// Number of times to retry a thread simulation.
+static MAX_THREAD_SIMULATIONS: u32 = 3;
 
-/**
- * TxExecutor
- */
+/// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
     pub client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
@@ -39,7 +36,7 @@ pub struct TxExecutor {
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
-    pub threads_retries: DashMap<Pubkey, u32>,
+    pub threads_simulations: DashMap<Pubkey, u32>,
 }
 
 impl TxExecutor {
@@ -57,7 +54,7 @@ impl TxExecutor {
             observers,
             runtime,
             tpu_client,
-            threads_retries: DashMap::new(),
+            threads_simulations: DashMap::new(),
         }
     }
 
@@ -81,6 +78,16 @@ impl TxExecutor {
                 })
                 .unwrap();
 
+            // Drop threads that have failed simulation the max number of times.
+            this.clone()
+                .threads_simulations
+                .retain(|_, v| *v < MAX_THREAD_SIMULATIONS);
+
+            // Purge message history that is beyond the dedupe period.
+            this.clone()
+                .message_history
+                .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
+
             // Rotate into the worker pool.
             this.clone()
                 .execute_pool_rotate_txs(slot, pool_position.clone())
@@ -92,10 +99,6 @@ impl TxExecutor {
                 .execute_thread_exec_txs(slot, pool_position)
                 .await
                 .ok();
-
-            // Purge message history that is beyond the dedupe period.
-            this.message_history
-                .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
 
             Ok(())
         })
@@ -142,9 +145,7 @@ impl TxExecutor {
                 .executable_threads
                 .par_iter()
                 .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
-                .filter_map(|entry| {
-                    self.clone().try_build_thread_exec_tx(*entry.key())
-                })
+                .filter_map(|entry| self.clone().try_build_thread_exec_tx(*entry.key()))
                 .for_each(|tx| {
                     self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                 });
@@ -152,39 +153,34 @@ impl TxExecutor {
             return Ok(());
         }
 
-        self.observers.thread.executable_threads.clone()
+        self.observers
+            .thread
+            .executable_threads
+            .clone()
             .par_iter()
             .filter_map(|thread_pubkey_ref| {
-                self.clone().try_build_thread_exec_tx(*thread_pubkey_ref.key())
+                self.clone()
+                    .try_build_thread_exec_tx(*thread_pubkey_ref.key())
             })
-            .collect::<Vec<Transaction>>()
-            .iter()
             .for_each(|tx| {
-                self.clone().execute_tx(slot, tx).map_err(|err| err).ok();
+                self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
 
         Ok(())
     }
 
-    pub fn try_build_thread_exec_tx(
-        self: Arc<Self>,
-        thread_pubkey: Pubkey,
-    ) -> Option<Transaction> {
-        trace!("Failed threads: {:#?}", self.threads_retries);
-        if self.clone().remove_failing_thread_if_needed(thread_pubkey) == true {
-            trace!(
-                "Thread '{}' has already been retried ({}) times; removing it from the executable threads list.",
-                thread_pubkey, THREAD_MAX_RETRIES,
-            );
-            return None
-        }
-
+    pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
         crate::builders::build_thread_exec_tx(
             self.client.clone(),
             thread_pubkey,
             self.config.worker_id,
-        ).or_else(|| {
-            self.clone().record_thread_status(thread_pubkey);
+        )
+        .or_else(|| {
+            self.clone()
+                .threads_simulations
+                .entry(thread_pubkey)
+                .and_modify(|v| *v += 1)
+                .or_insert(1);
             None
         })
     }
@@ -261,25 +257,6 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         self.runtime.spawn(f(self.clone()));
         Ok(())
-    }
-
-    fn remove_failing_thread_if_needed(self: Arc<Self>, thread_pubkey: Pubkey) -> bool {
-        let failures = self.threads_retries.get(&thread_pubkey).map_or(0, |v| *v.value());
-        if failures >= THREAD_MAX_RETRIES {
-            self.observers.thread.executable_threads.remove(&thread_pubkey);
-            self.threads_retries.remove(&thread_pubkey);
-            return true
-        }
-        false
-    }
-    
-    fn record_thread_status(self: Arc<Self>, thread_pubkey: Pubkey) {
-        self.threads_retries
-            .entry(thread_pubkey)
-            .and_modify(|v| {
-                *v += 1
-            })
-            .or_insert(1);
     }
 }
 
