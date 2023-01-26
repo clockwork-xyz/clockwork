@@ -27,7 +27,7 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 static THREAD_TIMEOUT_WINDOW: u64 = 10;
 
 /// Number of times to retry a thread simulation.
-static MAX_THREAD_SIMULATION_FAILURES: u32 = 3;
+static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 
 /// TxExecutor
 pub struct TxExecutor {
@@ -83,22 +83,6 @@ impl TxExecutor {
                 "simulation_failures: {:?}",
                 this.clone().simulation_failures
             );
-
-            // Drop threads that have failed simulation the max number of times.
-            // this.clone()
-            //     .simulation_failures
-            //     .retain(|thread_pubkey, failed_simulations| {
-            //         if *failed_simulations >= MAX_THREAD_SIMULATION_FAILURES {
-            //             this.clone()
-            //                 .observers
-            //                 .thread
-            //                 .executable_threads
-            //                 .remove(thread_pubkey);
-            //             false
-            //         } else {
-            //             true
-            //         }
-            //     });
 
             // Purge message history that is beyond the dedupe period.
             this.clone()
@@ -181,6 +165,17 @@ impl TxExecutor {
             .thread
             .executable_threads
             .par_iter()
+            .filter(|entry| {
+                // Linear backoff from simulation failures.
+                let failure_count = self
+                    .clone()
+                    .simulation_failures
+                    .get(entry.key())
+                    .map(|e| *e.value())
+                    .unwrap_or(0);
+                let backoff = ((failure_count * 3) as u64) + entry.value();
+                slot >= backoff
+            })
             .filter_map(|entry| {
                 self.clone()
                     .try_build_thread_exec_tx(*entry.key())
@@ -194,11 +189,13 @@ impl TxExecutor {
     }
 
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
-        // Build the thread_exec transaction.
+        // Get the thread.
         let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
             Err(_err) => return None,
             Ok(thread) => thread,
         };
+
+        // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
             self.client.clone(),
             thread.clone(),
@@ -206,6 +203,7 @@ impl TxExecutor {
             self.config.worker_id,
         )
         .or_else(|| {
+            // Increment the failure count.
             let failure_count = self
                 .clone()
                 .simulation_failures
@@ -214,8 +212,9 @@ impl TxExecutor {
                 .or_insert(1)
                 .value()
                 .clone();
+
+            // Drop the thread.
             if failure_count >= MAX_THREAD_SIMULATION_FAILURES {
-                // Drop the thread.
                 self.clone().simulation_failures.remove(&thread_pubkey);
                 self.clone()
                     .observers
