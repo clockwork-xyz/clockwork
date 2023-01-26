@@ -86,6 +86,22 @@ impl TxExecutor {
                 this.clone().simulation_failures
             );
 
+            // Drop threads that cross the simulation failure threshold.
+            this.clone()
+                .simulation_failures
+                .retain(|thread_pubkey, failures| {
+                    if *failures >= MAX_THREAD_SIMULATION_FAILURES {
+                        this.clone()
+                            .observers
+                            .thread
+                            .executable_threads
+                            .remove(thread_pubkey);
+                        false
+                    } else {
+                        true
+                    }
+                });
+
             // Purge message history that is beyond the dedupe period.
             this.clone()
                 .message_history
@@ -211,16 +227,16 @@ impl TxExecutor {
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
 
-            self.clone()
-                .simulation_failures
-                .remove_if(&thread_pubkey, |_, v| {
-                    if *v >= MAX_THREAD_SIMULATION_FAILURES {
-                        self.observers.thread.drop_thread(thread, thread_pubkey);
-                        true
-                    } else {
-                        false
-                    }
-                });
+            // self.clone()
+            //     .simulation_failures
+            //     .remove_if(&thread_pubkey, |_, v| {
+            //         if *v >= MAX_THREAD_SIMULATION_FAILURES {
+            //             self.observers.thread.drop_thread(thread, thread_pubkey);
+            //             true
+            //         } else {
+            //             false
+            //         }
+            //     });
             // Increment the failure count.
             // let failure_count = self
             //     .clone()
