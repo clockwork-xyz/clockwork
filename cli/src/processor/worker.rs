@@ -1,4 +1,4 @@
-use clockwork_client::network::state::Penalty;
+use clockwork_client::network::state::{Penalty, WorkerSettings};
 
 use {
     crate::errors::CliError,
@@ -95,5 +95,27 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     if !silent {
         get(client, worker_id)?;
     }
+    Ok(())
+}
+
+pub fn update(client: &Client, id: u64, signatory: Option<Keypair>) -> Result<(), CliError> {
+    // Derive worker keypair.
+    let worker_pubkey = Worker::pubkey(id);
+    let worker = client
+        .get::<Worker>(&worker_pubkey)
+        .map_err(|_err| CliError::AccountDataNotParsable(worker_pubkey.to_string()))?;
+
+    // Build and submit tx.
+    let settings = WorkerSettings {
+        commission_rate: 0,
+        signatory: signatory.map_or(worker.signatory, |v| v.pubkey()),
+    };
+    let ix = clockwork_client::network::instruction::worker_update(
+        client.payer_pubkey(),
+        settings,
+        worker_pubkey,
+    );
+    client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
+    get(client, worker.id)?;
     Ok(())
 }
