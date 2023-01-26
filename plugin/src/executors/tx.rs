@@ -205,6 +205,11 @@ impl TxExecutor {
             self.config.worker_id,
         )
         .or_else(|| {
+            self.clone()
+                .simulation_failures
+                .entry(thread_pubkey)
+                .and_modify(|v| *v += 1)
+                .or_insert(1);
             // Increment the failure count.
             // let failure_count = self
             //     .clone()
