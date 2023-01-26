@@ -582,7 +582,8 @@ pub fn app() -> Command<'static> {
                         )
                         .arg(
                             Arg::new("signatory_keypair")
-                                .index(1)
+                                .long("signatory_keypair")
+                                .short('k')
                                 .takes_value(true)
                                 .required(false)
                                 .help("Filepath to the worker's new signatory keypair"),
