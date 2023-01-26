@@ -3,6 +3,7 @@ pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
+use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
