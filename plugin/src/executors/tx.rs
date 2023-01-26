@@ -167,17 +167,17 @@ impl TxExecutor {
             .thread
             .executable_threads
             .par_iter()
-            .filter(|entry| {
-                // Linear backoff from simulation failures.
-                let failure_count = self
-                    .clone()
-                    .simulation_failures
-                    .get(entry.key())
-                    .map(|e| *e.value())
-                    .unwrap_or(0);
-                let backoff = ((failure_count * 3) as u64) + entry.value();
-                slot >= backoff
-            })
+            // .filter(|entry| {
+            //     // Linear backoff from simulation failures.
+            //     let failure_count = self
+            //         .clone()
+            //         .simulation_failures
+            //         .get(entry.key())
+            //         .map(|e| *e.value())
+            //         .unwrap_or(0);
+            //     let backoff = ((failure_count * 3) as u64) + entry.value();
+            //     slot >= backoff
+            // })
             .filter_map(|entry| {
                 self.clone()
                     .try_build_thread_exec_tx(*entry.key())
@@ -206,23 +206,23 @@ impl TxExecutor {
         )
         .or_else(|| {
             // Increment the failure count.
-            let failure_count = self
-                .clone()
-                .simulation_failures
-                .entry(thread_pubkey)
-                .and_modify(|v| *v += 1)
-                .or_insert(1)
-                .value()
-                .clone();
+            // let failure_count = self
+            //     .clone()
+            //     .simulation_failures
+            //     .entry(thread_pubkey)
+            //     .and_modify(|v| *v += 1)
+            //     .or_insert(1)
+            //     .value()
+            //     .clone();
 
             // Drop the thread.
-            if failure_count >= MAX_THREAD_SIMULATION_FAILURES {
-                self.clone().simulation_failures.remove(&thread_pubkey);
-                self.clone()
-                    .observers
-                    .thread
-                    .drop_thread(thread, thread_pubkey);
-            }
+            // if failure_count >= MAX_THREAD_SIMULATION_FAILURES {
+            //     self.clone().simulation_failures.remove(&thread_pubkey);
+            //     self.clone()
+            //         .observers
+            //         .thread
+            //         .drop_thread(thread, thread_pubkey);
+            // }
             None
         })
     }
