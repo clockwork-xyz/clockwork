@@ -210,6 +210,17 @@ impl TxExecutor {
                 .entry(thread_pubkey)
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
+
+            self.clone()
+                .simulation_failures
+                .remove_if(&thread_pubkey, |_, v| {
+                    if *v >= MAX_THREAD_SIMULATION_FAILURES {
+                        self.observers.thread.drop_thread(thread, thread_pubkey);
+                        true
+                    } else {
+                        false
+                    }
+                });
             // Increment the failure count.
             // let failure_count = self
             //     .clone()

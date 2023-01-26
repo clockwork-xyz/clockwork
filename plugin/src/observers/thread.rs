@@ -181,18 +181,18 @@ impl ThreadObserver {
 
     pub fn drop_thread(&self, thread: Thread, thread_pubkey: Pubkey) {
         self.executable_threads.remove(&thread_pubkey);
-        // match thread.trigger {
-        //     Trigger::Account {
-        //         address,
-        //         offset: _,
-        //         size: _,
-        //     } => {
-        //         if let Some(threads) = self.listener_threads.get(&address) {
-        //             threads.remove(&thread_pubkey);
-        //         }
-        //     }
-        //     _ => {}
-        // }
+        match thread.trigger {
+            Trigger::Account {
+                address,
+                offset: _,
+                size: _,
+            } => {
+                if let Some(threads) = self.listener_threads.get(&address) {
+                    threads.remove(&thread_pubkey);
+                }
+            }
+            _ => {}
+        }
     }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
