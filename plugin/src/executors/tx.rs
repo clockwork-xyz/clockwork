@@ -60,10 +60,8 @@ impl TxExecutor {
     }
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        info!("debug_xx");
         self.spawn(|this| async move {
             // Get this worker's position in the delegate pool.
-            info!("debug_x1");
             let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let pool_position = this
                 .client
@@ -91,12 +89,16 @@ impl TxExecutor {
                 .simulation_failures
                 .retain(|thread_pubkey, failures| {
                     if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-                        this.clone()
-                            .observers
-                            .thread
-                            .executable_threads
-                            .remove(thread_pubkey);
-                        false
+                        match this.clone().client.clone().get::<Thread>(&thread_pubkey) {
+                            Err(_err) => true,
+                            Ok(thread) => {
+                                this.clone()
+                                    .observers
+                                    .thread
+                                    .drop_thread(thread, *thread_pubkey);
+                                false
+                            }
+                        }
                     } else {
                         true
                     }
@@ -226,35 +228,6 @@ impl TxExecutor {
                 .entry(thread_pubkey)
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
-
-            // self.clone()
-            //     .simulation_failures
-            //     .remove_if(&thread_pubkey, |_, v| {
-            //         if *v >= MAX_THREAD_SIMULATION_FAILURES {
-            //             self.observers.thread.drop_thread(thread, thread_pubkey);
-            //             true
-            //         } else {
-            //             false
-            //         }
-            //     });
-            // Increment the failure count.
-            // let failure_count = self
-            //     .clone()
-            //     .simulation_failures
-            //     .entry(thread_pubkey)
-            //     .and_modify(|v| *v += 1)
-            //     .or_insert(1)
-            //     .value()
-            //     .clone();
-
-            // Drop the thread.
-            // if failure_count >= MAX_THREAD_SIMULATION_FAILURES {
-            //     self.clone().simulation_failures.remove(&thread_pubkey);
-            //     self.clone()
-            //         .observers
-            //         .thread
-            //         .drop_thread(thread, thread_pubkey);
-            // }
             None
         })
     }

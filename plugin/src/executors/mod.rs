@@ -3,7 +3,6 @@ pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
-use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
@@ -17,11 +16,8 @@ pub struct Executors {
 
 impl Executors {
     pub fn execute_work(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        info!("debug_ax");
         self.spawn(|this| async move {
-            info!("debug_a1");
-            let e = this.tx.clone().execute_txs(slot);
-            info!("debug_a2: {:?}", e);
+            this.tx.clone().execute_txs(slot)?;
             this.webhook.clone().execute_requests()?;
             Ok(())
         })
