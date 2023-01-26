@@ -60,6 +60,7 @@ impl TxExecutor {
     }
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        info!("debug_xx");
         self.spawn(|this| async move {
             // Get this worker's position in the delegate pool.
             info!("debug_x1");
