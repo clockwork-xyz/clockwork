@@ -142,7 +142,9 @@ impl GeyserPlugin for ClockworkPlugin {
                         self.observers.thread.cron_threads.len()
                     );
                     self.observers.thread.clone().observe_processed_slot(slot)?;
+                    info!("debug_a");
                     executors.clone().execute_work(slot)?;
+                    info!("debug_b");
                 }
                 None => (),
             },
