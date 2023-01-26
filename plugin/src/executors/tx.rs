@@ -62,6 +62,7 @@ impl TxExecutor {
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
             // Get this worker's position in the delegate pool.
+            info!("debug_x1");
             let worker_pubkey = Worker::pubkey(this.config.worker_id);
             let pool_position = this
                 .client

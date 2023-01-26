@@ -17,7 +17,9 @@ pub struct Executors {
 impl Executors {
     pub fn execute_work(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
+            info!("debug_a1");
             this.tx.clone().execute_txs(slot)?;
+            info!("debug_a2");
             this.webhook.clone().execute_requests()?;
             Ok(())
         })
