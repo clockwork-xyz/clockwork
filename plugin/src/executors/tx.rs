@@ -167,17 +167,17 @@ impl TxExecutor {
             .thread
             .executable_threads
             .par_iter()
-            // .filter(|entry| {
-            //     // Linear backoff from simulation failures.
-            //     let failure_count = self
-            //         .clone()
-            //         .simulation_failures
-            //         .get(entry.key())
-            //         .map(|e| *e.value())
-            //         .unwrap_or(0);
-            //     let backoff = ((failure_count * 3) as u64) + entry.value();
-            //     slot >= backoff
-            // })
+            .filter(|entry| {
+                // Linear backoff from simulation failures.
+                let failure_count = self
+                    .clone()
+                    .simulation_failures
+                    .get(entry.key())
+                    .map(|e| *e.value())
+                    .unwrap_or(0);
+                let backoff = ((failure_count * 3) as u64) + entry.value();
+                slot >= backoff
+            })
             .filter_map(|entry| {
                 self.clone()
                     .try_build_thread_exec_tx(*entry.key())
