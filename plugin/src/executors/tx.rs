@@ -2,9 +2,10 @@ use std::{fmt::Debug, sync::Arc};
 
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+    thread::state::Thread,
     Client as ClockworkClient,
 };
-use dashmap::{DashMap, DashSet};
+use dashmap::DashMap;
 use log::info;
 use rayon::prelude::*;
 use solana_client::rpc_config::RpcSimulateTransactionConfig;
@@ -26,7 +27,7 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 static THREAD_TIMEOUT_WINDOW: u64 = 10;
 
 /// Number of times to retry a thread simulation.
-static MAX_THREAD_SIMULATIONS: u32 = 3;
+static MAX_THREAD_SIMULATION_FAILURES: u32 = 3;
 
 /// TxExecutor
 pub struct TxExecutor {
@@ -37,7 +38,6 @@ pub struct TxExecutor {
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
     pub simulation_failures: DashMap<Pubkey, u32>,
-    pub simulation_locks: DashSet<Pubkey>,
 }
 
 impl TxExecutor {
@@ -56,7 +56,6 @@ impl TxExecutor {
             runtime,
             tpu_client,
             simulation_failures: DashMap::new(),
-            simulation_locks: DashSet::new(),
         }
     }
 
@@ -86,20 +85,20 @@ impl TxExecutor {
             );
 
             // Drop threads that have failed simulation the max number of times.
-            this.clone()
-                .simulation_failures
-                .retain(|thread_pubkey, failed_simulations| {
-                    if *failed_simulations >= MAX_THREAD_SIMULATIONS {
-                        this.clone()
-                            .observers
-                            .thread
-                            .executable_threads
-                            .remove(thread_pubkey);
-                        false
-                    } else {
-                        true
-                    }
-                });
+            // this.clone()
+            //     .simulation_failures
+            //     .retain(|thread_pubkey, failed_simulations| {
+            //         if *failed_simulations >= MAX_THREAD_SIMULATION_FAILURES {
+            //             this.clone()
+            //                 .observers
+            //                 .thread
+            //                 .executable_threads
+            //                 .remove(thread_pubkey);
+            //             false
+            //         } else {
+            //             true
+            //         }
+            //     });
 
             // Purge message history that is beyond the dedupe period.
             this.clone()
@@ -195,29 +194,36 @@ impl TxExecutor {
     }
 
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
-        // Acquire lock on thread for simulation.
-        if !self.simulation_locks.insert(thread_pubkey) {
-            return None;
-        }
-
         // Build the thread_exec transaction.
-        let tx = crate::builders::build_thread_exec_tx(
+        let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
+            Err(_err) => return None,
+            Ok(thread) => thread,
+        };
+        crate::builders::build_thread_exec_tx(
             self.client.clone(),
+            thread.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
         .or_else(|| {
-            self.clone()
+            let failure_count = self
+                .clone()
                 .simulation_failures
                 .entry(thread_pubkey)
                 .and_modify(|v| *v += 1)
-                .or_insert(1);
+                .or_insert(1)
+                .value()
+                .clone();
+            if failure_count >= MAX_THREAD_SIMULATION_FAILURES {
+                // Drop the thread.
+                self.clone().simulation_failures.remove(&thread_pubkey);
+                self.clone()
+                    .observers
+                    .thread
+                    .drop_thread(thread, thread_pubkey);
+            }
             None
-        });
-
-        // Drop simulation lock.
-        self.simulation_locks.remove(&thread_pubkey);
-        tx
+        })
     }
 
     fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {

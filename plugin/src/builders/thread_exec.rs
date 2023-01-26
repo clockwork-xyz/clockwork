@@ -27,14 +27,11 @@ static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
 pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
+    thread: Thread,
     thread_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
     // Grab the thread and relevant data.
-    let thread = match client.get::<Thread>(&thread_pubkey) {
-        Err(_err) => return None,
-        Ok(thread) => thread,
-    };
     let blockhash = client.get_latest_blockhash().unwrap();
     let signatory_pubkey = client.payer_pubkey();
 
