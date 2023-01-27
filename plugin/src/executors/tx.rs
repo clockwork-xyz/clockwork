@@ -89,16 +89,8 @@ impl TxExecutor {
                 .simulation_failures
                 .retain(|thread_pubkey, failures| {
                     if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-                        match this.clone().client.clone().get::<Thread>(&thread_pubkey) {
-                            Err(_err) => true,
-                            Ok(thread) => {
-                                this.clone()
-                                    .observers
-                                    .thread
-                                    .drop_thread(thread, *thread_pubkey);
-                                false
-                            }
-                        }
+                        this.observers.thread.drop_thread(*thread_pubkey);
+                        false
                     } else {
                         true
                     }
