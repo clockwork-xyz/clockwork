@@ -96,8 +96,8 @@ impl ThreadObserver {
                 for thread_pubkey in entry.value().iter() {
                     this.executable_threads.insert(*thread_pubkey, slot);
                 }
-                entry.clear();
             }
+            this.listener_threads.remove(&account_pubkey);
             Ok(())
         })
     }
