@@ -12,6 +12,7 @@ RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 
 # Bump clockwork-cron
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' macros/Cargo.toml
 
 # Bump programs
 sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
@@ -20,14 +21,17 @@ sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/
 
 # Bump network program dependencies
 sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/network/Cargo.toml
+sed -i '' -e 's/^clockwork-macros =.*/clockwork-macros = { path = "..\/..\/macros", version = "'${new_version}'" }/g' programs/network/Cargo.toml
 
 # Bump thread program dependencies
 sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/thread/Cargo.toml
+sed -i '' -e 's/^clockwork-macros =.*/clockwork-macros = { path = "..\/..\/macros", version = "'${new_version}'" }/g' programs/thread/Cargo.toml
 sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/thread/Cargo.toml
 sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/thread/Cargo.toml
 
 # Bump webhook program dependencies
 sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
+sed -i '' -e 's/^clockwork-macros =.*/clockwork-macros = { path = "..\/..\/macros", version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
 
 # Bump clockwork-client
 sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
