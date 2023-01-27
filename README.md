@@ -30,6 +30,14 @@
 | Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v1.4.0](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa?cluster=devnet) | [v1.4.0](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa) |
 | Thread | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.4.0](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | [v1.4.0](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv) |
 
+# SDKs
+For who? | Description | Language | Lib  | Examples |
+| ------ | ----------- | -------- | ---- | -------- |
+| Off-Chain Clients | Typescript binding to interact with Clockwork Programs | Typescript | [npm](https://www.npmjs.com/package/@clockwork-xyz/sdk) | [Explorer](https://github.com/clockwork-xyz/explorer)
+| Off-Chain Clients | Rust binding to interact with Clockwork Programs | Rust | [crates.io](https://crates.io/crates/clockwork-client) | [See Example Repo](https://github.com/clockwork-xyz/examples)
+| Solana Programs |  Anchor helpers to CPIs with Clockwork Programs | Anchor | [crates.io](https://crates.io/crates/clockwork-sdk) | [See Example Repo](https://github.com/clockwork-xyz/examples)
+
+
 
 
 # Notes
