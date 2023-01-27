@@ -1,13 +1,11 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
 /// Snapshot
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Snapshot {
     pub id: u64,
     pub total_frames: u64,
@@ -17,13 +15,6 @@ pub struct Snapshot {
 impl Snapshot {
     pub fn pubkey(id: u64) -> Pubkey {
         Pubkey::find_program_address(&[SEED_SNAPSHOT, id.to_be_bytes().as_ref()], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Snapshot {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Snapshot::try_deserialize(&mut data.as_slice())
     }
 }
 

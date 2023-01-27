@@ -7,7 +7,7 @@ use {
 };
 
 #[derive(Accounts)]
-pub struct SnapshotEntryCreate<'info> {
+pub struct TakeSnapshotCreateEntry<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -72,7 +72,7 @@ pub struct SnapshotEntryCreate<'info> {
     pub worker: Box<Account<'info, Worker>>,
 }
 
-pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
@@ -118,7 +118,7 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
                 AccountMetaData::new_readonly(system_program.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
-            data: anchor_sighash("snapshot_entry_create").to_vec(),
+            data: anchor_sighash("take_snapshot_create_entry").to_vec(),
         })
     } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This frame has captured all its entries. Create a frame for the next worker.
@@ -141,19 +141,10 @@ pub fn handler(ctx: Context<SnapshotEntryCreate>) -> Result<ThreadResponse> {
                     false,
                 ),
             ],
-            data: anchor_sighash("snapshot_frame_create").to_vec(),
+            data: anchor_sighash("take_snapshot_create_frame").to_vec(),
         })
     } else {
-        // All entries in this frame have been captured, and it is the last frame. The snapshot is done!
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-            ],
-            data: anchor_sighash("registry_epoch_cutover").to_vec(),
-        })
+        None
     };
 
     Ok(ThreadResponse {

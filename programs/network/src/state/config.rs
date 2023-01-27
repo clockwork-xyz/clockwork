@@ -1,7 +1,5 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-};
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_CONFIG: &[u8] = b"config";
 
@@ -10,7 +8,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
  */
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Config {
     pub admin: Pubkey,
     pub epoch_thread: Pubkey,
@@ -21,13 +19,6 @@ pub struct Config {
 impl Config {
     pub fn pubkey() -> Pubkey {
         Pubkey::find_program_address(&[SEED_CONFIG], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Config {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Config::try_deserialize(&mut data.as_slice())
     }
 }
 

@@ -21,9 +21,9 @@ pub struct ThreadWithdraw<'info> {
         seeds = [
             SEED_THREAD,
             thread.authority.as_ref(),
-            thread.id.as_bytes(),
+            thread.id.as_slice(),
         ],
-        bump,
+        bump = thread.bump,
         has_one = authority,
     )]
     pub thread: Account<'info, Thread>,

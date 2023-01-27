@@ -1,7 +1,7 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::{collections::VecDeque, convert::TryFrom},
-};
+use std::collections::VecDeque;
+
+use anchor_lang::{prelude::*, AnchorDeserialize};
+use clockwork_macros::TryFromData;
 
 pub const SEED_POOL: &[u8] = b"pool";
 
@@ -12,7 +12,7 @@ const DEFAULT_POOL_SIZE: usize = 1;
  */
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, TryFromData)]
 pub struct Pool {
     pub id: u64,
     pub size: usize,
@@ -22,13 +22,6 @@ pub struct Pool {
 impl Pool {
     pub fn pubkey(id: u64) -> Pubkey {
         Pubkey::find_program_address(&[SEED_POOL, id.to_be_bytes().as_ref()], &crate::ID).0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Pool {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Pool::try_deserialize(&mut data.as_slice())
     }
 }
 

@@ -1,14 +1,13 @@
-use {
-    anchor_lang::{
-        prelude::borsh::BorshSchema,
-        prelude::Pubkey,
-        prelude::*,
-        solana_program::{self, instruction::Instruction},
-        AnchorDeserialize,
-    },
-    static_pubkey::static_pubkey,
-    std::{convert::TryFrom, hash::Hash},
+use std::{convert::TryFrom, hash::Hash};
+
+use anchor_lang::{
+    prelude::borsh::BorshSchema,
+    prelude::Pubkey,
+    prelude::*,
+    solana_program::{self, instruction::Instruction},
+    AnchorDeserialize,
 };
+use static_pubkey::static_pubkey;
 
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
@@ -78,21 +77,13 @@ impl TryFrom<Vec<u8>> for ClockData {
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
-    /// The kickoff instruction to use on the next triggering of the thread.
-    /// If none, the kickoff instruction remains unchanged.
-    pub kickoff_instruction: Option<InstructionData>,
-    /// The next instruction to use on the next execution of the thread.
+    /// The next instruction to execute.
     pub next_instruction: Option<InstructionData>,
 }
 
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
-            #[deprecated(
-                since = "1.4.2",
-                note = "In v2, the kickoff_instruction property will be removed. Users should instead write static kickoff instructions that can derive any needed dynamic accounts addresses and return them in the next_instruction."
-            )]
-            kickoff_instruction: None,
             next_instruction: None,
         };
     }

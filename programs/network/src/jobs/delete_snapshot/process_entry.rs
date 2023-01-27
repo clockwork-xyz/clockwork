@@ -1,9 +1,7 @@
-use clockwork_utils::{InstructionData, AccountMetaData, anchor_sighash};
-
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
+use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::{InstructionData, AccountMetaData, anchor_sighash, ThreadResponse}};
 
 #[derive(Accounts)]
-pub struct SnapshotEntryDelete<'info> {
+pub struct DeleteSnapshotProcessEntry<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
 
@@ -55,7 +53,7 @@ pub struct SnapshotEntryDelete<'info> {
     pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
@@ -109,7 +107,7 @@ pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ThreadResponse> {
                 AccountMetaData::new(snapshot_frame.key(), false),
                 AccountMetaData::new(thread.key(), true),
             ],
-            data: anchor_sighash("snapshot_entry_delete").to_vec(),
+            data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // This frame has no more entries. Move onto the next frame.
@@ -122,12 +120,12 @@ pub fn handler(ctx: Context<SnapshotEntryDelete>) -> Result<ThreadResponse> {
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
                 AccountMetaData::new(thread.key(), true),
             ],
-            data: anchor_sighash("snapshot_frame_delete").to_vec(),
+            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
     } else {
         // This frame as no more entires and it was the last frame in the snapshot. We are done!
         None
     };
 
-    Ok( ThreadResponse { next_instruction, ..ThreadResponse::default() } )
+    Ok( ThreadResponse { next_instruction } )
 }
