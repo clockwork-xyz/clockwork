@@ -85,16 +85,20 @@ impl TxExecutor {
             );
 
             // Drop threads that cross the simulation failure threshold.
-            // this.clone()
-            //     .simulation_failures
-            //     .retain(|thread_pubkey, failures| {
-            //         if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-            //             this.observers.thread.drop_thread(*thread_pubkey);
-            //             false
-            //         } else {
-            //             true
-            //         }
-            //     });
+            this.clone()
+                .simulation_failures
+                .retain(|thread_pubkey, failures| {
+                    if *failures >= MAX_THREAD_SIMULATION_FAILURES {
+                        // this.observers.thread.drop_thread(*thread_pubkey);
+                        this.observers
+                            .thread
+                            .executable_threads
+                            .remove(thread_pubkey);
+                        false
+                    } else {
+                        true
+                    }
+                });
 
             // Purge message history that is beyond the dedupe period.
             this.clone()
