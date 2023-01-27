@@ -79,11 +79,6 @@ impl TxExecutor {
                 })
                 .unwrap();
 
-            info!(
-                "simulation_failures: {:?}",
-                this.clone().simulation_failures
-            );
-
             // Drop threads that cross the simulation failure threshold.
             this.clone()
                 .simulation_failures
@@ -139,11 +134,8 @@ impl TxExecutor {
                     snapshot_frame,
                     self.config.worker_id,
                 ) {
-                    None => {
-                        info!("No pool rotation transaction...");
-                    }
+                    None => {}
                     Some(tx) => {
-                        info!("Pool rotation tx: {:?}", tx.signatures[0]);
                         self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                     }
                 };

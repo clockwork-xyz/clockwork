@@ -81,12 +81,14 @@ pub fn build_thread_exec_tx(
             // If the simulation was successful, pack the ix into the tx.
             Ok(response) => {
                 if response.value.err.is_some() {
-                    info!(
-                        "Error simulating thread: {} error: \"{}\" logs: {:?}",
-                        thread_pubkey,
-                        response.value.err.unwrap(),
-                        response.value.logs.unwrap_or(vec![])
-                    );
+                    if successful_ixs.is_empty() {
+                        info!(
+                            "thread: {} simulation_error: \"{}\" logs: {:?}",
+                            thread_pubkey,
+                            response.value.err.unwrap(),
+                            response.value.logs.unwrap_or(vec![])
+                        );
+                    }
                     break;
                 }
 
@@ -145,7 +147,8 @@ pub fn build_thread_exec_tx(
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[client.payer()], blockhash);
     info!(
-        "sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        "thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        thread_pubkey,
         now.elapsed(),
         successful_ixs.len(),
         units_consumed,
