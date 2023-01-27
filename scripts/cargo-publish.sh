@@ -3,6 +3,8 @@
 # Publish shared libs
 cargo publish -p clockwork-cron
 sleep 25
+cargo publish -p clockwork-macros
+sleep 25
 cargo publish -p clockwork-utils
 sleep 25
 
