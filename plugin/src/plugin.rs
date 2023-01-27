@@ -136,9 +136,10 @@ impl GeyserPlugin for ClockworkPlugin {
             SlotStatus::Processed => match &self.executors {
                 Some(executors) => {
                     info!(
-                        "slot: {} executable_threads: {} cron_threads: {}",
+                        "slot: {} executable_threads: {:?} cron_threads: {}",
                         slot,
-                        self.observers.thread.executable_threads.len(),
+                        // self.observers.thread.executable_threads.len(),
+                        self.observers.thread.executable_threads,
                         self.observers.thread.cron_threads.len()
                     );
                     self.observers.thread.clone().observe_processed_slot(slot)?;

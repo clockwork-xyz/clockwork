@@ -10,6 +10,7 @@ mod registry_epoch_kickoff;
 mod registry_nonce_hash;
 mod registry_unlock;
 mod worker_create;
+mod worker_update;
 
 pub use config_update::*;
 pub use delegation_create::*;
@@ -23,3 +24,4 @@ pub use registry_epoch_kickoff::*;
 pub use registry_nonce_hash::*;
 pub use registry_unlock::*;
 pub use worker_create::*;
+pub use worker_update::*;

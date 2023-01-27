@@ -28,6 +28,9 @@ pub struct ThreadObserver {
     // Map from account pubkeys to the set of threads listening for an account update.
     pub listener_threads: DashMap<Pubkey, DashSet<Pubkey>>,
 
+    // // Map from thread pubkeys to the account they're listening to.
+    // pub listener_threads_reverse: DashMap<Pubkey, Pubkey>,
+
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -40,6 +43,7 @@ impl ThreadObserver {
             executable_threads: DashMap::new(),
             cron_threads: DashMap::new(),
             listener_threads: DashMap::new(),
+            // listener_threads_reverse: DashMap::new(),
             runtime,
         }
     }
@@ -93,6 +97,7 @@ impl ThreadObserver {
                     this.executable_threads.insert(*thread_pubkey, slot);
                 }
             }
+            this.listener_threads.remove(&account_pubkey);
             Ok(())
         })
     }
@@ -134,6 +139,7 @@ impl ThreadObserver {
                                 v.insert(thread_pubkey);
                                 v
                             });
+                        // this.listener_threads_reverse.insert(thread_pubkey, address);
                     }
                     Trigger::Cron {
                         schedule,
@@ -178,6 +184,18 @@ impl ThreadObserver {
             Ok(())
         })
     }
+
+    // pub fn drop_thread(&self, thread_pubkey: Pubkey) {
+    //     self.executable_threads.remove(&thread_pubkey);
+    //     if let Some(account_pubkey) = self.listener_threads_reverse.get(&thread_pubkey) {
+    //         self.listener_threads_reverse.remove(&thread_pubkey);
+    //         self.listener_threads
+    //             .entry(*account_pubkey)
+    //             .and_modify(|v| {
+    //                 v.remove(&thread_pubkey);
+    //             });
+    //     }
+    // }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
         self: &Arc<Self>,

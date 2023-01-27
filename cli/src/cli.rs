@@ -120,6 +120,10 @@ pub enum CliCommand {
     WorkerGet {
         id: u64,
     },
+    WorkerUpdate {
+        id: u64,
+        signatory: Option<Keypair>,
+    },
 }
 
 pub fn app() -> Command<'static> {
@@ -564,6 +568,25 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(true)
                                 .help("The ID of the worker to lookup"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("update")
+                        .about("Update a new worker")
+                        .arg(
+                            Arg::new("id")
+                                .index(1)
+                                .takes_value(true)
+                                .required(true)
+                                .help("The ID of the worker to edit"),
+                        )
+                        .arg(
+                            Arg::new("signatory_keypair")
+                                .long("signatory_keypair")
+                                .short('k')
+                                .takes_value(true)
+                                .required(false)
+                                .help("Filepath to the worker's new signatory keypair"),
                         ),
                 ),
         )
