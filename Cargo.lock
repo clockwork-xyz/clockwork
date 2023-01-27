@@ -775,7 +775,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anyhow",
  "cargo_toml",
@@ -803,7 +803,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -821,7 +821,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "chrono",
  "nom",
@@ -839,7 +839,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -849,7 +849,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-sdk"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -860,7 +860,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-thread-program"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -874,7 +874,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-utils"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-webhook-program"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "clockwork-macros",
@@ -892,7 +892,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork_plugin"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "bincode",

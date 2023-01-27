@@ -2,6 +2,7 @@ use std::{fmt::Debug, sync::Arc};
 
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+    thread::state::Thread,
     Client as ClockworkClient,
 };
 use dashmap::DashMap;
@@ -26,7 +27,7 @@ static MESSAGE_DEDUPE_PERIOD: u64 = 10;
 static THREAD_TIMEOUT_WINDOW: u64 = 10;
 
 /// Number of times to retry a thread simulation.
-static MAX_THREAD_SIMULATIONS: u32 = 3;
+static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 
 /// TxExecutor
 pub struct TxExecutor {
@@ -36,7 +37,7 @@ pub struct TxExecutor {
     pub observers: Arc<Observers>,
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
-    pub threads_simulations: DashMap<Pubkey, u32>,
+    pub simulation_failures: DashMap<Pubkey, u32>,
 }
 
 impl TxExecutor {
@@ -54,7 +55,7 @@ impl TxExecutor {
             observers,
             runtime,
             tpu_client,
-            threads_simulations: DashMap::new(),
+            simulation_failures: DashMap::new(),
         }
     }
 
@@ -78,10 +79,21 @@ impl TxExecutor {
                 })
                 .unwrap();
 
-            // Drop threads that have failed simulation the max number of times.
+            // Drop threads that cross the simulation failure threshold.
             this.clone()
-                .threads_simulations
-                .retain(|_, v| *v < MAX_THREAD_SIMULATIONS);
+                .simulation_failures
+                .retain(|thread_pubkey, failures| {
+                    if *failures >= MAX_THREAD_SIMULATION_FAILURES {
+                        // this.observers.thread.drop_thread(*thread_pubkey);
+                        this.observers
+                            .thread
+                            .executable_threads
+                            .remove(thread_pubkey);
+                        false
+                    } else {
+                        true
+                    }
+                });
 
             // Purge message history that is beyond the dedupe period.
             this.clone()
@@ -145,39 +157,62 @@ impl TxExecutor {
                 .executable_threads
                 .par_iter()
                 .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
-                .filter_map(|entry| self.clone().try_build_thread_exec_tx(*entry.key()))
-                .for_each(|tx| {
+                .filter_map(|entry| {
+                    self.clone()
+                        .try_build_thread_exec_tx(*entry.key())
+                        .map(|tx| (tx, *entry.key()))
+                })
+                .for_each(|(tx, thread_pubkey)| {
+                    self.clone().simulation_failures.remove(&thread_pubkey);
                     self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                 });
-
             return Ok(());
         }
 
         self.observers
             .thread
             .executable_threads
-            .clone()
             .par_iter()
-            .filter_map(|thread_pubkey_ref| {
-                self.clone()
-                    .try_build_thread_exec_tx(*thread_pubkey_ref.key())
+            .filter(|entry| {
+                // Linear backoff from simulation failures.
+                let failure_count = self
+                    .clone()
+                    .simulation_failures
+                    .get(entry.key())
+                    .map(|e| *e.value())
+                    .unwrap_or(0);
+                let backoff = ((failure_count * 3) as u64) + entry.value();
+                slot >= backoff
             })
-            .for_each(|tx| {
+            .filter_map(|entry| {
+                self.clone()
+                    .try_build_thread_exec_tx(*entry.key())
+                    .map(|tx| (tx, *entry.key()))
+            })
+            .for_each(|(tx, thread_pubkey)| {
+                self.clone().simulation_failures.remove(&thread_pubkey);
                 self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
-
         Ok(())
     }
 
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
+        // Get the thread.
+        let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
+            Err(_err) => return None,
+            Ok(thread) => thread,
+        };
+
+        // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
             self.client.clone(),
+            thread.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
         .or_else(|| {
             self.clone()
-                .threads_simulations
+                .simulation_failures
                 .entry(thread_pubkey)
                 .and_modify(|v| *v += 1)
                 .or_insert(1);
@@ -199,13 +234,12 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .submit_tx(tx)
-            // .simulate_tx(tx)
-            // .and_then(|tx| self.clone().submit_tx(&tx))
+            .simulate_tx(tx)
+            .and_then(|tx| self.clone().submit_tx(&tx))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
-    fn _simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         // TODO Only submit this transaction if the simulated increase in this worker's
         //      Fee account balance is greater than the lamports spent by the worker.
 

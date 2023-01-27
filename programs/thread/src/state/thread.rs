@@ -67,7 +67,7 @@ impl ThreadAccount for Account<'_, Thread> {
     fn pubkey(&self) -> Pubkey {
         Thread::pubkey(self.authority, self.id.clone())
     }
-
+    
     fn realloc(&mut self) -> Result<()> {
         // Realloc memory for the thread account
         let data_len = 8 + self.try_to_vec()?.len();

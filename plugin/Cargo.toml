@@ -1,6 +1,6 @@
 [package]
 name = "clockwork_plugin"
-version = "1.4.0"
+version = "1.4.2"
 edition = "2021"
 description = "Clockwork plugin for Solana validators"
 license = "AGPL-3.0-or-later"

@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-thread-program"
-version = "1.4.0"
+version = "1.4.2"
 description = "Clockwork thread program"
 edition = "2021"
 license = "AGPL-3.0-or-later"

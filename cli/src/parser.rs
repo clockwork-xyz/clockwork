@@ -241,6 +241,10 @@ fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", matches)) => Ok(CliCommand::WorkerGet {
             id: parse_u64("id", matches)?,
         }),
+        Some(("update", matches)) => Ok(CliCommand::WorkerUpdate {
+            id: parse_u64("id", matches)?,
+            signatory: parse_keypair_file("signatory_keypair", matches).ok(),
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),
