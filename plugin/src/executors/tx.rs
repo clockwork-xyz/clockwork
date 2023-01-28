@@ -136,13 +136,6 @@ impl TxExecutor {
                 ) {
                     None => {}
                     Some(tx) => {
-                        info!("nonce: {:?} total_stake: {:?} current_position: {:?} stake_offset: {:?} stake_amount: {:?}", 
-                            registry.nonce.checked_rem(snapshot.total_stake),
-                            snapshot.total_stake,
-                            pool_position.current_position,
-                            snapshot_frame.stake_offset,
-                            snapshot_frame.stake_amount,
-                        );
                         self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
                     }
                 };
