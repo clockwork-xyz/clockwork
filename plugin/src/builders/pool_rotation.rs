@@ -17,14 +17,6 @@ pub fn build_pool_rotation_tx<'a>(
     snapshot_frame: SnapshotFrame,
     worker_id: u64,
 ) -> Option<Transaction> {
-    info!("building_pool_rotation nonce: {:?} total_stake: {:?} current_position: {:?} stake_offset: {:?} stake_amount: {:?}", 
-        registry.nonce.checked_rem(snapshot.total_stake),
-        snapshot.total_stake,
-        pool_position.current_position,
-        snapshot_frame.stake_offset,
-        snapshot_frame.stake_amount,
-    );
-
     // Exit early if the rotator is not intialized
     if registry.nonce == 0 {
         return None;
