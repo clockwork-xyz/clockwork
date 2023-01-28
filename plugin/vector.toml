@@ -62,15 +62,13 @@ inputs = ["filter_solana_logs"]
 source = '''
   if .source == "clockwork_plugin::builders::thread_exec" {
     .grok_results = parse_groks!(
-	.message, 
-	patterns: [
-	  "Error simulating thread: %{_thread} error: %{_error} logs: %{_logs}"
-	],
-	aliases: {
-	  "_thread": "%{DATA:thread}",
-          "_error": "%{QUOTEDSTRING:error}",
-          "_logs": "%{GREEDYDATA:logs}"
-	}
+	    .message, 
+	    patterns: ["thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
+	    aliases: {
+	      "_thread": "%{DATA:thread}",
+        "_error": "%{QUOTEDSTRING:error}",
+        "_logs": "%{GREEDYDATA:logs}"
+	    }
     )
     .thread = .grok_results.thread
     .error_msg = .grok_results.error
@@ -133,7 +131,7 @@ name = "clockwork_simulation_test"
 [[tests.inputs]]
 insert_at = "parse_solana_logs"
 type = "raw"
-value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] Error simulating thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
+value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K simulation_error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
 
 [[tests.outputs]]
 extract_from = "parse_clockwork_logs"
