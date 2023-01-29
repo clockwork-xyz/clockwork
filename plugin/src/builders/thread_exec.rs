@@ -141,12 +141,12 @@ pub fn build_thread_exec_tx(
     // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
     if let Some(units_consumed) = units_consumed {
         let units_committed = std::cmp::min(
-            units_consumed + TRANSACTION_COMPUTE_UNIT_BUFFER,
+            (units_consumed as u32) + TRANSACTION_COMPUTE_UNIT_BUFFER,
             TRANSACTION_COMPUTE_UNIT_LIMIT,
         );
         _ = std::mem::replace(
             &mut successful_ixs[0],
-            ComputeBudgetInstruction::set_compute_unit_limit(units_committed as u32),
+            ComputeBudgetInstruction::set_compute_unit_limit(units_committed),
         );
     }
 
