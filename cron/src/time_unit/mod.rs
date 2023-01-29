@@ -206,6 +206,9 @@ where
                     }
                     specifier => Self::ordinals_from_specifier(specifier)?,
                 };
+                if *step == 0 {
+                    return Err(ErrorKind::Expression(format!("step cannot be 0")).into());
+                }
                 base_set.into_iter().step_by(*step as usize).collect()
             }
             RootSpecifier::NamedPoint(ref name) => (&[Self::ordinal_from_name(name)?])
