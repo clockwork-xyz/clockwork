@@ -4,8 +4,6 @@ use {
     std::mem::size_of,
 };
 
-/// The default rate limit to initialize threads with
-const DEFAULT_RATE_LIMIT: u64 = 10;
 
 /// The minimum exec fee that may be set on a thread.
 const MINIMUM_FEE: u64 = 1000;
@@ -64,7 +62,7 @@ pub fn handler(ctx: Context<ThreadCreate>, id: Vec<u8>, instructions: Vec<Instru
     thread.name = String::new();
     thread.next_instruction = None;
     thread.paused = false;
-    thread.rate_limit = DEFAULT_RATE_LIMIT;
+    thread.rate_limit = u64::MAX;
     thread.trigger = trigger;
 
     Ok(())
