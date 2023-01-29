@@ -25,6 +25,9 @@ static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 /// Max compute units that may be used by transaction.
 static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
+/// The buffer amount to add to transactions' compute units in case on-chain PDA derivations take more CUs than used in simulation.
+static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 100;
+
 pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
     thread: Thread,
@@ -137,9 +140,13 @@ pub fn build_thread_exec_tx(
 
     // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
     if let Some(units_consumed) = units_consumed {
+        let units_committed = std::cmp::min(
+            (units_consumed as u32) + TRANSACTION_COMPUTE_UNIT_BUFFER,
+            TRANSACTION_COMPUTE_UNIT_LIMIT,
+        );
         _ = std::mem::replace(
             &mut successful_ixs[0],
-            ComputeBudgetInstruction::set_compute_unit_limit(units_consumed as u32),
+            ComputeBudgetInstruction::set_compute_unit_limit(units_committed),
         );
     }
 
