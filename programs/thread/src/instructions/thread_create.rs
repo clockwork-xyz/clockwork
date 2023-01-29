@@ -1,16 +1,19 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of,
-};
+use    std::mem::size_of;
 
+use    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+        system_program::{transfer, Transfer},
+    };
+
+use crate::state::*;
 
 /// The minimum exec fee that may be set on a thread.
 const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
-#[instruction(id: Vec<u8>, instructions: Vec<InstructionData>,  trigger: Trigger)]
+#[instruction(amount: u64, id: Vec<u8>, instructions: Vec<InstructionData>,  trigger: Trigger)]
 pub struct ThreadCreate<'info> {
     /// The authority (owner) of the thread.
     #[account()]
@@ -45,9 +48,11 @@ pub struct ThreadCreate<'info> {
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, id: Vec<u8>, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
+    let payer = &ctx.accounts.payer;
+    let system_program = &ctx.accounts.system_program;
     let thread = &mut ctx.accounts.thread;
 
     // Initialize the thread
@@ -64,6 +69,18 @@ pub fn handler(ctx: Context<ThreadCreate>, id: Vec<u8>, instructions: Vec<Instru
     thread.paused = false;
     thread.rate_limit = u64::MAX;
     thread.trigger = trigger;
+
+    // Transfer SOL from payer to the thread.
+    transfer(
+        CpiContext::new(
+            system_program.to_account_info(),
+            Transfer {
+                from: payer.to_account_info(),
+                to: thread.to_account_info(),
+            },
+        ),
+        amount
+    )?;
 
     Ok(())
 }

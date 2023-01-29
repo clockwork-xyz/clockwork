@@ -163,6 +163,7 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     let epoch_thread_id = "clockwork.network.epoch";
     let epoch_thread_pubkey = Thread::pubkey(client.payer_pubkey(), epoch_thread_id.into());
     let ix_a = clockwork_client::thread::instruction::thread_create(
+        LAMPORTS_PER_SOL,
         client.payer_pubkey(),
         epoch_thread_id.into(),
         vec![
@@ -185,6 +186,7 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     let hasher_thread_id = "clockwork.network.hasher";
     let hasher_thread_pubkey = Thread::pubkey(client.payer_pubkey(), hasher_thread_id.into());
     let ix_b = clockwork_client::thread::instruction::thread_create(
+        LAMPORTS_PER_SOL,
         client.payer_pubkey(),
         hasher_thread_id.into(),
         vec![
@@ -212,8 +214,6 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
 
     client.send_and_confirm(&vec![ix_a], &[client.payer()])?;
     client.send_and_confirm(&vec![ix_b, ix_c], &[client.payer()])?;
-    client.airdrop(&epoch_thread_pubkey, LAMPORTS_PER_SOL)?;
-    client.airdrop(&hasher_thread_pubkey, LAMPORTS_PER_SOL)?;
 
     Ok(())
 }

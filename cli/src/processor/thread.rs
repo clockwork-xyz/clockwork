@@ -23,6 +23,7 @@ pub fn create(
 ) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.clone().into_bytes());
     let ix = clockwork_client::thread::instruction::thread_create(
+        0,
         client.payer_pubkey(),
         id.into_bytes(),
         instructions,
