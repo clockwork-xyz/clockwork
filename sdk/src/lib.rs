@@ -24,11 +24,12 @@ pub mod cpi {
 
     pub fn thread_create<'info>(
         ctx: CpiContext<'_, '_, '_, 'info, ThreadCreate<'info>>,
+        amount: u64,
         id: Vec<u8>,
         instructions: Vec<crate::state::InstructionData>,
         trigger: crate::state::Trigger,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_create(ctx, id, instructions, trigger)
+        clockwork_thread_program::cpi::thread_create(ctx, amount, id, instructions, trigger)
     }
 
     pub fn thread_delete<'info>(

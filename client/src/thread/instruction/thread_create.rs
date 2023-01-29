@@ -11,6 +11,7 @@ use {
 };
 
 pub fn thread_create(
+    amount: u64,
     authority: Pubkey,
     id: Vec<u8>,
     instructions: Vec<ClockworkInstructionData>,
@@ -27,6 +28,7 @@ pub fn thread_create(
             AccountMeta::new(thread, false),
         ],
         data: clockwork_thread_program::instruction::ThreadCreate {
+            amount,
             id,
             instructions,
             trigger,

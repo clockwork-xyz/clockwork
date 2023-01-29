@@ -34,11 +34,12 @@ pub mod thread_program {
     /// Creates a new transaction thread.
     pub fn thread_create(
         ctx: Context<ThreadCreate>,
+        amount: u64,
         id: Vec<u8>,
         instructions: Vec<InstructionData>,
         trigger: Trigger,
     ) -> Result<()> {
-        thread_create::handler(ctx, id, instructions, trigger)
+        thread_create::handler(ctx, amount, id, instructions, trigger)
     }
 
     /// Closes an existing thread account and returns the lamports to the owner.
