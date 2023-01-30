@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
-use clockwork_client::{
-    network::state::Worker,
-    thread::state::{Thread, Trigger},
-    Client as ClockworkClient,
-};
+use clockwork_client::{network::state::Worker, Client as ClockworkClient};
+use clockwork_thread_program_v2::state::Trigger;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::{
@@ -19,6 +16,8 @@ use solana_sdk::{
     compute_budget::ComputeBudgetInstruction, transaction::Transaction,
 };
 
+use crate::versioned_thread::VersionedThread;
+
 /// Max byte size of a serialized transaction.
 static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 
@@ -30,7 +29,7 @@ static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 100;
 
 pub fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
-    thread: Thread,
+    thread: VersionedThread,
     thread_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
@@ -39,14 +38,13 @@ pub fn build_thread_exec_tx(
     let signatory_pubkey = client.payer_pubkey();
 
     // Build the first instruction of the transaction.
-    let first_instruction = if thread.next_instruction.is_some() {
-        build_exec_ix(thread, signatory_pubkey, worker_id)
+    let first_instruction = if thread.next_instruction().is_some() {
+        build_exec_ix(thread, thread_pubkey, signatory_pubkey, worker_id)
     } else {
-        build_kickoff_ix(thread, signatory_pubkey, worker_id)
+        build_kickoff_ix(thread, thread_pubkey, signatory_pubkey, worker_id)
     };
 
-    // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
-    // TODO Migrate to versioned transactions.
+    // Simulate the transaction and pack as many instructions as possible until we hit mem/cpu limits.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
         first_instruction,
@@ -107,13 +105,16 @@ pub fn build_thread_exec_tx(
                 if let Some(ui_accounts) = response.value.accounts {
                     if let Some(Some(ui_account)) = ui_accounts.get(0) {
                         if let Some(account) = ui_account.decode::<Account>() {
-                            if let Ok(sim_thread) = Thread::try_from(account.data) {
-                                if sim_thread.next_instruction.is_some() {
-                                    if let Some(exec_context) = sim_thread.exec_context {
-                                        if exec_context.execs_since_slot.lt(&sim_thread.rate_limit)
+                            if let Ok(sim_thread) = VersionedThread::try_from(account.data) {
+                                if sim_thread.next_instruction().is_some() {
+                                    if let Some(exec_context) = sim_thread.exec_context() {
+                                        if exec_context
+                                            .execs_since_slot
+                                            .lt(&sim_thread.rate_limit())
                                         {
                                             ixs.push(build_exec_ix(
                                                 sim_thread,
+                                                thread_pubkey,
                                                 signatory_pubkey,
                                                 worker_id,
                                             ));
@@ -164,9 +165,13 @@ pub fn build_thread_exec_tx(
     Some(tx)
 }
 
-fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
+fn build_kickoff_ix(
+    thread: VersionedThread,
+    thread_pubkey: Pubkey,
+    signatory_pubkey: Pubkey,
+    worker_id: u64,
+) -> Instruction {
     // Build the instruction.
-    let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
         signatory_pubkey,
         thread_pubkey,
@@ -174,7 +179,7 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
     );
 
     // If the thread's trigger is account-based, inject the triggering account.
-    match thread.trigger {
+    match thread.trigger() {
         Trigger::Account {
             address,
             offset: _,
@@ -190,16 +195,20 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
     kickoff_ix
 }
 
-fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
+fn build_exec_ix(
+    thread: VersionedThread,
+    thread_pubkey: Pubkey,
+    signatory_pubkey: Pubkey,
+    worker_id: u64,
+) -> Instruction {
     // Build the instruction.
-    let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
         signatory_pubkey,
         thread_pubkey,
         Worker::pubkey(worker_id),
     );
 
-    if let Some(next_instruction) = thread.next_instruction {
+    if let Some(next_instruction) = thread.next_instruction() {
         // Inject the target program account.
         exec_ix.accounts.push(AccountMeta::new_readonly(
             next_instruction.program_id,

@@ -2,7 +2,6 @@ use std::{fmt::Debug, sync::Arc};
 
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
-    thread::state::Thread,
     Client as ClockworkClient,
 };
 use dashmap::DashMap;
@@ -18,6 +17,7 @@ use tokio::runtime::Runtime;
 
 use crate::{
     config::PluginConfig, observers::Observers, pool_position::PoolPosition, tpu_client::TpuClient,
+    versioned_thread::VersionedThread,
 };
 
 /// Number of slots to wait before attempting to resend a message.
@@ -199,7 +199,7 @@ impl TxExecutor {
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
         // Get the thread.
         // TODO Parse to a versioned thread.
-        let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
+        let thread = match self.client.clone().get::<VersionedThread>(&thread_pubkey) {
             Err(_err) => return None,
             Ok(thread) => thread,
         };
@@ -207,7 +207,7 @@ impl TxExecutor {
         // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
             self.client.clone(),
-            thread.clone(),
+            thread,
             thread_pubkey,
             self.config.worker_id,
         )
