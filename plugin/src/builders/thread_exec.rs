@@ -45,6 +45,7 @@ pub fn build_thread_exec_tx(
     };
 
     // Simulate the transaction and pack as many instructions as possible until we hit mem/cpu limits.
+    // TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
         first_instruction,
