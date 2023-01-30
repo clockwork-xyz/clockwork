@@ -782,8 +782,8 @@ dependencies = [
  "chrono",
  "clap 3.2.22",
  "clockwork-client",
- "clockwork-cron",
- "clockwork-utils",
+ "clockwork-cron 1.4.2",
+ "clockwork-utils 1.4.2",
  "dirs-next",
  "regex",
  "serde",
@@ -809,9 +809,9 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
- "clockwork-network-program",
- "clockwork-thread-program",
- "clockwork-utils",
+ "clockwork-network-program 1.4.2",
+ "clockwork-thread-program 1.4.2",
+ "clockwork-utils 1.4.2",
  "clockwork-webhook-program",
  "solana-client",
  "solana-sdk",
@@ -822,6 +822,17 @@ dependencies = [
 [[package]]
 name = "clockwork-cron"
 version = "1.4.2"
+dependencies = [
+ "chrono",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
+name = "clockwork-cron"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec00fac13ba4c45201f7bcbfd44df23b659521ef765de9d31d14a1194d028cce"
 dependencies = [
  "chrono",
  "nom",
@@ -844,7 +855,18 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "clockwork-macros",
- "clockwork-utils",
+ "clockwork-utils 1.4.2",
+]
+
+[[package]]
+name = "clockwork-network-program"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "358aa1fb9a328d355cababfabb5ca69134a8bc703d355fe2979442441e30d6b7"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "clockwork-utils 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -853,7 +875,7 @@ version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "chrono",
- "clockwork-thread-program",
+ "clockwork-thread-program 1.4.2",
  "nom",
  "once_cell",
 ]
@@ -864,10 +886,25 @@ version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "chrono",
- "clockwork-cron",
+ "clockwork-cron 1.4.2",
  "clockwork-macros",
- "clockwork-network-program",
- "clockwork-utils",
+ "clockwork-network-program 1.4.2",
+ "clockwork-utils 1.4.2",
+ "static-pubkey",
+ "version",
+]
+
+[[package]]
+name = "clockwork-thread-program"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00d8201d1680a1540e157a0a9f3cb84d9cc9a25ad66fcb9328c6f94b2fe14175"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clockwork-network-program 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clockwork-utils 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "static-pubkey",
  "version",
 ]
@@ -882,12 +919,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-utils"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26a6168b2af3007a81363951be00237defe4152e77e407d96f365f5de1a6dd37"
+dependencies = [
+ "anchor-lang",
+ "base64 0.13.1",
+ "static-pubkey",
+]
+
+[[package]]
 name = "clockwork-webhook-program"
 version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "clockwork-macros",
- "clockwork-network-program",
+ "clockwork-network-program 1.4.2",
 ]
 
 [[package]]
@@ -901,8 +949,11 @@ dependencies = [
  "cargo_toml",
  "chrono",
  "clockwork-client",
- "clockwork-cron",
- "clockwork-utils",
+ "clockwork-cron 1.4.2",
+ "clockwork-macros",
+ "clockwork-thread-program 1.4.2",
+ "clockwork-thread-program 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clockwork-utils 1.4.2",
  "dashmap",
  "log 0.4.17",
  "prost",

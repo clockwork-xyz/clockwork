@@ -198,6 +198,7 @@ impl TxExecutor {
 
     pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
         // Get the thread.
+        // TODO Parse to a versioned thread.
         let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
             Err(_err) => return None,
             Ok(thread) => thread,

@@ -54,7 +54,7 @@ pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instruction
     let payer = &ctx.accounts.payer;
     let system_program = &ctx.accounts.system_program;
     let thread = &mut ctx.accounts.thread;
-
+    
     // Initialize the thread
     let bump = *ctx.bumps.get("thread").unwrap();
     thread.authority = authority.key();

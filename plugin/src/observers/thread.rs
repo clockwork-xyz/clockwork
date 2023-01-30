@@ -1,8 +1,8 @@
 use std::{fmt::Debug, str::FromStr, sync::Arc};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::thread::state::{Thread, Trigger, TriggerContext};
 use clockwork_cron::Schedule;
+use clockwork_thread_program_v2::state::{Trigger, TriggerContext};
 use dashmap::{DashMap, DashSet};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo, Result as PluginResult,
@@ -10,7 +10,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 use solana_program::{clock::Clock, pubkey::Pubkey};
 use tokio::runtime::Runtime;
 
-use crate::config::PluginConfig;
+use crate::{config::PluginConfig, versioned_thread::VersionedThread};
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
@@ -28,9 +28,6 @@ pub struct ThreadObserver {
     // Map from account pubkeys to the set of threads listening for an account update.
     pub listener_threads: DashMap<Pubkey, DashSet<Pubkey>>,
 
-    // // Map from thread pubkeys to the account they're listening to.
-    // pub listener_threads_reverse: DashMap<Pubkey, Pubkey>,
-
     // Tokio runtime for processing async tasks.
     pub runtime: Arc<Runtime>,
 }
@@ -43,7 +40,6 @@ impl ThreadObserver {
             executable_threads: DashMap::new(),
             cron_threads: DashMap::new(),
             listener_threads: DashMap::new(),
-            // listener_threads_reverse: DashMap::new(),
             runtime,
         }
     }
@@ -104,7 +100,7 @@ impl ThreadObserver {
 
     pub fn observe_thread(
         self: Arc<Self>,
-        thread: Thread,
+        thread: VersionedThread,
         thread_pubkey: Pubkey,
         slot: u64,
     ) -> PluginResult<()> {
@@ -113,16 +109,16 @@ impl ThreadObserver {
             this.executable_threads.remove(&thread_pubkey);
 
             // If the thread is paused, just return without indexing
-            if thread.paused {
+            if thread.paused() {
                 return Ok(());
             }
 
-            if thread.next_instruction.is_some() {
+            if thread.next_instruction().is_some() {
                 // If the thread has a next instruction, index it as executable.
                 this.executable_threads.insert(thread_pubkey, slot);
             } else {
                 // Otherwise, index the thread according to its trigger type.
-                match thread.trigger {
+                match thread.trigger() {
                     Trigger::Account {
                         address,
                         offset: _,
@@ -139,15 +135,14 @@ impl ThreadObserver {
                                 v.insert(thread_pubkey);
                                 v
                             });
-                        // this.listener_threads_reverse.insert(thread_pubkey, address);
                     }
                     Trigger::Cron {
                         schedule,
                         skippable: _,
                     } => {
                         // Find a reference timestamp for calculating the thread's upcoming target time.
-                        let reference_timestamp = match thread.exec_context {
-                            None => thread.created_at.unix_timestamp,
+                        let reference_timestamp = match thread.exec_context() {
+                            None => thread.created_at().unix_timestamp,
                             Some(exec_context) => match exec_context.trigger_context {
                                 TriggerContext::Cron { started_at } => started_at,
                                 _ => {
@@ -184,18 +179,6 @@ impl ThreadObserver {
             Ok(())
         })
     }
-
-    // pub fn drop_thread(&self, thread_pubkey: Pubkey) {
-    //     self.executable_threads.remove(&thread_pubkey);
-    //     if let Some(account_pubkey) = self.listener_threads_reverse.get(&thread_pubkey) {
-    //         self.listener_threads_reverse.remove(&thread_pubkey);
-    //         self.listener_threads
-    //             .entry(*account_pubkey)
-    //             .and_modify(|v| {
-    //                 v.remove(&thread_pubkey);
-    //             });
-    //     }
-    // }
 
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
         self: &Arc<Self>,
