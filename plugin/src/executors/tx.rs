@@ -1,4 +1,7 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{
+    fmt::Debug,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
@@ -38,6 +41,7 @@ pub struct TxExecutor {
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
     pub simulation_failures: DashMap<Pubkey, u32>,
+    pub is_locked: AtomicBool,
 }
 
 impl TxExecutor {
@@ -56,35 +60,31 @@ impl TxExecutor {
             runtime,
             tpu_client,
             simulation_failures: DashMap::new(),
+            is_locked: AtomicBool::new(false),
         }
     }
 
     pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
         self.spawn(|this| async move {
-            // Get this worker's position in the delegate pool.
-            let worker_pubkey = Worker::pubkey(this.config.worker_id);
-            let pool_position = this
-                .client
-                .get::<Pool>(&Pool::pubkey(0))
-                .map(|pool| {
-                    let workers = &mut pool.workers.clone();
-                    PoolPosition {
-                        current_position: pool
-                            .workers
-                            .iter()
-                            .position(|k| k.eq(&worker_pubkey))
-                            .map(|i| i as u64),
-                        workers: workers.make_contiguous().to_vec().clone(),
-                    }
-                })
-                .unwrap();
+            // Lock until work is done.
+            if this
+                .clone()
+                .is_locked
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
+                info!("Locked...");
+                return Ok(());
+            }
+            info!("Locking...");
+            this.clone()
+                .is_locked
+                .store(true, std::sync::atomic::Ordering::Relaxed);
 
             // Drop threads that cross the simulation failure threshold.
             this.clone()
                 .simulation_failures
                 .retain(|thread_pubkey, failures| {
                     if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-                        // this.observers.thread.drop_thread(*thread_pubkey);
                         this.observers
                             .thread
                             .executable_threads
@@ -100,17 +100,37 @@ impl TxExecutor {
                 .message_history
                 .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
 
-            // Rotate into the worker pool.
-            this.clone()
-                .execute_pool_rotate_txs(slot, pool_position.clone())
-                .await
-                .ok();
+            // Get this worker's position in the delegate pool.
+            let worker_pubkey = Worker::pubkey(this.config.worker_id);
+            if let Ok(pool_position) = this.client.get::<Pool>(&Pool::pubkey(0)).map(|pool| {
+                let workers = &mut pool.workers.clone();
+                PoolPosition {
+                    current_position: pool
+                        .workers
+                        .iter()
+                        .position(|k| k.eq(&worker_pubkey))
+                        .map(|i| i as u64),
+                    workers: workers.make_contiguous().to_vec().clone(),
+                }
+            }) {
+                // Rotate into the worker pool.
+                this.clone()
+                    .execute_pool_rotate_txs(slot, pool_position.clone())
+                    .await
+                    .ok();
 
-            // Execute thread transactions.
+                // Execute thread transactions.
+                this.clone()
+                    .execute_thread_exec_txs(slot, pool_position)
+                    .await
+                    .ok();
+            }
+
+            // Release the lock.
+            info!("Unlocking...");
             this.clone()
-                .execute_thread_exec_txs(slot, pool_position)
-                .await
-                .ok();
+                .is_locked
+                .store(false, std::sync::atomic::Ordering::Relaxed);
 
             Ok(())
         })
@@ -193,6 +213,7 @@ impl TxExecutor {
                 self.clone().simulation_failures.remove(&thread_pubkey);
                 self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
             });
+
         Ok(())
     }
 
