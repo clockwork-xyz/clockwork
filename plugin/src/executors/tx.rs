@@ -1,6 +1,9 @@
 use std::{
     fmt::Debug,
-    sync::{atomic::AtomicBool, Arc},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 
 use clockwork_client::{
@@ -70,15 +73,11 @@ impl TxExecutor {
             if this
                 .clone()
                 .is_locked
-                .load(std::sync::atomic::Ordering::Relaxed)
+                .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
+                .is_err()
             {
-                info!("Locked...");
                 return Ok(());
             }
-            info!("Locking...");
-            this.clone()
-                .is_locked
-                .store(true, std::sync::atomic::Ordering::Relaxed);
 
             // Drop threads that cross the simulation failure threshold.
             this.clone()
@@ -127,7 +126,6 @@ impl TxExecutor {
             }
 
             // Release the lock.
-            info!("Unlocking...");
             this.clone()
                 .is_locked
                 .store(false, std::sync::atomic::Ordering::Relaxed);
