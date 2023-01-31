@@ -19,7 +19,9 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
-use solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction};
+use solana_sdk::{
+    commitment_config::CommitmentConfig, signature::Signature, transaction::Transaction,
+};
 use tokio::runtime::Runtime;
 
 use crate::{
@@ -44,7 +46,13 @@ pub struct TxExecutor {
     pub runtime: Arc<Runtime>,
     pub tpu_client: Arc<TpuClient>,
     pub simulation_failures: DashMap<Pubkey, u32>,
+    pub processed_threads: DashMap<Pubkey, TimestampedSignature>,
     pub is_locked: AtomicBool,
+}
+
+pub struct TimestampedSignature {
+    pub signature: Signature,
+    pub slot: u64,
 }
 
 impl TxExecutor {
@@ -63,6 +71,7 @@ impl TxExecutor {
             runtime,
             tpu_client,
             simulation_failures: DashMap::new(),
+            processed_threads: DashMap::new(),
             is_locked: AtomicBool::new(false),
         }
     }
@@ -125,6 +134,9 @@ impl TxExecutor {
                     .ok();
             }
 
+            // Check-in on submitted txs.
+            this.clone().check_processed_threads(slot).await.ok();
+
             // Release the lock.
             this.clone()
                 .is_locked
@@ -154,11 +166,40 @@ impl TxExecutor {
                 ) {
                     None => {}
                     Some(tx) => {
-                        self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+                        self.clone().execute_tx(slot, &tx).ok();
                     }
                 };
             }
         }
+        Ok(())
+    }
+
+    async fn check_processed_threads(self: Arc<Self>, slot: u64) -> PluginResult<()> {
+        self.processed_threads
+            .retain(|thread_pubkey, timestamped_signature| {
+                match self
+                    .client
+                    .get_signature_status(&timestamped_signature.signature)
+                {
+                    Err(err) => {
+                        info!("Error fetching signature status: {:?}", err);
+                        true
+                    }
+                    Ok(status) => {
+                        info!(
+                            "thread: {} sig: {} status: {:?}",
+                            thread_pubkey, timestamped_signature.signature, status
+                        );
+                        match status {
+                            None => true,
+                            Some(status) => match status {
+                                Err(err) => false,
+                                Ok(k) => false,
+                            },
+                        }
+                    }
+                }
+            });
         Ok(())
     }
 
@@ -182,15 +223,16 @@ impl TxExecutor {
                 })
                 .for_each(|(tx, thread_pubkey)| {
                     self.clone().simulation_failures.remove(&thread_pubkey);
-                    self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+                    self.clone().execute_tx(slot, &tx).ok();
                 });
             return Ok(());
         }
 
+        // Get the set of thread pubkeys that are executable.
         self.observers
             .thread
             .executable_threads
-            .par_iter()
+            .iter()
             .filter(|entry| {
                 // Linear backoff from simulation failures.
                 let failure_count = self
@@ -202,14 +244,33 @@ impl TxExecutor {
                 let backoff = ((failure_count * 3) as u64) + entry.value();
                 slot >= backoff
             })
-            .filter_map(|entry| {
+            .map(|entry| *entry.key())
+            .collect::<Vec<Pubkey>>()
+            .par_iter()
+            .filter_map(|thread_pubkey| {
                 self.clone()
-                    .try_build_thread_exec_tx(*entry.key())
-                    .map(|tx| (tx, *entry.key()))
+                    .try_build_thread_exec_tx(*thread_pubkey)
+                    .map(|tx| (tx, thread_pubkey))
             })
             .for_each(|(tx, thread_pubkey)| {
-                self.clone().simulation_failures.remove(&thread_pubkey);
-                self.clone().execute_tx(slot, &tx).map_err(|err| err).ok();
+                self.clone().simulation_failures.remove(thread_pubkey);
+                self.clone()
+                    .execute_tx(slot, &tx)
+                    .and_then(|_| {
+                        self.observers
+                            .thread
+                            .executable_threads
+                            .remove(thread_pubkey);
+                        self.processed_threads.insert(
+                            *thread_pubkey,
+                            TimestampedSignature {
+                                signature: tx.signatures[0],
+                                slot,
+                            },
+                        );
+                        Ok(())
+                    })
+                    .ok();
             });
 
         Ok(())
@@ -259,9 +320,6 @@ impl TxExecutor {
     }
 
     fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        // TODO Only submit this transaction if the simulated increase in this worker's
-        //      Fee account balance is greater than the lamports spent by the worker.
-
         self.tpu_client
             .rpc_client()
             .simulate_transaction_with_config(
