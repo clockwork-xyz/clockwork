@@ -10,7 +10,7 @@ use tokio::runtime::Runtime;
 use tx::TxExecutor;
 use webhook::WebhookExecutor;
 
-use crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient};
+use crate::{observers::Observers, tpu_client::TpuClient};
 
 pub struct Executors {
     pub tx: Arc<TxExecutor>,
@@ -33,13 +33,16 @@ impl Executors {
         observers.thread.clone().observe_processed_slot(slot)?;
 
         // Process the slot in the transaction executor.
-        self.tx.clone().execute_txs(
-            observers.clone(),
-            self.client.clone(),
-            slot,
-            runtime.clone(),
-            tpu_client,
-        )?;
+        self.tx
+            .clone()
+            .execute_txs(
+                observers.clone(),
+                self.client.clone(),
+                slot,
+                runtime.clone(),
+                tpu_client,
+            )
+            .await?;
 
         info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
 

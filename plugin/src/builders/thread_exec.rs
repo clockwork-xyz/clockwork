@@ -28,7 +28,7 @@ static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 /// The buffer amount to add to transactions' compute units in case on-chain PDA derivations take more CUs than used in simulation.
 static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 100;
 
-pub fn build_thread_exec_tx(
+pub async fn build_thread_exec_tx(
     client: Arc<ClockworkClient>,
     thread: Thread,
     thread_pubkey: Pubkey,
