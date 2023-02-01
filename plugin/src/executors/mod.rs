@@ -12,11 +12,12 @@ use std::{
 use clockwork_client::Client as ClockworkClient;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+use solana_sdk::commitment_config::CommitmentConfig;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
 use webhook::WebhookExecutor;
 
-use crate::{observers::Observers, tpu_client::TpuClient};
+use crate::observers::Observers;
 
 pub struct Executors {
     pub tx: Arc<TxExecutor>,
@@ -31,10 +32,11 @@ impl Executors {
         observers: Arc<Observers>,
         slot: u64,
         runtime: Arc<Runtime>,
-        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
         info!("process_slot: {}", slot,);
         let now = std::time::Instant::now();
+
+        // Acquire lock.
         if self
             .clone()
             .lock
@@ -42,6 +44,11 @@ impl Executors {
             .is_err()
         {
             info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+            return Ok(());
+        }
+
+        // Lazy initialize tpu client.
+        if self.client.get_health().is_err() {
             return Ok(());
         }
 
@@ -56,7 +63,6 @@ impl Executors {
                 executable_threads,
                 slot,
                 runtime.clone(),
-                tpu_client,
             )
             .await?;
 

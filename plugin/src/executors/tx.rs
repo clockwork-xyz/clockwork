@@ -1,14 +1,20 @@
 use std::{fmt::Debug, sync::Arc};
 
+use async_once::AsyncOnce;
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
     Client as ClockworkClient,
 };
 use dashmap::{DashMap, DashSet};
+use lazy_static::lazy_static;
 use log::info;
 use rayon::prelude::*;
-use solana_client::rpc_config::RpcSimulateTransactionConfig;
+use solana_client::{
+    nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
+    rpc_config::RpcSimulateTransactionConfig,
+    tpu_client::TpuClientConfig,
+};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
@@ -16,7 +22,7 @@ use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
 use solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction};
 use tokio::runtime::Runtime;
 
-use crate::{config::PluginConfig, pool_position::PoolPosition, tpu_client::TpuClient};
+use crate::{config::PluginConfig, pool_position::PoolPosition};
 
 /// Number of slots to wait before attempting to resend a message.
 static MESSAGE_DEDUPE_PERIOD: u64 = 8;
@@ -58,7 +64,6 @@ impl TxExecutor {
         thread_pubkeys: DashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
-        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
         // Index the provided threads as executable.
         thread_pubkeys.par_iter().for_each(|pubkey| {
@@ -105,20 +110,15 @@ impl TxExecutor {
                         client.clone(),
                         slot,
                         pool_position.clone(),
-                        tpu_client.clone(),
+                        runtime.clone(),
                     )
+                    .await
                     .ok();
             }
 
             // Execute thread transactions.
             self.clone()
-                .execute_thread_exec_txs(
-                    client.clone(),
-                    slot,
-                    pool_position,
-                    runtime.clone(),
-                    tpu_client,
-                )
+                .execute_thread_exec_txs(client.clone(), slot, pool_position, runtime.clone())
                 .await
                 .ok();
         }
@@ -126,12 +126,12 @@ impl TxExecutor {
         Ok(())
     }
 
-    fn execute_pool_rotate_txs(
+    async fn execute_pool_rotate_txs(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         slot: u64,
         pool_position: PoolPosition,
-        tpu_client: Arc<TpuClient>,
+        runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         let registry = client.get::<Registry>(&Registry::pubkey()).unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
@@ -148,7 +148,7 @@ impl TxExecutor {
                 ) {
                     None => {}
                     Some(tx) => {
-                        self.clone().execute_tx(slot, tpu_client, &tx).ok();
+                        self.clone().execute_tx(slot, &tx, runtime).await.ok();
                     }
                 };
             }
@@ -162,7 +162,6 @@ impl TxExecutor {
         slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
-        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
@@ -197,8 +196,8 @@ impl TxExecutor {
                 runtime.spawn(self.clone().process_thread(
                     client.clone(),
                     slot,
-                    tpu_client.clone(),
                     *thread_pubkey,
+                    runtime.clone(),
                 ))
             })
             .collect();
@@ -213,8 +212,8 @@ impl TxExecutor {
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
         slot: u64,
-        tpu_client: Arc<TpuClient>,
         thread_pubkey: Pubkey,
+        runtime: Arc<Runtime>,
     ) {
         if let Some(tx) = self
             .clone()
@@ -223,7 +222,8 @@ impl TxExecutor {
         {
             if self
                 .clone()
-                .execute_tx(slot, tpu_client.clone(), &tx)
+                .execute_tx(slot, &tx, runtime.clone())
+                .await
                 .is_ok()
             {
                 self.executable_threads.remove(&thread_pubkey);
@@ -260,11 +260,11 @@ impl TxExecutor {
         })
     }
 
-    fn execute_tx(
+    async fn execute_tx(
         self: Arc<Self>,
         slot: u64,
-        tpu_client: Arc<TpuClient>,
         tx: &Transaction,
+        runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         // Exit early if this message was sent recently
         if let Some(entry) = self
@@ -278,18 +278,15 @@ impl TxExecutor {
         }
 
         // Simulate and submit the tx
-        self.clone()
-            .simulate_tx(tx, tpu_client.clone())
-            .and_then(|tx| self.clone().submit_tx(&tx, tpu_client.clone()))
-            .and_then(|tx| self.log_tx(slot, tx))
+        self.clone().simulate_tx(tx).await?;
+        self.clone().submit_tx(tx).await?;
+        self.clone().log_tx(slot, tx)
     }
 
-    fn simulate_tx(
-        self: Arc<Self>,
-        tx: &Transaction,
-        tpu_client: Arc<TpuClient>,
-    ) -> PluginResult<Transaction> {
-        tpu_client
+    async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        TPU_CLIENT
+            .get()
+            .await
             .rpc_client()
             .simulate_transaction_with_config(
                 tx,
@@ -299,6 +296,7 @@ impl TxExecutor {
                     ..RpcSimulateTransactionConfig::default()
                 },
             )
+            .await
             .map_err(|err| {
                 GeyserPluginError::Custom(format!("Tx failed simulation: {}", err).into())
             })
@@ -314,12 +312,8 @@ impl TxExecutor {
             })?
     }
 
-    fn submit_tx(
-        self: Arc<Self>,
-        tx: &Transaction,
-        tpu_client: Arc<TpuClient>,
-    ) -> PluginResult<Transaction> {
-        if !tpu_client.send_transaction(tx) {
+    async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+        if !TPU_CLIENT.get().await.send_transaction(tx).await {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
@@ -327,7 +321,7 @@ impl TxExecutor {
         Ok(tx.clone())
     }
 
-    fn log_tx(self: Arc<Self>, slot: u64, tx: Transaction) -> PluginResult<()> {
+    fn log_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
         self.message_history
             .insert(tx.message().blockhash_agnostic_hash(), slot);
         let sig = tx.signatures[0];
@@ -357,4 +351,24 @@ impl BlockhashAgnosticHash for Message {
         }
         .hash()
     }
+}
+
+static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
+static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+
+lazy_static! {
+    static ref TPU_CLIENT: AsyncOnce<TpuClient> = AsyncOnce::new(async {
+        let rpc_client = Arc::new(RpcClient::new_with_commitment(
+            LOCAL_RPC_URL.into(),
+            CommitmentConfig::processed(),
+        ));
+        let tpu_client = TpuClient::new(
+            rpc_client,
+            LOCAL_WEBSOCKET_URL.into(),
+            TpuClientConfig::default(),
+        )
+        .await
+        .unwrap();
+        tpu_client
+    });
 }

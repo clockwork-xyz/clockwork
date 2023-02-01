@@ -387,6 +387,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "async_once"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ce4f10ea3abcd6617873bae9f91d1c5332b4a778bd9ce34d0cd517474c1de82"
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -883,6 +889,7 @@ name = "clockwork_plugin"
 version = "1.4.3"
 dependencies = [
  "anchor-lang",
+ "async_once",
  "bincode",
  "bs58 0.4.0",
  "bugsnag",
@@ -892,6 +899,7 @@ dependencies = [
  "clockwork-cron",
  "clockwork-utils",
  "dashmap",
+ "lazy_static",
  "log 0.4.17",
  "prost",
  "rayon",

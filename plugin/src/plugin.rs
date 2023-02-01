@@ -1,43 +1,36 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{fmt::Debug, sync::atomic::AtomicBool, sync::Arc};
 
+use clockwork_client::Client as ClockworkClient;
+use log::info;
+use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, ReplicaAccountInfo,
+    GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
 };
-use tokio::sync::RwLock;
+use solana_program::pubkey::Pubkey;
+use tokio::runtime::{Builder, Runtime};
 
-use {
-    crate::{
-        config::PluginConfig,
-        events::AccountUpdateEvent,
-        executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
-        observers::{
-            thread::ThreadObserver,
-            webhook::{HttpRequest, WebhookObserver},
-            Observers,
-        },
-        tpu_client::TpuClient,
-        utils::read_or_new_keypair,
+use crate::{
+    config::PluginConfig,
+    events::AccountUpdateEvent,
+    executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
+    observers::{
+        thread::ThreadObserver,
+        webhook::{HttpRequest, WebhookObserver},
+        Observers,
     },
-    clockwork_client::Client as ClockworkClient,
-    log::info,
-    solana_client::rpc_client::RpcClient,
-    solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
-    },
-    solana_program::pubkey::Pubkey,
-    solana_sdk::commitment_config::CommitmentConfig,
-    std::{fmt::Debug, sync::Arc},
-    tokio::runtime::{Builder, Runtime},
+    utils::read_or_new_keypair,
 };
 
-static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
-
-#[derive(Debug)]
 pub struct ClockworkPlugin {
     pub inner: Arc<Inner>,
     pub client: Arc<ClockworkClient>,
-    pub tpu_client: Option<Arc<TpuClient>>,
+    // pub tpu_client: Option<Arc<TpuClient>>,
+}
+
+impl Debug for ClockworkPlugin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "inner: {:?}", self.inner)
+    }
 }
 
 #[derive(Debug)]
@@ -149,33 +142,33 @@ impl GeyserPlugin for ClockworkPlugin {
         _parent: Option<u64>,
         status: SlotStatus,
     ) -> PluginResult<()> {
-        if self.tpu_client.is_none() {
-            self.try_build_tpu_client()?;
-        }
+        // if self.tpu_client.is_none() {
+        //     self.try_build_tpu_client()?;
+        // }
 
-        if let Some(tpu_client) = &self.tpu_client {
-            let tpu_client = tpu_client.clone();
-            self.inner.clone().spawn(|inner| async move {
-                match status {
-                    SlotStatus::Processed => {
-                        inner
-                            .executors
-                            .clone()
-                            .process_slot(
-                                inner.observers.clone(),
-                                slot,
-                                inner.runtime.clone(),
-                                tpu_client,
-                            )
-                            .await?;
-                    }
-                    _ => (),
+        self.inner.clone().spawn(|inner| async move {
+            match status {
+                SlotStatus::Processed => {
+                    inner
+                        .executors
+                        .clone()
+                        .process_slot(
+                            inner.observers.clone(),
+                            slot,
+                            inner.runtime.clone(),
+                            // tpu_client,
+                        )
+                        .await?;
                 }
-                Ok(())
-            })
-        } else {
+                _ => (),
+            }
             Ok(())
-        }
+        })
+        // if let Some(tpu_client) = &self.tpu_client {
+        //     let tpu_client = tpu_client.clone();
+        // } else {
+        //     Ok(())
+        // }
     }
 
     fn notify_transaction(
@@ -202,6 +195,8 @@ impl GeyserPlugin for ClockworkPlugin {
     }
 }
 
+static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
+
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
@@ -221,7 +216,7 @@ impl ClockworkPlugin {
         });
         Self {
             client: clockwork_client,
-            tpu_client: None,
+            // tpu_client: None,
             inner: Arc::new(Inner {
                 config,
                 executors,
@@ -234,19 +229,14 @@ impl ClockworkPlugin {
 
     fn try_build_tpu_client(&mut self) -> PluginResult<()> {
         // Return early if not healthy
-        if self.client.get_health().is_err() {
-            return Err(GeyserPluginError::Custom(
-                format!("RPC service is not healthy").into(),
-            ));
-        }
         // Build clients
-        let tpu_client = TpuClient::new(
-            read_or_new_keypair(self.inner.config.clone().keypath),
-            LOCAL_RPC_URL.into(),
-            LOCAL_WEBSOCKET_URL.into(),
-        )
-        .unwrap();
-        self.tpu_client = Some(Arc::new(tpu_client));
+        // let tpu_client = TpuClient::new(
+        //     read_or_new_keypair(self.inner.config.clone().keypath),
+        //     LOCAL_RPC_URL.into(),
+        //     LOCAL_WEBSOCKET_URL.into(),
+        // )
+        // .unwrap();
+        // self.tpu_client = Some(Arc::new(tpu_client));
         Ok(())
     }
 }
