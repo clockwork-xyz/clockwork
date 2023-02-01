@@ -12,7 +12,6 @@ use std::{
 use clockwork_client::Client as ClockworkClient;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
-use solana_sdk::commitment_config::CommitmentConfig;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
 use webhook::WebhookExecutor;
@@ -36,6 +35,12 @@ impl Executors {
         info!("process_slot: {}", slot,);
         let now = std::time::Instant::now();
 
+        // Return early if node is not healthy.
+        if self.client.get_health().is_err() {
+            info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+            return Ok(());
+        }
+
         // Acquire lock.
         if self
             .clone()
@@ -44,11 +49,6 @@ impl Executors {
             .is_err()
         {
             info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
-            return Ok(());
-        }
-
-        // Lazy initialize tpu client.
-        if self.client.get_health().is_err() {
             return Ok(());
         }
 

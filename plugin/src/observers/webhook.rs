@@ -8,7 +8,6 @@ use {
         hash::{Hash, Hasher},
         sync::Arc,
     },
-    tokio::runtime::Runtime,
 };
 
 pub struct WebhookObserver {

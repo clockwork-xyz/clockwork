@@ -106,12 +106,7 @@ impl TxExecutor {
             // Rotate into the worker pool.
             if pool_position.current_position.is_none() {
                 self.clone()
-                    .execute_pool_rotate_txs(
-                        client.clone(),
-                        slot,
-                        pool_position.clone(),
-                        runtime.clone(),
-                    )
+                    .execute_pool_rotate_txs(client.clone(), slot, pool_position.clone())
                     .await
                     .ok();
             }
@@ -131,7 +126,6 @@ impl TxExecutor {
         client: Arc<ClockworkClient>,
         slot: u64,
         pool_position: PoolPosition,
-        runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         let registry = client.get::<Registry>(&Registry::pubkey()).unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
@@ -148,7 +142,7 @@ impl TxExecutor {
                 ) {
                     None => {}
                     Some(tx) => {
-                        self.clone().execute_tx(slot, &tx, runtime).await.ok();
+                        self.clone().execute_tx(slot, &tx).await.ok();
                     }
                 };
             }
@@ -193,12 +187,10 @@ impl TxExecutor {
         let tasks: Vec<_> = thread_pubkeys
             .iter()
             .map(|thread_pubkey| {
-                runtime.spawn(self.clone().process_thread(
-                    client.clone(),
-                    slot,
-                    *thread_pubkey,
-                    runtime.clone(),
-                ))
+                runtime.spawn(
+                    self.clone()
+                        .process_thread(client.clone(), slot, *thread_pubkey),
+                )
             })
             .collect();
         for task in tasks {
@@ -213,19 +205,13 @@ impl TxExecutor {
         client: Arc<ClockworkClient>,
         slot: u64,
         thread_pubkey: Pubkey,
-        runtime: Arc<Runtime>,
     ) {
         if let Some(tx) = self
             .clone()
             .try_build_thread_exec_tx(client.clone(), thread_pubkey)
             .await
         {
-            if self
-                .clone()
-                .execute_tx(slot, &tx, runtime.clone())
-                .await
-                .is_ok()
-            {
+            if self.clone().execute_tx(slot, &tx).await.is_ok() {
                 self.executable_threads.remove(&thread_pubkey);
                 // TODO Track the transaction signature
             }
@@ -260,12 +246,7 @@ impl TxExecutor {
         })
     }
 
-    async fn execute_tx(
-        self: Arc<Self>,
-        slot: u64,
-        tx: &Transaction,
-        runtime: Arc<Runtime>,
-    ) -> PluginResult<()> {
+    async fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
         // Exit early if this message was sent recently
         if let Some(entry) = self
             .message_history

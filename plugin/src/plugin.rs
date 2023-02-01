@@ -226,19 +226,6 @@ impl ClockworkPlugin {
             }),
         }
     }
-
-    fn try_build_tpu_client(&mut self) -> PluginResult<()> {
-        // Return early if not healthy
-        // Build clients
-        // let tpu_client = TpuClient::new(
-        //     read_or_new_keypair(self.inner.config.clone().keypath),
-        //     LOCAL_RPC_URL.into(),
-        //     LOCAL_WEBSOCKET_URL.into(),
-        // )
-        // .unwrap();
-        // self.tpu_client = Some(Arc::new(tpu_client));
-        Ok(())
-    }
 }
 
 impl Default for ClockworkPlugin {
