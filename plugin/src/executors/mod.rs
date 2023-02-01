@@ -1,7 +1,13 @@
 pub mod tx;
 pub mod webhook;
 
-use std::{fmt::Debug, sync::Arc};
+use std::{
+    fmt::Debug,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 use clockwork_client::Client as ClockworkClient;
 use log::info;
@@ -16,6 +22,7 @@ pub struct Executors {
     pub tx: Arc<TxExecutor>,
     pub webhook: Arc<WebhookExecutor>,
     pub client: Arc<ClockworkClient>,
+    pub lock: AtomicBool,
 }
 
 impl Executors {
@@ -28,26 +35,36 @@ impl Executors {
     ) -> PluginResult<()> {
         info!("process_slot: {}", slot,);
         let now = std::time::Instant::now();
+        if self
+            .clone()
+            .lock
+            .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
+            .is_err()
+        {
+            info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+            return Ok(());
+        }
 
         // Process the slot on the observers.
-        observers.thread.clone().observe_processed_slot(slot)?;
+        let executable_threads = observers.thread.clone().process_slot(slot)?;
 
         // Process the slot in the transaction executor.
         self.tx
             .clone()
             .execute_txs(
-                observers.clone(),
                 self.client.clone(),
+                executable_threads,
                 slot,
                 runtime.clone(),
                 tpu_client,
             )
             .await?;
 
+        // Release the lock.
+        self.clone()
+            .lock
+            .store(false, std::sync::atomic::Ordering::Relaxed);
         info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
-
-        // Process the slot in the webhook executor.
-        // self.webhook.clone().execute_requests()?;
         Ok(())
     }
 }

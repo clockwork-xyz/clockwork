@@ -1,17 +1,11 @@
-use std::{
-    fmt::Debug,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-};
+use std::{fmt::Debug, sync::Arc};
 
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
     Client as ClockworkClient,
 };
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use log::info;
 use rayon::prelude::*;
 use solana_client::rpc_config::RpcSimulateTransactionConfig;
@@ -22,65 +16,68 @@ use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
 use solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction};
 use tokio::runtime::Runtime;
 
-use crate::{
-    config::PluginConfig, observers::Observers, pool_position::PoolPosition, tpu_client::TpuClient,
-};
+use crate::{config::PluginConfig, pool_position::PoolPosition, tpu_client::TpuClient};
 
 /// Number of slots to wait before attempting to resend a message.
-static MESSAGE_DEDUPE_PERIOD: u64 = 10;
+static MESSAGE_DEDUPE_PERIOD: u64 = 8;
 
 /// Number of slots to wait before trying to execute a thread while not in the pool.
-static THREAD_TIMEOUT_WINDOW: u64 = 10;
+static THREAD_TIMEOUT_WINDOW: u64 = 8;
 
 /// Number of times to retry a thread simulation.
 static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 
+/// Number of slots to wait after simulation failure before retrying again.
+static LINEAR_BACKOFF_DURATION: u32 = 4;
+
 /// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub message_history: DashMap<Hash, u64>, // Map from message hashes to the slot when that message was sent
-    pub simulation_failures: DashMap<Pubkey, u32>,
-    pub is_locked: AtomicBool,
+    pub executable_threads: DashMap<Pubkey, ExecutableThreadMetadata>,
+    pub message_history: DashMap<Hash, u64>,
+}
+
+#[derive(Debug)]
+pub struct ExecutableThreadMetadata {
+    pub due_slot: u64,
+    pub simulation_failures: u32,
 }
 
 impl TxExecutor {
     pub fn new(config: PluginConfig) -> Self {
         Self {
             config: config.clone(),
+            executable_threads: DashMap::new(),
             message_history: DashMap::new(),
-            simulation_failures: DashMap::new(),
-            is_locked: AtomicBool::new(false),
         }
     }
 
     pub async fn execute_txs(
         self: Arc<Self>,
-        observers: Arc<Observers>,
         client: Arc<ClockworkClient>,
+        thread_pubkeys: DashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
         tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
-        // Lock until work is done.
-        if self
-            .clone()
-            .is_locked
-            .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
-            .is_err()
-        {
-            return Ok(());
-        }
+        // Index the provided threads as executable.
+        thread_pubkeys.par_iter().for_each(|pubkey| {
+            self.executable_threads.insert(
+                *pubkey,
+                ExecutableThreadMetadata {
+                    due_slot: slot,
+                    simulation_failures: 0,
+                },
+            );
+        });
+
+        info!("executable_threads: {:?}", self.executable_threads);
 
         // Drop threads that cross the simulation failure threshold.
         self.clone()
-            .simulation_failures
-            .retain(|thread_pubkey, failures| {
-                if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-                    observers.thread.executable_threads.remove(thread_pubkey);
-                    false
-                } else {
-                    true
-                }
+            .executable_threads
+            .retain(|_thread_pubkey, metadata| {
+                metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES
             });
 
         // Purge message history that is beyond the dedupe period.
@@ -102,20 +99,21 @@ impl TxExecutor {
             }
         }) {
             // Rotate into the worker pool.
-            self.clone()
-                .execute_pool_rotate_txs(
-                    client.clone(),
-                    slot,
-                    pool_position.clone(),
-                    tpu_client.clone(),
-                )
-                .ok();
+            if pool_position.current_position.is_none() {
+                self.clone()
+                    .execute_pool_rotate_txs(
+                        client.clone(),
+                        slot,
+                        pool_position.clone(),
+                        tpu_client.clone(),
+                    )
+                    .ok();
+            }
 
             // Execute thread transactions.
             self.clone()
                 .execute_thread_exec_txs(
                     client.clone(),
-                    observers.clone(),
                     slot,
                     pool_position,
                     runtime.clone(),
@@ -124,11 +122,6 @@ impl TxExecutor {
                 .await
                 .ok();
         }
-
-        // Release the lock.
-        self.clone()
-            .is_locked
-            .store(false, std::sync::atomic::Ordering::Relaxed);
 
         Ok(())
     }
@@ -166,7 +159,6 @@ impl TxExecutor {
     async fn execute_thread_exec_txs(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
-        observers: Arc<Observers>,
         slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
@@ -174,36 +166,28 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
-        let thread_pubkeys =
-            if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
-                // This worker is not in the pool. Get pubkeys that are beyond the timeout window.
-                observers
-                    .thread
-                    .executable_threads
-                    .par_iter()
-                    .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
-                    .map(|entry| *entry.key())
-                    .collect::<Vec<Pubkey>>()
-            } else {
-                // This worker is in the pool. Get pubkeys for executable threads.
-                observers
-                    .thread
-                    .executable_threads
-                    .par_iter()
-                    .filter(|entry| {
-                        // Linear backoff from simulation failures.
-                        let failure_count = self
-                            .clone()
-                            .simulation_failures
-                            .get(entry.key())
-                            .map(|e| *e.value())
-                            .unwrap_or(0);
-                        let backoff = ((failure_count * 3) as u64) + entry.value();
-                        slot >= backoff
-                    })
-                    .map(|entry| *entry.key())
-                    .collect::<Vec<Pubkey>>()
-            };
+        let thread_pubkeys = if pool_position.current_position.is_none()
+            && !pool_position.workers.is_empty()
+        {
+            // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
+            self.executable_threads
+                .par_iter()
+                .filter(|entry| slot > entry.value().due_slot + THREAD_TIMEOUT_WINDOW)
+                .map(|entry| *entry.key())
+                .collect::<Vec<Pubkey>>()
+        } else {
+            // This worker is in the pool. Get pubkeys executable threads.
+            self.executable_threads
+                .par_iter()
+                .filter(|entry| {
+                    // Linear backoff from simulation failures.
+                    let backoff = entry.value().due_slot
+                        + ((entry.value().simulation_failures * LINEAR_BACKOFF_DURATION) as u64);
+                    slot >= backoff
+                })
+                .map(|entry| *entry.key())
+                .collect::<Vec<Pubkey>>()
+        };
 
         // Process the tasks in parallel.
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
@@ -212,7 +196,6 @@ impl TxExecutor {
             .map(|thread_pubkey| {
                 runtime.spawn(self.clone().process_thread(
                     client.clone(),
-                    observers.clone(),
                     slot,
                     tpu_client.clone(),
                     *thread_pubkey,
@@ -229,7 +212,6 @@ impl TxExecutor {
     pub async fn process_thread(
         self: Arc<Self>,
         client: Arc<ClockworkClient>,
-        observers: Arc<Observers>,
         slot: u64,
         tpu_client: Arc<TpuClient>,
         thread_pubkey: Pubkey,
@@ -239,14 +221,14 @@ impl TxExecutor {
             .try_build_thread_exec_tx(client.clone(), thread_pubkey)
             .await
         {
-            self.clone().simulation_failures.remove(&thread_pubkey);
-            self.clone()
+            if self
+                .clone()
                 .execute_tx(slot, tpu_client.clone(), &tx)
-                .and_then(|_| {
-                    observers.thread.executable_threads.remove(&thread_pubkey);
-                    Ok(())
-                })
-                .ok();
+                .is_ok()
+            {
+                self.executable_threads.remove(&thread_pubkey);
+                // TODO Track the transaction signature
+            }
         }
     }
 
@@ -271,10 +253,9 @@ impl TxExecutor {
         .await
         .or_else(|| {
             self.clone()
-                .simulation_failures
+                .executable_threads
                 .entry(thread_pubkey)
-                .and_modify(|v| *v += 1)
-                .or_insert(1);
+                .and_modify(|metadata| metadata.simulation_failures += 1);
             None
         })
     }

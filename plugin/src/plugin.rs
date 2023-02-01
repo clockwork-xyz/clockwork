@@ -210,13 +210,14 @@ impl ClockworkPlugin {
             LOCAL_RPC_URL.into(),
         ));
         let observers = Arc::new(Observers {
-            thread: Arc::new(ThreadObserver::new(config.clone())),
-            webhook: Arc::new(WebhookObserver::new(runtime.clone())),
+            thread: Arc::new(ThreadObserver::new()),
+            webhook: Arc::new(WebhookObserver::new()),
         });
         let executors = Arc::new(Executors {
             tx: Arc::new(TxExecutor::new(config.clone())),
             webhook: Arc::new(WebhookExecutor::new(config.clone())),
             client: clockwork_client.clone(),
+            lock: AtomicBool::new(false),
         });
         Self {
             client: clockwork_client,
