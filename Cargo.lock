@@ -377,9 +377,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.57"
+version = "0.1.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76464446b8bc32758d7e88ee1a804d9914cd9b1cb264c029899680b0be29826f"
+checksum = "1cd7fce9ba8c3c042128ce72d8b2ddbf3a05747efb67ea0313c635e10bda47a2"
 dependencies = [
  "proc-macro2 1.0.46",
  "quote 1.0.21",
@@ -889,6 +889,7 @@ name = "clockwork_plugin"
 version = "1.4.3"
 dependencies = [
  "anchor-lang",
+ "async-trait",
  "async_once",
  "bincode",
  "bs58 0.4.0",

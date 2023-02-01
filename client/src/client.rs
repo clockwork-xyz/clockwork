@@ -48,7 +48,7 @@ pub struct Client {
 
 impl Client {
     pub fn new(payer: Keypair, url: String) -> Self {
-        let client = RpcClient::new_with_commitment::<String>(url, CommitmentConfig::confirmed());
+        let client = RpcClient::new_with_commitment::<String>(url, CommitmentConfig::processed());
         Self { client, payer }
     }
 
@@ -145,13 +145,12 @@ impl Client {
         }
     }
 
-    fn transaction<T: Signers>(&self,
-                               ixs: &[Instruction],
-                               signers: &T) -> ClientResult<Transaction> {
-        let mut tx = Transaction::new_with_payer(
-            ixs,
-            Some(&self.payer_pubkey()),
-        );
+    fn transaction<T: Signers>(
+        &self,
+        ixs: &[Instruction],
+        signers: &T,
+    ) -> ClientResult<Transaction> {
+        let mut tx = Transaction::new_with_payer(ixs, Some(&self.payer_pubkey()));
         tx.sign(signers, self.latest_blockhash()?);
         Ok(tx)
     }

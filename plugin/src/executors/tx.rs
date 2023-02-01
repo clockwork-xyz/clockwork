@@ -4,7 +4,6 @@ use async_once::AsyncOnce;
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
-    Client as ClockworkClient,
 };
 use dashmap::{DashMap, DashSet};
 use lazy_static::lazy_static;
@@ -19,10 +18,14 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
-use solana_sdk::{commitment_config::CommitmentConfig, transaction::Transaction};
+use solana_sdk::{
+    commitment_config::CommitmentConfig, signature::Keypair, transaction::Transaction,
+};
 use tokio::runtime::Runtime;
 
-use crate::{config::PluginConfig, pool_position::PoolPosition};
+use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
+
+use super::AccountGet;
 
 /// Number of slots to wait before attempting to resend a message.
 static MESSAGE_DEDUPE_PERIOD: u64 = 8;
@@ -41,6 +44,7 @@ pub struct TxExecutor {
     pub config: PluginConfig,
     pub executable_threads: DashMap<Pubkey, ExecutableThreadMetadata>,
     pub message_history: DashMap<Hash, u64>,
+    pub keypair: Keypair,
 }
 
 #[derive(Debug)]
@@ -55,12 +59,13 @@ impl TxExecutor {
             config: config.clone(),
             executable_threads: DashMap::new(),
             message_history: DashMap::new(),
+            keypair: read_or_new_keypair(config.keypath),
         }
     }
 
     pub async fn execute_txs(
         self: Arc<Self>,
-        client: Arc<ClockworkClient>,
+        client: Arc<RpcClient>,
         thread_pubkeys: DashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
@@ -92,7 +97,7 @@ impl TxExecutor {
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
-        if let Ok(pool_position) = client.get::<Pool>(&Pool::pubkey(0)).map(|pool| {
+        if let Ok(pool_position) = client.get::<Pool>(&Pool::pubkey(0)).await.map(|pool| {
             let workers = &mut pool.workers.clone();
             PoolPosition {
                 current_position: pool
@@ -123,28 +128,28 @@ impl TxExecutor {
 
     async fn execute_pool_rotate_txs(
         self: Arc<Self>,
-        client: Arc<ClockworkClient>,
+        client: Arc<RpcClient>,
         slot: u64,
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
-        let registry = client.get::<Registry>(&Registry::pubkey()).unwrap();
+        let registry = client.get::<Registry>(&Registry::pubkey()).await.unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
         let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
-        if let Ok(snapshot) = client.get::<Snapshot>(&snapshot_pubkey) {
-            if let Ok(snapshot_frame) = client.get::<SnapshotFrame>(&snapshot_frame_pubkey) {
-                match crate::builders::build_pool_rotation_tx(
+        if let Ok(snapshot) = client.get::<Snapshot>(&snapshot_pubkey).await {
+            if let Ok(snapshot_frame) = client.get::<SnapshotFrame>(&snapshot_frame_pubkey).await {
+                if let Some(tx) = crate::builders::build_pool_rotation_tx(
                     client.clone(),
+                    &self.keypair,
                     pool_position,
                     registry,
                     snapshot,
                     snapshot_frame,
                     self.config.worker_id,
-                ) {
-                    None => {}
-                    Some(tx) => {
-                        self.clone().execute_tx(slot, &tx).await.ok();
-                    }
-                };
+                )
+                .await
+                {
+                    self.clone().execute_tx(slot, &tx).await.ok();
+                }
             }
         }
         Ok(())
@@ -152,7 +157,7 @@ impl TxExecutor {
 
     async fn execute_thread_exec_txs(
         self: Arc<Self>,
-        client: Arc<ClockworkClient>,
+        client: Arc<RpcClient>,
         slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
@@ -164,14 +169,14 @@ impl TxExecutor {
         {
             // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
             self.executable_threads
-                .par_iter()
+                .iter()
                 .filter(|entry| slot > entry.value().due_slot + THREAD_TIMEOUT_WINDOW)
                 .map(|entry| *entry.key())
                 .collect::<Vec<Pubkey>>()
         } else {
             // This worker is in the pool. Get pubkeys executable threads.
             self.executable_threads
-                .par_iter()
+                .iter()
                 .filter(|entry| {
                     // Linear backoff from simulation failures.
                     let backoff = entry.value().due_slot
@@ -202,7 +207,7 @@ impl TxExecutor {
 
     pub async fn process_thread(
         self: Arc<Self>,
-        client: Arc<ClockworkClient>,
+        client: Arc<RpcClient>,
         slot: u64,
         thread_pubkey: Pubkey,
     ) {
@@ -220,11 +225,11 @@ impl TxExecutor {
 
     pub async fn try_build_thread_exec_tx(
         self: Arc<Self>,
-        client: Arc<ClockworkClient>,
+        client: Arc<RpcClient>,
         thread_pubkey: Pubkey,
     ) -> Option<Transaction> {
         // Get the thread.
-        let thread = match client.clone().get::<Thread>(&thread_pubkey) {
+        let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
             Err(_err) => return None,
             Ok(thread) => thread,
         };
@@ -232,6 +237,7 @@ impl TxExecutor {
         // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
             client.clone(),
+            &self.keypair,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,

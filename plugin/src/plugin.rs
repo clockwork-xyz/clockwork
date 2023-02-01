@@ -1,6 +1,5 @@
-use std::{fmt::Debug, sync::atomic::AtomicBool, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
-use clockwork_client::Client as ClockworkClient;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -12,19 +11,12 @@ use tokio::runtime::{Builder, Runtime};
 use crate::{
     config::PluginConfig,
     events::AccountUpdateEvent,
-    executors::{tx::TxExecutor, webhook::WebhookExecutor, Executors},
-    observers::{
-        thread::ThreadObserver,
-        webhook::{HttpRequest, WebhookObserver},
-        Observers,
-    },
-    utils::read_or_new_keypair,
+    executors::Executors,
+    observers::{webhook::HttpRequest, Observers},
 };
 
 pub struct ClockworkPlugin {
     pub inner: Arc<Inner>,
-    pub client: Arc<ClockworkClient>,
-    // pub tpu_client: Option<Arc<TpuClient>>,
 }
 
 impl Debug for ClockworkPlugin {
@@ -38,7 +30,6 @@ pub struct Inner {
     pub config: PluginConfig,
     pub executors: Arc<Executors>,
     pub observers: Arc<Observers>,
-    pub is_locked: AtomicBool,
     pub runtime: Arc<Runtime>,
 }
 
@@ -73,7 +64,7 @@ impl GeyserPlugin for ClockworkPlugin {
         &mut self,
         account: ReplicaAccountInfoVersions,
         slot: u64,
-        _is_startup: bool,
+        is_startup: bool,
     ) -> PluginResult<()> {
         // Parse account info.
         let account_info = match account {
@@ -94,11 +85,14 @@ impl GeyserPlugin for ClockworkPlugin {
         // Process event on tokio task.
         self.inner.clone().spawn(|inner| async move {
             // Send all account updates to the thread observer for account listeners.
-            inner
-                .observers
-                .thread
-                .clone()
-                .observe_account(account_pubkey, slot)?;
+            // Only process account updates if we're past the startup phase.
+            if !is_startup {
+                inner
+                    .observers
+                    .thread
+                    .clone()
+                    .observe_account(account_pubkey, slot)?;
+            }
 
             // Parse and process specific update events.
             if let Ok(event) = event {
@@ -142,33 +136,19 @@ impl GeyserPlugin for ClockworkPlugin {
         _parent: Option<u64>,
         status: SlotStatus,
     ) -> PluginResult<()> {
-        // if self.tpu_client.is_none() {
-        //     self.try_build_tpu_client()?;
-        // }
-
         self.inner.clone().spawn(|inner| async move {
             match status {
                 SlotStatus::Processed => {
                     inner
                         .executors
                         .clone()
-                        .process_slot(
-                            inner.observers.clone(),
-                            slot,
-                            inner.runtime.clone(),
-                            // tpu_client,
-                        )
+                        .process_slot(inner.observers.clone(), slot, inner.runtime.clone())
                         .await?;
                 }
                 _ => (),
             }
             Ok(())
         })
-        // if let Some(tpu_client) = &self.tpu_client {
-        //     let tpu_client = tpu_client.clone();
-        // } else {
-        //     Ok(())
-        // }
     }
 
     fn notify_transaction(
@@ -195,33 +175,16 @@ impl GeyserPlugin for ClockworkPlugin {
     }
 }
 
-static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let clockwork_client = Arc::new(ClockworkClient::new(
-            read_or_new_keypair(config.clone().keypath),
-            LOCAL_RPC_URL.into(),
-        ));
-        let observers = Arc::new(Observers {
-            thread: Arc::new(ThreadObserver::new()),
-            webhook: Arc::new(WebhookObserver::new()),
-        });
-        let executors = Arc::new(Executors {
-            tx: Arc::new(TxExecutor::new(config.clone())),
-            webhook: Arc::new(WebhookExecutor::new(config.clone())),
-            client: clockwork_client.clone(),
-            lock: AtomicBool::new(false),
-        });
+        let observers = Arc::new(Observers::new());
+        let executors = Arc::new(Executors::new(config.clone()));
         Self {
-            client: clockwork_client,
-            // tpu_client: None,
             inner: Arc::new(Inner {
                 config,
                 executors,
                 observers,
-                is_locked: AtomicBool::new(false),
                 runtime,
             }),
         }

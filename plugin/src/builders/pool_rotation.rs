@@ -1,16 +1,15 @@
 use std::sync::Arc;
 
-use clockwork_client::{
-    network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
-    Client as ClockworkClient,
-};
+use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
-use solana_sdk::transaction::Transaction;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
 
 use crate::pool_position::PoolPosition;
 
-pub fn build_pool_rotation_tx<'a>(
-    client: Arc<ClockworkClient>,
+pub async fn build_pool_rotation_tx<'a>(
+    client: Arc<RpcClient>,
+    keypair: &Keypair,
     pool_position: PoolPosition,
     registry: Registry,
     snapshot: Snapshot,
@@ -65,15 +64,14 @@ pub fn build_pool_rotation_tx<'a>(
     let snapshot_pubkey = Snapshot::pubkey(snapshot.id);
     let ix = clockwork_client::network::instruction::pool_rotate(
         Pool::pubkey(0),
-        client.payer_pubkey(),
+        keypair.pubkey(),
         snapshot_pubkey,
         SnapshotFrame::pubkey(snapshot_pubkey, worker_id),
         Worker::pubkey(worker_id),
     );
 
     // Build and sign tx.
-    let mut tx = Transaction::new_with_payer(&[ix.clone()], Some(&client.payer_pubkey()));
-    tx.sign(&[client.payer()], client.get_latest_blockhash().unwrap());
-
+    let mut tx = Transaction::new_with_payer(&[ix.clone()], Some(&keypair.pubkey()));
+    tx.sign(&[keypair], client.get_latest_blockhash().await.unwrap());
     return Some(tx);
 }
