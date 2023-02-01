@@ -40,13 +40,8 @@ static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 /// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub client: Arc<ClockworkClient>, // TODO ClockworkClient and TPUClient can be unified into a single interface
     pub message_history: DashMap<Hash, u64>, // Map from message hashes to the slot when that message was sent
-    pub observers: Arc<Observers>,
-    pub runtime: Arc<Runtime>,
-    pub tpu_client: Arc<TpuClient>,
     pub simulation_failures: DashMap<Pubkey, u32>,
-    pub processed_threads: DashMap<Pubkey, TimestampedSignature>,
     pub is_locked: AtomicBool,
 }
 
@@ -56,108 +51,107 @@ pub struct TimestampedSignature {
 }
 
 impl TxExecutor {
-    pub fn new(
-        config: PluginConfig,
-        client: Arc<ClockworkClient>,
-        observers: Arc<Observers>,
-        runtime: Arc<Runtime>,
-        tpu_client: Arc<TpuClient>,
-    ) -> Self {
+    pub fn new(config: PluginConfig) -> Self {
         Self {
             config: config.clone(),
-            client,
             message_history: DashMap::new(),
-            observers,
-            runtime,
-            tpu_client,
             simulation_failures: DashMap::new(),
-            processed_threads: DashMap::new(),
             is_locked: AtomicBool::new(false),
         }
     }
 
-    pub fn execute_txs(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            // Lock until work is done.
-            if this
-                .clone()
-                .is_locked
-                .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
-                .is_err()
-            {
-                return Ok(());
-            }
+    pub fn execute_txs(
+        self: Arc<Self>,
+        observers: Arc<Observers>,
+        client: Arc<ClockworkClient>,
+        slot: u64,
+        runtime: Arc<Runtime>,
+        tpu_client: Arc<TpuClient>,
+    ) -> PluginResult<()> {
+        // Lock until work is done.
+        if self
+            .clone()
+            .is_locked
+            .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
+            .is_err()
+        {
+            return Ok(());
+        }
 
-            // Drop threads that cross the simulation failure threshold.
-            this.clone()
-                .simulation_failures
-                .retain(|thread_pubkey, failures| {
-                    if *failures >= MAX_THREAD_SIMULATION_FAILURES {
-                        this.observers
-                            .thread
-                            .executable_threads
-                            .remove(thread_pubkey);
-                        false
-                    } else {
-                        true
-                    }
-                });
-
-            // Purge message history that is beyond the dedupe period.
-            this.clone()
-                .message_history
-                .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
-
-            // Get this worker's position in the delegate pool.
-            let worker_pubkey = Worker::pubkey(this.config.worker_id);
-            if let Ok(pool_position) = this.client.get::<Pool>(&Pool::pubkey(0)).map(|pool| {
-                let workers = &mut pool.workers.clone();
-                PoolPosition {
-                    current_position: pool
-                        .workers
-                        .iter()
-                        .position(|k| k.eq(&worker_pubkey))
-                        .map(|i| i as u64),
-                    workers: workers.make_contiguous().to_vec().clone(),
+        // Drop threads that cross the simulation failure threshold.
+        self.clone()
+            .simulation_failures
+            .retain(|thread_pubkey, failures| {
+                if *failures >= MAX_THREAD_SIMULATION_FAILURES {
+                    observers.thread.executable_threads.remove(thread_pubkey);
+                    false
+                } else {
+                    true
                 }
-            }) {
-                // Rotate into the worker pool.
-                this.clone()
-                    .execute_pool_rotate_txs(slot, pool_position.clone())
-                    .await
-                    .ok();
+            });
 
-                // Execute thread transactions.
-                this.clone()
-                    .execute_thread_exec_txs(slot, pool_position)
-                    .await
-                    .ok();
+        // Purge message history that is beyond the dedupe period.
+        self.clone()
+            .message_history
+            .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
+
+        // Get self worker's position in the delegate pool.
+        let worker_pubkey = Worker::pubkey(self.config.worker_id);
+        if let Ok(pool_position) = client.get::<Pool>(&Pool::pubkey(0)).map(|pool| {
+            let workers = &mut pool.workers.clone();
+            PoolPosition {
+                current_position: pool
+                    .workers
+                    .iter()
+                    .position(|k| k.eq(&worker_pubkey))
+                    .map(|i| i as u64),
+                workers: workers.make_contiguous().to_vec().clone(),
             }
+        }) {
+            // Rotate into the worker pool.
+            self.clone()
+                .execute_pool_rotate_txs(
+                    client.clone(),
+                    slot,
+                    pool_position.clone(),
+                    tpu_client.clone(),
+                )
+                .ok();
 
-            // Check-in on submitted txs.
-            this.clone().check_processed_threads(slot).await.ok();
+            // Execute thread transactions.
+            self.clone()
+                .execute_thread_exec_txs(
+                    client.clone(),
+                    observers.clone(),
+                    slot,
+                    pool_position,
+                    tpu_client,
+                )
+                .ok();
+        }
 
-            // Release the lock.
-            this.clone()
-                .is_locked
-                .store(false, std::sync::atomic::Ordering::Relaxed);
+        // Release the lock.
+        self.clone()
+            .is_locked
+            .store(false, std::sync::atomic::Ordering::Relaxed);
 
-            Ok(())
-        })
+        Ok(())
     }
 
-    async fn execute_pool_rotate_txs(
+    fn execute_pool_rotate_txs(
         self: Arc<Self>,
+        client: Arc<ClockworkClient>,
         slot: u64,
         pool_position: PoolPosition,
+        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
-        let registry = self.client.get::<Registry>(&Registry::pubkey()).unwrap();
+        let registry = client.get::<Registry>(&Registry::pubkey()).unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
         let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
-        if let Ok(snapshot) = self.client.get::<Snapshot>(&snapshot_pubkey) {
-            if let Ok(snapshot_frame) = self.client.get::<SnapshotFrame>(&snapshot_frame_pubkey) {
+        if let Ok(snapshot) = client.get::<Snapshot>(&snapshot_pubkey) {
+            if let Ok(snapshot_frame) = client.get::<SnapshotFrame>(&snapshot_frame_pubkey) {
                 match crate::builders::build_pool_rotation_tx(
-                    self.client.clone(),
+                    client.clone(),
                     pool_position,
                     registry,
                     snapshot,
@@ -166,7 +160,7 @@ impl TxExecutor {
                 ) {
                     None => {}
                     Some(tx) => {
-                        self.clone().execute_tx(slot, &tx).ok();
+                        self.clone().execute_tx(slot, tpu_client, &tx).ok();
                     }
                 };
             }
@@ -174,62 +168,36 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn check_processed_threads(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.processed_threads
-            .retain(|thread_pubkey, timestamped_signature| {
-                match self
-                    .client
-                    .get_signature_status(&timestamped_signature.signature)
-                {
-                    Err(err) => {
-                        info!("Error fetching signature status: {:?}", err);
-                        true
-                    }
-                    Ok(status) => {
-                        info!(
-                            "thread: {} sig: {} status: {:?}",
-                            thread_pubkey, timestamped_signature.signature, status
-                        );
-                        match status {
-                            None => true,
-                            Some(status) => match status {
-                                Err(err) => false,
-                                Ok(k) => false,
-                            },
-                        }
-                    }
-                }
-            });
-        Ok(())
-    }
-
-    async fn execute_thread_exec_txs(
+    fn execute_thread_exec_txs(
         self: Arc<Self>,
+        client: Arc<ClockworkClient>,
+        observers: Arc<Observers>,
         slot: u64,
         pool_position: PoolPosition,
+        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
         // Exit early if this worker is not in the delegate pool.
         if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
             // Attempt executing threads that have been executable for more than the time window.
-            self.observers
+            observers
                 .thread
                 .executable_threads
                 .par_iter()
                 .filter(|entry| slot > entry.value() + THREAD_TIMEOUT_WINDOW)
                 .filter_map(|entry| {
                     self.clone()
-                        .try_build_thread_exec_tx(*entry.key())
+                        .try_build_thread_exec_tx(client.clone(), *entry.key())
                         .map(|tx| (tx, *entry.key()))
                 })
                 .for_each(|(tx, thread_pubkey)| {
                     self.clone().simulation_failures.remove(&thread_pubkey);
-                    self.clone().execute_tx(slot, &tx).ok();
+                    self.clone().execute_tx(slot, tpu_client.clone(), &tx).ok();
                 });
             return Ok(());
         }
 
         // Get the set of thread pubkeys that are executable.
-        self.observers
+        observers
             .thread
             .executable_threads
             .iter()
@@ -249,25 +217,15 @@ impl TxExecutor {
             .par_iter()
             .filter_map(|thread_pubkey| {
                 self.clone()
-                    .try_build_thread_exec_tx(*thread_pubkey)
+                    .try_build_thread_exec_tx(client.clone(), *thread_pubkey)
                     .map(|tx| (tx, thread_pubkey))
             })
             .for_each(|(tx, thread_pubkey)| {
                 self.clone().simulation_failures.remove(thread_pubkey);
                 self.clone()
-                    .execute_tx(slot, &tx)
+                    .execute_tx(slot, tpu_client.clone(), &tx)
                     .and_then(|_| {
-                        self.observers
-                            .thread
-                            .executable_threads
-                            .remove(thread_pubkey);
-                        self.processed_threads.insert(
-                            *thread_pubkey,
-                            TimestampedSignature {
-                                signature: tx.signatures[0],
-                                slot,
-                            },
-                        );
+                        observers.thread.executable_threads.remove(thread_pubkey);
                         Ok(())
                     })
                     .ok();
@@ -276,16 +234,20 @@ impl TxExecutor {
         Ok(())
     }
 
-    pub fn try_build_thread_exec_tx(self: Arc<Self>, thread_pubkey: Pubkey) -> Option<Transaction> {
+    pub fn try_build_thread_exec_tx(
+        self: Arc<Self>,
+        client: Arc<ClockworkClient>,
+        thread_pubkey: Pubkey,
+    ) -> Option<Transaction> {
         // Get the thread.
-        let thread = match self.client.clone().get::<Thread>(&thread_pubkey) {
+        let thread = match client.clone().get::<Thread>(&thread_pubkey) {
             Err(_err) => return None,
             Ok(thread) => thread,
         };
 
         // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
-            self.client.clone(),
+            client.clone(),
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,
@@ -300,7 +262,12 @@ impl TxExecutor {
         })
     }
 
-    fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
+    fn execute_tx(
+        self: Arc<Self>,
+        slot: u64,
+        tpu_client: Arc<TpuClient>,
+        tx: &Transaction,
+    ) -> PluginResult<()> {
         // Exit early if this message was sent recently
         if let Some(entry) = self
             .message_history
@@ -314,13 +281,17 @@ impl TxExecutor {
 
         // Simulate and submit the tx
         self.clone()
-            .simulate_tx(tx)
-            .and_then(|tx| self.clone().submit_tx(&tx))
+            .simulate_tx(tx, tpu_client.clone())
+            .and_then(|tx| self.clone().submit_tx(&tx, tpu_client.clone()))
             .and_then(|tx| self.log_tx(slot, tx))
     }
 
-    fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        self.tpu_client
+    fn simulate_tx(
+        self: Arc<Self>,
+        tx: &Transaction,
+        tpu_client: Arc<TpuClient>,
+    ) -> PluginResult<Transaction> {
+        tpu_client
             .rpc_client()
             .simulate_transaction_with_config(
                 tx,
@@ -345,8 +316,12 @@ impl TxExecutor {
             })?
     }
 
-    fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        if !self.tpu_client.send_transaction(tx) {
+    fn submit_tx(
+        self: Arc<Self>,
+        tx: &Transaction,
+        tpu_client: Arc<TpuClient>,
+    ) -> PluginResult<Transaction> {
+        if !tpu_client.send_transaction(tx) {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
@@ -361,14 +336,6 @@ impl TxExecutor {
         info!("slot: {} sig: {}", slot, sig);
         Ok(())
     }
-
-    fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
-        self: &Arc<Self>,
-        f: impl FnOnce(Arc<Self>) -> F,
-    ) -> PluginResult<()> {
-        self.runtime.spawn(f(self.clone()));
-        Ok(())
-    }
 }
 
 impl Debug for TxExecutor {
@@ -377,9 +344,7 @@ impl Debug for TxExecutor {
     }
 }
 
-/**
- * BlockhashAgnosticHash
- */
+/// BlockhashAgnosticHash
 trait BlockhashAgnosticHash {
     fn blockhash_agnostic_hash(&self) -> Hash;
 }

@@ -1,4 +1,9 @@
-use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, ReplicaAccountInfo,
+};
+use tokio::sync::RwLock;
 
 use {
     crate::{
@@ -30,11 +35,17 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 #[derive(Debug)]
 pub struct ClockworkPlugin {
-    // Plugin config values.
+    pub inner: Arc<Inner>,
+    pub client: Arc<ClockworkClient>,
+    pub tpu_client: Option<Arc<TpuClient>>,
+}
+
+#[derive(Debug)]
+pub struct Inner {
     pub config: PluginConfig,
-    pub executors: Option<Arc<Executors>>,
+    pub executors: Arc<Executors>,
     pub observers: Arc<Observers>,
-    // Tokio runtime for processing async tasks.
+    pub is_locked: AtomicBool,
     pub runtime: Arc<Runtime>,
 }
 
@@ -71,7 +82,7 @@ impl GeyserPlugin for ClockworkPlugin {
         slot: u64,
         _is_startup: bool,
     ) -> PluginResult<()> {
-        // Fetch account info
+        // Parse account info.
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
             ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
@@ -85,34 +96,46 @@ impl GeyserPlugin for ClockworkPlugin {
             },
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
+        let event = AccountUpdateEvent::try_from(account_info);
 
-        // Send all account updates to the thread observer for account listeners.
-        self.observers.thread.clone().observe_account(
-            account_pubkey,
-            account_info.clone(),
-            slot,
-        )?;
+        // Process event on tokio task.
+        self.inner.clone().spawn(|inner| async move {
+            // Send all account updates to the thread observer for account listeners.
+            inner
+                .observers
+                .thread
+                .clone()
+                .observe_account(account_pubkey, slot)?;
 
-        // Parse and process specific update events.
-        match AccountUpdateEvent::try_from(account_info) {
-            Ok(event) => match event {
-                AccountUpdateEvent::Clock { clock } => {
-                    self.observers.thread.clone().observe_clock(clock)
+            // Parse and process specific update events.
+            if let Ok(event) = event {
+                match event {
+                    AccountUpdateEvent::Clock { clock } => {
+                        inner.observers.thread.clone().observe_clock(clock).ok();
+                    }
+                    AccountUpdateEvent::HttpRequest { request } => {
+                        inner
+                            .observers
+                            .webhook
+                            .clone()
+                            .observe_request(HttpRequest {
+                                pubkey: account_pubkey,
+                                request,
+                            })
+                            .ok();
+                    }
+                    AccountUpdateEvent::Thread { thread } => {
+                        inner
+                            .observers
+                            .thread
+                            .clone()
+                            .observe_thread(thread, account_pubkey, slot)
+                            .ok();
+                    }
                 }
-                AccountUpdateEvent::HttpRequest { request } => {
-                    self.observers.webhook.clone().observe_request(HttpRequest {
-                        pubkey: account_pubkey,
-                        request,
-                    })
-                }
-                AccountUpdateEvent::Thread { thread } => self
-                    .observers
-                    .thread
-                    .clone()
-                    .observe_thread(thread, account_pubkey, slot),
-            },
-            Err(_err) => Ok(()),
-        }
+            }
+            Ok(())
+        })
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
@@ -124,31 +147,35 @@ impl GeyserPlugin for ClockworkPlugin {
         &mut self,
         slot: u64,
         _parent: Option<u64>,
-        status: solana_geyser_plugin_interface::geyser_plugin_interface::SlotStatus,
+        status: SlotStatus,
     ) -> PluginResult<()> {
-        // If they don't exist yet, try to build the executors.
-        if self.executors.is_none() {
-            self.try_build_executors()
+        if self.tpu_client.is_none() {
+            self.try_build_tpu_client()?;
         }
 
-        // Update the plugin state and execute transactions with the processed slot number.
-        match status {
-            SlotStatus::Processed => match &self.executors {
-                Some(executors) => {
-                    info!(
-                        "slot: {} executable_threads: {} cron_threads: {}",
-                        slot,
-                        self.observers.thread.executable_threads.len(),
-                        self.observers.thread.cron_threads.len()
-                    );
-                    self.observers.thread.clone().observe_processed_slot(slot)?;
-                    executors.clone().execute_work(slot)?;
+        if let Some(tpu_client) = &self.tpu_client {
+            let tpu_client = tpu_client.clone();
+            self.inner.clone().spawn(|inner| async move {
+                match status {
+                    SlotStatus::Processed => {
+                        inner
+                            .executors
+                            .clone()
+                            .process_slot(
+                                inner.observers.clone(),
+                                slot,
+                                inner.runtime.clone(),
+                                tpu_client,
+                            )
+                            .await?;
+                    }
+                    _ => (),
                 }
-                None => (),
-            },
-            _ => (),
+                Ok(())
+            })
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn notify_transaction(
@@ -178,70 +205,64 @@ impl GeyserPlugin for ClockworkPlugin {
 impl ClockworkPlugin {
     fn new_from_config(config: PluginConfig) -> Self {
         let runtime = build_runtime(config.clone());
-        let thread_observer = Arc::new(ThreadObserver::new(config.clone(), runtime.clone()));
-        let webhook_observer = Arc::new(WebhookObserver::new(runtime.clone()));
+        let clockwork_client = Arc::new(ClockworkClient::new(
+            read_or_new_keypair(config.clone().keypath),
+            LOCAL_RPC_URL.into(),
+        ));
+        let observers = Arc::new(Observers {
+            thread: Arc::new(ThreadObserver::new(config.clone())),
+            webhook: Arc::new(WebhookObserver::new(runtime.clone())),
+        });
+        let executors = Arc::new(Executors {
+            tx: Arc::new(TxExecutor::new(config.clone())),
+            webhook: Arc::new(WebhookExecutor::new(config.clone())),
+            client: clockwork_client.clone(),
+        });
         Self {
-            config,
-            executors: None,
-            observers: Arc::new(Observers {
-                thread: thread_observer,
-                webhook: webhook_observer,
+            client: clockwork_client,
+            tpu_client: None,
+            inner: Arc::new(Inner {
+                config,
+                executors,
+                observers,
+                is_locked: AtomicBool::new(false),
+                runtime,
             }),
-            runtime,
         }
     }
 
-    fn try_build_executors(&mut self) {
+    fn try_build_tpu_client(&mut self) -> PluginResult<()> {
         // Return early if not healthy
-        if RpcClient::new_with_commitment::<String>(
-            LOCAL_RPC_URL.into(),
-            CommitmentConfig::confirmed(),
-        )
-        .get_health()
-        .is_err()
-        {
-            return;
+        if self.client.get_health().is_err() {
+            return Err(GeyserPluginError::Custom(
+                format!("RPC service is not healthy").into(),
+            ));
         }
-
         // Build clients
-        let clockwork_client = Arc::new(ClockworkClient::new(
-            read_or_new_keypair(self.config.clone().keypath),
+        let tpu_client = TpuClient::new(
+            read_or_new_keypair(self.inner.config.clone().keypath),
             LOCAL_RPC_URL.into(),
-        ));
-        let tpu_client = Arc::new(
-            TpuClient::new(
-                read_or_new_keypair(self.config.clone().keypath),
-                LOCAL_RPC_URL.into(),
-                LOCAL_WEBSOCKET_URL.into(),
-            )
-            .unwrap(),
-        );
-
-        // Build executors
-        let webhook_executor = Arc::new(WebhookExecutor::new(
-            self.config.clone(),
-            self.observers.clone(),
-            self.runtime.clone(),
-            clockwork_client.payer_pubkey(),
-        ));
-        let tx_executor = Arc::new(TxExecutor::new(
-            self.config.clone(),
-            clockwork_client.clone(),
-            self.observers.clone(),
-            self.runtime.clone(),
-            tpu_client.clone(),
-        ));
-        self.executors = Some(Arc::new(Executors {
-            tx: tx_executor,
-            runtime: self.runtime.clone(),
-            webhook: webhook_executor,
-        }))
+            LOCAL_WEBSOCKET_URL.into(),
+        )
+        .unwrap();
+        self.tpu_client = Some(Arc::new(tpu_client));
+        Ok(())
     }
 }
 
 impl Default for ClockworkPlugin {
     fn default() -> Self {
         Self::new_from_config(PluginConfig::default())
+    }
+}
+
+impl Inner {
+    fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
+        self: Arc<Self>,
+        f: impl FnOnce(Arc<Self>) -> F,
+    ) -> PluginResult<()> {
+        self.runtime.spawn(f(self.clone()));
+        Ok(())
     }
 }
 

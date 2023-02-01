@@ -8,6 +8,7 @@ use {
     solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
 };
 
+#[derive(Debug)]
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },

@@ -3,31 +3,48 @@ pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
+use clockwork_client::Client as ClockworkClient;
+use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
 use webhook::WebhookExecutor;
 
+use crate::{config::PluginConfig, observers::Observers, tpu_client::TpuClient};
+
 pub struct Executors {
     pub tx: Arc<TxExecutor>,
-    pub runtime: Arc<Runtime>,
     pub webhook: Arc<WebhookExecutor>,
+    pub client: Arc<ClockworkClient>,
 }
 
 impl Executors {
-    pub fn execute_work(self: Arc<Self>, slot: u64) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            this.tx.clone().execute_txs(slot)?;
-            this.webhook.clone().execute_requests()?;
-            Ok(())
-        })
-    }
-
-    fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
-        self: &Arc<Self>,
-        f: impl FnOnce(Arc<Self>) -> F,
+    pub async fn process_slot(
+        self: Arc<Self>,
+        observers: Arc<Observers>,
+        slot: u64,
+        runtime: Arc<Runtime>,
+        tpu_client: Arc<TpuClient>,
     ) -> PluginResult<()> {
-        self.runtime.spawn(f(self.clone()));
+        info!("process_slot: {}", slot,);
+        let now = std::time::Instant::now();
+
+        // Process the slot on the observers.
+        observers.thread.clone().observe_processed_slot(slot)?;
+
+        // Process the slot in the transaction executor.
+        self.tx.clone().execute_txs(
+            observers.clone(),
+            self.client.clone(),
+            slot,
+            runtime.clone(),
+            tpu_client,
+        )?;
+
+        info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+
+        // Process the slot in the webhook executor.
+        // self.webhook.clone().execute_requests()?;
         Ok(())
     }
 }
