@@ -1,7 +1,10 @@
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
-    sync::Arc,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
 };
 
 use async_once::AsyncOnce;
@@ -39,13 +42,14 @@ static THREAD_TIMEOUT_WINDOW: u64 = 8;
 static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 
 /// Number of slots to wait after simulation failure before retrying again.
-static LINEAR_BACKOFF_DURATION: u32 = 4;
+static LINEAR_BACKOFF_DURATION: u32 = 5;
 
 /// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
     pub executable_threads: RwLock<HashMap<Pubkey, ExecutableThreadMetadata>>,
     pub message_history: RwLock<HashMap<Hash, u64>>,
+    pub dropped_threads: AtomicU64,
     pub keypair: Keypair,
 }
 
@@ -61,6 +65,7 @@ impl TxExecutor {
             config: config.clone(),
             executable_threads: RwLock::new(HashMap::new()),
             message_history: RwLock::new(HashMap::new()),
+            dropped_threads: AtomicU64::new(0),
             keypair: read_or_new_keypair(config.keypath),
         }
     }
@@ -86,9 +91,17 @@ impl TxExecutor {
 
         // Drop threads that cross the simulation failure threshold.
         w_executable_threads.retain(|_thread_pubkey, metadata| {
-            metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES
+            let b = metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES;
+            if !b {
+                self.dropped_threads.fetch_and(1, Ordering::Relaxed);
+            }
+            b
         });
-        info!("executable_threads: {:?}", *w_executable_threads);
+        info!(
+            "dropped_threads: {:?} executable_threads: {:?}",
+            self.dropped_threads.load(Ordering::Relaxed),
+            *w_executable_threads
+        );
         drop(w_executable_threads);
 
         // Purge message history that is beyond the dedupe period.
@@ -224,6 +237,12 @@ impl TxExecutor {
                 drop(w_executable_threads);
                 // TODO Track the transaction signature
             }
+        } else {
+            let mut w_executable_threads = self.executable_threads.write().await;
+            w_executable_threads
+                .entry(thread_pubkey)
+                .and_modify(|metadata| metadata.simulation_failures += 1);
+            drop(w_executable_threads);
         }
     }
 
@@ -234,27 +253,21 @@ impl TxExecutor {
     ) -> Option<Transaction> {
         // Get the thread.
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
-            Err(_err) => return None,
+            Err(_err) => {
+                return None;
+            }
             Ok(thread) => thread,
         };
 
         // Build the thread_exec transaction.
-        let tx = crate::builders::build_thread_exec_tx(
+        crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
-        .await;
-        if tx.is_none() {
-            let mut w_executable_threads = self.executable_threads.write().await;
-            w_executable_threads
-                .entry(thread_pubkey)
-                .and_modify(|metadata| metadata.simulation_failures += 1);
-            drop(w_executable_threads);
-        }
-        tx
+        .await
     }
 
     async fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {

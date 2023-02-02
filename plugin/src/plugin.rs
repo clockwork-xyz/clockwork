@@ -1,7 +1,6 @@
 use std::{fmt::Debug, sync::Arc};
 
 use log::info;
-use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
 };
