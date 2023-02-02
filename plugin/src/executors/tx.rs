@@ -88,7 +88,7 @@ impl TxExecutor {
         w_executable_threads.retain(|_thread_pubkey, metadata| {
             metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES
         });
-        info!("executable_threads: {:?}", self.executable_threads);
+        info!("executable_threads: {:?}", *w_executable_threads);
         drop(w_executable_threads);
 
         // Purge message history that is beyond the dedupe period.
