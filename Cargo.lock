@@ -899,11 +899,9 @@ dependencies = [
  "clockwork-client",
  "clockwork-cron",
  "clockwork-utils",
- "dashmap",
  "lazy_static",
  "log 0.4.17",
  "prost",
- "rayon",
  "reqwest",
  "sentry",
  "serde",
@@ -1144,20 +1142,6 @@ dependencies = [
  "proc-macro2 1.0.46",
  "quote 1.0.21",
  "syn 1.0.102",
-]
-
-[[package]]
-name = "dashmap"
-version = "5.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "907076dfda823b0b36d2a1bb5f90c96660a5bbcd7729e10727f07858f22c4edc"
-dependencies = [
- "cfg-if",
- "hashbrown 0.12.3",
- "lock_api",
- "once_cell",
- "parking_lot_core 0.9.3",
- "rayon",
 ]
 
 [[package]]

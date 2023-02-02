@@ -91,7 +91,8 @@ impl GeyserPlugin for ClockworkPlugin {
                     .observers
                     .thread
                     .clone()
-                    .observe_account(account_pubkey, slot)?;
+                    .observe_account(account_pubkey, slot)
+                    .await?;
             }
 
             // Parse and process specific update events.
@@ -102,7 +103,13 @@ impl GeyserPlugin for ClockworkPlugin {
                 );
                 match event {
                     AccountUpdateEvent::Clock { clock } => {
-                        inner.observers.thread.clone().observe_clock(clock).ok();
+                        inner
+                            .observers
+                            .thread
+                            .clone()
+                            .observe_clock(clock)
+                            .await
+                            .ok();
                     }
                     AccountUpdateEvent::HttpRequest { request } => {
                         inner
@@ -113,6 +120,7 @@ impl GeyserPlugin for ClockworkPlugin {
                                 pubkey: account_pubkey,
                                 request,
                             })
+                            .await
                             .ok();
                     }
                     AccountUpdateEvent::Thread { thread } => {
@@ -121,6 +129,7 @@ impl GeyserPlugin for ClockworkPlugin {
                             .thread
                             .clone()
                             .observe_thread(thread, account_pubkey, slot)
+                            .await
                             .ok();
                     }
                 }

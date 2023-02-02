@@ -1,105 +1,124 @@
-use std::{fmt::Debug, str::FromStr, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    str::FromStr,
+    sync::Arc,
+};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Thread, Trigger, TriggerContext};
 use clockwork_cron::Schedule;
-use dashmap::{DashMap, DashSet};
 use log::info;
-use rayon::prelude::*;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey};
+use tokio::sync::RwLock;
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
-    pub clocks: DashMap<u64, Clock>,
-
-    // The set of threads with a cront trigger.
-    // Map from unix timestamps to the list of threads scheduled for that moment.
-    pub cron_threads: DashMap<i64, DashSet<Pubkey>>,
+    pub clocks: RwLock<HashMap<u64, Clock>>,
 
     // The set of threads with an account trigger.
     // Map from account pubkeys to the set of threads listening for an account update.
-    pub listener_threads: DashMap<Pubkey, DashSet<Pubkey>>,
+    pub account_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
+
+    // The set of threads with a cront trigger.
+    // Map from unix timestamps to the list of threads scheduled for that moment.
+    pub cron_threads: RwLock<HashMap<i64, HashSet<Pubkey>>>,
 
     // The set of threads with an immediate trigger.
-    pub immediate_threads: DashSet<Pubkey>,
+    pub immediate_threads: RwLock<HashSet<Pubkey>>,
 
     // The set of accounts that have updated.
-    pub updated_accounts: DashSet<Pubkey>,
+    pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
 
 impl ThreadObserver {
     pub fn new() -> Self {
         Self {
-            clocks: DashMap::new(),
-            cron_threads: DashMap::new(),
-            immediate_threads: DashSet::new(),
-            listener_threads: DashMap::new(),
-            updated_accounts: DashSet::new(),
+            clocks: RwLock::new(HashMap::new()),
+            account_threads: RwLock::new(HashMap::new()),
+            cron_threads: RwLock::new(HashMap::new()),
+            immediate_threads: RwLock::new(HashSet::new()),
+            updated_accounts: RwLock::new(HashSet::new()),
         }
     }
 
-    pub fn process_slot(self: Arc<Self>, slot: u64) -> PluginResult<DashSet<Pubkey>> {
-        let executable_threads: DashSet<Pubkey> = DashSet::new();
+    pub async fn process_slot(self: Arc<Self>, slot: u64) -> PluginResult<HashSet<Pubkey>> {
+        let mut executable_threads: HashSet<Pubkey> = HashSet::new();
 
         // Drop old clocks.
-        self.clocks
-            .retain(|cached_slot, _clock| *cached_slot >= slot);
+        let mut w_clocks = self.clocks.write().await;
+        w_clocks.retain(|cached_slot, _clock| *cached_slot >= slot);
+        drop(w_clocks);
 
         // Get the set of threads that were triggered by the current clock.
-        if let Some(clock) = self.clocks.get(&slot) {
-            self.cron_threads
-                .retain(|target_timestamp, thread_pubkeys| {
-                    let is_due = clock.unix_timestamp >= *target_timestamp;
-                    if is_due {
-                        for thread_pubkey_ref in thread_pubkeys.iter() {
-                            executable_threads.insert(*thread_pubkey_ref.key());
-                        }
+        let r_clocks = self.clocks.read().await;
+        if let Some(clock) = r_clocks.get(&slot) {
+            let mut w_cron_threads = self.cron_threads.write().await;
+            w_cron_threads.retain(|target_timestamp, thread_pubkeys| {
+                let is_due = clock.unix_timestamp >= *target_timestamp;
+                if is_due {
+                    for pubkey in thread_pubkeys.iter() {
+                        executable_threads.insert(*pubkey);
                     }
-                    !is_due
-                });
+                }
+                !is_due
+            });
+            drop(w_cron_threads);
         }
 
         // Get the set of threads were triggered by an account update.
-        self.updated_accounts.par_iter().for_each(|account_pubkey| {
-            if let Some(thread_pubkeys) = self.listener_threads.get(&account_pubkey) {
-                thread_pubkeys.par_iter().for_each(|pubkey| {
+        let mut w_account_threads = self.account_threads.write().await;
+        let mut w_updated_accounts = self.updated_accounts.write().await;
+        w_updated_accounts.iter().for_each(|account_pubkey| {
+            if let Some(thread_pubkeys) = w_account_threads.get(&account_pubkey) {
+                thread_pubkeys.iter().for_each(|pubkey| {
                     executable_threads.insert(*pubkey);
                 });
-                self.listener_threads.remove(&account_pubkey);
+                w_account_threads.remove(&account_pubkey);
             }
         });
-        self.updated_accounts.clear();
+        w_updated_accounts.clear();
+        drop(w_account_threads);
+        drop(w_updated_accounts);
 
         // Get the set of immediate threads.
-        self.immediate_threads.par_iter().for_each(|pubkey| {
+        let mut w_immediate_threads = self.immediate_threads.write().await;
+        w_immediate_threads.iter().for_each(|pubkey| {
             executable_threads.insert(*pubkey);
         });
-        self.immediate_threads.clear();
+        w_immediate_threads.clear();
+        drop(w_immediate_threads);
 
         Ok(executable_threads)
     }
 
-    pub fn observe_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
-        self.clocks.insert(clock.slot, clock.clone());
+    pub async fn observe_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {
+        let mut w_clocks = self.clocks.write().await;
+        w_clocks.insert(clock.slot, clock.clone());
+        drop(w_clocks);
         Ok(())
     }
 
     /// Move all threads listening to this account into the executable set.
-    pub fn observe_account(
+    pub async fn observe_account(
         self: Arc<Self>,
         account_pubkey: Pubkey,
         _slot: u64,
     ) -> PluginResult<()> {
-        if self.listener_threads.contains_key(&account_pubkey) {
-            self.updated_accounts.insert(account_pubkey);
+        let r_account_threads = self.account_threads.read().await;
+        if r_account_threads.contains_key(&account_pubkey) {
+            let mut w_updated_accounts = self.updated_accounts.write().await;
+            w_updated_accounts.insert(account_pubkey);
+            drop(w_updated_accounts);
         }
+        drop(r_account_threads);
         Ok(())
     }
 
-    pub fn observe_thread(
+    pub async fn observe_thread(
         self: Arc<Self>,
         thread: Thread,
         thread_pubkey: Pubkey,
@@ -112,7 +131,9 @@ impl ThreadObserver {
 
         if thread.next_instruction.is_some() {
             // If the thread has a next instruction, index it as executable.
-            self.immediate_threads.insert(thread_pubkey);
+            let mut w_immediate_threads = self.immediate_threads.write().await;
+            w_immediate_threads.insert(thread_pubkey);
+            drop(w_immediate_threads);
         } else {
             // Otherwise, index the thread according to its trigger type.
             match thread.trigger {
@@ -122,16 +143,18 @@ impl ThreadObserver {
                     size: _,
                 } => {
                     // Index the thread by its trigger's account pubkey.
-                    self.listener_threads
+                    let mut w_account_threads = self.account_threads.write().await;
+                    w_account_threads
                         .entry(address)
                         .and_modify(|v| {
                             v.insert(thread_pubkey);
                         })
                         .or_insert_with(|| {
-                            let v = DashSet::new();
+                            let mut v = HashSet::new();
                             v.insert(thread_pubkey);
                             v
                         });
+                    drop(w_account_threads);
                 }
                 Trigger::Cron {
                     schedule,
@@ -154,28 +177,32 @@ impl ThreadObserver {
                     match next_moment(reference_timestamp, schedule) {
                         None => {} // The thread does not have any upcoming scheduled target time
                         Some(target_timestamp) => {
-                            self.cron_threads
+                            let mut w_cron_threads = self.cron_threads.write().await;
+                            w_cron_threads
                                 .entry(target_timestamp)
                                 .and_modify(|v| {
                                     v.insert(thread_pubkey);
                                 })
                                 .or_insert_with(|| {
-                                    let v = DashSet::new();
+                                    let mut v = HashSet::new();
                                     v.insert(thread_pubkey);
                                     v
                                 });
+                            drop(w_cron_threads);
                         }
                     }
                 }
                 Trigger::Immediate => {
-                    self.immediate_threads.insert(thread_pubkey);
+                    let mut w_immediate_threads = self.immediate_threads.write().await;
+                    w_immediate_threads.insert(thread_pubkey);
+                    drop(w_immediate_threads);
                 }
             }
         }
 
         info!(
             "cron_threads: {:?} account_threads: {:?} immediate_threads: {:?}",
-            self.cron_threads, self.listener_threads, self.immediate_threads
+            self.cron_threads, self.account_threads, self.immediate_threads
         );
         Ok(())
     }

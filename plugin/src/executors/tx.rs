@@ -1,14 +1,16 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    sync::Arc,
+};
 
 use async_once::AsyncOnce;
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
 };
-use dashmap::{DashMap, DashSet};
 use lazy_static::lazy_static;
 use log::info;
-use rayon::prelude::*;
 use solana_client::{
     nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
     rpc_config::RpcSimulateTransactionConfig,
@@ -21,7 +23,7 @@ use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
 use solana_sdk::{
     commitment_config::CommitmentConfig, signature::Keypair, transaction::Transaction,
 };
-use tokio::runtime::Runtime;
+use tokio::{runtime::Runtime, sync::RwLock};
 
 use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
 
@@ -42,8 +44,8 @@ static LINEAR_BACKOFF_DURATION: u32 = 4;
 /// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
-    pub executable_threads: DashMap<Pubkey, ExecutableThreadMetadata>,
-    pub message_history: DashMap<Hash, u64>,
+    pub executable_threads: RwLock<HashMap<Pubkey, ExecutableThreadMetadata>>,
+    pub message_history: RwLock<HashMap<Hash, u64>>,
     pub keypair: Keypair,
 }
 
@@ -57,8 +59,8 @@ impl TxExecutor {
     pub fn new(config: PluginConfig) -> Self {
         Self {
             config: config.clone(),
-            executable_threads: DashMap::new(),
-            message_history: DashMap::new(),
+            executable_threads: RwLock::new(HashMap::new()),
+            message_history: RwLock::new(HashMap::new()),
             keypair: read_or_new_keypair(config.keypath),
         }
     }
@@ -66,13 +68,14 @@ impl TxExecutor {
     pub async fn execute_txs(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        thread_pubkeys: DashSet<Pubkey>,
+        thread_pubkeys: HashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         // Index the provided threads as executable.
-        thread_pubkeys.par_iter().for_each(|pubkey| {
-            self.executable_threads.insert(
+        let mut w_executable_threads = self.executable_threads.write().await;
+        thread_pubkeys.iter().for_each(|pubkey| {
+            w_executable_threads.insert(
                 *pubkey,
                 ExecutableThreadMetadata {
                     due_slot: slot,
@@ -81,19 +84,17 @@ impl TxExecutor {
             );
         });
 
-        info!("executable_threads: {:?}", self.executable_threads);
-
         // Drop threads that cross the simulation failure threshold.
-        self.clone()
-            .executable_threads
-            .retain(|_thread_pubkey, metadata| {
-                metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES
-            });
+        w_executable_threads.retain(|_thread_pubkey, metadata| {
+            metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES
+        });
+        info!("executable_threads: {:?}", self.executable_threads);
+        drop(w_executable_threads);
 
         // Purge message history that is beyond the dedupe period.
-        self.clone()
-            .message_history
-            .retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
+        let mut w_message_history = self.message_history.write().await;
+        w_message_history.retain(|_msg_hash, msg_slot| *msg_slot >= slot - MESSAGE_DEDUPE_PERIOD);
+        drop(w_message_history);
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
@@ -164,28 +165,29 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
-        let thread_pubkeys = if pool_position.current_position.is_none()
-            && !pool_position.workers.is_empty()
-        {
-            // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
-            self.executable_threads
-                .iter()
-                .filter(|entry| slot > entry.value().due_slot + THREAD_TIMEOUT_WINDOW)
-                .map(|entry| *entry.key())
-                .collect::<Vec<Pubkey>>()
-        } else {
-            // This worker is in the pool. Get pubkeys executable threads.
-            self.executable_threads
-                .iter()
-                .filter(|entry| {
-                    // Linear backoff from simulation failures.
-                    let backoff = entry.value().due_slot
-                        + ((entry.value().simulation_failures * LINEAR_BACKOFF_DURATION) as u64);
-                    slot >= backoff
-                })
-                .map(|entry| *entry.key())
-                .collect::<Vec<Pubkey>>()
-        };
+        let r_executable_threads = self.executable_threads.read().await;
+        let thread_pubkeys =
+            if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
+                // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
+                r_executable_threads
+                    .iter()
+                    .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
+                    .map(|(pubkey, _metadata)| *pubkey)
+                    .collect::<Vec<Pubkey>>()
+            } else {
+                // This worker is in the pool. Get pubkeys executable threads.
+                r_executable_threads
+                    .iter()
+                    .filter(|(_pubkey, metadata)| {
+                        // Linear backoff from simulation failures.
+                        let backoff = metadata.due_slot
+                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64);
+                        slot >= backoff
+                    })
+                    .map(|(pubkey, _metadata)| *pubkey)
+                    .collect::<Vec<Pubkey>>()
+            };
+        drop(r_executable_threads);
 
         // Process the tasks in parallel.
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
@@ -217,7 +219,9 @@ impl TxExecutor {
             .await
         {
             if self.clone().execute_tx(slot, &tx).await.is_ok() {
-                self.executable_threads.remove(&thread_pubkey);
+                let mut w_executable_threads = self.executable_threads.write().await;
+                w_executable_threads.remove(&thread_pubkey);
+                drop(w_executable_threads);
                 // TODO Track the transaction signature
             }
         }
@@ -235,39 +239,39 @@ impl TxExecutor {
         };
 
         // Build the thread_exec transaction.
-        crate::builders::build_thread_exec_tx(
+        let tx = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
-        .await
-        .or_else(|| {
-            self.clone()
-                .executable_threads
+        .await;
+        if tx.is_none() {
+            let mut w_executable_threads = self.executable_threads.write().await;
+            w_executable_threads
                 .entry(thread_pubkey)
                 .and_modify(|metadata| metadata.simulation_failures += 1);
-            None
-        })
+            drop(w_executable_threads);
+        }
+        tx
     }
 
     async fn execute_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
         // Exit early if this message was sent recently
-        if let Some(entry) = self
-            .message_history
-            .get(&tx.message().blockhash_agnostic_hash())
-        {
-            let msg_slot = entry.value();
+        let r_message_history = self.message_history.read().await;
+        if let Some(msg_slot) = r_message_history.get(&tx.message().blockhash_agnostic_hash()) {
             if slot < msg_slot + MESSAGE_DEDUPE_PERIOD {
                 return Ok(());
             }
         }
+        drop(r_message_history);
 
         // Simulate and submit the tx
         self.clone().simulate_tx(tx).await?;
         self.clone().submit_tx(tx).await?;
-        self.clone().log_tx(slot, tx)
+        self.clone().log_tx(slot, tx).await?;
+        Ok(())
     }
 
     async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
@@ -308,9 +312,10 @@ impl TxExecutor {
         Ok(tx.clone())
     }
 
-    fn log_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
-        self.message_history
-            .insert(tx.message().blockhash_agnostic_hash(), slot);
+    async fn log_tx(self: Arc<Self>, slot: u64, tx: &Transaction) -> PluginResult<()> {
+        let mut w_message_history = self.message_history.write().await;
+        w_message_history.insert(tx.message().blockhash_agnostic_hash(), slot);
+        drop(w_message_history);
         let sig = tx.signatures[0];
         info!("slot: {} sig: {}", slot, sig);
         Ok(())

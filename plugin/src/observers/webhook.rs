@@ -1,29 +1,31 @@
-use {
-    clockwork_client::webhook::state::Request,
-    dashmap::DashSet,
-    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
-    solana_program::pubkey::Pubkey,
-    std::{
-        fmt::Debug,
-        hash::{Hash, Hasher},
-        sync::Arc,
-    },
+use std::{
+    collections::HashSet,
+    fmt::Debug,
+    hash::{Hash, Hasher},
+    sync::Arc,
 };
+
+use clockwork_client::webhook::state::Request;
+use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+use solana_program::pubkey::Pubkey;
+use tokio::sync::RwLock;
 
 pub struct WebhookObserver {
     // The set of http request pubkeys that can be processed.
-    pub webhook_requests: DashSet<HttpRequest>,
+    pub webhook_requests: RwLock<HashSet<HttpRequest>>,
 }
 
 impl WebhookObserver {
     pub fn new() -> Self {
         Self {
-            webhook_requests: DashSet::new(),
+            webhook_requests: RwLock::new(HashSet::new()),
         }
     }
 
-    pub fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
-        self.webhook_requests.insert(request);
+    pub async fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
+        let mut w_webhook_requests = self.webhook_requests.write().await;
+        w_webhook_requests.insert(request);
+        drop(w_webhook_requests);
         Ok(())
     }
 }

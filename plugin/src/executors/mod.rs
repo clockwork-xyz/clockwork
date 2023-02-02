@@ -45,6 +45,7 @@ impl Executors {
             lock: AtomicBool::new(false),
         }
     }
+
     pub async fn process_slot(
         self: Arc<Self>,
         observers: Arc<Observers>,
@@ -80,7 +81,7 @@ impl Executors {
         }
 
         // Process the slot on the observers.
-        let executable_threads = observers.thread.clone().process_slot(slot)?;
+        let executable_threads = observers.thread.clone().process_slot(slot).await?;
 
         // Process the slot in the transaction executor.
         self.tx
