@@ -129,6 +129,7 @@ impl ThreadObserver {
             return Ok(());
         }
 
+        info!("indexing thread: {:?}", thread_pubkey);
         if thread.next_instruction.is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_immediate_threads = self.immediate_threads.write().await;
@@ -200,10 +201,6 @@ impl ThreadObserver {
             }
         }
 
-        info!(
-            "cron_threads: {:?} account_threads: {:?} immediate_threads: {:?}",
-            self.cron_threads, self.account_threads, self.immediate_threads
-        );
         Ok(())
     }
 }
