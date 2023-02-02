@@ -56,7 +56,11 @@ impl Executors {
 
         // Return early if node is not healthy.
         if self.client.get_health().await.is_err() {
-            info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+            info!(
+                "processed_slot: {} duration: {:?} status: unhealthy",
+                slot,
+                now.elapsed()
+            );
             return Ok(());
         }
 
@@ -67,7 +71,11 @@ impl Executors {
             .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
             .is_err()
         {
-            info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+            info!(
+                "processed_slot: {} duration: {:?} status: locked",
+                slot,
+                now.elapsed()
+            );
             return Ok(());
         }
 
@@ -89,7 +97,11 @@ impl Executors {
         self.clone()
             .lock
             .store(false, std::sync::atomic::Ordering::Relaxed);
-        info!("processed_slot: {} duration: {:?}", slot, now.elapsed());
+        info!(
+            "processed_slot: {} duration: {:?} status: processed",
+            slot,
+            now.elapsed()
+        );
         Ok(())
     }
 }

@@ -4,6 +4,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Thread, Trigger, TriggerContext};
 use clockwork_cron::Schedule;
 use dashmap::{DashMap, DashSet};
+use log::info;
 use rayon::prelude::*;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
@@ -172,6 +173,10 @@ impl ThreadObserver {
             }
         }
 
+        info!(
+            "cron_threads: {:?} account_threads: {:?} immediate_threads: {:?}",
+            self.cron_threads, self.listener_threads, self.immediate_threads
+        );
         Ok(())
     }
 }
