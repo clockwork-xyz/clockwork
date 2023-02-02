@@ -21,9 +21,8 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         let account_pubkey = Pubkey::new(account_info.pubkey);
         if account_info.owner.len() != 32 {
             info!(
-                "account: {:?} len: {} Invalid owner pubkey length",
-                account_pubkey,
-                account_info.owner.len(),
+                "Invalid owner pubkey length pubkey: {:?} account_info: {:?}",
+                account_pubkey, account_info
             );
             return Err(GeyserPluginError::Custom(
                 format!("Invalid pubkey length").into(),
