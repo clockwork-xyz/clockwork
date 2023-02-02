@@ -18,6 +18,12 @@ pub enum AccountUpdateEvent {
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
     fn try_from(account_info: ReplicaAccountInfo) -> Result<Self, Self::Error> {
+        // Parse pubkeys.
+        if account_info.owner.len() != 32 {
+            return Err(GeyserPluginError::Custom(
+                format!("Invalid pubkey length").into(),
+            ));
+        }
         let account_pubkey = Pubkey::new(account_info.pubkey);
         let owner_pubkey = Pubkey::new(account_info.owner);
 
