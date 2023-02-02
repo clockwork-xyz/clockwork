@@ -162,7 +162,7 @@ impl TxExecutor {
         let r_transaction_history = self.transaction_history.read().await;
         let checkable_transactions = r_transaction_history
             .iter()
-            .filter(|(_, metadata)| metadata.slot_sent > slot + TRANSACTION_CONFIRMATION_PERIOD)
+            .filter(|(_, metadata)| slot > metadata.slot_sent + TRANSACTION_CONFIRMATION_PERIOD)
             .map(|(pubkey, metadata)| CheckableTransaction {
                 thread_pubkey: *pubkey,
                 signature: metadata.signature,
