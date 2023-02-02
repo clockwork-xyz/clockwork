@@ -2,9 +2,7 @@ use anchor_lang::Discriminator;
 use bincode::deserialize;
 use clockwork_client::{thread::state::Thread, webhook::state::Request};
 use log::info;
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, ReplicaAccountInfo,
-};
+use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPluginError;
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 #[derive(Debug)]
@@ -14,9 +12,16 @@ pub enum AccountUpdateEvent {
     Thread { thread: Thread },
 }
 
-impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
+#[derive(Debug, Clone)]
+pub struct AccountInfoShort<'a> {
+    pub pubkey: &'a [u8],
+    pub owner: &'a [u8],
+    pub data: &'a [u8],
+}
+
+impl TryFrom<AccountInfoShort<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
-    fn try_from(account_info: ReplicaAccountInfo) -> Result<Self, Self::Error> {
+    fn try_from(account_info: AccountInfoShort) -> Result<Self, Self::Error> {
         // Parse pubkeys.
         let account_pubkey = Pubkey::new(account_info.pubkey);
         if account_info.owner.len() != 32 {
