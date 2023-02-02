@@ -67,6 +67,7 @@ impl GeyserPlugin for ClockworkPlugin {
         is_startup: bool,
     ) -> PluginResult<()> {
         // Parse account info.
+        let now = std::time::Instant::now();
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
             ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
@@ -122,7 +123,14 @@ impl GeyserPlugin for ClockworkPlugin {
                 }
             }
             Ok(())
-        })
+        });
+
+        info!(
+            "processed_account: {:?} duration: {:?}",
+            account_pubkey,
+            now.elapsed()
+        );
+        Ok(())
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
@@ -148,7 +156,8 @@ impl GeyserPlugin for ClockworkPlugin {
                 _ => (),
             }
             Ok(())
-        })
+        });
+        Ok(())
     }
 
     fn notify_transaction(
@@ -201,9 +210,8 @@ impl Inner {
     fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
         self: Arc<Self>,
         f: impl FnOnce(Arc<Self>) -> F,
-    ) -> PluginResult<()> {
+    ) {
         self.runtime.spawn(f(self.clone()));
-        Ok(())
     }
 }
 
