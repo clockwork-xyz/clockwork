@@ -68,16 +68,22 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         // Parse account info.
         let account_info = match account {
-            ReplicaAccountInfoVersions::V0_0_1(account_info) => account_info.clone(),
-            ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
-                pubkey: account_info.pubkey,
-                lamports: account_info.lamports,
-                owner: account_info.owner,
-                executable: account_info.executable,
-                rent_epoch: account_info.rent_epoch,
-                data: account_info.data,
-                write_version: account_info.write_version,
-            },
+            ReplicaAccountInfoVersions::V0_0_1(account_info) => {
+                info!("account_info_V1: {:?}", account_info);
+                account_info.clone()
+            }
+            ReplicaAccountInfoVersions::V0_0_2(account_info) => {
+                info!("account_info_V2: {:?}", account_info);
+                ReplicaAccountInfo {
+                    pubkey: account_info.pubkey,
+                    lamports: account_info.lamports,
+                    owner: account_info.owner,
+                    executable: account_info.executable,
+                    rent_epoch: account_info.rent_epoch,
+                    data: account_info.data,
+                    write_version: account_info.write_version,
+                }
+            }
         };
         let account_pubkey = Pubkey::new(account_info.clone().pubkey);
         let event = AccountUpdateEvent::try_from(account_info);
