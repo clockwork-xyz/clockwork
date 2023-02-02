@@ -96,6 +96,10 @@ impl GeyserPlugin for ClockworkPlugin {
 
             // Parse and process specific update events.
             if let Ok(event) = event {
+                info!(
+                    "slot: {:?} is_startup: {} event: {:?}",
+                    slot, is_startup, event
+                );
                 match event {
                     AccountUpdateEvent::Clock { clock } => {
                         inner.observers.thread.clone().observe_clock(clock).ok();
