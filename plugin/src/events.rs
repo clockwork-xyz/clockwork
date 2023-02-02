@@ -1,14 +1,11 @@
+use anchor_lang::Discriminator;
+use bincode::deserialize;
+use clockwork_client::{thread::state::Thread, webhook::state::Request};
 use log::info;
-
-use {
-    anchor_lang::Discriminator,
-    bincode::deserialize,
-    clockwork_client::{thread::state::Thread, webhook::state::Request},
-    solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, ReplicaAccountInfo,
-    },
-    solana_program::{clock::Clock, pubkey::Pubkey, sysvar},
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, ReplicaAccountInfo,
 };
+use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
@@ -24,10 +21,9 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         let account_pubkey = Pubkey::new(account_info.pubkey);
         if account_info.owner.len() != 32 {
             info!(
-                "account: {:?} len: {} owner: {:?} Invalid owner pubkey length",
+                "account: {:?} len: {} Invalid owner pubkey length",
                 account_pubkey,
                 account_info.owner.len(),
-                account_info.owner
             );
             return Err(GeyserPluginError::Custom(
                 format!("Invalid pubkey length").into(),
