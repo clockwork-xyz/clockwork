@@ -73,6 +73,7 @@ impl GeyserPlugin for ClockworkPlugin {
                 account_info.clone()
             }
             ReplicaAccountInfoVersions::V0_0_2(account_info) => {
+                info!("account_v2: {:?}", account_info.pubkey);
                 info!("account_info_V2: {:?}", account_info);
                 ReplicaAccountInfo {
                     pubkey: account_info.pubkey,
