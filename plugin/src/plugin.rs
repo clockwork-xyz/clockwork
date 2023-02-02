@@ -74,20 +74,13 @@ impl GeyserPlugin for ClockworkPlugin {
                 owner: account_info.owner,
                 data: account_info.data,
             },
-            ReplicaAccountInfoVersions::V0_0_2(account_info) => {
-                info!("A");
-                let pubkey_vec = account_info.pubkey.to_vec();
-                info!("B");
-                let owner_vec = account_info.owner.to_vec();
-                info!("C {:?} {:?}", pubkey_vec, owner_vec);
-                AccountInfoShort {
-                    pubkey: account_info.pubkey,
-                    owner: account_info.owner,
-                    data: account_info.data,
-                }
-            }
+            ReplicaAccountInfoVersions::V0_0_2(account_info) => AccountInfoShort {
+                pubkey: account_info.pubkey,
+                owner: account_info.owner,
+                data: account_info.data,
+            },
         };
-        let account_pubkey = Pubkey::new(account_info.clone().pubkey);
+        let account_pubkey = Pubkey::new(account_info.pubkey);
         let event = AccountUpdateEvent::try_from(account_info);
 
         // Process event on tokio task.
