@@ -3,12 +3,12 @@ use std::sync::Arc;
 use clockwork_client::{
     network::state::Worker,
     thread::state::{Thread, Trigger},
-    Client as ClockworkClient,
 };
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
-use solana_client::rpc_config::{
-    RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
+use solana_client::{
+    nonblocking::rpc_client::RpcClient,
+    rpc_config::{RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig},
 };
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -16,7 +16,8 @@ use solana_program::{
 };
 use solana_sdk::{
     account::Account, commitment_config::CommitmentConfig,
-    compute_budget::ComputeBudgetInstruction, transaction::Transaction,
+    compute_budget::ComputeBudgetInstruction, signature::Keypair, signer::Signer,
+    transaction::Transaction,
 };
 
 /// Max byte size of a serialized transaction.
@@ -28,15 +29,16 @@ static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 /// The buffer amount to add to transactions' compute units in case on-chain PDA derivations take more CUs than used in simulation.
 static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 100;
 
-pub fn build_thread_exec_tx(
-    client: Arc<ClockworkClient>,
+pub async fn build_thread_exec_tx(
+    client: Arc<RpcClient>,
+    payer: &Keypair,
     thread: Thread,
     thread_pubkey: Pubkey,
     worker_id: u64,
 ) -> Option<Transaction> {
     // Grab the thread and relevant data.
-    let blockhash = client.get_latest_blockhash().unwrap();
-    let signatory_pubkey = client.payer_pubkey();
+    let blockhash = client.get_latest_blockhash().await.unwrap();
+    let signatory_pubkey = payer.pubkey();
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction.is_some() {
@@ -56,7 +58,7 @@ pub fn build_thread_exec_tx(
     let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
-        sim_tx.sign(&[client.payer()], blockhash);
+        sim_tx.sign(&[payer], blockhash);
 
         // Exit early if the transaction exceeds the size limit.
         if sim_tx.message_data().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
@@ -64,18 +66,21 @@ pub fn build_thread_exec_tx(
         }
 
         // Run the simulation.
-        match client.simulate_transaction_with_config(
-            &sim_tx,
-            RpcSimulateTransactionConfig {
-                replace_recent_blockhash: true,
-                commitment: Some(CommitmentConfig::processed()),
-                accounts: Some(RpcSimulateTransactionAccountsConfig {
-                    encoding: Some(UiAccountEncoding::Base64Zstd),
-                    addresses: vec![thread_pubkey.to_string()],
-                }),
-                ..RpcSimulateTransactionConfig::default()
-            },
-        ) {
+        match client
+            .simulate_transaction_with_config(
+                &sim_tx,
+                RpcSimulateTransactionConfig {
+                    replace_recent_blockhash: true,
+                    commitment: Some(CommitmentConfig::processed()),
+                    accounts: Some(RpcSimulateTransactionAccountsConfig {
+                        encoding: Some(UiAccountEncoding::Base64Zstd),
+                        addresses: vec![thread_pubkey.to_string()],
+                    }),
+                    ..RpcSimulateTransactionConfig::default()
+                },
+            )
+            .await
+        {
             // If there was a simulation error, stop packing and exit now.
             Err(_err) => {
                 break;
@@ -152,7 +157,7 @@ pub fn build_thread_exec_tx(
 
     // Build and return the signed transaction.
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
-    tx.sign(&[client.payer()], blockhash);
+    tx.sign(&[payer], blockhash);
     info!(
         "thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
         thread_pubkey,
