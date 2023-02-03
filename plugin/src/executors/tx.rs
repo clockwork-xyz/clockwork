@@ -99,11 +99,12 @@ impl TxExecutor {
 
         // Drop threads that cross the simulation failure threshold.
         w_executable_threads.retain(|_thread_pubkey, metadata| {
-            let b = metadata.simulation_failures < MAX_THREAD_SIMULATION_FAILURES;
-            if !b {
+            if metadata.simulation_failures >= MAX_THREAD_SIMULATION_FAILURES {
                 self.dropped_threads.fetch_and(1, Ordering::Relaxed);
+                false
+            } else {
+                true
             }
-            b
         });
         info!(
             "dropped_threads: {:?} executable_threads: {:?}",
@@ -265,6 +266,10 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
+                    .filter(|(_pubkey, metadata)| {
+                        slot >= (metadata.due_slot
+                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64))
+                    })
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
             } else {
@@ -272,10 +277,8 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| {
-                        // Linear backoff from simulation failures.
-                        let backoff = metadata.due_slot
-                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64);
-                        slot >= backoff
+                        slot >= (metadata.due_slot
+                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64))
                     })
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
