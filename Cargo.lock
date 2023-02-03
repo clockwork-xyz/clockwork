@@ -377,14 +377,20 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.57"
+version = "0.1.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76464446b8bc32758d7e88ee1a804d9914cd9b1cb264c029899680b0be29826f"
+checksum = "1cd7fce9ba8c3c042128ce72d8b2ddbf3a05747efb67ea0313c635e10bda47a2"
 dependencies = [
  "proc-macro2 1.0.46",
  "quote 1.0.21",
  "syn 1.0.102",
 ]
+
+[[package]]
+name = "async_once"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ce4f10ea3abcd6617873bae9f91d1c5332b4a778bd9ce34d0cd517474c1de82"
 
 [[package]]
 name = "atty"
@@ -883,6 +889,8 @@ name = "clockwork_plugin"
 version = "1.4.3"
 dependencies = [
  "anchor-lang",
+ "async-trait",
+ "async_once",
  "bincode",
  "bs58 0.4.0",
  "bugsnag",
@@ -891,10 +899,9 @@ dependencies = [
  "clockwork-client",
  "clockwork-cron",
  "clockwork-utils",
- "dashmap",
+ "lazy_static",
  "log 0.4.17",
  "prost",
- "rayon",
  "reqwest",
  "sentry",
  "serde",
@@ -1135,20 +1142,6 @@ dependencies = [
  "proc-macro2 1.0.46",
  "quote 1.0.21",
  "syn 1.0.102",
-]
-
-[[package]]
-name = "dashmap"
-version = "5.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "907076dfda823b0b36d2a1bb5f90c96660a5bbcd7729e10727f07858f22c4edc"
-dependencies = [
- "cfg-if",
- "hashbrown 0.12.3",
- "lock_api",
- "once_cell",
- "parking_lot_core 0.9.3",
- "rayon",
 ]
 
 [[package]]

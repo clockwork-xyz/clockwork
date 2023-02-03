@@ -1,46 +1,31 @@
-use {
-    clockwork_client::webhook::state::Request,
-    dashmap::DashSet,
-    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
-    solana_program::pubkey::Pubkey,
-    std::{
-        fmt::Debug,
-        hash::{Hash, Hasher},
-        sync::Arc,
-    },
-    tokio::runtime::Runtime,
+use std::{
+    collections::HashSet,
+    fmt::Debug,
+    hash::{Hash, Hasher},
+    sync::Arc,
 };
+
+use clockwork_client::webhook::state::Request;
+use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+use solana_program::pubkey::Pubkey;
+use tokio::sync::RwLock;
 
 pub struct WebhookObserver {
     // The set of http request pubkeys that can be processed.
-    pub webhook_requests: DashSet<HttpRequest>,
-
-    // Tokio runtime for processing async tasks.
-    pub runtime: Arc<Runtime>,
+    pub webhook_requests: RwLock<HashSet<HttpRequest>>,
 }
 
 impl WebhookObserver {
-    pub fn new(runtime: Arc<Runtime>) -> Self {
+    pub fn new() -> Self {
         Self {
-            webhook_requests: DashSet::new(),
-            runtime,
+            webhook_requests: RwLock::new(HashSet::new()),
         }
     }
 
-    pub fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
-        self.spawn(|this| async move {
-            this.webhook_requests.insert(request);
-            Ok(())
-        })
-    }
-
-    // fn build_reqwests() ->
-
-    fn spawn<F: std::future::Future<Output = PluginResult<()>> + Send + 'static>(
-        self: &Arc<Self>,
-        f: impl FnOnce(Arc<Self>) -> F,
-    ) -> PluginResult<()> {
-        self.runtime.spawn(f(self.clone()));
+    pub async fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
+        let mut w_webhook_requests = self.webhook_requests.write().await;
+        w_webhook_requests.insert(request);
+        drop(w_webhook_requests);
         Ok(())
     }
 }
