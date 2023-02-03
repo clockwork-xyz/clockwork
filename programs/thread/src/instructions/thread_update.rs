@@ -9,9 +9,6 @@ use {
     },
 };
 
-/// The maximum rate limit which may be set on thread.
-const MAX_RATE_LIMIT: u64 = 32;
-
 /// Accounts required by the `thread_update` instruction.
 #[derive(Accounts)]
 #[instruction(settings: ThreadSettings)]
@@ -56,10 +53,6 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
 
     // If provided, update the rate limit.
     if let Some(rate_limit) = settings.rate_limit {
-        require!(
-            rate_limit.le(&MAX_RATE_LIMIT),
-            ClockworkError::MaxRateLimitExceeded
-        );
         thread.rate_limit = rate_limit;
     }
 
