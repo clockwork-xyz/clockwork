@@ -43,8 +43,8 @@ static THREAD_TIMEOUT_WINDOW: u64 = 8;
 /// Number of times to retry a thread simulation.
 static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 
-/// Number of slots to wait after simulation failure before retrying again.
-static LINEAR_BACKOFF_DURATION: u32 = 5;
+/// The constant of the exponential backoff function.
+static EXPONENTIAL_BACKOFF_CONSTANT: u32 = 2;
 
 /// TxExecutor
 pub struct TxExecutor {
@@ -99,7 +99,7 @@ impl TxExecutor {
 
         // Drop threads that cross the simulation failure threshold.
         w_executable_threads.retain(|_thread_pubkey, metadata| {
-            if metadata.simulation_failures >= MAX_THREAD_SIMULATION_FAILURES {
+            if metadata.simulation_failures > MAX_THREAD_SIMULATION_FAILURES {
                 self.dropped_threads.fetch_and(1, Ordering::Relaxed);
                 false
             } else {
@@ -267,8 +267,9 @@ impl TxExecutor {
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
                     .filter(|(_pubkey, metadata)| {
-                        slot >= (metadata.due_slot
-                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64))
+                        slot >= metadata.due_slot
+                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
+                            - 1
                     })
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
@@ -277,8 +278,9 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| {
-                        slot >= (metadata.due_slot
-                            + ((metadata.simulation_failures * LINEAR_BACKOFF_DURATION) as u64))
+                        slot >= metadata.due_slot
+                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
+                            - 1
                     })
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
