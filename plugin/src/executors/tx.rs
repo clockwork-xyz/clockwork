@@ -100,7 +100,7 @@ impl TxExecutor {
         // Drop threads that cross the simulation failure threshold.
         w_executable_threads.retain(|_thread_pubkey, metadata| {
             if metadata.simulation_failures > MAX_THREAD_SIMULATION_FAILURES {
-                self.dropped_threads.fetch_and(1, Ordering::Relaxed);
+                self.dropped_threads.fetch_add(1, Ordering::Relaxed);
                 false
             } else {
                 true
