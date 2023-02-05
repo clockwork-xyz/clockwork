@@ -100,7 +100,7 @@ impl TxExecutor {
         // Drop threads that cross the simulation failure threshold.
         w_executable_threads.retain(|_thread_pubkey, metadata| {
             if metadata.simulation_failures > MAX_THREAD_SIMULATION_FAILURES {
-                self.dropped_threads.fetch_and(1, Ordering::Relaxed);
+                self.dropped_threads.fetch_add(1, Ordering::Relaxed);
                 false
             } else {
                 true
@@ -316,14 +316,18 @@ impl TxExecutor {
             .try_build_thread_exec_tx(client.clone(), thread_pubkey)
             .await
         {
-            if self.clone().execute_tx(&tx).await.is_ok() {
-                let mut w_executable_threads = self.executable_threads.write().await;
-                w_executable_threads.remove(&thread_pubkey);
-                drop(w_executable_threads);
-
-                // Log the submission attempt.
-                self.clone().log_tx(slot, thread_pubkey, &tx).await;
-                // TODO Track the transaction signature
+            if self
+                .clone()
+                .dedupe_tx(slot, thread_pubkey, &tx)
+                .await
+                .is_ok()
+            {
+                if self.clone().execute_tx(&tx).await.is_ok() {
+                    let mut w_executable_threads = self.executable_threads.write().await;
+                    w_executable_threads.remove(&thread_pubkey);
+                    drop(w_executable_threads);
+                    self.clone().log_tx(slot, thread_pubkey, &tx).await;
+                }
             }
         } else {
             let mut w_executable_threads = self.executable_threads.write().await;
@@ -339,7 +343,6 @@ impl TxExecutor {
         client: Arc<RpcClient>,
         thread_pubkey: Pubkey,
     ) -> Option<Transaction> {
-        // Get the thread.
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
             Err(_err) => {
                 return None;
@@ -347,7 +350,6 @@ impl TxExecutor {
             Ok(thread) => thread,
         };
 
-        // Build the thread_exec transaction.
         crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
@@ -358,17 +360,23 @@ impl TxExecutor {
         .await
     }
 
-    async fn execute_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<()> {
-        // Exit early if this message was sent recently
-        // let r_transaction_history = self.transaction_history.read().await;
-        // if let Some(msg_slot) = r_transaction_history.get(&tx.message().blockhash_agnostic_hash()) {
-        //     if slot < msg_slot + MESSAGE_DEDUPE_PERIOD {
-        //         return Ok(());
-        //     }
-        // }
-        // drop(r_transaction_history);
+    pub async fn dedupe_tx(
+        self: Arc<Self>,
+        slot: u64,
+        thread_pubkey: Pubkey,
+        tx: &Transaction,
+    ) -> PluginResult<()> {
+        let r_transaction_history = self.transaction_history.read().await;
+        if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
+            if metadata.signature.eq(&tx.signatures[0]) && metadata.slot_sent.le(&slot) {
+                return Err(GeyserPluginError::Custom(format!("Transaction signature is a duplicate of a previously submitted transaction").into()));
+            }
+        }
+        drop(r_transaction_history);
+        Ok(())
+    }
 
-        // Simulate and submit the tx
+    async fn execute_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<()> {
         self.clone().simulate_tx(tx).await?;
         self.clone().submit_tx(tx).await?;
         Ok(())
@@ -382,7 +390,7 @@ impl TxExecutor {
             .simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
-                    replace_recent_blockhash: true,
+                    replace_recent_blockhash: false,
                     commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
@@ -414,7 +422,6 @@ impl TxExecutor {
 
     async fn log_tx(self: Arc<Self>, slot: u64, thread_pubkey: Pubkey, tx: &Transaction) {
         let mut w_transaction_history = self.transaction_history.write().await;
-        // w_transaction_history.insert(tx.message().blockhash_agnostic_hash(), slot);
         w_transaction_history.insert(
             thread_pubkey,
             TransactionMetadata {
@@ -423,8 +430,6 @@ impl TxExecutor {
             },
         );
         drop(w_transaction_history);
-        // let sig = tx.signatures[0];
-        // info!("slot: {} sig: {}", slot, sig);
     }
 }
 
