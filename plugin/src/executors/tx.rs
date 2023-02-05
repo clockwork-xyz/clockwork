@@ -369,7 +369,7 @@ impl TxExecutor {
         let r_transaction_history = self.transaction_history.read().await;
         if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
             if metadata.signature.eq(&tx.signatures[0]) && metadata.slot_sent.le(&slot) {
-                info!("slot: {} thread: {} event: Transaction signature is duplicate of previously submitted transaction");
+                info!("slot: {} thread: {} event: Transaction signature is duplicate of previously submitted transaction", slot, thread_pubkey);
                 return Err(GeyserPluginError::Custom(format!("Transaction signature is a duplicate of a previously submitted transaction").into()));
             }
         }
