@@ -2,12 +2,12 @@ use std::{fmt::Debug, sync::Arc};
 
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPlugin, ReplicaAccountInfoVersions, Result as PluginResult, SlotStatus,
+    GeyserPlugin, ReplicaAccountInfo, ReplicaAccountInfoVersions, Result as PluginResult,
+    SlotStatus,
 };
 use solana_program::pubkey::Pubkey;
 use tokio::runtime::{Builder, Runtime};
 
-use crate::events::AccountInfoShort;
 use crate::{
     config::PluginConfig,
     events::AccountUpdateEvent,
@@ -68,15 +68,23 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         // Parse account info.
         let account_info = match account {
-            ReplicaAccountInfoVersions::V0_0_1(account_info) => AccountInfoShort {
+            ReplicaAccountInfoVersions::V0_0_1(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,
+                lamports: account_info.lamports,
                 owner: account_info.owner,
+                executable: account_info.executable,
+                rent_epoch: account_info.rent_epoch,
                 data: account_info.data,
+                write_version: account_info.write_version,
             },
-            ReplicaAccountInfoVersions::V0_0_2(account_info) => AccountInfoShort {
+            ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,
+                lamports: account_info.lamports,
                 owner: account_info.owner,
+                executable: account_info.executable,
+                rent_epoch: account_info.rent_epoch,
                 data: account_info.data,
+                write_version: account_info.write_version,
             },
         };
         let account_pubkey = Pubkey::new(account_info.pubkey);
@@ -107,7 +115,10 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::HttpRequest { request } => {
+                    AccountUpdateEvent::HttpRequest {
+                        request,
+                        write_version: _,
+                    } => {
                         inner
                             .observers
                             .webhook
@@ -119,12 +130,15 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::Thread { thread } => {
+                    AccountUpdateEvent::Thread {
+                        thread,
+                        write_version,
+                    } => {
                         inner
                             .observers
                             .thread
                             .clone()
-                            .observe_thread(thread, account_pubkey, slot)
+                            .observe_thread(thread, account_pubkey, slot, write_version)
                             .await
                             .ok();
                     }

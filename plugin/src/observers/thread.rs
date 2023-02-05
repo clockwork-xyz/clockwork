@@ -32,6 +32,9 @@ pub struct ThreadObserver {
 
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
+
+    // The last seen write version for a given thread.
+    pub write_versions: RwLock<HashMap<Pubkey, u64>>,
 }
 
 impl ThreadObserver {
@@ -42,6 +45,7 @@ impl ThreadObserver {
             cron_threads: RwLock::new(HashMap::new()),
             immediate_threads: RwLock::new(HashSet::new()),
             updated_accounts: RwLock::new(HashSet::new()),
+            write_versions: RwLock::new(HashMap::new()),
         }
     }
 
@@ -122,14 +126,37 @@ impl ThreadObserver {
         self: Arc<Self>,
         thread: Thread,
         thread_pubkey: Pubkey,
-        _slot: u64,
+        slot: u64,
+        write_version: u64,
     ) -> PluginResult<()> {
+        // Update the write version.
+        let mut w_write_versions = self.write_versions.write().await;
+        let mut did_update = false;
+        w_write_versions
+            .entry(thread_pubkey)
+            .and_modify(|entry| {
+                if (*entry).lt(&write_version) {
+                    *entry = write_version;
+                    did_update = true
+                }
+            })
+            .or_insert(write_version);
+        drop(w_write_versions);
+
+        // Exit early if this thread has an older write version than previously seen updates.
+        if !did_update {
+            return Ok(());
+        }
+
         // If the thread is paused, just return without indexing
         if thread.paused {
             return Ok(());
         }
 
-        info!("indexing thread: {:?}", thread_pubkey);
+        info!(
+            "indexing thread: {:?} slot: {} write_version: {}",
+            thread_pubkey, slot, write_version
+        );
         if thread.next_instruction.is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_immediate_threads = self.immediate_threads.write().await;
