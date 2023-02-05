@@ -325,17 +325,41 @@ impl TxExecutor {
             .try_build_thread_exec_tx(client.clone(), thread_pubkey)
             .await
         {
+            info!(
+                "slot: {:?} process_thread_A: {:?} duration: {:?}",
+                slot,
+                thread_pubkey,
+                now.elapsed()
+            );
             if self
                 .clone()
                 .dedupe_tx(slot, thread_pubkey, &tx)
                 .await
                 .is_ok()
             {
+                info!(
+                    "slot: {:?} process_thread_B: {:?} duration: {:?}",
+                    slot,
+                    thread_pubkey,
+                    now.elapsed()
+                );
                 if self.clone().execute_tx(&tx).await.is_ok() {
+                    info!(
+                        "slot: {:?} process_thread_C: {:?} duration: {:?}",
+                        slot,
+                        thread_pubkey,
+                        now.elapsed()
+                    );
                     let mut w_executable_threads = self.executable_threads.write().await;
                     w_executable_threads.remove(&thread_pubkey);
                     drop(w_executable_threads);
                     self.clone().log_tx(slot, thread_pubkey, &tx).await;
+                    info!(
+                        "slot: {:?} process_thread_D: {:?} duration: {:?}",
+                        slot,
+                        thread_pubkey,
+                        now.elapsed()
+                    );
                 }
             }
         } else {
@@ -346,7 +370,7 @@ impl TxExecutor {
             drop(w_executable_threads);
         }
         info!(
-            "slot: {:?} process_thread: {:?} duration: {:?}",
+            "slot: {:?} process_thread_E: {:?} duration: {:?}",
             slot,
             thread_pubkey,
             now.elapsed()
