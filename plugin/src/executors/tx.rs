@@ -289,6 +289,7 @@ impl TxExecutor {
 
         // Process the tasks in parallel.
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
+        let now = std::time::Instant::now();
         let tasks: Vec<_> = thread_pubkeys
             .iter()
             .map(|thread_pubkey| {
@@ -298,9 +299,16 @@ impl TxExecutor {
                 )
             })
             .collect();
+        let len = tasks.len();
         for task in tasks {
             task.await.ok();
         }
+        info!(
+            "slot: {:?} process_thread_tasks: {:?} duration: {:?}",
+            slot,
+            len,
+            now.elapsed()
+        );
 
         Ok(())
     }
@@ -311,6 +319,7 @@ impl TxExecutor {
         slot: u64,
         thread_pubkey: Pubkey,
     ) {
+        let now = std::time::Instant::now();
         if let Some(tx) = self
             .clone()
             .try_build_thread_exec_tx(client.clone(), thread_pubkey)
@@ -336,6 +345,12 @@ impl TxExecutor {
                 .and_modify(|metadata| metadata.simulation_failures += 1);
             drop(w_executable_threads);
         }
+        info!(
+            "slot: {:?} process_thread: {:?} duration: {:?}",
+            slot,
+            thread_pubkey,
+            now.elapsed()
+        );
     }
 
     pub async fn try_build_thread_exec_tx(
