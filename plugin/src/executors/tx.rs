@@ -377,6 +377,7 @@ impl TxExecutor {
     ) -> Option<(Pubkey, Transaction)> {
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
             Err(_err) => {
+                self.increment_simulation_failure(thread_pubkey).await;
                 return None;
             }
             Ok(thread) => thread,
@@ -402,13 +403,17 @@ impl TxExecutor {
                 None
             }
         } else {
-            let mut w_executable_threads = self.executable_threads.write().await;
-            w_executable_threads
-                .entry(thread_pubkey)
-                .and_modify(|metadata| metadata.simulation_failures += 1);
-            drop(w_executable_threads);
+            self.increment_simulation_failure(thread_pubkey).await;
             None
         }
+    }
+
+    pub async fn increment_simulation_failure(self: Arc<Self>, thread_pubkey: Pubkey) {
+        let mut w_executable_threads = self.executable_threads.write().await;
+        w_executable_threads
+            .entry(thread_pubkey)
+            .and_modify(|metadata| metadata.simulation_failures += 1);
+        drop(w_executable_threads);
     }
 
     pub async fn dedupe_tx(
