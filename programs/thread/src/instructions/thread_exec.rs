@@ -154,7 +154,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     // If there is no dynamic next instruction, get the next instruction from the instruction set.
     let mut exec_index = thread.exec_context.unwrap().exec_index;
     if next_instruction.is_none() {
-        if let Some(ix) = thread.instructions.get(exec_index + 1) {
+        if let Some(ix) = thread.instructions.get((exec_index + 1) as usize) {
             next_instruction = Some(ix.clone());
             exec_index = exec_index + 1;
         }

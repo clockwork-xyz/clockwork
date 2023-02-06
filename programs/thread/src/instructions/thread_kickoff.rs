@@ -61,7 +61,8 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                     // Begin computing the data hash of this account.
                     let mut hasher = DefaultHasher::new();
                     let data = &account_info.try_borrow_data().unwrap();
-                    let range_end = offset.checked_add(size).unwrap();
+                    let offset = offset as usize;
+                    let range_end = offset.checked_add(size as usize).unwrap() as usize;
                     if data.len().gt(&range_end) {
                         data[offset..range_end].hash(&mut hasher);
                     } else {
