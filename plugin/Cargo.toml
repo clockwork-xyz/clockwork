@@ -42,6 +42,7 @@ solana-sdk = "~1.14.12"
 solana-transaction-status = "~1.14.12"
 thiserror = "1.0.30"
 tokio = "~1.14.1"
+futures = "0.3.26"
 
 [build-dependencies]
 cargo_toml = "0.13.0"

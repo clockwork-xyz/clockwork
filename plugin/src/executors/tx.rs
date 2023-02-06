@@ -8,6 +8,7 @@ use std::{
 };
 
 use async_once::AsyncOnce;
+use bincode::serialize;
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
@@ -287,28 +288,88 @@ impl TxExecutor {
             };
         drop(r_executable_threads);
 
-        // Process the tasks in parallel.
-        // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
-        let now = std::time::Instant::now();
-        let tasks: Vec<_> = thread_pubkeys
-            .iter()
-            .map(|thread_pubkey| {
-                runtime.spawn(
-                    self.clone()
-                        .process_thread(client.clone(), slot, *thread_pubkey),
-                )
-            })
-            .collect();
-        let len = tasks.len();
-        for task in tasks {
-            task.await.ok();
+        if !thread_pubkeys.is_empty() {
+            // Process the tasks in parallel.
+            // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
+            let now = std::time::Instant::now();
+            let tasks: Vec<_> = thread_pubkeys
+                .iter()
+                .map(|thread_pubkey| {
+                    runtime.spawn(
+                        self.clone()
+                            .process_thread(client.clone(), slot, *thread_pubkey),
+                    )
+                })
+                .collect();
+            let len = tasks.len();
+            info!(
+                "slot: {:?} process_thread_tasks_C: {:?} duration: {:?}",
+                slot,
+                len,
+                now.elapsed()
+            );
+            let mut executed_threads: HashMap<Pubkey, Signature> = HashMap::new();
+            let wire_txs = futures::future::join_all(tasks)
+                .await
+                .iter()
+                .filter_map(|res| match res {
+                    Err(_err) => None,
+                    Ok(res) => match res {
+                        None => None,
+                        Some((pubkey, tx)) => {
+                            executed_threads.insert(*pubkey, tx.signatures[0]);
+                            Some(tx)
+                        }
+                    },
+                })
+                .map(|tx| serialize(tx).unwrap())
+                .collect::<Vec<Vec<u8>>>();
+            let len = wire_txs.len();
+            info!(
+                "slot: {:?} process_thread_tasks_D: {:?} duration: {:?}",
+                slot,
+                len,
+                now.elapsed()
+            );
+            match TPU_CLIENT
+                .get()
+                .await
+                .try_send_wire_transaction_batch(wire_txs)
+                .await
+            {
+                Err(err) => {
+                    info!("Failed to sent transaction batch: {:?}", err);
+                }
+                Ok(()) => {
+                    info!(
+                        "slot: {:?} process_thread_tasks_E: {:?} duration: {:?}",
+                        slot,
+                        len,
+                        now.elapsed()
+                    );
+                    let mut w_executable_threads = self.executable_threads.write().await;
+                    let mut w_transaction_history = self.transaction_history.write().await;
+                    for (pubkey, signature) in executed_threads {
+                        w_executable_threads.remove(&pubkey);
+                        w_transaction_history.insert(
+                            pubkey,
+                            TransactionMetadata {
+                                slot_sent: slot,
+                                signature,
+                            },
+                        );
+                    }
+                    drop(w_executable_threads);
+                    drop(w_transaction_history);
+                }
+            }
+            info!(
+                "slot: {:?} process_thread_tasks_F: {:?} duration: {:?}",
+                slot,
+                len,
+                now.elapsed()
+            );
         }
-        info!(
-            "slot: {:?} process_thread_tasks: {:?} duration: {:?}",
-            slot,
-            len,
-            now.elapsed()
-        );
 
         Ok(())
     }
@@ -318,7 +379,7 @@ impl TxExecutor {
         client: Arc<RpcClient>,
         slot: u64,
         thread_pubkey: Pubkey,
-    ) {
+    ) -> Option<(Pubkey, Transaction)> {
         let now = std::time::Instant::now();
         if let Some(tx) = self
             .clone()
@@ -343,24 +404,27 @@ impl TxExecutor {
                     thread_pubkey,
                     now.elapsed()
                 );
-                if self.clone().execute_tx(&tx).await.is_ok() {
-                    info!(
-                        "slot: {:?} process_thread_C: {:?} duration: {:?}",
-                        slot,
-                        thread_pubkey,
-                        now.elapsed()
-                    );
-                    let mut w_executable_threads = self.executable_threads.write().await;
-                    w_executable_threads.remove(&thread_pubkey);
-                    drop(w_executable_threads);
-                    self.clone().log_tx(slot, thread_pubkey, &tx).await;
-                    info!(
-                        "slot: {:?} process_thread_D: {:?} duration: {:?}",
-                        slot,
-                        thread_pubkey,
-                        now.elapsed()
-                    );
-                }
+                Some((thread_pubkey, tx))
+                // if self.clone().execute_tx(&tx).await.is_ok() {
+                //     info!(
+                //         "slot: {:?} process_thread_C: {:?} duration: {:?}",
+                //         slot,
+                //         thread_pubkey,
+                //         now.elapsed()
+                //     );
+                //     let mut w_executable_threads = self.executable_threads.write().await;
+                //     w_executable_threads.remove(&thread_pubkey);
+                //     drop(w_executable_threads);
+                //     self.clone().log_tx(slot, thread_pubkey, &tx).await;
+                //     info!(
+                //         "slot: {:?} process_thread_D: {:?} duration: {:?}",
+                //         slot,
+                //         thread_pubkey,
+                //         now.elapsed()
+                //     );
+                // }
+            } else {
+                None
             }
         } else {
             let mut w_executable_threads = self.executable_threads.write().await;
@@ -368,13 +432,14 @@ impl TxExecutor {
                 .entry(thread_pubkey)
                 .and_modify(|metadata| metadata.simulation_failures += 1);
             drop(w_executable_threads);
+            None
         }
-        info!(
-            "slot: {:?} process_thread_E: {:?} duration: {:?}",
-            slot,
-            thread_pubkey,
-            now.elapsed()
-        );
+        // info!(
+        //     "slot: {:?} process_thread_E: {:?} duration: {:?}",
+        //     slot,
+        //     thread_pubkey,
+        //     now.elapsed()
+        // );
     }
 
     pub async fn try_build_thread_exec_tx(
@@ -459,17 +524,17 @@ impl TxExecutor {
         Ok(tx.clone())
     }
 
-    async fn log_tx(self: Arc<Self>, slot: u64, thread_pubkey: Pubkey, tx: &Transaction) {
-        let mut w_transaction_history = self.transaction_history.write().await;
-        w_transaction_history.insert(
-            thread_pubkey,
-            TransactionMetadata {
-                slot_sent: slot,
-                signature: tx.signatures[0],
-            },
-        );
-        drop(w_transaction_history);
-    }
+    // async fn log_tx(self: Arc<Self>, slot: u64, thread_pubkey: Pubkey, tx: &Transaction) {
+    //     let mut w_transaction_history = self.transaction_history.write().await;
+    //     w_transaction_history.insert(
+    //         thread_pubkey,
+    //         TransactionMetadata {
+    //             slot_sent: slot,
+    //             signature: tx.signatures[0],
+    //         },
+    //     );
+    //     drop(w_transaction_history);
+    // }
 }
 
 impl Debug for TxExecutor {
