@@ -67,7 +67,7 @@ impl ThreadAccount for Account<'_, Thread> {
     fn pubkey(&self) -> Pubkey {
         Thread::pubkey(self.authority, self.id.clone())
     }
-    
+
     fn realloc(&mut self) -> Result<()> {
         // Realloc memory for the thread account
         let data_len = 8 + self.try_to_vec()?.len();
@@ -80,7 +80,7 @@ impl ThreadAccount for Account<'_, Thread> {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ExecContext {
     /// Index of the next instruction to be executed.
-    pub exec_index: usize,
+    pub exec_index: u64,
 
     /// Number of execs since the last tx reimbursement.
     pub execs_since_reimbursement: u64,
@@ -103,9 +103,9 @@ pub enum Trigger {
         /// The address of the account to monitor.
         address: Pubkey,
         /// The byte offset of the account data to monitor.
-        offset: usize,
+        offset: u64,
         /// The size of the byte slice to monitor (must be less than 1kb)
-        size: usize,
+        size: u64,
     },
 
     /// Allows a thread to be kicked off according to a one-time or recurring schedule.
