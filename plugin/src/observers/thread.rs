@@ -129,10 +129,7 @@ impl ThreadObserver {
             return Ok(());
         }
 
-        info!(
-            "indexing thread: {:?} slot: {} write_version: {}",
-            thread_pubkey, slot, write_version
-        );
+        info!("indexing thread: {:?} slot: {}", thread_pubkey, slot);
         if thread.next_instruction.is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_immediate_threads = self.immediate_threads.write().await;
