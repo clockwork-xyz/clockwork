@@ -37,6 +37,7 @@ pub async fn build_thread_exec_tx(
     worker_id: u64,
 ) -> Option<Transaction> {
     // Grab the thread and relevant data.
+    let now = std::time::Instant::now();
     let blockhash = client.get_latest_blockhash().await.unwrap();
     let signatory_pubkey = payer.pubkey();
 
@@ -55,7 +56,6 @@ pub async fn build_thread_exec_tx(
     ];
     let mut successful_ixs: Vec<Instruction> = vec![];
     let mut units_consumed: Option<u64> = None;
-    let now = std::time::Instant::now();
     loop {
         let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
         sim_tx.sign(&[payer], blockhash);
