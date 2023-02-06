@@ -8,6 +8,7 @@ use std::{
 };
 
 use async_once::AsyncOnce;
+use bincode::serialize;
 use clockwork_client::{
     network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
     thread::state::Thread,
@@ -243,20 +244,19 @@ impl TxExecutor {
                 )
                 .await
                 {
-                    self.clone().execute_tx(&tx).await.ok();
+                    self.clone().simulate_tx(&tx).await?;
+                    self.clone().submit_tx(&tx).await?;
                 }
             }
         }
         Ok(())
     }
 
-    async fn execute_thread_exec_txs(
+    async fn get_executable_threads(
         self: Arc<Self>,
-        client: Arc<RpcClient>,
-        slot: u64,
         pool_position: PoolPosition,
-        runtime: Arc<Runtime>,
-    ) -> PluginResult<()> {
+        slot: u64,
+    ) -> PluginResult<Vec<Pubkey>> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
         let r_executable_threads = self.executable_threads.read().await;
@@ -286,63 +286,95 @@ impl TxExecutor {
                     .collect::<Vec<Pubkey>>()
             };
         drop(r_executable_threads);
+        Ok(thread_pubkeys)
+    }
 
-        // Process the tasks in parallel.
+    async fn execute_thread_exec_txs(
+        self: Arc<Self>,
+        client: Arc<RpcClient>,
+        slot: u64,
+        pool_position: PoolPosition,
+        runtime: Arc<Runtime>,
+    ) -> PluginResult<()> {
+        let executable_threads = self
+            .clone()
+            .get_executable_threads(pool_position, slot)
+            .await?;
+        if executable_threads.is_empty() {
+            return Ok(());
+        }
+
+        // Build transactions in parallel.
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
-        let tasks: Vec<_> = thread_pubkeys
+        let tasks: Vec<_> = executable_threads
             .iter()
             .map(|thread_pubkey| {
-                runtime.spawn(
-                    self.clone()
-                        .process_thread(client.clone(), slot, *thread_pubkey),
-                )
+                runtime.spawn(self.clone().try_build_thread_exec_tx(
+                    client.clone(),
+                    slot,
+                    *thread_pubkey,
+                ))
             })
             .collect();
-        for task in tasks {
-            task.await.ok();
+        let mut executed_threads: HashMap<Pubkey, Signature> = HashMap::new();
+
+        // Serialize to wire transactions.
+        let wire_txs = futures::future::join_all(tasks)
+            .await
+            .iter()
+            .filter_map(|res| match res {
+                Err(_err) => None,
+                Ok(res) => match res {
+                    None => None,
+                    Some((pubkey, tx)) => {
+                        executed_threads.insert(*pubkey, tx.signatures[0]);
+                        Some(tx)
+                    }
+                },
+            })
+            .map(|tx| serialize(tx).unwrap())
+            .collect::<Vec<Vec<u8>>>();
+
+        // Batch submit transactions to the leader.
+        // TODO Explore rewriting the TPU client for optimized performance.
+        //      This currently is by far the most expensive part of processing threads.
+        //      Submitting transactions takes 8x longer (>200ms) than simulating and building transactions.
+        match TPU_CLIENT
+            .get()
+            .await
+            .try_send_wire_transaction_batch(wire_txs)
+            .await
+        {
+            Err(err) => {
+                info!("Failed to sent transaction batch: {:?}", err);
+            }
+            Ok(()) => {
+                let mut w_executable_threads = self.executable_threads.write().await;
+                let mut w_transaction_history = self.transaction_history.write().await;
+                for (pubkey, signature) in executed_threads {
+                    w_executable_threads.remove(&pubkey);
+                    w_transaction_history.insert(
+                        pubkey,
+                        TransactionMetadata {
+                            slot_sent: slot,
+                            signature,
+                        },
+                    );
+                }
+                drop(w_executable_threads);
+                drop(w_transaction_history);
+            }
         }
 
         Ok(())
     }
 
-    pub async fn process_thread(
+    pub async fn try_build_thread_exec_tx(
         self: Arc<Self>,
         client: Arc<RpcClient>,
         slot: u64,
         thread_pubkey: Pubkey,
-    ) {
-        if let Some(tx) = self
-            .clone()
-            .try_build_thread_exec_tx(client.clone(), thread_pubkey)
-            .await
-        {
-            if self
-                .clone()
-                .dedupe_tx(slot, thread_pubkey, &tx)
-                .await
-                .is_ok()
-            {
-                if self.clone().execute_tx(&tx).await.is_ok() {
-                    let mut w_executable_threads = self.executable_threads.write().await;
-                    w_executable_threads.remove(&thread_pubkey);
-                    drop(w_executable_threads);
-                    self.clone().log_tx(slot, thread_pubkey, &tx).await;
-                }
-            }
-        } else {
-            let mut w_executable_threads = self.executable_threads.write().await;
-            w_executable_threads
-                .entry(thread_pubkey)
-                .and_modify(|metadata| metadata.simulation_failures += 1);
-            drop(w_executable_threads);
-        }
-    }
-
-    pub async fn try_build_thread_exec_tx(
-        self: Arc<Self>,
-        client: Arc<RpcClient>,
-        thread_pubkey: Pubkey,
-    ) -> Option<Transaction> {
+    ) -> Option<(Pubkey, Transaction)> {
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
             Err(_err) => {
                 return None;
@@ -350,7 +382,7 @@ impl TxExecutor {
             Ok(thread) => thread,
         };
 
-        crate::builders::build_thread_exec_tx(
+        if let Some(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
             thread.clone(),
@@ -358,6 +390,25 @@ impl TxExecutor {
             self.config.worker_id,
         )
         .await
+        {
+            if self
+                .clone()
+                .dedupe_tx(slot, thread_pubkey, &tx)
+                .await
+                .is_ok()
+            {
+                Some((thread_pubkey, tx))
+            } else {
+                None
+            }
+        } else {
+            let mut w_executable_threads = self.executable_threads.write().await;
+            w_executable_threads
+                .entry(thread_pubkey)
+                .and_modify(|metadata| metadata.simulation_failures += 1);
+            drop(w_executable_threads);
+            None
+        }
     }
 
     pub async fn dedupe_tx(
@@ -373,12 +424,6 @@ impl TxExecutor {
             }
         }
         drop(r_transaction_history);
-        Ok(())
-    }
-
-    async fn execute_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<()> {
-        self.clone().simulate_tx(tx).await?;
-        self.clone().submit_tx(tx).await?;
         Ok(())
     }
 
@@ -418,18 +463,6 @@ impl TxExecutor {
             ));
         }
         Ok(tx.clone())
-    }
-
-    async fn log_tx(self: Arc<Self>, slot: u64, thread_pubkey: Pubkey, tx: &Transaction) {
-        let mut w_transaction_history = self.transaction_history.write().await;
-        w_transaction_history.insert(
-            thread_pubkey,
-            TransactionMetadata {
-                slot_sent: slot,
-                signature: tx.signatures[0],
-            },
-        );
-        drop(w_transaction_history);
     }
 }
 
