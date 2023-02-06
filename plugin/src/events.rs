@@ -9,17 +9,9 @@ use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
-    Clock {
-        clock: Clock,
-    },
-    HttpRequest {
-        request: Request,
-        write_version: u64,
-    },
-    Thread {
-        thread: Thread,
-        write_version: u64,
-    },
+    Clock { clock: Clock },
+    HttpRequest { request: Request },
+    Thread { thread: Thread },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -59,7 +51,6 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                             msg: "Failed to parse Clockwork thread account".into(),
                         }
                     })?,
-                    write_version: account_info.write_version,
                 });
             }
         }
@@ -72,7 +63,6 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                         msg: "Failed to parse Clockwork http request".into(),
                     }
                 })?,
-                write_version: account_info.write_version,
             });
         }
 

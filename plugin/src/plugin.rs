@@ -115,10 +115,7 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::HttpRequest {
-                        request,
-                        write_version: _,
-                    } => {
+                    AccountUpdateEvent::HttpRequest { request } => {
                         inner
                             .observers
                             .webhook
@@ -130,15 +127,12 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::Thread {
-                        thread,
-                        write_version,
-                    } => {
+                    AccountUpdateEvent::Thread { thread } => {
                         inner
                             .observers
                             .thread
                             .clone()
-                            .observe_thread(thread, account_pubkey, slot, write_version)
+                            .observe_thread(thread, account_pubkey, slot)
                             .await
                             .ok();
                     }
