@@ -1,8 +1,8 @@
 use {crate::state::*, anchor_lang::prelude::*};
 
-/// Accounts required by the `automation_delete` instruction.
+/// Accounts required by the `automation_reset` instruction.
 #[derive(Accounts)]
-pub struct AutomationStop<'info> {
+pub struct AutomationReset<'info> {
     /// The authority (owner) of the automation.
     #[account()]
     pub authority: Signer<'info>,
@@ -21,11 +21,11 @@ pub struct AutomationStop<'info> {
     pub automation: Account<'info, Automation>,
 }
 
-pub fn handler(ctx: Context<AutomationStop>) -> Result<()> {
+pub fn handler(ctx: Context<AutomationReset>) -> Result<()> {
     // Get accounts
     let automation = &mut ctx.accounts.automation;
 
-    // Pause the automation
+    // Reset the next instruction.
     automation.next_instruction = None;
 
     Ok(())
