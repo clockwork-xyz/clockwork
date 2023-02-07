@@ -9,10 +9,7 @@ use std::{
 
 use async_once::AsyncOnce;
 use bincode::serialize;
-use clockwork_client::{
-    network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
-    automation::state::Automation,
-};
+use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
@@ -31,7 +28,10 @@ use solana_sdk::{
 };
 use tokio::{runtime::Runtime, sync::RwLock};
 
-use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
+use crate::{
+    config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair,
+    versioned_automation::VersionedAutomation,
+};
 
 use super::AccountGet;
 
@@ -260,31 +260,32 @@ impl TxExecutor {
         // Get the set of automation pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
         let r_executable_automations = self.executable_automations.read().await;
-        let automation_pubkeys =
-            if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
-                // This worker is not in the pool. Get pubkeys of automations that are beyond the timeout window.
-                r_executable_automations
-                    .iter()
-                    .filter(|(_pubkey, metadata)| slot > metadata.due_slot + AUTOMATION_TIMEOUT_WINDOW)
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
-            } else {
-                // This worker is in the pool. Get pubkeys executable automations.
-                r_executable_automations
-                    .iter()
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
-            };
+        let automation_pubkeys = if pool_position.current_position.is_none()
+            && !pool_position.workers.is_empty()
+        {
+            // This worker is not in the pool. Get pubkeys of automations that are beyond the timeout window.
+            r_executable_automations
+                .iter()
+                .filter(|(_pubkey, metadata)| slot > metadata.due_slot + AUTOMATION_TIMEOUT_WINDOW)
+                .filter(|(_pubkey, metadata)| {
+                    slot >= metadata.due_slot
+                        + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
+                        - 1
+                })
+                .map(|(pubkey, _metadata)| *pubkey)
+                .collect::<Vec<Pubkey>>()
+        } else {
+            // This worker is in the pool. Get pubkeys executable automations.
+            r_executable_automations
+                .iter()
+                .filter(|(_pubkey, metadata)| {
+                    slot >= metadata.due_slot
+                        + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
+                        - 1
+                })
+                .map(|(pubkey, _metadata)| *pubkey)
+                .collect::<Vec<Pubkey>>()
+        };
         drop(r_executable_automations);
         Ok(automation_pubkeys)
     }
@@ -375,7 +376,11 @@ impl TxExecutor {
         slot: u64,
         automation_pubkey: Pubkey,
     ) -> Option<(Pubkey, Transaction)> {
-        let automation = match client.clone().get::<Automation>(&automation_pubkey).await {
+        let automation = match client
+            .clone()
+            .get::<VersionedAutomation>(&automation_pubkey)
+            .await
+        {
             Err(_err) => {
                 self.increment_simulation_failure(automation_pubkey).await;
                 return None;
@@ -386,7 +391,7 @@ impl TxExecutor {
         if let Some(tx) = crate::builders::build_automation_exec_tx(
             client.clone(),
             &self.keypair,
-            automation.clone(),
+            automation,
             automation_pubkey,
             self.config.worker_id,
         )

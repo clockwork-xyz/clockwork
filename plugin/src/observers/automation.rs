@@ -6,7 +6,7 @@ use std::{
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::automation::state::{Automation, Trigger, TriggerContext};
+use clockwork_client::automation::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -14,6 +14,8 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 };
 use solana_program::{clock::Clock, pubkey::Pubkey};
 use tokio::sync::RwLock;
+
+use crate::versioned_automation::VersionedAutomation;
 
 pub struct AutomationObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
@@ -120,24 +122,27 @@ impl AutomationObserver {
 
     pub async fn observe_automation(
         self: Arc<Self>,
-        automation: Automation,
+        automation: VersionedAutomation,
         automation_pubkey: Pubkey,
         slot: u64,
     ) -> PluginResult<()> {
         // If the automation is paused, just return without indexing
-        if automation.paused {
+        if automation.paused() {
             return Ok(());
         }
 
-        info!("indexing automation: {:?} slot: {}", automation_pubkey, slot);
-        if automation.next_instruction.is_some() {
+        info!(
+            "indexing automation: {:?} slot: {}",
+            automation_pubkey, slot
+        );
+        if automation.next_instruction().is_some() {
             // If the automation has a next instruction, index it as executable.
             let mut w_immediate_automations = self.immediate_automations.write().await;
             w_immediate_automations.insert(automation_pubkey);
             drop(w_immediate_automations);
         } else {
             // Otherwise, index the automation according to its trigger type.
-            match automation.trigger {
+            match automation.trigger() {
                 Trigger::Account {
                     address,
                     offset: _,
@@ -162,8 +167,8 @@ impl AutomationObserver {
                     skippable: _,
                 } => {
                     // Find a reference timestamp for calculating the automation's upcoming target time.
-                    let reference_timestamp = match automation.exec_context {
-                        None => automation.created_at.unix_timestamp,
+                    let reference_timestamp = match automation.exec_context() {
+                        None => automation.created_at().unix_timestamp,
                         Some(exec_context) => match exec_context.trigger_context {
                             TriggerContext::Cron { started_at } => started_at,
                             _ => {

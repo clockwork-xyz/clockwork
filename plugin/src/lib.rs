@@ -8,6 +8,7 @@ mod observers;
 mod plugin;
 mod pool_position;
 mod utils;
+mod versioned_automation;
 
 pub use plugin::ClockworkPlugin;
 
