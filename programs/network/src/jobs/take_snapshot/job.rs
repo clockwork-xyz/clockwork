@@ -1,8 +1,9 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
+use anchor_lang::{prelude::*, solana_program::system_program};
+use clockwork_utils::automation::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct TakeSnapshotJob<'info> {
@@ -30,7 +31,7 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
+                AccountMetaData::new(PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(
                     Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),

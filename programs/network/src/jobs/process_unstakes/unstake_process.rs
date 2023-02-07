@@ -1,11 +1,10 @@
-use clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData};
-
-use {
-    crate::{errors::*, state::*},
-    anchor_lang::prelude::*,
-    anchor_spl::token::{transfer, Token, TokenAccount, Transfer},
-    clockwork_utils::ThreadResponse,
+use anchor_lang::prelude::*;
+use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
+use clockwork_utils::automation::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
 };
+
+use crate::{errors::*, state::*};
 
 #[derive(Accounts)]
 pub struct UnstakeProcess<'info> {

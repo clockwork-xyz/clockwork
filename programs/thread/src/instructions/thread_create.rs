@@ -1,11 +1,11 @@
-use    std::mem::size_of;
+use std::mem::size_of;
 
-use    anchor_lang::{
-        prelude::*,
-        solana_program::system_program,
-        system_program::{transfer, Transfer},
-    };
-use clockwork_utils::InstructionData;
+use anchor_lang::{
+    prelude::*,
+    solana_program::system_program,
+    system_program::{transfer, Transfer}
+};
+use clockwork_utils::automation::{Trigger, InstructionData};
 
 use crate::state::*;
 

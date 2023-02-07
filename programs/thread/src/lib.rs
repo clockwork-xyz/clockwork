@@ -10,7 +10,10 @@ pub mod state;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_utils::{CrateInfo, InstructionData};
+use clockwork_utils::{
+    automation::{InstructionData, Trigger},
+    CrateInfo,
+};
 use instructions::*;
 use state::*;
 

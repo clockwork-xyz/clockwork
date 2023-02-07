@@ -1,12 +1,13 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-    anchor_spl::{
-        associated_token::get_associated_token_address,
-        token::{transfer, Token, TokenAccount, Transfer},
-    },
-    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
+use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::get_associated_token_address,
+    token::{transfer, Token, TokenAccount, Transfer},
 };
+use clockwork_utils::automation::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+};
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct StakeDelegationsProcessDelegation<'info> {

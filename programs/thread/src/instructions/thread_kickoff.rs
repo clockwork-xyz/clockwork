@@ -8,6 +8,7 @@ use anchor_lang::prelude::*;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
 use clockwork_network_program::state::{Worker, WorkerAccount};
+use clockwork_utils::automation::Trigger;
 
 use crate::{errors::*, state::*};
 

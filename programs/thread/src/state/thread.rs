@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_macros::TryFromData;
-use clockwork_utils::{ClockData, InstructionData, Trigger};
+use clockwork_utils::automation::{ClockData, InstructionData, Trigger};
 
 pub const SEED_THREAD: &[u8] = b"thread";
 

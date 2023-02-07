@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
+use anchor_lang::prelude::*;
+use clockwork_utils::automation::ThreadResponse;
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct EpochCutover<'info> {

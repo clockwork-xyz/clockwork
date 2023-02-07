@@ -10,7 +10,7 @@ mod instructions;
 mod jobs;
 
 use anchor_lang::prelude::*;
-use clockwork_utils::*;
+use clockwork_utils::automation::*;
 use instructions::*;
 use jobs::*;
 use state::*;

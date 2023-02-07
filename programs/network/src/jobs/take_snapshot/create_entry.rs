@@ -1,10 +1,11 @@
-use {
-    crate::state::*,
-    anchor_lang::{prelude::*, solana_program::system_program},
-    anchor_spl::associated_token::get_associated_token_address,
-    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
-    std::mem::size_of,
+use anchor_lang::{prelude::*, solana_program::system_program};
+use anchor_spl::associated_token::get_associated_token_address;
+use clockwork_utils::automation::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
+use std::mem::size_of;
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct TakeSnapshotCreateEntry<'info> {
@@ -109,7 +110,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> 
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(next_delegation_pubkey, false),
-                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
+                AccountMetaData::new(PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
@@ -129,7 +130,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> 
             program_id: crate::ID,
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(clockwork_utils::PAYER_PUBKEY, true),
+                AccountMetaData::new(PAYER_PUBKEY, true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),

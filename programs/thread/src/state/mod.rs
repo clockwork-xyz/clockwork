@@ -2,5 +2,5 @@
 
 mod thread;
 
-pub use clockwork_utils::*;
+pub use clockwork_utils::automation::*;
 pub use thread::*;
