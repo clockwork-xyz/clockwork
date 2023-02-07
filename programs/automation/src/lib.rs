@@ -65,13 +65,16 @@ pub mod automation_program {
         automation_resume::handler(ctx)
     }
 
-    /// Resumes a paused automation.
-    pub fn automation_stop(ctx: Context<AutomationStop>) -> Result<()> {
-        automation_stop::handler(ctx)
+    /// Resets an automation's next instruction.
+    pub fn automation_reset(ctx: Context<AutomationReset>) -> Result<()> {
+        automation_reset::handler(ctx)
     }
 
     /// Allows an owner to update the mutable properties of a automation.
-    pub fn automation_update(ctx: Context<AutomationUpdate>, settings: AutomationSettings) -> Result<()> {
+    pub fn automation_update(
+        ctx: Context<AutomationUpdate>,
+        settings: AutomationSettings,
+    ) -> Result<()> {
         automation_update::handler(ctx, settings)
     }
 

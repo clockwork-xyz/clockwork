@@ -200,7 +200,7 @@ fn parse_automation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
         Some(("resume", matches)) => Ok(CliCommand::AutomationResume {
             id: parse_string("id", matches)?,
         }),
-        Some(("stop", matches)) => Ok(CliCommand::AutomationStop {
+        Some(("reset", matches)) => Ok(CliCommand::AutomationReset {
             id: parse_string("id", matches)?,
         }),
         Some(("update", matches)) => Ok(CliCommand::AutomationUpdate {

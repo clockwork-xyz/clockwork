@@ -4,8 +4,8 @@ pub use clockwork_automation_program::ID;
 
 pub mod state {
     pub use clockwork_automation_program::state::{
-        AccountMetaData, ClockData, ExecContext, InstructionData, Automation, AutomationAccount,
-        AutomationResponse, AutomationSettings, Trigger, TriggerContext,
+        AccountMetaData, Automation, AutomationAccount, AutomationResponse, AutomationSettings,
+        ClockData, ExecContext, InstructionData, Trigger, TriggerContext,
     };
 }
 
@@ -18,8 +18,8 @@ pub mod cpi {
     use anchor_lang::prelude::{CpiContext, Result};
 
     pub use clockwork_automation_program::cpi::accounts::{
-        AutomationCreate, AutomationDelete, AutomationPause, AutomationResume, AutomationStop, AutomationUpdate,
-        AutomationWithdraw,
+        AutomationCreate, AutomationDelete, AutomationPause, AutomationReset, AutomationResume,
+        AutomationUpdate, AutomationWithdraw,
     };
 
     pub fn automation_create<'info>(
@@ -50,8 +50,10 @@ pub mod cpi {
         clockwork_automation_program::cpi::automation_resume(ctx)
     }
 
-    pub fn automation_stop<'info>(ctx: CpiContext<'_, '_, '_, 'info, AutomationStop<'info>>) -> Result<()> {
-        clockwork_automation_program::cpi::automation_stop(ctx)
+    pub fn automation_reset<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationReset<'info>>,
+    ) -> Result<()> {
+        clockwork_automation_program::cpi::automation_reset(ctx)
     }
 
     pub fn automation_update<'info>(

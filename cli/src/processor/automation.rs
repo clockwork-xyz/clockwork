@@ -1,7 +1,7 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        automation::state::{InstructionData, Automation, AutomationSettings, Trigger},
+        automation::state::{Automation, AutomationSettings, InstructionData, Trigger},
         Client,
     },
     clockwork_utils::CrateInfo,
@@ -57,8 +57,10 @@ pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
 
 pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
     let automation_pubkey = Automation::pubkey(client.payer_pubkey(), id.into_bytes());
-    let ix =
-        clockwork_client::automation::instruction::automation_pause(client.payer_pubkey(), automation_pubkey);
+    let ix = clockwork_client::automation::instruction::automation_pause(
+        client.payer_pubkey(),
+        automation_pubkey,
+    );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, automation_pubkey)?;
     Ok(())
@@ -66,17 +68,21 @@ pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
 
 pub fn resume(client: &Client, id: String) -> Result<(), CliError> {
     let automation_pubkey = Automation::pubkey(client.payer_pubkey(), id.into_bytes());
-    let ix =
-        clockwork_client::automation::instruction::automation_resume(client.payer_pubkey(), automation_pubkey);
+    let ix = clockwork_client::automation::instruction::automation_resume(
+        client.payer_pubkey(),
+        automation_pubkey,
+    );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, automation_pubkey)?;
     Ok(())
 }
 
-pub fn stop(client: &Client, id: String) -> Result<(), CliError> {
+pub fn reset(client: &Client, id: String) -> Result<(), CliError> {
     let automation_pubkey = Automation::pubkey(client.payer_pubkey(), id.into_bytes());
-    let ix =
-        clockwork_client::automation::instruction::automation_stop(client.payer_pubkey(), automation_pubkey);
+    let ix = clockwork_client::automation::instruction::automation_reset(
+        client.payer_pubkey(),
+        automation_pubkey,
+    );
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, automation_pubkey)?;
     Ok(())

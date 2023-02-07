@@ -92,7 +92,7 @@ pub enum CliCommand {
     AutomationResume {
         id: String,
     },
-    AutomationStop {
+    AutomationReset {
         id: String,
     },
     AutomationUpdate {
@@ -394,7 +394,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("create")
-                        .about("Create a new automation")
+                        .about("Create an new automation")
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
@@ -445,7 +445,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("delete")
-                        .about("Delete a automation")
+                        .about("Delete an automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
@@ -457,7 +457,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("get")
-                        .about("Lookup a automation")
+                        .about("Lookup an automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
@@ -477,7 +477,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("pause")
-                        .about("Pause a automation")
+                        .about("Pause an automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
@@ -488,7 +488,7 @@ pub fn app() -> Command<'static> {
                     ),
                 )
                 .subcommand(
-                    Command::new("resume").about("Resume a automation").arg(
+                    Command::new("resume").about("Resume an automation").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -497,7 +497,7 @@ pub fn app() -> Command<'static> {
                     ),
                 )
                 .subcommand(
-                    Command::new("stop").about("Stop a automation").arg(
+                    Command::new("reset").about("Reset an automation").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
@@ -507,7 +507,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("update")
-                        .about("Update a property of a automation")
+                        .about("Update a property of an automation")
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")

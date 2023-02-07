@@ -6,13 +6,13 @@ use anchor_lang::{
     InstructionData,
 };
 
-pub fn automation_stop(authority: Pubkey, automation: Pubkey) -> Instruction {
+pub fn automation_reset(authority: Pubkey, automation: Pubkey) -> Instruction {
     Instruction {
         program_id: clockwork_automation_program::ID,
         accounts: vec![
             AccountMeta::new_readonly(authority, true),
             AccountMeta::new(automation, false),
         ],
-        data: clockwork_automation_program::instruction::AutomationStop {}.data(),
+        data: clockwork_automation_program::instruction::AutomationReset {}.data(),
     }
 }

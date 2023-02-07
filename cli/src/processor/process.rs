@@ -82,7 +82,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::AutomationDelete { id } => super::automation::delete(&client, id),
         CliCommand::AutomationPause { id } => super::automation::pause(&client, id),
         CliCommand::AutomationResume { id } => super::automation::resume(&client, id),
-        CliCommand::AutomationStop { id } => super::automation::stop(&client, id),
+        CliCommand::AutomationReset { id } => super::automation::reset(&client, id),
         CliCommand::AutomationGet { id, address } => {
             let pubkey = parse_pubkey_from_id_or_address(client.payer_pubkey(), id, address)?;
             super::automation::get(&client, pubkey)
