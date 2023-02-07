@@ -6,7 +6,7 @@ use anchor_lang::{
     },
     AnchorDeserialize,
 };
-use clockwork_network_program::state::{Fee, Penalty, Pool, Worker, WorkerAccount};
+use clockwork_network_program::state::{Fee, Pool, Worker, WorkerAccount};
 use clockwork_utils::automation::{InstructionData, ThreadResponse, PAYER_PUBKEY};
 
 use crate::{errors::ClockworkError, state::*};
@@ -32,19 +32,6 @@ pub struct ThreadExec<'info> {
         has_one = worker,
     )]
     pub fee: Account<'info, Fee>,
-
-    /// The worker's penalty account.
-    #[account(
-        mut,
-        seeds = [
-            clockwork_network_program::state::SEED_PENALTY,
-            worker.key().as_ref(),
-        ],
-        bump,
-        seeds::program = clockwork_network_program::ID,
-        has_one = worker,
-    )]
-    pub penalty: Account<'info, Penalty>,
 
     /// The active worker pool.
     #[account(address = Pool::pubkey(POOL_ID))]
@@ -77,7 +64,6 @@ pub struct ThreadExec<'info> {
 pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     // Get accounts
     let fee = &mut ctx.accounts.fee;
-    let penalty = &mut ctx.accounts.penalty;
     let pool = &ctx.accounts.pool;
     let signatory = &mut ctx.accounts.signatory;
     let thread = &mut ctx.accounts.thread;
@@ -214,22 +200,14 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             .unwrap();
     }
 
-    // Debit the fee from the thread account.
-    // If the worker is in the pool, pay fee to the worker's fee account.
-    // Otherwise, pay fee to the worker's penalty account.
-    **thread.to_account_info().try_borrow_mut_lamports()? = thread
-        .to_account_info()
-        .lamports()
-        .checked_sub(thread.fee)
-        .unwrap();
+    // If the worker is in the pool, debit from the thread account and payout to the worker's fee account.
     if pool.clone().into_inner().workers.contains(&worker.key()) {
-        **fee.to_account_info().try_borrow_mut_lamports()? = fee
+        **thread.to_account_info().try_borrow_mut_lamports()? = thread
             .to_account_info()
             .lamports()
-            .checked_add(thread.fee)
+            .checked_sub(thread.fee)
             .unwrap();
-    } else {
-        **penalty.to_account_info().try_borrow_mut_lamports()? = penalty
+        **fee.to_account_info().try_borrow_mut_lamports()? = fee
             .to_account_info()
             .lamports()
             .checked_add(thread.fee)
