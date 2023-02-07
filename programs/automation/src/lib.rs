@@ -17,7 +17,7 @@ use clockwork_utils::{
 use instructions::*;
 use state::*;
 
-declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
+declare_id!("auto5LqrhPVVt34PDu3dPwJhRisGoFA6dYpxRn29n1k");
 
 /// Program for creating transaction automations on Solana.
 #[program]
