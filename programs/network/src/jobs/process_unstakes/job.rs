@@ -41,5 +41,6 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<ThreadResponse> {
         } else {
             None
         },
+        trigger: None,
     })
 }

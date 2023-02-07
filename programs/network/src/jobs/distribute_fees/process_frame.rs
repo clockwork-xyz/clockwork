@@ -134,5 +134,8 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
         None
     };
 
-    Ok(ThreadResponse { next_instruction })
+    Ok(ThreadResponse {
+        next_instruction,
+        trigger: None,
+    })
 }

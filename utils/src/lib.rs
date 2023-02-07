@@ -1,21 +1,20 @@
 pub mod explorer;
 
-use {
-    anchor_lang::{
-        prelude::borsh::BorshSchema,
-        prelude::Pubkey,
-        prelude::*,
-        solana_program::{self, instruction::Instruction},
-        AnchorDeserialize,
-    },
-    base64,
-    static_pubkey::static_pubkey,
-    std::{
-        convert::TryFrom,
-        fmt::{Debug, Display, Formatter},
-        hash::Hash,
-    },
+use std::{
+    convert::TryFrom,
+    fmt::{Debug, Display, Formatter},
+    hash::Hash,
 };
+
+use anchor_lang::{
+    prelude::borsh::BorshSchema,
+    prelude::Pubkey,
+    prelude::*,
+    solana_program::{self, instruction::Instruction},
+    AnchorDeserialize,
+};
+use base64;
+use static_pubkey::static_pubkey;
 
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
@@ -82,17 +81,47 @@ impl TryFrom<Vec<u8>> for ClockData {
     }
 }
 
+/// The triggering conditions of a thread.
+#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
+pub enum Trigger {
+    /// Allows a thread to be kicked off whenever the data of an account changes.
+    Account {
+        /// The address of the account to monitor.
+        address: Pubkey,
+        /// The byte offset of the account data to monitor.
+        offset: u64,
+        /// The size of the byte slice to monitor (must be less than 1kb)
+        size: u64,
+    },
+
+    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
+    Cron {
+        /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
+        schedule: String,
+
+        /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
+        /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
+        skippable: bool,
+    },
+
+    /// Allows a thread to be kicked off as soon as it's created.
+    Immediate,
+}
+
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
-    /// The next instruction to execute.
+    /// A dynamic instruction to execute next.
     pub next_instruction: Option<InstructionData>,
+    /// Value to update the thread trigger to.
+    pub trigger: Option<Trigger>,
 }
 
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
             next_instruction: None,
+            trigger: None,
         };
     }
 }

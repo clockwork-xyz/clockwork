@@ -10,7 +10,7 @@ pub mod state;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_utils::CrateInfo;
+use clockwork_utils::{CrateInfo, InstructionData};
 use instructions::*;
 use state::*;
 

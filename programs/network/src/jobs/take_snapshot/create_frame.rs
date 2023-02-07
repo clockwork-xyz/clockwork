@@ -139,5 +139,8 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<ThreadResponse> 
         None
     };
 
-    Ok(ThreadResponse { next_instruction })
+    Ok(ThreadResponse {
+        next_instruction,
+        trigger: None,
+    })
 }

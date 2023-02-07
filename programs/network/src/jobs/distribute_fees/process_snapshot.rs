@@ -64,5 +64,6 @@ pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<ThreadResp
         } else {
             None
         },
+        trigger: None,
     })
 }
