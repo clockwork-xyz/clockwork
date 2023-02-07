@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use clockwork_utils::automation::ThreadResponse;
+use clockwork_utils::automation::AutomationResponse;
 
 use crate::state::*;
 
@@ -15,15 +15,15 @@ pub struct EpochCutover<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<EpochCutover>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<EpochCutover>) -> Result<AutomationResponse> {
     let registry = &mut ctx.accounts.registry;
     registry.current_epoch = registry.current_epoch.checked_add(1).unwrap();
     registry.locked = false;
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction: None,
         trigger: None,
     })

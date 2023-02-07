@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -56,14 +56,14 @@ pub struct DistributeFeesProcessEntry<'info> {
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 
     #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -72,7 +72,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_entry = &ctx.accounts.snapshot_entry;
     let snapshot_frame = &ctx.accounts.snapshot_frame;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
     let worker = &ctx.accounts.worker;
 
     // Calculate the balance of this particular delegation, based on the weight of its stake with this worker.
@@ -104,7 +104,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         .checked_add(distribution_balance)
         .unwrap();
 
-    // Build the next instruction for the thread.
+    // Build the next instruction for the automation.
     let next_instruction = if snapshot_entry
         .id
         .checked_add(1)
@@ -128,7 +128,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_entry_pubkey, false),
                 AccountMetaData::new_readonly(snapshot_frame.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
             data: anchor_sighash("distribute_fees_process_entry").to_vec(),
@@ -151,7 +151,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new(next_worker_pubkey, false),
             ],
             data: anchor_sighash("distribute_fees_process_frame").to_vec(),
@@ -160,7 +160,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         None
     };
 
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction,
         trigger: None,
     })

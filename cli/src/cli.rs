@@ -1,7 +1,7 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
 use clockwork_client::{
-    thread::state::{InstructionData, Trigger},
+    automation::state::{InstructionData, Trigger},
     webhook::state::HttpMethod,
 };
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
@@ -18,8 +18,8 @@ pub enum CliCommand {
     ConfigGet,
     ConfigSet {
         admin: Option<Pubkey>,
-        epoch_thread: Option<Pubkey>,
-        hasher_thread: Option<Pubkey>,
+        epoch_automation: Option<Pubkey>,
+        hasher_automation: Option<Pubkey>,
     },
 
     // Crontab
@@ -46,7 +46,7 @@ pub enum CliCommand {
         worker_id: u64,
     },
 
-    ExplorerGetThread {
+    ExplorerGetAutomation {
         id: Option<String>,
         address: Option<Pubkey>,
     },
@@ -72,30 +72,30 @@ pub enum CliCommand {
         size: usize,
     },
 
-    // Thread commands
-    ThreadCrateInfo,
-    ThreadCreate {
+    // Automation commands
+    AutomationCrateInfo,
+    AutomationCreate {
         id: String,
         kickoff_instruction: InstructionData,
         trigger: Trigger,
     },
-    ThreadDelete {
+    AutomationDelete {
         id: String,
     },
-    ThreadGet {
+    AutomationGet {
         id: Option<String>,
         address: Option<Pubkey>,
     },
-    ThreadPause {
+    AutomationPause {
         id: String,
     },
-    ThreadResume {
+    AutomationResume {
         id: String,
     },
-    ThreadStop {
+    AutomationStop {
         id: String,
     },
-    ThreadUpdate {
+    AutomationUpdate {
         id: String,
         rate_limit: Option<u64>,
         schedule: Option<String>,
@@ -147,20 +147,20 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("epoch_thread")
-                                .long("epoch_thread")
+                            Arg::new("epoch_automation")
+                                .long("epoch_automation")
                                 .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .arg(
-                            Arg::new("hasher_thread")
-                                .long("hasher_thread")
+                            Arg::new("hasher_automation")
+                                .long("hasher_automation")
                                 .value_name("ADDRESS")
                                 .takes_value(true),
                         )
                         .group(
                             ArgGroup::new("config_settings")
-                                .args(&["admin", "epoch_thread", "hasher_thread"])
+                                .args(&["admin", "epoch_automation", "hasher_automation"])
                                 .multiple(true),
                         ),
                 ),
@@ -279,22 +279,22 @@ pub fn app() -> Command<'static> {
                 .arg_required_else_help(true)
                 .subcommand(
                     Command::new("get")
-                        .about("Prints thread explorer url")
+                        .about("Prints automation explorer url")
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .index(1)
                                 .takes_value(true)
                                 .required(false)
-                                .help("The label of the thread to lookup (only works if you \
-                                are the signer of that thread)")
+                                .help("The label of the automation to lookup (only works if you \
+                                are the signer of that automation)")
                         )
                         .arg(
                             Arg::new("address")
                                 .short('k')
                                 .long("address")
                                 .takes_value(true)
-                                .help("The address of the thread to lookup"),
+                                .help("The address of the automation to lookup"),
                         ),
                 )
         )
@@ -385,8 +385,8 @@ pub fn app() -> Command<'static> {
                 ),
         )
         .subcommand(
-            Command::new("thread")
-                .about("Manage your transaction threads")
+            Command::new("automation")
+                .about("Manage your transaction automations")
                 .arg_required_else_help(true)
                 .subcommand(
                     Command::new("crate-info")
@@ -394,7 +394,7 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("create")
-                        .about("Create a new thread")
+                        .about("Create a new automation")
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
@@ -403,7 +403,7 @@ pub fn app() -> Command<'static> {
                                 .value_name("ID")
                                 .takes_value(true)
                                 .required(true)
-                                .help("The ID of the thread to be created"),
+                                .help("The ID of the automation to be created"),
                         )
                         .arg(
                             Arg::new("kickoff_instruction")
@@ -445,76 +445,76 @@ pub fn app() -> Command<'static> {
                 )
                 .subcommand(
                     Command::new("delete")
-                        .about("Delete a thread")
+                        .about("Delete a automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to delete"),
+                            .help("The id of the automation to delete"),
                     ),
                 )
                 .subcommand(
                     Command::new("get")
-                        .about("Lookup a thread")
+                        .about("Lookup a automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The label of the thread to lookup (only works if you \
-                                are the signer of that thread)")
+                            .help("The label of the automation to lookup (only works if you \
+                                are the signer of that automation)")
                         )
                         .arg(
                             Arg::new("address")
                                 .short('k')
                                 .long("address")
                                 .takes_value(true)
-                                .help("The address of the thread to lookup"),
+                                .help("The address of the automation to lookup"),
                         )
                 )
                 .subcommand(
                     Command::new("pause")
-                        .about("Pause a thread")
+                        .about("Pause a automation")
                         .arg_required_else_help(true)
                         .arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to pause"),
+                            .help("The id of the automation to pause"),
                     ),
                 )
                 .subcommand(
-                    Command::new("resume").about("Resume a thread").arg(
+                    Command::new("resume").about("Resume a automation").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to resume"),
+                            .help("The id of the automation to resume"),
                     ),
                 )
                 .subcommand(
-                    Command::new("stop").about("Stop a thread").arg(
+                    Command::new("stop").about("Stop a automation").arg(
                         Arg::new("id")
                             .index(1)
                             .takes_value(true)
                             .required(false)
-                            .help("The id of the thread to stop"),
+                            .help("The id of the automation to stop"),
                     ),
                 )
                 .subcommand(
                     Command::new("update")
-                        .about("Update a property of a thread")
+                        .about("Update a property of a automation")
                         .arg_required_else_help(true)
                         .arg(
                             Arg::new("id")
                                 .index(1)
                                 .takes_value(true)
                                 .required(false)
-                                .help("The id of the thread to lookup"),
+                                .help("The id of the automation to lookup"),
                         )
                         .arg(
                             Arg::new("rate_limit")
@@ -523,7 +523,7 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(false)
                                 .help(
-                                    "The maximum number of instructions this thread can execute per slot",
+                                    "The maximum number of instructions this automation can execute per slot",
                                 ),
                         )
                         .arg(
@@ -532,7 +532,7 @@ pub fn app() -> Command<'static> {
                                 .short('s')
                                 .takes_value(true)
                                 .required(false)
-                                .help("The cron schedule of the thread"),
+                                .help("The cron schedule of the automation"),
                         ),
                 ),
         )

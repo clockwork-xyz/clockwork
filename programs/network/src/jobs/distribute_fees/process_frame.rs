@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -37,21 +37,21 @@ pub struct DistributeFeesProcessFrame<'info> {
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 
     #[account(mut)]
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let fee = &mut ctx.accounts.fee;
     let registry = &ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_frame = &ctx.accounts.snapshot_frame;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
     let worker = &mut ctx.accounts.worker;
 
     // Calculate the fee account's usuable balance.
@@ -88,7 +88,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
     // Record the balance that is distributable to delegations.
     fee.distributable_balance = fee_usable_balance.checked_sub(commission_balance).unwrap();
 
-    // Build next instruction for the thread.
+    // Build next instruction for the automation.
     let next_instruction = if snapshot_frame.total_entries.gt(&0) {
         // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
@@ -103,7 +103,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(snapshot_entry_pubkey.key(), false),
                 AccountMetaData::new_readonly(snapshot_frame.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(worker.key(), false),
             ],
             data: anchor_sighash("distribute_fees_process_entry").to_vec(),
@@ -126,7 +126,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new(next_worker_pubkey, false),
             ],
             data: anchor_sighash("distribute_fees_process_frame").to_vec(),
@@ -135,7 +135,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
         None
     };
 
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction,
         trigger: None,
     })

@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{transfer, Token, TokenAccount, Transfer},
 };
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -38,8 +38,8 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -54,13 +54,13 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<AutomationResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let delegation_stake = &mut ctx.accounts.delegation_stake;
     let registry = &ctx.accounts.registry;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
     let token_program = &ctx.accounts.token_program;
     let worker = &ctx.accounts.worker;
     let worker_stake = &ctx.accounts.worker_stake;
@@ -89,7 +89,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
     // Update the delegation's stake amount.
     delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
-    // Build next instruction for the thread.
+    // Build next instruction for the automation.
     let next_instruction = if delegation
         .id
         .checked_add(1)
@@ -109,7 +109,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
                     false,
                 ),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(token_program.key(), false),
                 AccountMetaData::new_readonly(worker.key(), false),
                 AccountMetaData::new(worker_stake.key(), false),
@@ -128,7 +128,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
@@ -140,7 +140,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
         None
     };
 
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction,
         trigger: None,
     })

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -37,17 +37,17 @@ pub struct DistributeFeesProcessSnapshot<'info> {
     )]
     pub snapshot: Account<'info, Snapshot>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<AutomationResponse> {
     let config = &ctx.accounts.config;
     let registry = &mut ctx.accounts.registry;
     let snapshot = &ctx.accounts.snapshot;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
 
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction: if snapshot.total_frames.gt(&0) {
             Some(InstructionData {
                 program_id: crate::ID,
@@ -57,7 +57,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<ThreadResp
                     AccountMetaData::new_readonly(registry.key(), false),
                     AccountMetaData::new_readonly(snapshot.key(), false),
                     AccountMetaData::new_readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                    AccountMetaData::new_readonly(thread.key(), true),
+                    AccountMetaData::new_readonly(automation.key(), true),
                     AccountMetaData::new(Worker::pubkey(0), false),
                 ],
                 data: anchor_sighash("distribute_fees_process_frame").to_vec(),

@@ -3,9 +3,9 @@
 set -e
 
 # Rebuid programs
-rm -rf lib/clockwork_thread_program.so
-cd programs/thread && anchor build; cd -;
-cp -fv target/deploy/clockwork_thread_program.so lib/
+rm -rf lib/clockwork_automation_program.so
+cd programs/automation && anchor build; cd -;
+cp -fv target/deploy/clockwork_automation_program.so lib/
 
 # Rebuild plugin
 rm -rf lib/libclockwork_plugin.dylib

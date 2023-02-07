@@ -1,4 +1,4 @@
-use clockwork_utils::automation::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse};
+use clockwork_utils::automation::{anchor_sighash, AccountMetaData, InstructionData, AutomationResponse};
 
 use {crate::state::*, anchor_lang::prelude::*};
 
@@ -26,30 +26,30 @@ pub struct DeleteSnapshotProcessSnapshot<'info> {
 
     #[account(
         mut, 
-        address = config.epoch_thread
+        address = config.epoch_automation
     )]
-    pub thread: Signer<'info>,
+    pub automation: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<AutomationResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
-    let thread = &mut ctx.accounts.thread;
+    let automation = &mut ctx.accounts.automation;
 
     // If this snapshot has no entries, then close immediately
     if snapshot.total_frames.eq(&0) {
         let snapshot_lamports = snapshot.to_account_info().lamports();
         **snapshot.to_account_info().lamports.borrow_mut() = 0;
-        **thread.to_account_info().lamports.borrow_mut() = thread
+        **automation.to_account_info().lamports.borrow_mut() = automation
             .to_account_info()
             .lamports()
             .checked_add(snapshot_lamports)
             .unwrap();
     }
 
-    // Build next instruction the thread.
+    // Build next instruction the automation.
     let next_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
         Some(InstructionData {
@@ -59,7 +59,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResp
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                AccountMetaData::new(thread.key(), true),
+                AccountMetaData::new(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
@@ -68,5 +68,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResp
         None
     };
 
-    Ok(ThreadResponse { next_instruction, trigger: None })
+    Ok(AutomationResponse { next_instruction, trigger: None })
 }

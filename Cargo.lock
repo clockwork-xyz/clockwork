@@ -780,6 +780,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-automation-program"
+version = "1.4.2"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-macros",
+ "clockwork-network-program",
+ "clockwork-utils",
+ "static-pubkey",
+ "version",
+]
+
+[[package]]
 name = "clockwork-cli"
 version = "1.4.2"
 dependencies = [
@@ -815,8 +829,8 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "borsh",
+ "clockwork-automation-program",
  "clockwork-network-program",
- "clockwork-thread-program",
  "clockwork-utils",
  "clockwork-webhook-program",
  "solana-client",
@@ -859,23 +873,9 @@ version = "1.4.2"
 dependencies = [
  "anchor-lang",
  "chrono",
- "clockwork-thread-program",
+ "clockwork-automation-program",
  "nom",
  "once_cell",
-]
-
-[[package]]
-name = "clockwork-thread-program"
-version = "1.4.2"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-macros",
- "clockwork-network-program",
- "clockwork-utils",
- "static-pubkey",
- "version",
 ]
 
 [[package]]

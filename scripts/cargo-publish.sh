@@ -11,7 +11,7 @@ sleep 25
 # Publish programs
 cargo publish -p clockwork-network-program
 sleep 25
-cargo publish -p clockwork-thread-program
+cargo publish -p clockwork-automation-program
 sleep 25
 cargo publish -p clockwork-webhook-program
 sleep 25

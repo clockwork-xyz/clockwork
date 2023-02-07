@@ -1,20 +1,20 @@
-pub mod thread;
+pub mod automation;
 pub mod webhook;
 
 use std::{fmt::Debug, sync::Arc};
 
-use thread::ThreadObserver;
+use automation::AutomationObserver;
 use webhook::WebhookObserver;
 
 pub struct Observers {
-    pub thread: Arc<ThreadObserver>,
+    pub automation: Arc<AutomationObserver>,
     pub webhook: Arc<WebhookObserver>,
 }
 
 impl Observers {
     pub fn new() -> Self {
         Observers {
-            thread: Arc::new(ThreadObserver::new()),
+            automation: Arc::new(AutomationObserver::new()),
             webhook: Arc::new(WebhookObserver::new()),
         }
     }
