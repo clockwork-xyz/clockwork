@@ -61,7 +61,7 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
         // Require the thread is not in the middle of processing.
         require!(
             std::mem::discriminant(&thread.trigger) == std::mem::discriminant(&trigger),
-            ClockworkError::InvalidTriggerVarient
+            ClockworkError::InvalidTriggerVariant
         );
         thread.trigger = trigger;
     }

@@ -156,7 +156,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         if let Some(trigger) = thread_response.trigger {
             require!(
                 std::mem::discriminant(&thread.trigger) == std::mem::discriminant(&trigger),
-                ClockworkError::InvalidTriggerVarient
+                ClockworkError::InvalidTriggerVariant
             );
             thread.trigger = trigger;
         }
