@@ -1,6 +1,6 @@
-use clockwork_utils::{InstructionData, AccountMetaData, anchor_sighash};
+use clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, ThreadResponse};
 
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::ThreadResponse};
+use {crate::state::*, anchor_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessFrame<'info> {

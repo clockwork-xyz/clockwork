@@ -1,18 +1,15 @@
-use clockwork_utils::{InstructionData, ThreadResponse};
-
-use {
-    crate::errors::ClockworkError,
-    crate::state::*,
-    anchor_lang::{
-        prelude::*,
-        solana_program::{
-            instruction::Instruction,
-            program::{get_return_data, invoke_signed},
-        },
-        AnchorDeserialize,
+use anchor_lang::{
+    prelude::*,
+    solana_program::{
+        instruction::Instruction,
+        program::{get_return_data, invoke_signed},
     },
-    clockwork_network_program::state::{Fee, Penalty, Pool, Worker, WorkerAccount},
+    AnchorDeserialize,
 };
+use clockwork_network_program::state::{Fee, Penalty, Pool, Worker, WorkerAccount};
+use clockwork_utils::automation::{InstructionData, ThreadResponse, PAYER_PUBKEY};
+
+use crate::{errors::ClockworkError, state::*};
 
 /// The ID of the pool workers must be a member of to collect fees.
 const POOL_ID: u64 = 0;
@@ -104,7 +101,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     // Inject the signatory's pubkey for the Clockwork payer ID.
     let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
     instruction.accounts.iter().for_each(|acc| {
-        let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
+        let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
             signatory.key()
         } else {
             acc.pubkey

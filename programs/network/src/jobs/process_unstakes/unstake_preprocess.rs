@@ -1,10 +1,10 @@
+use anchor_lang::prelude::*;
 use anchor_spl::associated_token::get_associated_token_address;
-
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
+use clockwork_utils::automation::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
 };
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct UnstakePreprocess<'info> {

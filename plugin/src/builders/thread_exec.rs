@@ -4,6 +4,7 @@ use clockwork_client::{
     network::state::Worker,
     thread::state::{Thread, Trigger},
 };
+use clockwork_utils::automation::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
@@ -213,7 +214,7 @@ fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> In
 
         // Inject the worker pubkey as the dynamic "payer" account.
         for acc in next_instruction.clone().accounts {
-            let acc_pubkey = if acc.pubkey == clockwork_utils::PAYER_PUBKEY {
+            let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
                 signatory_pubkey
             } else {
                 acc.pubkey

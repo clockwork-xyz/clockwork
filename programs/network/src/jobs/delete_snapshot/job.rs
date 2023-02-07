@@ -1,7 +1,9 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    clockwork_utils::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse},
+    clockwork_utils::automation::{
+        anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    },
 };
 
 #[derive(Accounts)]
