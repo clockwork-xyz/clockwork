@@ -60,11 +60,10 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
     if let Some(trigger) = settings.trigger {
         // Require the thread is not in the middle of processing.
         require!(
-            thread.next_instruction.is_none(),
-            ClockworkError::ThreadBusy
+            std::mem::discriminant(&thread.trigger) == std::mem::discriminant(&trigger),
+            ClockworkError::InvalidTriggerVarient
         );
         thread.trigger = trigger;
-        thread.exec_context = None;
     }
 
     // Reallocate mem for the thread account

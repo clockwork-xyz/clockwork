@@ -1,15 +1,15 @@
-use {
-    crate::{errors::*, state::*},
-    anchor_lang::prelude::*,
-    chrono::{DateTime, NaiveDateTime, Utc},
-    clockwork_cron::Schedule,
-    clockwork_network_program::state::{Worker, WorkerAccount},
-    std::{
-        collections::hash_map::DefaultHasher,
-        hash::{Hash, Hasher},
-        str::FromStr,
-    },
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    str::FromStr,
 };
+
+use anchor_lang::prelude::*;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use clockwork_cron::Schedule;
+use clockwork_network_program::state::{Worker, WorkerAccount};
+
+use crate::{errors::*, state::*};
 
 /// Accounts required by the `thread_kickoff` instruction.
 #[derive(Accounts)]
@@ -40,8 +40,8 @@ pub struct ThreadKickoff<'info> {
 pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
     // Get accounts.
     let thread = &mut ctx.accounts.thread;
-
     let clock = Clock::get().unwrap();
+
     match thread.trigger.clone() {
         Trigger::Account {
             address,

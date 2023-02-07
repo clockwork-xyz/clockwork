@@ -13,6 +13,10 @@ pub enum ClockworkError {
     #[msg("The thread is in an invalid state")]
     InvalidThreadState,
 
+    /// TThe provided trigger varient is invalid.
+    #[msg("The trigger varient cannot be changed")]
+    InvalidTriggerVarient,
+
     /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]
     TriggerNotActive,

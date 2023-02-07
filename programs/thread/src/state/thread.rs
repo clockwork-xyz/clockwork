@@ -1,7 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_macros::TryFromData;
-
-use crate::state::*;
+use clockwork_utils::{ClockData, InstructionData, Trigger};
 
 pub const SEED_THREAD: &[u8] = b"thread";
 
@@ -93,33 +92,6 @@ pub struct ExecContext {
 
     /// Context for the triggering condition
     pub trigger_context: TriggerContext,
-}
-
-/// The triggering conditions of a thread.
-#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
-pub enum Trigger {
-    /// Allows a thread to be kicked off whenever the data of an account changes.
-    Account {
-        /// The address of the account to monitor.
-        address: Pubkey,
-        /// The byte offset of the account data to monitor.
-        offset: u64,
-        /// The size of the byte slice to monitor (must be less than 1kb)
-        size: u64,
-    },
-
-    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
-    Cron {
-        /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
-        schedule: String,
-
-        /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
-        /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
-        skippable: bool,
-    },
-
-    /// Allows a thread to be kicked off as soon as it's created.
-    Immediate,
 }
 
 /// The event which allowed a particular transaction thread to be triggered.

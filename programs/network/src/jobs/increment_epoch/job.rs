@@ -22,5 +22,6 @@ pub fn handler(ctx: Context<EpochCutover>) -> Result<ThreadResponse> {
     registry.locked = false;
     Ok(ThreadResponse {
         next_instruction: None,
+        trigger: None,
     })
 }

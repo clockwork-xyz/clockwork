@@ -1,3 +1,5 @@
+use clockwork_utils::{InstructionData, ThreadResponse};
+
 use {
     crate::errors::ClockworkError,
     crate::state::*,
@@ -149,6 +151,15 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     let mut next_instruction = None;
     if let Some(thread_response) = thread_response {
         next_instruction = thread_response.next_instruction;
+
+        // Update the trigger.
+        if let Some(trigger) = thread_response.trigger {
+            require!(
+                std::mem::discriminant(&thread.trigger) == std::mem::discriminant(&trigger),
+                ClockworkError::InvalidTriggerVarient
+            );
+            thread.trigger = trigger;
+        }
     }
 
     // If there is no dynamic next instruction, get the next instruction from the instruction set.
