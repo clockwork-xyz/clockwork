@@ -44,18 +44,6 @@ impl From<Clock> for ClockData {
     }
 }
 
-// impl From<&ClockData> for Clock {
-//     fn from(clock: &ClockData) -> Self {
-//         Clock {
-//             slot: clock.slot,
-//             epoch_start_timestamp: clock.epoch_start_timestamp,
-//             epoch: clock.epoch,
-//             leader_schedule_epoch: clock.leader_schedule_epoch,
-//             unix_timestamp: clock.unix_timestamp,
-//         }
-//     }
-// }
-
 impl TryFrom<Vec<u8>> for ClockData {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
