@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::get_associated_token_address;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -17,22 +17,22 @@ pub struct UnstakePreprocess<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 
     #[account(address = unstake.pubkey())]
     pub unstake: Account<'info, Unstake>,
 }
 
-pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<AutomationResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
     let unstake = &ctx.accounts.unstake;
 
-    // Return next instruction for thread.
-    Ok(ThreadResponse {
+    // Return next instruction for automation.
+    Ok(AutomationResponse {
         next_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -40,7 +40,7 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new(unstake.delegation, false),
                 AccountMetaData::new(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(anchor_spl::token::ID, false),
                 AccountMetaData::new(unstake.key(), false),
                 AccountMetaData::new_readonly(unstake.worker, false),
@@ -51,6 +51,6 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
             ],
             data: anchor_sighash("unstake_process").to_vec(),
         }),
-        ..ThreadResponse::default()
+        ..AutomationResponse::default()
     })
 }

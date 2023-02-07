@@ -61,7 +61,7 @@ pub mod network_program {
         pool_update::handler(ctx, settings)
     }
 
-    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<ThreadResponse> {
+    pub fn registry_nonce_hash(ctx: Context<RegistryNonceHash>) -> Result<AutomationResponse> {
         registry_nonce_hash::handler(ctx)
     }
 
@@ -87,111 +87,111 @@ pub mod network_program {
 
     // DistributeFees job
 
-    pub fn distribute_fees_job(ctx: Context<DistributeFeesJob>) -> Result<ThreadResponse> {
+    pub fn distribute_fees_job(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
         jobs::distribute_fees::job::handler(ctx)
     }
 
     pub fn distribute_fees_process_entry(
         ctx: Context<DistributeFeesProcessEntry>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::distribute_fees::process_entry::handler(ctx)
     }
 
     pub fn distribute_fees_process_frame(
         ctx: Context<DistributeFeesProcessFrame>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::distribute_fees::process_frame::handler(ctx)
     }
 
     pub fn distribute_fees_process_snapshot(
         ctx: Context<DistributeFeesProcessSnapshot>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::distribute_fees::process_snapshot::handler(ctx)
     }
 
     // StakeDelegations job
 
-    pub fn stake_delegations_job(ctx: Context<StakeDelegationsJob>) -> Result<ThreadResponse> {
+    pub fn stake_delegations_job(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> {
         jobs::stake_delegations::job::handler(ctx)
     }
 
     pub fn stake_delegations_process_worker(
         ctx: Context<StakeDelegationsProcessWorker>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::stake_delegations::process_worker::handler(ctx)
     }
 
     pub fn stake_delegations_process_delegation(
         ctx: Context<StakeDelegationsProcessDelegation>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::stake_delegations::process_delegation::handler(ctx)
     }
 
     // TakeSnapshot job
 
-    pub fn take_snapshot_job(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
+    pub fn take_snapshot_job(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
         jobs::take_snapshot::job::handler(ctx)
     }
 
     pub fn take_snapshot_create_entry(
         ctx: Context<TakeSnapshotCreateEntry>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::take_snapshot::create_entry::handler(ctx)
     }
 
     pub fn take_snapshot_create_frame(
         ctx: Context<TakeSnapshotCreateFrame>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::take_snapshot::create_frame::handler(ctx)
     }
 
     pub fn take_snapshot_create_snapshot(
         ctx: Context<TakeSnapshotCreateSnapshot>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::take_snapshot::create_snapshot::handler(ctx)
     }
 
     // IncrementEpoch job
 
-    pub fn increment_epoch(ctx: Context<EpochCutover>) -> Result<ThreadResponse> {
+    pub fn increment_epoch(ctx: Context<EpochCutover>) -> Result<AutomationResponse> {
         jobs::increment_epoch::job::handler(ctx)
     }
 
     // Delete snapshot
 
-    pub fn delete_snapshot_job(ctx: Context<DeleteSnapshotJob>) -> Result<ThreadResponse> {
+    pub fn delete_snapshot_job(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
         jobs::delete_snapshot::job::handler(ctx)
     }
 
     pub fn delete_snapshot_process_snapshot(
         ctx: Context<DeleteSnapshotProcessSnapshot>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::delete_snapshot::process_snapshot::handler(ctx)
     }
 
     pub fn delete_snapshot_process_frame(
         ctx: Context<DeleteSnapshotProcessFrame>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::delete_snapshot::process_frame::handler(ctx)
     }
 
     pub fn delete_snapshot_process_entry(
         ctx: Context<DeleteSnapshotProcessEntry>,
-    ) -> Result<ThreadResponse> {
+    ) -> Result<AutomationResponse> {
         jobs::delete_snapshot::process_entry::handler(ctx)
     }
 
     // ProcessUnstakes job
 
-    pub fn process_unstakes_job(ctx: Context<ProcessUnstakesJob>) -> Result<ThreadResponse> {
+    pub fn process_unstakes_job(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
         jobs::process_unstakes::job::handler(ctx)
     }
 
-    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
+    pub fn unstake_preprocess(ctx: Context<UnstakePreprocess>) -> Result<AutomationResponse> {
         jobs::process_unstakes::unstake_preprocess::handler(ctx)
     }
 
-    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
+    pub fn unstake_process(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         jobs::process_unstakes::unstake_process::handler(ctx)
     }
 }

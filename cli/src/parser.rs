@@ -1,7 +1,7 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
 use clockwork_client::{
-    thread::state::{AccountMetaData, InstructionData, Trigger},
+    automation::state::{AccountMetaData, InstructionData, Trigger},
     webhook::state::HttpMethod,
 };
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
@@ -25,7 +25,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
-            Some(("thread", matches)) => parse_thread_command(matches),
+            Some(("automation", matches)) => parse_automation_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
             Some(("worker", matches)) => parse_worker_command(matches),
@@ -105,8 +105,8 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).ok(),
-            epoch_thread: parse_pubkey("epoch_thread", matches).ok(),
-            hasher_thread: parse_pubkey("hasher_thread", matches).ok(),
+            epoch_automation: parse_pubkey("epoch_automation", matches).ok(),
+            hasher_automation: parse_pubkey("hasher_automation", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -147,7 +147,7 @@ fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_explorer_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::ExplorerGetThread {
+        Some(("get", matches)) => Ok(CliCommand::ExplorerGetAutomation {
             id: parse_string("id", matches).ok(),
             address: parse_pubkey("address", matches).ok(),
         }),
@@ -179,31 +179,31 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_automation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("crate-info", _)) => Ok(CliCommand::ThreadCrateInfo {}),
-        Some(("create", matches)) => Ok(CliCommand::ThreadCreate {
+        Some(("crate-info", _)) => Ok(CliCommand::AutomationCrateInfo {}),
+        Some(("create", matches)) => Ok(CliCommand::AutomationCreate {
             id: parse_string("id", matches)?,
             kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
             trigger: parse_trigger(matches)?,
         }),
-        Some(("delete", matches)) => Ok(CliCommand::ThreadDelete {
+        Some(("delete", matches)) => Ok(CliCommand::AutomationDelete {
             id: parse_string("id", matches)?,
         }),
-        Some(("get", matches)) => Ok(CliCommand::ThreadGet {
+        Some(("get", matches)) => Ok(CliCommand::AutomationGet {
             id: parse_string("id", matches).ok(),
             address: parse_pubkey("address", matches).ok(),
         }),
-        Some(("pause", matches)) => Ok(CliCommand::ThreadPause {
+        Some(("pause", matches)) => Ok(CliCommand::AutomationPause {
             id: parse_string("id", matches)?,
         }),
-        Some(("resume", matches)) => Ok(CliCommand::ThreadResume {
+        Some(("resume", matches)) => Ok(CliCommand::AutomationResume {
             id: parse_string("id", matches)?,
         }),
-        Some(("stop", matches)) => Ok(CliCommand::ThreadStop {
+        Some(("stop", matches)) => Ok(CliCommand::AutomationStop {
             id: parse_string("id", matches)?,
         }),
-        Some(("update", matches)) => Ok(CliCommand::ThreadUpdate {
+        Some(("update", matches)) => Ok(CliCommand::AutomationUpdate {
             id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).ok(),
             schedule: parse_string("schedule", matches).ok(),

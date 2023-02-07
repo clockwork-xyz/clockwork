@@ -8,7 +8,7 @@ mod localnet;
 mod pool;
 mod process;
 mod registry;
-mod thread;
+mod automation;
 mod webhook;
 mod worker;
 

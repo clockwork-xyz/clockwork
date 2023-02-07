@@ -5,10 +5,10 @@ use {
 
 };
 
-pub fn thread_url<T: std::fmt::Display>(thread: T, config: CliConfig) -> Result<(),
+pub fn automation_url<T: std::fmt::Display>(automation: T, config: CliConfig) -> Result<(),
     CliError> {
-    println!("thread: {}", explorer(config).thread_url(thread,
-                                                 clockwork_client::thread::ID));
+    println!("automation: {}", explorer(config).automation_url(automation,
+                                                 clockwork_client::automation::ID));
     Ok(())
 }
 

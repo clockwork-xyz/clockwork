@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::get_associated_token_address;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
+    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
 };
 
 use crate::state::*;
@@ -17,21 +17,21 @@ pub struct StakeDelegationsProcessWorker<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_thread)]
-    pub thread: Signer<'info>,
+    #[account(address = config.epoch_automation)]
+    pub automation: Signer<'info>,
 
     #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<AutomationResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let thread = &ctx.accounts.thread;
+    let automation = &ctx.accounts.automation;
     let worker = &ctx.accounts.worker;
 
-    // Build the next instruction for the thread.
+    // Build the next instruction for the automation.
     let next_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
@@ -45,7 +45,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResp
                     false,
                 ),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(anchor_spl::token::ID, false),
                 AccountMetaData::new_readonly(worker.key(), false),
                 AccountMetaData::new(
@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResp
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
+                AccountMetaData::new_readonly(automation.key(), true),
                 AccountMetaData::new_readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
@@ -79,7 +79,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResp
         None
     };
 
-    Ok(ThreadResponse {
+    Ok(AutomationResponse {
         next_instruction,
         trigger: None,
     })

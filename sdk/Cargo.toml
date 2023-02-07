@@ -16,7 +16,7 @@ name = "clockwork_sdk"
 [dependencies]
 anchor-lang = "0.26.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-thread-program = { path = "../programs/thread", features = ["cpi"], version = "1.4.2" }
+clockwork-automation-program = { path = "../programs/automation", features = ["cpi"], version = "1.4.2" }
 nom = "~7"
 once_cell = "1.5.2"
 

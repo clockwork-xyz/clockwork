@@ -1,4 +1,4 @@
-use clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, ThreadResponse};
+use clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, AutomationResponse};
 
 use {crate::state::*, anchor_lang::prelude::*};
 
@@ -38,24 +38,24 @@ pub struct DeleteSnapshotProcessFrame<'info> {
 
     #[account(
         mut, 
-        address = config.epoch_thread
+        address = config.epoch_automation
     )]
-    pub thread: Signer<'info>,
+    pub automation: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<AutomationResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
-    let thread = &mut ctx.accounts.thread;
+    let automation = &mut ctx.accounts.automation;
 
     // If this frame has no entries, then close the frame account.
     if snapshot_frame.total_entries.eq(&0) {
         let snapshot_frame_lamports = snapshot_frame.to_account_info().lamports();
         **snapshot_frame.to_account_info().lamports.borrow_mut() = 0;
-        **thread.to_account_info().lamports.borrow_mut() = thread
+        **automation.to_account_info().lamports.borrow_mut() = automation
             .to_account_info()
             .lamports()
             .checked_add(snapshot_frame_lamports)
@@ -66,7 +66,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
         if snapshot_frame.id.checked_add(1).unwrap().eq(&snapshot.total_frames) {
             let snapshot_lamports = snapshot.to_account_info().lamports();
             **snapshot.to_account_info().lamports.borrow_mut() = 0;
-            **thread.to_account_info().lamports.borrow_mut() = thread
+            **automation.to_account_info().lamports.borrow_mut() = automation
                 .to_account_info()
                 .lamports()
                 .checked_add(snapshot_lamports)
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), 0), false),
                 AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new(thread.key(), true),
+                AccountMetaData::new(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
@@ -98,7 +98,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(thread.key(), true),
+                AccountMetaData::new(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
@@ -107,5 +107,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
         None
     };
 
-    Ok( ThreadResponse { next_instruction, ..ThreadResponse::default() } )
+    Ok( AutomationResponse { next_instruction, ..AutomationResponse::default() } )
 }

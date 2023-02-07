@@ -1,70 +1,70 @@
-pub use clockwork_thread_program::errors;
-pub use clockwork_thread_program::program::ThreadProgram;
-pub use clockwork_thread_program::ID;
+pub use clockwork_automation_program::errors;
+pub use clockwork_automation_program::program::AutomationProgram;
+pub use clockwork_automation_program::ID;
 
 pub mod state {
-    pub use clockwork_thread_program::state::{
-        AccountMetaData, ClockData, ExecContext, InstructionData, Thread, ThreadAccount,
-        ThreadResponse, ThreadSettings, Trigger, TriggerContext,
+    pub use clockwork_automation_program::state::{
+        AccountMetaData, ClockData, ExecContext, InstructionData, Automation, AutomationAccount,
+        AutomationResponse, AutomationSettings, Trigger, TriggerContext,
     };
 }
 
 pub mod utils {
-    pub use clockwork_thread_program::state::anchor_sighash;
-    pub use clockwork_thread_program::state::PAYER_PUBKEY;
+    pub use clockwork_automation_program::state::anchor_sighash;
+    pub use clockwork_automation_program::state::PAYER_PUBKEY;
 }
 
 pub mod cpi {
     use anchor_lang::prelude::{CpiContext, Result};
 
-    pub use clockwork_thread_program::cpi::accounts::{
-        ThreadCreate, ThreadDelete, ThreadPause, ThreadResume, ThreadStop, ThreadUpdate,
-        ThreadWithdraw,
+    pub use clockwork_automation_program::cpi::accounts::{
+        AutomationCreate, AutomationDelete, AutomationPause, AutomationResume, AutomationStop, AutomationUpdate,
+        AutomationWithdraw,
     };
 
-    pub fn thread_create<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadCreate<'info>>,
+    pub fn automation_create<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationCreate<'info>>,
         amount: u64,
         id: Vec<u8>,
         instructions: Vec<crate::state::InstructionData>,
         trigger: crate::state::Trigger,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_create(ctx, amount, id, instructions, trigger)
+        clockwork_automation_program::cpi::automation_create(ctx, amount, id, instructions, trigger)
     }
 
-    pub fn thread_delete<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadDelete<'info>>,
+    pub fn automation_delete<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationDelete<'info>>,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_delete(ctx)
+        clockwork_automation_program::cpi::automation_delete(ctx)
     }
 
-    pub fn thread_pause<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadPause<'info>>,
+    pub fn automation_pause<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationPause<'info>>,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_pause(ctx)
+        clockwork_automation_program::cpi::automation_pause(ctx)
     }
 
-    pub fn thread_resume<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadResume<'info>>,
+    pub fn automation_resume<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationResume<'info>>,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_resume(ctx)
+        clockwork_automation_program::cpi::automation_resume(ctx)
     }
 
-    pub fn thread_stop<'info>(ctx: CpiContext<'_, '_, '_, 'info, ThreadStop<'info>>) -> Result<()> {
-        clockwork_thread_program::cpi::thread_stop(ctx)
+    pub fn automation_stop<'info>(ctx: CpiContext<'_, '_, '_, 'info, AutomationStop<'info>>) -> Result<()> {
+        clockwork_automation_program::cpi::automation_stop(ctx)
     }
 
-    pub fn thread_update<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadUpdate<'info>>,
-        settings: crate::state::ThreadSettings,
+    pub fn automation_update<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationUpdate<'info>>,
+        settings: crate::state::AutomationSettings,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_update(ctx, settings)
+        clockwork_automation_program::cpi::automation_update(ctx, settings)
     }
 
-    pub fn thread_withdraw<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, ThreadWithdraw<'info>>,
+    pub fn automation_withdraw<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, AutomationWithdraw<'info>>,
         amount: u64,
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_withdraw(ctx, amount)
+        clockwork_automation_program::cpi::automation_withdraw(ctx, amount)
     }
 }

@@ -54,10 +54,10 @@ impl TryFrom<Vec<u8>> for ClockData {
     }
 }
 
-/// The triggering conditions of a thread.
+/// The triggering conditions of a automation.
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
 pub enum Trigger {
-    /// Allows a thread to be kicked off whenever the data of an account changes.
+    /// Allows a automation to be kicked off whenever the data of an account changes.
     Account {
         /// The address of the account to monitor.
         address: Pubkey,
@@ -67,7 +67,7 @@ pub enum Trigger {
         size: u64,
     },
 
-    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
+    /// Allows a automation to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
@@ -77,20 +77,20 @@ pub enum Trigger {
         skippable: bool,
     },
 
-    /// Allows a thread to be kicked off as soon as it's created.
+    /// Allows a automation to be kicked off as soon as it's created.
     Immediate,
 }
 
-/// A response value target programs can return to update the thread.
+/// A response value target programs can return to update the automation.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-pub struct ThreadResponse {
+pub struct AutomationResponse {
     /// A dynamic instruction to execute next.
     pub next_instruction: Option<InstructionData>,
-    /// Value to update the thread trigger to.
+    /// Value to update the automation trigger to.
     pub trigger: Option<Trigger>,
 }
 
-impl Default for ThreadResponse {
+impl Default for AutomationResponse {
     fn default() -> Self {
         return Self {
             next_instruction: None,
