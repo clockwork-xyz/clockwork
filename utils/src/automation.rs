@@ -54,10 +54,10 @@ impl TryFrom<Vec<u8>> for ClockData {
     }
 }
 
-/// The triggering conditions of a automation.
+/// The triggering conditions of an automation.
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
 pub enum Trigger {
-    /// Allows a automation to be kicked off whenever the data of an account changes.
+    /// Allows an automation to be kicked off whenever the data of an account changes.
     Account {
         /// The address of the account to monitor.
         address: Pubkey,
@@ -67,7 +67,10 @@ pub enum Trigger {
         size: u64,
     },
 
-    /// Allows a automation to be kicked off according to a one-time or recurring schedule.
+    /// Allows an automation to be kicked off as soon as it's created.
+    Active,
+
+    /// Allows an automation to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
@@ -76,16 +79,13 @@ pub enum Trigger {
         /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
         skippable: bool,
     },
-
-    /// Allows a automation to be kicked off as soon as it's created.
-    Immediate,
 }
 
 /// A response value target programs can return to update the automation.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct AutomationResponse {
     /// A dynamic instruction to execute next.
-    pub next_instruction: Option<InstructionData>,
+    pub dynamic_instruction: Option<InstructionData>,
     /// Value to update the automation trigger to.
     pub trigger: Option<Trigger>,
 }
@@ -93,7 +93,7 @@ pub struct AutomationResponse {
 impl Default for AutomationResponse {
     fn default() -> Self {
         return Self {
-            next_instruction: None,
+            dynamic_instruction: None,
             trigger: None,
         };
     }
@@ -169,7 +169,7 @@ pub struct AccountMetaData {
 
 impl AccountMetaData {
     /// Construct metadata for a writable account.
-    pub fn new(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn mutable(pubkey: Pubkey, is_signer: bool) -> Self {
         Self {
             pubkey,
             is_signer,
@@ -178,7 +178,7 @@ impl AccountMetaData {
     }
 
     /// Construct metadata for a read-only account.
-    pub fn new_readonly(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn readonly(pubkey: Pubkey, is_signer: bool) -> Self {
         Self {
             pubkey,
             is_signer,

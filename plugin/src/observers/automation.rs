@@ -193,7 +193,7 @@ impl AutomationObserver {
                         }
                     }
                 }
-                Trigger::Immediate => {
+                Trigger::Active => {
                     let mut w_immediate_automations = self.immediate_automations.write().await;
                     w_immediate_automations.insert(automation_pubkey);
                     drop(w_immediate_automations);

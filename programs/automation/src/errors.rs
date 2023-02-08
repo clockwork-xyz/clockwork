@@ -9,7 +9,7 @@ pub enum ClockworkError {
     #[msg("The exec response could not be parsed")]
     InvalidAutomationResponse,
 
-    /// Thrown if a automation has an invalid state and cannot complete the operation.
+    /// Thrown if an automation has an invalid state and cannot complete the operation.
     #[msg("The automation is in an invalid state")]
     InvalidAutomationState,
 
@@ -28,11 +28,11 @@ pub enum ClockworkError {
     #[msg("The automation is currently paused")]
     AutomationPaused,
 
-    /// Thrown if a exec instruction would cause a automation to exceed its rate limit.
+    /// Thrown if a exec instruction would cause an automation to exceed its rate limit.
     #[msg("The automation's rate limit has been reached")]
     RateLimitExeceeded,
 
-    /// Thrown if a automation authority attempts to set a rate limit above the maximum allowed value.
+    /// Thrown if an automation authority attempts to set a rate limit above the maximum allowed value.
     #[msg("Automation rate limits cannot exceed the maximum allowed value")]
     MaxRateLimitExceeded,
 
@@ -40,7 +40,7 @@ pub enum ClockworkError {
     #[msg("Inner instruction attempted to write to an unauthorized address")]
     UnauthorizedWrite,
 
-    /// Thrown if the user attempts to withdraw SOL that would put a automation below it's minimum rent threshold.
+    /// Thrown if the user attempts to withdraw SOL that would put an automation below it's minimum rent threshold.
     #[msg("Withdrawing this amount would leave the automation with less than the minimum required SOL for rent exemption")]
     WithdrawalTooLarge,
 }

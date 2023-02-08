@@ -9,7 +9,7 @@ use clockwork_utils::automation::{Trigger, InstructionData};
 
 use crate::state::*;
 
-/// The minimum exec fee that may be set on a automation.
+/// The minimum exec fee that may be set on an automation.
 const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `automation_create` instruction.

@@ -50,16 +50,16 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<Automation
     }
 
     // Build next instruction the automation.
-    let next_instruction = if snapshot.total_frames.gt(&0) {
+    let dynamic_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                AccountMetaData::new(automation.key(), true),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(snapshot.key(), false),
+                AccountMetaData::mutable(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                AccountMetaData::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
@@ -68,5 +68,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<Automation
         None
     };
 
-    Ok(AutomationResponse { next_instruction, trigger: None })
+    Ok(AutomationResponse { dynamic_instruction, trigger: None })
 }

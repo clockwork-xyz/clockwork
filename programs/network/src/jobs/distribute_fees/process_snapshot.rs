@@ -48,17 +48,17 @@ pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<Automation
     let automation = &ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        next_instruction: if snapshot.total_frames.gt(&0) {
+        dynamic_instruction: if snapshot.total_frames.gt(&0) {
             Some(InstructionData {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new(Fee::pubkey(Worker::pubkey(0)), false),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new_readonly(snapshot.key(), false),
-                    AccountMetaData::new_readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                    AccountMetaData::new_readonly(automation.key(), true),
-                    AccountMetaData::new(Worker::pubkey(0), false),
+                    AccountMetaData::readonly(config.key(), false),
+                    AccountMetaData::mutable(Fee::pubkey(Worker::pubkey(0)), false),
+                    AccountMetaData::readonly(registry.key(), false),
+                    AccountMetaData::readonly(snapshot.key(), false),
+                    AccountMetaData::readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                    AccountMetaData::readonly(automation.key(), true),
+                    AccountMetaData::mutable(Worker::pubkey(0), false),
                 ],
                 data: anchor_sighash("distribute_fees_process_frame").to_vec(),
             })

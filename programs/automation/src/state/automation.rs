@@ -30,12 +30,12 @@ pub struct Automation {
     pub paused: bool,
     /// The maximum number of execs allowed per slot.
     pub rate_limit: u64,
-    /// The triggering event to kickoff a automation.
+    /// The triggering event to kickoff an automation.
     pub trigger: Trigger,
 }
 
 impl Automation {
-    /// Derive the pubkey of a automation account.
+    /// Derive the pubkey of an automation account.
     pub fn pubkey(authority: Pubkey, id: Vec<u8>) -> Pubkey {
         Pubkey::find_program_address(
             &[SEED_AUTOMATION, authority.as_ref(), id.as_slice()],
@@ -53,7 +53,7 @@ impl PartialEq for Automation {
 
 impl Eq for Automation {}
 
-/// Trait for reading and writing to a automation account.
+/// Trait for reading and writing to an automation account.
 pub trait AutomationAccount {
     /// Get the pubkey of the automation account.
     fn pubkey(&self) -> Pubkey;
@@ -103,14 +103,14 @@ pub enum TriggerContext {
         data_hash: u64,
     },
 
+    /// The active trigger context.
+    Active,
+
     /// A cron execution context.
     Cron {
         /// The threshold moment the schedule was waiting for.
         started_at: i64,
     },
-
-    /// The immediate trigger context.
-    Immediate,
 }
 
 /// The properties of automations which are updatable.

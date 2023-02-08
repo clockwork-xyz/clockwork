@@ -32,13 +32,13 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
 
     // Process the snapshot.
     Ok(AutomationResponse {
-        next_instruction: Some(InstructionData {
+        dynamic_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(Snapshot::pubkey(registry.current_epoch), false),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(Snapshot::pubkey(registry.current_epoch), false),
+                AccountMetaData::readonly(automation.key(), true),
             ],
             data: anchor_sighash("distribute_fees_process_snapshot").to_vec(),
         }),

@@ -130,7 +130,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
     }
 
     // Build next instruction for the automation.
-    let next_instruction = if unstake
+    let dynamic_instruction = if unstake
         .id
         .checked_add(1)
         .unwrap()
@@ -140,10 +140,10 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(next_unstake_pubkey, false),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(next_unstake_pubkey, false),
             ],
             data: anchor_sighash("unstake_preprocess").to_vec(),
         })
@@ -152,7 +152,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
     };
 
     Ok(AutomationResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

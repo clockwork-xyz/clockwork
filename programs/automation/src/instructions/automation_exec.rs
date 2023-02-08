@@ -133,7 +133,7 @@ pub fn handler(ctx: Context<AutomationExec>) -> Result<()> {
     // Grab the next instruction from the automation response.
     let mut next_instruction = None;
     if let Some(automation_response) = automation_response {
-        next_instruction = automation_response.next_instruction;
+        next_instruction = automation_response.dynamic_instruction;
 
         // Update the trigger.
         if let Some(trigger) = automation_response.trigger {

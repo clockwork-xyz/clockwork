@@ -90,7 +90,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
     delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
     // Build next instruction for the automation.
-    let next_instruction = if delegation
+    let dynamic_instruction = if delegation
         .id
         .checked_add(1)
         .unwrap()
@@ -102,17 +102,17 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(next_delegation_pubkey, false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::mutable(next_delegation_pubkey, false),
+                AccountMetaData::mutable(
                     get_associated_token_address(&next_delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(token_program.key(), false),
-                AccountMetaData::new_readonly(worker.key(), false),
-                AccountMetaData::new(worker_stake.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(token_program.key(), false),
+                AccountMetaData::readonly(worker.key(), false),
+                AccountMetaData::mutable(worker_stake.key(), false),
             ],
             data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
         })
@@ -126,10 +126,10 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
                 ),
@@ -141,7 +141,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
     };
 
     Ok(AutomationResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

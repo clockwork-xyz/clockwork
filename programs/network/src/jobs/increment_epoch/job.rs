@@ -24,7 +24,7 @@ pub fn handler(ctx: Context<EpochCutover>) -> Result<AutomationResponse> {
     registry.current_epoch = registry.current_epoch.checked_add(1).unwrap();
     registry.locked = false;
     Ok(AutomationResponse {
-        next_instruction: None,
+        dynamic_instruction: None,
         trigger: None,
     })
 }

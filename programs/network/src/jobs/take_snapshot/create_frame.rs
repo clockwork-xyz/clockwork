@@ -93,23 +93,23 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<AutomationRespon
     snapshot.total_frames = snapshot.total_frames.checked_add(1).unwrap();
 
     // Build the next instruction for the automation.
-    let next_instruction = if worker.total_delegations.gt(&0) {
+    let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(zeroth_delegation_pubkey, false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new(zeroth_snapshot_entry_pubkey, false),
-                AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new_readonly(system_program.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(worker.key(), false),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(zeroth_delegation_pubkey, false),
+                AccountMetaData::mutable(PAYER_PUBKEY, true),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(snapshot.key(), false),
+                AccountMetaData::mutable(zeroth_snapshot_entry_pubkey, false),
+                AccountMetaData::mutable(snapshot_frame.key(), false),
+                AccountMetaData::readonly(system_program.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(worker.key(), false),
             ],
             data: anchor_sighash("take_snapshot_create_entry").to_vec(),
         })
@@ -121,15 +121,15 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<AutomationRespon
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(system_program.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(next_worker_pubkey, false),
-                AccountMetaData::new_readonly(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::mutable(PAYER_PUBKEY, true),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(snapshot.key(), false),
+                AccountMetaData::mutable(next_snapshot_frame_pubkey, false),
+                AccountMetaData::readonly(system_program.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(next_worker_pubkey, false),
+                AccountMetaData::readonly(
                     get_associated_token_address(&next_worker_pubkey, &config.mint),
                     false,
                 ),
@@ -141,7 +141,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<AutomationRespon
     };
 
     Ok(AutomationResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

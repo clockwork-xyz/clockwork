@@ -27,18 +27,18 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        next_instruction: Some(InstructionData {
+        dynamic_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::mutable(PAYER_PUBKEY, true),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(
                     Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
                     false,
                 ),
-                AccountMetaData::new_readonly(system_program::ID, false),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::readonly(system_program::ID, false),
+                AccountMetaData::readonly(automation.key(), true),
             ],
             data: anchor_sighash("take_snapshot_create_snapshot").to_vec(),
         }),

@@ -33,18 +33,18 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<AutomationResponse> {
 
     // Return next instruction for automation.
     Ok(AutomationResponse {
-        next_instruction: Some(InstructionData {
+        dynamic_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(unstake.authority, false),
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(unstake.delegation, false),
-                AccountMetaData::new(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(anchor_spl::token::ID, false),
-                AccountMetaData::new(unstake.key(), false),
-                AccountMetaData::new_readonly(unstake.worker, false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(unstake.authority, false),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::mutable(unstake.delegation, false),
+                AccountMetaData::mutable(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(anchor_spl::token::ID, false),
+                AccountMetaData::mutable(unstake.key(), false),
+                AccountMetaData::readonly(unstake.worker, false),
+                AccountMetaData::mutable(
                     get_associated_token_address(&unstake.worker, &config.mint),
                     false,
                 ),

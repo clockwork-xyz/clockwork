@@ -27,16 +27,16 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &mut ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        next_instruction: Some(InstructionData {
+        dynamic_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(
                     Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
                     false,
                 ),
-                AccountMetaData::new(automation.key(), true),
+                AccountMetaData::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_snapshot").to_vec(),
         }),

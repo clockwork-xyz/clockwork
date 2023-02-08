@@ -50,7 +50,7 @@ pub mod automation_program {
         automation_delete::handler(ctx)
     }
 
-    /// Kicks off a automation if its trigger condition is active.
+    /// Kicks off an automation if its trigger condition is active.
     pub fn automation_kickoff(ctx: Context<AutomationKickoff>) -> Result<()> {
         automation_kickoff::handler(ctx)
     }
@@ -70,7 +70,7 @@ pub mod automation_program {
         automation_reset::handler(ctx)
     }
 
-    /// Allows an owner to update the mutable properties of a automation.
+    /// Allows an owner to update the mutable properties of an automation.
     pub fn automation_update(
         ctx: Context<AutomationUpdate>,
         settings: AutomationSettings,
@@ -78,7 +78,7 @@ pub mod automation_program {
         automation_update::handler(ctx, settings)
     }
 
-    /// Allows an owner to withdraw from a automation's lamport balance.
+    /// Allows an owner to withdraw from an automation's lamport balance.
     pub fn automation_withdraw(ctx: Context<AutomationWithdraw>, amount: u64) -> Result<()> {
         automation_withdraw::handler(ctx, amount)
     }

@@ -97,6 +97,20 @@ pub fn handler(ctx: Context<AutomationKickoff>) -> Result<()> {
                 }
             }
         }
+        Trigger::Active => {
+            // Set the exec context.
+            require!(
+                automation.exec_context.is_none(),
+                ClockworkError::InvalidAutomationState
+            );
+            automation.exec_context = Some(ExecContext {
+                exec_index: 0,
+                execs_since_reimbursement: 0,
+                execs_since_slot: 0,
+                last_exec_at: clock.slot,
+                trigger_context: TriggerContext::Active,
+            });
+        }
         Trigger::Cron {
             schedule,
             skippable,
@@ -133,20 +147,6 @@ pub fn handler(ctx: Context<AutomationKickoff>) -> Result<()> {
                 execs_since_slot: 0,
                 last_exec_at: clock.slot,
                 trigger_context: TriggerContext::Cron { started_at },
-            });
-        }
-        Trigger::Immediate => {
-            // Set the exec context.
-            require!(
-                automation.exec_context.is_none(),
-                ClockworkError::InvalidAutomationState
-            );
-            automation.exec_context = Some(ExecContext {
-                exec_index: 0,
-                execs_since_reimbursement: 0,
-                execs_since_slot: 0,
-                last_exec_at: clock.slot,
-                trigger_context: TriggerContext::Immediate,
             });
         }
     }

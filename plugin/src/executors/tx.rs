@@ -38,10 +38,10 @@ use super::AccountGet;
 /// Number of slots to wait before checking for a confirmed transaction.
 static TRANSACTION_CONFIRMATION_PERIOD: u64 = 10;
 
-/// Number of slots to wait before trying to execute a automation while not in the pool.
+/// Number of slots to wait before trying to execute an automation while not in the pool.
 static AUTOMATION_TIMEOUT_WINDOW: u64 = 8;
 
-/// Number of times to retry a automation simulation.
+/// Number of times to retry an automation simulation.
 static MAX_AUTOMATION_SIMULATION_FAILURES: u32 = 5;
 
 /// The constant of the exponential backoff function.

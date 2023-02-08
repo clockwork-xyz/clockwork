@@ -32,23 +32,23 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
     let worker = &ctx.accounts.worker;
 
     // Build the next instruction for the automation.
-    let next_instruction = if worker.total_delegations.gt(&0) {
+    let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(delegation_pubkey, false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::mutable(delegation_pubkey, false),
+                AccountMetaData::mutable(
                     get_associated_token_address(&delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(anchor_spl::token::ID, false),
-                AccountMetaData::new_readonly(worker.key(), false),
-                AccountMetaData::new(
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(anchor_spl::token::ID, false),
+                AccountMetaData::readonly(worker.key(), false),
+                AccountMetaData::mutable(
                     get_associated_token_address(&worker.key(), &config.mint),
                     false,
                 ),
@@ -65,10 +65,10 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::readonly(automation.key(), true),
+                AccountMetaData::readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
                 ),
@@ -80,7 +80,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
     };
 
     Ok(AutomationResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

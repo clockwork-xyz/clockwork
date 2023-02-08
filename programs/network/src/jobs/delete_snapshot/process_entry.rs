@@ -95,17 +95,17 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
     }
 
     // Build the next instruction
-    let next_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
+    let dynamic_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
         // Move on to the next entry.
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new(automation.key(), true),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(snapshot.key(), false),
+                AccountMetaData::mutable(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
+                AccountMetaData::mutable(snapshot_frame.key(), false),
+                AccountMetaData::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
@@ -114,11 +114,11 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
         Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(automation.key(), true),
+                AccountMetaData::readonly(config.key(), false),
+                AccountMetaData::readonly(registry.key(), false),
+                AccountMetaData::mutable(snapshot.key(), false),
+                AccountMetaData::mutable(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
+                AccountMetaData::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })
@@ -127,5 +127,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
         None
     };
 
-    Ok( AutomationResponse { next_instruction, trigger: None } )
+    Ok( AutomationResponse { dynamic_instruction, trigger: None } )
 }

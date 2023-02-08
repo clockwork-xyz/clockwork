@@ -52,22 +52,22 @@ pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<AutomationRes
     snapshot.init(registry.current_epoch.checked_add(1).unwrap())?;
 
     Ok(AutomationResponse {
-        next_instruction: if registry.total_workers.gt(&0) {
+        dynamic_instruction: if registry.total_workers.gt(&0) {
             // The registry has workers. Create a snapshot frame for the zeroth worker.
             let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
             let worker_pubkey = Worker::pubkey(0);
             Some(InstructionData {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new(PAYER_PUBKEY, true),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new(snapshot.key(), false),
-                    AccountMetaData::new(snapshot_frame_pubkey, false),
-                    AccountMetaData::new_readonly(system_program.key(), false),
-                    AccountMetaData::new_readonly(automation.key(), true),
-                    AccountMetaData::new_readonly(worker_pubkey, false),
-                    AccountMetaData::new_readonly(
+                    AccountMetaData::readonly(config.key(), false),
+                    AccountMetaData::mutable(PAYER_PUBKEY, true),
+                    AccountMetaData::readonly(registry.key(), false),
+                    AccountMetaData::mutable(snapshot.key(), false),
+                    AccountMetaData::mutable(snapshot_frame_pubkey, false),
+                    AccountMetaData::readonly(system_program.key(), false),
+                    AccountMetaData::readonly(automation.key(), true),
+                    AccountMetaData::readonly(worker_pubkey, false),
+                    AccountMetaData::readonly(
                         get_associated_token_address(&worker_pubkey, &config.mint),
                         false,
                     ),
