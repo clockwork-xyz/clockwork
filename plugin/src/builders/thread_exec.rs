@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
+use anchor_lang::{AnchorDeserialize, InstructionData};
+use chain_drive::{instructions::summon::DataToBeSummoned, ID as SHADOW_PORTAL_ID};
 use clockwork_client::{
     network::state::Worker,
     thread::state::{Thread, Trigger},
 };
 use clockwork_utils::automation::PAYER_PUBKEY;
 use log::info;
+use sha2::{Digest, Sha256};
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
@@ -44,7 +47,7 @@ pub async fn build_thread_exec_tx(
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction.is_some() {
-        build_exec_ix(thread, signatory_pubkey, worker_id)
+        build_exec_ix(thread, signatory_pubkey, worker_id, Arc::clone(&client)).await
     } else {
         build_kickoff_ix(thread, signatory_pubkey, worker_id)
     };
@@ -118,11 +121,15 @@ pub async fn build_thread_exec_tx(
                                     if let Some(exec_context) = sim_thread.exec_context {
                                         if exec_context.execs_since_slot.lt(&sim_thread.rate_limit)
                                         {
-                                            ixs.push(build_exec_ix(
-                                                sim_thread,
-                                                signatory_pubkey,
-                                                worker_id,
-                                            ));
+                                            ixs.push(
+                                                build_exec_ix(
+                                                    sim_thread,
+                                                    signatory_pubkey,
+                                                    worker_id,
+                                                    Arc::clone(&client),
+                                                )
+                                                .await,
+                                            );
                                         } else {
                                             // Exit early if the thread has reached its rate limit.
                                             break;
@@ -196,7 +203,12 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
     kickoff_ix
 }
 
-fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
+async fn build_exec_ix(
+    thread: Thread,
+    signatory_pubkey: Pubkey,
+    worker_id: u64,
+    client: Arc<RpcClient>,
+) -> Instruction {
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
@@ -205,7 +217,7 @@ fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> In
         Worker::pubkey(worker_id),
     );
 
-    if let Some(next_instruction) = thread.next_instruction {
+    if let Some(mut next_instruction) = thread.next_instruction {
         // Inject the target program account.
         exec_ix.accounts.push(AccountMeta::new_readonly(
             next_instruction.program_id,
@@ -213,7 +225,7 @@ fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> In
         ));
 
         // Inject the worker pubkey as the dynamic "payer" account.
-        for acc in next_instruction.clone().accounts {
+        for acc in &next_instruction.accounts {
             let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
                 signatory_pubkey
             } else {
@@ -224,7 +236,44 @@ fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> In
                 false => AccountMeta::new_readonly(acc_pubkey, false),
             })
         }
+
+        // If using a shadow portal, append appropriate data
+        if next_instruction.program_id.eq(&SHADOW_PORTAL_ID) {
+            match &next_instruction.data[..] {
+                _data if _data == *UPLOAD_DATA_DISCRIMINATOR => {
+                    // First, determine what data to upload
+                    if let Ok(account_data) = client
+                        .get_account_data(&next_instruction.accounts[1].pubkey)
+                        .await
+                    {
+                        if let Ok(metadata) = DataToBeSummoned::try_from_slice(&account_data) {
+                            if let Ok(response) = reqwest::get(metadata.get_source()).await {
+                                if let Ok(data) = response.bytes().await {
+                                    // Check if hash is right
+                                    let mut hasher = Sha256::new();
+                                    hasher.update(&data);
+                                    if (*hasher.finalize()).eq(&metadata.hash) {
+                                        next_instruction.data.append(&mut data.to_vec());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _data if _data == *DELETE_DATA_DISCRIMINATOR => {
+                    // do nothing
+                }
+
+                _ => {}
+            }
+        }
     }
 
     exec_ix
+}
+
+lazy_static::lazy_static! {
+    static ref UPLOAD_DATA_DISCRIMINATOR: Vec<u8> = chain_drive::instruction::Upload { data: vec![] }.data();
+    static ref DELETE_DATA_DISCRIMINATOR: Vec<u8> = chain_drive::instruction::Delete {}.data();
 }

@@ -43,6 +43,11 @@ solana-transaction-status = "~1.14.12"
 thiserror = "1.0.30"
 tokio = "~1.14.1"
 futures = "0.3.26"
+sha2 = "0.10.6"
+
+
+[dependencies.chain-drive]
+git = "https://github.com/GenesysGo/shadow-drive-clockwork.git"
 
 [build-dependencies]
 cargo_toml = "0.13.0"
