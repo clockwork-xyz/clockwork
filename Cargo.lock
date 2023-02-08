@@ -852,6 +852,7 @@ dependencies = [
 name = "clockwork-macros"
 version = "1.4.0"
 dependencies = [
+ "anchor-syn",
  "proc-macro2 1.0.46",
  "quote 1.0.21",
  "syn 1.0.102",

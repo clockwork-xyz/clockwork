@@ -4,13 +4,12 @@ pub use clockwork_automation_program::ID;
 
 pub mod state {
     pub use clockwork_automation_program::state::{
-        AccountBuilder, Automation, AutomationAccount, AutomationResponse, AutomationSettings,
+        Acc, Automation, AutomationAccount, AutomationResponse, AutomationSettings,
         ClockData, ExecContext, Ix, Trigger, TriggerContext,
     };
 }
 
 pub mod utils {
-    pub use clockwork_automation_program::state::anchor_sighash;
     pub use clockwork_automation_program::state::PAYER_PUBKEY;
 }
 

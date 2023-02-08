@@ -1,10 +1,8 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct StakeDelegationsProcessWorker<'info> {
@@ -38,22 +36,22 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::mutable(delegation_pubkey, false),
-                AccountBuilder::mutable(
+                Acc::readonly(config.key(), false),
+                Acc::mutable(delegation_pubkey, false),
+                Acc::mutable(
                     get_associated_token_address(&delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(anchor_spl::token::ID, false),
-                AccountBuilder::readonly(worker.key(), false),
-                AccountBuilder::mutable(
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(anchor_spl::token::ID, false),
+                Acc::readonly(worker.key(), false),
+                Acc::mutable(
                     get_associated_token_address(&worker.key(), &config.mint),
                     false,
                 ),
             ],
-            data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
+            data: instruction::StakeDelegationsProcessDelegation {}.data(),
         })
     } else if worker
         .id
@@ -65,15 +63,12 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(
-                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
-                    false,
-                ),
+                Acc::readonly(config.key(), false),
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(Worker::pubkey(worker.id.checked_add(1).unwrap()), false),
             ],
-            data: anchor_sighash("stake_delegations_process_worker").to_vec(),
+            data: instruction::StakeDelegationsProcessWorker {}.data(),
         })
     } else {
         None

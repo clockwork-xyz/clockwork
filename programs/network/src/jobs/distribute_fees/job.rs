@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{AutomationResponse, InstructionBuilder};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct DistributeFeesJob<'info> {
@@ -32,16 +30,15 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
 
     // Process the snapshot.
     Ok(AutomationResponse {
-        dynamic_instruction: Some(Ix {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(Snapshot::pubkey(registry.current_epoch), false),
-                AccountBuilder::readonly(automation.key(), true),
-            ],
-            data: anchor_sighash("distribute_fees_process_snapshot").to_vec(),
-        }),
+        dynamic_instruction: Some(
+            InstructionBuilder::new(crate::ID)
+                .readonly_account(config.key())
+                .readonly_account(registry.key())
+                .readonly_account(Snapshot::pubkey(registry.current_epoch))
+                .signer(automation.key())
+                .data(instruction::DistributeFeesProcessSnapshot {}.data())
+                .build(),
+        ),
         trigger: None,
     })
 }

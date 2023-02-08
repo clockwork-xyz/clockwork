@@ -10,6 +10,7 @@ mod instructions;
 mod jobs;
 
 use anchor_lang::prelude::*;
+use clockwork_macros::clockwork;
 use clockwork_utils::automation::*;
 use instructions::*;
 use jobs::*;
@@ -17,9 +18,10 @@ use state::*;
 
 declare_id!("F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa");
 
+// #[clockwork]
 #[program]
 pub mod network_program {
-    use super::*;
+    pub use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {
         config_update::handler(ctx, settings)

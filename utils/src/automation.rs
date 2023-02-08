@@ -12,17 +12,6 @@ use static_pubkey::static_pubkey;
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
 
-/// The sighash of a named instruction in an Anchor program.
-pub fn anchor_sighash(name: &str) -> [u8; 8] {
-    let namespace = "global";
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8],
-    );
-    sighash
-}
-
 /// The clock object, representing a specific moment in time recorded by a Solana cluster.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
 pub struct ClockData {
@@ -85,7 +74,7 @@ pub enum Trigger {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct AutomationResponse {
     /// A dynamic instruction to execute next.
-    pub dynamic_instruction: Option<Ix>,
+    pub dynamic_instruction: Option<InstructionBuilder>,
     /// Value to update the automation trigger to.
     pub trigger: Option<Trigger>,
 }
@@ -101,23 +90,23 @@ impl Default for AutomationResponse {
 
 /// The data needed execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct Ix {
+pub struct SerializableInstruction {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
     /// Metadata for what accounts should be passed to the instruction processor
-    pub accounts: Vec<AccountBuilder>,
+    pub accounts: Vec<SerializableAccount>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
 }
 
-impl From<Instruction> for Ix {
+impl From<Instruction> for SerializableInstruction {
     fn from(instruction: Instruction) -> Self {
-        Ix {
+        SerializableInstruction {
             program_id: instruction.program_id,
             accounts: instruction
                 .accounts
                 .iter()
-                .map(|a| AccountBuilder {
+                .map(|a| SerializableAccount {
                     pubkey: a.pubkey,
                     is_signer: a.is_signer,
                     is_writable: a.is_writable,
@@ -128,8 +117,8 @@ impl From<Instruction> for Ix {
     }
 }
 
-impl From<&Ix> for Instruction {
-    fn from(instruction: &Ix) -> Self {
+impl From<&SerializableInstruction> for Instruction {
+    fn from(instruction: &SerializableInstruction) -> Self {
         Instruction {
             program_id: instruction.program_id,
             accounts: instruction
@@ -146,11 +135,11 @@ impl From<&Ix> for Instruction {
     }
 }
 
-impl TryFrom<Vec<u8>> for Ix {
+impl TryFrom<Vec<u8>> for SerializableInstruction {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Ok(
-            borsh::try_from_slice_with_schema::<Ix>(data.as_slice())
+            borsh::try_from_slice_with_schema::<SerializableInstruction>(data.as_slice())
                 .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
         )
     }
@@ -158,7 +147,7 @@ impl TryFrom<Vec<u8>> for Ix {
 
 /// Account metadata needed to execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct AccountBuilder {
+pub struct SerializableAccount {
     /// An account's public key
     pub pubkey: Pubkey,
     /// True if an Instruction requires a Transaction signature matching `pubkey`.
@@ -167,7 +156,7 @@ pub struct AccountBuilder {
     pub is_writable: bool,
 }
 
-impl AccountBuilder {
+impl SerializableAccount {
     /// Construct metadata for a writable account.
     pub fn mutable(pubkey: Pubkey, signer: bool) -> Self {
         Self {
@@ -184,5 +173,58 @@ impl AccountBuilder {
             is_signer: signer,
             is_writable: false,
         }
+    }
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+pub struct InstructionBuilder {
+    program_id: Pubkey,
+    accounts: Vec<SerializableAccount>,
+    data: Vec<u8>,
+}
+
+impl InstructionBuilder {
+    pub fn new(program_id: Pubkey) -> Self {
+        InstructionBuilder {
+            program_id,
+            accounts: vec![],
+            data: vec![],
+        }
+    }
+
+    pub fn signer(&mut self, pubkey: Pubkey) -> &mut Self {
+        self.accounts.push(SerializableAccount {
+            pubkey,
+            is_signer: true,
+            is_writable: true,
+        });
+        self
+    }
+
+    pub fn readonly_account(&mut self, pubkey: Pubkey) -> &mut Self {
+        self.accounts.push(SerializableAccount {
+            pubkey,
+            is_signer: false,
+            is_writable: false,
+        });
+        self
+    }
+
+    pub fn mutable_account(&mut self, pubkey: Pubkey) -> &mut Self {
+        self.accounts.push(SerializableAccount {
+            pubkey,
+            is_signer: false,
+            is_writable: true,
+        });
+        self
+    }
+
+    pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
+        self.data = data;
+        self
+    }
+
+    pub fn build(&mut self) -> Self {
+        self.clone()
     }
 }

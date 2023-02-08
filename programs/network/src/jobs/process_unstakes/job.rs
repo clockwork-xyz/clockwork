@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct ProcessUnstakesJob<'info> {
@@ -32,12 +30,12 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
             Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountBuilder::readonly(config.key(), false),
-                    AccountBuilder::readonly(registry.key(), false),
-                    AccountBuilder::readonly(automation.key(), true),
-                    AccountBuilder::readonly(Unstake::pubkey(0), false),
+                    Acc::readonly(config.key(), false),
+                    Acc::readonly(registry.key(), false),
+                    Acc::readonly(automation.key(), true),
+                    Acc::readonly(Unstake::pubkey(0), false),
                 ],
-                data: anchor_sighash("unstake_preprocess").to_vec(),
+                data: instruction::UnstakePreprocess {}.data(),
             })
         } else {
             None

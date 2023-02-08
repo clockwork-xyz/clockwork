@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse, PAYER_PUBKEY,
-};
+use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix, PAYER_PUBKEY};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct TakeSnapshotJob<'info> {
@@ -30,17 +28,17 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
         dynamic_instruction: Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::mutable(PAYER_PUBKEY, true),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::mutable(
+                Acc::readonly(config.key(), false),
+                Acc::mutable(PAYER_PUBKEY, true),
+                Acc::readonly(registry.key(), false),
+                Acc::mutable(
                     Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
                     false,
                 ),
-                AccountBuilder::readonly(system_program::ID, false),
-                AccountBuilder::readonly(automation.key(), true),
+                Acc::readonly(system_program::ID, false),
+                Acc::readonly(automation.key(), true),
             ],
-            data: anchor_sighash("take_snapshot_create_snapshot").to_vec(),
+            data: instruction::TakeSnapshotCreateSnapshot {}.data(),
         }),
         trigger: None,
     })

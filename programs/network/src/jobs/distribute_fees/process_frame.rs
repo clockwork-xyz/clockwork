@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct DistributeFeesProcessFrame<'info> {
@@ -96,17 +94,17 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::mutable(delegation_pubkey, false),
-                AccountBuilder::mutable(fee.key(), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(snapshot.key(), false),
-                AccountBuilder::readonly(snapshot_entry_pubkey.key(), false),
-                AccountBuilder::readonly(snapshot_frame.key(), false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(worker.key(), false),
+                Acc::readonly(config.key(), false),
+                Acc::mutable(delegation_pubkey, false),
+                Acc::mutable(fee.key(), false),
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(snapshot.key(), false),
+                Acc::readonly(snapshot_entry_pubkey.key(), false),
+                Acc::readonly(snapshot_frame.key(), false),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(worker.key(), false),
             ],
-            data: anchor_sighash("distribute_fees_process_entry").to_vec(),
+            data: instruction::DistributeFeesProcessEntry {}.data(),
         })
     } else if snapshot_frame
         .id
@@ -121,15 +119,15 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::mutable(Fee::pubkey(next_worker_pubkey), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(snapshot.key(), false),
-                AccountBuilder::readonly(next_snapshot_frame_pubkey, false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::mutable(next_worker_pubkey, false),
+                Acc::readonly(config.key(), false),
+                Acc::mutable(Fee::pubkey(next_worker_pubkey), false),
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(snapshot.key(), false),
+                Acc::readonly(next_snapshot_frame_pubkey, false),
+                Acc::readonly(automation.key(), true),
+                Acc::mutable(next_worker_pubkey, false),
             ],
-            data: anchor_sighash("distribute_fees_process_frame").to_vec(),
+            data: instruction::DistributeFeesProcessFrame {}.data(),
         })
     } else {
         None

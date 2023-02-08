@@ -1,10 +1,7 @@
-use {
-    crate::state::*,
-    anchor_lang::prelude::*,
-    clockwork_utils::automation::{
-        anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-    },
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{AutomationResponse, InstructionBuilder};
+
+use crate::{network_program::instruction, state::*};
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotJob<'info> {
@@ -27,19 +24,17 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &mut ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        dynamic_instruction: Some(Ix {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::mutable(
-                    Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
-                    false,
-                ),
-                AccountBuilder::mutable(automation.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_snapshot").to_vec(),
-        }),
+        dynamic_instruction: Some(
+            InstructionBuilder::new(crate::ID)
+                .readonly_account(config.key())
+                .readonly_account(registry.key())
+                .readonly_account(Snapshot::pubkey(
+                    registry.current_epoch.checked_sub(1).unwrap(),
+                ))
+                .signer(automation.key())
+                .data(instruction::DeleteSnapshotProcessSnapshot {}.data())
+                .build(),
+        ),
         trigger: None,
     })
 }

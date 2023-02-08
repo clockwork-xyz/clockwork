@@ -1,11 +1,10 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse, PAYER_PUBKEY,
-};
 use std::mem::size_of;
 
-use crate::state::*;
+use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
+use anchor_spl::associated_token::get_associated_token_address;
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix, PAYER_PUBKEY};
+
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct TakeSnapshotCreateEntry<'info> {
@@ -108,18 +107,18 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::readonly(next_delegation_pubkey, false),
-                AccountBuilder::mutable(PAYER_PUBKEY, true),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(snapshot.key(), false),
-                AccountBuilder::mutable(next_snapshot_entry_pubkey, false),
-                AccountBuilder::mutable(snapshot_frame.key(), false),
-                AccountBuilder::readonly(system_program.key(), false),
-                AccountBuilder::readonly(worker.key(), false),
+                Acc::readonly(config.key(), false),
+                Acc::readonly(next_delegation_pubkey, false),
+                Acc::mutable(PAYER_PUBKEY, true),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(snapshot.key(), false),
+                Acc::mutable(next_snapshot_entry_pubkey, false),
+                Acc::mutable(snapshot_frame.key(), false),
+                Acc::readonly(system_program.key(), false),
+                Acc::readonly(worker.key(), false),
             ],
-            data: anchor_sighash("take_snapshot_create_entry").to_vec(),
+            data: instruction::TakeSnapshotCreateEntry {}.data(),
         })
     } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This frame has captured all its entries. Create a frame for the next worker.
@@ -129,20 +128,20 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::mutable(PAYER_PUBKEY, true),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::mutable(snapshot.key(), false),
-                AccountBuilder::mutable(next_snapshot_frame_pubkey, false),
-                AccountBuilder::readonly(system_program.key(), false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(next_worker_pubkey, false),
-                AccountBuilder::readonly(
+                Acc::readonly(config.key(), false),
+                Acc::mutable(PAYER_PUBKEY, true),
+                Acc::readonly(registry.key(), false),
+                Acc::mutable(snapshot.key(), false),
+                Acc::mutable(next_snapshot_frame_pubkey, false),
+                Acc::readonly(system_program.key(), false),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(next_worker_pubkey, false),
+                Acc::readonly(
                     get_associated_token_address(&next_worker_pubkey, &config.mint),
                     false,
                 ),
             ],
-            data: anchor_sighash("take_snapshot_create_frame").to_vec(),
+            data: instruction::TakeSnapshotCreateFrame {}.data(),
         })
     } else {
         None

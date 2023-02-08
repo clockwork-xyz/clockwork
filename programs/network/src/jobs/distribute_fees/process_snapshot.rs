@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 // DONE Payout yield.
 //      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
@@ -52,15 +50,15 @@ pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<Automation
             Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountBuilder::readonly(config.key(), false),
-                    AccountBuilder::mutable(Fee::pubkey(Worker::pubkey(0)), false),
-                    AccountBuilder::readonly(registry.key(), false),
-                    AccountBuilder::readonly(snapshot.key(), false),
-                    AccountBuilder::readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                    AccountBuilder::readonly(automation.key(), true),
-                    AccountBuilder::mutable(Worker::pubkey(0), false),
+                    Acc::readonly(config.key(), false),
+                    Acc::mutable(Fee::pubkey(Worker::pubkey(0)), false),
+                    Acc::readonly(registry.key(), false),
+                    Acc::readonly(snapshot.key(), false),
+                    Acc::readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                    Acc::readonly(automation.key(), true),
+                    Acc::mutable(Worker::pubkey(0), false),
                 ],
-                data: anchor_sighash("distribute_fees_process_frame").to_vec(),
+                data: instruction::DistributeFeesProcessFrame {}.data(),
             })
         } else {
             None

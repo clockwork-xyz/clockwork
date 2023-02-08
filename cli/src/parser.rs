@@ -1,7 +1,7 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
 use clockwork_client::{
-    automation::state::{AccountBuilder, Ix, Trigger},
+    automation::state::{Acc, Ix, Trigger},
     webhook::state::HttpMethod,
 };
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
@@ -342,8 +342,8 @@ impl TryFrom<&JsonInstructionData> for Ix {
             accounts: value
                 .accounts
                 .iter()
-                .map(|acc| AccountBuilder::try_from(acc).unwrap())
-                .collect::<Vec<AccountBuilder>>(),
+                .map(|acc| Acc::try_from(acc).unwrap())
+                .collect::<Vec<Acc>>(),
             data: value.data.clone(),
         })
     }
@@ -364,11 +364,11 @@ pub struct JsonAccountMetaData {
     pub is_writable: bool,
 }
 
-impl TryFrom<&JsonAccountMetaData> for AccountBuilder {
+impl TryFrom<&JsonAccountMetaData> for Acc {
     type Error = CliError;
 
     fn try_from(value: &JsonAccountMetaData) -> Result<Self, Self::Error> {
-        Ok(AccountBuilder {
+        Ok(Acc {
             pubkey: Pubkey::from_str(value.pubkey.as_str())
                 .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             is_signer: value.is_signer,

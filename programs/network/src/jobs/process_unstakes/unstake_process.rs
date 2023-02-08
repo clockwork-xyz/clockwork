@@ -1,10 +1,8 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::{errors::*, state::*};
+use crate::{errors::*, instruction, state::*};
 
 #[derive(Accounts)]
 pub struct UnstakeProcess<'info> {
@@ -140,12 +138,12 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountBuilder::readonly(config.key(), false),
-                AccountBuilder::readonly(registry.key(), false),
-                AccountBuilder::readonly(automation.key(), true),
-                AccountBuilder::readonly(next_unstake_pubkey, false),
+                Acc::readonly(config.key(), false),
+                Acc::readonly(registry.key(), false),
+                Acc::readonly(automation.key(), true),
+                Acc::readonly(next_unstake_pubkey, false),
             ],
-            data: anchor_sighash("unstake_preprocess").to_vec(),
+            data: instruction::UnstakePreprocess {}.data(),
         })
     } else {
         None

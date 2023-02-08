@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
-};
+use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
 
-use crate::state::*;
+use crate::{instruction, state::*};
 
 #[derive(Accounts)]
 pub struct StakeDelegationsJob<'info> {
@@ -30,12 +28,12 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> 
             Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountBuilder::readonly(config.key(), false),
-                    AccountBuilder::readonly(registry.key(), false),
-                    AccountBuilder::readonly(automation.key(), true),
-                    AccountBuilder::readonly(Worker::pubkey(0), false),
+                    Acc::readonly(config.key(), false),
+                    Acc::readonly(registry.key(), false),
+                    Acc::readonly(automation.key(), true),
+                    Acc::readonly(Worker::pubkey(0), false),
                 ],
-                data: anchor_sighash("stake_delegations_process_worker").to_vec(),
+                data: instruction::StakeDelegationsProcessWorker.data(),
             })
         } else {
             None
