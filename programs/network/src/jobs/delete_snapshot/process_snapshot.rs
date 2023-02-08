@@ -1,4 +1,4 @@
-use clockwork_utils::automation::{anchor_sighash, AccountMetaData, InstructionData, AutomationResponse};
+use clockwork_utils::automation::{anchor_sighash, AccountBuilder, Ix, AutomationResponse};
 
 use {crate::state::*, anchor_lang::prelude::*};
 
@@ -52,14 +52,14 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<Automation
     // Build next instruction the automation.
     let dynamic_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(SnapshotFrame::pubkey(snapshot.key(), 0), false),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })

@@ -11,7 +11,7 @@ mod instructions;
 
 use anchor_lang::prelude::*;
 use clockwork_utils::{
-    automation::{InstructionData, Trigger},
+    automation::{Ix, Trigger},
     CrateInfo,
 };
 use instructions::*;
@@ -39,7 +39,7 @@ pub mod automation_program {
         ctx: Context<AutomationCreate>,
         amount: u64,
         id: Vec<u8>,
-        instructions: Vec<InstructionData>,
+        instructions: Vec<Ix>,
         trigger: Trigger,
     ) -> Result<()> {
         automation_create::handler(ctx, amount, id, instructions, trigger)

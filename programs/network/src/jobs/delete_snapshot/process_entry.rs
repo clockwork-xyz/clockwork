@@ -1,4 +1,4 @@
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, AutomationResponse}};
+use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::automation::{Ix, AccountBuilder, anchor_sighash, AutomationResponse}};
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessEntry<'info> {
@@ -97,28 +97,28 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
     // Build the next instruction
     let dynamic_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
         // Move on to the next entry.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
-                AccountMetaData::mutable(snapshot_frame.key(), false),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
+                AccountBuilder::mutable(snapshot_frame.key(), false),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // This frame has no more entries. Move onto the next frame.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })

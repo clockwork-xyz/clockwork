@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::{errors::*, state::*};
@@ -137,13 +137,13 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         .lt(&registry.total_unstakes)
     {
         let next_unstake_pubkey = Unstake::pubkey(unstake.id.checked_add(1).unwrap());
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(next_unstake_pubkey, false),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(next_unstake_pubkey, false),
             ],
             data: anchor_sighash("unstake_preprocess").to_vec(),
         })

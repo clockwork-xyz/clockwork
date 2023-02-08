@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -29,13 +29,13 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
     // Return next instruction for automation.
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_unstakes.gt(&0) {
-            Some(InstructionData {
+            Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountMetaData::readonly(config.key(), false),
-                    AccountMetaData::readonly(registry.key(), false),
-                    AccountMetaData::readonly(automation.key(), true),
-                    AccountMetaData::readonly(Unstake::pubkey(0), false),
+                    AccountBuilder::readonly(config.key(), false),
+                    AccountBuilder::readonly(registry.key(), false),
+                    AccountBuilder::readonly(automation.key(), true),
+                    AccountBuilder::readonly(Unstake::pubkey(0), false),
                 ],
                 data: anchor_sighash("unstake_preprocess").to_vec(),
             })

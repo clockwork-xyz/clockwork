@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -93,18 +93,18 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         let snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(delegation_pubkey, false),
-                AccountMetaData::mutable(fee.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(snapshot.key(), false),
-                AccountMetaData::readonly(snapshot_entry_pubkey.key(), false),
-                AccountMetaData::readonly(snapshot_frame.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(worker.key(), false),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(delegation_pubkey, false),
+                AccountBuilder::mutable(fee.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(snapshot.key(), false),
+                AccountBuilder::readonly(snapshot_entry_pubkey.key(), false),
+                AccountBuilder::readonly(snapshot_frame.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(worker.key(), false),
             ],
             data: anchor_sighash("distribute_fees_process_entry").to_vec(),
         })
@@ -118,16 +118,16 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(Fee::pubkey(next_worker_pubkey), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(snapshot.key(), false),
-                AccountMetaData::readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::mutable(next_worker_pubkey, false),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(Fee::pubkey(next_worker_pubkey), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(snapshot.key(), false),
+                AccountBuilder::readonly(next_snapshot_frame_pubkey, false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::mutable(next_worker_pubkey, false),
             ],
             data: anchor_sighash("distribute_fees_process_frame").to_vec(),
         })

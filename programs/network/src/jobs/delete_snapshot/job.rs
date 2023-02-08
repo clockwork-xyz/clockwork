@@ -2,7 +2,7 @@ use {
     crate::state::*,
     anchor_lang::prelude::*,
     clockwork_utils::automation::{
-        anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+        anchor_sighash, AccountBuilder, Ix, AutomationResponse,
     },
 };
 
@@ -27,16 +27,16 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &mut ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        dynamic_instruction: Some(InstructionData {
+        dynamic_instruction: Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(
                     Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
                     false,
                 ),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_snapshot").to_vec(),
         }),

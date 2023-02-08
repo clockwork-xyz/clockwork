@@ -85,7 +85,7 @@ pub enum Trigger {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct AutomationResponse {
     /// A dynamic instruction to execute next.
-    pub dynamic_instruction: Option<InstructionData>,
+    pub dynamic_instruction: Option<Ix>,
     /// Value to update the automation trigger to.
     pub trigger: Option<Trigger>,
 }
@@ -101,23 +101,23 @@ impl Default for AutomationResponse {
 
 /// The data needed execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct InstructionData {
+pub struct Ix {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
     /// Metadata for what accounts should be passed to the instruction processor
-    pub accounts: Vec<AccountMetaData>,
+    pub accounts: Vec<AccountBuilder>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
 }
 
-impl From<Instruction> for InstructionData {
+impl From<Instruction> for Ix {
     fn from(instruction: Instruction) -> Self {
-        InstructionData {
+        Ix {
             program_id: instruction.program_id,
             accounts: instruction
                 .accounts
                 .iter()
-                .map(|a| AccountMetaData {
+                .map(|a| AccountBuilder {
                     pubkey: a.pubkey,
                     is_signer: a.is_signer,
                     is_writable: a.is_writable,
@@ -128,8 +128,8 @@ impl From<Instruction> for InstructionData {
     }
 }
 
-impl From<&InstructionData> for Instruction {
-    fn from(instruction: &InstructionData) -> Self {
+impl From<&Ix> for Instruction {
+    fn from(instruction: &Ix) -> Self {
         Instruction {
             program_id: instruction.program_id,
             accounts: instruction
@@ -146,11 +146,11 @@ impl From<&InstructionData> for Instruction {
     }
 }
 
-impl TryFrom<Vec<u8>> for InstructionData {
+impl TryFrom<Vec<u8>> for Ix {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Ok(
-            borsh::try_from_slice_with_schema::<InstructionData>(data.as_slice())
+            borsh::try_from_slice_with_schema::<Ix>(data.as_slice())
                 .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
         )
     }
@@ -158,7 +158,7 @@ impl TryFrom<Vec<u8>> for InstructionData {
 
 /// Account metadata needed to execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct AccountMetaData {
+pub struct AccountBuilder {
     /// An account's public key
     pub pubkey: Pubkey,
     /// True if an Instruction requires a Transaction signature matching `pubkey`.
@@ -167,21 +167,21 @@ pub struct AccountMetaData {
     pub is_writable: bool,
 }
 
-impl AccountMetaData {
+impl AccountBuilder {
     /// Construct metadata for a writable account.
-    pub fn mutable(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn mutable(pubkey: Pubkey, signer: bool) -> Self {
         Self {
             pubkey,
-            is_signer,
+            is_signer: signer,
             is_writable: true,
         }
     }
 
     /// Construct metadata for a read-only account.
-    pub fn readonly(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn readonly(pubkey: Pubkey, signer: bool) -> Self {
         Self {
             pubkey,
-            is_signer,
+            is_signer: signer,
             is_writable: false,
         }
     }

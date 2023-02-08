@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
 use anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount};
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse, PAYER_PUBKEY,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse, PAYER_PUBKEY,
 };
 use std::mem::size_of;
 
@@ -97,19 +97,19 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<AutomationRespon
         // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(zeroth_delegation_pubkey, false),
-                AccountMetaData::mutable(PAYER_PUBKEY, true),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(snapshot.key(), false),
-                AccountMetaData::mutable(zeroth_snapshot_entry_pubkey, false),
-                AccountMetaData::mutable(snapshot_frame.key(), false),
-                AccountMetaData::readonly(system_program.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(worker.key(), false),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(zeroth_delegation_pubkey, false),
+                AccountBuilder::mutable(PAYER_PUBKEY, true),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(snapshot.key(), false),
+                AccountBuilder::mutable(zeroth_snapshot_entry_pubkey, false),
+                AccountBuilder::mutable(snapshot_frame.key(), false),
+                AccountBuilder::readonly(system_program.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(worker.key(), false),
             ],
             data: anchor_sighash("take_snapshot_create_entry").to_vec(),
         })
@@ -118,18 +118,18 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<AutomationRespon
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(PAYER_PUBKEY, true),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(next_snapshot_frame_pubkey, false),
-                AccountMetaData::readonly(system_program.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(next_worker_pubkey, false),
-                AccountMetaData::readonly(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(PAYER_PUBKEY, true),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(next_snapshot_frame_pubkey, false),
+                AccountBuilder::readonly(system_program.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(next_worker_pubkey, false),
+                AccountBuilder::readonly(
                     get_associated_token_address(&next_worker_pubkey, &config.mint),
                     false,
                 ),

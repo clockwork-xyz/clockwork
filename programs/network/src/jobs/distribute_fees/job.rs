@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -32,13 +32,13 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
 
     // Process the snapshot.
     Ok(AutomationResponse {
-        dynamic_instruction: Some(InstructionData {
+        dynamic_instruction: Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(Snapshot::pubkey(registry.current_epoch), false),
-                AccountMetaData::readonly(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(Snapshot::pubkey(registry.current_epoch), false),
+                AccountBuilder::readonly(automation.key(), true),
             ],
             data: anchor_sighash("distribute_fees_process_snapshot").to_vec(),
         }),

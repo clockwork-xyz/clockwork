@@ -1,7 +1,7 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        automation::state::{Automation, AutomationSettings, InstructionData, Trigger},
+        automation::state::{Automation, AutomationSettings, Ix, Trigger},
         Client,
     },
     clockwork_utils::CrateInfo,
@@ -18,7 +18,7 @@ pub fn crate_info(client: &Client) -> Result<(), CliError> {
 pub fn create(
     client: &Client,
     id: String,
-    instructions: Vec<InstructionData>,
+    instructions: Vec<Ix>,
     trigger: Trigger,
 ) -> Result<(), CliError> {
     let automation_pubkey = Automation::pubkey(client.payer_pubkey(), id.clone().into_bytes());

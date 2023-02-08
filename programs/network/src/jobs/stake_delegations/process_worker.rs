@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::get_associated_token_address;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -35,20 +35,20 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
     let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(delegation_pubkey, false),
-                AccountMetaData::mutable(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(delegation_pubkey, false),
+                AccountBuilder::mutable(
                     get_associated_token_address(&delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(anchor_spl::token::ID, false),
-                AccountMetaData::readonly(worker.key(), false),
-                AccountMetaData::mutable(
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(anchor_spl::token::ID, false),
+                AccountBuilder::readonly(worker.key(), false),
+                AccountBuilder::mutable(
                     get_associated_token_address(&worker.key(), &config.mint),
                     false,
                 ),
@@ -62,13 +62,13 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
         .lt(&registry.total_workers)
     {
         // This worker has no delegations. Move on to the next worker.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
                 ),

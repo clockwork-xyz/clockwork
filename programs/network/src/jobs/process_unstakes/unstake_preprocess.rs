@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::get_associated_token_address;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -33,18 +33,18 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<AutomationResponse> {
 
     // Return next instruction for automation.
     Ok(AutomationResponse {
-        dynamic_instruction: Some(InstructionData {
+        dynamic_instruction: Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(unstake.authority, false),
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(unstake.delegation, false),
-                AccountMetaData::mutable(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(anchor_spl::token::ID, false),
-                AccountMetaData::mutable(unstake.key(), false),
-                AccountMetaData::readonly(unstake.worker, false),
-                AccountMetaData::mutable(
+                AccountBuilder::readonly(unstake.authority, false),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(unstake.delegation, false),
+                AccountBuilder::mutable(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(anchor_spl::token::ID, false),
+                AccountBuilder::mutable(unstake.key(), false),
+                AccountBuilder::readonly(unstake.worker, false),
+                AccountBuilder::mutable(
                     get_associated_token_address(&unstake.worker, &config.mint),
                     false,
                 ),

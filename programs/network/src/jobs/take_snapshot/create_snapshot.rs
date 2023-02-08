@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
 use anchor_spl::associated_token::get_associated_token_address;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse, PAYER_PUBKEY,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse, PAYER_PUBKEY,
 };
 use std::mem::size_of;
 
@@ -56,18 +56,18 @@ pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<AutomationRes
             // The registry has workers. Create a snapshot frame for the zeroth worker.
             let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
             let worker_pubkey = Worker::pubkey(0);
-            Some(InstructionData {
+            Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountMetaData::readonly(config.key(), false),
-                    AccountMetaData::mutable(PAYER_PUBKEY, true),
-                    AccountMetaData::readonly(registry.key(), false),
-                    AccountMetaData::mutable(snapshot.key(), false),
-                    AccountMetaData::mutable(snapshot_frame_pubkey, false),
-                    AccountMetaData::readonly(system_program.key(), false),
-                    AccountMetaData::readonly(automation.key(), true),
-                    AccountMetaData::readonly(worker_pubkey, false),
-                    AccountMetaData::readonly(
+                    AccountBuilder::readonly(config.key(), false),
+                    AccountBuilder::mutable(PAYER_PUBKEY, true),
+                    AccountBuilder::readonly(registry.key(), false),
+                    AccountBuilder::mutable(snapshot.key(), false),
+                    AccountBuilder::mutable(snapshot_frame_pubkey, false),
+                    AccountBuilder::readonly(system_program.key(), false),
+                    AccountBuilder::readonly(automation.key(), true),
+                    AccountBuilder::readonly(worker_pubkey, false),
+                    AccountBuilder::readonly(
                         get_associated_token_address(&worker_pubkey, &config.mint),
                         false,
                     ),

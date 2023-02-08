@@ -1,7 +1,7 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
 use clockwork_client::{
-    automation::state::{InstructionData, Trigger},
+    automation::state::{Ix, Trigger},
     webhook::state::HttpMethod,
 };
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
@@ -76,7 +76,7 @@ pub enum CliCommand {
     AutomationCrateInfo,
     AutomationCreate {
         id: String,
-        kickoff_instruction: InstructionData,
+        kickoff_instruction: Ix,
         trigger: Trigger,
     },
     AutomationDelete {

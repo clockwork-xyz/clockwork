@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -27,13 +27,13 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> 
 
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_workers.gt(&0) {
-            Some(InstructionData {
+            Some(Ix {
                 program_id: crate::ID,
                 accounts: vec![
-                    AccountMetaData::readonly(config.key(), false),
-                    AccountMetaData::readonly(registry.key(), false),
-                    AccountMetaData::readonly(automation.key(), true),
-                    AccountMetaData::readonly(Worker::pubkey(0), false),
+                    AccountBuilder::readonly(config.key(), false),
+                    AccountBuilder::readonly(registry.key(), false),
+                    AccountBuilder::readonly(automation.key(), true),
+                    AccountBuilder::readonly(Worker::pubkey(0), false),
                 ],
                 data: anchor_sighash("stake_delegations_process_worker").to_vec(),
             })

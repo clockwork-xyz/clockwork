@@ -1,4 +1,4 @@
-use clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, AutomationResponse};
+use clockwork_utils::automation::{Ix, AccountBuilder, anchor_sighash, AutomationResponse};
 
 use {crate::state::*, anchor_lang::prelude::*};
 
@@ -77,28 +77,28 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<AutomationRes
     // Build the next instruction.
     let dynamic_instruction = if snapshot_frame.total_entries.gt(&0) {
         // This frame has entries. Delete the entries.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(SnapshotEntry::pubkey(snapshot_frame.key(), 0), false),
-                AccountMetaData::mutable(snapshot_frame.key(), false),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(SnapshotEntry::pubkey(snapshot_frame.key(), 0), false),
+                AccountBuilder::mutable(snapshot_frame.key(), false),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
         })
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // There are no more entries in this frame. Move on to the next frame.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::mutable(snapshot.key(), false),
-                AccountMetaData::mutable(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::mutable(automation.key(), true),
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::mutable(snapshot.key(), false),
+                AccountBuilder::mutable(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
+                AccountBuilder::mutable(automation.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
         })

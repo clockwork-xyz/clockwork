@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{transfer, Token, TokenAccount, Transfer},
 };
 use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    anchor_sighash, AccountBuilder, Ix, AutomationResponse,
 };
 
 use crate::state::*;
@@ -99,20 +99,20 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         // This worker has more delegations, continue locking their stake.
         let next_delegation_pubkey =
             Delegation::pubkey(worker.key(), delegation.id.checked_add(1).unwrap());
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::mutable(next_delegation_pubkey, false),
-                AccountMetaData::mutable(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::mutable(next_delegation_pubkey, false),
+                AccountBuilder::mutable(
                     get_associated_token_address(&next_delegation_pubkey, &config.mint),
                     false,
                 ),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(token_program.key(), false),
-                AccountMetaData::readonly(worker.key(), false),
-                AccountMetaData::mutable(worker_stake.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(token_program.key(), false),
+                AccountBuilder::readonly(worker.key(), false),
+                AccountBuilder::mutable(worker_stake.key(), false),
             ],
             data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
         })
@@ -123,13 +123,13 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         .lt(&registry.total_workers)
     {
         // This worker has no more delegations, move on to the next worker.
-        Some(InstructionData {
+        Some(Ix {
             program_id: crate::ID,
             accounts: vec![
-                AccountMetaData::readonly(config.key(), false),
-                AccountMetaData::readonly(registry.key(), false),
-                AccountMetaData::readonly(automation.key(), true),
-                AccountMetaData::readonly(
+                AccountBuilder::readonly(config.key(), false),
+                AccountBuilder::readonly(registry.key(), false),
+                AccountBuilder::readonly(automation.key(), true),
+                AccountBuilder::readonly(
                     Worker::pubkey(worker.id.checked_add(1).unwrap()),
                     false,
                 ),

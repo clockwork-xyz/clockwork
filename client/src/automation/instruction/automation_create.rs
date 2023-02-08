@@ -7,14 +7,14 @@ use {
         },
         InstructionData,
     },
-    clockwork_automation_program::state::{InstructionData as ClockworkInstructionData, Trigger},
+    clockwork_automation_program::state::{Ix, Trigger},
 };
 
 pub fn automation_create(
     amount: u64,
     authority: Pubkey,
     id: Vec<u8>,
-    instructions: Vec<ClockworkInstructionData>,
+    instructions: Vec<Ix>,
     payer: Pubkey,
     automation: Pubkey,
     trigger: Trigger,

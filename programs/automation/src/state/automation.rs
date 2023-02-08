@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_macros::TryFromData;
-use clockwork_utils::automation::{ClockData, InstructionData, Trigger};
+use clockwork_utils::automation::{ClockData, Ix, Trigger};
 
 pub const SEED_AUTOMATION: &[u8] = b"automation";
 
@@ -21,11 +21,11 @@ pub struct Automation {
     /// The id of the automation, given by the authority.
     pub id: Vec<u8>,
     /// The instructions to be executed.
-    pub instructions: Vec<InstructionData>,
+    pub instructions: Vec<Ix>,
     /// The name of the automation.
     pub name: String,
     /// The next instruction to be executed.
-    pub next_instruction: Option<InstructionData>,
+    pub next_instruction: Option<Ix>,
     /// Whether or not the automation is currently paused.
     pub paused: bool,
     /// The maximum number of execs allowed per slot.
@@ -117,7 +117,7 @@ pub enum TriggerContext {
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AutomationSettings {
     pub fee: Option<u64>,
-    pub instructions: Option<Vec<InstructionData>>,
+    pub instructions: Option<Vec<Ix>>,
     pub name: Option<String>,
     pub rate_limit: Option<u64>,
     pub trigger: Option<Trigger>,
