@@ -68,7 +68,6 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         // Parse account info.
         dbg!("got account");
-        dbg!(account);
         let account_info = &mut match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,
@@ -89,8 +88,11 @@ impl GeyserPlugin for ClockworkPlugin {
                 write_version: account_info.write_version,
             },
         };
+        dbg!("A");
         let account_pubkey = Pubkey::new(account_info.pubkey);
+        dbg!("B");
         let event = AccountUpdateEvent::try_from(account_info);
+        dbg!(event);
 
         // Process event on tokio task.
         self.inner.clone().spawn(|inner| async move {
