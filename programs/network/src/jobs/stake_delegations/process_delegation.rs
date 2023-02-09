@@ -3,7 +3,9 @@ use anchor_spl::{
     associated_token::get_associated_token_address,
     token::{transfer, Token, TokenAccount, Transfer},
 };
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction,
+};
 
 use crate::{instruction, state::*};
 
@@ -97,20 +99,20 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         // This worker has more delegations, continue locking their stake.
         let next_delegation_pubkey =
             Delegation::pubkey(worker.key(), delegation.id.checked_add(1).unwrap());
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::mutable(next_delegation_pubkey, false),
-                Acc::mutable(
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::mutable(next_delegation_pubkey, false),
+                SerializableAccount::mutable(
                     get_associated_token_address(&next_delegation_pubkey, &config.mint),
                     false,
                 ),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(token_program.key(), false),
-                Acc::readonly(worker.key(), false),
-                Acc::mutable(worker_stake.key(), false),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(token_program.key(), false),
+                SerializableAccount::readonly(worker.key(), false),
+                SerializableAccount::mutable(worker_stake.key(), false),
             ],
             data: instruction::StakeDelegationsProcessDelegation {}.data(),
         })
@@ -121,13 +123,16 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         .lt(&registry.total_workers)
     {
         // This worker has no more delegations, move on to the next worker.
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(Worker::pubkey(worker.id.checked_add(1).unwrap()), false),
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(
+                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
+                    false,
+                ),
             ],
             data: instruction::StakeDelegationsProcessWorker {}.data(),
         })

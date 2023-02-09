@@ -1,5 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix, PAYER_PUBKEY};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction, PAYER_PUBKEY,
+};
 
 use crate::{instruction, state::*};
 
@@ -25,18 +27,18 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        dynamic_instruction: Some(Ix {
+        dynamic_instruction: Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::mutable(PAYER_PUBKEY, true),
-                Acc::readonly(registry.key(), false),
-                Acc::mutable(
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::mutable(PAYER_PUBKEY, true),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::mutable(
                     Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
                     false,
                 ),
-                Acc::readonly(system_program::ID, false),
-                Acc::readonly(automation.key(), true),
+                SerializableAccount::readonly(system_program::ID, false),
+                SerializableAccount::readonly(automation.key(), true),
             ],
             data: instruction::TakeSnapshotCreateSnapshot {}.data(),
         }),

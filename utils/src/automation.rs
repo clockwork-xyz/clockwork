@@ -74,7 +74,7 @@ pub enum Trigger {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct AutomationResponse {
     /// A dynamic instruction to execute next.
-    pub dynamic_instruction: Option<InstructionBuilder>,
+    pub dynamic_instruction: Option<SerializableInstruction>,
     /// Value to update the automation trigger to.
     pub trigger: Option<Trigger>,
 }
@@ -224,7 +224,11 @@ impl InstructionBuilder {
         self
     }
 
-    pub fn build(&mut self) -> Self {
-        self.clone()
+    pub fn build(&mut self) -> SerializableInstruction {
+        SerializableInstruction {
+            program_id: self.program_id,
+            accounts: self.accounts.clone(),
+            data: self.data.clone(),
+        }
     }
 }

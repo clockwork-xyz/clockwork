@@ -1,6 +1,8 @@
 use anchor_lang::{prelude::*, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction,
+};
 
 use crate::{errors::*, instruction, state::*};
 
@@ -135,13 +137,13 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         .lt(&registry.total_unstakes)
     {
         let next_unstake_pubkey = Unstake::pubkey(unstake.id.checked_add(1).unwrap());
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(next_unstake_pubkey, false),
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(next_unstake_pubkey, false),
             ],
             data: instruction::UnstakePreprocess {}.data(),
         })

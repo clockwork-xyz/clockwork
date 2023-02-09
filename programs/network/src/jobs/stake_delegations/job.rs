@@ -1,5 +1,7 @@
 use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction,
+};
 
 use crate::{instruction, state::*};
 
@@ -25,13 +27,13 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> 
 
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_workers.gt(&0) {
-            Some(Ix {
+            Some(SerializableInstruction {
                 program_id: crate::ID,
                 accounts: vec![
-                    Acc::readonly(config.key(), false),
-                    Acc::readonly(registry.key(), false),
-                    Acc::readonly(automation.key(), true),
-                    Acc::readonly(Worker::pubkey(0), false),
+                    SerializableAccount::readonly(config.key(), false),
+                    SerializableAccount::readonly(registry.key(), false),
+                    SerializableAccount::readonly(automation.key(), true),
+                    SerializableAccount::readonly(Worker::pubkey(0), false),
                 ],
                 data: instruction::StakeDelegationsProcessWorker.data(),
             })

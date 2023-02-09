@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::parse_macro_input;
 
 #[proc_macro_derive(TryFromData)]
@@ -20,19 +20,6 @@ pub fn derive_try_from_data_attr(input: TokenStream) -> TokenStream {
     })
 }
 
-// /// The `#[program]` attribute defines the module containing all instruction
-// /// handlers defining all entries into a Solana program.
-// #[proc_macro_attribute]
-// pub fn program(
-//     _args: proc_macro::TokenStream,
-//     input: proc_macro::TokenStream,
-// ) -> proc_macro::TokenStream {
-//     parse_macro_input!(input as anchor_syn::Program)
-//         .to_token_stream()
-//         .into()
-// }
-
-// #[proc_macro_derive(Clockwork)]
 #[proc_macro_attribute]
 pub fn clockwork(_args: TokenStream, input: TokenStream) -> TokenStream {
     let program = parse_macro_input!(input as anchor_syn::Program);
@@ -40,15 +27,17 @@ pub fn clockwork(_args: TokenStream, input: TokenStream) -> TokenStream {
         .ixs
         .iter()
         .map(|ix| {
-            let name = format!("Clockwork{}", ix.ident);
+            ix
+            // let name: proc_macro2::TokenStream =
+            //     format!("Clockwork{}", ix.anchor_ident).parse().unwrap();
+            // TODO Create a cleaner instruction building interface.
             quote! {
-                type #name = u64;
+                // type #name = u64;
             }
         })
         .collect();
     quote! {
         #(#clockwork_targets)*
-        todo!()
     }
     .into()
 }

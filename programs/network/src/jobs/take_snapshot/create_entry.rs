@@ -2,7 +2,9 @@ use std::mem::size_of;
 
 use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix, PAYER_PUBKEY};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction, PAYER_PUBKEY,
+};
 
 use crate::{instruction, state::*};
 
@@ -104,19 +106,19 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
             snapshot_frame.key(),
             snapshot_entry.id.checked_add(1).unwrap(),
         );
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::readonly(next_delegation_pubkey, false),
-                Acc::mutable(PAYER_PUBKEY, true),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(snapshot.key(), false),
-                Acc::mutable(next_snapshot_entry_pubkey, false),
-                Acc::mutable(snapshot_frame.key(), false),
-                Acc::readonly(system_program.key(), false),
-                Acc::readonly(worker.key(), false),
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::readonly(next_delegation_pubkey, false),
+                SerializableAccount::mutable(PAYER_PUBKEY, true),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(snapshot.key(), false),
+                SerializableAccount::mutable(next_snapshot_entry_pubkey, false),
+                SerializableAccount::mutable(snapshot_frame.key(), false),
+                SerializableAccount::readonly(system_program.key(), false),
+                SerializableAccount::readonly(worker.key(), false),
             ],
             data: instruction::TakeSnapshotCreateEntry {}.data(),
         })
@@ -125,18 +127,18 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::mutable(PAYER_PUBKEY, true),
-                Acc::readonly(registry.key(), false),
-                Acc::mutable(snapshot.key(), false),
-                Acc::mutable(next_snapshot_frame_pubkey, false),
-                Acc::readonly(system_program.key(), false),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(next_worker_pubkey, false),
-                Acc::readonly(
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::mutable(PAYER_PUBKEY, true),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::mutable(snapshot.key(), false),
+                SerializableAccount::mutable(next_snapshot_frame_pubkey, false),
+                SerializableAccount::readonly(system_program.key(), false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(next_worker_pubkey, false),
+                SerializableAccount::readonly(
                     get_associated_token_address(&next_worker_pubkey, &config.mint),
                     false,
                 ),

@@ -2,7 +2,9 @@ use std::mem::size_of;
 
 use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix, PAYER_PUBKEY};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction, PAYER_PUBKEY,
+};
 
 use crate::{instruction, state::*};
 
@@ -55,18 +57,18 @@ pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<AutomationRes
             // The registry has workers. Create a snapshot frame for the zeroth worker.
             let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
             let worker_pubkey = Worker::pubkey(0);
-            Some(Ix {
+            Some(SerializableInstruction {
                 program_id: crate::ID,
                 accounts: vec![
-                    Acc::readonly(config.key(), false),
-                    Acc::mutable(PAYER_PUBKEY, true),
-                    Acc::readonly(registry.key(), false),
-                    Acc::mutable(snapshot.key(), false),
-                    Acc::mutable(snapshot_frame_pubkey, false),
-                    Acc::readonly(system_program.key(), false),
-                    Acc::readonly(automation.key(), true),
-                    Acc::readonly(worker_pubkey, false),
-                    Acc::readonly(
+                    SerializableAccount::readonly(config.key(), false),
+                    SerializableAccount::mutable(PAYER_PUBKEY, true),
+                    SerializableAccount::readonly(registry.key(), false),
+                    SerializableAccount::mutable(snapshot.key(), false),
+                    SerializableAccount::mutable(snapshot_frame_pubkey, false),
+                    SerializableAccount::readonly(system_program.key(), false),
+                    SerializableAccount::readonly(automation.key(), true),
+                    SerializableAccount::readonly(worker_pubkey, false),
+                    SerializableAccount::readonly(
                         get_associated_token_address(&worker_pubkey, &config.mint),
                         false,
                     ),

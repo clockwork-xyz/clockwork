@@ -1,5 +1,7 @@
 use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction,
+};
 
 use crate::{instruction, state::*};
 
@@ -91,18 +93,18 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         let snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::mutable(delegation_pubkey, false),
-                Acc::mutable(fee.key(), false),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(snapshot.key(), false),
-                Acc::readonly(snapshot_entry_pubkey.key(), false),
-                Acc::readonly(snapshot_frame.key(), false),
-                Acc::readonly(automation.key(), true),
-                Acc::readonly(worker.key(), false),
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::mutable(delegation_pubkey, false),
+                SerializableAccount::mutable(fee.key(), false),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(snapshot.key(), false),
+                SerializableAccount::readonly(snapshot_entry_pubkey.key(), false),
+                SerializableAccount::readonly(snapshot_frame.key(), false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::readonly(worker.key(), false),
             ],
             data: instruction::DistributeFeesProcessEntry {}.data(),
         })
@@ -116,16 +118,16 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
-        Some(Ix {
+        Some(SerializableInstruction {
             program_id: crate::ID,
             accounts: vec![
-                Acc::readonly(config.key(), false),
-                Acc::mutable(Fee::pubkey(next_worker_pubkey), false),
-                Acc::readonly(registry.key(), false),
-                Acc::readonly(snapshot.key(), false),
-                Acc::readonly(next_snapshot_frame_pubkey, false),
-                Acc::readonly(automation.key(), true),
-                Acc::mutable(next_worker_pubkey, false),
+                SerializableAccount::readonly(config.key(), false),
+                SerializableAccount::mutable(Fee::pubkey(next_worker_pubkey), false),
+                SerializableAccount::readonly(registry.key(), false),
+                SerializableAccount::readonly(snapshot.key(), false),
+                SerializableAccount::readonly(next_snapshot_frame_pubkey, false),
+                SerializableAccount::readonly(automation.key(), true),
+                SerializableAccount::mutable(next_worker_pubkey, false),
             ],
             data: instruction::DistributeFeesProcessFrame {}.data(),
         })

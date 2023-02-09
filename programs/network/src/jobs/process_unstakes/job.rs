@@ -1,5 +1,7 @@
 use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{Acc, AutomationResponse, Ix};
+use clockwork_utils::automation::{
+    AutomationResponse, SerializableAccount, SerializableInstruction,
+};
 
 use crate::{instruction, state::*};
 
@@ -27,13 +29,13 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
     // Return next instruction for automation.
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_unstakes.gt(&0) {
-            Some(Ix {
+            Some(SerializableInstruction {
                 program_id: crate::ID,
                 accounts: vec![
-                    Acc::readonly(config.key(), false),
-                    Acc::readonly(registry.key(), false),
-                    Acc::readonly(automation.key(), true),
-                    Acc::readonly(Unstake::pubkey(0), false),
+                    SerializableAccount::readonly(config.key(), false),
+                    SerializableAccount::readonly(registry.key(), false),
+                    SerializableAccount::readonly(automation.key(), true),
+                    SerializableAccount::readonly(Unstake::pubkey(0), false),
                 ],
                 data: instruction::UnstakePreprocess {}.data(),
             })
