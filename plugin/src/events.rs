@@ -18,9 +18,9 @@ pub enum AccountUpdateEvent {
     HttpRequest { request: Request },
 }
 
-impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
+impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
-    fn try_from(account_info: ReplicaAccountInfo) -> Result<Self, Self::Error> {
+    fn try_from(account_info: &mut ReplicaAccountInfo) -> Result<Self, Self::Error> {
         // Parse pubkeys.
         let account_pubkey = Pubkey::new(account_info.pubkey);
         if account_info.owner.len() != 32 {
