@@ -1,5 +1,6 @@
-use anchor_lang::Discriminator;
+use anchor_lang::{AccountDeserialize, AnchorDeserialize, Discriminator};
 use bincode::deserialize;
+use chain_drive::instructions::summon::DataToBeSummoned;
 use clockwork_client::{thread::state::Thread, webhook::state::Request};
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -12,6 +13,7 @@ pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },
     Thread { thread: Thread },
+    Upload { metadata: DataToBeSummoned },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -64,6 +66,22 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                     }
                 })?,
             });
+        }
+
+        // If the account belongs to shadow program
+        if dbg!(owner_pubkey).eq(dbg!(&chain_drive::ID)) && account_info.data.len() > 8 {
+            dbg!("found sdrive ix");
+            let d = &account_info.data[..8];
+            if dbg!(d).eq(dbg!(&DataToBeSummoned::DISCRIMINATOR)) {
+                dbg!("found summon account");
+                let mut account_info = account_info;
+                return Ok(AccountUpdateEvent::Upload {
+                    metadata: dbg!(DataToBeSummoned::try_deserialize(&mut account_info.data))
+                        .map_err(|_| GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse DataToBeSummoned account".into(),
+                        })?,
+                });
+            }
         }
 
         Err(GeyserPluginError::AccountsUpdateError {

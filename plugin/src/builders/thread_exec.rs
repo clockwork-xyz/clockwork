@@ -49,13 +49,14 @@ pub async fn build_thread_exec_tx(
     let first_instruction = if thread.next_instruction.is_some() {
         build_exec_ix(thread, signatory_pubkey, worker_id, Arc::clone(&client)).await
     } else {
-        build_kickoff_ix(thread, signatory_pubkey, worker_id)
+        build_kickoff_ix(thread, signatory_pubkey, worker_id, Arc::clone(&client)).await
     };
 
     // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
     // TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
+        // uploads
         first_instruction,
     ];
     let mut successful_ixs: Vec<Instruction> = vec![];
@@ -177,7 +178,52 @@ pub async fn build_thread_exec_tx(
     Some(tx)
 }
 
-fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
+async fn build_kickoff_ix(
+    mut thread: Thread,
+    signatory_pubkey: Pubkey,
+    worker_id: u64,
+    client: Arc<RpcClient>,
+) -> Instruction {
+    dbg!(&thread);
+    if let Some(kickoff_ix) = thread.instructions.get_mut(0) {
+        // If using a shadow portal, append appropriate data
+        println!("ix program id: {}", &kickoff_ix.program_id);
+        println!("shadow portal id: {}", &SHADOW_PORTAL_ID);
+        if kickoff_ix.program_id.eq(&SHADOW_PORTAL_ID) {
+            println!("found shadow portal ix");
+            println!("ix data is {:?}", &kickoff_ix.data[..]);
+            println!("upload data is {:?}", &*UPLOAD_DATA_DISCRIMINATOR);
+            match &kickoff_ix.data[..] {
+                _data if _data == *UPLOAD_DATA_DISCRIMINATOR => {
+                    // First, determine what data to upload
+                    if let Ok(account_data) = client
+                        .get_account_data(&kickoff_ix.accounts[1].pubkey)
+                        .await
+                    {
+                        if let Ok(metadata) = DataToBeSummoned::try_from_slice(&account_data) {
+                            if let Ok(response) = reqwest::get(dbg!(metadata.get_source())).await {
+                                if let Ok(data) = response.bytes().await {
+                                    // Check if hash is right
+                                    let mut hasher = Sha256::new();
+                                    hasher.update(dbg!(&data));
+                                    if (*hasher.finalize()).eq(&metadata.hash) {
+                                        kickoff_ix.data.append(&mut data.to_vec());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _data if _data == *DELETE_DATA_DISCRIMINATOR => {
+                    // do nothing
+                }
+
+                _ => {}
+            }
+        }
+    }
+
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
     let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
@@ -204,20 +250,21 @@ fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) ->
 }
 
 async fn build_exec_ix(
-    thread: Thread,
+    mut thread: Thread,
     signatory_pubkey: Pubkey,
     worker_id: u64,
     client: Arc<RpcClient>,
 ) -> Instruction {
+    dbg!(&thread);
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
-    let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
+    let mut exec_ix = dbg!(clockwork_client::thread::instruction::thread_exec(
         signatory_pubkey,
         thread_pubkey,
         Worker::pubkey(worker_id),
-    );
+    ));
 
-    if let Some(mut next_instruction) = thread.next_instruction {
+    if let Some(next_instruction) = thread.next_instruction {
         // Inject the target program account.
         exec_ix.accounts.push(AccountMeta::new_readonly(
             next_instruction.program_id,
@@ -236,24 +283,31 @@ async fn build_exec_ix(
                 false => AccountMeta::new_readonly(acc_pubkey, false),
             })
         }
+    }
 
+    if let Some(kickoff_ix) = thread.instructions.get_mut(0) {
         // If using a shadow portal, append appropriate data
-        if next_instruction.program_id.eq(&SHADOW_PORTAL_ID) {
-            match &next_instruction.data[..] {
+        println!("ix program id: {}", &kickoff_ix.program_id);
+        println!("shadow portal id: {}", &SHADOW_PORTAL_ID);
+        if kickoff_ix.program_id.eq(&SHADOW_PORTAL_ID) {
+            println!("found shadow portal ix");
+            println!("ix data is {:?}", &kickoff_ix.data[..]);
+            println!("upload data is {:?}", &*UPLOAD_DATA_DISCRIMINATOR);
+            match &kickoff_ix.data[..] {
                 _data if _data == *UPLOAD_DATA_DISCRIMINATOR => {
                     // First, determine what data to upload
                     if let Ok(account_data) = client
-                        .get_account_data(&next_instruction.accounts[1].pubkey)
+                        .get_account_data(&kickoff_ix.accounts[1].pubkey)
                         .await
                     {
                         if let Ok(metadata) = DataToBeSummoned::try_from_slice(&account_data) {
-                            if let Ok(response) = reqwest::get(metadata.get_source()).await {
+                            if let Ok(response) = reqwest::get(dbg!(metadata.get_source())).await {
                                 if let Ok(data) = response.bytes().await {
                                     // Check if hash is right
                                     let mut hasher = Sha256::new();
-                                    hasher.update(&data);
+                                    hasher.update(dbg!(&data));
                                     if (*hasher.finalize()).eq(&metadata.hash) {
-                                        next_instruction.data.append(&mut data.to_vec());
+                                        kickoff_ix.data.append(&mut data.to_vec());
                                     }
                                 }
                             }

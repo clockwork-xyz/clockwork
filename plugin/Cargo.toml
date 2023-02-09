@@ -33,13 +33,13 @@ sentry = "0.27.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 simple-error = "0.2.3"
-solana-account-decoder = "~1.14.12"
-solana-client = "~1.14.12"
-solana-geyser-plugin-interface = "~1.14.12"
-solana-logger = "~1.14.12"
-solana-program = "~1.14.12"
-solana-sdk = "~1.14.12"
-solana-transaction-status = "~1.14.12"
+solana-account-decoder = "=1.14.12"
+solana-client = "=1.14.12"
+solana-geyser-plugin-interface = "=1.14.12"
+solana-logger = "=1.14.12"
+solana-program = "=1.14.12"
+solana-sdk = "=1.14.12"
+solana-transaction-status = "=1.14.12"
 thiserror = "1.0.30"
 tokio = "~1.14.1"
 futures = "0.3.26"
@@ -47,7 +47,8 @@ sha2 = "0.10.6"
 
 
 [dependencies.chain-drive]
-git = "https://github.com/GenesysGo/shadow-drive-clockwork.git"
+# git = "https://github.com/GenesysGo/shadow-drive-clockwork.git"
+path = "../../shadow-drive-clockwork/programs/chain-drive/"
 
 [build-dependencies]
 cargo_toml = "0.13.0"
