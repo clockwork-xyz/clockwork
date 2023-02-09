@@ -4,16 +4,14 @@ pub mod state;
 mod instructions;
 
 use anchor_lang::prelude::*;
-use clockwork_macros::clockwork;
 use instructions::*;
 use state::*;
 
 declare_id!("E7p5KFo8kKCDm6BUnWtnVFkQSYh6ZA6xaGAuvpv8NXTa");
 
-#[clockwork]
 #[program]
 pub mod webhook_program {
-    use super::*;
+    pub use super::*;
 
     pub fn admin_config_update(
         ctx: Context<AdminConfigUpdate>,

@@ -895,6 +895,7 @@ dependencies = [
  "anchor-lang",
  "clockwork-macros",
  "clockwork-network-program",
+ "clockwork-utils",
 ]
 
 [[package]]

@@ -1,9 +1,10 @@
-use clockwork_utils::automation::{  AutomationResponse, InstructionBuilder};
+use clockwork_utils::automation::{AutomationResponse, SerializableInstruction, SerializableAccount, InstructionBuilder};
+use clockwork_macros::Clockwork;
 use anchor_lang::{prelude::*, InstructionData};
 
 use crate::{state::*, instruction};
 
-#[derive(Accounts)]
+#[derive(Accounts, Clockwork)]
 pub struct DeleteSnapshotProcessSnapshot<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,

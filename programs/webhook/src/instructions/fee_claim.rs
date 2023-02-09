@@ -1,9 +1,10 @@
-use {
-    crate::state::{Fee, FeeAccount},
-    anchor_lang::prelude::*,
-};
+use anchor_lang::prelude::*;
+use clockwork_macros::Clockwork;
+use clockwork_utils::automation::{SerializableAccount, SerializableInstruction};
 
-#[derive(Accounts)]
+use crate::state::{Fee, FeeAccount};
+
+#[derive(Accounts, Clockwork)]
 #[instruction(amount: u64)]
 pub struct FeeClaim<'info> {
     #[account(mut)]
@@ -27,6 +28,10 @@ pub fn handler<'info>(ctx: Context<FeeClaim>, amount: u64) -> Result<()> {
 
     // Claim the fee funds
     fee.claim_worker_balance(amount, pay_to)?;
+
+    // let my_ix = crate::webhook_program::fee_claim::FeeClaimInstruction::build();
+    // crate::webhook_program::fee_claim::FeeClaim {
+    // }
 
     Ok(())
 }

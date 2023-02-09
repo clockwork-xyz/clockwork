@@ -1,7 +1,9 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{AutomationResponse, InstructionBuilder};
+use anchor_lang::prelude::*;
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{network_program::instruction, state::*};
+use crate::{
+    delete_snapshot::process_snapshot::DeleteSnapshotProcessSnapshotInstruction, state::*,
+};
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotJob<'info> {
@@ -23,18 +25,15 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
     let registry = &ctx.accounts.registry;
     let automation = &mut ctx.accounts.automation;
 
+    let ix = DeleteSnapshotProcessSnapshotInstruction::build(
+        config.key(),
+        registry.key(),
+        Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
+        automation.key(),
+    );
+
     Ok(AutomationResponse {
-        dynamic_instruction: Some(
-            InstructionBuilder::new(crate::ID)
-                .readonly_account(config.key())
-                .readonly_account(registry.key())
-                .readonly_account(Snapshot::pubkey(
-                    registry.current_epoch.checked_sub(1).unwrap(),
-                ))
-                .signer(automation.key())
-                .data(instruction::DeleteSnapshotProcessSnapshot {}.data())
-                .build(),
-        ),
+        dynamic_instruction: Some(ix),
         trigger: None,
     })
 }
