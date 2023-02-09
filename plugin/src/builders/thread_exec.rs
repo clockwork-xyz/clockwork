@@ -74,7 +74,10 @@ pub async fn build_thread_exec_tx(
                     commitment: Some(CommitmentConfig::processed()),
                     accounts: Some(RpcSimulateTransactionAccountsConfig {
                         encoding: Some(UiAccountEncoding::Base64Zstd),
-                        addresses: vec![thread_pubkey.to_string()],
+                        addresses: vec![
+                            thread_pubkey.to_string(),
+                            solana_program::sysvar::clock::ID.to_string(),
+                        ],
                     }),
                     ..RpcSimulateTransactionConfig::default()
                 },
@@ -91,10 +94,11 @@ pub async fn build_thread_exec_tx(
                 if response.value.err.is_some() {
                     if successful_ixs.is_empty() {
                         info!(
-                            "thread: {} simulation_error: \"{}\" logs: {:?}",
+                            "thread: {} simulation_error: \"{}\" logs: {:?} accounts: {:?}",
                             thread_pubkey,
                             response.value.err.unwrap(),
-                            response.value.logs.unwrap_or(vec![])
+                            response.value.logs.unwrap_or(vec![]),
+                            response.value.accounts
                         );
                     }
                     break;
