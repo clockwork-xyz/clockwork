@@ -22,7 +22,6 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
     fn try_from(account_info: &mut ReplicaAccountInfo) -> Result<Self, Self::Error> {
         // Parse pubkeys.
-        dbg!(account_info);
         let account_pubkey = Pubkey::new(account_info.pubkey);
         let owner_pubkey = Pubkey::new(account_info.owner);
 
