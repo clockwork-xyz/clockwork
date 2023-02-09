@@ -15,6 +15,7 @@ pub enum VersionedAutomation {
 
 impl VersionedAutomation {
     pub fn authority(&self) -> Pubkey {
+        dbg!("versioned authority()", self);
         match self {
             Self::V1(t) => t.authority,
             Self::V2(t) => t.authority,
@@ -22,6 +23,7 @@ impl VersionedAutomation {
     }
 
     pub fn created_at(&self) -> ClockData {
+        dbg!("versioned created_at()", self);
         match self {
             Self::V1(t) => ClockData {
                 slot: t.created_at.slot,
@@ -33,6 +35,7 @@ impl VersionedAutomation {
     }
 
     pub fn exec_context(&self) -> Option<ExecContext> {
+        dbg!("versioned exec_context()", self);
         match self {
             Self::V1(t) => t.exec_context.map(|e| ExecContext {
                 exec_index: 0,
@@ -51,6 +54,7 @@ impl VersionedAutomation {
     }
 
     pub fn next_instruction(&self) -> Option<InstructionData> {
+        dbg!("versioned next_instruction()", self);
         match self {
             Self::V1(t) => unsafe {
                 std::mem::transmute_copy::<
@@ -63,6 +67,7 @@ impl VersionedAutomation {
     }
 
     pub fn paused(&self) -> bool {
+        dbg!("versioned paused()", self);
         match self {
             Self::V1(t) => t.paused,
             Self::V2(t) => t.paused,
@@ -70,6 +75,7 @@ impl VersionedAutomation {
     }
 
     pub fn rate_limit(&self) -> u64 {
+        dbg!("versioned rate_limit()", self);
         match self {
             Self::V1(t) => t.rate_limit,
             Self::V2(t) => t.rate_limit,
@@ -77,6 +83,7 @@ impl VersionedAutomation {
     }
 
     pub fn trigger(&self) -> Trigger {
+        dbg!("versioned trigger()", self);
         match self {
             Self::V1(t) => unsafe {
                 // TODO Handle case where we rename trigger value
@@ -97,6 +104,7 @@ impl AccountDeserialize for VersionedAutomation {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         // Try first to deserialize into AutomationV2.
         // If this fails, try to deserialize into AutomationV1.
+        dbg!("versioned try_deserialized_unchecked()");
         match AutomationV2::try_deserialize(buf) {
             Err(_err) => Ok(VersionedAutomation::V1(AutomationV1::try_deserialize(buf)?)),
             Ok(t) => Ok(VersionedAutomation::V2(t)),
