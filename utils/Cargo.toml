@@ -17,4 +17,6 @@ name = "clockwork_utils"
 anchor-lang = "0.26.0"
 base64 = "~0.13"
 static-pubkey = "1.0.3"
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
+clockwork-cron = { path = "../cron", version = "1.4.4" }
 
