@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
+use anchor_lang::prelude::Clock;
 use clockwork_client::{
     network::state::Worker,
     thread::state::{Thread, Trigger},
@@ -43,9 +44,9 @@ pub async fn build_thread_exec_tx(
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction.is_some() {
-        build_exec_ix(thread, signatory_pubkey, worker_id)
+        build_exec_ix(thread.clone(), signatory_pubkey, worker_id)
     } else {
-        build_kickoff_ix(thread, signatory_pubkey, worker_id)
+        build_kickoff_ix(thread.clone(), signatory_pubkey, worker_id)
     };
 
     // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
@@ -93,12 +94,24 @@ pub async fn build_thread_exec_tx(
             Ok(response) => {
                 if response.value.err.is_some() {
                     if successful_ixs.is_empty() {
+                        let clock_pubkey =
+                            Pubkey::from_str("SysvarC1ock11111111111111111111111111111111")
+                                .unwrap();
+                        let clock_data = client
+                            .get_account_with_commitment(
+                                &clock_pubkey,
+                                CommitmentConfig::processed(),
+                            )
+                            .await
+                            .unwrap();
+                        let clock = bincode::deserialize::<Clock>(&clock_data.value.unwrap().data);
                         info!(
-                            "thread: {} simulation_error: \"{}\" logs: {:?} accounts: {:?}",
+                            "thread: {} simulation_error: \"{}\" logs: {:?} thread_data: {:?} clock: {:?}",
                             thread_pubkey,
                             response.value.err.unwrap(),
                             response.value.logs.unwrap_or(vec![]),
-                            response.value.accounts
+                            thread,
+                            clock
                         );
                     }
                     break;
