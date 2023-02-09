@@ -67,6 +67,8 @@ impl GeyserPlugin for ClockworkPlugin {
         is_startup: bool,
     ) -> PluginResult<()> {
         // Parse account info.
+        dbg!("got account");
+        dbg!(account);
         let account_info = &mut match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,

@@ -22,16 +22,8 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
     fn try_from(account_info: &mut ReplicaAccountInfo) -> Result<Self, Self::Error> {
         // Parse pubkeys.
+        dbg!(account_info);
         let account_pubkey = Pubkey::new(account_info.pubkey);
-        if account_info.owner.len() != 32 {
-            info!(
-                "Invalid owner pubkey length pubkey: {:?} account_info: {:?}",
-                account_pubkey, account_info
-            );
-            return Err(GeyserPluginError::Custom(
-                format!("Invalid pubkey length").into(),
-            ));
-        }
         let owner_pubkey = Pubkey::new(account_info.owner);
 
         // If the account is the sysvar clock, parse it.
