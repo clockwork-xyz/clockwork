@@ -268,7 +268,7 @@ impl TxExecutor {
         self: Arc<Self>,
         pool_position: PoolPosition,
         slot: u64,
-    ) -> PluginResult<Vec<Pubkey>> {
+    ) -> PluginResult<Vec<(Pubkey, u64)>> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
         let r_executable_threads = self.executable_threads.read().await;
@@ -279,15 +279,15 @@ impl TxExecutor {
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
                     .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
             } else {
                 // This worker is in the pool. Get pubkeys executable threads.
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
             };
         drop(r_executable_threads);
         Ok(thread_pubkeys)
@@ -296,13 +296,13 @@ impl TxExecutor {
     async fn execute_thread_exec_txs(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        slot: u64,
+        observed_slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         let executable_threads = self
             .clone()
-            .get_executable_threads(pool_position, slot)
+            .get_executable_threads(pool_position, observed_slot)
             .await?;
         if executable_threads.is_empty() {
             return Ok(());
@@ -312,10 +312,11 @@ impl TxExecutor {
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
         let tasks: Vec<_> = executable_threads
             .iter()
-            .map(|thread_pubkey| {
+            .map(|(thread_pubkey, due_slot)| {
                 runtime.spawn(self.clone().try_build_thread_exec_tx(
                     client.clone(),
-                    slot,
+                    observed_slot,
+                    *due_slot,
                     *thread_pubkey,
                 ))
             })
@@ -360,7 +361,7 @@ impl TxExecutor {
                     w_transaction_history.insert(
                         pubkey,
                         TransactionMetadata {
-                            slot_sent: slot,
+                            slot_sent: observed_slot,
                             signature,
                         },
                     );
@@ -376,7 +377,8 @@ impl TxExecutor {
     pub async fn try_build_thread_exec_tx(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        slot: u64,
+        observed_slot: u64,
+        due_slot: u64,
         thread_pubkey: Pubkey,
     ) -> Option<(Pubkey, Transaction)> {
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
@@ -390,7 +392,7 @@ impl TxExecutor {
         if let Ok(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
-            slot,
+            due_slot,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,
@@ -400,7 +402,7 @@ impl TxExecutor {
             if let Some(tx) = tx {
                 if self
                     .clone()
-                    .dedupe_tx(slot, thread_pubkey, &tx)
+                    .dedupe_tx(observed_slot, thread_pubkey, &tx)
                     .await
                     .is_ok()
                 {
