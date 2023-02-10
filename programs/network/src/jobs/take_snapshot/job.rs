@@ -1,9 +1,11 @@
-use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction, PAYER_PUBKEY,
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData,
 };
+use clockwork_utils::automation::{AutomationResponse, PAYER_PUBKEY};
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct TakeSnapshotJob<'info> {
@@ -27,21 +29,22 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
     let automation = &ctx.accounts.automation;
 
     Ok(AutomationResponse {
-        dynamic_instruction: Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::mutable(PAYER_PUBKEY, true),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::mutable(
-                    Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
-                    false,
-                ),
-                SerializableAccount::readonly(system_program::ID, false),
-                SerializableAccount::readonly(automation.key(), true),
-            ],
-            data: instruction::TakeSnapshotCreateSnapshot {}.data(),
-        }),
+        dynamic_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::TakeSnapshotCreateSnapshot {
+                    config: config.key(),
+                    payer: PAYER_PUBKEY,
+                    registry: registry.key(),
+                    snapshot: Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
+                    system_program: system_program::ID,
+                    automation: automation.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::TakeSnapshotCreateSnapshot {}.data(),
+            }
+            .into(),
+        ),
         trigger: None,
     })
 }

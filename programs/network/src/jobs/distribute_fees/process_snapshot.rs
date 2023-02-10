@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 // DONE Payout yield.
 //      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
@@ -49,19 +47,23 @@ pub fn handler(ctx: Context<DistributeFeesProcessSnapshot>) -> Result<Automation
 
     Ok(AutomationResponse {
         dynamic_instruction: if snapshot.total_frames.gt(&0) {
-            Some(SerializableInstruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    SerializableAccount::readonly(config.key(), false),
-                    SerializableAccount::mutable(Fee::pubkey(Worker::pubkey(0)), false),
-                    SerializableAccount::readonly(registry.key(), false),
-                    SerializableAccount::readonly(snapshot.key(), false),
-                    SerializableAccount::readonly(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                    SerializableAccount::readonly(automation.key(), true),
-                    SerializableAccount::mutable(Worker::pubkey(0), false),
-                ],
-                data: instruction::DistributeFeesProcessFrame {}.data(),
-            })
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::DistributeFeesProcessFrame {
+                        config: config.key(),
+                        fee: Fee::pubkey(Worker::pubkey(0)),
+                        registry: registry.key(),
+                        snapshot: snapshot.key(),
+                        snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), 0),
+                        automation: automation.key(),
+                        worker: Worker::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::DistributeFeesProcessFrame {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

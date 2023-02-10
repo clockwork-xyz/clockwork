@@ -1,7 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{AutomationResponse, InstructionBuilder};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DistributeFeesProcessEntry<'info> {
@@ -117,18 +117,23 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
             snapshot_entry.id.checked_add(1).unwrap(),
         );
         Some(
-            InstructionBuilder::new(crate::ID)
-                .readonly_account(config.key())
-                .mutable_account(next_delegation_pubkey)
-                .mutable_account(fee.key())
-                .readonly_account(registry.key())
-                .readonly_account(snapshot.key())
-                .readonly_account(next_snapshot_entry_pubkey)
-                .readonly_account(snapshot_frame.key())
-                .signer(automation.key())
-                .readonly_account(worker.key())
-                .data(instruction::DistributeFeesProcessEntry {}.data())
-                .build(),
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessEntry {
+                    config: config.key(),
+                    delegation: next_delegation_pubkey,
+                    fee: fee.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: next_snapshot_entry_pubkey,
+                    snapshot_frame: snapshot_frame.key(),
+                    automation: automation.key(),
+                    worker: worker.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessEntry {}.data(),
+            }
+            .into(),
         )
     } else if snapshot_frame
         .id
@@ -141,16 +146,21 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         Some(
-            InstructionBuilder::new(crate::ID)
-                .readonly_account(config.key())
-                .mutable_account(Fee::pubkey(next_worker_pubkey))
-                .readonly_account(registry.key())
-                .readonly_account(snapshot.key())
-                .readonly_account(next_snapshot_frame_pubkey)
-                .signer(automation.key())
-                .mutable_account(next_worker_pubkey)
-                .data(instruction::DistributeFeesProcessFrame {}.data())
-                .build(),
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessFrame {
+                    config: config.key(),
+                    fee: Fee::pubkey(next_worker_pubkey),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: next_snapshot_frame_pubkey,
+                    automation: automation.key(),
+                    worker: next_worker_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessFrame {}.data(),
+            }
+            .into(),
         )
     } else {
         None

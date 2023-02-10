@@ -1,13 +1,11 @@
-use anchor_lang::{prelude::*, InstructionData};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::{
     associated_token::get_associated_token_address,
     token::{transfer, Token, TokenAccount, Transfer},
 };
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct StakeDelegationsProcessDelegation<'info> {
@@ -99,23 +97,27 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         // This worker has more delegations, continue locking their stake.
         let next_delegation_pubkey =
             Delegation::pubkey(worker.key(), delegation.id.checked_add(1).unwrap());
-        Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::mutable(next_delegation_pubkey, false),
-                SerializableAccount::mutable(
-                    get_associated_token_address(&next_delegation_pubkey, &config.mint),
-                    false,
-                ),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::readonly(automation.key(), true),
-                SerializableAccount::readonly(token_program.key(), false),
-                SerializableAccount::readonly(worker.key(), false),
-                SerializableAccount::mutable(worker_stake.key(), false),
-            ],
-            data: instruction::StakeDelegationsProcessDelegation {}.data(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessDelegation {
+                    config: config.key(),
+                    delegation: next_delegation_pubkey,
+                    delegation_stake: get_associated_token_address(
+                        &next_delegation_pubkey,
+                        &config.mint,
+                    ),
+                    registry: registry.key(),
+                    automation: automation.key(),
+                    token_program: token_program.key(),
+                    worker: worker.key(),
+                    worker_stake: worker_stake.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessDelegation {}.data(),
+            }
+            .into(),
+        )
     } else if worker
         .id
         .checked_add(1)
@@ -123,19 +125,20 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         .lt(&registry.total_workers)
     {
         // This worker has no more delegations, move on to the next worker.
-        Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::readonly(automation.key(), true),
-                SerializableAccount::readonly(
-                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
-                    false,
-                ),
-            ],
-            data: instruction::StakeDelegationsProcessWorker {}.data(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessWorker {
+                    config: config.key(),
+                    registry: registry.key(),
+                    automation: automation.key(),
+                    worker: Worker::pubkey(worker.id.checked_add(1).unwrap()),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };

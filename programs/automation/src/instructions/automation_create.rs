@@ -5,7 +5,7 @@ use anchor_lang::{
     solana_program::system_program,
     system_program::{transfer, Transfer}
 };
-use clockwork_utils::automation::{Trigger, Ix};
+use clockwork_utils::automation::Trigger;
 
 use crate::state::*;
 
@@ -14,7 +14,7 @@ const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `automation_create` instruction.
 #[derive(Accounts)]
-#[instruction(amount: u64, id: Vec<u8>, instructions: Vec<Ix>,  trigger: Trigger)]
+#[instruction(amount: u64, id: Vec<u8>, instructions: Vec<SerializableInstruction>,  trigger: Trigger)]
 pub struct AutomationCreate<'info> {
     /// The authority (owner) of the automation.
     #[account()]
@@ -37,7 +37,7 @@ pub struct AutomationCreate<'info> {
             id.as_slice(),
         ],
         bump,
-        payer = payer,
+        payer= payer,
         space = vec![
             8, 
             size_of::<Automation>(), 
@@ -49,7 +49,7 @@ pub struct AutomationCreate<'info> {
     pub automation: Account<'info, Automation>,
 }
 
-pub fn handler(ctx: Context<AutomationCreate>, amount: u64, id: Vec<u8>, instructions: Vec<Ix>, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<AutomationCreate>, amount: u64, id: Vec<u8>, instructions: Vec<SerializableInstruction>, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let payer = &ctx.accounts.payer;

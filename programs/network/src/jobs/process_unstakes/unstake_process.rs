@@ -1,10 +1,8 @@
-use anchor_lang::{prelude::*, InstructionData};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{errors::*, instruction, state::*};
+use crate::{errors::*, state::*};
 
 #[derive(Accounts)]
 pub struct UnstakeProcess<'info> {
@@ -137,16 +135,20 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         .lt(&registry.total_unstakes)
     {
         let next_unstake_pubkey = Unstake::pubkey(unstake.id.checked_add(1).unwrap());
-        Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::readonly(automation.key(), true),
-                SerializableAccount::readonly(next_unstake_pubkey, false),
-            ],
-            data: instruction::UnstakePreprocess {}.data(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::UnstakePreprocess {
+                    config: config.key(),
+                    registry: registry.key(),
+                    automation: automation.key(),
+                    unstake: next_unstake_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::UnstakePreprocess {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };

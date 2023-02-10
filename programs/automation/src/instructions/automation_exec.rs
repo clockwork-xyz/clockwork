@@ -7,7 +7,7 @@ use anchor_lang::{
     AnchorDeserialize,
 };
 use clockwork_network_program::state::{Fee, Pool, Worker, WorkerAccount};
-use clockwork_utils::automation::{Ix, AutomationResponse, PAYER_PUBKEY};
+use clockwork_utils::automation::{AutomationResponse, PAYER_PUBKEY};
 
 use crate::{errors::ClockworkError, state::*};
 
@@ -81,7 +81,7 @@ pub fn handler(ctx: Context<AutomationExec>) -> Result<()> {
 
     // Get the instruction to execute.
     // We have already verified that it is not null during account validation.
-    let next_instruction: &Option<Ix> = &automation.clone().next_instruction;
+    let next_instruction: &Option<SerializableInstruction> = &automation.clone().next_instruction;
     let instruction = next_instruction.as_ref().unwrap();
 
     // Inject the signatory's pubkey for the Clockwork payer ID.

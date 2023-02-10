@@ -1,12 +1,11 @@
-use {
-    crate::errors::CliError,
-    clockwork_client::{
-        automation::state::{Automation, AutomationSettings, Ix, Trigger},
-        Client,
-    },
-    clockwork_utils::CrateInfo,
-    solana_sdk::pubkey::Pubkey,
+use clockwork_client::{
+    automation::state::{Automation, AutomationSettings, SerializableInstruction, Trigger},
+    Client,
 };
+use clockwork_utils::CrateInfo;
+use solana_sdk::pubkey::Pubkey;
+
+use crate::errors::CliError;
 
 pub fn crate_info(client: &Client) -> Result<(), CliError> {
     let ix = clockwork_client::automation::instruction::get_crate_info();
@@ -18,7 +17,7 @@ pub fn crate_info(client: &Client) -> Result<(), CliError> {
 pub fn create(
     client: &Client,
     id: String,
-    instructions: Vec<Ix>,
+    instructions: Vec<SerializableInstruction>,
     trigger: Trigger,
 ) -> Result<(), CliError> {
     let automation_pubkey = Automation::pubkey(client.payer_pubkey(), id.clone().into_bytes());

@@ -1,7 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{  AutomationResponse, InstructionBuilder};
+use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{state::*, instruction};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessEntry<'info> {
@@ -100,26 +100,33 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
     // Build the next instruction
     let dynamic_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
         // Move on to the next entry.
-        Some(InstructionBuilder::new(crate::ID)
-            .readonly_account(config.key())
-            .readonly_account(registry.key())
-            .mutable_account(snapshot.key())
-            .mutable_account(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()))
-            .mutable_account(snapshot_frame.key())
-            .signer(automation.key())
-            .data(instruction::DeleteSnapshotProcessEntry{}.data())
-            .build()
+        Some (
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessEntry {
+                    config:config.key(),
+                    registry:registry.key(),
+                    snapshot:snapshot.key(),
+                    snapshot_entry:SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()),
+                    snapshot_frame:snapshot_frame.key(),
+                    automation: automation.key(),
+                }.to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessEntry{}.data()
+            }.into()
         )
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // This frame has no more entries. Move onto the next frame.
-        Some(InstructionBuilder::new(crate::ID)
-            .readonly_account(config.key())
-            .readonly_account(registry.key())
-            .mutable_account(snapshot.key())
-            .mutable_account(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()))
-            .signer(automation.key())
-            .data(instruction::DeleteSnapshotProcessFrame{}.data())
-            .build())
+        Some(Instruction {
+            program_id: crate::ID,
+            accounts: crate::accounts::DeleteSnapshotProcessFrame {
+                config: config.key(), 
+                registry: registry.key(), 
+                snapshot: snapshot.key(), 
+                snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), 
+                automation: automation.key(),
+            }.to_account_metas(Some(true)),
+            data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
+        }.into())
     } else {
         // This frame as no more entires and it was the last frame in the snapshot. We are done!
         None

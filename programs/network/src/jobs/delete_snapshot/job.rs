@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use clockwork_utils::automation::AutomationResponse;
 
-use crate::{
-    delete_snapshot::process_snapshot::DeleteSnapshotProcessSnapshotInstruction, state::*,
-};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotJob<'info> {
@@ -25,15 +23,21 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
     let registry = &ctx.accounts.registry;
     let automation = &mut ctx.accounts.automation;
 
-    let ix = DeleteSnapshotProcessSnapshotInstruction::build(
-        config.key(),
-        registry.key(),
-        Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
-        automation.key(),
-    );
-
     Ok(AutomationResponse {
-        dynamic_instruction: Some(ix),
+        dynamic_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessSnapshot {
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
+                    automation: automation.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessSnapshot {}.data(),
+            }
+            .into(),
+        ),
         trigger: None,
     })
 }

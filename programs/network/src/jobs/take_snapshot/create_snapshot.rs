@@ -1,12 +1,14 @@
 use std::mem::size_of;
 
-use anchor_lang::{prelude::*, solana_program::system_program, InstructionData};
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction, PAYER_PUBKEY,
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData,
 };
+use anchor_spl::associated_token::get_associated_token_address;
+use clockwork_utils::automation::{AutomationResponse, PAYER_PUBKEY};
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct TakeSnapshotCreateSnapshot<'info> {
@@ -57,24 +59,25 @@ pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<AutomationRes
             // The registry has workers. Create a snapshot frame for the zeroth worker.
             let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
             let worker_pubkey = Worker::pubkey(0);
-            Some(SerializableInstruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    SerializableAccount::readonly(config.key(), false),
-                    SerializableAccount::mutable(PAYER_PUBKEY, true),
-                    SerializableAccount::readonly(registry.key(), false),
-                    SerializableAccount::mutable(snapshot.key(), false),
-                    SerializableAccount::mutable(snapshot_frame_pubkey, false),
-                    SerializableAccount::readonly(system_program.key(), false),
-                    SerializableAccount::readonly(automation.key(), true),
-                    SerializableAccount::readonly(worker_pubkey, false),
-                    SerializableAccount::readonly(
-                        get_associated_token_address(&worker_pubkey, &config.mint),
-                        false,
-                    ),
-                ],
-                data: instruction::TakeSnapshotCreateFrame {}.data(),
-            })
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::TakeSnapshotCreateFrame {
+                        config: config.key(),
+                        payer: PAYER_PUBKEY,
+                        registry: registry.key(),
+                        snapshot: snapshot.key(),
+                        snapshot_frame: snapshot_frame_pubkey,
+                        system_program: system_program.key(),
+                        automation: automation.key(),
+                        worker: worker_pubkey,
+                        worker_stake: get_associated_token_address(&worker_pubkey, &config.mint),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::TakeSnapshotCreateFrame {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

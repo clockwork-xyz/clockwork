@@ -1,7 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{AutomationResponse, InstructionBuilder};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DistributeFeesJob<'info> {
@@ -31,13 +31,18 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
     // Process the snapshot.
     Ok(AutomationResponse {
         dynamic_instruction: Some(
-            InstructionBuilder::new(crate::ID)
-                .readonly_account(config.key())
-                .readonly_account(registry.key())
-                .readonly_account(Snapshot::pubkey(registry.current_epoch))
-                .signer(automation.key())
-                .data(instruction::DistributeFeesProcessSnapshot {}.data())
-                .build(),
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessSnapshot {
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: Snapshot::pubkey(registry.current_epoch),
+                    automation: automation.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessSnapshot {}.data(),
+            }
+            .into(),
         ),
         trigger: None,
     })

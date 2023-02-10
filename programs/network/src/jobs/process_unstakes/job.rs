@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct ProcessUnstakesJob<'info> {
@@ -29,16 +27,20 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
     // Return next instruction for automation.
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_unstakes.gt(&0) {
-            Some(SerializableInstruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    SerializableAccount::readonly(config.key(), false),
-                    SerializableAccount::readonly(registry.key(), false),
-                    SerializableAccount::readonly(automation.key(), true),
-                    SerializableAccount::readonly(Unstake::pubkey(0), false),
-                ],
-                data: instruction::UnstakePreprocess {}.data(),
-            })
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::UnstakePreprocess {
+                        config: config.key(),
+                        registry: registry.key(),
+                        automation: automation.key(),
+                        unstake: Unstake::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::UnstakePreprocess {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

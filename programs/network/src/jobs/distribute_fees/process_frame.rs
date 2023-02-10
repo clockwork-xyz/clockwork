@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DistributeFeesProcessFrame<'info> {
@@ -93,21 +91,25 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         let snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
-        Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::mutable(delegation_pubkey, false),
-                SerializableAccount::mutable(fee.key(), false),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::readonly(snapshot.key(), false),
-                SerializableAccount::readonly(snapshot_entry_pubkey.key(), false),
-                SerializableAccount::readonly(snapshot_frame.key(), false),
-                SerializableAccount::readonly(automation.key(), true),
-                SerializableAccount::readonly(worker.key(), false),
-            ],
-            data: instruction::DistributeFeesProcessEntry {}.data(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessEntry {
+                    config: config.key(),
+                    delegation: delegation_pubkey,
+                    fee: fee.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: snapshot_entry_pubkey.key(),
+                    snapshot_frame: snapshot_frame.key(),
+                    automation: automation.key(),
+                    worker: worker.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessEntry {}.data(),
+            }
+            .into(),
+        )
     } else if snapshot_frame
         .id
         .checked_add(1)
@@ -118,19 +120,23 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<AutomationRes
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
-        Some(SerializableInstruction {
-            program_id: crate::ID,
-            accounts: vec![
-                SerializableAccount::readonly(config.key(), false),
-                SerializableAccount::mutable(Fee::pubkey(next_worker_pubkey), false),
-                SerializableAccount::readonly(registry.key(), false),
-                SerializableAccount::readonly(snapshot.key(), false),
-                SerializableAccount::readonly(next_snapshot_frame_pubkey, false),
-                SerializableAccount::readonly(automation.key(), true),
-                SerializableAccount::mutable(next_worker_pubkey, false),
-            ],
-            data: instruction::DistributeFeesProcessFrame {}.data(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessFrame {
+                    config: config.key(),
+                    fee: Fee::pubkey(next_worker_pubkey),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: next_snapshot_frame_pubkey,
+                    automation: automation.key(),
+                    worker: next_worker_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessFrame {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };

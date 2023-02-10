@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::*, InstructionData};
-use clockwork_utils::automation::{
-    AutomationResponse, SerializableAccount, SerializableInstruction,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
 
-use crate::{instruction, state::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct StakeDelegationsJob<'info> {
@@ -27,16 +25,20 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> 
 
     Ok(AutomationResponse {
         dynamic_instruction: if registry.total_workers.gt(&0) {
-            Some(SerializableInstruction {
-                program_id: crate::ID,
-                accounts: vec![
-                    SerializableAccount::readonly(config.key(), false),
-                    SerializableAccount::readonly(registry.key(), false),
-                    SerializableAccount::readonly(automation.key(), true),
-                    SerializableAccount::readonly(Worker::pubkey(0), false),
-                ],
-                data: instruction::StakeDelegationsProcessWorker.data(),
-            })
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::StakeDelegationsProcessWorker {
+                        config: config.key(),
+                        registry: registry.key(),
+                        automation: automation.key(),
+                        worker: Worker::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

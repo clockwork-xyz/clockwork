@@ -1,10 +1,9 @@
-use clockwork_utils::automation::{AutomationResponse, SerializableInstruction, SerializableAccount, InstructionBuilder};
-use clockwork_macros::Clockwork;
-use anchor_lang::{prelude::*, InstructionData};
+use clockwork_utils::automation::AutomationResponse;
+use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
 
-use crate::{state::*, instruction};
+use crate::state::*;
 
-#[derive(Accounts, Clockwork)]
+#[derive(Accounts)]
 pub struct DeleteSnapshotProcessSnapshot<'info> {
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
@@ -55,14 +54,17 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<Automation
     let dynamic_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
         Some(
-            InstructionBuilder::new(crate::ID)
-            .readonly_account(config.key())
-            .readonly_account(registry.key())
-            .mutable_account(snapshot.key())
-            .mutable_account(SnapshotFrame::pubkey(snapshot.key(), 0))
-            .signer(automation.key())
-            .data(instruction::DeleteSnapshotProcessFrame{}.data())
-            .build()
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessFrame {
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), 0),
+                    automation: automation.key(),
+                }.to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
+            }.into()
         )
     } else {
         // This snaphot has no frames. We are done!

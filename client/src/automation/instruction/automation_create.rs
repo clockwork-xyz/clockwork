@@ -1,20 +1,18 @@
-use {
-    anchor_lang::{
-        solana_program::{
-            instruction::{AccountMeta, Instruction},
-            pubkey::Pubkey,
-            system_program,
-        },
-        InstructionData,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        system_program,
     },
-    clockwork_automation_program::state::{Ix, Trigger},
+    InstructionData,
 };
+use clockwork_automation_program::state::{SerializableInstruction, Trigger};
 
 pub fn automation_create(
     amount: u64,
     authority: Pubkey,
     id: Vec<u8>,
-    instructions: Vec<Ix>,
+    instructions: Vec<SerializableInstruction>,
     payer: Pubkey,
     automation: Pubkey,
     trigger: Trigger,
