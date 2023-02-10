@@ -390,6 +390,7 @@ impl TxExecutor {
         if let Some(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
+            slot,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,

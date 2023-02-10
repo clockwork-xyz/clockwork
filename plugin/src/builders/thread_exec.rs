@@ -33,6 +33,7 @@ static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 1000;
 pub async fn build_thread_exec_tx(
     client: Arc<RpcClient>,
     payer: &Keypair,
+    slot: u64,
     thread: Thread,
     thread_pubkey: Pubkey,
     worker_id: u64,
@@ -71,15 +72,14 @@ pub async fn build_thread_exec_tx(
             .simulate_transaction_with_config(
                 &sim_tx,
                 RpcSimulateTransactionConfig {
+                    sig_verify: false,
                     replace_recent_blockhash: true,
                     commitment: Some(CommitmentConfig::processed()),
                     accounts: Some(RpcSimulateTransactionAccountsConfig {
                         encoding: Some(UiAccountEncoding::Base64Zstd),
-                        addresses: vec![
-                            thread_pubkey.to_string(),
-                            solana_program::sysvar::clock::ID.to_string(),
-                        ],
+                        addresses: vec![thread_pubkey.to_string()],
                     }),
+                    min_context_slot: Some(slot),
                     ..RpcSimulateTransactionConfig::default()
                 },
             )
@@ -106,7 +106,8 @@ pub async fn build_thread_exec_tx(
                             .unwrap();
                         let clock = bincode::deserialize::<Clock>(&clock_data.value.unwrap().data);
                         info!(
-                            "thread: {} simulation_error: \"{}\" logs: {:?} thread_data: {:?} clock: {:?}",
+                            "slot: {} thread: {} simulation_error: \"{}\" logs: {:?} thread_data: {:?} clock: {:?}",
+                            slot,
                             thread_pubkey,
                             response.value.err.unwrap(),
                             response.value.logs.unwrap_or(vec![]),
@@ -176,7 +177,8 @@ pub async fn build_thread_exec_tx(
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[payer], blockhash);
     info!(
-        "thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        slot,
         thread_pubkey,
         now.elapsed(),
         successful_ixs.len(),
