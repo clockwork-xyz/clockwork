@@ -96,8 +96,8 @@ pub async fn build_thread_exec_tx(
                         match rpc_err {
                             solana_client::rpc_request::RpcError::RpcResponseError {
                                 code,
-                                _message,
-                                _data,
+                                message: _,
+                                data: _,
                             } => {
                                 if code.eq(&JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED) {
                                     return Err(GeyserPluginError::Custom(
