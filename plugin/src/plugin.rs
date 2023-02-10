@@ -90,7 +90,7 @@ impl GeyserPlugin for ClockworkPlugin {
         };
         dbg!("A {:?}", account_info);
         let account_pubkey = Pubkey::new(account_info.pubkey);
-        dbg!("B {:?}", automation_pubkey);
+        dbg!("B {:?}", account_pubkey);
         let event = AccountUpdateEvent::try_from(account_info);
         dbg!("C {:?}", event);
 
