@@ -127,6 +127,7 @@ impl AutomationObserver {
         slot: u64,
     ) -> PluginResult<()> {
         // If the automation is paused, just return without indexing
+        info!("Observe automation: {:?} slot: {}", automation_pubkey, slot);
         if automation.paused() {
             return Ok(());
         }
