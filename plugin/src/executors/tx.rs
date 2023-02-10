@@ -23,7 +23,7 @@ use solana_client::{
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
-use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
@@ -278,22 +278,14 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
             } else {
                 // This worker is in the pool. Get pubkeys executable threads.
                 r_executable_threads
                     .iter()
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
                     .map(|(pubkey, _metadata)| *pubkey)
                     .collect::<Vec<Pubkey>>()
             };
@@ -490,20 +482,24 @@ impl Debug for TxExecutor {
 }
 
 /// BlockhashAgnosticHash
-trait BlockhashAgnosticHash {
-    fn blockhash_agnostic_hash(&self) -> Hash;
-}
+// trait BlockhashAgnosticHash {
+//     fn blockhash_agnostic_hash(&self) -> Hash;
+// }
 
-impl BlockhashAgnosticHash for Message {
-    fn blockhash_agnostic_hash(&self) -> Hash {
-        Message {
-            header: self.header.clone(),
-            account_keys: self.account_keys.clone(),
-            recent_blockhash: Hash::default(),
-            instructions: self.instructions.clone(),
-        }
-        .hash()
-    }
+// impl BlockhashAgnosticHash for Message {
+//     fn blockhash_agnostic_hash(&self) -> Hash {
+//         Message {
+//             header: self.header.clone(),
+//             account_keys: self.account_keys.clone(),
+//             recent_blockhash: Hash::default(),
+//             instructions: self.instructions.clone(),
+//         }
+//         .hash()
+//     }
+// }
+
+fn exponential_backoff_threshold(metadata: &ExecutableThreadMetadata) -> u64 {
+    metadata.due_slot + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64 - 1
 }
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
