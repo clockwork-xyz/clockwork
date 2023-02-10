@@ -86,7 +86,11 @@ pub async fn build_thread_exec_tx(
             .await
         {
             // If there was a simulation error, stop packing and exit now.
-            Err(_err) => {
+            Err(err) => {
+                info!(
+                    "slot: {} thread: {} rpc_error_simulating: {}",
+                    slot, thread_pubkey, err,
+                );
                 break;
             }
 
