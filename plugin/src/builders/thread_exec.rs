@@ -10,6 +10,10 @@ use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig},
+    rpc_custom_error::JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
+};
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -37,7 +41,7 @@ pub async fn build_thread_exec_tx(
     thread: Thread,
     thread_pubkey: Pubkey,
     worker_id: u64,
-) -> Option<Transaction> {
+) -> PluginResult<Option<Transaction>> {
     // Grab the thread and relevant data.
     let now = std::time::Instant::now();
     let blockhash = client.get_latest_blockhash().await.unwrap();
@@ -87,10 +91,26 @@ pub async fn build_thread_exec_tx(
         {
             // If there was a simulation error, stop packing and exit now.
             Err(err) => {
-                info!(
-                    "slot: {} thread: {} rpc_error_simulating: {}",
-                    slot, thread_pubkey, err,
-                );
+                match err.kind {
+                    solana_client::client_error::ClientErrorKind::RpcError(rpc_err) => {
+                        match rpc_err {
+                            solana_client::rpc_request::RpcError::RpcResponseError {
+                                code,
+                                message,
+                                data,
+                            } => {
+                                if code.eq(&JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED) {
+                                    return Err(GeyserPluginError::Custom(
+                                        format!("RPC client has not reached min context slot")
+                                            .into(),
+                                    ));
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
                 break;
             }
 
@@ -162,7 +182,7 @@ pub async fn build_thread_exec_tx(
 
     // If there were no successful instructions, then exit early. There is nothing to do.
     if successful_ixs.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
@@ -189,7 +209,7 @@ pub async fn build_thread_exec_tx(
         units_consumed,
         tx.signatures[0]
     );
-    Some(tx)
+    Ok(Some(tx))
 }
 
 fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {

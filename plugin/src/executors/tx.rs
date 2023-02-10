@@ -387,7 +387,7 @@ impl TxExecutor {
             Ok(thread) => thread,
         };
 
-        if let Some(tx) = crate::builders::build_thread_exec_tx(
+        if let Ok(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
             slot,
@@ -397,18 +397,22 @@ impl TxExecutor {
         )
         .await
         {
-            if self
-                .clone()
-                .dedupe_tx(slot, thread_pubkey, &tx)
-                .await
-                .is_ok()
-            {
-                Some((thread_pubkey, tx))
+            if let Some(tx) = tx {
+                if self
+                    .clone()
+                    .dedupe_tx(slot, thread_pubkey, &tx)
+                    .await
+                    .is_ok()
+                {
+                    Some((thread_pubkey, tx))
+                } else {
+                    None
+                }
             } else {
+                self.increment_simulation_failure(thread_pubkey).await;
                 None
             }
         } else {
-            self.increment_simulation_failure(thread_pubkey).await;
             None
         }
     }
