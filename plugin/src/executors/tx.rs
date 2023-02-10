@@ -173,24 +173,27 @@ impl TxExecutor {
         drop(r_transaction_history);
 
         // Lookup transaction statuses and track which threads are successful / retriable.
+        let mut failed_threads: HashSet<Pubkey> = HashSet::new();
         let mut retriable_threads: HashSet<Pubkey> = HashSet::new();
         let mut successful_threads: HashSet<Pubkey> = HashSet::new();
         for data in checkable_transactions {
             match client
                 .get_signature_status_with_commitment(
                     &data.signature,
-                    CommitmentConfig::confirmed(),
+                    CommitmentConfig::processed(),
                 )
                 .await
             {
                 Err(_err) => {}
                 Ok(status) => match status {
                     None => {
+                        info!("Retrying thread: {:?}", data.thread_pubkey);
                         retriable_threads.insert(data.thread_pubkey);
                     }
                     Some(status) => match status {
-                        Err(_err) => {
-                            retriable_threads.insert(data.thread_pubkey);
+                        Err(err) => {
+                            info!("Thread failed: {:?} err: {:?}", data.thread_pubkey, err);
+                            failed_threads.insert(data.thread_pubkey);
                         }
                         Ok(()) => {
                             successful_threads.insert(data.thread_pubkey);
@@ -204,6 +207,9 @@ impl TxExecutor {
         let mut w_transaction_history = self.transaction_history.write().await;
         let mut w_executable_threads = self.executable_threads.write().await;
         for pubkey in successful_threads {
+            w_transaction_history.remove(&pubkey);
+        }
+        for pubkey in failed_threads {
             w_transaction_history.remove(&pubkey);
         }
         for pubkey in retriable_threads {
