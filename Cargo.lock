@@ -969,7 +969,6 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "signal-hook",
  "simple-error",
  "solana-account-decoder",
  "solana-client",
@@ -3453,16 +3452,6 @@ checksum = "e2904bea16a1ae962b483322a1c7b81d976029203aea1f461e51cd7705db7ba9"
 dependencies = [
  "digest 0.10.5",
  "keccak",
-]
-
-[[package]]
-name = "signal-hook"
-version = "0.3.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a253b5e89e2698464fc26b545c9edceb338e18a89effeeecfea192c3025be29d"
-dependencies = [
- "libc",
- "signal-hook-registry",
 ]
 
 [[package]]

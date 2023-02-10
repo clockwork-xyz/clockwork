@@ -68,7 +68,6 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         // Parse account info.
         // signal_hook::flag::register(signal_hook::consts::SIGSEGV);
-        dbg!("got account");
         let account_info = &mut match account {
             ReplicaAccountInfoVersions::V0_0_1(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,
@@ -89,7 +88,7 @@ impl GeyserPlugin for ClockworkPlugin {
                 write_version: account_info.write_version,
             },
         };
-        dbg!("A", account_info.clone());
+        dbg!("A");
         let account_pubkey = Pubkey::new(account_info.pubkey);
         dbg!("B", account_pubkey);
         let event = AccountUpdateEvent::try_from(account_info);
@@ -112,7 +111,6 @@ impl GeyserPlugin for ClockworkPlugin {
             if let Ok(event) = event {
                 match event {
                     AccountUpdateEvent::Clock { clock } => {
-                        dbg!("D clock");
                         inner
                             .observers
                             .automation
@@ -134,7 +132,6 @@ impl GeyserPlugin for ClockworkPlugin {
                             .ok();
                     }
                     AccountUpdateEvent::Automation { automation } => {
-                        dbg!("D automation");
                         inner
                             .observers
                             .automation
