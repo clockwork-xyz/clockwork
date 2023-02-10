@@ -187,12 +187,18 @@ impl TxExecutor {
                 Err(_err) => {}
                 Ok(status) => match status {
                     None => {
-                        info!("Retrying thread: {:?}", data.thread_pubkey);
+                        info!(
+                            "Retrying thread: {:?} missing_signature: {:?}",
+                            data.thread_pubkey, data.signature
+                        );
                         retriable_threads.insert(data.thread_pubkey);
                     }
                     Some(status) => match status {
                         Err(err) => {
-                            info!("Thread failed: {:?} err: {:?}", data.thread_pubkey, err);
+                            info!(
+                                "Thread failed: {:?} failed_signature: {:?} err: {:?}",
+                                data.thread_pubkey, data.signature, err
+                            );
                             failed_threads.insert(data.thread_pubkey);
                         }
                         Ok(()) => {
