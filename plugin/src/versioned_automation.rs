@@ -4,7 +4,8 @@ use anchor_lang::{
 };
 use clockwork_automation_program_v1::state::Thread as AutomationV1;
 use clockwork_automation_program_v2::state::{
-    Automation as AutomationV2, ClockData, ExecContext, InstructionData, Trigger, TriggerContext,
+    AccountMetaData, Automation as AutomationV2, ClockData, ExecContext, InstructionData, Trigger,
+    TriggerContext,
 };
 
 #[derive(Debug)]
@@ -58,19 +59,21 @@ impl VersionedAutomation {
         match self {
             Self::V1(t) => match &t.next_instruction {
                 None => None,
-                Some(ix) => Some(unsafe {
-                    std::mem::transmute_copy::<
-                        clockwork_automation_program_v1::state::InstructionData,
-                        InstructionData,
-                    >(ix)
+                Some(ix) => Some(InstructionData {
+                    program_id: ix.program_id,
+                    accounts: ix
+                        .accounts
+                        .iter()
+                        .map(|a| unsafe {
+                            std::mem::transmute_copy::<
+                                clockwork_automation_program_v1::state::AccountMetaData,
+                                AccountMetaData,
+                            >(a)
+                        })
+                        .collect::<Vec<AccountMetaData>>(),
+                    data: ix.data.clone(),
                 }),
             },
-            //         unsafe {
-            //     std::mem::transmute_copy::<
-            //         Option<clockwork_automation_program_v1::state::InstructionData>,
-            //         Option<InstructionData>,
-            //     >(&t.next_instruction)
-            // },
             Self::V2(t) => t.next_instruction.clone(),
         }
     }
