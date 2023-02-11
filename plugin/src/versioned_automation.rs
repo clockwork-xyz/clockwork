@@ -15,7 +15,7 @@ pub enum VersionedAutomation {
 
 impl VersionedAutomation {
     pub fn authority(&self) -> Pubkey {
-        dbg!("versioned authority()", self);
+        dbg!("versioned authority()");
         match self {
             Self::V1(t) => t.authority,
             Self::V2(t) => t.authority,
@@ -23,7 +23,7 @@ impl VersionedAutomation {
     }
 
     pub fn created_at(&self) -> ClockData {
-        dbg!("versioned created_at()", self);
+        dbg!("versioned created_at()");
         match self {
             Self::V1(t) => ClockData {
                 slot: t.created_at.slot,
@@ -35,7 +35,7 @@ impl VersionedAutomation {
     }
 
     pub fn exec_context(&self) -> Option<ExecContext> {
-        dbg!("versioned exec_context()", self);
+        dbg!("versioned exec_context()");
         match self {
             Self::V1(t) => t.exec_context.map(|e| ExecContext {
                 exec_index: 0,
@@ -54,7 +54,7 @@ impl VersionedAutomation {
     }
 
     pub fn next_instruction(&self) -> Option<InstructionData> {
-        dbg!("versioned next_instruction()", self);
+        dbg!("versioned next_instruction()");
         match self {
             Self::V1(t) => unsafe {
                 std::mem::transmute_copy::<
@@ -67,7 +67,7 @@ impl VersionedAutomation {
     }
 
     pub fn paused(&self) -> bool {
-        dbg!("versioned paused()", self);
+        dbg!("versioned paused()");
         match self {
             Self::V1(t) => t.paused,
             Self::V2(t) => t.paused,
@@ -75,7 +75,7 @@ impl VersionedAutomation {
     }
 
     pub fn rate_limit(&self) -> u64 {
-        dbg!("versioned rate_limit()", self);
+        dbg!("versioned rate_limit()");
         match self {
             Self::V1(t) => t.rate_limit,
             Self::V2(t) => t.rate_limit,
@@ -83,7 +83,7 @@ impl VersionedAutomation {
     }
 
     pub fn trigger(&self) -> Trigger {
-        dbg!("versioned trigger()", self);
+        dbg!("versioned trigger()");
         match self {
             Self::V1(t) => unsafe {
                 // TODO Handle case where we rename trigger value

@@ -127,7 +127,6 @@ impl AutomationObserver {
         slot: u64,
     ) -> PluginResult<()> {
         // If the automation is paused, just return without indexing
-        info!("Observe automation: {:?} slot: {}", automation_pubkey, slot);
         if automation.paused() {
             return Ok(());
         }
@@ -138,9 +137,9 @@ impl AutomationObserver {
         );
         if automation.next_instruction().is_some() {
             // If the automation has a next instruction, index it as executable.
-            let mut w_immediate_automations = self.immediate_automations.write().await;
-            w_immediate_automations.insert(automation_pubkey);
-            drop(w_immediate_automations);
+            // let mut w_immediate_automations = self.immediate_automations.write().await;
+            // w_immediate_automations.insert(automation_pubkey);
+            // drop(w_immediate_automations);
         } else {
             // Otherwise, index the automation according to its trigger type.
             match automation.trigger() {
@@ -150,54 +149,54 @@ impl AutomationObserver {
                     size: _,
                 } => {
                     // Index the automation by its trigger's account pubkey.
-                    let mut w_account_automations = self.account_automations.write().await;
-                    w_account_automations
-                        .entry(address)
-                        .and_modify(|v| {
-                            v.insert(automation_pubkey);
-                        })
-                        .or_insert_with(|| {
-                            let mut v = HashSet::new();
-                            v.insert(automation_pubkey);
-                            v
-                        });
-                    drop(w_account_automations);
+                    // let mut w_account_automations = self.account_automations.write().await;
+                    // w_account_automations
+                    //     .entry(address)
+                    //     .and_modify(|v| {
+                    //         v.insert(automation_pubkey);
+                    //     })
+                    //     .or_insert_with(|| {
+                    //         let mut v = HashSet::new();
+                    //         v.insert(automation_pubkey);
+                    //         v
+                    //     });
+                    // drop(w_account_automations);
                 }
                 Trigger::Cron {
                     schedule,
                     skippable: _,
                 } => {
                     // Find a reference timestamp for calculating the automation's upcoming target time.
-                    let reference_timestamp = match automation.exec_context() {
-                        None => automation.created_at().unix_timestamp,
-                        Some(exec_context) => match exec_context.trigger_context {
-                            TriggerContext::Cron { started_at } => started_at,
-                            _ => {
-                                return Err(GeyserPluginError::Custom(
-                                    "Invalid exec context".into(),
-                                ))
-                            }
-                        },
-                    };
+                    // let reference_timestamp = match automation.exec_context() {
+                    //     None => automation.created_at().unix_timestamp,
+                    //     Some(exec_context) => match exec_context.trigger_context {
+                    //         TriggerContext::Cron { started_at } => started_at,
+                    //         _ => {
+                    //             return Err(GeyserPluginError::Custom(
+                    //                 "Invalid exec context".into(),
+                    //             ))
+                    //         }
+                    //     },
+                    // };
 
-                    // Index the automation to its target timestamp
-                    match next_moment(reference_timestamp, schedule) {
-                        None => {} // The automation does not have any upcoming scheduled target time
-                        Some(target_timestamp) => {
-                            let mut w_cron_automations = self.cron_automations.write().await;
-                            w_cron_automations
-                                .entry(target_timestamp)
-                                .and_modify(|v| {
-                                    v.insert(automation_pubkey);
-                                })
-                                .or_insert_with(|| {
-                                    let mut v = HashSet::new();
-                                    v.insert(automation_pubkey);
-                                    v
-                                });
-                            drop(w_cron_automations);
-                        }
-                    }
+                    // // Index the automation to its target timestamp
+                    // match next_moment(reference_timestamp, schedule) {
+                    //     None => {} // The automation does not have any upcoming scheduled target time
+                    //     Some(target_timestamp) => {
+                    //         let mut w_cron_automations = self.cron_automations.write().await;
+                    //         w_cron_automations
+                    //             .entry(target_timestamp)
+                    //             .and_modify(|v| {
+                    //                 v.insert(automation_pubkey);
+                    //             })
+                    //             .or_insert_with(|| {
+                    //                 let mut v = HashSet::new();
+                    //                 v.insert(automation_pubkey);
+                    //                 v
+                    //             });
+                    //         drop(w_cron_automations);
+                    //     }
+                    // }
                 }
                 Trigger::Immediate => {
                     let mut w_immediate_automations = self.immediate_automations.write().await;
