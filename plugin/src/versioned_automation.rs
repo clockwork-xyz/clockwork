@@ -56,12 +56,21 @@ impl VersionedAutomation {
     pub fn next_instruction(&self) -> Option<InstructionData> {
         dbg!("versioned next_instruction()");
         match self {
-            Self::V1(t) => unsafe {
-                std::mem::transmute_copy::<
-                    Option<clockwork_automation_program_v1::state::InstructionData>,
-                    Option<InstructionData>,
-                >(&t.next_instruction)
+            Self::V1(t) => match &t.next_instruction {
+                None => None,
+                Some(ix) => Some(unsafe {
+                    std::mem::transmute_copy::<
+                        clockwork_automation_program_v1::state::InstructionData,
+                        InstructionData,
+                    >(ix)
+                }),
             },
+            //         unsafe {
+            //     std::mem::transmute_copy::<
+            //         Option<clockwork_automation_program_v1::state::InstructionData>,
+            //         Option<InstructionData>,
+            //     >(&t.next_instruction)
+            // },
             Self::V2(t) => t.next_instruction.clone(),
         }
     }
