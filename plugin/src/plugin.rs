@@ -128,13 +128,13 @@ impl GeyserPlugin for ClockworkPlugin {
                             .ok();
                     }
                     AccountUpdateEvent::Automation { automation } => {
-                        inner
-                            .observers
-                            .automation
-                            .clone()
-                            .observe_automation(automation, account_pubkey, slot)
-                            .await
-                            .ok();
+                        // inner
+                        //     .observers
+                        //     .automation
+                        //     .clone()
+                        //     .observe_automation(automation, account_pubkey, slot)
+                        //     .await
+                        //     .ok();
                     }
                 }
             }
