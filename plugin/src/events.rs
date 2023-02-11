@@ -3,7 +3,6 @@ use bincode::deserialize;
 use clockwork_automation_program_v1::state::Thread as AutomationV1;
 use clockwork_automation_program_v2::state::Automation as AutomationV2;
 use clockwork_client::webhook::state::Request;
-use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
@@ -38,10 +37,8 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
 
         // If the account belongs to the automation v1 program, parse it.
         if owner_pubkey.eq(&clockwork_automation_program_v1::ID) && account_info.data.len() > 8 {
-            dbg!("automation program v1", account_pubkey);
             let d = &account_info.data[..8];
             if d.eq(&AutomationV1::discriminator()) {
-                dbg!("automation v1", account_pubkey);
                 return Ok(AccountUpdateEvent::Automation {
                     automation: VersionedAutomation::V1(
                         AutomationV1::try_deserialize(&mut account_info.data).map_err(|_| {
