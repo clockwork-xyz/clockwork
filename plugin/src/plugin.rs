@@ -87,8 +87,8 @@ impl GeyserPlugin for ClockworkPlugin {
                 write_version: account_info.write_version,
             },
         };
-        // let account_pubkey = Pubkey::new(account_info.pubkey);
-        // let event = AccountUpdateEvent::try_from(account_info);
+        let account_pubkey = Pubkey::new(account_info.pubkey);
+        let event = AccountUpdateEvent::try_from(account_info);
 
         // Process event on tokio task.
         // self.inner.clone().spawn(|inner| async move {
