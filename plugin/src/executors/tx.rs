@@ -488,23 +488,6 @@ impl Debug for TxExecutor {
     }
 }
 
-/// BlockhashAgnosticHash
-// trait BlockhashAgnosticHash {
-//     fn blockhash_agnostic_hash(&self) -> Hash;
-// }
-
-// impl BlockhashAgnosticHash for Message {
-//     fn blockhash_agnostic_hash(&self) -> Hash {
-//         Message {
-//             header: self.header.clone(),
-//             account_keys: self.account_keys.clone(),
-//             recent_blockhash: Hash::default(),
-//             instructions: self.instructions.clone(),
-//         }
-//         .hash()
-//     }
-// }
-
 fn exponential_backoff_threshold(metadata: &ExecutableThreadMetadata) -> u64 {
     metadata.due_slot + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64 - 1
 }

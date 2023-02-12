@@ -873,8 +873,6 @@ version = "1.4.4"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
- "chrono",
- "clockwork-cron",
  "static-pubkey",
 ]
 
