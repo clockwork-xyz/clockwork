@@ -4,8 +4,8 @@ use anchor_lang::{
 };
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
 use clockwork_thread_program_v2::state::{
-    SerializableAccount, Thread as ThreadV2, ClockData, ExecContext, SerializableInstruction, Trigger,
-    TriggerContext,
+    ClockData, ExecContext, SerializableAccount, SerializableInstruction, Thread as ThreadV2,
+    Trigger, TriggerContext,
 };
 
 #[derive(Clone, Debug)]

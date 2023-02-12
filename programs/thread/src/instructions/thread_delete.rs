@@ -20,7 +20,7 @@ pub struct ThreadDelete<'info> {
             thread.id.as_slice(),
         ],
         bump = thread.bump,
-        has_one = authority,
+        constraint = thread.authority.eq(&authority.key()) || thread.key().eq(&authority.key()),
         close = close_to
     )]
     pub thread: Account<'info, Thread>,
