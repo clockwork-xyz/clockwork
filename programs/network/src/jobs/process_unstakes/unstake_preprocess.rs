@@ -1,8 +1,6 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
-};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -31,26 +29,28 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
     let thread = &ctx.accounts.thread;
     let unstake = &ctx.accounts.unstake;
 
-    // Return next instruction for thread.
+    // Return next instruction for automation.
     Ok(ThreadResponse {
-        next_instruction: Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(unstake.authority, false),
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(unstake.delegation, false),
-                AccountMetaData::new(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(anchor_spl::token::ID, false),
-                AccountMetaData::new(unstake.key(), false),
-                AccountMetaData::new_readonly(unstake.worker, false),
-                AccountMetaData::new(
-                    get_associated_token_address(&unstake.worker, &config.mint),
-                    false,
-                ),
-            ],
-            data: anchor_sighash("unstake_process").to_vec(),
-        }),
+        dynamic_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::UnstakeProcess {
+                    authority: unstake.authority,
+                    authority_tokens: get_associated_token_address(&unstake.authority, &config.mint),
+                    config: config.key(),
+                    delegation: unstake.delegation,
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    token_program: anchor_spl::token::ID,
+                    unstake: unstake.key(),
+                    worker: unstake.worker,
+                    worker_tokens: get_associated_token_address(&unstake.worker, &config.mint),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::UnstakeProcess {}.data(),
+            }
+            .into(),
+        ),
         ..ThreadResponse::default()
     })
 }

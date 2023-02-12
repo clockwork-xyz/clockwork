@@ -39,8 +39,6 @@ pub fn handler<'info>(ctx: Context<ApiNew>, base_url: String) -> Result<()> {
     let authority = &mut ctx.accounts.authority;
     let api = &mut ctx.accounts.api;
 
-    // TODO Validate base_url
-
     // Initialize the api account
     api.init(ack_authority.key(), authority.key(), base_url)?;
 

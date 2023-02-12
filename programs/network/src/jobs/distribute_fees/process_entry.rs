@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -104,8 +102,8 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         .checked_add(distribution_balance)
         .unwrap();
 
-    // Build the next instruction for the thread.
-    let next_instruction = if snapshot_entry
+    // Build the next instruction for the automation.
+    let dynamic_instruction = if snapshot_entry
         .id
         .checked_add(1)
         .unwrap()
@@ -118,21 +116,25 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
             snapshot_frame.key(),
             snapshot_entry.id.checked_add(1).unwrap(),
         );
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(next_delegation_pubkey, false),
-                AccountMetaData::new(fee.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new_readonly(next_snapshot_entry_pubkey, false),
-                AccountMetaData::new_readonly(snapshot_frame.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(worker.key(), false),
-            ],
-            data: anchor_sighash("distribute_fees_process_entry").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessEntry {
+                    config: config.key(),
+                    delegation: next_delegation_pubkey,
+                    fee: fee.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: next_snapshot_entry_pubkey,
+                    snapshot_frame: snapshot_frame.key(),
+                    thread: thread.key(),
+                    worker: worker.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessEntry {}.data(),
+            }
+            .into(),
+        )
     } else if snapshot_frame
         .id
         .checked_add(1)
@@ -143,25 +145,29 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(Fee::pubkey(next_worker_pubkey), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new_readonly(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new(next_worker_pubkey, false),
-            ],
-            data: anchor_sighash("distribute_fees_process_frame").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessFrame {
+                    config: config.key(),
+                    fee: Fee::pubkey(next_worker_pubkey),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: next_snapshot_frame_pubkey,
+                    thread: thread.key(),
+                    worker: next_worker_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessFrame {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
     Ok(ThreadResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

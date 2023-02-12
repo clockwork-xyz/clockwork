@@ -23,8 +23,9 @@ pub fn handler(ctx: Context<EpochCutover>) -> Result<ThreadResponse> {
     let registry = &mut ctx.accounts.registry;
     registry.current_epoch = registry.current_epoch.checked_add(1).unwrap();
     registry.locked = false;
+    
     Ok(ThreadResponse {
-        next_instruction: None,
+        dynamic_instruction: None,
         trigger: None,
     })
 }

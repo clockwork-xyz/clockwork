@@ -1,6 +1,7 @@
-use clockwork_utils::thread::{anchor_sighash, AccountMetaData, InstructionData, ThreadResponse};
+use clockwork_utils::thread::ThreadResponse;
+use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
 
-use {crate::state::*, anchor_lang::prelude::*};
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessSnapshot<'info> {
@@ -50,23 +51,25 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResp
     }
 
     // Build next instruction the thread.
-    let next_instruction = if snapshot.total_frames.gt(&0) {
+    let dynamic_instruction = if snapshot.total_frames.gt(&0) {
         // There are frames in this snapshot. Delete them.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), 0), false),
-                AccountMetaData::new(thread.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessFrame {
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), 0),
+                    thread: thread.key(),
+                }.to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
+            }.into()
+        )
     } else {
         // This snaphot has no frames. We are done!
         None
     };
 
-    Ok(ThreadResponse { next_instruction, trigger: None })
+    Ok(ThreadResponse { dynamic_instruction, trigger: None })
 }

@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -26,17 +24,21 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<ThreadResponse> {
     let thread = &ctx.accounts.thread;
 
     Ok(ThreadResponse {
-        next_instruction: if registry.total_workers.gt(&0) {
-            Some(InstructionData {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new_readonly(thread.key(), true),
-                    AccountMetaData::new_readonly(Worker::pubkey(0), false),
-                ],
-                data: anchor_sighash("stake_delegations_process_worker").to_vec(),
-            })
+        dynamic_instruction: if registry.total_workers.gt(&0) {
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::StakeDelegationsProcessWorker {
+                        config: config.key(),
+                        registry: registry.key(),
+                        thread: thread.key(),
+                        worker: Worker::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

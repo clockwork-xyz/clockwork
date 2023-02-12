@@ -15,6 +15,7 @@ name = "clockwork_macros"
 proc-macro = true
 
 [dependencies]
+anchor-syn = "0.26.0"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "1.0.60", features = ["full"] }

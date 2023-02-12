@@ -1,7 +1,7 @@
 use crate::parser::ProgramInfo;
 use clap::{Arg, ArgGroup, Command};
 use clockwork_client::{
-    thread::state::{InstructionData, Trigger},
+    thread::state::{SerializableInstruction, Trigger},
     webhook::state::HttpMethod,
 };
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
@@ -76,7 +76,7 @@ pub enum CliCommand {
     ThreadCrateInfo,
     ThreadCreate {
         id: String,
-        kickoff_instruction: InstructionData,
+        kickoff_instruction: SerializableInstruction,
         trigger: Trigger,
     },
     ThreadDelete {

@@ -1,8 +1,10 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-use anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount};
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData,
 };
+use anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount};
+use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 use std::mem::size_of;
 
 use crate::state::*;
@@ -93,55 +95,60 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<ThreadResponse> 
     snapshot.total_frames = snapshot.total_frames.checked_add(1).unwrap();
 
     // Build the next instruction for the thread.
-    let next_instruction = if worker.total_delegations.gt(&0) {
+    let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(zeroth_delegation_pubkey, false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(snapshot.key(), false),
-                AccountMetaData::new(zeroth_snapshot_entry_pubkey, false),
-                AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new_readonly(system_program.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(worker.key(), false),
-            ],
-            data: anchor_sighash("take_snapshot_create_entry").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::TakeSnapshotCreateEntry {
+                    config: config.key(),
+                    delegation: zeroth_delegation_pubkey,
+                    payer: PAYER_PUBKEY,
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: zeroth_snapshot_entry_pubkey,
+                    snapshot_frame: snapshot_frame.key(),
+                    system_program: system_program.key(),
+                    thread: thread.key(),
+                    worker: worker.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::TakeSnapshotCreateEntry {}.data(),
+            }
+            .into(),
+        )
     } else if snapshot.total_frames.lt(&registry.total_workers) {
         // This worker has no delegations. Create a snapshot frame for the next worker.
         let next_snapshot_frame_pubkey =
             SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap());
         let next_worker_pubkey = Worker::pubkey(worker.id.checked_add(1).unwrap());
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(next_snapshot_frame_pubkey, false),
-                AccountMetaData::new_readonly(system_program.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(next_worker_pubkey, false),
-                AccountMetaData::new_readonly(
-                    get_associated_token_address(&next_worker_pubkey, &config.mint),
-                    false,
-                ),
-            ],
-            data: anchor_sighash("take_snapshot_create_frame").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::TakeSnapshotCreateFrame {
+                    config: config.key(),
+                    payer: PAYER_PUBKEY,
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: next_snapshot_frame_pubkey,
+                    system_program: system_program.key(),
+                    thread: thread.key(),
+                    worker: next_worker_pubkey,
+                    worker_stake: get_associated_token_address(&next_worker_pubkey, &config.mint),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::TakeSnapshotCreateFrame {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
     Ok(ThreadResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

@@ -5,7 +5,7 @@ use anchor_lang::{
     solana_program::system_program,
     system_program::{transfer, Transfer}
 };
-use clockwork_utils::thread::{Trigger, InstructionData};
+use clockwork_utils::thread::{Trigger, SerializableInstruction};
 
 use crate::state::*;
 
@@ -14,7 +14,7 @@ const MINIMUM_FEE: u64 = 1000;
 
 /// Accounts required by the `thread_create` instruction.
 #[derive(Accounts)]
-#[instruction(amount: u64, id: Vec<u8>, instructions: Vec<InstructionData>,  trigger: Trigger)]
+#[instruction(amount: u64, id: Vec<u8>, instructions: Vec<SerializableInstruction>,  trigger: Trigger)]
 pub struct ThreadCreate<'info> {
     /// The authority (owner) of the thread.
     #[account()]
@@ -37,7 +37,7 @@ pub struct ThreadCreate<'info> {
             id.as_slice(),
         ],
         bump,
-        payer = payer,
+        payer= payer,
         space = vec![
             8, 
             size_of::<Thread>(), 
@@ -49,7 +49,7 @@ pub struct ThreadCreate<'info> {
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instructions: Vec<InstructionData>, trigger: Trigger) -> Result<()> {
+pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instructions: Vec<SerializableInstruction>, trigger: Trigger) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let payer = &ctx.accounts.payer;

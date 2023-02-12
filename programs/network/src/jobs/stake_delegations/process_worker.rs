@@ -1,8 +1,6 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
-};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -32,29 +30,30 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResp
     let worker = &ctx.accounts.worker;
 
     // Build the next instruction for the thread.
-    let next_instruction = if worker.total_delegations.gt(&0) {
+    let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(delegation_pubkey, false),
-                AccountMetaData::new(
-                    get_associated_token_address(&delegation_pubkey, &config.mint),
-                    false,
-                ),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(anchor_spl::token::ID, false),
-                AccountMetaData::new_readonly(worker.key(), false),
-                AccountMetaData::new(
-                    get_associated_token_address(&worker.key(), &config.mint),
-                    false,
-                ),
-            ],
-            data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessDelegation {
+                    config: config.key(),
+                    delegation: delegation_pubkey,
+                    delegation_stake: get_associated_token_address(
+                        &delegation_pubkey,
+                        &config.mint,
+                    ),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    token_program: anchor_spl::token::ID,
+                    worker: worker.key(),
+                    worker_stake: get_associated_token_address(&worker.key(), &config.mint),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessDelegation {}.data(),
+            }
+            .into(),
+        )
     } else if worker
         .id
         .checked_add(1)
@@ -62,25 +61,26 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResp
         .lt(&registry.total_workers)
     {
         // This worker has no delegations. Move on to the next worker.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(
-                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
-                    false,
-                ),
-            ],
-            data: anchor_sighash("stake_delegations_process_worker").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessWorker {
+                    config: config.key(),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    worker: Worker::pubkey(worker.id.checked_add(1).unwrap()),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
     Ok(ThreadResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }

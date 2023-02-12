@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::thread::{InstructionData, AccountMetaData, anchor_sighash, ThreadResponse}};
+use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
+use clockwork_utils::thread::ThreadResponse;
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessEntry<'info> {
@@ -95,37 +98,39 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<ThreadRespons
     }
 
     // Build the next instruction
-    let next_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
+    let dynamic_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
         // Move on to the next entry.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new(thread.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
-        })
+        Some (
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessEntry {
+                    config:config.key(),
+                    registry:registry.key(),
+                    snapshot:snapshot.key(),
+                    snapshot_entry:SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()),
+                    snapshot_frame:snapshot_frame.key(),
+                    thread: thread.key(),
+                }.to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessEntry{}.data()
+            }.into()
+        )
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // This frame has no more entries. Move onto the next frame.
-        Some(InstructionData {
+        Some(Instruction {
             program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(thread.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
-        })
+            accounts: crate::accounts::DeleteSnapshotProcessFrame {
+                config: config.key(), 
+                registry: registry.key(), 
+                snapshot: snapshot.key(), 
+                snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), 
+                thread: thread.key(),
+            }.to_account_metas(Some(true)),
+            data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
+        }.into())
     } else {
         // This frame as no more entires and it was the last frame in the snapshot. We are done!
         None
     };
 
-    Ok( ThreadResponse { next_instruction, trigger: None } )
+    Ok( ThreadResponse { dynamic_instruction, trigger: None } )
 }

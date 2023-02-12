@@ -11,7 +11,7 @@ mod instructions;
 
 use anchor_lang::prelude::*;
 use clockwork_utils::{
-    thread::{InstructionData, Trigger},
+    thread::{SerializableInstruction, Trigger},
     CrateInfo,
 };
 use instructions::*;
@@ -39,7 +39,7 @@ pub mod thread_program {
         ctx: Context<ThreadCreate>,
         amount: u64,
         id: Vec<u8>,
-        instructions: Vec<InstructionData>,
+        instructions: Vec<SerializableInstruction>,
         trigger: Trigger,
     ) -> Result<()> {
         thread_create::handler(ctx, amount, id, instructions, trigger)

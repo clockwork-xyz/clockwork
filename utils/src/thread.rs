@@ -12,17 +12,6 @@ use static_pubkey::static_pubkey;
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
 
-/// The sighash of a named instruction in an Anchor program.
-pub fn anchor_sighash(name: &str) -> [u8; 8] {
-    let namespace = "global";
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8],
-    );
-    sighash
-}
-
 /// The clock object, representing a specific moment in time recorded by a Solana cluster.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
 pub struct ClockData {
@@ -67,7 +56,10 @@ pub enum Trigger {
         size: u64,
     },
 
-    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
+    /// Allows an thread to be kicked off as soon as it's created.
+    Active,
+
+    /// Allows an thread to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
@@ -76,16 +68,13 @@ pub enum Trigger {
         /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
         skippable: bool,
     },
-
-    /// Allows a thread to be kicked off as soon as it's created.
-    Immediate,
 }
 
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
     /// A dynamic instruction to execute next.
-    pub next_instruction: Option<InstructionData>,
+    pub dynamic_instruction: Option<SerializableInstruction>,
     /// Value to update the thread trigger to.
     pub trigger: Option<Trigger>,
 }
@@ -93,7 +82,7 @@ pub struct ThreadResponse {
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
-            next_instruction: None,
+            dynamic_instruction: None,
             trigger: None,
         };
     }
@@ -101,23 +90,23 @@ impl Default for ThreadResponse {
 
 /// The data needed execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct InstructionData {
+pub struct SerializableInstruction {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
     /// Metadata for what accounts should be passed to the instruction processor
-    pub accounts: Vec<AccountMetaData>,
+    pub accounts: Vec<SerializableAccount>,
     /// Opaque data passed to the instruction processor
     pub data: Vec<u8>,
 }
 
-impl From<Instruction> for InstructionData {
+impl From<Instruction> for SerializableInstruction {
     fn from(instruction: Instruction) -> Self {
-        InstructionData {
+        SerializableInstruction {
             program_id: instruction.program_id,
             accounts: instruction
                 .accounts
                 .iter()
-                .map(|a| AccountMetaData {
+                .map(|a| SerializableAccount {
                     pubkey: a.pubkey,
                     is_signer: a.is_signer,
                     is_writable: a.is_writable,
@@ -128,8 +117,8 @@ impl From<Instruction> for InstructionData {
     }
 }
 
-impl From<&InstructionData> for Instruction {
-    fn from(instruction: &InstructionData) -> Self {
+impl From<&SerializableInstruction> for Instruction {
+    fn from(instruction: &SerializableInstruction) -> Self {
         Instruction {
             program_id: instruction.program_id,
             accounts: instruction
@@ -146,11 +135,11 @@ impl From<&InstructionData> for Instruction {
     }
 }
 
-impl TryFrom<Vec<u8>> for InstructionData {
+impl TryFrom<Vec<u8>> for SerializableInstruction {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Ok(
-            borsh::try_from_slice_with_schema::<InstructionData>(data.as_slice())
+            borsh::try_from_slice_with_schema::<SerializableInstruction>(data.as_slice())
                 .map_err(|_err| ErrorCode::AccountDidNotDeserialize)?,
         )
     }
@@ -158,7 +147,7 @@ impl TryFrom<Vec<u8>> for InstructionData {
 
 /// Account metadata needed to execute an instruction on Solana.
 #[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
-pub struct AccountMetaData {
+pub struct SerializableAccount {
     /// An account's public key
     pub pubkey: Pubkey,
     /// True if an Instruction requires a Transaction signature matching `pubkey`.
@@ -167,21 +156,21 @@ pub struct AccountMetaData {
     pub is_writable: bool,
 }
 
-impl AccountMetaData {
+impl SerializableAccount {
     /// Construct metadata for a writable account.
-    pub fn new(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn mutable(pubkey: Pubkey, signer: bool) -> Self {
         Self {
             pubkey,
-            is_signer,
+            is_signer: signer,
             is_writable: true,
         }
     }
 
     /// Construct metadata for a read-only account.
-    pub fn new_readonly(pubkey: Pubkey, is_signer: bool) -> Self {
+    pub fn readonly(pubkey: Pubkey, signer: bool) -> Self {
         Self {
             pubkey,
-            is_signer,
+            is_signer: signer,
             is_writable: false,
         }
     }

@@ -7,7 +7,7 @@ use anchor_lang::{
     AnchorDeserialize,
 };
 use clockwork_network_program::state::{Fee, Pool, Worker, WorkerAccount};
-use clockwork_utils::thread::{InstructionData, ThreadResponse, PAYER_PUBKEY};
+use clockwork_utils::thread::{SerializableInstruction, ThreadResponse, PAYER_PUBKEY};
 
 use crate::{errors::ClockworkError, state::*};
 
@@ -81,7 +81,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
 
     // Get the instruction to execute.
     // We have already verified that it is not null during account validation.
-    let next_instruction: &Option<InstructionData> = &thread.clone().next_instruction;
+    let next_instruction: &Option<SerializableInstruction> = &thread.clone().next_instruction;
     let instruction = next_instruction.as_ref().unwrap();
 
     // Inject the signatory's pubkey for the Clockwork payer ID.
@@ -133,7 +133,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     // Grab the next instruction from the thread response.
     let mut next_instruction = None;
     if let Some(thread_response) = thread_response {
-        next_instruction = thread_response.next_instruction;
+        next_instruction = thread_response.dynamic_instruction;
 
         // Update the trigger.
         if let Some(trigger) = thread_response.trigger {

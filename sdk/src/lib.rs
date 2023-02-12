@@ -4,13 +4,12 @@ pub use clockwork_thread_program::ID;
 
 pub mod state {
     pub use clockwork_thread_program::state::{
-        AccountMetaData, Thread, ThreadAccount, ThreadResponse, ThreadSettings,
-        ClockData, ExecContext, InstructionData, Trigger, TriggerContext,
+        Thread, ThreadAccount, ThreadResponse, ThreadSettings, ClockData,
+        ExecContext, SerializableAccount, SerializableInstruction, Trigger, TriggerContext,
     };
 }
 
 pub mod utils {
-    pub use clockwork_thread_program::state::anchor_sighash;
     pub use clockwork_thread_program::state::PAYER_PUBKEY;
 }
 
@@ -26,7 +25,7 @@ pub mod cpi {
         ctx: CpiContext<'_, '_, '_, 'info, ThreadCreate<'info>>,
         amount: u64,
         id: Vec<u8>,
-        instructions: Vec<crate::state::InstructionData>,
+        instructions: Vec<crate::state::SerializableInstruction>,
         trigger: crate::state::Trigger,
     ) -> Result<()> {
         clockwork_thread_program::cpi::thread_create(ctx, amount, id, instructions, trigger)

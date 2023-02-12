@@ -33,9 +33,6 @@ pub fn handler(ctx: Context<ThreadResume>) -> Result<()> {
         None => {}
         Some(exec_context) => {
             match exec_context.trigger_context {
-                TriggerContext::Account { data_hash: _ } => {
-                    // Nothing to do
-                }
                 TriggerContext::Cron { started_at: _ } => {
                     // Jump ahead to the current timestamp
                     thread.exec_context = Some(ExecContext {
@@ -45,8 +42,8 @@ pub fn handler(ctx: Context<ThreadResume>) -> Result<()> {
                         ..exec_context
                     });
                 }
-                TriggerContext::Immediate => {
-                    // Nothing to do
+                _ => {
+                    // Nothing to do.
                 }
             }
         }

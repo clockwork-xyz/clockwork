@@ -1,7 +1,9 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData,
 };
+use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 
@@ -27,21 +29,22 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
     let thread = &ctx.accounts.thread;
 
     Ok(ThreadResponse {
-        next_instruction: Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(
-                    Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
-                    false,
-                ),
-                AccountMetaData::new_readonly(system_program::ID, false),
-                AccountMetaData::new_readonly(thread.key(), true),
-            ],
-            data: anchor_sighash("take_snapshot_create_snapshot").to_vec(),
-        }),
+        dynamic_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::TakeSnapshotCreateSnapshot {
+                    config: config.key(),
+                    payer: PAYER_PUBKEY,
+                    registry: registry.key(),
+                    snapshot: Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
+                    system_program: system_program::ID,
+                    thread: thread.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::TakeSnapshotCreateSnapshot {}.data(),
+            }
+            .into(),
+        ),
         trigger: None,
     })
 }

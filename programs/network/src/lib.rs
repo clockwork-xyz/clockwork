@@ -19,7 +19,7 @@ declare_id!("F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa");
 
 #[program]
 pub mod network_program {
-    use super::*;
+    pub use super::*;
 
     pub fn config_update(ctx: Context<ConfigUpdate>, settings: ConfigSettings) -> Result<()> {
         config_update::handler(ctx, settings)

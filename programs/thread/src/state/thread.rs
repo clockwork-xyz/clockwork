@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_macros::TryFromData;
-use clockwork_utils::thread::{ClockData, InstructionData, Trigger};
+use clockwork_utils::thread::{ClockData, SerializableInstruction, Trigger};
 
 pub const SEED_THREAD: &[u8] = b"thread";
 
@@ -21,11 +21,11 @@ pub struct Thread {
     /// The id of the thread, given by the authority.
     pub id: Vec<u8>,
     /// The instructions to be executed.
-    pub instructions: Vec<InstructionData>,
+    pub instructions: Vec<SerializableInstruction>,
     /// The name of the thread.
     pub name: String,
     /// The next instruction to be executed.
-    pub next_instruction: Option<InstructionData>,
+    pub next_instruction: Option<SerializableInstruction>,
     /// Whether or not the thread is currently paused.
     pub paused: bool,
     /// The maximum number of execs allowed per slot.
@@ -103,21 +103,21 @@ pub enum TriggerContext {
         data_hash: u64,
     },
 
+    /// The active trigger context.
+    Active,
+
     /// A cron execution context.
     Cron {
         /// The threshold moment the schedule was waiting for.
         started_at: i64,
     },
-
-    /// The immediate trigger context.
-    Immediate,
 }
 
 /// The properties of threads which are updatable.
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ThreadSettings {
     pub fee: Option<u64>,
-    pub instructions: Option<Vec<InstructionData>>,
+    pub instructions: Option<Vec<SerializableInstruction>>,
     pub name: Option<String>,
     pub rate_limit: Option<u64>,
     pub trigger: Option<Trigger>,

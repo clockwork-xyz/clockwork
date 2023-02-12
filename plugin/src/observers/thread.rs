@@ -193,7 +193,7 @@ impl ThreadObserver {
                         }
                     }
                 }
-                Trigger::Immediate => {
+                Trigger::Active => {
                     let mut w_immediate_threads = self.immediate_threads.write().await;
                     w_immediate_threads.insert(thread_pubkey);
                     drop(w_immediate_threads);

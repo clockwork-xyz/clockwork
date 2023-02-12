@@ -1,8 +1,6 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::thread::{
-    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
-};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::{errors::*, state::*};
 
@@ -129,30 +127,34 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
         registry.total_unstakes = 0;
     }
 
-    // Build next instruction for the thread.
-    let next_instruction = if unstake
+    // Build next instruction for the automation.
+    let dynamic_instruction = if unstake
         .id
         .checked_add(1)
         .unwrap()
         .lt(&registry.total_unstakes)
     {
         let next_unstake_pubkey = Unstake::pubkey(unstake.id.checked_add(1).unwrap());
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(thread.key(), true),
-                AccountMetaData::new_readonly(next_unstake_pubkey, false),
-            ],
-            data: anchor_sighash("unstake_preprocess").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::UnstakePreprocess {
+                    config: config.key(),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    unstake: next_unstake_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::UnstakePreprocess {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
     Ok(ThreadResponse {
-        next_instruction,
+        dynamic_instruction,
         trigger: None,
     })
 }
