@@ -16,7 +16,6 @@ pub enum VersionedThread {
 
 impl VersionedThread {
     pub fn authority(&self) -> Pubkey {
-        dbg!("versioned authority()");
         match self {
             Self::V1(t) => t.authority,
             Self::V2(t) => t.authority,
@@ -24,7 +23,6 @@ impl VersionedThread {
     }
 
     pub fn created_at(&self) -> ClockData {
-        dbg!("versioned created_at()");
         match self {
             Self::V1(t) => ClockData {
                 slot: t.created_at.slot,
@@ -36,7 +34,6 @@ impl VersionedThread {
     }
 
     pub fn exec_context(&self) -> Option<ExecContext> {
-        dbg!("versioned exec_context()");
         match self {
             Self::V1(t) => t.exec_context.map(|e| ExecContext {
                 exec_index: 0,
@@ -55,7 +52,6 @@ impl VersionedThread {
     }
 
     pub fn next_instruction(&self) -> Option<SerializableInstruction> {
-        dbg!("versioned next_instruction()");
         match self {
             Self::V1(t) => match &t.next_instruction {
                 None => None,
@@ -79,7 +75,6 @@ impl VersionedThread {
     }
 
     pub fn paused(&self) -> bool {
-        dbg!("versioned paused()");
         match self {
             Self::V1(t) => t.paused,
             Self::V2(t) => t.paused,
@@ -87,7 +82,6 @@ impl VersionedThread {
     }
 
     pub fn rate_limit(&self) -> u64 {
-        dbg!("versioned rate_limit()");
         match self {
             Self::V1(t) => t.rate_limit,
             Self::V2(t) => t.rate_limit,
@@ -95,7 +89,6 @@ impl VersionedThread {
     }
 
     pub fn trigger(&self) -> Trigger {
-        dbg!("versioned trigger()");
         match self {
             Self::V1(t) => unsafe {
                 // TODO Handle case where we rename trigger value
@@ -116,7 +109,6 @@ impl AccountDeserialize for VersionedThread {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         // Try first to deserialize into ThreadV2.
         // If this fails, try to deserialize into ThreadV1.
-        dbg!("versioned try_deserialized_unchecked()");
         match ThreadV2::try_deserialize(buf) {
             Err(_err) => Ok(VersionedThread::V1(ThreadV1::try_deserialize(buf)?)),
             Ok(t) => Ok(VersionedThread::V2(t)),
