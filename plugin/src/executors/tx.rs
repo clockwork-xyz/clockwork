@@ -23,7 +23,7 @@ use solana_client::{
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
-use solana_program::{hash::Hash, message::Message, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
@@ -173,24 +173,33 @@ impl TxExecutor {
         drop(r_transaction_history);
 
         // Lookup transaction statuses and track which threads are successful / retriable.
+        let mut failed_threads: HashSet<Pubkey> = HashSet::new();
         let mut retriable_threads: HashSet<Pubkey> = HashSet::new();
         let mut successful_threads: HashSet<Pubkey> = HashSet::new();
         for data in checkable_transactions {
             match client
                 .get_signature_status_with_commitment(
                     &data.signature,
-                    CommitmentConfig::confirmed(),
+                    CommitmentConfig::processed(),
                 )
                 .await
             {
                 Err(_err) => {}
                 Ok(status) => match status {
                     None => {
+                        info!(
+                            "Retrying thread: {:?} missing_signature: {:?}",
+                            data.thread_pubkey, data.signature
+                        );
                         retriable_threads.insert(data.thread_pubkey);
                     }
                     Some(status) => match status {
-                        Err(_err) => {
-                            retriable_threads.insert(data.thread_pubkey);
+                        Err(err) => {
+                            info!(
+                                "Thread failed: {:?} failed_signature: {:?} err: {:?}",
+                                data.thread_pubkey, data.signature, err
+                            );
+                            failed_threads.insert(data.thread_pubkey);
                         }
                         Ok(()) => {
                             successful_threads.insert(data.thread_pubkey);
@@ -204,6 +213,9 @@ impl TxExecutor {
         let mut w_transaction_history = self.transaction_history.write().await;
         let mut w_executable_threads = self.executable_threads.write().await;
         for pubkey in successful_threads {
+            w_transaction_history.remove(&pubkey);
+        }
+        for pubkey in failed_threads {
             w_transaction_history.remove(&pubkey);
         }
         for pubkey in retriable_threads {
@@ -256,7 +268,7 @@ impl TxExecutor {
         self: Arc<Self>,
         pool_position: PoolPosition,
         slot: u64,
-    ) -> PluginResult<Vec<Pubkey>> {
+    ) -> PluginResult<Vec<(Pubkey, u64)>> {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
         let r_executable_threads = self.executable_threads.read().await;
@@ -266,24 +278,16 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
             } else {
                 // This worker is in the pool. Get pubkeys executable threads.
                 r_executable_threads
                     .iter()
-                    .filter(|(_pubkey, metadata)| {
-                        slot >= metadata.due_slot
-                            + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64
-                            - 1
-                    })
-                    .map(|(pubkey, _metadata)| *pubkey)
-                    .collect::<Vec<Pubkey>>()
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
             };
         drop(r_executable_threads);
         Ok(thread_pubkeys)
@@ -292,13 +296,13 @@ impl TxExecutor {
     async fn execute_thread_exec_txs(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        slot: u64,
+        observed_slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         let executable_threads = self
             .clone()
-            .get_executable_threads(pool_position, slot)
+            .get_executable_threads(pool_position, observed_slot)
             .await?;
         if executable_threads.is_empty() {
             return Ok(());
@@ -308,10 +312,11 @@ impl TxExecutor {
         // Note we parallelize using tokio because this work is IO heavy (RPC simulation calls).
         let tasks: Vec<_> = executable_threads
             .iter()
-            .map(|thread_pubkey| {
+            .map(|(thread_pubkey, due_slot)| {
                 runtime.spawn(self.clone().try_build_thread_exec_tx(
                     client.clone(),
-                    slot,
+                    observed_slot,
+                    *due_slot,
                     *thread_pubkey,
                 ))
             })
@@ -356,7 +361,7 @@ impl TxExecutor {
                     w_transaction_history.insert(
                         pubkey,
                         TransactionMetadata {
-                            slot_sent: slot,
+                            slot_sent: observed_slot,
                             signature,
                         },
                     );
@@ -372,7 +377,8 @@ impl TxExecutor {
     pub async fn try_build_thread_exec_tx(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        slot: u64,
+        observed_slot: u64,
+        due_slot: u64,
         thread_pubkey: Pubkey,
     ) -> Option<(Pubkey, Transaction)> {
         let thread = match client.clone().get::<Thread>(&thread_pubkey).await {
@@ -383,27 +389,32 @@ impl TxExecutor {
             Ok(thread) => thread,
         };
 
-        if let Some(tx) = crate::builders::build_thread_exec_tx(
+        if let Ok(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
             &self.keypair,
+            due_slot,
             thread.clone(),
             thread_pubkey,
             self.config.worker_id,
         )
         .await
         {
-            if self
-                .clone()
-                .dedupe_tx(slot, thread_pubkey, &tx)
-                .await
-                .is_ok()
-            {
-                Some((thread_pubkey, tx))
+            if let Some(tx) = tx {
+                if self
+                    .clone()
+                    .dedupe_tx(observed_slot, thread_pubkey, &tx)
+                    .await
+                    .is_ok()
+                {
+                    Some((thread_pubkey, tx))
+                } else {
+                    None
+                }
             } else {
+                self.increment_simulation_failure(thread_pubkey).await;
                 None
             }
         } else {
-            self.increment_simulation_failure(thread_pubkey).await;
             None
         }
     }
@@ -477,21 +488,8 @@ impl Debug for TxExecutor {
     }
 }
 
-/// BlockhashAgnosticHash
-trait BlockhashAgnosticHash {
-    fn blockhash_agnostic_hash(&self) -> Hash;
-}
-
-impl BlockhashAgnosticHash for Message {
-    fn blockhash_agnostic_hash(&self) -> Hash {
-        Message {
-            header: self.header.clone(),
-            account_keys: self.account_keys.clone(),
-            recent_blockhash: Hash::default(),
-            instructions: self.instructions.clone(),
-        }
-        .hash()
-    }
+fn exponential_backoff_threshold(metadata: &ExecutableThreadMetadata) -> u64 {
+    metadata.due_slot + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64 - 1
 }
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
