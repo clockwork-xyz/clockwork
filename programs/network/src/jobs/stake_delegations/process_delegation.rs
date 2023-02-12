@@ -25,6 +25,7 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub delegation: Account<'info, Delegation>,
 
     #[account(
+        mut,
         associated_token::authority = delegation,
         associated_token::mint = config.mint,
     )]
@@ -46,6 +47,7 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub worker: Account<'info, Worker>,
 
     #[account(
+        mut,
         associated_token::authority = worker,
         associated_token::mint = config.mint,
     )]

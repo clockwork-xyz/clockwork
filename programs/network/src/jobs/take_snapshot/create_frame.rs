@@ -94,7 +94,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<ThreadResponse> 
         .unwrap();
     snapshot.total_frames = snapshot.total_frames.checked_add(1).unwrap();
 
-    // Build the next instruction for the automation.
+    // Build the next instruction for the thread.
     let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
