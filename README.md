@@ -1,6 +1,4 @@
 <div align="center">
-  <img height="240" src="https://user-images.githubusercontent.com/8634334/213889894-8a976ab8-52ff-4b8c-b411-7da067d2a57b.svg" />
-
   <h1>Clockwork</h1>
 
   <p>
