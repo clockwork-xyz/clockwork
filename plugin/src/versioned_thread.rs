@@ -4,8 +4,8 @@ use anchor_lang::{
 };
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
 use clockwork_thread_program_v2::state::{
-    SerializableAccount, Thread as ThreadV2, ClockData, ExecContext, SerializableInstruction, Trigger,
-    TriggerContext,
+    ClockData, ExecContext, SerializableAccount, SerializableInstruction, Thread as ThreadV2,
+    Trigger, TriggerContext,
 };
 
 #[derive(Clone, Debug)]
@@ -90,11 +90,24 @@ impl VersionedThread {
 
     pub fn trigger(&self) -> Trigger {
         match self {
-            Self::V1(t) => unsafe {
-                // TODO Handle case where we rename trigger value
-                std::mem::transmute_copy::<clockwork_thread_program_v1::state::Trigger, Trigger>(
-                    &t.trigger,
-                )
+            Self::V1(t) => match &t.trigger {
+                clockwork_thread_program_v1::state::Trigger::Account {
+                    address,
+                    offset,
+                    size,
+                } => Trigger::Account {
+                    address: *address,
+                    offset: *offset as u64,
+                    size: *size as u64,
+                },
+                clockwork_thread_program_v1::state::Trigger::Cron {
+                    schedule,
+                    skippable,
+                } => Trigger::Cron {
+                    schedule: schedule.clone(),
+                    skippable: *skippable,
+                },
+                clockwork_thread_program_v1::state::Trigger::Immediate => Trigger::Now,
             },
             Self::V2(t) => t.trigger.clone(),
         }
