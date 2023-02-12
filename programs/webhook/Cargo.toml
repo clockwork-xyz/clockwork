@@ -25,4 +25,4 @@ default = []
 anchor-lang = { features = ["init-if-needed"], version = "0.26.0" }
 clockwork-macros = { path = "../../macros", version = "2.0.0-alpha" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.0-alpha" }
-clockwork-utils = { path = "../../utils", version = "1.4.0" }
+clockwork-utils = { path = "../../utils", version = "2.0.0-alpha" }
