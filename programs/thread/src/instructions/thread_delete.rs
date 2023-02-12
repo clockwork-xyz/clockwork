@@ -4,7 +4,9 @@ use {crate::state::*, anchor_lang::prelude::*};
 #[derive(Accounts)]
 pub struct ThreadDelete<'info> {
     /// The authority (owner) of the thread.
-    #[account()]
+    #[account(
+        constraint = authority.key().eq(&thread.authority) || authority.key().eq(&thread.key())
+    )]
     pub authority: Signer<'info>,
 
     /// The address to return the data rent lamports to.
@@ -20,7 +22,6 @@ pub struct ThreadDelete<'info> {
             thread.id.as_slice(),
         ],
         bump = thread.bump,
-        constraint = thread.authority.eq(&authority.key()) || thread.key().eq(&authority.key()),
         close = close_to
     )]
     pub thread: Account<'info, Thread>,
