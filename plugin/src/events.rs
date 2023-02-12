@@ -1,33 +1,27 @@
-use anchor_lang::Discriminator;
+use anchor_lang::{AccountDeserialize, Discriminator};
 use bincode::deserialize;
-use clockwork_client::{thread::state::Thread, webhook::state::Request};
-use log::info;
+use clockwork_thread_program_v1::state::Thread as ThreadV1;
+use clockwork_thread_program_v2::state::Thread as ThreadV2;
+use clockwork_client::webhook::state::Request;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
+use crate::versioned_thread::VersionedThread;
+
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },
-    Thread { thread: Thread },
+    Thread { thread: VersionedThread },
 }
 
-impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
+impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
     type Error = GeyserPluginError;
-    fn try_from(account_info: ReplicaAccountInfo) -> Result<Self, Self::Error> {
+    fn try_from(account_info: &mut ReplicaAccountInfo) -> Result<Self, Self::Error> {
         // Parse pubkeys.
         let account_pubkey = Pubkey::new(account_info.pubkey);
-        if account_info.owner.len() != 32 {
-            info!(
-                "Invalid owner pubkey length pubkey: {:?} account_info: {:?}",
-                account_pubkey, account_info
-            );
-            return Err(GeyserPluginError::Custom(
-                format!("Invalid pubkey length").into(),
-            ));
-        }
         let owner_pubkey = Pubkey::new(account_info.owner);
 
         // If the account is the sysvar clock, parse it.
@@ -41,16 +35,34 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account belongs to the thread program, parse it.
-        if owner_pubkey.eq(&clockwork_client::thread::ID) && account_info.data.len() > 8 {
+        // If the account belongs to the thread v1 program, parse it.
+        if owner_pubkey.eq(&clockwork_thread_program_v1::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Thread::discriminator()) {
+            if d.eq(&ThreadV1::discriminator()) {
                 return Ok(AccountUpdateEvent::Thread {
-                    thread: Thread::try_from(account_info.data.to_vec()).map_err(|_| {
-                        GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork thread account".into(),
-                        }
-                    })?,
+                    thread: VersionedThread::V1(
+                        ThreadV1::try_deserialize(&mut account_info.data).map_err(|_| {
+                            GeyserPluginError::AccountsUpdateError {
+                                msg: "Failed to parse Clockwork thread v1 account".into(),
+                            }
+                        })?,
+                    ),
+                });
+            }
+        }
+
+        // If the account belongs to the thread v2 program, parse it.
+        if owner_pubkey.eq(&clockwork_thread_program_v2::ID) && account_info.data.len() > 8 {
+            let d = &account_info.data[..8];
+            if d.eq(&ThreadV2::discriminator()) {
+                return Ok(AccountUpdateEvent::Thread {
+                    thread: VersionedThread::V2(
+                        ThreadV2::try_deserialize(&mut account_info.data).map_err(|_| {
+                            GeyserPluginError::AccountsUpdateError {
+                                msg: "Failed to parse Clockwork thread v2 account".into(),
+                            }
+                        })?,
+                    ),
                 });
             }
         }
@@ -58,7 +70,7 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         // If the account belongs to the webhook program, parse in
         if owner_pubkey.eq(&clockwork_client::webhook::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::HttpRequest {
-                request: Request::try_from(account_info.data.to_vec()).map_err(|_| {
+                request: Request::try_deserialize(&mut account_info.data).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
                         msg: "Failed to parse Clockwork http request".into(),
                     }

@@ -29,7 +29,7 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
     let thread = &ctx.accounts.thread;
     let unstake = &ctx.accounts.unstake;
 
-    // Return next instruction for automation.
+    // Return next instruction for thread.
     Ok(ThreadResponse {
         dynamic_instruction: Some(
             Instruction {

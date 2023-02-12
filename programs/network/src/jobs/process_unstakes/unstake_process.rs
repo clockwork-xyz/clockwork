@@ -127,7 +127,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
         registry.total_unstakes = 0;
     }
 
-    // Build next instruction for the automation.
+    // Build next instruction for the thread.
     let dynamic_instruction = if unstake
         .id
         .checked_add(1)

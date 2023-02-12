@@ -99,7 +99,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> 
     // Update the snapshot frame.
     snapshot_frame.total_entries = snapshot_frame.total_entries.checked_add(1).unwrap();
 
-    // Build the next instruction for the automation.
+    // Build the next instruction for the thread.
     let dynamic_instruction = if snapshot_frame.total_entries.lt(&worker.total_delegations) {
         // Create a snapshot entry for the next delegation.
         let next_delegation_pubkey =

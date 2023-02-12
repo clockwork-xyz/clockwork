@@ -6,7 +6,7 @@ use std::{
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::thread::state::{Thread, Trigger, TriggerContext};
+use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -14,6 +14,8 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 };
 use solana_program::{clock::Clock, pubkey::Pubkey};
 use tokio::sync::RwLock;
+
+use crate::versioned_thread::VersionedThread;
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
@@ -120,24 +122,27 @@ impl ThreadObserver {
 
     pub async fn observe_thread(
         self: Arc<Self>,
-        thread: Thread,
+        thread: VersionedThread,
         thread_pubkey: Pubkey,
         slot: u64,
     ) -> PluginResult<()> {
         // If the thread is paused, just return without indexing
-        if thread.paused {
+        if thread.paused() {
             return Ok(());
         }
 
-        info!("indexing thread: {:?} slot: {}", thread_pubkey, slot);
-        if thread.next_instruction.is_some() {
+        info!(
+            "indexing thread: {:?} slot: {}",
+            thread_pubkey, slot
+        );
+        if thread.next_instruction().is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_immediate_threads = self.immediate_threads.write().await;
             w_immediate_threads.insert(thread_pubkey);
             drop(w_immediate_threads);
         } else {
             // Otherwise, index the thread according to its trigger type.
-            match thread.trigger {
+            match thread.trigger() {
                 Trigger::Account {
                     address,
                     offset: _,
@@ -162,8 +167,8 @@ impl ThreadObserver {
                     skippable: _,
                 } => {
                     // Find a reference timestamp for calculating the thread's upcoming target time.
-                    let reference_timestamp = match thread.exec_context {
-                        None => thread.created_at.unix_timestamp,
+                    let reference_timestamp = match thread.exec_context() {
+                        None => thread.created_at().unix_timestamp,
                         Some(exec_context) => match exec_context.trigger_context {
                             TriggerContext::Cron { started_at } => started_at,
                             _ => {

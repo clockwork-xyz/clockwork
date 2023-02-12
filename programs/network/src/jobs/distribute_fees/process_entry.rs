@@ -102,7 +102,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
         .checked_add(distribution_balance)
         .unwrap();
 
-    // Build the next instruction for the automation.
+    // Build the next instruction for the thread.
     let dynamic_instruction = if snapshot_entry
         .id
         .checked_add(1)
