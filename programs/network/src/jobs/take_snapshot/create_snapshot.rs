@@ -1,9 +1,12 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse, PAYER_PUBKEY,
-};
 use std::mem::size_of;
+
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData,
+};
+use anchor_spl::associated_token::get_associated_token_address;
+use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 
@@ -36,44 +39,45 @@ pub struct TakeSnapshotCreateSnapshot<'info> {
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let system_program = &ctx.accounts.system_program;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
     // Start a new snapshot.
     snapshot.init(registry.current_epoch.checked_add(1).unwrap())?;
 
-    Ok(AutomationResponse {
-        next_instruction: if registry.total_workers.gt(&0) {
+    Ok(ThreadResponse {
+        dynamic_instruction: if registry.total_workers.gt(&0) {
             // The registry has workers. Create a snapshot frame for the zeroth worker.
             let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot.key(), 0);
             let worker_pubkey = Worker::pubkey(0);
-            Some(InstructionData {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new(PAYER_PUBKEY, true),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new(snapshot.key(), false),
-                    AccountMetaData::new(snapshot_frame_pubkey, false),
-                    AccountMetaData::new_readonly(system_program.key(), false),
-                    AccountMetaData::new_readonly(automation.key(), true),
-                    AccountMetaData::new_readonly(worker_pubkey, false),
-                    AccountMetaData::new_readonly(
-                        get_associated_token_address(&worker_pubkey, &config.mint),
-                        false,
-                    ),
-                ],
-                data: anchor_sighash("take_snapshot_create_frame").to_vec(),
-            })
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::TakeSnapshotCreateFrame {
+                        config: config.key(),
+                        payer: PAYER_PUBKEY,
+                        registry: registry.key(),
+                        snapshot: snapshot.key(),
+                        snapshot_frame: snapshot_frame_pubkey,
+                        system_program: system_program.key(),
+                        thread: thread.key(),
+                        worker: worker_pubkey,
+                        worker_stake: get_associated_token_address(&worker_pubkey, &config.mint),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::TakeSnapshotCreateFrame {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

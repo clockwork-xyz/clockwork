@@ -1,11 +1,9 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::{
     associated_token::get_associated_token_address,
     token::{transfer, Token, TokenAccount, Transfer},
 };
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
-};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -27,6 +25,7 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub delegation: Account<'info, Delegation>,
 
     #[account(
+        mut,
         associated_token::authority = delegation,
         associated_token::mint = config.mint,
     )]
@@ -38,8 +37,8 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -48,19 +47,20 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub worker: Account<'info, Worker>,
 
     #[account(
+        mut,
         associated_token::authority = worker,
         associated_token::mint = config.mint,
     )]
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let delegation_stake = &mut ctx.accounts.delegation_stake;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let worker = &ctx.accounts.worker;
     let worker_stake = &ctx.accounts.worker_stake;
@@ -89,8 +89,8 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
     // Update the delegation's stake amount.
     delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
-    // Build next instruction for the automation.
-    let next_instruction = if delegation
+    // Build next instruction for the thread.
+    let dynamic_instruction = if delegation
         .id
         .checked_add(1)
         .unwrap()
@@ -99,23 +99,27 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         // This worker has more delegations, continue locking their stake.
         let next_delegation_pubkey =
             Delegation::pubkey(worker.key(), delegation.id.checked_add(1).unwrap());
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new(next_delegation_pubkey, false),
-                AccountMetaData::new(
-                    get_associated_token_address(&next_delegation_pubkey, &config.mint),
-                    false,
-                ),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(token_program.key(), false),
-                AccountMetaData::new_readonly(worker.key(), false),
-                AccountMetaData::new(worker_stake.key(), false),
-            ],
-            data: anchor_sighash("stake_delegations_process_delegation").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessDelegation {
+                    config: config.key(),
+                    delegation: next_delegation_pubkey,
+                    delegation_stake: get_associated_token_address(
+                        &next_delegation_pubkey,
+                        &config.mint,
+                    ),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    token_program: token_program.key(),
+                    worker: worker.key(),
+                    worker_stake: worker_stake.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessDelegation {}.data(),
+            }
+            .into(),
+        )
     } else if worker
         .id
         .checked_add(1)
@@ -123,25 +127,26 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         .lt(&registry.total_workers)
     {
         // This worker has no more delegations, move on to the next worker.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(
-                    Worker::pubkey(worker.id.checked_add(1).unwrap()),
-                    false,
-                ),
-            ],
-            data: anchor_sighash("stake_delegations_process_worker").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::StakeDelegationsProcessWorker {
+                    config: config.key(),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    worker: Worker::pubkey(worker.id.checked_add(1).unwrap()),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
-    Ok(AutomationResponse {
-        next_instruction,
+    Ok(ThreadResponse {
+        dynamic_instruction,
         trigger: None,
     })
 }

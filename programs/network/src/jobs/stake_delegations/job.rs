@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -16,27 +14,31 @@ pub struct StakeDelegationsJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<ThreadResponse> {
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    Ok(AutomationResponse {
-        next_instruction: if registry.total_workers.gt(&0) {
-            Some(InstructionData {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new_readonly(automation.key(), true),
-                    AccountMetaData::new_readonly(Worker::pubkey(0), false),
-                ],
-                data: anchor_sighash("stake_delegations_process_worker").to_vec(),
-            })
+    Ok(ThreadResponse {
+        dynamic_instruction: if registry.total_workers.gt(&0) {
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::StakeDelegationsProcessWorker {
+                        config: config.key(),
+                        registry: registry.key(),
+                        thread: thread.key(),
+                        worker: Worker::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::StakeDelegationsProcessWorker {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

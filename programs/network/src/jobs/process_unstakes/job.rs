@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -16,29 +14,33 @@ pub struct ProcessUnstakesJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    // Return next instruction for automation.
-    Ok(AutomationResponse {
-        next_instruction: if registry.total_unstakes.gt(&0) {
-            Some(InstructionData {
-                program_id: crate::ID,
-                accounts: vec![
-                    AccountMetaData::new_readonly(config.key(), false),
-                    AccountMetaData::new_readonly(registry.key(), false),
-                    AccountMetaData::new_readonly(automation.key(), true),
-                    AccountMetaData::new_readonly(Unstake::pubkey(0), false),
-                ],
-                data: anchor_sighash("unstake_preprocess").to_vec(),
-            })
+    // Return next instruction for thread.
+    Ok(ThreadResponse {
+        dynamic_instruction: if registry.total_unstakes.gt(&0) {
+            Some(
+                Instruction {
+                    program_id: crate::ID,
+                    accounts: crate::accounts::UnstakePreprocess {
+                        config: config.key(),
+                        registry: registry.key(),
+                        thread: thread.key(),
+                        unstake: Unstake::pubkey(0),
+                    }
+                    .to_account_metas(Some(true)),
+                    data: crate::instruction::UnstakePreprocess {}.data(),
+                }
+                .into(),
+            )
         } else {
             None
         },

@@ -1,7 +1,6 @@
-use {
-    crate::state::{Fee, FeeAccount},
-    anchor_lang::prelude::*,
-};
+use anchor_lang::prelude::*;
+
+use crate::state::{Fee, FeeAccount};
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]

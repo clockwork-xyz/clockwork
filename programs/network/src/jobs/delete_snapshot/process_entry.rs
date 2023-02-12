@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*, clockwork_utils::automation::{InstructionData, AccountMetaData, anchor_sighash, AutomationResponse}};
+use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
+use clockwork_utils::thread::ThreadResponse;
+
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct DeleteSnapshotProcessEntry<'info> {
@@ -48,24 +51,24 @@ pub struct DeleteSnapshotProcessEntry<'info> {
 
     #[account(
         mut, 
-        address = config.epoch_automation
+        address = config.epoch_thread
     )]
-    pub automation: Signer<'info>,
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
     let snapshot = &mut ctx.accounts.snapshot;
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
-    let automation = &mut ctx.accounts.automation;
+    let thread = &mut ctx.accounts.thread;
 
     // Close the snapshot entry account.
     let snapshot_entry_lamports = snapshot_entry.to_account_info().lamports();
     **snapshot_entry.to_account_info().lamports.borrow_mut() = 0;
-    **automation.to_account_info().lamports.borrow_mut() = automation
+    **thread.to_account_info().lamports.borrow_mut() = thread
         .to_account_info()
         .lamports()
         .checked_add(snapshot_entry_lamports)
@@ -75,7 +78,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
     if snapshot_entry.id.checked_add(1).unwrap().eq(&snapshot_frame.total_entries) {
         let snapshot_frame_lamports = snapshot_frame.to_account_info().lamports();
         **snapshot_frame.to_account_info().lamports.borrow_mut() = 0;
-        **automation.to_account_info().lamports.borrow_mut() = automation
+        **thread.to_account_info().lamports.borrow_mut() = thread
             .to_account_info()
             .lamports()
             .checked_add(snapshot_frame_lamports)
@@ -86,7 +89,7 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
         if snapshot_frame.id.checked_add(1).unwrap().eq(&snapshot.total_frames) {
             let snapshot_lamports = snapshot.to_account_info().lamports();
             **snapshot.to_account_info().lamports.borrow_mut() = 0;
-            **automation.to_account_info().lamports.borrow_mut() = automation
+            **thread.to_account_info().lamports.borrow_mut() = thread
                 .to_account_info()
                 .lamports()
                 .checked_add(snapshot_lamports)
@@ -95,37 +98,39 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<AutomationRes
     }
 
     // Build the next instruction
-    let next_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
+    let dynamic_instruction = if snapshot_entry.id.checked_add(1).unwrap().lt(&snapshot_frame.total_entries) {
         // Move on to the next entry.
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(snapshot_frame.key(), false),
-                AccountMetaData::new(automation.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_entry").to_vec(),
-        })
+        Some (
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DeleteSnapshotProcessEntry {
+                    config:config.key(),
+                    registry:registry.key(),
+                    snapshot:snapshot.key(),
+                    snapshot_entry:SnapshotEntry::pubkey(snapshot_frame.key(), snapshot_entry.id.checked_add(1).unwrap()),
+                    snapshot_frame:snapshot_frame.key(),
+                    thread: thread.key(),
+                }.to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessEntry{}.data()
+            }.into()
+        )
     } else if snapshot_frame.id.checked_add(1).unwrap().lt(&snapshot.total_frames) {
         // This frame has no more entries. Move onto the next frame.
-        Some(InstructionData {
+        Some(Instruction {
             program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new(snapshot.key(), false),
-                AccountMetaData::new(SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), false),
-                AccountMetaData::new(automation.key(), true),
-            ],
-            data: anchor_sighash("delete_snapshot_process_frame").to_vec(),
-        })
+            accounts: crate::accounts::DeleteSnapshotProcessFrame {
+                config: config.key(), 
+                registry: registry.key(), 
+                snapshot: snapshot.key(), 
+                snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()), 
+                thread: thread.key(),
+            }.to_account_metas(Some(true)),
+            data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
+        }.into())
     } else {
         // This frame as no more entires and it was the last frame in the snapshot. We are done!
         None
     };
 
-    Ok( AutomationResponse { next_instruction, trigger: None } )
+    Ok( ThreadResponse { dynamic_instruction, trigger: None } )
 }

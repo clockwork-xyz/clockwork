@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, AutomationResponse, InstructionData,
-};
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -17,31 +15,35 @@ pub struct DistributeFeesJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &mut ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
     // Lock the registry.
     registry.locked = true;
 
     // Process the snapshot.
-    Ok(AutomationResponse {
-        next_instruction: Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(Snapshot::pubkey(registry.current_epoch), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-            ],
-            data: anchor_sighash("distribute_fees_process_snapshot").to_vec(),
-        }),
+    Ok(ThreadResponse {
+        dynamic_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::DistributeFeesProcessSnapshot {
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: Snapshot::pubkey(registry.current_epoch),
+                    thread: thread.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DistributeFeesProcessSnapshot {}.data(),
+            }
+            .into(),
+        ),
         trigger: None,
     })
 }

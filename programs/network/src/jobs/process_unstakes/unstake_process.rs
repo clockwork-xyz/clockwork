@@ -1,8 +1,6 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
-};
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::{errors::*, state::*};
 
@@ -41,8 +39,8 @@ pub struct UnstakeProcess<'info> {
     )]
     pub registry: Box<Account<'info, Registry>>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -70,14 +68,14 @@ pub struct UnstakeProcess<'info> {
     pub worker_tokens: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
     // Get accounts.
     let authority = &ctx.accounts.authority;
     let authority_tokens = &ctx.accounts.authority_tokens;
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let registry = &mut ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let unstake = &ctx.accounts.unstake;
     let worker = &ctx.accounts.worker;
@@ -129,30 +127,34 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         registry.total_unstakes = 0;
     }
 
-    // Build next instruction for the automation.
-    let next_instruction = if unstake
+    // Build next instruction for the thread.
+    let dynamic_instruction = if unstake
         .id
         .checked_add(1)
         .unwrap()
         .lt(&registry.total_unstakes)
     {
         let next_unstake_pubkey = Unstake::pubkey(unstake.id.checked_add(1).unwrap());
-        Some(InstructionData {
-            program_id: crate::ID,
-            accounts: vec![
-                AccountMetaData::new_readonly(config.key(), false),
-                AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
-                AccountMetaData::new_readonly(next_unstake_pubkey, false),
-            ],
-            data: anchor_sighash("unstake_preprocess").to_vec(),
-        })
+        Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::UnstakePreprocess {
+                    config: config.key(),
+                    registry: registry.key(),
+                    thread: thread.key(),
+                    unstake: next_unstake_pubkey,
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::UnstakePreprocess {}.data(),
+            }
+            .into(),
+        )
     } else {
         None
     };
 
-    Ok(AutomationResponse {
-        next_instruction,
+    Ok(ThreadResponse {
+        dynamic_instruction,
         trigger: None,
     })
 }

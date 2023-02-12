@@ -1,20 +1,20 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 use bincode::deserialize;
-use clockwork_automation_program_v1::state::Thread as AutomationV1;
-use clockwork_automation_program_v2::state::Automation as AutomationV2;
+use clockwork_thread_program_v1::state::Thread as ThreadV1;
+use clockwork_thread_program_v2::state::Thread as ThreadV2;
 use clockwork_client::webhook::state::Request;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 
-use crate::versioned_automation::VersionedAutomation;
+use crate::versioned_thread::VersionedThread;
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
-    Automation { automation: VersionedAutomation },
     Clock { clock: Clock },
     HttpRequest { request: Request },
+    Thread { thread: VersionedThread },
 }
 
 impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -35,15 +35,15 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account belongs to the automation v1 program, parse it.
-        if owner_pubkey.eq(&clockwork_automation_program_v1::ID) && account_info.data.len() > 8 {
+        // If the account belongs to the thread v1 program, parse it.
+        if owner_pubkey.eq(&clockwork_thread_program_v1::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&AutomationV1::discriminator()) {
-                return Ok(AccountUpdateEvent::Automation {
-                    automation: VersionedAutomation::V1(
-                        AutomationV1::try_deserialize(&mut account_info.data).map_err(|_| {
+            if d.eq(&ThreadV1::discriminator()) {
+                return Ok(AccountUpdateEvent::Thread {
+                    thread: VersionedThread::V1(
+                        ThreadV1::try_deserialize(&mut account_info.data).map_err(|_| {
                             GeyserPluginError::AccountsUpdateError {
-                                msg: "Failed to parse Clockwork automation v1 account".into(),
+                                msg: "Failed to parse Clockwork thread v1 account".into(),
                             }
                         })?,
                     ),
@@ -51,15 +51,15 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             }
         }
 
-        // If the account belongs to the automation v1 program, parse it.
-        if owner_pubkey.eq(&clockwork_automation_program_v2::ID) && account_info.data.len() > 8 {
+        // If the account belongs to the thread v2 program, parse it.
+        if owner_pubkey.eq(&clockwork_thread_program_v2::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&AutomationV2::discriminator()) {
-                return Ok(AccountUpdateEvent::Automation {
-                    automation: VersionedAutomation::V2(
-                        AutomationV2::try_deserialize(&mut account_info.data).map_err(|_| {
+            if d.eq(&ThreadV2::discriminator()) {
+                return Ok(AccountUpdateEvent::Thread {
+                    thread: VersionedThread::V2(
+                        ThreadV2::try_deserialize(&mut account_info.data).map_err(|_| {
                             GeyserPluginError::AccountsUpdateError {
-                                msg: "Failed to parse Clockwork automation v2 account".into(),
+                                msg: "Failed to parse Clockwork thread v2 account".into(),
                             }
                         })?,
                     ),

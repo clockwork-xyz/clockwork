@@ -93,7 +93,7 @@ if command -v anchor &> /dev/null; then
 
   # Copy program binaries into lib folder
   cp -fv "target/deploy/clockwork_network_program.so" "$installDir"/lib
-  cp -fv "target/deploy/clockwork_automation_program.so" "$installDir"/lib
+  cp -fv "target/deploy/clockwork_thread_program.so" "$installDir"/lib
   cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir"/lib
 fi
 

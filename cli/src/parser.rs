@@ -1,7 +1,7 @@
 use crate::{cli::CliCommand, errors::CliError};
 use clap::ArgMatches;
 use clockwork_client::{
-    automation::state::{AccountMetaData, InstructionData, Trigger},
+    thread::state::{SerializableAccount, SerializableInstruction, Trigger},
     webhook::state::HttpMethod,
 };
 use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
@@ -25,7 +25,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
-            Some(("automation", matches)) => parse_automation_command(matches),
+            Some(("thread", matches)) => parse_thread_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
             Some(("worker", matches)) => parse_worker_command(matches),
@@ -105,8 +105,8 @@ fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", _)) => Ok(CliCommand::ConfigGet {}),
         Some(("set", matches)) => Ok(CliCommand::ConfigSet {
             admin: parse_pubkey("admin", matches).ok(),
-            epoch_automation: parse_pubkey("epoch_automation", matches).ok(),
-            hasher_automation: parse_pubkey("hasher_automation", matches).ok(),
+            epoch_thread: parse_pubkey("epoch_thread", matches).ok(),
+            hasher_thread: parse_pubkey("hasher_thread", matches).ok(),
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
@@ -147,7 +147,7 @@ fn parse_delegation_command(matches: &ArgMatches) -> Result<CliCommand, CliError
 
 fn parse_explorer_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("get", matches)) => Ok(CliCommand::ExplorerGetAutomation {
+        Some(("get", matches)) => Ok(CliCommand::ExplorerGetThread {
             id: parse_string("id", matches).ok(),
             address: parse_pubkey("address", matches).ok(),
         }),
@@ -179,31 +179,31 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
-fn parse_automation_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
-        Some(("crate-info", _)) => Ok(CliCommand::AutomationCrateInfo {}),
-        Some(("create", matches)) => Ok(CliCommand::AutomationCreate {
+        Some(("crate-info", _)) => Ok(CliCommand::ThreadCrateInfo {}),
+        Some(("create", matches)) => Ok(CliCommand::ThreadCreate {
             id: parse_string("id", matches)?,
             kickoff_instruction: parse_instruction_file("kickoff_instruction", matches)?,
             trigger: parse_trigger(matches)?,
         }),
-        Some(("delete", matches)) => Ok(CliCommand::AutomationDelete {
+        Some(("delete", matches)) => Ok(CliCommand::ThreadDelete {
             id: parse_string("id", matches)?,
         }),
-        Some(("get", matches)) => Ok(CliCommand::AutomationGet {
+        Some(("get", matches)) => Ok(CliCommand::ThreadGet {
             id: parse_string("id", matches).ok(),
             address: parse_pubkey("address", matches).ok(),
         }),
-        Some(("pause", matches)) => Ok(CliCommand::AutomationPause {
+        Some(("pause", matches)) => Ok(CliCommand::ThreadPause {
             id: parse_string("id", matches)?,
         }),
-        Some(("resume", matches)) => Ok(CliCommand::AutomationResume {
+        Some(("resume", matches)) => Ok(CliCommand::ThreadResume {
             id: parse_string("id", matches)?,
         }),
-        Some(("reset", matches)) => Ok(CliCommand::AutomationReset {
+        Some(("reset", matches)) => Ok(CliCommand::ThreadReset {
             id: parse_string("id", matches)?,
         }),
-        Some(("update", matches)) => Ok(CliCommand::AutomationUpdate {
+        Some(("update", matches)) => Ok(CliCommand::ThreadUpdate {
             id: parse_string("id", matches)?,
             rate_limit: parse_u64("rate_limit", matches).ok(),
             schedule: parse_string("schedule", matches).ok(),
@@ -265,19 +265,22 @@ fn parse_trigger(matches: &ArgMatches) -> Result<Trigger, CliError> {
             schedule: parse_string("cron", matches)?,
             skippable: true,
         });
-    } else if matches.is_present("immediate") {
-        return Ok(Trigger::Immediate);
+    } else if matches.is_present("active") {
+        return Ok(Trigger::Active);
     }
 
     Err(CliError::BadParameter("trigger".into()))
 }
 
-fn parse_instruction_file(arg: &str, matches: &ArgMatches) -> Result<InstructionData, CliError> {
+fn parse_instruction_file(
+    arg: &str,
+    matches: &ArgMatches,
+) -> Result<SerializableInstruction, CliError> {
     let filepath = parse_string(arg, matches)?;
     let text = fs::read_to_string(filepath).map_err(|_err| CliError::BadParameter(arg.into()))?;
     let ix: JsonInstructionData =
         serde_json::from_str(text.as_str()).expect("JSON was not well-formatted");
-    InstructionData::try_from(&ix)
+    SerializableInstruction::try_from(&ix)
 }
 
 fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
@@ -332,18 +335,18 @@ pub struct JsonInstructionData {
     pub data: Vec<u8>,
 }
 
-impl TryFrom<&JsonInstructionData> for InstructionData {
+impl TryFrom<&JsonInstructionData> for SerializableInstruction {
     type Error = CliError;
 
     fn try_from(value: &JsonInstructionData) -> Result<Self, Self::Error> {
-        Ok(InstructionData {
+        Ok(SerializableInstruction {
             program_id: Pubkey::from_str(value.program_id.as_str())
                 .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             accounts: value
                 .accounts
                 .iter()
-                .map(|ix| AccountMetaData::try_from(ix).unwrap())
-                .collect::<Vec<AccountMetaData>>(),
+                .map(|acc| SerializableAccount::try_from(acc).unwrap())
+                .collect::<Vec<SerializableAccount>>(),
             data: value.data.clone(),
         })
     }
@@ -364,11 +367,11 @@ pub struct JsonAccountMetaData {
     pub is_writable: bool,
 }
 
-impl TryFrom<&JsonAccountMetaData> for AccountMetaData {
+impl TryFrom<&JsonAccountMetaData> for SerializableAccount {
     type Error = CliError;
 
     fn try_from(value: &JsonAccountMetaData) -> Result<Self, Self::Error> {
-        Ok(AccountMetaData {
+        Ok(SerializableAccount {
             pubkey: Pubkey::from_str(value.pubkey.as_str())
                 .map_err(|_err| CliError::BadParameter("Could not parse pubkey".into()))?,
             is_signer: value.is_signer,
