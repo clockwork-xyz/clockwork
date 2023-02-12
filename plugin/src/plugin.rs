@@ -92,12 +92,12 @@ impl GeyserPlugin for ClockworkPlugin {
 
         // Process event on tokio task.
         self.inner.clone().spawn(|inner| async move {
-            // Send all account updates to the automation observer for account listeners.
+            // Send all account updates to the thread observer for account listeners.
             // Only process account updates if we're past the startup phase.
             if !is_startup {
                 inner
                     .observers
-                    .automation
+                    .thread
                     .clone()
                     .observe_account(account_pubkey, slot)
                     .await?;
@@ -109,7 +109,7 @@ impl GeyserPlugin for ClockworkPlugin {
                     AccountUpdateEvent::Clock { clock } => {
                         inner
                             .observers
-                            .automation
+                            .thread
                             .clone()
                             .observe_clock(clock)
                             .await
@@ -127,12 +127,12 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::Automation { automation } => {
+                    AccountUpdateEvent::Thread { thread } => {
                         inner
                             .observers
-                            .automation
+                            .thread
                             .clone()
-                            .observe_automation(automation, account_pubkey, slot)
+                            .observe_thread(thread, account_pubkey, slot)
                             .await
                             .ok();
                     }

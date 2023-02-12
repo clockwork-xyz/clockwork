@@ -81,14 +81,14 @@ impl Executors {
         }
 
         // Process the slot on the observers.
-        let executable_automations = observers.automation.clone().process_slot(slot).await?;
+        let executable_threads = observers.thread.clone().process_slot(slot).await?;
 
         // Process the slot in the transaction executor.
         self.tx
             .clone()
             .execute_txs(
                 self.client.clone(),
-                executable_automations,
+                executable_threads,
                 slot,
                 runtime.clone(),
             )

@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse, PAYER_PUBKEY,
+use clockwork_utils::thread::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
 use std::mem::size_of;
 
@@ -63,8 +63,8 @@ pub struct TakeSnapshotCreateEntry<'info> {
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         address = worker.pubkey(),
@@ -73,7 +73,7 @@ pub struct TakeSnapshotCreateEntry<'info> {
     pub worker: Box<Account<'info, Worker>>,
 }
 
-pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
@@ -82,7 +82,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
     let system_program = &ctx.accounts.system_program;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
     // Initialize snapshot entry account.
@@ -96,7 +96,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
     // Update the snapshot frame.
     snapshot_frame.total_entries = snapshot_frame.total_entries.checked_add(1).unwrap();
 
-    // Build the next instruction for the automation.
+    // Build the next instruction for the thread.
     let next_instruction = if snapshot_frame.total_entries.lt(&worker.total_delegations) {
         // Create a snapshot entry for the next delegation.
         let next_delegation_pubkey =
@@ -111,7 +111,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(next_delegation_pubkey, false),
                 AccountMetaData::new(PAYER_PUBKEY, true),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(registry.key(), false),
                 AccountMetaData::new_readonly(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_entry_pubkey, false),
@@ -135,7 +135,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
                 AccountMetaData::new(snapshot.key(), false),
                 AccountMetaData::new(next_snapshot_frame_pubkey, false),
                 AccountMetaData::new_readonly(system_program.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(next_worker_pubkey, false),
                 AccountMetaData::new_readonly(
                     get_associated_token_address(&next_worker_pubkey, &config.mint),
@@ -148,8 +148,8 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         next_instruction,
-        ..AutomationResponse::default()
+        ..ThreadResponse::default()
     })
 }

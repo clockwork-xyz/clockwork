@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse, PAYER_PUBKEY,
+use clockwork_utils::thread::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse, PAYER_PUBKEY,
 };
 
 use crate::state::*;
@@ -16,17 +16,17 @@ pub struct TakeSnapshotJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         next_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -38,7 +38,7 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
                     false,
                 ),
                 AccountMetaData::new_readonly(system_program::ID, false),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
             ],
             data: anchor_sighash("take_snapshot_create_snapshot").to_vec(),
         }),

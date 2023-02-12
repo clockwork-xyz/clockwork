@@ -18,8 +18,8 @@ pub fn get(client: &Client) -> Result<(), CliError> {
 pub fn set(
     client: &Client,
     admin: Option<Pubkey>,
-    epoch_automation: Option<Pubkey>,
-    hasher_automation: Option<Pubkey>,
+    epoch_thread: Option<Pubkey>,
+    hasher_thread: Option<Pubkey>,
 ) -> Result<(), CliError> {
     // Get the current config.
     let config = client
@@ -29,8 +29,8 @@ pub fn set(
     // Build new config. settings
     let settings = ConfigSettings {
         admin: admin.unwrap_or(config.admin),
-        epoch_automation: epoch_automation.unwrap_or(config.epoch_automation),
-        hasher_automation: hasher_automation.unwrap_or(config.hasher_automation),
+        epoch_thread: epoch_thread.unwrap_or(config.epoch_thread),
+        hasher_thread: hasher_thread.unwrap_or(config.hasher_thread),
         mint: config.mint,
     };
 

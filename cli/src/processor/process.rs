@@ -1,6 +1,6 @@
 use crate::{
     cli::CliCommand, config::CliConfig, errors::CliError,
-    processor::automation::parse_pubkey_from_id_or_address,
+    processor::thread::parse_pubkey_from_id_or_address,
 };
 use anyhow::Result;
 use clap::ArgMatches;
@@ -41,9 +41,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::ConfigGet => super::config::get(&client),
         CliCommand::ConfigSet {
             admin,
-            epoch_automation,
-            hasher_automation,
-        } => super::config::set(&client, admin, epoch_automation, hasher_automation),
+            epoch_thread,
+            hasher_thread,
+        } => super::config::set(&client, admin, epoch_thread, hasher_thread),
         CliCommand::Crontab { schedule } => super::crontab::get(&client, schedule),
         CliCommand::DelegationCreate { worker_id } => super::delegation::create(&client, worker_id),
         CliCommand::DelegationDeposit {
@@ -60,9 +60,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             delegation_id,
             worker_id,
         } => super::delegation::withdraw(&client, amount, delegation_id, worker_id),
-        CliCommand::ExplorerGetAutomation { id, address } => {
+        CliCommand::ExplorerGetThread { id, address } => {
             let pubkey = parse_pubkey_from_id_or_address(client.payer_pubkey(), id, address)?;
-            super::explorer::automation_url(pubkey, config)
+            super::explorer::thread_url(pubkey, config)
         }
         CliCommand::Initialize { mint } => super::initialize::initialize(&client, mint),
         CliCommand::Localnet {
@@ -73,25 +73,25 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
         CliCommand::PoolUpdate { id, size } => super::pool::update(&client, id, size),
-        CliCommand::AutomationCrateInfo {} => super::automation::crate_info(&client),
-        CliCommand::AutomationCreate {
+        CliCommand::ThreadCrateInfo {} => super::thread::crate_info(&client),
+        CliCommand::ThreadCreate {
             id,
             kickoff_instruction,
             trigger,
-        } => super::automation::create(&client, id, vec![kickoff_instruction], trigger),
-        CliCommand::AutomationDelete { id } => super::automation::delete(&client, id),
-        CliCommand::AutomationPause { id } => super::automation::pause(&client, id),
-        CliCommand::AutomationResume { id } => super::automation::resume(&client, id),
-        CliCommand::AutomationReset { id } => super::automation::reset(&client, id),
-        CliCommand::AutomationGet { id, address } => {
+        } => super::thread::create(&client, id, vec![kickoff_instruction], trigger),
+        CliCommand::ThreadDelete { id } => super::thread::delete(&client, id),
+        CliCommand::ThreadPause { id } => super::thread::pause(&client, id),
+        CliCommand::ThreadResume { id } => super::thread::resume(&client, id),
+        CliCommand::ThreadReset { id } => super::thread::reset(&client, id),
+        CliCommand::ThreadGet { id, address } => {
             let pubkey = parse_pubkey_from_id_or_address(client.payer_pubkey(), id, address)?;
-            super::automation::get(&client, pubkey)
+            super::thread::get(&client, pubkey)
         }
-        CliCommand::AutomationUpdate {
+        CliCommand::ThreadUpdate {
             id,
             rate_limit,
             schedule,
-        } => super::automation::update(&client, id, rate_limit, schedule),
+        } => super::thread::update(&client, id, rate_limit, schedule),
         CliCommand::RegistryGet => super::registry::get(&client),
         CliCommand::RegistryUnlock => super::registry::unlock(&client),
         CliCommand::WebhookRequestNew {
