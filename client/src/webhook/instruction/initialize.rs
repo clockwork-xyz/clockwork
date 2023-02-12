@@ -4,7 +4,7 @@ use anchor_lang::{
         pubkey::Pubkey,
         system_program,
     },
-    Ix,
+    InstructionData,
 };
 
 pub fn initialize(admin: Pubkey) -> Instruction {

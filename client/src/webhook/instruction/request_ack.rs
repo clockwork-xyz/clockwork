@@ -4,7 +4,7 @@ use anchor_lang::{
         pubkey::Pubkey,
         system_program, sysvar,
     },
-    Ix,
+    InstructionData,
 };
 
 pub fn request_ack(
