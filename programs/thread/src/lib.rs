@@ -17,7 +17,7 @@ use clockwork_utils::{
 use instructions::*;
 use state::*;
 
-declare_id!("auto5LqrhPVVt34PDu3dPwJhRisGoFA6dYpxRn29n1k");
+declare_id!("CLoCK99qFooNcvAa5nGHB3acgup8FkF2vbtDR1X12Y45");
 
 /// Program for creating transaction threads on Solana.
 #[program]
