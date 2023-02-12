@@ -1,6 +1,6 @@
 use anchor_lang::Discriminator;
 use bincode::deserialize;
-use clockwork_client::{automation::state::Automation, webhook::state::Request};
+use clockwork_client::{thread::state::Thread, webhook::state::Request};
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
@@ -11,7 +11,7 @@ use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     HttpRequest { request: Request },
-    Automation { automation: Automation },
+    Thread { thread: Thread },
 }
 
 impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -41,14 +41,14 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
             });
         }
 
-        // If the account belongs to the automation program, parse it.
-        if owner_pubkey.eq(&clockwork_client::automation::ID) && account_info.data.len() > 8 {
+        // If the account belongs to the thread program, parse it.
+        if owner_pubkey.eq(&clockwork_client::thread::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if d.eq(&Automation::discriminator()) {
-                return Ok(AccountUpdateEvent::Automation {
-                    automation: Automation::try_from(account_info.data.to_vec()).map_err(|_| {
+            if d.eq(&Thread::discriminator()) {
+                return Ok(AccountUpdateEvent::Thread {
+                    thread: Thread::try_from(account_info.data.to_vec()).map_err(|_| {
                         GeyserPluginError::AccountsUpdateError {
-                            msg: "Failed to parse Clockwork automation account".into(),
+                            msg: "Failed to parse Clockwork thread account".into(),
                         }
                     })?,
                 });

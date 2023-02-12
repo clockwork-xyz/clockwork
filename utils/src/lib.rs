@@ -1,4 +1,4 @@
-pub mod automation;
+pub mod thread;
 pub mod explorer;
 
 use std::fmt::{Debug, Display, Formatter};

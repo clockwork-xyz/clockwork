@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -14,16 +14,16 @@ pub struct StakeDelegationsJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<ThreadResponse> {
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction: if registry.total_workers.gt(&0) {
             Some(
                 Instruction {
@@ -31,7 +31,7 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<AutomationResponse> 
                     accounts: crate::accounts::StakeDelegationsProcessWorker {
                         config: config.key(),
                         registry: registry.key(),
-                        automation: automation.key(),
+                        thread: thread.key(),
                         worker: Worker::pubkey(0),
                     }
                     .to_account_metas(Some(true)),

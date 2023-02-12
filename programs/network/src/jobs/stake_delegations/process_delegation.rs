@@ -3,7 +3,7 @@ use anchor_spl::{
     associated_token::get_associated_token_address,
     token::{transfer, Token, TokenAccount, Transfer},
 };
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -36,8 +36,8 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -52,13 +52,13 @@ pub struct StakeDelegationsProcessDelegation<'info> {
     pub worker_stake: Account<'info, TokenAccount>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let delegation_stake = &mut ctx.accounts.delegation_stake;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let worker = &ctx.accounts.worker;
     let worker_stake = &ctx.accounts.worker_stake;
@@ -87,7 +87,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
     // Update the delegation's stake amount.
     delegation.stake_amount = delegation.stake_amount.checked_add(amount).unwrap();
 
-    // Build next instruction for the automation.
+    // Build next instruction for the thread.
     let dynamic_instruction = if delegation
         .id
         .checked_add(1)
@@ -108,7 +108,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
                         &config.mint,
                     ),
                     registry: registry.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     token_program: token_program.key(),
                     worker: worker.key(),
                     worker_stake: worker_stake.key(),
@@ -131,7 +131,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
                 accounts: crate::accounts::StakeDelegationsProcessWorker {
                     config: config.key(),
                     registry: registry.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     worker: Worker::pubkey(worker.id.checked_add(1).unwrap()),
                 }
                 .to_account_metas(Some(true)),
@@ -143,7 +143,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Automa
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction,
         trigger: None,
     })

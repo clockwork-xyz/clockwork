@@ -6,7 +6,7 @@ use anchor_lang::{
     InstructionData,
 };
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::{AutomationResponse, PAYER_PUBKEY};
+use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 
@@ -66,8 +66,8 @@ pub struct TakeSnapshotCreateEntry<'info> {
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(
         address = worker.pubkey(),
@@ -76,7 +76,7 @@ pub struct TakeSnapshotCreateEntry<'info> {
     pub worker: Box<Account<'info, Worker>>,
 }
 
-pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let delegation = &ctx.accounts.delegation;
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
     let snapshot_entry = &mut ctx.accounts.snapshot_entry;
     let snapshot_frame = &mut ctx.accounts.snapshot_frame;
     let system_program = &ctx.accounts.system_program;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
     // Initialize snapshot entry account.
@@ -115,12 +115,12 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
                     config: config.key(),
                     delegation: next_delegation_pubkey,
                     payer: PAYER_PUBKEY,
-                    registry: automation.key(),
-                    snapshot: registry.key(),
-                    snapshot_entry: snapshot.key(),
-                    snapshot_frame: next_snapshot_entry_pubkey,
-                    system_program: snapshot_frame.key(),
-                    automation: system_program.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: next_snapshot_entry_pubkey,
+                    snapshot_frame: snapshot_frame.key(),
+                    system_program: system_program.key(),
+                    thread: thread.key(),
                     worker: worker.key(),
                 }
                 .to_account_metas(Some(true)),
@@ -143,7 +143,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
                     snapshot: snapshot.key(),
                     snapshot_frame: next_snapshot_frame_pubkey,
                     system_program: system_program.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     worker: next_worker_pubkey,
                     worker_stake: get_associated_token_address(&next_worker_pubkey, &config.mint),
                 }
@@ -156,8 +156,8 @@ pub fn handler(ctx: Context<TakeSnapshotCreateEntry>) -> Result<AutomationRespon
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction,
-        ..AutomationResponse::default()
+        ..ThreadResponse::default()
     })
 }

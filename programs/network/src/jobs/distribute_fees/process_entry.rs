@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -54,14 +54,14 @@ pub struct DistributeFeesProcessEntry<'info> {
     )]
     pub snapshot_frame: Account<'info, SnapshotFrame>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
@@ -70,7 +70,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
     let snapshot = &ctx.accounts.snapshot;
     let snapshot_entry = &ctx.accounts.snapshot_entry;
     let snapshot_frame = &ctx.accounts.snapshot_frame;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
     // Calculate the balance of this particular delegation, based on the weight of its stake with this worker.
@@ -127,7 +127,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
                     snapshot: snapshot.key(),
                     snapshot_entry: next_snapshot_entry_pubkey,
                     snapshot_frame: snapshot_frame.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     worker: worker.key(),
                 }
                 .to_account_metas(Some(true)),
@@ -154,7 +154,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
                     registry: registry.key(),
                     snapshot: snapshot.key(),
                     snapshot_frame: next_snapshot_frame_pubkey,
-                    automation: automation.key(),
+                    thread: thread.key(),
                     worker: next_worker_pubkey,
                 }
                 .to_account_metas(Some(true)),
@@ -166,7 +166,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<AutomationRes
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction,
         trigger: None,
     })

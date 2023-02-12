@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::{errors::*, state::*};
 
@@ -39,8 +39,8 @@ pub struct UnstakeProcess<'info> {
     )]
     pub registry: Box<Account<'info, Registry>>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -68,14 +68,14 @@ pub struct UnstakeProcess<'info> {
     pub worker_tokens: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
     // Get accounts.
     let authority = &ctx.accounts.authority;
     let authority_tokens = &ctx.accounts.authority_tokens;
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let registry = &mut ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let unstake = &ctx.accounts.unstake;
     let worker = &ctx.accounts.worker;
@@ -141,7 +141,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
                 accounts: crate::accounts::UnstakePreprocess {
                     config: config.key(),
                     registry: registry.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     unstake: next_unstake_pubkey,
                 }
                 .to_account_metas(Some(true)),
@@ -153,7 +153,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction,
         trigger: None,
     })

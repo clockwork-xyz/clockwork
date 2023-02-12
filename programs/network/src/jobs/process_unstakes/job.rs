@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -14,18 +14,18 @@ pub struct ProcessUnstakesJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    // Return next instruction for automation.
-    Ok(AutomationResponse {
+    // Return next instruction for thread.
+    Ok(ThreadResponse {
         dynamic_instruction: if registry.total_unstakes.gt(&0) {
             Some(
                 Instruction {
@@ -33,7 +33,7 @@ pub fn handler(ctx: Context<ProcessUnstakesJob>) -> Result<AutomationResponse> {
                     accounts: crate::accounts::UnstakePreprocess {
                         config: config.key(),
                         registry: registry.key(),
-                        automation: automation.key(),
+                        thread: thread.key(),
                         unstake: Unstake::pubkey(0),
                     }
                     .to_account_metas(Some(true)),

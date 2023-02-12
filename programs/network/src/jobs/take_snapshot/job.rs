@@ -3,7 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, system_program},
     InstructionData,
 };
-use clockwork_utils::automation::{AutomationResponse, PAYER_PUBKEY};
+use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 
@@ -18,17 +18,17 @@ pub struct TakeSnapshotJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<ThreadResponse> {
     // Get accounts
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction: Some(
             Instruction {
                 program_id: crate::ID,
@@ -38,7 +38,7 @@ pub fn handler(ctx: Context<TakeSnapshotJob>) -> Result<AutomationResponse> {
                     registry: registry.key(),
                     snapshot: Snapshot::pubkey(registry.current_epoch.checked_add(1).unwrap()),
                     system_program: system_program::ID,
-                    automation: automation.key(),
+                    thread: thread.key(),
                 }
                 .to_account_metas(Some(true)),
                 data: crate::instruction::TakeSnapshotCreateSnapshot {}.data(),

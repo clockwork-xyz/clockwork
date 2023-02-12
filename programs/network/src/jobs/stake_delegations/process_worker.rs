@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
 use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -15,21 +15,21 @@ pub struct StakeDelegationsProcessWorker<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = worker.pubkey())]
     pub worker: Account<'info, Worker>,
 }
 
-pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
-    // Build the next instruction for the automation.
+    // Build the next instruction for the thread.
     let dynamic_instruction = if worker.total_delegations.gt(&0) {
         // This worker has delegations. Stake their deposits.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
@@ -44,7 +44,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
                         &config.mint,
                     ),
                     registry: registry.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     token_program: anchor_spl::token::ID,
                     worker: worker.key(),
                     worker_stake: get_associated_token_address(&worker.key(), &config.mint),
@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
                 accounts: crate::accounts::StakeDelegationsProcessWorker {
                     config: config.key(),
                     registry: registry.key(),
-                    automation: automation.key(),
+                    thread: thread.key(),
                     worker: Worker::pubkey(worker.id.checked_add(1).unwrap()),
                 }
                 .to_account_metas(Some(true)),
@@ -79,7 +79,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessWorker>) -> Result<Automation
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction,
         trigger: None,
     })

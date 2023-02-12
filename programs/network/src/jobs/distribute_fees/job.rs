@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::automation::AutomationResponse;
+use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
@@ -15,21 +15,21 @@ pub struct DistributeFeesJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<ThreadResponse> {
     // Get accounts.
     let config = &ctx.accounts.config;
     let registry = &mut ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
 
     // Lock the registry.
     registry.locked = true;
 
     // Process the snapshot.
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         dynamic_instruction: Some(
             Instruction {
                 program_id: crate::ID,
@@ -37,7 +37,7 @@ pub fn handler(ctx: Context<DistributeFeesJob>) -> Result<AutomationResponse> {
                     config: config.key(),
                     registry: registry.key(),
                     snapshot: Snapshot::pubkey(registry.current_epoch),
-                    automation: automation.key(),
+                    thread: thread.key(),
                 }
                 .to_account_metas(Some(true)),
                 data: crate::instruction::DistributeFeesProcessSnapshot {}.data(),

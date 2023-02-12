@@ -62,12 +62,12 @@ impl Explorer {
         }
     }
 
-    /// Ex: https://explorer.clockwork.xyz/automation/{automation}
+    /// Ex: https://explorer.clockwork.xyz/thread/{thread}
     ///     ?network=custom
     ///     &customRPC=http://localhost:8899
-    pub fn automation_url<T: std::fmt::Display, U: std::fmt::Display>(&self, automation: T, program_id: U) -> String {
+    pub fn thread_url<T: std::fmt::Display, U: std::fmt::Display>(&self, thread: T, program_id: U) -> String {
         let url = format!("{}/address/{}?programID={}&network={}", CK_EXPLORER_URL,
-                          automation, program_id, self
+                          thread, program_id, self
             .cluster);
         if self.cluster == "custom" {
             url + "&customRPC=" + self.custom_rpc.as_ref().unwrap()
