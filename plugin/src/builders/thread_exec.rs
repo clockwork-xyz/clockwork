@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
+use anchor_lang::prelude::Clock;
 use clockwork_client::{
     network::state::Worker,
     thread::state::{Thread, Trigger},
@@ -9,6 +10,10 @@ use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig},
+    rpc_custom_error::JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
+};
+use solana_geyser_plugin_interface::geyser_plugin_interface::{
+    GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -32,10 +37,11 @@ static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 1000;
 pub async fn build_thread_exec_tx(
     client: Arc<RpcClient>,
     payer: &Keypair,
+    slot: u64,
     thread: Thread,
     thread_pubkey: Pubkey,
     worker_id: u64,
-) -> Option<Transaction> {
+) -> PluginResult<Option<Transaction>> {
     // Grab the thread and relevant data.
     let now = std::time::Instant::now();
     let blockhash = client.get_latest_blockhash().await.unwrap();
@@ -43,9 +49,9 @@ pub async fn build_thread_exec_tx(
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction.is_some() {
-        build_exec_ix(thread, signatory_pubkey, worker_id)
+        build_exec_ix(thread.clone(), signatory_pubkey, worker_id)
     } else {
-        build_kickoff_ix(thread, signatory_pubkey, worker_id)
+        build_kickoff_ix(thread.clone(), signatory_pubkey, worker_id)
     };
 
     // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
@@ -70,19 +76,41 @@ pub async fn build_thread_exec_tx(
             .simulate_transaction_with_config(
                 &sim_tx,
                 RpcSimulateTransactionConfig {
+                    sig_verify: false,
                     replace_recent_blockhash: true,
                     commitment: Some(CommitmentConfig::processed()),
                     accounts: Some(RpcSimulateTransactionAccountsConfig {
                         encoding: Some(UiAccountEncoding::Base64Zstd),
                         addresses: vec![thread_pubkey.to_string()],
                     }),
+                    min_context_slot: Some(slot),
                     ..RpcSimulateTransactionConfig::default()
                 },
             )
             .await
         {
             // If there was a simulation error, stop packing and exit now.
-            Err(_err) => {
+            Err(err) => {
+                match err.kind {
+                    solana_client::client_error::ClientErrorKind::RpcError(rpc_err) => {
+                        match rpc_err {
+                            solana_client::rpc_request::RpcError::RpcResponseError {
+                                code,
+                                message: _,
+                                data: _,
+                            } => {
+                                if code.eq(&JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED) {
+                                    return Err(GeyserPluginError::Custom(
+                                        format!("RPC client has not reached min context slot")
+                                            .into(),
+                                    ));
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
                 break;
             }
 
@@ -90,11 +118,25 @@ pub async fn build_thread_exec_tx(
             Ok(response) => {
                 if response.value.err.is_some() {
                     if successful_ixs.is_empty() {
+                        let clock_pubkey =
+                            Pubkey::from_str("SysvarC1ock11111111111111111111111111111111")
+                                .unwrap();
+                        let clock_data = client
+                            .get_account_with_commitment(
+                                &clock_pubkey,
+                                CommitmentConfig::processed(),
+                            )
+                            .await
+                            .unwrap();
+                        let clock = bincode::deserialize::<Clock>(&clock_data.value.unwrap().data);
                         info!(
-                            "thread: {} simulation_error: \"{}\" logs: {:?}",
+                            "slot: {} thread: {} simulation_error: \"{}\" logs: {:?} thread_data: {:?} clock: {:?}",
+                            slot,
                             thread_pubkey,
                             response.value.err.unwrap(),
-                            response.value.logs.unwrap_or(vec![])
+                            response.value.logs.unwrap_or(vec![]),
+                            thread,
+                            clock
                         );
                     }
                     break;
@@ -140,7 +182,7 @@ pub async fn build_thread_exec_tx(
 
     // If there were no successful instructions, then exit early. There is nothing to do.
     if successful_ixs.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
@@ -159,14 +201,15 @@ pub async fn build_thread_exec_tx(
     let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
     tx.sign(&[payer], blockhash);
     info!(
-        "thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
+        slot,
         thread_pubkey,
         now.elapsed(),
         successful_ixs.len(),
         units_consumed,
         tx.signatures[0]
     );
-    Some(tx)
+    Ok(Some(tx))
 }
 
 fn build_kickoff_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
