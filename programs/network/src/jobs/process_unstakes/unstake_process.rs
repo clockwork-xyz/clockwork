@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::automation::{
-    anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+use clockwork_utils::thread::{
+    anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
 };
 
 use crate::{errors::*, state::*};
@@ -41,8 +41,8 @@ pub struct UnstakeProcess<'info> {
     )]
     pub registry: Box<Account<'info, Registry>>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
@@ -70,14 +70,14 @@ pub struct UnstakeProcess<'info> {
     pub worker_tokens: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
     // Get accounts.
     let authority = &ctx.accounts.authority;
     let authority_tokens = &ctx.accounts.authority_tokens;
     let config = &ctx.accounts.config;
     let delegation = &mut ctx.accounts.delegation;
     let registry = &mut ctx.accounts.registry;
-    let automation = &ctx.accounts.automation;
+    let thread = &ctx.accounts.thread;
     let token_program = &ctx.accounts.token_program;
     let unstake = &ctx.accounts.unstake;
     let worker = &ctx.accounts.worker;
@@ -129,7 +129,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         registry.total_unstakes = 0;
     }
 
-    // Build next instruction for the automation.
+    // Build next instruction for the thread.
     let next_instruction = if unstake
         .id
         .checked_add(1)
@@ -142,7 +142,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
             accounts: vec![
                 AccountMetaData::new_readonly(config.key(), false),
                 AccountMetaData::new_readonly(registry.key(), false),
-                AccountMetaData::new_readonly(automation.key(), true),
+                AccountMetaData::new_readonly(thread.key(), true),
                 AccountMetaData::new_readonly(next_unstake_pubkey, false),
             ],
             data: anchor_sighash("unstake_preprocess").to_vec(),
@@ -151,7 +151,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<AutomationResponse> {
         None
     };
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         next_instruction,
         trigger: None,
     })

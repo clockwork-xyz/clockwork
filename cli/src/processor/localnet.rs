@@ -6,7 +6,7 @@ use {
     anyhow::Result,
     clockwork_client::{
         network::state::ConfigSettings,
-        automation::state::{Automation, Trigger},
+        thread::state::{Thread, Trigger},
         Client,
     },
     regex::Regex,
@@ -42,7 +42,7 @@ pub fn start(
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
-    create_automations(client, mint_pubkey)
+    create_threads(client, mint_pubkey)
         .map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed.
@@ -158,56 +158,56 @@ fn register_worker(client: &Client) -> Result<()> {
     Ok(())
 }
 
-fn create_automations(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
-    // Create epoch automation.
-    let epoch_automation_id = "clockwork.network.epoch";
-    let epoch_automation_pubkey = Automation::pubkey(client.payer_pubkey(), epoch_automation_id.into());
-    let ix_a = clockwork_client::automation::instruction::automation_create(
+fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
+    // Create epoch thread.
+    let epoch_thread_id = "clockwork.network.epoch";
+    let epoch_thread_pubkey = Thread::pubkey(client.payer_pubkey(), epoch_thread_id.into());
+    let ix_a = clockwork_client::thread::instruction::thread_create(
         LAMPORTS_PER_SOL,
         client.payer_pubkey(),
-        epoch_automation_id.into(),
+        epoch_thread_id.into(),
         vec![
-            clockwork_client::network::job::distribute_fees(epoch_automation_pubkey).into(),
-            clockwork_client::network::job::process_unstakes(epoch_automation_pubkey).into(),
-            clockwork_client::network::job::stake_delegations(epoch_automation_pubkey).into(),
-            clockwork_client::network::job::take_snapshot(epoch_automation_pubkey).into(),
-            clockwork_client::network::job::increment_epoch(epoch_automation_pubkey).into(),
-            clockwork_client::network::job::delete_snapshot(epoch_automation_pubkey).into(),
+            clockwork_client::network::job::distribute_fees(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::process_unstakes(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::stake_delegations(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::take_snapshot(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::increment_epoch(epoch_thread_pubkey).into(),
+            clockwork_client::network::job::delete_snapshot(epoch_thread_pubkey).into(),
         ],
         client.payer_pubkey(),
-        epoch_automation_pubkey,
+        epoch_thread_pubkey,
         Trigger::Cron {
             schedule: "0 * * * * * *".into(),
             skippable: true,
         },
     );
 
-    // Create hasher automation.
-    let hasher_automation_id = "clockwork.network.hasher";
-    let hasher_automation_pubkey = Automation::pubkey(client.payer_pubkey(), hasher_automation_id.into());
-    let ix_b = clockwork_client::automation::instruction::automation_create(
+    // Create hasher thread.
+    let hasher_thread_id = "clockwork.network.hasher";
+    let hasher_thread_pubkey = Thread::pubkey(client.payer_pubkey(), hasher_thread_id.into());
+    let ix_b = clockwork_client::thread::instruction::thread_create(
         LAMPORTS_PER_SOL,
         client.payer_pubkey(),
-        hasher_automation_id.into(),
+        hasher_thread_id.into(),
         vec![
-            clockwork_client::network::instruction::registry_nonce_hash(hasher_automation_pubkey)
+            clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey)
                 .into(),
         ],
         client.payer_pubkey(),
-        hasher_automation_pubkey,
+        hasher_thread_pubkey,
         Trigger::Cron {
             schedule: "*/15 * * * * * *".into(),
             skippable: true,
         },
     );
 
-    // Update config with automation pubkeys
+    // Update config with thread pubkeys
     let ix_c = clockwork_client::network::instruction::config_update(
         client.payer_pubkey(),
         ConfigSettings {
             admin: client.payer_pubkey(),
-            epoch_automation: epoch_automation_pubkey,
-            hasher_automation: hasher_automation_pubkey,
+            epoch_thread: epoch_thread_pubkey,
+            hasher_thread: hasher_thread_pubkey,
             mint: mint_pubkey,
         },
     );
@@ -234,7 +234,7 @@ fn start_test_validator(
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
         .bpf_program(home_dir, clockwork_client::network::ID, "network")
-        .bpf_program(home_dir, clockwork_client::automation::ID, "automation")
+        .bpf_program(home_dir, clockwork_client::thread::ID, "thread")
         .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
         .network_url(network_url)
         .clone_addresses(clone_addresses)

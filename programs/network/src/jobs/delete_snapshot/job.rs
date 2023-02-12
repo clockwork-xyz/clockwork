@@ -1,8 +1,8 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    clockwork_utils::automation::{
-        anchor_sighash, AccountMetaData, InstructionData, AutomationResponse,
+    clockwork_utils::thread::{
+        anchor_sighash, AccountMetaData, InstructionData, ThreadResponse,
     },
 };
 
@@ -17,16 +17,16 @@ pub struct DeleteSnapshotJob<'info> {
     )]
     pub registry: Account<'info, Registry>,
 
-    #[account(address = config.epoch_automation)]
-    pub automation: Signer<'info>,
+    #[account(address = config.epoch_thread)]
+    pub thread: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
+pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<ThreadResponse> {
     let config = &ctx.accounts.config;
     let registry = &ctx.accounts.registry;
-    let automation = &mut ctx.accounts.automation;
+    let thread = &mut ctx.accounts.thread;
 
-    Ok(AutomationResponse {
+    Ok(ThreadResponse {
         next_instruction: Some(InstructionData {
             program_id: crate::ID,
             accounts: vec![
@@ -36,7 +36,7 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<AutomationResponse> {
                     Snapshot::pubkey(registry.current_epoch.checked_sub(1).unwrap()),
                     false,
                 ),
-                AccountMetaData::new(automation.key(), true),
+                AccountMetaData::new(thread.key(), true),
             ],
             data: anchor_sighash("delete_snapshot_process_snapshot").to_vec(),
         }),

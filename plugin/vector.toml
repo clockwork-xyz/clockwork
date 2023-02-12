@@ -49,7 +49,7 @@ source = '''
 inputs = ["parse_solana_logs"]
 type = "filter"
 condition = '''
-  .source == "clockwork_plugin::builders::automation_exec" ||
+  .source == "clockwork_plugin::builders::thread_exec" ||
   .source == "clockwork_plugin::executors::tx" ||
   .source == "solana_validator" ||
   .source == "solana_core::validator"
@@ -60,17 +60,17 @@ condition = '''
 type = "remap"
 inputs = ["filter_solana_logs"]
 source = '''
-  if .source == "clockwork_plugin::builders::automation_exec" {
+  if .source == "clockwork_plugin::builders::thread_exec" {
     .grok_results = parse_groks!(
 	    .message, 
-	    patterns: ["automation: %{_automation} simulation_error: %{_error} logs: %{_logs}"],
+	    patterns: ["thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
 	    aliases: {
-	      "_automation": "%{DATA:automation}",
+	      "_thread": "%{DATA:thread}",
         "_error": "%{QUOTEDSTRING:error}",
         "_logs": "%{GREEDYDATA:logs}"
 	    }
     )
-    .automation = .grok_results.automation
+    .thread = .grok_results.thread
     .error_msg = .grok_results.error
     .program_logs = parse_json!(.grok_results.logs)
     del(.grok_results)
@@ -82,7 +82,7 @@ source = '''
 type = "filter"
 inputs = ["parse_clockwork_logs"]
 condition = '''
-  .source == "clockwork_plugin::builders::automation_exec" &&
+  .source == "clockwork_plugin::builders::thread_exec" &&
     !is_null(.error_msg)
 '''
 
@@ -90,7 +90,7 @@ condition = '''
 [transforms.throttle_clockwork_simulation_logs]
 type = "throttle"
 inputs = ["filter_clockwork_simulation_logs"]
-key_field = "{{ automation }}"
+key_field = "{{ thread }}"
 threshold = 1
 window_secs = 30
 
@@ -131,7 +131,7 @@ name = "clockwork_simulation_test"
 [[tests.inputs]]
 insert_at = "parse_solana_logs"
 type = "raw"
-value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::automation_exec] automation: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K simulation_error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: AutomationKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
+value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K simulation_error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
 
 [[tests.outputs]]
 extract_from = "parse_clockwork_logs"
@@ -141,8 +141,8 @@ type = "vrl"
 source = '''
   assert_eq!(.dt, "2023-01-11T04:37:09.059509973Z")
   assert_eq!(.level, "INFO")
-  assert_eq!(.source, "clockwork_plugin::builders::automation_exec")
-  assert_eq!(.automation, "9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K")
+  assert_eq!(.source, "clockwork_plugin::builders::thread_exec")
+  assert_eq!(.thread, "9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K")
   assert_eq!(.error_msg, "\"Transaction results in an account (1) without insufficient funds for rent\"")
-  assert_eq!(.program_logs, ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: AutomationKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"])
+  assert_eq!(.program_logs, ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"])
 '''
