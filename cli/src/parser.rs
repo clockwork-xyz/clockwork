@@ -265,8 +265,8 @@ fn parse_trigger(matches: &ArgMatches) -> Result<Trigger, CliError> {
             schedule: parse_string("cron", matches)?,
             skippable: true,
         });
-    } else if matches.is_present("active") {
-        return Ok(Trigger::Active);
+    } else if matches.is_present("now") {
+        return Ok(Trigger::Now);
     }
 
     Err(CliError::BadParameter("trigger".into()))

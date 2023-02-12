@@ -56,9 +56,6 @@ pub enum Trigger {
         size: u64,
     },
 
-    /// Allows an thread to be kicked off as soon as it's created.
-    Active,
-
     /// Allows an thread to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
@@ -68,6 +65,9 @@ pub enum Trigger {
         /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
         skippable: bool,
     },
+
+    /// Allows an thread to be kicked off as soon as it's created.
+    Now,
 }
 
 /// A response value target programs can return to update the thread.

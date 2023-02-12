@@ -97,20 +97,6 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 }
             }
         }
-        Trigger::Active => {
-            // Set the exec context.
-            require!(
-                thread.exec_context.is_none(),
-                ClockworkError::InvalidThreadState
-            );
-            thread.exec_context = Some(ExecContext {
-                exec_index: 0,
-                execs_since_reimbursement: 0,
-                execs_since_slot: 0,
-                last_exec_at: clock.slot,
-                trigger_context: TriggerContext::Active,
-            });
-        }
         Trigger::Cron {
             schedule,
             skippable,
@@ -147,6 +133,20 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 execs_since_slot: 0,
                 last_exec_at: clock.slot,
                 trigger_context: TriggerContext::Cron { started_at },
+            });
+        }
+        Trigger::Now => {
+            // Set the exec context.
+            require!(
+                thread.exec_context.is_none(),
+                ClockworkError::InvalidThreadState
+            );
+            thread.exec_context = Some(ExecContext {
+                exec_index: 0,
+                execs_since_reimbursement: 0,
+                execs_since_slot: 0,
+                last_exec_at: clock.slot,
+                trigger_context: TriggerContext::Now,
             });
         }
     }

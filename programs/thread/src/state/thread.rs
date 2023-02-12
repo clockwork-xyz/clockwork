@@ -103,14 +103,14 @@ pub enum TriggerContext {
         data_hash: u64,
     },
 
-    /// The active trigger context.
-    Active,
-
     /// A cron execution context.
     Cron {
         /// The threshold moment the schedule was waiting for.
         started_at: i64,
     },
+
+    /// The trigger context for threads with a "now" trigger.
+    Now,
 }
 
 /// The properties of threads which are updatable.

@@ -25,12 +25,12 @@ pub struct ThreadObserver {
     // Map from account pubkeys to the set of threads listening for an account update.
     pub account_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
 
-    // The set of threads with a cront trigger.
+    // The set of threads with a cron trigger.
     // Map from unix timestamps to the list of threads scheduled for that moment.
     pub cron_threads: RwLock<HashMap<i64, HashSet<Pubkey>>>,
 
-    // The set of threads with an immediate trigger.
-    pub immediate_threads: RwLock<HashSet<Pubkey>>,
+    // The set of threads with a now trigger.
+    pub now_threads: RwLock<HashSet<Pubkey>>,
 
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
@@ -42,7 +42,7 @@ impl ThreadObserver {
             clocks: RwLock::new(HashMap::new()),
             account_threads: RwLock::new(HashMap::new()),
             cron_threads: RwLock::new(HashMap::new()),
-            immediate_threads: RwLock::new(HashSet::new()),
+            now_threads: RwLock::new(HashSet::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -87,12 +87,12 @@ impl ThreadObserver {
         drop(w_updated_accounts);
 
         // Get the set of immediate threads.
-        let mut w_immediate_threads = self.immediate_threads.write().await;
-        w_immediate_threads.iter().for_each(|pubkey| {
+        let mut w_now_threads = self.now_threads.write().await;
+        w_now_threads.iter().for_each(|pubkey| {
             executable_threads.insert(*pubkey);
         });
-        w_immediate_threads.clear();
-        drop(w_immediate_threads);
+        w_now_threads.clear();
+        drop(w_now_threads);
 
         Ok(executable_threads)
     }
@@ -131,15 +131,12 @@ impl ThreadObserver {
             return Ok(());
         }
 
-        info!(
-            "indexing thread: {:?} slot: {}",
-            thread_pubkey, slot
-        );
+        info!("indexing thread: {:?} slot: {}", thread_pubkey, slot);
         if thread.next_instruction().is_some() {
             // If the thread has a next instruction, index it as executable.
-            let mut w_immediate_threads = self.immediate_threads.write().await;
-            w_immediate_threads.insert(thread_pubkey);
-            drop(w_immediate_threads);
+            let mut w_now_threads = self.now_threads.write().await;
+            w_now_threads.insert(thread_pubkey);
+            drop(w_now_threads);
         } else {
             // Otherwise, index the thread according to its trigger type.
             match thread.trigger() {
@@ -198,10 +195,10 @@ impl ThreadObserver {
                         }
                     }
                 }
-                Trigger::Active => {
-                    let mut w_immediate_threads = self.immediate_threads.write().await;
-                    w_immediate_threads.insert(thread_pubkey);
-                    drop(w_immediate_threads);
+                Trigger::Now => {
+                    let mut w_now_threads = self.now_threads.write().await;
+                    w_now_threads.insert(thread_pubkey);
+                    drop(w_now_threads);
                 }
             }
         }
