@@ -117,6 +117,12 @@ pub enum TriggerContext {
         /// The threshold slot the schedule was waiting for.
         started_at: u64,
     },
+
+    /// The trigger context for threads with an "epoch" trigger.
+    Epoch {
+        /// The threshold epoch the schedule was waiting for.
+        started_at: u64,
+    },
 }
 
 /// The properties of threads which are updatable.
