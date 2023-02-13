@@ -68,6 +68,9 @@ pub enum Trigger {
 
     /// Allows an thread to be kicked off as soon as it's created.
     Now,
+
+    /// Allows a thread to be kicked off according to a slot.
+    Slot { slot: u64 },
 }
 
 /// A response value target programs can return to update the thread.

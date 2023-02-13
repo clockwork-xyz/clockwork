@@ -149,6 +149,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 trigger_context: TriggerContext::Now,
             });
         }
+        Trigger::Slot { slot } => {}
     }
 
     // If we make it here, the trigger is active. Update the next instruction and be done.
