@@ -12,7 +12,10 @@ use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
-use solana_program::{clock::Clock, pubkey::Pubkey};
+use solana_program::{
+    clock::{Clock, DEFAULT_DEV_SLOTS_PER_EPOCH},
+    pubkey::Pubkey,
+};
 use tokio::sync::RwLock;
 
 use crate::versioned_thread::VersionedThread;
@@ -35,6 +38,9 @@ pub struct ThreadObserver {
     // The set of threads with a slot trigger.
     pub slot_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
+    // The set of threads with an epoch trigger.
+    pub epoch_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
@@ -47,6 +53,7 @@ impl ThreadObserver {
             cron_threads: RwLock::new(HashMap::new()),
             now_threads: RwLock::new(HashSet::new()),
             slot_threads: RwLock::new(HashMap::new()),
+            epoch_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -102,6 +109,20 @@ impl ThreadObserver {
             !is_due
         });
         drop(w_slot_threads);
+
+        // Get the set of threads that were trigger by an epoch update.
+        let mut w_epoch_threads = self.epoch_threads.write().await;
+        w_epoch_threads.retain(|target_epoch, thread_pubkeys| {
+            // TODO calculate epoch
+            let is_due = slot >= *target_epoch;
+            if is_due {
+                for pubkey in thread_pubkeys.iter() {
+                    executable_threads.insert(*pubkey);
+                }
+            }
+            !is_due
+        });
+        drop(w_epoch_threads);
 
         // Get the set of immediate threads.
         let mut w_now_threads = self.now_threads.write().await;
@@ -230,6 +251,20 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_slot_threads);
+                }
+                Trigger::Epoch { epoch } => {
+                    let mut w_epoch_threads = self.epoch_threads.write().await;
+                    w_epoch_threads
+                        .entry(epoch)
+                        .and_modify(|v| {
+                            v.insert(thread_pubkey);
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(thread_pubkey);
+                            v
+                        });
+                    drop(w_epoch_threads);
                 }
             }
         }
