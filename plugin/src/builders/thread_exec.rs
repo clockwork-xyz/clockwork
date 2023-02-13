@@ -1,10 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
-use anchor_lang::prelude::Clock;
-use clockwork_client::{
-    network::state::Worker,
-    thread::state::Trigger,
-};
+use anchor_lang::{prelude::Clock, InstructionData, ToAccountMetas};
+use clockwork_client::{network::state::Worker, thread::state::Trigger};
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -49,15 +46,26 @@ pub async fn build_thread_exec_tx(
     let now = std::time::Instant::now();
     let blockhash = client.get_latest_blockhash().await.unwrap();
     let signatory_pubkey = payer.pubkey();
+    let worker_pubkey = Worker::pubkey(worker_id);
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction().is_some() {
-        build_exec_ix(thread.clone(), thread_pubkey, signatory_pubkey, worker_id)
+        build_exec_ix(
+            thread.clone(),
+            thread_pubkey,
+            signatory_pubkey,
+            worker_pubkey,
+        )
     } else {
-        build_kickoff_ix(thread.clone(), thread_pubkey, signatory_pubkey, worker_id)
+        build_kickoff_ix(
+            thread.clone(),
+            thread_pubkey,
+            signatory_pubkey,
+            worker_pubkey,
+        )
     };
 
-    // Simulate the transactino and pack as many instructions as possible until we hit mem/cpu limits.
+    // Simulate the transaction and pack as many instructions as possible until we hit mem/cpu limits.
     // TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
@@ -160,13 +168,15 @@ pub async fn build_thread_exec_tx(
                             if let Ok(sim_thread) = VersionedThread::try_from(account.data) {
                                 if sim_thread.next_instruction().is_some() {
                                     if let Some(exec_context) = sim_thread.exec_context() {
-                                        if exec_context.execs_since_slot.lt(&sim_thread.rate_limit())
+                                        if exec_context
+                                            .execs_since_slot
+                                            .lt(&sim_thread.rate_limit())
                                         {
                                             ixs.push(build_exec_ix(
                                                 sim_thread,
                                                 thread_pubkey,
                                                 signatory_pubkey,
-                                                worker_id,
+                                                worker_pubkey,
                                             ));
                                         } else {
                                             // Exit early if the thread has reached its rate limit.
@@ -216,14 +226,35 @@ pub async fn build_thread_exec_tx(
     Ok(Some(tx))
 }
 
-
-fn build_kickoff_ix(thread: VersionedThread, thread_pubkey: Pubkey, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
+fn build_kickoff_ix(
+    thread: VersionedThread,
+    thread_pubkey: Pubkey,
+    signatory_pubkey: Pubkey,
+    worker_pubkey: Pubkey,
+) -> Instruction {
     // Build the instruction.
-    let mut kickoff_ix = clockwork_client::thread::instruction::thread_kickoff(
-        signatory_pubkey,
-        thread_pubkey,
-        Worker::pubkey(worker_id),
-    );
+    let mut kickoff_ix = match thread {
+        VersionedThread::V1(_) => Instruction {
+            program_id: clockwork_thread_program_v1::ID,
+            accounts: clockwork_thread_program_v1::accounts::ThreadKickoff {
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(false)),
+            data: clockwork_thread_program_v1::instruction::ThreadKickoff {}.data(),
+        },
+        VersionedThread::V2(_) => Instruction {
+            program_id: clockwork_thread_program_v2::ID,
+            accounts: clockwork_thread_program_v2::accounts::ThreadKickoff {
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(false)),
+            data: clockwork_thread_program_v2::instruction::ThreadKickoff {}.data(),
+        },
+    };
 
     // If the thread's trigger is account-based, inject the triggering account.
     match thread.trigger() {
@@ -246,14 +277,36 @@ fn build_exec_ix(
     thread: VersionedThread,
     thread_pubkey: Pubkey,
     signatory_pubkey: Pubkey,
-    worker_id: u64,
+    worker_pubkey: Pubkey,
 ) -> Instruction {
     // Build the instruction.
-    let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
-        signatory_pubkey,
-        thread_pubkey,
-        Worker::pubkey(worker_id),
-    );
+    let mut exec_ix = match thread {
+        VersionedThread::V1(_) => Instruction {
+            program_id: clockwork_thread_program_v1::ID,
+            accounts: clockwork_thread_program_v1::accounts::ThreadExec {
+                fee: clockwork_client::network::state::Fee::pubkey(worker_pubkey),
+                penalty: clockwork_client::network::state::Penalty::pubkey(worker_pubkey),
+                pool: clockwork_client::network::state::Pool::pubkey(0),
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(true)),
+            data: clockwork_thread_program_v1::instruction::ThreadExec {}.data(),
+        },
+        VersionedThread::V2(_) => Instruction {
+            program_id: clockwork_thread_program_v2::ID,
+            accounts: clockwork_thread_program_v2::accounts::ThreadExec {
+                fee: clockwork_client::network::state::Fee::pubkey(worker_pubkey),
+                pool: clockwork_client::network::state::Pool::pubkey(0),
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(true)),
+            data: clockwork_thread_program_v2::instruction::ThreadExec {}.data(),
+        },
+    };
 
     if let Some(next_instruction) = thread.next_instruction() {
         // Inject the target program account.
