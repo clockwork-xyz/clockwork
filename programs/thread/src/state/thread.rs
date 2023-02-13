@@ -111,6 +111,12 @@ pub enum TriggerContext {
 
     /// The trigger context for threads with a "now" trigger.
     Now,
+
+    /// The trigger context for threads with a "slot" trigger.
+    Slot {
+        /// The threshold slot the schedule was waiting for.
+        started_at: u64,
+    },
 }
 
 /// The properties of threads which are updatable.
