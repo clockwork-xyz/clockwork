@@ -17,7 +17,7 @@ use clockwork_utils::{
 use instructions::*;
 use state::*;
 
-declare_id!("CLoCK99qFooNcvAa5nGHB3acgup8FkF2vbtDR1X12Y45");
+declare_id!("CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh");
 
 /// Program for creating transaction threads on Solana.
 #[program]
@@ -71,10 +71,7 @@ pub mod thread_program {
     }
 
     /// Allows an owner to update the mutable properties of a thread.
-    pub fn thread_update(
-        ctx: Context<ThreadUpdate>,
-        settings: ThreadSettings,
-    ) -> Result<()> {
+    pub fn thread_update(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<()> {
         thread_update::handler(ctx, settings)
     }
 
