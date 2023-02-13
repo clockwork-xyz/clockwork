@@ -149,6 +149,16 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 trigger_context: TriggerContext::Now,
             });
         }
+        Trigger::Slot { slot } => {
+            require!(clock.slot.ge(&slot), ClockworkError::TriggerNotActive);
+            thread.exec_context = Some(ExecContext {
+                exec_index: 0,
+                execs_since_reimbursement: 0,
+                execs_since_slot: 0,
+                last_exec_at: clock.slot,
+                trigger_context: TriggerContext::Slot { started_at: slot },
+            });
+        }
     }
 
     // If we make it here, the trigger is active. Update the next instruction and be done.
