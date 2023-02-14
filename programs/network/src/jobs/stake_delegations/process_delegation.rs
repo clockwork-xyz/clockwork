@@ -147,6 +147,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
 
     Ok(ThreadResponse {
         dynamic_instruction,
+        close_to: None,
         trigger: None,
     })
 }

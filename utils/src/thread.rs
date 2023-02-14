@@ -79,6 +79,9 @@ pub enum Trigger {
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
+    /// If set, the thread will automatically close and return lamports to the provided address.
+    /// If dynamic_instruction is also set, it will take precidence and the thread will not be closed.
+    pub close_to: Option<Pubkey>,
     /// A dynamic instruction to execute next.
     pub dynamic_instruction: Option<SerializableInstruction>,
     /// Value to update the thread trigger to.
@@ -88,6 +91,7 @@ pub struct ThreadResponse {
 impl Default for ThreadResponse {
     fn default() -> Self {
         return Self {
+            close_to: None,
             dynamic_instruction: None,
             trigger: None,
         };

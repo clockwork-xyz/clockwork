@@ -155,6 +155,7 @@ pub fn handler(ctx: Context<UnstakeProcess>) -> Result<ThreadResponse> {
 
     Ok(ThreadResponse {
         dynamic_instruction,
+        close_to: None,
         trigger: None,
     })
 }

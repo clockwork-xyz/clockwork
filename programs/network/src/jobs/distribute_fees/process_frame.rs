@@ -143,6 +143,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
 
     Ok(ThreadResponse {
         dynamic_instruction,
+        close_to: None,
         trigger: None,
     })
 }

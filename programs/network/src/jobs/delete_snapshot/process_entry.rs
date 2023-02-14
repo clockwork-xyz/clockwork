@@ -132,5 +132,5 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessEntry>) -> Result<ThreadRespons
         None
     };
 
-    Ok( ThreadResponse { dynamic_instruction, trigger: None } )
+    Ok( ThreadResponse { dynamic_instruction, close_to: None, trigger: None } )
 }

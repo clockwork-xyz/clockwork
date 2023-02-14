@@ -4,7 +4,7 @@ use anchor_lang::{
         instruction::Instruction,
         program::{get_return_data, invoke_signed},
     },
-    AnchorDeserialize,
+    AnchorDeserialize, InstructionData,
 };
 use clockwork_network_program::state::{Fee, Pool, Worker, WorkerAccount};
 use clockwork_utils::thread::{SerializableInstruction, ThreadResponse, PAYER_PUBKEY};
@@ -131,8 +131,10 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     };
 
     // Grab the next instruction from the thread response.
+    let mut close_to = None;
     let mut next_instruction = None;
     if let Some(thread_response) = thread_response {
+        close_to = thread_response.close_to;
         next_instruction = thread_response.dynamic_instruction;
 
         // Update the trigger.
@@ -155,7 +157,23 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     }
 
     // Update the next instruction.
-    thread.next_instruction = next_instruction;
+    if let Some(close_to) = close_to {
+        thread.next_instruction = Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::ThreadDelete {
+                    authority: thread.key(),
+                    close_to,
+                    thread: thread.key(),
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::ThreadDelete {}.data(),
+            }
+            .into(),
+        );
+    } else {
+        thread.next_instruction = next_instruction;
+    }
 
     // Update the exec context.
     let current_slot = Clock::get().unwrap().slot;

@@ -42,6 +42,7 @@ pub fn handler(ctx: Context<StakeDelegationsJob>) -> Result<ThreadResponse> {
         } else {
             None
         },
+        close_to: None,
         trigger: None,
     })
 }
