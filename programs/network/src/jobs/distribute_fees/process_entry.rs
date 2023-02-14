@@ -158,7 +158,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
                     worker: next_worker_pubkey,
                 }
                 .to_account_metas(Some(true)),
-                data: crate::instruction::DeleteSnapshotProcessFrame {}.data(),
+                data: crate::instruction::DistributeFeesProcessFrame {}.data(),
             }
             .into(),
         )

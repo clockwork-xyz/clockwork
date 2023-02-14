@@ -82,12 +82,12 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
             Instruction {
                 program_id: crate::ID,
                 accounts: crate::accounts::DeleteSnapshotProcessEntry {
-                    config:config.key(),
-                    registry:registry.key(),
-                    snapshot:snapshot.key(),
-                    snapshot_entry:SnapshotEntry::pubkey(snapshot_frame.key(), 0),
-                    snapshot_frame:snapshot_frame.key(),
-                    thread:thread.key(),
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_entry: SnapshotEntry::pubkey(snapshot_frame.key(), 0),
+                    snapshot_frame: snapshot_frame.key(),
+                    thread: thread.key(),
                 }.to_account_metas(Some(true)),
                 data: crate::instruction::DeleteSnapshotProcessEntry{}.data()
             }.into()
@@ -98,11 +98,11 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessFrame>) -> Result<ThreadRespons
             Instruction {
                 program_id: crate::ID,
                 accounts: crate::accounts::DeleteSnapshotProcessFrame {
-                    config:config.key(),
-                    registry:registry.key(),
-                    snapshot:snapshot.key(),
-                    snapshot_frame:SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()),
-                    thread:thread.key(),
+                    config: config.key(),
+                    registry: registry.key(),
+                    snapshot: snapshot.key(),
+                    snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), snapshot_frame.id.checked_add(1).unwrap()),
+                    thread: thread.key(),
                 }.to_account_metas(Some(true)),
                 data: crate::instruction::DeleteSnapshotProcessFrame {}.data()
             }.into()
