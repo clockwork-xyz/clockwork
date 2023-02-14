@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     str::FromStr,
-    sync::Arc,
+    sync::{atomic::AtomicU64, Arc},
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -12,10 +12,7 @@ use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
-use solana_program::{
-    clock::{Clock, DEFAULT_DEV_SLOTS_PER_EPOCH},
-    pubkey::Pubkey,
-};
+use solana_program::{clock::Clock, pubkey::Pubkey};
 use tokio::sync::RwLock;
 
 use crate::versioned_thread::VersionedThread;
@@ -23,6 +20,9 @@ use crate::versioned_thread::VersionedThread;
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: RwLock<HashMap<u64, Clock>>,
+
+    // Integer tracking the current epoch.
+    pub current_epoch: AtomicU64,
 
     // The set of threads with an account trigger.
     // Map from account pubkeys to the set of threads listening for an account update.
@@ -49,6 +49,7 @@ impl ThreadObserver {
     pub fn new() -> Self {
         Self {
             clocks: RwLock::new(HashMap::new()),
+            current_epoch: AtomicU64::new(0),
             account_threads: RwLock::new(HashMap::new()),
             cron_threads: RwLock::new(HashMap::new()),
             now_threads: RwLock::new(HashSet::new()),
@@ -73,6 +74,8 @@ impl ThreadObserver {
             w_cron_threads.retain(|target_timestamp, thread_pubkeys| {
                 let is_due = clock.unix_timestamp >= *target_timestamp;
                 if is_due {
+                    self.current_epoch
+                        .fetch_max(clock.epoch, std::sync::atomic::Ordering::Relaxed);
                     for pubkey in thread_pubkeys.iter() {
                         executable_threads.insert(*pubkey);
                     }
@@ -112,9 +115,11 @@ impl ThreadObserver {
 
         // Get the set of threads that were trigger by an epoch update.
         let mut w_epoch_threads = self.epoch_threads.write().await;
+        let current_epoch = self
+            .current_epoch
+            .load(std::sync::atomic::Ordering::Relaxed);
         w_epoch_threads.retain(|target_epoch, thread_pubkeys| {
-            // TODO calculate epoch
-            let is_due = slot >= *target_epoch;
+            let is_due = current_epoch >= *target_epoch;
             if is_due {
                 for pubkey in thread_pubkeys.iter() {
                     executable_threads.insert(*pubkey);
