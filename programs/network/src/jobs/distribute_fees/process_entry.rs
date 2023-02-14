@@ -168,6 +168,7 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
 
     Ok(ThreadResponse {
         dynamic_instruction,
+        close_to: None,
         trigger: None,
     })
 }

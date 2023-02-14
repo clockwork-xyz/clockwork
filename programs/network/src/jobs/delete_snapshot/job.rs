@@ -3,7 +3,6 @@ use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 
-
 #[derive(Accounts)]
 pub struct DeleteSnapshotJob<'info> {
     #[account(address = Config::pubkey())]
@@ -39,6 +38,7 @@ pub fn handler(ctx: Context<DeleteSnapshotJob>) -> Result<ThreadResponse> {
             }
             .into(),
         ),
+        close_to: None,
         trigger: None,
     })
 }

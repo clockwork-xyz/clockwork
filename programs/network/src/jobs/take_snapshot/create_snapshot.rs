@@ -81,6 +81,7 @@ pub fn handler(ctx: Context<TakeSnapshotCreateSnapshot>) -> Result<ThreadRespons
         } else {
             None
         },
+        close_to: None,
         trigger: None,
     })
 }
