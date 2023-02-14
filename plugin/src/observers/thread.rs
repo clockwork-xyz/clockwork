@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     str::FromStr,
-    sync::Arc,
+    sync::{atomic::AtomicU64, Arc},
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -21,6 +21,9 @@ pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: RwLock<HashMap<u64, Clock>>,
 
+    // Integer tracking the current epoch.
+    pub current_epoch: AtomicU64,
+
     // The set of threads with an account trigger.
     // Map from account pubkeys to the set of threads listening for an account update.
     pub account_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
@@ -35,6 +38,9 @@ pub struct ThreadObserver {
     // The set of threads with a slot trigger.
     pub slot_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
+    // The set of threads with an epoch trigger.
+    pub epoch_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
@@ -43,10 +49,12 @@ impl ThreadObserver {
     pub fn new() -> Self {
         Self {
             clocks: RwLock::new(HashMap::new()),
+            current_epoch: AtomicU64::new(0),
             account_threads: RwLock::new(HashMap::new()),
             cron_threads: RwLock::new(HashMap::new()),
             now_threads: RwLock::new(HashSet::new()),
             slot_threads: RwLock::new(HashMap::new()),
+            epoch_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -66,6 +74,8 @@ impl ThreadObserver {
             w_cron_threads.retain(|target_timestamp, thread_pubkeys| {
                 let is_due = clock.unix_timestamp >= *target_timestamp;
                 if is_due {
+                    self.current_epoch
+                        .fetch_max(clock.epoch, std::sync::atomic::Ordering::Relaxed);
                     for pubkey in thread_pubkeys.iter() {
                         executable_threads.insert(*pubkey);
                     }
@@ -102,6 +112,22 @@ impl ThreadObserver {
             !is_due
         });
         drop(w_slot_threads);
+
+        // Get the set of threads that were trigger by an epoch update.
+        let mut w_epoch_threads = self.epoch_threads.write().await;
+        let current_epoch = self
+            .current_epoch
+            .load(std::sync::atomic::Ordering::Relaxed);
+        w_epoch_threads.retain(|target_epoch, thread_pubkeys| {
+            let is_due = current_epoch >= *target_epoch;
+            if is_due {
+                for pubkey in thread_pubkeys.iter() {
+                    executable_threads.insert(*pubkey);
+                }
+            }
+            !is_due
+        });
+        drop(w_epoch_threads);
 
         // Get the set of immediate threads.
         let mut w_now_threads = self.now_threads.write().await;
@@ -230,6 +256,20 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_slot_threads);
+                }
+                Trigger::Epoch { epoch } => {
+                    let mut w_epoch_threads = self.epoch_threads.write().await;
+                    w_epoch_threads
+                        .entry(epoch)
+                        .and_modify(|v| {
+                            v.insert(thread_pubkey);
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(thread_pubkey);
+                            v
+                        });
+                    drop(w_epoch_threads);
                 }
             }
         }
