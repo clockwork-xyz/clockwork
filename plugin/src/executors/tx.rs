@@ -469,61 +469,14 @@ impl TxExecutor {
     }
 
     async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        // let tpu_client = TPU_CLIENT.get().await;
-        // log::debug!("got tpu client");
-        // let tpu_client: Option<TpuClient> = {
-        //     let rpc_client = Arc::new(RpcClient::new_with_commitment(
-        //         LOCAL_RPC_URL.into(),
-        //         CommitmentConfig::processed(),
-        //     ));
-        //     match TpuClient::new(
-        //         rpc_client,
-        //         LOCAL_WEBSOCKET_URL.into(),
-        //         TpuClientConfig::default(),
-        //     )
-        //     .await
-        //     {
-        //         Ok(tpu_client) => Some(tpu_client),
-        //         Err(err) => {
-        //             log::debug!("failed to get tpu client {err:#?}");
-        //             None
-        //         }
-        //     }
-        // };
-        // if let Some(client) = tpu_client {
-        //     if !client.send_transaction(tx).await {
-        //         return Err(GeyserPluginError::Custom(
-        //             "Failed to send transaction".into(),
-        //         ));
-        //     }
-        // }
-        // log::debug!("got tpu for sub");
-
-        let rpc_client = Arc::new(RpcClient::new_with_commitment(
-            LOCAL_RPC_URL.into(),
-            CommitmentConfig::processed(),
-        ));
-        log::debug!("got rpc for sim");
-        if !rpc_client
-            .send_transaction_with_config(
-                tx,
-                RpcSendTransactionConfig {
-                    skip_preflight: true,
-                    ..RpcSendTransactionConfig::default()
-                },
-            )
-            .await
-            .is_ok()
-        {
+        if !TPU_CLIENT.get().await.send_transaction(tx).await {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
         }
-
         Ok(tx.clone())
     }
 
-    // #[allow(unused_must_use)]
     pub(crate) async fn upload_tx(
         self: Arc<Self>,
         metadata: &DataToBeSummoned,
@@ -532,17 +485,17 @@ impl TxExecutor {
     ) -> PluginResult<()> {
         // TODO: deserialization will happen every time. need to make it only try deser/upload once
         if !metadata.uploaded {
-            if let Ok(response) = reqwest::get(dbg!(metadata.get_source())).await {
+            if let Ok(response) = reqwest::get(metadata.get_source()).await {
                 if let Ok(data) = response.bytes().await {
                     // Check if hash is right
                     let mut hasher = Sha256::new();
-                    hasher.update(dbg!(&data));
+                    hasher.update(&data);
                     if (*hasher.finalize()).eq(&metadata.hash) {
                         let upload = Upload {
                             data: data.to_vec(),
                         };
                         let upload_ix_data = upload.data();
-                        let upload_ix = dbg!(Instruction {
+                        let upload_ix = Instruction {
                             program_id: chain_drive::ID,
                             accounts: vec![
                                 AccountMeta::new(self.keypair.pubkey(), true),
@@ -557,47 +510,18 @@ impl TxExecutor {
                                 AccountMeta::new_readonly(clockwork_client::thread::ID, false),
                                 AccountMeta::new_readonly(
                                     solana_program::system_program::ID,
-                                    false
+                                    false,
                                 ),
                             ],
                             data: upload_ix_data,
-                        });
+                        };
                         let mut transaction =
                             Transaction::new_with_payer(&[upload_ix], Some(&self.keypair.pubkey()));
                         transaction.sign(
                             &[&self.keypair],
                             client.get_latest_blockhash().await.expect("TODO"),
                         );
-                        // dbg!("simulating upload transaction");
-                        // match self.clone().simulate_tx(&transaction).await {
-                        // Ok(_) => {
-                        dbg!("sending upload transaction");
-                        let rpc_client = Arc::new(RpcClient::new_with_commitment(
-                            LOCAL_RPC_URL.into(),
-                            CommitmentConfig::processed(),
-                        ));
-                        match rpc_client
-                            .send_transaction_with_config(
-                                &transaction,
-                                RpcSendTransactionConfig {
-                                    skip_preflight: true,
-                                    ..RpcSendTransactionConfig::default()
-                                },
-                            )
-                            .await
-                        {
-                            Ok(sig) => {
-                                dbg!("upload sig {sig}");
-                                dbg!(sig);
-                            }
-                            Err(_) => {
-                                dbg!("failed to submit upload");
-                            }
-                        };
-                        dbg!("sent upload transaction");
-                        // }
-                        // Err(err) => log::debug!("upload simulation failed {err:#?}"),
-                        // }
+                        TPU_CLIENT.get().await.send_transaction(&transaction).await;
                     }
                 }
             }
