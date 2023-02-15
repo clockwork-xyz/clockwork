@@ -57,8 +57,7 @@ cd clockwork
 
 #### 2. Checkout the latest stable release branch.
 ```sh
-git describe --tags `git rev-list --tags --max-count=1`
-git checkout tags/...
+git checkout -b v1.4 origin/v1.4
 ```
 > ⚠️ Make sure the version of your program or client matches the version of the engine that you are running. E.g., if you are using `clockwork-sdk = 1.4.0`, you should also `git checkout tags/v1.4.0`. We use semantic versioning, but main branch is probably not what you want.
 
