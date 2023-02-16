@@ -66,6 +66,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     sol_log_compute_units();
 
     // Get accounts
+    let clock = Clock::get().unwrap();
     let fee = &mut ctx.accounts.fee;
     let pool = &ctx.accounts.pool;
     let signatory = &mut ctx.accounts.signatory;
@@ -73,7 +74,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     let worker = &ctx.accounts.worker;
 
     // If the rate limit has been met, exit early.
-    if thread.exec_context.unwrap().last_exec_at == Clock::get().unwrap().slot
+    if thread.exec_context.unwrap().last_exec_at == clock.slot
         && thread.exec_context.unwrap().execs_since_slot >= thread.rate_limit
     {
         return Err(ClockworkError::RateLimitExeceeded.into());
@@ -168,7 +169,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     }
 
     // Update the exec context.
-    let current_slot = Clock::get().unwrap().slot;
     thread.exec_context = Some(ExecContext {
         exec_index,
         execs_since_reimbursement: thread
@@ -177,7 +177,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             .execs_since_reimbursement
             .checked_add(1)
             .unwrap(),
-        execs_since_slot: if current_slot == thread.exec_context.unwrap().last_exec_at {
+        execs_since_slot: if clock.slot == thread.exec_context.unwrap().last_exec_at {
             thread
                 .exec_context
                 .unwrap()
@@ -187,7 +187,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         } else {
             1
         },
-        last_exec_at: current_slot,
+        last_exec_at: clock.slot,
         ..thread.exec_context.unwrap()
     });
 
