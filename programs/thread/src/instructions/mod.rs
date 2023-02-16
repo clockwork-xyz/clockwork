@@ -1,21 +1,25 @@
+pub mod get_crate_info;
 pub mod thread_create;
 pub mod thread_delete;
 pub mod thread_exec;
+pub mod thread_instruction_add;
+pub mod thread_instruction_remove;
 pub mod thread_kickoff;
 pub mod thread_pause;
 pub mod thread_reset;
 pub mod thread_resume;
 pub mod thread_update;
 pub mod thread_withdraw;
-pub mod get_crate_info;
 
+pub use get_crate_info::*;
 pub use thread_create::*;
 pub use thread_delete::*;
 pub use thread_exec::*;
+pub use thread_instruction_add::*;
+pub use thread_instruction_remove::*;
 pub use thread_kickoff::*;
 pub use thread_pause::*;
 pub use thread_reset::*;
 pub use thread_resume::*;
 pub use thread_update::*;
 pub use thread_withdraw::*;
-pub use get_crate_info::*;
