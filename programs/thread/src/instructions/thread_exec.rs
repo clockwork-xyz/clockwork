@@ -2,6 +2,7 @@ use anchor_lang::{
     prelude::*,
     solana_program::{
         instruction::Instruction,
+        log::sol_log_compute_units,
         program::{get_return_data, invoke_signed},
     },
     AnchorDeserialize, InstructionData,
@@ -62,6 +63,8 @@ pub struct ThreadExec<'info> {
 }
 
 pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
+    sol_log_compute_units();
+
     // Get accounts
     let fee = &mut ctx.accounts.fee;
     let pool = &ctx.accounts.pool;
@@ -81,31 +84,20 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
 
     // Get the instruction to execute.
     // We have already verified that it is not null during account validation.
-    let next_instruction: &Option<SerializableInstruction> = &thread.clone().next_instruction;
-    let instruction = next_instruction.as_ref().unwrap();
+    let instruction: &mut SerializableInstruction = &mut thread.next_instruction.clone().unwrap();
 
     // Inject the signatory's pubkey for the Clockwork payer ID.
-    let normalized_accounts: &mut Vec<AccountMeta> = &mut vec![];
-    instruction.accounts.iter().for_each(|acc| {
-        let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
-            signatory.key()
-        } else {
-            acc.pubkey
-        };
-        normalized_accounts.push(AccountMeta {
-            pubkey: acc_pubkey,
-            is_signer: acc.is_signer,
-            is_writable: acc.is_writable,
-        });
-    });
+    for acc in instruction.accounts.iter_mut() {
+        if acc.pubkey.eq(&PAYER_PUBKEY) {
+            acc.pubkey = signatory.key();
+        }
+    }
+
+    sol_log_compute_units();
 
     // Invoke the provided instruction.
     invoke_signed(
-        &Instruction {
-            program_id: instruction.program_id,
-            data: instruction.data.clone(),
-            accounts: normalized_accounts.to_vec(),
-        },
+        &Instruction::from(&*instruction),
         ctx.remaining_accounts,
         &[&[
             SEED_THREAD,
