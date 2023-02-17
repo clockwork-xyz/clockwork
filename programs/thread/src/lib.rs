@@ -50,6 +50,22 @@ pub mod thread_program {
         thread_delete::handler(ctx)
     }
 
+    /// Appends a new instruction to the thread's instruction set.
+    pub fn thread_instruction_add(
+        ctx: Context<ThreadInstructionAdd>,
+        instruction: SerializableInstruction,
+    ) -> Result<()> {
+        thread_instruction_add::handler(ctx, instruction)
+    }
+
+    /// Removes an instruction to the thread's instruction set at the provied index.
+    pub fn thread_instruction_remove(
+        ctx: Context<ThreadInstructionRemove>,
+        index: u64,
+    ) -> Result<()> {
+        thread_instruction_remove::handler(ctx, index)
+    }
+
     /// Kicks off a thread if its trigger condition is active.
     pub fn thread_kickoff(ctx: Context<ThreadKickoff>) -> Result<()> {
         thread_kickoff::handler(ctx)
