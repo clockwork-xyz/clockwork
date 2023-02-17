@@ -2,7 +2,6 @@ use anchor_lang::{
     prelude::*,
     solana_program::{
         instruction::Instruction,
-        log::sol_log_compute_units,
         program::{get_return_data, invoke_signed},
     },
     AnchorDeserialize, InstructionData,
@@ -63,8 +62,6 @@ pub struct ThreadExec<'info> {
 }
 
 pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
-    sol_log_compute_units();
-
     // Get accounts
     let clock = Clock::get().unwrap();
     let fee = &mut ctx.accounts.fee;
@@ -93,8 +90,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             acc.pubkey = signatory.key();
         }
     }
-
-    sol_log_compute_units();
 
     // Invoke the provided instruction.
     invoke_signed(
