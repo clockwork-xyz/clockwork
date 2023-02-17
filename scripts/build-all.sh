@@ -17,13 +17,13 @@ EOF
 # Set build flags
 maybeRustVersion=
 installDir=
-buildVariant=release
-maybeReleaseFlag=--release
+buildVariant=debug
+maybeReleaseFlag=
 while [[ -n $1 ]]; do
   if [[ ${1:0:1} = - ]]; then
-    if [[ $1 = --debug ]]; then
-      maybeReleaseFlag=
-      buildVariant=debug
+    if [[ $1 = --release ]]; then
+      maybeReleaseFlag=--release
+      buildVariant=release
       shift
     else
       usage "Unknown option: $1"
