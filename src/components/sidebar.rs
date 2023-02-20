@@ -1,36 +1,40 @@
-use yew::prelude::*;
-use yew_router::prelude::*;
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
-use crate::Route;
+use crate::routes::RoutePath;
 
-#[function_component]
-pub fn Sidebar() -> Html {
-    html! {
-        <div class={classes!("fixed", "left-0", "flex", "flex-col", "px-8")}>
-            <SidebarButton title={"Data"} route={Route::Data} />
-            <SidebarButton title={"Files"} route={Route::Files} />
-            <SidebarButton title={"Threads"} route={Route::Threads} />
-        </div>
-    }
+pub fn Sidebar(cx: Scope) -> Element {
+    cx.render(rsx! {
+        div {
+            class: "fixed left-0 flex flex-col px-8",
+            SidebarButton {
+                title: "Data",
+                route: RoutePath::Data.as_str()
+            }
+            SidebarButton {
+                title: "Files",
+                route: RoutePath::Files.as_str()
+            }
+            SidebarButton {
+                title: "Threads",
+                route: RoutePath::Threads.as_str()
+            }
+        }
+    })
 }
 
-#[derive(Properties, PartialEq)]
-pub struct SidebarButtonProps {
-    #[prop_or_default]
-    pub title: AttrValue,
-    pub route: Route,
+#[derive(PartialEq, Props)]
+pub struct SidebarButtonProps<'a> {
+    title: &'a str,
+    route: &'a str,
 }
 
-#[function_component]
-pub fn SidebarButton(props: &SidebarButtonProps) -> Html {
-    let navigator = use_navigator().unwrap();
-    let onclick = {
-        let route = props.route.clone();
-        move |_| navigator.push(&route)
-    };
-    html! {
-        <button class={classes!("p-2", "w-full", "text-left")} {onclick}>
-            <p>{props.title.clone()}</p>
-        </button>
-    }
+pub fn SidebarButton<'a>(cx: Scope<'a, SidebarButtonProps<'a>>) -> Element {
+    cx.render(rsx! {
+        Link {
+            to: cx.props.route,
+            class: "w-full p-2 text-left",
+            "{cx.props.title}"
+        }
+    })
 }

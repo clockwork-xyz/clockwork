@@ -1,24 +1,25 @@
-use yew::prelude::*;
-use yew_router::prelude::*;
+use dioxus::prelude::*;
+use dioxus_router::Link;
 
-use crate::Route;
+use crate::routes::RoutePath;
 
-#[function_component]
-pub fn Navbar() -> Html {
-    html! {
-        <div class={classes!("fixed", "top-0", "w-screen", "p-8")}>
-            <Logo />
-        </div>
-    }
+pub fn Navbar(cx: Scope) -> Element {
+    cx.render(rsx! {
+        div {
+            class: "fixed top-0 w-screen p-8",
+            Logo {}
+        }
+    })
 }
 
-#[function_component]
-pub fn Logo() -> Html {
-    let navigator = use_navigator().unwrap();
-    let onclick = { move |_| navigator.push(&Route::Home) };
-    html! {
-        <button class={classes!("p-2")} {onclick}>
-            <img class={classes!("h-4")} src="/img/CLOCKWORK.svg" />
-        </button>
-    }
+pub fn Logo(cx: Scope) -> Element {
+    cx.render(rsx! {
+        Link {
+            to: RoutePath::Home.as_str(),
+            img {
+                src: "/img/CLOCKWORK.svg",
+                class: "h-4"
+            }
+        }
+    })
 }
