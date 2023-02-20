@@ -1,4 +1,4 @@
-use yew::{function_component, html, Callback, Html, MouseEvent, Properties};
+use yew::{function_component, html, prelude::*, Callback, Html, MouseEvent, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -11,7 +11,17 @@ pub struct Props {
 pub fn Navbar() -> Html {
     html! {
         <div class="fixed top-0 w-screen p-8">
-            <img class="h-4" src="/img/CLOCKWORK.svg" />
+            <Logo />
         </div>
+    }
+}
+
+#[function_component]
+pub fn Logo() -> Html {
+    let onclick = { move |_| todo!() };
+    html! {
+        <button class="p-2" {onclick}>
+            <img class="h-4" src="/img/CLOCKWORK.svg" />
+        </button>
     }
 }
