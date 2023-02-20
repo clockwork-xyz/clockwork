@@ -1,7 +1,7 @@
 mod components;
 mod routes;
 
-use components::navbar::Navbar;
+use components::*;
 use routes::*;
 use wasm_logger;
 use yew::prelude::*;
@@ -14,6 +14,7 @@ fn app() -> Html {
             <div class={classes!("flex", "flex-col", "items-center", "justify-center")}>
                 <BrowserRouter>
                     <Navbar />
+                    <Sidebar />
                     <Switch<Route> render={switch} />
                 </BrowserRouter>
             </div>

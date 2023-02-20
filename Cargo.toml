@@ -14,6 +14,4 @@ wasm-logger = "0.2"
 web-sys = "0.3.56"
 yew = { version = "0.20.0", features = ["csr"] }
 yew-router = "0.17.0"
-# yew = { git="https://github.com/yewstack/yew.git", features = ["csr"] }
-# yew-router = { git = "https://github.com/yewstack/yew.git" }
 

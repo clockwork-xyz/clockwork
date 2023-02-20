@@ -3,13 +3,6 @@ use yew_router::prelude::*;
 
 use crate::Route;
 
-#[derive(Properties, PartialEq)]
-pub struct Props {
-    #[prop_or_default]
-    pub value: String,
-    pub onclick: Callback<MouseEvent>,
-}
-
 #[function_component]
 pub fn Navbar() -> Html {
     html! {
