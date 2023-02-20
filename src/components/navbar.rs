@@ -1,4 +1,7 @@
 use yew::prelude::*;
+use yew_router::prelude::*;
+
+use crate::Route;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -18,7 +21,8 @@ pub fn Navbar() -> Html {
 
 #[function_component]
 pub fn Logo() -> Html {
-    let onclick = { move |_| todo!() };
+    let navigator = use_navigator().unwrap();
+    let onclick = { move |_| navigator.push(&Route::Home) };
     html! {
         <button class={classes!("p-2")} {onclick}>
             <img class={classes!("h-4")} src="/img/CLOCKWORK.svg" />
