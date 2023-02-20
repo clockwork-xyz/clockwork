@@ -1,0 +1,16 @@
+[package]
+name = "solana-dapp-example"
+version = "0.1.0"
+edition = "2021"
+author = ["Russell Wong"]
+
+[dependencies]
+js-sys = "0.3.56"
+log = "0.4"
+serde = "1.0.136"
+wasm-bindgen = "0.2.79"
+wasm-bindgen-futures = "0.4.29"
+wasm-logger = "0.2"
+web-sys = "0.3.56"
+yew = { git="https://github.com/yewstack/yew.git", features = ["csr"] }
+yew-router = { git = "https://github.com/yewstack/yew.git" }
