@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 pub fn Clock(cx: Scope) -> Element {
     let time = use_state(&cx, || Utc::now());
 
-    use_future(&cx, {}, |_| {
+    use_future(&cx, (), |_| {
         let time = time.clone();
         async move {
             loop {
