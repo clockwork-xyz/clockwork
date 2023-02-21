@@ -1,10 +1,12 @@
 #![allow(non_snake_case)]
 mod components;
+mod pages;
 mod routes;
 
 use components::*;
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
+use pages::*;
 use wasm_logger;
 
 use crate::routes::RoutePath;
@@ -21,6 +23,7 @@ fn App(cx: Scope) -> Element {
             Router {
                 Navbar {}
                 Sidebar {}
+                Clock {}
                 Route { to: RoutePath::Home.as_str(), HomePage{} }
                 Route { to: RoutePath::Data.as_str(), DataPage{} }
                 Route { to: RoutePath::Files.as_str(), FilesPage{} }
@@ -28,35 +31,5 @@ fn App(cx: Scope) -> Element {
                 Route { to: RoutePath::NotFound.as_str(), NotFoundPage{} }
             }
         }
-    })
-}
-
-fn HomePage(cx: Scope) -> Element {
-    cx.render(rsx! {
-        h1 { "Home" }
-    })
-}
-
-fn DataPage(cx: Scope) -> Element {
-    cx.render(rsx! {
-        h1 { "Data" }
-    })
-}
-
-fn FilesPage(cx: Scope) -> Element {
-    cx.render(rsx! {
-        h1 { "Files" }
-    })
-}
-
-fn ThreadsPage(cx: Scope) -> Element {
-    cx.render(rsx! {
-        h1 { "Threads" }
-    })
-}
-
-fn NotFoundPage(cx: Scope) -> Element {
-    cx.render(rsx! {
-        h1 { "Not found" }
     })
 }
