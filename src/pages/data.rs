@@ -189,7 +189,11 @@ impl Quotable for PriceAccount {
             fprice = fprice / 10 as f64;
             fconf = fconf / 10 as f64;
         }
-        format!("${:.3} ± {:.3}", fprice, fconf).into()
+        if fprice < 0.001 {
+            format!("${:.3e} ± {:.3e}", fprice, fconf).into()
+        } else {
+            format!("${:.3} ± {:.3}", fprice, fconf).into()
+        }
     }
 }
 
