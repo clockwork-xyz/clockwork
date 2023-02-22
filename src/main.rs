@@ -48,34 +48,21 @@ pub fn HotKeys(cx: Scope) -> Element {
             Some(EventListener::new(&document, "keydown", move |event| {
                 let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
                 if goto_mode {
+                    goto_mode = false;
                     match event.key().as_str() {
                         "D" | "d" => {
-                            if goto_mode {
-                                router.navigate_to(RoutePath::Data.as_str());
-                                goto_mode = false;
-                            }
+                            router.navigate_to(RoutePath::Data.as_str());
                         }
                         "F" | "f" => {
-                            if goto_mode {
-                                router.navigate_to(RoutePath::Files.as_str());
-                                goto_mode = false;
-                            }
+                            router.navigate_to(RoutePath::Files.as_str());
                         }
                         "H" | "h" => {
-                            if goto_mode {
-                                router.navigate_to(RoutePath::Home.as_str());
-                                goto_mode = false;
-                            }
+                            router.navigate_to(RoutePath::Home.as_str());
                         }
                         "T" | "t" => {
-                            if goto_mode {
-                                router.navigate_to(RoutePath::Threads.as_str());
-                                goto_mode = false;
-                            }
+                            router.navigate_to(RoutePath::Threads.as_str());
                         }
-                        _ => {
-                            goto_mode = false;
-                        }
+                        _ => {}
                     }
                 } else {
                     match event.key().as_str() {
