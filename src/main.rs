@@ -9,6 +9,7 @@ use dioxus_router::{use_router, Route, Router};
 use gloo_events::EventListener;
 use log::info;
 use pages::*;
+use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use wasm_logger;
 
 use crate::routes::RoutePath;
@@ -43,10 +44,47 @@ pub fn HotKeys(cx: Scope) -> Element {
         let router = router.clone();
         async move {
             let document = gloo_utils::document();
+            let mut goto_mode = false;
             Some(EventListener::new(&document, "keydown", move |event| {
-                info!("{:?}", event);
-                // TODO Parse event and implement hotkeys.
-                router.navigate_to(RoutePath::Home.as_str());
+                let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
+                if goto_mode {
+                    match event.key().as_str() {
+                        "D" | "d" => {
+                            if goto_mode {
+                                router.navigate_to(RoutePath::Data.as_str());
+                                goto_mode = false;
+                            }
+                        }
+                        "F" | "f" => {
+                            if goto_mode {
+                                router.navigate_to(RoutePath::Files.as_str());
+                                goto_mode = false;
+                            }
+                        }
+                        "H" | "h" => {
+                            if goto_mode {
+                                router.navigate_to(RoutePath::Home.as_str());
+                                goto_mode = false;
+                            }
+                        }
+                        "T" | "t" => {
+                            if goto_mode {
+                                router.navigate_to(RoutePath::Threads.as_str());
+                                goto_mode = false;
+                            }
+                        }
+                        _ => {
+                            goto_mode = false;
+                        }
+                    }
+                } else {
+                    match event.key().as_str() {
+                        "G" | "g" => {
+                            goto_mode = true;
+                        }
+                        _ => {}
+                    }
+                }
             }))
         }
     });
