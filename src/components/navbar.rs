@@ -6,7 +6,7 @@ use crate::{components::ConnectButton, routes::RoutePath};
 pub fn Navbar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "fixed top-0 flex flex-row justify-between w-screen p-8 ",
+            class: "fixed top-0 flex flex-row justify-between w-screen p-8",
             Logo {}
             ConnectButton {}
         }
