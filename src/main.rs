@@ -21,11 +21,10 @@ fn main() {
 fn App(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "w-screen h-screen flex items-center justify-center",
+            class: "w-screen h-screen flex flex-col justify-start",
             Router {
                 HotKeys {}
                 Navbar {}
-                Sidebar {}
                 Clock {}
                 Route { to: RoutePath::Home.as_str(), HomePage{} }
                 Route { to: RoutePath::Data.as_str(), DataPage{} }

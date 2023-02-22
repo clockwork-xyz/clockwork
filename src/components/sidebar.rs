@@ -6,18 +6,21 @@ use crate::routes::RoutePath;
 pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "fixed left-0 flex flex-col px-8",
-            SidebarButton {
-                title: "Data",
-                route: RoutePath::Data.as_str()
-            }
-            SidebarButton {
-                title: "Files",
-                route: RoutePath::Files.as_str()
-            }
-            SidebarButton {
-                title: "Threads",
-                route: RoutePath::Threads.as_str()
+            class: "h-full w-48 flex items-center",
+            div {
+                class: "w-full flex flex-col my-auto",
+                SidebarButton {
+                    title: "Data",
+                    route: RoutePath::Data.as_str()
+                }
+                SidebarButton {
+                    title: "Files",
+                    route: RoutePath::Files.as_str()
+                }
+                SidebarButton {
+                    title: "Threads",
+                    route: RoutePath::Threads.as_str()
+                }
             }
         }
     })

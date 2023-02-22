@@ -1,7 +1,14 @@
 use dioxus::prelude::*;
 
+use super::Page;
+
 pub fn DataPage(cx: Scope) -> Element {
     cx.render(rsx! {
-        h1 { "Data" }
+        Page {
+            h1 {
+                class: "text-2xl font-semibold",
+                "Data"
+            }
+        }
     })
 }

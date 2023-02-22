@@ -10,12 +10,12 @@ use solana_client_wasm::{
     WasmClient,
 };
 
+use super::Page;
+
 pub fn ThreadsPage(cx: Scope) -> Element {
     let _threads = use_state::<Vec<Thread>>(&cx, || vec![]);
+
     use_future(&cx, (), |_| {
-        // let blockhash = blockhash.clone();
-        // let slot = slot.clone();
-        // let time = time.clone();
         let client = WasmClient::new("http://74.118.139.244:8899");
         async move {
             let accounts = client
@@ -34,20 +34,15 @@ pub fn ThreadsPage(cx: Scope) -> Element {
                 .await
                 .unwrap();
             info!("{:?}", accounts);
-            // accounts
-
-            // client.ge
-            // loop {
-            //     blockhash.set(client.get_latest_blockhash().await.unwrap().to_string());
-            //     time.set(Utc::now());
-            //     slot.set(client.get_slot().await.unwrap());
-            //     gloo_timers::future::TimeoutFuture::new(1000).await;
-            // }
-            // TODO
         }
     });
 
     cx.render(rsx! {
-        h1 { "Threads" }
+        Page {
+            h1 {
+                class: "text-2xl font-semibold",
+                "Threads"
+            }
+        }
     })
 }
