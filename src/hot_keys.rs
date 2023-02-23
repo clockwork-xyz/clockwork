@@ -3,7 +3,7 @@ use dioxus_router::use_router;
 use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 
-pub fn HotKeys(cx: Scope) -> Element {
+pub fn Goto(cx: Scope) -> Element {
     let router = use_router(&cx);
     use_future(&cx, (), |_| {
         let router = router.clone();
@@ -24,8 +24,8 @@ pub fn HotKeys(cx: Scope) -> Element {
                         "H" | "h" => {
                             router.navigate_to("/");
                         }
-                        "T" | "t" => {
-                            router.navigate_to("/threads");
+                        "P" | "p" => {
+                            router.navigate_to("/programs");
                         }
                         _ => {}
                     }

@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
 use gloo_events::EventListener;
-use log::info;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::HtmlElement;
 
@@ -65,7 +64,7 @@ pub fn PriceFeedsTable(cx: Scope) -> Element {
 fn PriceTableHeader(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800",
+            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 font-medium text-sm text-slate-600",
             p {
                 "Ticker"
             }
@@ -88,7 +87,7 @@ fn PriceRow<'a>(cx: Scope<'a, PriceRowProps<'a>>) -> Element {
         Link {
             to: "/price_feed/{cx.props.price.pubkey}",
             id: cx.props.id.as_str(),
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800",
+            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
             p {
                 "{cx.props.price.ticker}"
             }

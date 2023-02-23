@@ -7,7 +7,7 @@ mod pyth;
 use components::*;
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
-use hot_keys::HotKeys;
+use hot_keys::Goto;
 use pages::*;
 use wasm_logger;
 
@@ -21,14 +21,14 @@ fn App(cx: Scope) -> Element {
         div {
             class: "w-screen h-screen flex flex-col justify-start",
             Router {
-                HotKeys {}
+                Goto {}
                 Navbar {}
                 Clock {}
                 Route { to: "/", HomePage{} }
                 Route { to: "/data", DataPage{} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/price_feed/:address", PriceFeedPage{} }
-                Route { to: "/threads", ThreadsPage{} }
+                Route { to: "/programs", ProgramsPage{} }
                 Route { to: "", NotFoundPage{} }
             }
         }

@@ -1,10 +1,10 @@
 use dioxus::prelude::*;
-use dioxus_router::Link;
+use dioxus_router::{use_route, Link};
 
 pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "h-full w-48 flex flex-col items-start",
+            class: "h-full w-48 flex flex-col items-start py-8",
                 SidebarButton {
                     title: "Data",
                     route: "/data"
@@ -14,8 +14,8 @@ pub fn Sidebar(cx: Scope) -> Element {
                     route: "/files"
                 }
                 SidebarButton {
-                    title: "Threads",
-                    route: "/threads"
+                    title: "Programs",
+                    route: "/programs"
                 }
         }
     })
@@ -28,10 +28,18 @@ pub struct SidebarButtonProps<'a> {
 }
 
 pub fn SidebarButton<'a>(cx: Scope<'a, SidebarButtonProps<'a>>) -> Element {
+    let is_selected = use_route(&cx)
+        .last_segment()
+        .eq(&Some(cx.props.route.trim_start_matches("/")));
+
     cx.render(rsx! {
         Link {
             to: cx.props.route,
-            class: "w-full p-2 text-left",
+            class: if is_selected {
+                "w-full py-2 px-8 flex flex-row text-left hover:bg-slate-900"
+            } else {
+                "w-full py-2 px-8 flex flex-row text-left text-slate-600 hover:bg-slate-900"
+            },
             "{cx.props.title}"
         }
     })

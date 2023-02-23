@@ -12,7 +12,7 @@ use solana_client_wasm::{
 
 use super::Page;
 
-pub fn ThreadsPage(cx: Scope) -> Element {
+pub fn ProgramsPage(cx: Scope) -> Element {
     let _threads = use_state::<Vec<Thread>>(&cx, || vec![]);
 
     use_future(&cx, (), |_| {
@@ -41,7 +41,7 @@ pub fn ThreadsPage(cx: Scope) -> Element {
         Page {
             h1 {
                 class: "text-2xl font-semibold",
-                "Threads"
+                "Programs"
             }
         }
     })
