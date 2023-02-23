@@ -2,6 +2,7 @@
 mod components;
 mod hot_keys;
 mod pages;
+mod pyth;
 mod routes;
 
 use components::*;
