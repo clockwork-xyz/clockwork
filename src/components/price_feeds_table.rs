@@ -1,10 +1,15 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
+use gloo_events::EventListener;
+use log::info;
+use wasm_bindgen::{JsCast, UnwrapThrowExt};
+use web_sys::HtmlElement;
 
 use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
 
 pub fn PriceFeedsTable(cx: Scope) -> Element {
     let pyth_feeds = use_state(&cx, || vec![]);
+    let current_index = use_ref(&cx, || 0);
 
     use_future(&cx, (), |_| {
         let pyth_feeds = pyth_feeds.clone();
@@ -16,11 +21,40 @@ pub fn PriceFeedsTable(cx: Scope) -> Element {
         }
     });
 
+    use_future(&cx, (), |_| {
+        let current_index = current_index.clone();
+        async move {
+            let document = gloo_utils::document();
+            Some(EventListener::new(&document, "keydown", move |event| {
+                let document = gloo_utils::document();
+                let idx = current_index.read();
+                let id = format!("price-feed-{}", idx);
+                let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
+                match event.key().as_str() {
+                    "J" | "j" => {
+                        if let Some(element) = document.get_element_by_id(&*id) {
+                            if element.unchecked_into::<HtmlElement>().focus().is_ok() {
+                                // current_index = &Some(0);
+                            }
+                        }
+                    }
+                    "K" | "k" => {
+                        if let Some(element) = document.get_element_by_id(&*id) {
+                            element.unchecked_into::<HtmlElement>().focus().unwrap();
+                        }
+                    }
+                    _ => {}
+                }
+            }))
+        }
+    });
+
     cx.render(rsx! {
         div {
             PriceTableHeader {}
-            for feed in pyth_feeds.get() {
+            for (i, feed) in pyth_feeds.get().iter().enumerate() {
                 PriceRow {
+                    id: format!("price-feed-{}", i),
                     price: feed.clone(),
                 }
             }
@@ -44,6 +78,7 @@ fn PriceTableHeader(cx: Scope) -> Element {
 
 #[derive(PartialEq, Props)]
 struct PriceRowProps<'a> {
+    id: String,
     price: PythFeedPrice<'a>,
 }
 
@@ -52,6 +87,7 @@ fn PriceRow<'a>(cx: Scope<'a, PriceRowProps<'a>>) -> Element {
     cx.render(rsx! {
         Link {
             to: "/price_feed/{cx.props.price.pubkey}",
+            id: cx.props.id.as_str(),
             class: "w-full flex flex-row justify-between py-3 border-b border-slate-800",
             p {
                 "{cx.props.price.ticker}"

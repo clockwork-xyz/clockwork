@@ -4,9 +4,7 @@ use dioxus_router::Link;
 pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "h-full w-48 flex items-center",
-            div {
-                class: "w-full flex flex-col my-auto",
+            class: "h-full w-48 flex flex-col items-start",
                 SidebarButton {
                     title: "Data",
                     route: "/data"
@@ -19,7 +17,6 @@ pub fn Sidebar(cx: Scope) -> Element {
                     title: "Threads",
                     route: "/threads"
                 }
-            }
         }
     })
 }

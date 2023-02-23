@@ -3,7 +3,6 @@ mod components;
 mod hot_keys;
 mod pages;
 mod pyth;
-// mod routes;
 
 use components::*;
 use dioxus::prelude::*;
@@ -11,8 +10,6 @@ use dioxus_router::{Route, Router};
 use hot_keys::HotKeys;
 use pages::*;
 use wasm_logger;
-
-// use crate::routes::RoutePath;
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
