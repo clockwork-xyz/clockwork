@@ -7,8 +7,6 @@ use solana_client_wasm::WasmClient;
 
 use super::Page;
 
-static DATA_FEED_PUBKEY: &str = "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG";
-
 enum PythFeed {
     AptUsd,
     AtomUsd,
@@ -39,19 +37,19 @@ impl PythFeed {
             PythFeed::UsdtUsd.pubkey(),
         ]
     }
-    pub fn all_names() -> Vec<String> {
+    pub fn all_names<'a>() -> Vec<&'a str> {
         vec![
-            PythFeed::AptUsd.name().to_string(),
-            PythFeed::AtomUsd.name().to_string(),
-            PythFeed::BonkUsd.name().to_string(),
-            PythFeed::BtcUsd.name().to_string(),
-            PythFeed::BusdUsd.name().to_string(),
-            PythFeed::DaiUsd.name().to_string(),
-            PythFeed::EthUsd.name().to_string(),
-            PythFeed::MaticUsd.name().to_string(),
-            PythFeed::SolUsd.name().to_string(),
-            PythFeed::UsdcUsd.name().to_string(),
-            PythFeed::UsdtUsd.name().to_string(),
+            PythFeed::AptUsd.name(),
+            PythFeed::AtomUsd.name(),
+            PythFeed::BonkUsd.name(),
+            PythFeed::BtcUsd.name(),
+            PythFeed::BusdUsd.name(),
+            PythFeed::DaiUsd.name(),
+            PythFeed::EthUsd.name(),
+            PythFeed::MaticUsd.name(),
+            PythFeed::SolUsd.name(),
+            PythFeed::UsdcUsd.name(),
+            PythFeed::UsdtUsd.name(),
         ]
     }
     pub fn name(&self) -> &str {
@@ -88,8 +86,8 @@ impl PythFeed {
 }
 
 #[derive(Clone, PartialEq)]
-pub struct NamedPrice {
-    name: String,
+pub struct NamedPrice<'a> {
+    name: &'a str,
     price: PriceAccount,
 }
 
@@ -113,7 +111,7 @@ pub fn DataPage(cx: Scope) -> Element {
                     .filter_map(|(i, account)| {
                         if let Some(acc) = account {
                             Some(NamedPrice {
-                                name: pyth_feed_names.get(i).unwrap().clone(),
+                                name: pyth_feed_names.get(i).unwrap(),
                                 price: *load::<PriceAccount>(acc.data.as_slice()).unwrap(),
                             })
                         } else {
@@ -158,11 +156,11 @@ pub fn PriceTableHeader(cx: Scope) -> Element {
 }
 
 #[derive(PartialEq, Props)]
-pub struct PriceRowProps {
-    price: NamedPrice,
+pub struct PriceRowProps<'a> {
+    price: NamedPrice<'a>,
 }
 
-pub fn PriceRow(cx: Scope<PriceRowProps>) -> Element {
+pub fn PriceRow<'a>(cx: Scope<'a, PriceRowProps<'a>>) -> Element {
     let quote = cx.props.price.price.quote();
     cx.render(rsx! {
         div {
