@@ -26,8 +26,8 @@ fn App(cx: Scope) -> Element {
                 Clock {}
                 Route { to: "/", HomePage{} }
                 Route { to: "/data", DataPage{} }
+                Route { to: "/data/pyth/:address", PriceFeedPage{} }
                 Route { to: "/files", FilesPage{} }
-                Route { to: "/price_feed/:address", PriceFeedPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "", NotFoundPage{} }
             }

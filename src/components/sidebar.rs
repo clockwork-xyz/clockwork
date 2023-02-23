@@ -29,7 +29,7 @@ pub struct SidebarButtonProps<'a> {
 
 pub fn SidebarButton<'a>(cx: Scope<'a, SidebarButtonProps<'a>>) -> Element {
     let is_selected = use_route(&cx)
-        .last_segment()
+        .nth_segment(0)
         .eq(&Some(cx.props.route.trim_start_matches("/")));
 
     cx.render(rsx! {
