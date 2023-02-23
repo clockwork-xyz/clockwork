@@ -3,8 +3,6 @@ use dioxus_router::use_router;
 use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 
-use crate::routes::RoutePath;
-
 pub fn HotKeys(cx: Scope) -> Element {
     let router = use_router(&cx);
     use_future(&cx, (), |_| {
@@ -18,16 +16,16 @@ pub fn HotKeys(cx: Scope) -> Element {
                     goto_mode = false;
                     match event.key().as_str() {
                         "D" | "d" => {
-                            router.navigate_to(RoutePath::Data.as_str());
+                            router.navigate_to("/data");
                         }
                         "F" | "f" => {
-                            router.navigate_to(RoutePath::Files.as_str());
+                            router.navigate_to("/files");
                         }
                         "H" | "h" => {
-                            router.navigate_to(RoutePath::Home.as_str());
+                            router.navigate_to("/");
                         }
                         "T" | "t" => {
-                            router.navigate_to(RoutePath::Threads.as_str());
+                            router.navigate_to("/threads");
                         }
                         _ => {}
                     }

@@ -1,8 +1,6 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
 
-use crate::routes::RoutePath;
-
 pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
@@ -11,15 +9,15 @@ pub fn Sidebar(cx: Scope) -> Element {
                 class: "w-full flex flex-col my-auto",
                 SidebarButton {
                     title: "Data",
-                    route: RoutePath::Data.as_str()
+                    route: "/data"
                 }
                 SidebarButton {
                     title: "Files",
-                    route: RoutePath::Files.as_str()
+                    route: "/files"
                 }
                 SidebarButton {
                     title: "Threads",
-                    route: RoutePath::Threads.as_str()
+                    route: "/threads"
                 }
             }
         }

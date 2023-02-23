@@ -3,7 +3,7 @@ mod components;
 mod hot_keys;
 mod pages;
 mod pyth;
-mod routes;
+// mod routes;
 
 use components::*;
 use dioxus::prelude::*;
@@ -12,7 +12,7 @@ use hot_keys::HotKeys;
 use pages::*;
 use wasm_logger;
 
-use crate::routes::RoutePath;
+// use crate::routes::RoutePath;
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
@@ -27,11 +27,12 @@ fn App(cx: Scope) -> Element {
                 HotKeys {}
                 Navbar {}
                 Clock {}
-                Route { to: RoutePath::Home.as_str(), HomePage{} }
-                Route { to: RoutePath::Data.as_str(), DataPage{} }
-                Route { to: RoutePath::Files.as_str(), FilesPage{} }
-                Route { to: RoutePath::Threads.as_str(), ThreadsPage{} }
-                Route { to: RoutePath::NotFound.as_str(), NotFoundPage{} }
+                Route { to: "/", HomePage{} }
+                Route { to: "/data", DataPage{} }
+                Route { to: "/files", FilesPage{} }
+                Route { to: "/price_feed/:address", PriceFeedPage{} }
+                Route { to: "/threads", ThreadsPage{} }
+                Route { to: "", NotFoundPage{} }
             }
         }
     })

@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_router::Link;
 
-use crate::{components::ConnectButton, routes::RoutePath};
+use crate::components::ConnectButton;
 
 pub fn Navbar(cx: Scope) -> Element {
     cx.render(rsx! {
@@ -16,7 +16,7 @@ pub fn Navbar(cx: Scope) -> Element {
 pub fn Logo(cx: Scope) -> Element {
     cx.render(rsx! {
         Link {
-            to: RoutePath::Home.as_str(),
+            to: "/",
             class: "flex items-center w-40",
             img {
                 src: "/img/CLOCKWORK.svg",

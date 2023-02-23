@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_router::Link;
 
 use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
 
@@ -30,7 +31,7 @@ pub fn PriceFeedsTable(cx: Scope) -> Element {
 fn PriceTableHeader(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "w-full flex flex-row justify-between",
+            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800",
             p {
                 "Ticker"
             }
@@ -49,8 +50,9 @@ struct PriceRowProps<'a> {
 fn PriceRow<'a>(cx: Scope<'a, PriceRowProps<'a>>) -> Element {
     let quote = cx.props.price.price.quote();
     cx.render(rsx! {
-        div {
-            class: "w-full flex flex-row justify-between",
+        Link {
+            to: "/price_feed/{cx.props.price.pubkey}",
+            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800",
             p {
                 "{cx.props.price.ticker}"
             }
