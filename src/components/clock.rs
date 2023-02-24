@@ -1,5 +1,6 @@
 use chrono::Utc;
 use dioxus::prelude::*;
+use dioxus_router::Link;
 use solana_client_wasm::WasmClient;
 
 pub fn Clock(cx: Scope) -> Element {
@@ -23,9 +24,14 @@ pub fn Clock(cx: Scope) -> Element {
     });
 
     cx.render(rsx! {
-        p {
+        div {
             class: "fixed bottom-0 right-0 p-4",
-            format!("Blockhash: {} Slot: {} {}", blockhash, slot, time.to_rfc3339())
+            Link {
+                to: "https://explorer.solana.com/block/{slot}",
+                class: "hover:underline",
+                new_tab: true,
+                format!("Block: {} {}", slot, time.to_rfc3339())
+            }
         }
     })
 }
