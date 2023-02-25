@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-cli"
-version = "2.0.0-beta"
+version = "2.0.0-gamma"
 description = "Command line interface for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -13,9 +13,9 @@ keywords = ["solana"]
 [dependencies]
 anyhow = "1.0.61"
 clap = { version = "3.1.2", features = ["derive"] }
-clockwork-client = { path = "../client", version = "2.0.0-beta" }
+clockwork-client = { path = "../client", version = "2.0.0-gamma" }
 clockwork-cron = { path = "../cron", version = "2.0.0-alpha" }
-clockwork-utils = { path = "../utils", version = "2.0.0-beta" }
+clockwork-utils = { path = "../utils", version = "2.0.0-gamma" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 dirs-next = "2.0.0"
 regex = "1.6.0"
