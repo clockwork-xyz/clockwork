@@ -1,6 +1,6 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
-use anchor_lang::{prelude::Clock, InstructionData, ToAccountMetas};
+use anchor_lang::{InstructionData, ToAccountMetas};
 use clockwork_client::{network::state::Worker, thread::state::Trigger};
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
