@@ -238,6 +238,20 @@ impl ThreadObserver {
                         }
                     }
                 }
+                Trigger::Timestamp { unix_ts } => {
+                    let mut w_cron_threads = self.cron_threads.write().await;
+                    w_cron_threads
+                        .entry(unix_ts)
+                        .and_modify(|v| {
+                            v.insert(thread_pubkey);
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(thread_pubkey);
+                            v
+                        });
+                    drop(w_cron_threads);
+                }
                 Trigger::Now => {
                     let mut w_now_threads = self.now_threads.write().await;
                     w_now_threads.insert(thread_pubkey);
