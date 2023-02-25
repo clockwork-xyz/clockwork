@@ -15,48 +15,55 @@ pub fn HotKeys(cx: Scope) -> Element {
             Some(EventListener::new(&document, "keydown", move |event| {
                 let document = gloo_utils::document();
                 let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
-                if goto_mode {
-                    goto_mode = false;
-                    match event.key().as_str() {
-                        "D" | "d" => {
+                match event.key().as_str() {
+                    "G" | "g" => {
+                        goto_mode = true;
+                    }
+                    "D" | "d" => {
+                        if goto_mode {
                             router.navigate_to("/data");
+                            goto_mode = false;
                         }
-                        "F" | "f" => {
+                    }
+                    "F" | "f" => {
+                        if goto_mode {
                             router.navigate_to("/files");
+                            goto_mode = false;
                         }
-                        "H" | "h" => {
+                    }
+                    "H" | "h" => {
+                        if goto_mode {
                             router.navigate_to("/");
+                            goto_mode = false;
                         }
-                        "P" | "p" => {
+                    }
+                    "P" | "p" => {
+                        if goto_mode {
                             router.navigate_to("/programs");
+                            goto_mode = false;
                         }
-                        _ => {}
                     }
-                } else {
-                    match event.key().as_str() {
-                        "G" | "g" => {
-                            goto_mode = true;
-                        }
-                        "J" | "j" => {
-                            let id = list_index.map_or(0, |i| i + 1);
-                            let elem_id = format!("list-item-{}", id);
-                            if let Some(element) = document.get_element_by_id(&*elem_id) {
-                                if element.unchecked_into::<HtmlElement>().focus().is_ok() {
-                                    list_index = Some(id);
-                                }
+                    "J" | "j" => {
+                        goto_mode = false;
+                        let id = list_index.map_or(0, |i| i + 1);
+                        let elem_id = format!("list-item-{}", id);
+                        if let Some(element) = document.get_element_by_id(&*elem_id) {
+                            if element.unchecked_into::<HtmlElement>().focus().is_ok() {
+                                list_index = Some(id);
                             }
                         }
-                        "K" | "k" => {
-                            let id = list_index.map_or(0, |i| i.saturating_sub(1));
-                            let elem_id = format!("list-item-{}", id);
-                            if let Some(element) = document.get_element_by_id(&*elem_id) {
-                                if element.unchecked_into::<HtmlElement>().focus().is_ok() {
-                                    list_index = Some(id);
-                                }
+                    }
+                    "K" | "k" => {
+                        goto_mode = false;
+                        let id = list_index.map_or(0, |i| i.saturating_sub(1));
+                        let elem_id = format!("list-item-{}", id);
+                        if let Some(element) = document.get_element_by_id(&*elem_id) {
+                            if element.unchecked_into::<HtmlElement>().focus().is_ok() {
+                                list_index = Some(id);
                             }
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
             }))
         }

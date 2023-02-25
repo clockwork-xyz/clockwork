@@ -3,13 +3,13 @@ use dioxus::prelude::*;
 use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
 
 pub fn MarketsTable(cx: Scope) -> Element {
-    let pyth_feeds = use_state(&cx, || vec![]);
+    let market_data = use_state(&cx, || vec![]);
 
     use_future(&cx, (), |_| {
-        let pyth_feeds = pyth_feeds.clone();
+        let market_data = market_data.clone();
         async move {
             loop {
-                pyth_feeds.set(get_price_feeds().await);
+                market_data.set(get_price_feeds().await);
                 gloo_timers::future::TimeoutFuture::new(1000).await;
             }
         }
@@ -17,8 +17,12 @@ pub fn MarketsTable(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
+            h1 {
+                class: "text-2xl font-semibold pb-2",
+                "Markets"
+            }
             Header {}
-            for (i, feed) in pyth_feeds.get().iter().enumerate() {
+            for (i, feed) in market_data.get().iter().enumerate() {
                 Row {
                     elem_id: format!("list-item-{}", i),
                     price: feed.clone(),
