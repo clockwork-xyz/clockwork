@@ -4,8 +4,8 @@ pub use clockwork_thread_program::ID;
 
 pub mod state {
     pub use clockwork_thread_program::state::{
-        Thread, ThreadAccount, ThreadResponse, ThreadSettings, ClockData,
-        ExecContext, SerializableAccount, SerializableInstruction, Trigger, TriggerContext,
+        ClockData, ExecContext, SerializableAccount, SerializableInstruction, Thread,
+        ThreadAccount, ThreadResponse, ThreadSettings, Trigger, TriggerContext,
     };
 }
 
@@ -17,8 +17,8 @@ pub mod cpi {
     use anchor_lang::prelude::{CpiContext, Result};
 
     pub use clockwork_thread_program::cpi::accounts::{
-        ThreadCreate, ThreadDelete, ThreadPause, ThreadReset, ThreadResume,
-        ThreadUpdate, ThreadWithdraw,
+        ThreadCreate, ThreadDelete, ThreadPause, ThreadReset, ThreadResume, ThreadUpdate,
+        ThreadWithdraw,
     };
 
     pub fn thread_create<'info>(

@@ -129,25 +129,12 @@ pub async fn build_thread_exec_tx(
             Ok(response) => {
                 if response.value.err.is_some() {
                     if successful_ixs.is_empty() {
-                        let clock_pubkey =
-                            Pubkey::from_str("SysvarC1ock11111111111111111111111111111111")
-                                .unwrap();
-                        let clock_data = client
-                            .get_account_with_commitment(
-                                &clock_pubkey,
-                                CommitmentConfig::processed(),
-                            )
-                            .await
-                            .unwrap();
-                        let clock = bincode::deserialize::<Clock>(&clock_data.value.unwrap().data);
                         info!(
-                            "slot: {} thread: {} simulation_error: \"{}\" logs: {:?} thread_data: {:?} clock: {:?}",
+                            "slot: {} thread: {} simulation_error: \"{}\" logs: {:?}",
                             slot,
                             thread_pubkey,
                             response.value.err.unwrap(),
                             response.value.logs.unwrap_or(vec![]),
-                            thread,
-                            clock
                         );
                     }
                     break;

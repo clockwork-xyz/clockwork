@@ -63,8 +63,9 @@ source = '''
   if .source == "clockwork_plugin::builders::thread_exec" {
     .grok_results = parse_groks!(
 	    .message, 
-	    patterns: ["thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
+	    patterns: ["slot: {%_slot} thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
 	    aliases: {
+        "_slot": "%{DATA:slot}",
 	      "_thread": "%{DATA:thread}",
         "_error": "%{QUOTEDSTRING:error}",
         "_logs": "%{GREEDYDATA:logs}"
