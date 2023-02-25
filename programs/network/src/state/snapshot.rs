@@ -1,11 +1,10 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_SNAPSHOT: &[u8] = b"snapshot";
 
 /// Snapshot
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Snapshot {
     pub id: u64,
     pub total_frames: u64,

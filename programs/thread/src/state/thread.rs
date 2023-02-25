@@ -1,12 +1,11 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
-use clockwork_macros::TryFromData;
 use clockwork_utils::thread::{ClockData, SerializableInstruction, Trigger};
 
 pub const SEED_THREAD: &[u8] = b"thread";
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Thread {
     /// The owner of this thread.
     pub authority: Pubkey,

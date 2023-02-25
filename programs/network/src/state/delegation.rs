@@ -1,11 +1,10 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_DELEGATION: &[u8] = b"delegation";
 
 /// An account to manage a token holder's stake delegation with a particiular a worker.
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Delegation {
     /// The authority of this delegation account.
     pub authority: Pubkey,

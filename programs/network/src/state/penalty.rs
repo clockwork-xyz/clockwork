@@ -1,11 +1,10 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_PENALTY: &[u8] = b"penalty";
 
 /// Escrows the lamport balance owed to a particular worker.
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Penalty {
     /// The worker who was penalized.
     pub worker: Pubkey,

@@ -1,11 +1,10 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_UNSTAKE: &[u8] = b"unstake";
 
 /// Unstake
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Unstake {
     pub amount: u64,
     pub authority: Pubkey,

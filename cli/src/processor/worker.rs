@@ -1,11 +1,13 @@
-use clockwork_client::network::state::{Penalty, WorkerSettings};
-
-use {
-    crate::errors::CliError,
-    clockwork_client::network::state::{Config, Fee, Registry, Snapshot, SnapshotFrame, Worker},
-    clockwork_client::Client,
-    solana_sdk::signature::{Keypair, Signer},
+use anchor_lang::AnchorDeserialize;
+use clockwork_client::{
+    network::state::{
+        Config, Fee, Penalty, Registry, Snapshot, SnapshotFrame, Worker, WorkerSettings,
+    },
+    Client,
 };
+use solana_sdk::signature::{Keypair, Signer};
+
+use crate::errors::CliError;
 
 pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let worker_pubkey = Worker::pubkey(id);
@@ -45,7 +47,7 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
-    let registry = Registry::try_from(registry_data)
+    let registry = Registry::try_from_slice(registry_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     // Get snapshot frame
@@ -54,7 +56,7 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     match client.get_account_data(&snapshot_frame_pubkey) {
         Err(_err) => {}
         Ok(snapshot_frame_data) => {
-            let snapshot_frame = SnapshotFrame::try_from(snapshot_frame_data)
+            let snapshot_frame = SnapshotFrame::try_from_slice(snapshot_frame_data.as_slice())
                 .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
             println!("{:#?}", snapshot_frame);
         }
@@ -69,7 +71,7 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from(config_data)
+    let config = Config::try_from_slice(config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Get registry
@@ -77,7 +79,7 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
-    let registry = Registry::try_from(registry_data)
+    let registry = Registry::try_from_slice(registry_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     // Build ix

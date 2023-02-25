@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_POOL: &[u8] = b"pool";
 
@@ -12,7 +11,7 @@ const DEFAULT_POOL_SIZE: usize = 1;
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Pool {
     pub id: u64,
     pub size: usize,

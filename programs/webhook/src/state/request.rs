@@ -8,7 +8,6 @@ use super::Api;
 use crate::errors::ClockworkError;
 
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_REQUEST: &[u8] = b"request";
 
@@ -17,7 +16,7 @@ pub const SEED_REQUEST: &[u8] = b"request";
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Request {
     pub api: Pubkey,
     pub caller: Pubkey,

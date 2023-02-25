@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_CONFIG: &[u8] = b"config";
 
@@ -8,7 +7,7 @@ pub const SEED_CONFIG: &[u8] = b"config";
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
     pub epoch_thread: Pubkey,

@@ -4,14 +4,13 @@ use std::{
 };
 
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
 
 /// Registry
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Registry {
     pub current_epoch: u64,
     pub locked: bool,

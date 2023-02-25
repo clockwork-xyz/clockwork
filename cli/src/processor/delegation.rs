@@ -1,10 +1,11 @@
+use anchor_lang::AnchorDeserialize;
+use clockwork_client::{
+    network::state::{Config, Delegation, Worker},
+    Client,
+};
 use spl_associated_token_account::get_associated_token_address;
 
-use {
-    crate::errors::CliError,
-    clockwork_client::network::state::{Config, Delegation, Worker},
-    clockwork_client::Client,
-};
+use crate::errors::CliError;
 
 pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
     // Get config data
@@ -12,7 +13,7 @@ pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from(config_data)
+    let config = Config::try_from_slice(config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Get worker
@@ -20,7 +21,7 @@ pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
     let worker_data = client
         .get_account_data(&worker_pubkey)
         .map_err(|_err| CliError::AccountNotFound(worker_pubkey.to_string()))?;
-    let worker = Worker::try_from(worker_data)
+    let worker = Worker::try_from_slice(worker_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(worker_pubkey.to_string()))?;
 
     // Build ix
@@ -47,7 +48,7 @@ pub fn deposit(
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from(config_data)
+    let config = Config::try_from_slice(config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // TODO Map the amount using the mint's decimals.
@@ -77,7 +78,7 @@ pub fn withdraw(
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from(config_data)
+    let config = Config::try_from_slice(config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // TODO Map the amount using the mint's decimals.
@@ -102,7 +103,7 @@ pub fn get(client: &Client, delegation_id: u64, worker_id: u64) -> Result<(), Cl
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from(config_data)
+    let config = Config::try_from_slice(config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Get the delegation account.
@@ -111,7 +112,7 @@ pub fn get(client: &Client, delegation_id: u64, worker_id: u64) -> Result<(), Cl
     let delegation_data = client
         .get_account_data(&delegation_pubkey)
         .map_err(|_err| CliError::AccountNotFound(delegation_pubkey.to_string()))?;
-    let delegation = Delegation::try_from(delegation_data)
+    let delegation = Delegation::try_from_slice(delegation_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(delegation_pubkey.to_string()))?;
 
     // Get the delegation's token account.

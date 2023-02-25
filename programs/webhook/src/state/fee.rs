@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 use super::Request;
 
@@ -10,7 +9,7 @@ pub const SEED_FEE: &[u8] = b"fee";
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Fee {
     pub authority: Pubkey,
     pub admin_balance: u64,

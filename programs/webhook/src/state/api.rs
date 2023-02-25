@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_API: &[u8] = b"api";
 
@@ -8,7 +7,7 @@ pub const SEED_API: &[u8] = b"api";
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Api {
     pub ack_authority: Pubkey,
     pub authority: Pubkey,

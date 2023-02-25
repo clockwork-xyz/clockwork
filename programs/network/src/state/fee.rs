@@ -1,11 +1,10 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_FEE: &[u8] = b"fee";
 
 /// Escrows the lamport balance owed to a particular worker.
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Fee {
     /// The number of lamports that are distributable for this epoch period.
     pub distributable_balance: u64,

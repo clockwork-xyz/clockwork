@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 use crate::errors::*;
 
@@ -7,7 +6,7 @@ pub const SEED_WORKER: &[u8] = b"worker";
 
 /// Worker
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Worker {
     /// The worker's authority (owner).
     pub authority: Pubkey,

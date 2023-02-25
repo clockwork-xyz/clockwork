@@ -783,6 +783,7 @@ dependencies = [
 name = "clockwork-cli"
 version = "2.0.0-gamma"
 dependencies = [
+ "anchor-lang",
  "anyhow",
  "cargo_toml",
  "chrono",
@@ -872,7 +873,6 @@ version = "2.0.0-gamma"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "clockwork-macros",
  "clockwork-utils 2.0.0-gamma",
 ]
 
@@ -909,7 +909,6 @@ dependencies = [
  "anchor-lang",
  "chrono",
  "clockwork-cron 2.0.0-gamma",
- "clockwork-macros",
  "clockwork-network-program 2.0.0-gamma",
  "clockwork-utils 2.0.0-gamma",
  "static-pubkey",
@@ -941,7 +940,6 @@ name = "clockwork-webhook-program"
 version = "2.0.0-gamma"
 dependencies = [
  "anchor-lang",
- "clockwork-macros",
  "clockwork-network-program 2.0.0-gamma",
  "clockwork-utils 2.0.0-gamma",
 ]

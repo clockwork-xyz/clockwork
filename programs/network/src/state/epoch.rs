@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 use super::Snapshot;
 
@@ -10,7 +9,7 @@ pub const SEED_EPOCH: &[u8] = b"epoch";
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Epoch {
     pub id: u64,
     pub snapshot: Pubkey,

@@ -1,5 +1,4 @@
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use clockwork_macros::TryFromData;
 
 pub const SEED_CONFIG: &[u8] = b"config";
 
@@ -15,7 +14,7 @@ static DEFAULT_TIMEOUT_THRESHOLD: u64 = 100; // 100 slots
  */
 
 #[account]
-#[derive(Debug, TryFromData)]
+#[derive(Debug)]
 pub struct Config {
     pub admin: Pubkey,
     pub request_fee: u64, // Amount to charge per request and payout to workers
