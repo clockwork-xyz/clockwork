@@ -21,7 +21,7 @@ fn App(cx: Scope) -> Element {
         div {
             class: "w-screen h-screen flex flex-col justify-start",
             Router {
-                // HotKeys {}
+                HotKeys {}
                 Navbar {}
                 Clock {}
                 Route { to: "/", HomePage{} }

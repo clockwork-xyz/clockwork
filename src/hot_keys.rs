@@ -47,7 +47,7 @@ pub fn HotKeys(cx: Scope) -> Element {
                             }
                         }
                         "K" | "k" => {
-                            let id = list_index.map_or(0, |i| i.saturating_sub(0));
+                            let id = list_index.map_or(0, |i| i.saturating_sub(1));
                             let elem_id = format!("list-item-{}", id);
                             if let Some(element) = document.get_element_by_id(&*elem_id) {
                                 if element.unchecked_into::<HtmlElement>().focus().is_ok() {
