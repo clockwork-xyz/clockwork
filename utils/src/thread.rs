@@ -80,9 +80,10 @@ pub enum Trigger {
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
 pub struct ThreadResponse {
     /// If set, the thread will automatically close and return lamports to the provided address.
-    /// If dynamic_instruction is also set, it will take precidence and the thread will not be closed.
+    /// If dynamic_instruction is also set, close_to will take precedence and the dynamic instruction will not be executed.
     pub close_to: Option<Pubkey>,
     /// A dynamic instruction to execute next.
+    /// If close_to is also set, it will take precedence and the dynamic instruction will not be executed.
     pub dynamic_instruction: Option<SerializableInstruction>,
     /// Value to update the thread trigger to.
     pub trigger: Option<Trigger>,
