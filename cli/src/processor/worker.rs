@@ -1,4 +1,4 @@
-use anchor_lang::AnchorDeserialize;
+use anchor_lang::AccountDeserialize;
 use clockwork_client::{
     network::state::{
         Config, Fee, Penalty, Registry, Snapshot, SnapshotFrame, Worker, WorkerSettings,
@@ -47,7 +47,7 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
-    let registry = Registry::try_from_slice(registry_data.as_slice())
+    let registry = Registry::try_deserialize(&mut registry_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     // Get snapshot frame
@@ -56,8 +56,10 @@ pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     match client.get_account_data(&snapshot_frame_pubkey) {
         Err(_err) => {}
         Ok(snapshot_frame_data) => {
-            let snapshot_frame = SnapshotFrame::try_from_slice(snapshot_frame_data.as_slice())
-                .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
+            let snapshot_frame = SnapshotFrame::try_deserialize(
+                &mut snapshot_frame_data.as_slice(),
+            )
+            .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
             println!("{:#?}", snapshot_frame);
         }
     }
@@ -71,7 +73,7 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     let config_data = client
         .get_account_data(&config_pubkey)
         .map_err(|_err| CliError::AccountNotFound(config_pubkey.to_string()))?;
-    let config = Config::try_from_slice(config_data.as_slice())
+    let config = Config::try_deserialize(&mut config_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(config_pubkey.to_string()))?;
 
     // Get registry
@@ -79,7 +81,7 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     let registry_data = client
         .get_account_data(&registry_pubkey)
         .map_err(|_err| CliError::AccountNotFound(registry_pubkey.to_string()))?;
-    let registry = Registry::try_from_slice(registry_data.as_slice())
+    let registry = Registry::try_deserialize(&mut registry_data.as_slice())
         .map_err(|_err| CliError::AccountDataNotParsable(registry_pubkey.to_string()))?;
 
     // Build ix
