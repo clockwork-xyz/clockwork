@@ -60,7 +60,7 @@ cd clockwork
 git describe --tags `git rev-list --tags --max-count=1`
 git checkout tags/...
 ```
-> ⚠️ Make sure the version of your program or client matches the version of the engine that you are running. E.g., if you are using `clockwork-sdk = 1.4.0`, you should also `git checkout tags/v1.4.0`. We use semantic versioning, but main branch is probably not what you want.
+> ⚠️ Make sure the version of your program or client matches the version of the engine that you are running. E.g., if you are using `clockwork-sdk = 2.0.0`, you should also `git checkout tags/v2.0.0`. We use semantic versioning, but main branch is probably not what you want.
 
 
 #### 3. Build the repo.
@@ -94,7 +94,7 @@ rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
 solana-keygen new -o clockwork-worker-keypair.json
 ```
 
-#### 3. Load this keypair with a small amount of SOL (~0.01 ◎). 
+#### 3. Load this keypair with a small amount of SOL (~0.1 ◎). 
 
 #### 4. Register your worker and get a worker ID: 
 ```sh
