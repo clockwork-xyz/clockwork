@@ -39,3 +39,34 @@ Upcoming fire times:
 -> 2018-08-15 09:30:00 UTC
 */
 ```
+
+## ⚠️ Syntax
+```bash
+sec  min   hour   day of month   month   day of week   year
+```
+If you use tools such as crontab guru, note that the clockwork parser is a __7__ columns string.
+You probably need to add the __seconds__ _(left most column)_ and can optionally add the year _(right most column)_.
+e.g. the following 5 columns cron:
+
+| min | hour | day of month | month | day of week |
+|-----|------|--------------|-------|-------------|
+| 0   | 18   |  *           | *     | FRI         |
+
+becomes
+| sec | min | hour | day of month | month | day of week | year |
+|-----|-----|------|--------------|-------|-------------|------|
+| 0   | 0   | 18   |  *           | *     | FRI         | *    |
+
+or
+
+| sec | min | hour | day of month | month | day of week |
+|-----|-----|------|--------------|-------|-------------|
+| 0   | 0   | 18   |  *           | *     | FRI         |
+
+These are also supported:
+```bash
+"@yearly"
+"@weekly"
+"@daily"
+"@hourly"
+```
