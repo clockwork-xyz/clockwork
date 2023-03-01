@@ -781,7 +781,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "anyhow",
@@ -789,8 +789,8 @@ dependencies = [
  "chrono",
  "clap 3.2.22",
  "clockwork-client",
- "clockwork-cron 2.0.0-gamma",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-cron 2.0.0",
+ "clockwork-utils 2.0.0",
  "dirs-next",
  "regex",
  "serde",
@@ -810,15 +810,15 @@ dependencies = [
 
 [[package]]
 name = "clockwork-client"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bincode",
  "borsh",
- "clockwork-network-program 2.0.0-gamma",
- "clockwork-thread-program 2.0.0-gamma",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-network-program 2.0.0",
+ "clockwork-thread-program 2.0.0",
+ "clockwork-utils 2.0.0",
  "clockwork-webhook-program",
  "solana-client",
  "solana-sdk",
@@ -839,7 +839,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "chrono",
  "nom",
@@ -848,7 +848,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-macros"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-syn",
  "proc-macro2 1.0.46",
@@ -869,20 +869,20 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-utils 2.0.0",
 ]
 
 [[package]]
 name = "clockwork-sdk"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "chrono",
- "clockwork-thread-program 2.0.0-gamma",
+ "clockwork-thread-program 2.0.0",
  "nom",
  "once_cell",
 ]
@@ -904,13 +904,13 @@ dependencies = [
 
 [[package]]
 name = "clockwork-thread-program"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "chrono",
- "clockwork-cron 2.0.0-gamma",
- "clockwork-network-program 2.0.0-gamma",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-cron 2.0.0",
+ "clockwork-network-program 2.0.0",
+ "clockwork-utils 2.0.0",
  "static-pubkey",
  "version",
 ]
@@ -928,7 +928,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-utils"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
@@ -937,16 +937,16 @@ dependencies = [
 
 [[package]]
 name = "clockwork-webhook-program"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
- "clockwork-network-program 2.0.0-gamma",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-network-program 2.0.0",
+ "clockwork-utils 2.0.0",
 ]
 
 [[package]]
 name = "clockwork_plugin"
-version = "2.0.0-gamma"
+version = "2.0.0"
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -957,10 +957,10 @@ dependencies = [
  "cargo_toml",
  "chrono",
  "clockwork-client",
- "clockwork-cron 2.0.0-gamma",
+ "clockwork-cron 2.0.0",
  "clockwork-thread-program 1.4.2",
- "clockwork-thread-program 2.0.0-gamma",
- "clockwork-utils 2.0.0-gamma",
+ "clockwork-thread-program 2.0.0",
+ "clockwork-utils 2.0.0",
  "futures",
  "lazy_static",
  "log 0.4.17",
