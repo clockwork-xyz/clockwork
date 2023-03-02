@@ -1,10 +1,12 @@
 #![allow(non_snake_case)]
 mod components;
+mod context;
 mod hot_keys;
 mod pages;
 mod pyth;
 
 use components::*;
+use context::*;
 use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
 use hot_keys::HotKeys;
@@ -17,6 +19,11 @@ fn main() {
 }
 
 fn App(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || User {
+        pubkey: None,
+        account: None,
+    });
+
     cx.render(rsx! {
         div {
             class: "w-screen h-screen flex flex-col justify-start",

@@ -1,14 +1,19 @@
+use crate::{components::ConnectButton, context::User};
+
+use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use dioxus::prelude::*;
 use dioxus_router::Link;
-
-use crate::components::ConnectButton;
 
 pub fn Navbar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
             class: "flex flex-row justify-between w-screen p-8",
             Logo {}
-            ConnectButton {}
+            div {
+                class: "flex items-center space-x-4",
+                Balance {}
+                ConnectButton {}
+            }
         }
     })
 }
@@ -23,4 +28,26 @@ pub fn Logo(cx: Scope) -> Element {
             }
         }
     })
+}
+
+fn Balance(cx: Scope) -> Element {
+    let user_context = use_shared_state::<User>(cx).unwrap();
+
+    let user_balance = if let Some(account) = &user_context.read().account {
+        format_balance(account.lamports)
+    } else {
+        String::from("")
+    };
+
+    cx.render(rsx! {
+        div {
+            class: "text-lg",
+            user_balance
+        }
+    })
+}
+
+fn format_balance(lamports: u64) -> String {
+    let balance = lamports as f64 / LAMPORTS_PER_SOL as f64;
+    String::from(format!("⊚ {:.4}", balance.to_string()))
 }
