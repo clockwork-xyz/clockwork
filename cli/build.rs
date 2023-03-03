@@ -22,7 +22,7 @@ fn get_geyser_interface_version() -> String {
         _ => "unknown (error parsing Plugin's Cargo.toml)".to_string(),
     };
 
-    let re = Regex::new(r"(\d\.\d{2}\.\d)").unwrap();
+    let re = Regex::new(r"(\d+\.\d+\.\d+)").unwrap();
     re.captures(&semver)
         .unwrap()
         .get(1)
