@@ -135,7 +135,7 @@ sudo systemctl restart sol
 ```
 
 ## Common Errors
-Please refer to the [FAQ](https://github.com/clockwork-xyz/docs/blob/main/FAQ.md#common-errors).
+Please refer to the [FAQ](https://docs.clockwork.xyz/developers/faq).
 
 ## Questions
 Come build with us and ask us questions [Discord](https://discord.gg/epHsTsnUre)!
