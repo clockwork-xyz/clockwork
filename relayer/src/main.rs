@@ -1,14 +1,12 @@
 use std::{fs, path::Path};
 
 use actix_web::{get, post, web, App, HttpServer, Responder};
-use byte_unit::ByteUnit;
 use serde::{Deserialize, Serialize};
-use shadow_drive_sdk::{Byte, ShadowDriveClient, Signer, StorageAccountVersion};
 use solana_sdk::signature::read_keypair_file;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
-static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/development-keypair.json";
-static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/development-keypair.json";
+static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
+static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
 static SECRETS_PATH: &str = "/home/ubuntu/secrets";
 // static RPC_URL: &str = "http://0.0.0.0:8899";
 
@@ -16,7 +14,7 @@ static SECRETS_PATH: &str = "/home/ubuntu/secrets";
 async fn main() -> std::io::Result<()> {
     // Generate a keypair for encryption.
     let encryption_keypair_path = Path::new(ENCRYPTION_KEYPAIR_PATH.into());
-    if encryption_keypair_path.exists() {
+    if !encryption_keypair_path.exists() {
         let encryption_keypair = ElGamalKeypair::new_rand();
         encryption_keypair
             .write_json_file(ENCRYPTION_KEYPAIR_PATH)
@@ -28,7 +26,7 @@ async fn main() -> std::io::Result<()> {
     assert!(secrets_path.is_dir());
 
     // Start the webserver.
-    HttpServer::new(|| App::new().service(secret_create))
+    HttpServer::new(|| App::new().service(secret_create).service(secret_get))
         .bind(("127.0.0.1", 8000))?
         .run()
         .await
@@ -42,18 +40,18 @@ struct SecretCreate {
 
 #[post("/secret")]
 async fn secret_create(req: web::Json<SecretCreate>) -> impl Responder {
-    // Fetch encryption keypair.
+    // Encrypt the secret word.
     let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
     let plaintext = req.word.to_string();
     let ciphertext = encrypt(keypair, plaintext);
 
-    // Save the ciphertext to the file system.
-    let secrets_path = std::path::Path::new(SECRETS_PATH.into());
+    // Save the ciphertext to the filesystem.
+    let secrets_path = Path::new(SECRETS_PATH.into());
     assert!(secrets_path.is_dir());
     let secret_filepath = dbg!(secrets_path.join(format!("{}.txt", req.name)));
     fs::write(secret_filepath, ciphertext).unwrap();
 
-    // TODO Save the ciphertext to storage.
+    // TODO Save the ciphertext to Shadow Drive.
     // let keypair = read_keypair_file(RELAYER_KEYPAIR_PATH).unwrap();
     // let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
     // let decrypted_plaintext = decrypt(keypair, ciphertext);
@@ -64,7 +62,12 @@ async fn secret_create(req: web::Json<SecretCreate>) -> impl Responder {
 
 #[get("/secret/{name}")]
 async fn secret_get(name: web::Path<String>) -> impl Responder {
-    "TODO"
+    // Decrypt the ciphertext.
+    let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
+    let secret_filepath = Path::new(SECRETS_PATH.into()).join(format!("{}.txt", name));
+    let ciphertext = fs::read(secret_filepath).unwrap();
+    let plaintext = decrypt(keypair, ciphertext);
+    plaintext
 }
 
 const NORMALIZED_SECRET_LENGTH: usize = 64;
