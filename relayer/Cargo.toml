@@ -15,7 +15,6 @@ keywords = ["solana"]
 [dependencies]
 actix-web = "4.3.1"
 clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.1" }
-# rsa = "0.8.2"
 solana-zk-token-sdk = "1.14.15"
 solana-sdk = "1.14.15"
 tokio = "1.26.0"
