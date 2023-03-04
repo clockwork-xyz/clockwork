@@ -73,6 +73,8 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::PoolGet { id } => super::pool::get(&client, id),
         CliCommand::PoolList {} => super::pool::list(&client),
         CliCommand::PoolUpdate { id, size } => super::pool::update(&client, id, size),
+        CliCommand::SecretCreate { name, word } => super::secret::create(&client, name, word),
+        CliCommand::SecretGet { name } => super::secret::get(&client, name),
         CliCommand::ThreadCrateInfo {} => super::thread::crate_info(&client),
         CliCommand::ThreadCreate {
             id,

@@ -1,8 +1,7 @@
 use std::{fs, path::Path};
 
-use actix_web::{get, post, web, App, HttpServer, Responder};
-use serde::{Deserialize, Serialize};
-use solana_sdk::signature::read_keypair_file;
+use actix_web::{post, web, App, HttpServer, Responder};
+use clockwork_relayer_api::{SecretCreate, SecretGet, SignedRequest};
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
@@ -32,23 +31,24 @@ async fn main() -> std::io::Result<()> {
         .await
 }
 
-#[derive(Deserialize, Serialize)]
-struct SecretCreate {
-    name: String,
-    word: String,
-}
+#[post("/secret_create")]
+async fn secret_create(req: web::Json<SignedRequest<SecretCreate>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
 
-#[post("/secret")]
-async fn secret_create(req: web::Json<SecretCreate>) -> impl Responder {
     // Encrypt the secret word.
     let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
-    let plaintext = req.word.to_string();
+    let plaintext = req.msg.word.to_string();
     let ciphertext = encrypt(keypair, plaintext);
 
     // Save the ciphertext to the filesystem.
     let secrets_path = Path::new(SECRETS_PATH.into());
     assert!(secrets_path.is_dir());
-    let secret_filepath = dbg!(secrets_path.join(format!("{}.txt", req.name)));
+    let user_secrets_path = secrets_path.join(req.signer.to_string());
+    if !user_secrets_path.exists() {
+        fs::create_dir(user_secrets_path.clone()).unwrap();
+    }
+    let secret_filepath = user_secrets_path.join(format!("{}.txt", req.msg.name));
     fs::write(secret_filepath, ciphertext).unwrap();
 
     // TODO Save the ciphertext to Shadow Drive.
@@ -60,11 +60,16 @@ async fn secret_create(req: web::Json<SecretCreate>) -> impl Responder {
     "Ok"
 }
 
-#[get("/secret/{name}")]
-async fn secret_get(name: web::Path<String>) -> impl Responder {
+#[post("/secret_get")]
+async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
+
     // Decrypt the ciphertext.
     let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
-    let secret_filepath = Path::new(SECRETS_PATH.into()).join(format!("{}.txt", name));
+    let secret_filepath = Path::new(SECRETS_PATH.into())
+        .join(req.signer.to_string())
+        .join(format!("{}.txt", req.msg.name));
     let ciphertext = fs::read(secret_filepath).unwrap();
     let plaintext = decrypt(keypair, ciphertext);
     plaintext

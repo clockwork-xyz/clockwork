@@ -25,6 +25,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
+            Some(("secret", matches)) => parse_secret_command(matches),
             Some(("thread", matches)) => parse_thread_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
@@ -173,6 +174,21 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             size: parse_usize("size", matches)?,
         }),
         Some(("list", _)) => Ok(CliCommand::PoolList {}),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
+fn parse_secret_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::SecretGet {
+            name: parse_string("name", matches)?,
+        }),
+        Some(("create", matches)) => Ok(CliCommand::SecretCreate {
+            name: parse_string("name", matches)?,
+            word: parse_string("word", matches)?,
+        }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),
         )),

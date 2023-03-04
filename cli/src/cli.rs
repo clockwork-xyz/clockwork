@@ -105,6 +105,15 @@ pub enum CliCommand {
     RegistryGet,
     RegistryUnlock,
 
+    // Secrets
+    SecretCreate {
+        name: String,
+        word: String,
+    },
+    SecretGet {
+        name: String,
+    },
+
     // Http
     WebhookRequestNew {
         api: Pubkey,
@@ -383,6 +392,46 @@ pub fn app() -> Command<'static> {
                                 .help("The size of the pool"),
                         ),
                 ),
+        )
+        .subcommand(
+            Command::new("secret")
+                .about("Manage your secrets")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("create")
+                        .about("Save a new secret")
+                        .arg(
+                            Arg::new("word")
+                                .long("word")
+                                .short('w')
+                                .value_name("WORD")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The secret word to securely save")
+                        )
+                        .arg(
+                            Arg::new("name")
+                                .long("name")
+                                .short('n')
+                                .value_name("NAME")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The name of the secret")
+                        )
+                )
+                .subcommand(
+                    Command::new("get")
+                        .about("Retrieve a previously saved secret")
+                        .arg(
+                            Arg::new("name")
+                                .long("name")
+                                .short('n')
+                                .value_name("NAME")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The name of the secret")
+                        )
+                )
         )
         .subcommand(
             Command::new("thread")

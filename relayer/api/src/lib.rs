@@ -1,0 +1,28 @@
+use serde::{Deserialize, Serialize};
+use solana_sdk::{pubkey::Pubkey, signature::Signature};
+
+#[derive(Deserialize, Serialize)]
+pub struct SignedRequest<T: Sized> {
+    pub msg: T,
+    pub signer: Pubkey,
+    pub signature: Signature,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SecretCreate {
+    pub name: String,
+    pub word: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SecretGet {
+    pub name: String,
+}
+
+impl<T: Serialize> SignedRequest<T> {
+    pub fn authenticate(&self) -> bool {
+        let msg_bytes = bincode::serialize(&self.msg).unwrap();
+        self.signature
+            .verify(&self.signer.to_bytes(), msg_bytes.as_slice())
+    }
+}

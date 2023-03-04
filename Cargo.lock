@@ -641,12 +641,6 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
-
-[[package]]
-name = "base64"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
@@ -1009,14 +1003,17 @@ version = "2.0.1"
 dependencies = [
  "anchor-lang",
  "anyhow",
+ "bincode",
  "cargo_toml",
  "chrono",
  "clap 3.2.23",
  "clockwork-client",
  "clockwork-cron 2.0.1",
+ "clockwork-relayer-api",
  "clockwork-utils 2.0.1",
  "dirs-next",
  "regex",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_yaml 0.9.17",
@@ -1098,6 +1095,32 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "clockwork-utils 2.0.1",
+]
+
+[[package]]
+name = "clockwork-relayer"
+version = "2.0.1"
+dependencies = [
+ "actix-web",
+ "bincode",
+ "byte-unit",
+ "clockwork-relayer-api",
+ "clockwork-webhook-program",
+ "curve25519-dalek",
+ "lazy_static",
+ "serde",
+ "solana-sdk",
+ "solana-zk-token-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "clockwork-relayer-api"
+version = "2.0.1"
+dependencies = [
+ "bincode",
+ "serde",
+ "solana-sdk",
 ]
 
 [[package]]
@@ -1203,22 +1226,6 @@ dependencies = [
  "solana-sdk",
  "solana-transaction-status",
  "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "clockwork_relayer"
-version = "2.0.1"
-dependencies = [
- "actix-web",
- "byte-unit",
- "clockwork-webhook-program",
- "curve25519-dalek",
- "lazy_static",
- "serde",
- "shadow-drive-sdk",
- "solana-sdk",
- "solana-zk-token-sdk",
  "tokio",
 ]
 
@@ -2127,7 +2134,7 @@ dependencies = [
  "time 0.1.45",
  "traitobject",
  "typeable",
- "unicase 1.4.2",
+ "unicase",
  "url 1.7.2",
 ]
 
@@ -2241,12 +2248,6 @@ dependencies = [
  "typenum",
  "version_check 0.9.4",
 ]
-
-[[package]]
-name = "index-fixed"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4161ceaf2f41b6cd3f6502f5da085d4ad4393a51e0c70ed2fce1d5698d798fae"
 
 [[package]]
 name = "indexmap"
@@ -2581,16 +2582,6 @@ name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
-
-[[package]]
-name = "mime_guess"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
-dependencies = [
- "mime 0.3.16",
- "unicase 2.6.0",
-]
 
 [[package]]
 name = "minimal-lexical"
@@ -3350,7 +3341,6 @@ dependencies = [
  "js-sys",
  "log 0.4.17",
  "mime 0.3.16",
- "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding 2.2.0",
@@ -3368,7 +3358,6 @@ dependencies = [
  "url 2.3.1",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-streams",
  "web-sys",
  "webpki-roots",
  "winreg",
@@ -3791,48 +3780,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shadow-drive-sdk"
-version = "0.6.1"
-dependencies = [
- "anchor-lang",
- "async-trait",
- "base64 0.20.0",
- "bincode",
- "byte-unit",
- "bytes",
- "futures",
- "hex",
- "itertools",
- "lazy_static",
- "reqwest",
- "serde",
- "serde_json",
- "sha2 0.10.6",
- "shadow-drive-user-staking",
- "sodalite",
- "solana-account-decoder",
- "solana-client",
- "solana-sdk",
- "solana-transaction-status",
- "spl-associated-token-account",
- "spl-token",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "shadow-drive-user-staking"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd9b13a14c9caa33f518cdd3ce58f0767c2e4d7f484759e60d11815d8907b090"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "hex",
- "spl-associated-token-account",
-]
-
-[[package]]
 name = "shell-words"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3892,15 +3839,6 @@ checksum = "64a4a911eed85daf18834cfaa86a79b7d266ff93ff5ba14005426219480ed662"
 dependencies = [
  "libc",
  "winapi",
-]
-
-[[package]]
-name = "sodalite"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41784a359d15c58bba298cccb7f30a847a1a42d0620c9bdaa0aa42fdb3c280e0"
-dependencies = [
- "index-fixed",
 ]
 
 [[package]]
@@ -5012,15 +4950,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "unicase"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
-dependencies = [
- "version_check 0.9.4",
-]
-
-[[package]]
 name = "unicode-bidi"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5265,19 +5194,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0046fef7e28c3804e5e38bfa31ea2a0f73905319b677e57ebe37e49358989b5d"
-
-[[package]]
-name = "wasm-streams"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bbae3363c08332cadccd13b67db371814cd214c2524020932f0804b8cf7c078"
-dependencies = [
- "futures-util",
- "js-sys",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
 
 [[package]]
 name = "web-sys"
