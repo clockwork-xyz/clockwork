@@ -1196,6 +1196,7 @@ version = "2.0.1"
 dependencies = [
  "actix-web",
  "clockwork-webhook-program",
+ "curve25519-dalek",
  "solana-sdk",
  "solana-zk-token-sdk",
  "tokio",
