@@ -72,50 +72,47 @@ async fn hello(req: HttpRequest, name: web::Path<String>) -> impl Responder {
 //     req.headers().get("clockwork-worker")?.to_str().ok()
 // }
 
+const NORMALIZED_SECRET_LENGTH: usize = 64;
+const PLAINTEXT_CHUNK_SIZE: usize = 4;
+const CIPHERTEXT_CHUNK_SIZE: usize = 64;
+
 fn decrypt(keypair: &ElGamalKeypair, ciphertext: Vec<u8>) -> String {
     // Decrypt the ciphertext chunks.
     let plaintext_bytes: Vec<u8> = ciphertext
-        .chunks(64)
+        .chunks(CIPHERTEXT_CHUNK_SIZE)
         .map(|i| {
             let cx = ElGamalCiphertext::from_bytes(&i).unwrap();
             let dx = keypair.secret.decrypt_u32(&cx).unwrap();
-            dx.to_le_bytes()[0..4].to_vec()
+            dx.to_le_bytes()[0..PLAINTEXT_CHUNK_SIZE].to_vec()
         })
         .flatten()
         .collect();
 
     // Lookup the plaintext length and take the slice from deciphered text.
     // Map the resulting bytes back into a utf8 string.
-    let len = plaintext_bytes[0] as usize;
-    let plaintext = plaintext_bytes.get(1..len + 1).unwrap().to_vec();
+    let len = plaintext_bytes[NORMALIZED_SECRET_LENGTH - 1] as usize;
+    let plaintext = plaintext_bytes.get(0..len).unwrap().to_vec();
     String::from_utf8(plaintext).unwrap()
 }
 
 fn encrypt(keypair: &ElGamalKeypair, plaintext: String) -> Vec<u8> {
     // Use the first byte to store the length.
-    let plaintext_bytes = &mut plaintext.as_bytes();
-    assert!(plaintext_bytes.len() < 256);
-    let mut metadata_plaintext_bytes = vec![plaintext_bytes.len() as u8];
-    metadata_plaintext_bytes.extend_from_slice(plaintext_bytes);
+    let bytes = &mut plaintext.as_bytes().to_vec();
+    let len = bytes.len();
+    assert!(len < NORMALIZED_SECRET_LENGTH);
+    bytes.resize(NORMALIZED_SECRET_LENGTH - 1, 0);
+    bytes.push(len as u8);
 
-    // Chunk the [metadata + plaintext] buffer into 32 bits, and encrypt each chunk.
-    // Flatten the resulting ciphertext into a buffer.
-    metadata_plaintext_bytes
-        .chunks(4)
-        .map(|i| {
-            if i.len() < 4 {
-                // If the chunk is smaller than 4 bytes, pad with 0s.
-                let mut x = i.to_vec();
-                x.resize(4, 0);
-                x.as_slice().try_into().unwrap()
-            } else {
-                i.try_into().unwrap()
-            }
-        })
-        .map(|s: [u8; 4]| {
+    // Chunk plaintext bytes into pieces of 32 bits each.
+    // Encrypt each chunk into a 64 byte ciphertext.
+    // Flatten the ciphertext bytes into a buffer.
+    bytes
+        .chunks(PLAINTEXT_CHUNK_SIZE)
+        .map(|i| i.try_into().unwrap())
+        .map(|s: [u8; PLAINTEXT_CHUNK_SIZE]| {
             keypair
                 .public
-                .encrypt(unsafe { std::mem::transmute::<[u8; 4], u32>(s) })
+                .encrypt(unsafe { std::mem::transmute::<[u8; PLAINTEXT_CHUNK_SIZE], u32>(s) })
                 .to_bytes()
                 .to_vec()
         })
@@ -133,8 +130,8 @@ mod tests {
     fn test_encrypt_decrypt_correctness() {
         let keypair = &ElGamalKeypair::new_rand();
         let plaintext = "Hello, world";
-        let ciphertext = encrypt(keypair, plaintext.into());
-        let decrypted_plaintext = decrypt(keypair, ciphertext);
+        let ciphertext = dbg!(encrypt(keypair, plaintext.into()));
+        let decrypted_plaintext = dbg!(decrypt(keypair, ciphertext));
         assert!(plaintext.eq(&decrypted_plaintext));
     }
 }

@@ -11,6 +11,7 @@ members = [
     "utils"
 ]
 
-# [patch.crates-io]
+[patch.crates-io]
 # solana-program = { path = "../solana/sdk/program" }
+shadow-drive-sdk = { path = "../shadow-drive-rust/sdk" }
 
