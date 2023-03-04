@@ -1211,8 +1211,11 @@ name = "clockwork_relayer"
 version = "2.0.1"
 dependencies = [
  "actix-web",
+ "byte-unit",
  "clockwork-webhook-program",
  "curve25519-dalek",
+ "lazy_static",
+ "serde",
  "shadow-drive-sdk",
  "solana-sdk",
  "solana-zk-token-sdk",

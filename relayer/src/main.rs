@@ -1,76 +1,71 @@
-use std::str::FromStr;
+use std::{fs, path::Path};
 
-use actix_web::{get, post, web, App, HttpRequest, HttpServer, Responder};
-use curve25519_dalek::scalar::Scalar;
-use solana_sdk::{pubkey::Pubkey, signature::read_keypair_file};
+use actix_web::{get, post, web, App, HttpServer, Responder};
+use byte_unit::ByteUnit;
+use serde::{Deserialize, Serialize};
+use shadow_drive_sdk::{Byte, ShadowDriveClient, Signer, StorageAccountVersion};
+use solana_sdk::signature::read_keypair_file;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
-// static ACK_AUTHORITY_KEYPATH: &str = "TODO";
+static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/development-keypair.json";
+static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/development-keypair.json";
+static SECRETS_PATH: &str = "/home/ubuntu/secrets";
 // static RPC_URL: &str = "http://0.0.0.0:8899";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(hello))
+    // Generate a keypair for encryption.
+    let encryption_keypair_path = Path::new(ENCRYPTION_KEYPAIR_PATH.into());
+    if encryption_keypair_path.exists() {
+        let encryption_keypair = ElGamalKeypair::new_rand();
+        encryption_keypair
+            .write_json_file(ENCRYPTION_KEYPAIR_PATH)
+            .expect("Failed to write encryption keypair to filepath");
+    }
+
+    // Verify the secrets directory exists.
+    let secrets_path = Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+
+    // Start the webserver.
+    HttpServer::new(|| App::new().service(secret_create))
         .bind(("127.0.0.1", 8000))?
         .run()
         .await
 }
 
-#[post("/relay/{word}")]
-async fn hello(req: HttpRequest, name: web::Path<String>) -> impl Responder {
-    // Parse headers to request metadata
-
-    println!("Req: {:?}", req);
-
-    let keypair = &ElGamalKeypair::new_rand();
-    let plaintext = name.to_string();
-    let ciphertext = encrypt(keypair, plaintext);
-    let decrypted_plaintext = decrypt(keypair, ciphertext);
-    dbg!(decrypted_plaintext);
-
-    // let ciphertext = keypair.public.encrypt(plaintext);
-
-    // let caller_id = Pubkey::from_str(get_caller_id(&req).unwrap()).unwrap();
-    // let request_id = Pubkey::from_str(get_request_id(&req).unwrap()).unwrap();
-    // let worker_id = Pubkey::from_str(get_worker_id(&req).unwrap()).unwrap();
-    // println!(
-    //     "caller_id: {} request_id: {} worker_id: {}",
-    //     caller_id, request_id, worker_id
-    // );
-
-    // Build the client
-    // let keypair = read_keypair_file(ACK_AUTHORITY_KEYPATH.to_string()).unwrap();
-
-    // let client = cronos_client::Client::new(keypair, RPC_URL.to_string());
-
-    // Execute the ack instruction
-    // web::block(move || {
-    //     let ix = cronos_client::http::instruction::request_ack(
-    //         client.payer_pubkey(),
-    //         caller_id,
-    //         request_id,
-    //         worker_id,
-    //     );
-    //     let sig = client.send(&[ix], &[client.payer()]).unwrap();
-    //     println!("Sig: {:#?}", sig);
-    // })
-    // .await
-    // .ok();
-
-    format!("Hello!")
+#[derive(Deserialize, Serialize)]
+struct SecretCreate {
+    name: String,
+    word: String,
 }
 
-// fn get_caller_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
-//     req.headers().get("x-caller-id")?.to_str().ok()
-// }
+#[post("/secret")]
+async fn secret_create(req: web::Json<SecretCreate>) -> impl Responder {
+    // Fetch encryption keypair.
+    let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
+    let plaintext = req.word.to_string();
+    let ciphertext = encrypt(keypair, plaintext);
 
-// fn get_request_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
-//     req.headers().get("x-request-id")?.to_str().ok()
-// }
+    // Save the ciphertext to the file system.
+    let secrets_path = std::path::Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+    let secret_filepath = dbg!(secrets_path.join(format!("{}.txt", req.name)));
+    fs::write(secret_filepath, ciphertext).unwrap();
 
-// fn get_worker_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
-//     req.headers().get("clockwork-worker")?.to_str().ok()
-// }
+    // TODO Save the ciphertext to storage.
+    // let keypair = read_keypair_file(RELAYER_KEYPAIR_PATH).unwrap();
+    // let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
+    // let decrypted_plaintext = decrypt(keypair, ciphertext);
+    // dbg!(decrypted_plaintext);
+
+    "Ok"
+}
+
+#[get("/secret/{name}")]
+async fn secret_get(name: web::Path<String>) -> impl Responder {
+    "TODO"
+}
 
 const NORMALIZED_SECRET_LENGTH: usize = 64;
 const PLAINTEXT_CHUNK_SIZE: usize = 4;
