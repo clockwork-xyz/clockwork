@@ -1,8 +1,9 @@
-use {
-    crate::{config::PluginConfig, observers::webhook::HttpRequest},
-    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
-    std::{fmt::Debug, sync::Arc},
-};
+use std::{fmt::Debug, sync::Arc};
+
+use clockwork_client::webhook::state::Request;
+use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+
+use crate::config::PluginConfig;
 
 pub struct WebhookExecutor {
     pub config: PluginConfig,
@@ -15,14 +16,7 @@ impl WebhookExecutor {
         }
     }
 
-    pub fn execute_requests(self: Arc<Self>) -> PluginResult<()> {
-        // for request in self.clone().observers.webhook.webhook_requests.iter() {
-        //     self.clone().execute_request(request.clone())?;
-        // }
-        Ok(())
-    }
-
-    fn _execute_request(self: Arc<Self>, _http_request: HttpRequest) -> PluginResult<()> {
+    fn _execute_request(self: Arc<Self>, _request: Request) -> PluginResult<()> {
         // self.spawn(|this| async move {
         //     let url = http_request.clone().request.url;
         //     let res = match http_request.request.method {

@@ -1,9 +1,4 @@
-use std::{
-    collections::HashSet,
-    fmt::Debug,
-    hash::{Hash, Hasher},
-    sync::Arc,
-};
+use std::{collections::HashSet, fmt::Debug, sync::Arc};
 
 use clockwork_client::webhook::state::Request;
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
@@ -11,8 +6,8 @@ use solana_program::pubkey::Pubkey;
 use tokio::sync::RwLock;
 
 pub struct WebhookObserver {
-    // The set of http request pubkeys that can be processed.
-    pub webhook_requests: RwLock<HashSet<HttpRequest>>,
+    // The set of webhook requests that can be processed.
+    pub webhook_requests: RwLock<HashSet<Pubkey>>,
 }
 
 impl WebhookObserver {
@@ -22,9 +17,14 @@ impl WebhookObserver {
         }
     }
 
-    pub async fn observe_request(self: Arc<Self>, request: HttpRequest) -> PluginResult<()> {
+    pub async fn observe_request(
+        self: Arc<Self>,
+        _request: Request,
+        request_pubkey: Pubkey,
+        _slot: u64,
+    ) -> PluginResult<()> {
         let mut w_webhook_requests = self.webhook_requests.write().await;
-        w_webhook_requests.insert(request);
+        w_webhook_requests.insert(request_pubkey);
         drop(w_webhook_requests);
         Ok(())
     }
@@ -32,30 +32,6 @@ impl WebhookObserver {
 
 impl Debug for WebhookObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "http-observer")
+        write!(f, "webhook-observer")
     }
 }
-
-/**
- * HttpRequest
- */
-
-#[derive(Clone)]
-pub struct HttpRequest {
-    pub pubkey: Pubkey,
-    pub request: Request,
-}
-
-impl Hash for HttpRequest {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.pubkey.hash(state);
-    }
-}
-
-impl PartialEq for HttpRequest {
-    fn eq(&self, other: &Self) -> bool {
-        self.pubkey == other.pubkey
-    }
-}
-
-impl Eq for HttpRequest {}

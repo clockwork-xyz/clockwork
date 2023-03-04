@@ -1,0 +1,21 @@
+[package]
+name = "clockwork_relayer"
+version = "2.0.1"
+edition = "2021"
+description = "Clockwork relayer for webhook requests"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/relayer"
+documentation = "https://docs.clockwork.xyz"
+readme = "./README.md"
+keywords = ["solana"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.3.1"
+clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.1" }
+# rsa = "0.8.2"
+solana-zk-token-sdk = "1.14.15"
+solana-sdk = "1.14.15"
+tokio = "1.26.0"

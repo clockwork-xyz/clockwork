@@ -9,10 +9,7 @@ use solana_program::pubkey::Pubkey;
 use tokio::runtime::{Builder, Runtime};
 
 use crate::{
-    config::PluginConfig,
-    events::AccountUpdateEvent,
-    executors::Executors,
-    observers::{webhook::HttpRequest, Observers},
+    config::PluginConfig, events::AccountUpdateEvent, executors::Executors, observers::Observers,
 };
 
 pub struct ClockworkPlugin {
@@ -87,7 +84,7 @@ impl GeyserPlugin for ClockworkPlugin {
                 write_version: account_info.write_version,
             },
         };
-        let account_pubkey = Pubkey::new(account_info.pubkey);
+        let account_pubkey = Pubkey::try_from(account_info.pubkey).unwrap();
         let event = AccountUpdateEvent::try_from(account_info);
 
         // Process event on tokio task.
@@ -115,24 +112,21 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::HttpRequest { request } => {
-                        inner
-                            .observers
-                            .webhook
-                            .clone()
-                            .observe_request(HttpRequest {
-                                pubkey: account_pubkey,
-                                request,
-                            })
-                            .await
-                            .ok();
-                    }
                     AccountUpdateEvent::Thread { thread } => {
                         inner
                             .observers
                             .thread
                             .clone()
                             .observe_thread(thread, account_pubkey, slot)
+                            .await
+                            .ok();
+                    }
+                    AccountUpdateEvent::Webhook { request } => {
+                        inner
+                            .observers
+                            .webhook
+                            .clone()
+                            .observe_request(request, account_pubkey, slot)
                             .await
                             .ok();
                     }

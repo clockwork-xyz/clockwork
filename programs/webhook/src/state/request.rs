@@ -4,99 +4,50 @@ use std::{
     str::FromStr,
 };
 
-use super::Api;
-use crate::errors::ClockworkError;
-
 use anchor_lang::{prelude::*, AnchorDeserialize};
+use serde::{Deserialize, Serialize};
+
+use crate::errors::ClockworkError;
 
 pub const SEED_REQUEST: &[u8] = b"request";
 
-/**
- * Request
- */
-
 #[account]
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Request {
-    pub api: Pubkey,
-    pub caller: Pubkey,
+    pub authority: Pubkey,
+    pub body: Vec<u8>,
     pub created_at: u64,
-    pub fee_amount: u64,
     pub headers: HashMap<String, String>,
-    pub id: String,
+    pub id: Vec<u8>,
     pub method: HttpMethod,
-    pub route: String,
+    pub relayer: Relayer,
     pub url: String,
     pub workers: Vec<Pubkey>,
 }
 
 impl Request {
-    pub fn pubkey(api: Pubkey, caller: Pubkey, id: String) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, id: Vec<u8>) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_REQUEST, api.as_ref(), caller.as_ref(), id.as_bytes()],
+            &[SEED_REQUEST, authority.as_ref(), id.as_slice()],
             &crate::ID,
         )
         .0
     }
 }
 
-/**
- * RequestAccount
- */
-
+/// RequestAccount ...
 pub trait RequestAccount {
     fn pubkey(&self) -> Pubkey;
-
-    fn init(
-        &mut self,
-        api: &Account<Api>,
-        caller: Pubkey,
-        created_at: u64,
-        fee_amount: u64,
-        headers: HashMap<String, String>,
-        id: String,
-        method: HttpMethod,
-        route: String,
-        workers: Vec<Pubkey>,
-    ) -> Result<()>;
 }
 
 impl RequestAccount for Account<'_, Request> {
     fn pubkey(&self) -> Pubkey {
-        Request::pubkey(self.api, self.caller, self.id.clone())
-    }
-
-    fn init(
-        &mut self,
-        api: &Account<Api>,
-        caller: Pubkey,
-        created_at: u64,
-        fee_amount: u64,
-        headers: HashMap<String, String>,
-        id: String,
-        method: HttpMethod,
-        route: String,
-        workers: Vec<Pubkey>,
-    ) -> Result<()> {
-        self.api = api.key();
-        self.caller = caller;
-        self.created_at = created_at;
-        self.fee_amount = fee_amount;
-        self.headers = headers;
-        self.id = id;
-        self.method = method;
-        self.route = route.clone();
-        self.url = api.clone().base_url.to_owned() + route.as_str();
-        self.workers = workers;
-        Ok(())
+        Request::pubkey(self.authority, self.id.clone())
     }
 }
 
-/**
- * HttpMethod
- */
-
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+/// HttpMethod
+#[derive(AnchorDeserialize, AnchorSerialize, Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub enum HttpMethod {
     Get,
     Post,
@@ -121,4 +72,10 @@ impl FromStr for HttpMethod {
             _ => Err(ClockworkError::InvalidHttpMethod.into()),
         }
     }
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize, Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub enum Relayer {
+    Clockwork,
+    Custom(String),
 }

@@ -6,6 +6,11 @@ members = [
     "macros",
     "plugin",
     "programs/*",
+    "relayer",
     "sdk",
     "utils"
 ]
+
+# [patch.crates-io]
+# solana-program = { path = "../solana/sdk/program" }
+

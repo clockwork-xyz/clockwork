@@ -1,28 +1,23 @@
-use {
-    crate::state::{
-        Api, ApiAccount, Config, HttpMethod, Request, RequestAccount, SEED_REQUEST,
-    },
-    anchor_lang::{
-        prelude::*,
-        solana_program::system_program,
-        system_program::{transfer, Transfer},
-    },
-    clockwork_network_program::state::Pool,
-    std::{collections::HashMap, mem::size_of},
+use std::{collections::HashMap, mem::size_of};
+
+use anchor_lang::{
+    prelude::*,
+    solana_program::system_program,
+    system_program::{transfer, Transfer},
 };
+use clockwork_network_program::state::Pool;
+
+use crate::state::{Relayer, Config, HttpMethod, Request, SEED_REQUEST};
 
 #[derive(Accounts)]
 #[instruction(
-    id: String, 
+    id: Vec<u8>, 
     method: HttpMethod, 
-    route: String
+    url: String
 )]
-pub struct RequestNew<'info> {
-    #[account(address = api.pubkey())]
-    pub api: Account<'info, Api>,
-
+pub struct RequestCreate<'info> {
     #[account()]
-    pub caller: Signer<'info>,
+    pub authority: Signer<'info>,
 
     #[account(address = Config::pubkey())]
     pub config: Account<'info, Config>,
@@ -37,9 +32,8 @@ pub struct RequestNew<'info> {
         init,
         seeds = [
             SEED_REQUEST,
-            api.key().as_ref(),
-            caller.key().as_ref(),
-            id.as_bytes(),
+            authority.key().as_ref(),
+            id.as_slice(),
         ],
         bump,
         space = 8 + size_of::<Request>(),
@@ -52,46 +46,39 @@ pub struct RequestNew<'info> {
 }
 
 pub fn handler<'info>(
-    ctx: Context<RequestNew>,
-    id: String,
+    ctx: Context<RequestCreate>,
+    id: Vec<u8>,
     method: HttpMethod,
-    route: String,
+    url: String,
 ) -> Result<()> {
-    // Fetch accounts
-    let api = &ctx.accounts.api;
-    let caller = &ctx.accounts.caller;
+    // Get accounts
+    let authority = &ctx.accounts.authority;
     let config = &ctx.accounts.config;
     let payer = &mut ctx.accounts.payer;
     let pool = &ctx.accounts.pool;
     let request = &mut ctx.accounts.request;
     let system_program = &ctx.accounts.system_program;
 
-    // TODO Validate route is a relative path
-
     // Initialize the request account
     let current_slot = Clock::get().unwrap().slot;
     let fee_amount = config.request_fee;
     let headers = HashMap::new(); // TODO Get headers from ix data
-    let workers = pool
+    request.authority = authority.key();
+    request.created_at = current_slot;
+    request.headers = headers;
+    request.id = id;
+    request.method = method;
+    request.relayer = Relayer::Clockwork;
+    request.url = url;
+    request.workers = pool
         .clone()
         .into_inner()
         .workers
         .iter()
         .map(|k| *k)
         .collect::<Vec<Pubkey>>();
-    request.init(
-        api,
-        caller.key(),
-        current_slot,
-        fee_amount,
-        headers,
-        id,
-        method,
-        route,
-        workers,
-    )?;
 
-    // Transfer fees into request account to hold in escrow
+    // Transfer fees into request account to hold in escrow.
     transfer(
         CpiContext::new(
             system_program.to_account_info(),
