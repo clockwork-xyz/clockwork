@@ -15,11 +15,12 @@ pub mod webhook_program {
 
     pub fn webhook_create<'info>(
         ctx: Context<WebhookCreate>,
+        headers: std::collections::HashMap<String, String>,
         id: Vec<u8>,
         method: HttpMethod,
         url: String,
     ) -> Result<()> {
-        webhook_create::handler(ctx, id, method, url)
+        webhook_create::handler(ctx, headers, id, method, url)
     }
 
     pub fn webhook_respond<'info>(ctx: Context<WebhookRespond>) -> Result<()> {

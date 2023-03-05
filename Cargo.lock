@@ -1111,6 +1111,7 @@ dependencies = [
  "curve25519-dalek",
  "lazy_static",
  "rayon",
+ "regex",
  "reqwest",
  "serde",
  "solana-client",

@@ -12,6 +12,7 @@ static WEBHOOK_FEE: u64 = 1_000_000;
 
 #[derive(Accounts)]
 #[instruction(
+    headers: HashMap<String, String>,
     id: Vec<u8>, 
     method: HttpMethod, 
     url: String
@@ -42,6 +43,7 @@ pub struct WebhookCreate<'info> {
 
 pub fn handler<'info>(
     ctx: Context<WebhookCreate>,
+    headers: HashMap<String, String>,
     id: Vec<u8>,
     method: HttpMethod,
     url: String,
@@ -54,7 +56,6 @@ pub fn handler<'info>(
 
     // Initialize the webhook account
     let current_slot = Clock::get().unwrap().slot;
-    let headers = HashMap::new(); // TODO Get headers from ix data
     webhook.authority = authority.key();
     webhook.created_at = current_slot;
     webhook.headers = headers;
@@ -62,13 +63,6 @@ pub fn handler<'info>(
     webhook.method = method;
     webhook.relayer = Relayer::Clockwork;
     webhook.url = url;
-    // webhook.workers = pool
-    //     .clone()
-    //     .into_inner()
-    //     .workers
-    //     .iter()
-    //     .map(|k| *k)
-    //     .collect::<Vec<Pubkey>>();
 
     // Transfer fees into webhook account to hold in escrow.
     transfer(

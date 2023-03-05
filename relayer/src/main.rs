@@ -1,10 +1,11 @@
 use std::{fs, path::Path};
 
 use actix_web::{post, web, App, HttpServer, Responder};
-use anchor_lang::AccountDeserialize;
+use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use clockwork_relayer_api::{Relay, SecretCreate, SecretGet, SignedRequest};
 use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
+use regex::Regex;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
@@ -44,25 +45,41 @@ async fn main() -> std::io::Result<()> {
 
 #[post("/relay")]
 async fn relay(req: web::Json<Relay>) -> impl Responder {
-    // std::thread::sleep(std::time::Duration::from_millis(1000));
     let client = RpcClient::new_with_commitment(RPC_URL.into(), CommitmentConfig::processed());
     let data = client.get_account_data(&req.webhook).await.unwrap();
     let webhook = Webhook::try_deserialize(&mut data.as_slice()).unwrap();
 
-    // TODO Check if this request has been processed.
+    // TODO Check if this webhook has already been processed.
+    // TODO Acquire a write lock on the webhook pubkey.
 
-    // Build the URL request.
+    // Build the request.
     let client = reqwest::Client::new();
     let url = webhook.url;
-    let request = match webhook.method {
+    let mut request = match webhook.method {
         HttpMethod::Get => client.get(url),
         HttpMethod::Post => client.post(url),
     };
 
-    // TODO Inject secrets into headers.
+    // Add the request headers. Hydrate with user secrets if requested.
+    let re = Regex::new(r"\{[[:alnum:]]+\}").unwrap();
+    for (k, v) in webhook.headers {
+        if let Some(m) = re.find(&v) {
+            if let Some(secret_name) = v.as_str().get(m.start() + 1..m.end() - 1) {
+                if let Some(secret_word) =
+                    fetch_decrypted_secret(webhook.authority, secret_name.into()).await
+                {
+                    let mut hydrated_header = v.clone();
+                    hydrated_header.replace_range(m.start()..m.end(), &secret_word);
+                    request = request.try_clone().unwrap().header(k, hydrated_header);
+                }
+            }
+        } else {
+            request = request.try_clone().unwrap().header(k, v);
+        }
+    }
 
-    // TODO If requested, write the result back on-chain.
-    match request.send().await {
+    // TODO Write the result back on-chain.
+    match dbg!(request).send().await {
         Ok(response) => {
             // TODO
             dbg!(response);
@@ -95,13 +112,6 @@ async fn secret_create(req: web::Json<SignedRequest<SecretCreate>>) -> impl Resp
     }
     let secret_filepath = user_secrets_path.join(format!("{}.txt", req.msg.name));
     fs::write(secret_filepath, ciphertext).unwrap();
-
-    // TODO Save the ciphertext to Shadow Drive.
-    // let keypair = read_keypair_file(RELAYER_KEYPAIR_PATH).unwrap();
-    // let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
-    // let decrypted_plaintext = decrypt(keypair, ciphertext);
-    // dbg!(decrypted_plaintext);
-
     "Ok"
 }
 
@@ -111,13 +121,9 @@ async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder 
     assert!(req.0.authenticate());
 
     // Decrypt the ciphertext.
-    let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
-    let secret_filepath = Path::new(SECRETS_PATH.into())
-        .join(req.signer.to_string())
-        .join(format!("{}.txt", req.msg.name));
-    let ciphertext = fs::read(secret_filepath).unwrap();
-    let plaintext = decrypt(keypair, ciphertext);
-    plaintext
+    fetch_decrypted_secret(req.signer, req.msg.name.to_string())
+        .await
+        .unwrap_or("Not found".into())
 }
 
 const NORMALIZED_SECRET_LENGTH: usize = 64;
@@ -168,6 +174,19 @@ fn encrypt(keypair: &ElGamalKeypair, plaintext: String) -> Vec<u8> {
         .collect()
 }
 
+async fn fetch_decrypted_secret(user: Pubkey, name: String) -> Option<String> {
+    let keypair = &ElGamalKeypair::read_json_file(ENCRYPTION_KEYPAIR_PATH).unwrap();
+    let secret_filepath = Path::new(SECRETS_PATH.into())
+        .join(user.to_string())
+        .join(format!("{}.txt", name));
+    if let Ok(ciphertext) = fs::read(secret_filepath) {
+        let plaintext = decrypt(keypair, ciphertext);
+        Some(plaintext)
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use solana_zk_token_sdk::encryption::elgamal::ElGamalKeypair;
@@ -178,8 +197,8 @@ mod tests {
     fn test_encrypt_decrypt_correctness() {
         let keypair = &ElGamalKeypair::new_rand();
         let plaintext = "Hello, world";
-        let ciphertext = dbg!(encrypt(keypair, plaintext.into()));
-        let decrypted_plaintext = dbg!(decrypt(keypair, ciphertext));
+        let ciphertext = encrypt(keypair, plaintext.into());
+        let decrypted_plaintext = decrypt(keypair, ciphertext);
         assert!(plaintext.eq(&decrypted_plaintext));
     }
 }

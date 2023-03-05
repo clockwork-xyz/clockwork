@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 // use anchor_lang::prelude::*;
 use anchor_lang::{InstructionData, ToAccountMetas};
 use clockwork_client::{
@@ -14,6 +16,8 @@ pub fn create(
     method: HttpMethod,
     url: String,
 ) -> Result<(), CliError> {
+    let mut headers: HashMap<String, String> = HashMap::new();
+    headers.insert("X-CUSTOM-HEADER".into(), "TEST {hello}".into());
     let ix = Instruction {
         program_id: clockwork_webhook_program::ID,
         accounts: clockwork_webhook_program::accounts::WebhookCreate {
@@ -24,6 +28,7 @@ pub fn create(
         }
         .to_account_metas(Some(true)),
         data: clockwork_webhook_program::instruction::WebhookCreate {
+            headers,
             id: id.clone(),
             method,
             url,
