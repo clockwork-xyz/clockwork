@@ -14,13 +14,16 @@ keywords = ["solana"]
 
 [dependencies]
 actix-web = "4.3.1"
+anchor-lang = "0.26.0"
 byte-unit = "4.0.18"
 clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.1" }
 clockwork-relayer-api = { path = "api", version = "2.0.1" }
 curve25519-dalek = "3.2.1"
 lazy_static = "1.4.0"
+reqwest = "0.11.14"
 serde = "1.0.152"
 # shadow-drive-sdk = "0.6.1"
+solana-client = "1.14.15"
 solana-zk-token-sdk = "1.14.15"
 solana-sdk = "1.14.15"
 tokio = "1.26.0"

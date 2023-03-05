@@ -1,5 +1,3 @@
-mod config;
-mod request;
+mod webhook;
 
-pub use config::*;
-pub use request::*;
+pub use webhook::*;

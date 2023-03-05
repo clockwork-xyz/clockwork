@@ -1,14 +1,19 @@
 use std::{fs, path::Path};
 
 use actix_web::{post, web, App, HttpServer, Responder};
-use clockwork_relayer_api::{SecretCreate, SecretGet, SignedRequest};
+use anchor_lang::AccountDeserialize;
+use clockwork_relayer_api::{Relay, SecretCreate, SecretGet, SignedRequest};
+use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
 static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
 static SECRETS_PATH: &str = "/home/ubuntu/secrets";
-// static RPC_URL: &str = "http://0.0.0.0:8899";
+static RPC_URL: &str = "http://127.0.0.1:8899";
+// static RPC_URL: &str = "http://74.118.139.244:8899";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,10 +31,49 @@ async fn main() -> std::io::Result<()> {
     assert!(secrets_path.is_dir());
 
     // Start the webserver.
-    HttpServer::new(|| App::new().service(secret_create).service(secret_get))
-        .bind(("127.0.0.1", 8000))?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(relay)
+            .service(secret_create)
+            .service(secret_get)
+    })
+    .bind(("127.0.0.1", 8000))?
+    .run()
+    .await
+}
+
+#[post("/relay")]
+async fn relay(req: web::Json<Relay>) -> impl Responder {
+    // std::thread::sleep(std::time::Duration::from_millis(1000));
+    let client = RpcClient::new_with_commitment(RPC_URL.into(), CommitmentConfig::processed());
+    let data = client.get_account_data(&req.webhook).await.unwrap();
+    let webhook = Webhook::try_deserialize(&mut data.as_slice()).unwrap();
+
+    // TODO Check if this request has been processed.
+
+    // Build the URL request.
+    let client = reqwest::Client::new();
+    let url = webhook.url;
+    let request = match webhook.method {
+        HttpMethod::Get => client.get(url),
+        HttpMethod::Post => client.post(url),
+    };
+
+    // TODO Inject secrets into headers.
+
+    // TODO If requested, write the result back on-chain.
+    match request.send().await {
+        Ok(response) => {
+            // TODO
+            dbg!(response);
+        }
+        Err(err) => {
+            // TODO
+            dbg!(err);
+        }
+    }
+
+    "Ok"
 }
 
 #[post("/secret_create")]

@@ -17,7 +17,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
             Some(("crontab", matches)) => parse_crontab_command(matches),
             Some(("delegation", matches)) => parse_delegation_command(matches),
@@ -87,18 +86,6 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         network_url: parse_string("url", matches).ok(),
         program_infos,
     })
-}
-
-fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("new", matches)) => Ok(CliCommand::ApiNew {
-            ack_authority: parse_pubkey("ack_authority", matches)?,
-            base_url: parse_string("base_url", matches)?,
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
 }
 
 fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
@@ -241,12 +228,19 @@ fn parse_registry_command(matches: &ArgMatches) -> Result<CliCommand, CliError> 
 }
 
 fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::WebhookRequestNew {
-        api: parse_pubkey("api", matches)?,
-        id: parse_string("id", matches)?,
-        method: parse_http_method("method", matches)?,
-        route: parse_string("route", matches)?,
-    })
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::WebhookGet {
+            id: parse_string("id", matches)?.into_bytes(),
+        }),
+        Some(("create", matches)) => Ok(CliCommand::WebhookCreate {
+            id: parse_string("id", matches)?.into_bytes(),
+            method: parse_http_method("method", matches)?,
+            url: parse_string("url", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
 }
 
 fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {

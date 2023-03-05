@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 use bincode::deserialize;
-use clockwork_client::webhook::state::Request;
+use clockwork_client::webhook::state::Webhook;
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
 use clockwork_thread_program_v2::state::Thread as ThreadV2;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -14,7 +14,7 @@ use crate::versioned_thread::VersionedThread;
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     Thread { thread: VersionedThread },
-    Webhook { request: Request },
+    Webhook { webhook: Webhook },
 }
 
 impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -70,9 +70,9 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         // If the account belongs to the webhook program, parse in
         if owner_pubkey.eq(&clockwork_client::webhook::ID) && account_info.data.len() > 8 {
             return Ok(AccountUpdateEvent::Webhook {
-                request: Request::try_deserialize(&mut account_info.data).map_err(|_| {
+                webhook: Webhook::try_deserialize(&mut account_info.data).map_err(|_| {
                     GeyserPluginError::AccountsUpdateError {
-                        msg: "Failed to parse Clockwork webhook request".into(),
+                        msg: "Failed to parse Clockwork webhook".into(),
                     }
                 })?,
             });

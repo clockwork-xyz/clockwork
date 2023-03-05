@@ -121,12 +121,12 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::Webhook { request } => {
+                    AccountUpdateEvent::Webhook { webhook } => {
                         inner
                             .observers
                             .webhook
                             .clone()
-                            .observe_request(request, account_pubkey, slot)
+                            .observe_webhook(webhook, account_pubkey)
                             .await
                             .ok();
                     }

@@ -9,11 +9,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::ClockworkError;
 
-pub const SEED_REQUEST: &[u8] = b"request";
+pub const SEED_WEBHOOK: &[u8] = b"webhook";
 
 #[account]
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Request {
+pub struct Webhook {
     pub authority: Pubkey,
     pub body: Vec<u8>,
     pub created_at: u64,
@@ -25,24 +25,24 @@ pub struct Request {
     pub workers: Vec<Pubkey>,
 }
 
-impl Request {
+impl Webhook {
     pub fn pubkey(authority: Pubkey, id: Vec<u8>) -> Pubkey {
         Pubkey::find_program_address(
-            &[SEED_REQUEST, authority.as_ref(), id.as_slice()],
+            &[SEED_WEBHOOK, authority.as_ref(), id.as_slice()],
             &crate::ID,
         )
         .0
     }
 }
 
-/// RequestAccount ...
-pub trait RequestAccount {
+/// WebhookAccount ...
+pub trait WebhookAccount {
     fn pubkey(&self) -> Pubkey;
 }
 
-impl RequestAccount for Account<'_, Request> {
+impl WebhookAccount for Account<'_, Webhook> {
     fn pubkey(&self) -> Pubkey {
-        Request::pubkey(self.authority, self.id.clone())
+        Webhook::pubkey(self.authority, self.id.clone())
     }
 }
 

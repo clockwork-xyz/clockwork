@@ -8,12 +8,6 @@ use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {
-    // API commands
-    ApiNew {
-        ack_authority: Pubkey,
-        base_url: String,
-    },
-
     // Config commands
     ConfigGet,
     ConfigSet {
@@ -72,8 +66,11 @@ pub enum CliCommand {
         size: usize,
     },
 
-    // Thread commands
+    // TODO Rename to Version. Use flags to filter by program.
+    //      Default to listing all deployed program versions on the user's configured cluster.
     ThreadCrateInfo,
+
+    // Thread commands
     ThreadCreate {
         id: String,
         kickoff_instruction: SerializableInstruction,
@@ -114,12 +111,14 @@ pub enum CliCommand {
         name: String,
     },
 
-    // Http
-    WebhookRequestNew {
-        api: Pubkey,
-        id: String,
+    // Webhook
+    WebhookCreate {
+        id: Vec<u8>,
         method: HttpMethod,
-        route: String,
+        url: String,
+    },
+    WebhookGet {
+        id: Vec<u8>,
     },
 
     // Worker commands
@@ -592,7 +591,59 @@ pub fn app() -> Command<'static> {
                 .subcommand(Command::new("get").about("Lookup the registry"))
                 .subcommand(Command::new("unlock").about("Manually unlock the registry")),
         )
-        .subcommand(Command::new("snapshot").about("Lookup the current Clockwork network registry"))
+        .subcommand(
+            Command::new("snapshot")
+                .about("Lookup the current Clockwork network registry")
+        )
+        .subcommand(
+            Command::new("webhook")
+                .about("Manage your webhooks")
+                .arg_required_else_help(true)
+                .subcommand(
+                    Command::new("create")
+                        .about("Create a new webhook")
+                        .arg(
+                            Arg::new("id")
+                                .long("id")
+                                .short('i')
+                                .value_name("ID")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The id of the webhook")
+                        )
+                        .arg(
+                            Arg::new("method")
+                                .long("method")
+                                .short('m')
+                                .value_name("GET|POST")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The http method to use")
+                        )
+                        .arg(
+                            Arg::new("url")
+                                .long("url")
+                                .short('u')
+                                .value_name("URL")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The url to send the webhook to")
+                        )
+                )
+                .subcommand(
+                    Command::new("get")
+                        .about("Lookup a webhook")
+                        .arg(
+                            Arg::new("id")
+                                .long("id")
+                                .short('i')
+                                .value_name("ID")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The id of the webhook")
+                        )
+                )
+        )
         .subcommand(
             Command::new("worker")
                 .about("Manage your workers")

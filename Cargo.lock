@@ -1011,6 +1011,7 @@ dependencies = [
  "clockwork-cron 2.0.1",
  "clockwork-relayer-api",
  "clockwork-utils 2.0.1",
+ "clockwork-webhook-program",
  "dirs-next",
  "regex",
  "reqwest",
@@ -1102,6 +1103,7 @@ name = "clockwork-relayer"
 version = "2.0.1"
 dependencies = [
  "actix-web",
+ "anchor-lang",
  "bincode",
  "byte-unit",
  "clockwork-relayer-api",
@@ -1109,7 +1111,9 @@ dependencies = [
  "curve25519-dalek",
  "lazy_static",
  "rayon",
+ "reqwest",
  "serde",
+ "solana-client",
  "solana-sdk",
  "solana-zk-token-sdk",
  "tokio",
@@ -1207,6 +1211,7 @@ dependencies = [
  "chrono",
  "clockwork-client",
  "clockwork-cron 2.0.1",
+ "clockwork-relayer-api",
  "clockwork-thread-program 1.4.2",
  "clockwork-thread-program 2.0.1",
  "clockwork-utils 2.0.1",
