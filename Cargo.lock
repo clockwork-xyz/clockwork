@@ -1108,6 +1108,7 @@ dependencies = [
  "clockwork-webhook-program",
  "curve25519-dalek",
  "lazy_static",
+ "rayon",
  "serde",
  "solana-sdk",
  "solana-zk-token-sdk",

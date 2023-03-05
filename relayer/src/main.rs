@@ -2,6 +2,7 @@ use std::{fs, path::Path};
 
 use actix_web::{post, web, App, HttpServer, Responder};
 use clockwork_relayer_api::{SecretCreate, SecretGet, SignedRequest};
+use rayon::prelude::*;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
@@ -82,7 +83,7 @@ const CIPHERTEXT_CHUNK_SIZE: usize = 64;
 fn decrypt(keypair: &ElGamalKeypair, ciphertext: Vec<u8>) -> String {
     // Decrypt the ciphertext chunks.
     let plaintext_bytes: Vec<u8> = ciphertext
-        .chunks(CIPHERTEXT_CHUNK_SIZE)
+        .par_chunks(CIPHERTEXT_CHUNK_SIZE)
         .map(|i| {
             let cx = ElGamalCiphertext::from_bytes(&i).unwrap();
             let dx = keypair.secret.decrypt_u32(&cx).unwrap();
