@@ -56,47 +56,20 @@ async fn relay(req: web::Json<Relay>) -> impl Responder {
     // TODO Check if this webhook has already been processed.
     // TODO Acquire a write lock on the webhook pubkey.
 
-    // Build the request.
+    // Begin building the request.
     let client = reqwest::Client::new();
-    let url = webhook.url;
+    let url = hydrate_secret(webhook.url, webhook.authority).await;
     let mut request = match webhook.method {
         HttpMethod::Get => client.get(url),
         HttpMethod::Post => client.post(url),
     };
 
     // Add the request headers.
-    let re = Regex::new(r"\{[[:alnum:]]+:[[:alnum:]]+\}").unwrap();
     for (k, v) in webhook.headers {
-        // Hydrate header with user secrets.
-        let mut did_hydrate = false;
-        if let Some(m) = re.find(&v) {
-            if let Some(secret_id) = v.as_str().get(m.start() + 1..m.end() - 1) {
-                let mut parts = secret_id.split(':');
-                if parts.clone().count() == 2 {
-                    // Verify the webhook.authority has permission to use this secret
-                    let secret_owner = Pubkey::from_str(parts.next().unwrap()).unwrap();
-                    let secret_name = parts.next().unwrap();
-                    if is_approved(webhook.authority, secret_owner, secret_name.to_string()) {
-                        if let Some(secret_word) =
-                            fetch_decrypted_secret(secret_owner, secret_name.into()).await
-                        {
-                            let mut hydrated_header = v.clone();
-                            hydrated_header.replace_range(m.start()..m.end(), &secret_word);
-                            request = request
-                                .try_clone()
-                                .unwrap()
-                                .header(k.clone(), hydrated_header);
-                            did_hydrate = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Otherwise, add the header as is.
-        if !did_hydrate {
-            request = request.try_clone().unwrap().header(k, v);
-        }
+        request = request
+            .try_clone()
+            .unwrap()
+            .header(k, hydrate_secret(v, webhook.authority).await);
     }
 
     // TODO Write the result back on-chain.
@@ -198,7 +171,8 @@ async fn secret_revoke(req: web::Json<SignedRequest<SecretRevoke>>) -> impl Resp
 
     "Ok"
 }
-const NORMALIZED_SECRET_LENGTH: usize = 64;
+
+const NORMALIZED_SECRET_LENGTH: usize = 128;
 const PLAINTEXT_CHUNK_SIZE: usize = 4;
 const CIPHERTEXT_CHUNK_SIZE: usize = 64;
 
@@ -272,6 +246,29 @@ fn is_approved(delegate: Pubkey, user: Pubkey, secret_name: String) -> bool {
 
     // Return true if the user owns the secret or is approved to use it.
     delegate.eq(&user) || delegates.contains(delegate.to_string().as_str())
+}
+
+async fn hydrate_secret(phrase: String, user: Pubkey) -> String {
+    let re = Regex::new(r"\{[[:alnum:]]+:[[:alnum:]]+\}").unwrap();
+    if let Some(m) = re.find(&phrase.clone()) {
+        let mut hydrated_phrase = phrase.clone();
+        if let Some(secret_id) = phrase.as_str().get(m.start() + 1..m.end() - 1) {
+            let mut parts = secret_id.split(':');
+            if parts.clone().count() == 2 {
+                // Verify the webhook.authority has permission to use this secret
+                let secret_owner = Pubkey::from_str(parts.next().unwrap()).unwrap();
+                let secret_name = parts.next().unwrap();
+                if is_approved(user, secret_owner, secret_name.to_string()) {
+                    if let Some(secret_word) =
+                        fetch_decrypted_secret(secret_owner, secret_name.into()).await
+                    {
+                        hydrated_phrase.replace_range(m.start()..m.end(), &secret_word);
+                    }
+                }
+            }
+        }
+    }
+    phrase
 }
 
 #[cfg(test)]

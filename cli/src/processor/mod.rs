@@ -108,7 +108,12 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         } => thread::update(&client, id, rate_limit, schedule),
         CliCommand::RegistryGet => registry::get(&client),
         CliCommand::RegistryUnlock => registry::unlock(&client),
-        CliCommand::WebhookCreate { id, method, url } => webhook::create(&client, id, method, url),
+        CliCommand::WebhookCreate {
+            body,
+            id,
+            method,
+            url,
+        } => webhook::create(&client, body, id, method, url),
         CliCommand::WebhookGet { id } => webhook::get(&client, id),
         CliCommand::WorkerCreate { signatory } => worker::create(&client, signatory, false),
         CliCommand::WorkerGet { id } => worker::get(&client, id),

@@ -12,6 +12,7 @@ use crate::errors::CliError;
 
 pub fn create(
     client: &Client,
+    body: Vec<u8>,
     id: Vec<u8>,
     method: HttpMethod,
     url: String,
@@ -31,6 +32,7 @@ pub fn create(
         }
         .to_account_metas(Some(true)),
         data: clockwork_webhook_program::instruction::WebhookCreate {
+            body,
             headers,
             id: id.clone(),
             method,

@@ -241,6 +241,7 @@ fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
             id: parse_string("id", matches)?.into_bytes(),
         }),
         Some(("create", matches)) => Ok(CliCommand::WebhookCreate {
+            body: parse_string("body", matches)?.into_bytes(),
             id: parse_string("id", matches)?.into_bytes(),
             method: parse_http_method("method", matches)?,
             url: parse_string("url", matches)?,

@@ -121,6 +121,7 @@ pub enum CliCommand {
 
     // Webhook
     WebhookCreate {
+        body: Vec<u8>,
         id: Vec<u8>,
         method: HttpMethod,
         url: String,
@@ -654,6 +655,15 @@ pub fn app() -> Command<'static> {
                 .subcommand(
                     Command::new("create")
                         .about("Create a new webhook")
+                        .arg(
+                            Arg::new("body")
+                                .long("body")
+                                .short('b')
+                                .value_name("VALUE")
+                                .takes_value(true)
+                                .required(false)
+                                .help("The body of the request")
+                        )
                         .arg(
                             Arg::new("id")
                                 .long("id")
