@@ -103,12 +103,20 @@ pub enum CliCommand {
     RegistryUnlock,
 
     // Secrets
+    SecretApprove {
+        name: String,
+        delegate: Pubkey,
+    },
     SecretCreate {
         name: String,
         word: String,
     },
     SecretGet {
         name: String,
+    },
+    SecretRevoke {
+        name: String,
+        delegate: Pubkey,
     },
 
     // Webhook
@@ -397,6 +405,28 @@ pub fn app() -> Command<'static> {
                 .about("Manage your secrets")
                 .arg_required_else_help(true)
                 .subcommand(
+                    Command::new("approve")
+                        .about("Approve a new delegate to use a secret")
+                        .arg(
+                            Arg::new("name")
+                                .long("name")
+                                .short('n')
+                                .value_name("NAME")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The name of the secret")
+                        )
+                        .arg(
+                            Arg::new("delegate")
+                                .long("delegate")
+                                .short('d')
+                                .value_name("PUBKEY")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The delegate to approve")
+                        )
+                )
+                .subcommand(
                     Command::new("create")
                         .about("Save a new secret")
                         .arg(
@@ -429,6 +459,28 @@ pub fn app() -> Command<'static> {
                                 .takes_value(true)
                                 .required(true)
                                 .help("The name of the secret")
+                        )
+                )
+                .subcommand(
+                    Command::new("revoke")
+                        .about("Revoke a delegate's approval to use a secret")
+                        .arg(
+                            Arg::new("name")
+                                .long("name")
+                                .short('n')
+                                .value_name("NAME")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The name of the secret")
+                        )
+                        .arg(
+                            Arg::new("delegate")
+                                .long("delegate")
+                                .short('d')
+                                .value_name("PUBKEY")
+                                .takes_value(true)
+                                .required(true)
+                                .help("The delegate to revoke approval from")
                         )
                 )
         )

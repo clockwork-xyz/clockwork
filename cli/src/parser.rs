@@ -169,12 +169,20 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
 
 fn parse_secret_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
+        Some(("approve", matches)) => Ok(CliCommand::SecretApprove {
+            name: parse_string("name", matches)?,
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
         Some(("get", matches)) => Ok(CliCommand::SecretGet {
             name: parse_string("name", matches)?,
         }),
         Some(("create", matches)) => Ok(CliCommand::SecretCreate {
             name: parse_string("name", matches)?,
             word: parse_string("word", matches)?,
+        }),
+        Some(("revoke", matches)) => Ok(CliCommand::SecretRevoke {
+            name: parse_string("name", matches)?,
+            delegate: parse_pubkey("delegate", matches)?,
         }),
         _ => Err(CliError::CommandNotRecognized(
             matches.subcommand().unwrap().0.into(),

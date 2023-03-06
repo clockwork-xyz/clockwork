@@ -1,8 +1,10 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, str::FromStr};
 
 use actix_web::{post, web, App, HttpServer, Responder};
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
-use clockwork_relayer_api::{Relay, SecretCreate, SecretGet, SignedRequest};
+use clockwork_relayer_api::{
+    Relay, SecretApprove, SecretCreate, SecretGet, SecretRevoke, SignedRequest,
+};
 use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
 use regex::Regex;
@@ -37,6 +39,8 @@ async fn main() -> std::io::Result<()> {
             .service(relay)
             .service(secret_create)
             .service(secret_get)
+            .service(secret_approve)
+            .service(secret_revoke)
     })
     .bind(("127.0.0.1", 8000))?
     .run()
@@ -60,20 +64,37 @@ async fn relay(req: web::Json<Relay>) -> impl Responder {
         HttpMethod::Post => client.post(url),
     };
 
-    // Add the request headers. Hydrate with user secrets if requested.
-    let re = Regex::new(r"\{[[:alnum:]]+\}").unwrap();
+    // Add the request headers.
+    let re = Regex::new(r"\{[[:alnum:]]+:[[:alnum:]]+\}").unwrap();
     for (k, v) in webhook.headers {
+        // Hydrate header with user secrets.
+        let mut did_hydrate = false;
         if let Some(m) = re.find(&v) {
-            if let Some(secret_name) = v.as_str().get(m.start() + 1..m.end() - 1) {
-                if let Some(secret_word) =
-                    fetch_decrypted_secret(webhook.authority, secret_name.into()).await
-                {
-                    let mut hydrated_header = v.clone();
-                    hydrated_header.replace_range(m.start()..m.end(), &secret_word);
-                    request = request.try_clone().unwrap().header(k, hydrated_header);
+            if let Some(secret_id) = v.as_str().get(m.start() + 1..m.end() - 1) {
+                let mut parts = secret_id.split(':');
+                if parts.clone().count() == 2 {
+                    // Verify the webhook.authority has permission to use this secret
+                    let secret_owner = Pubkey::from_str(parts.next().unwrap()).unwrap();
+                    let secret_name = parts.next().unwrap();
+                    if is_approved(webhook.authority, secret_owner, secret_name.to_string()) {
+                        if let Some(secret_word) =
+                            fetch_decrypted_secret(secret_owner, secret_name.into()).await
+                        {
+                            let mut hydrated_header = v.clone();
+                            hydrated_header.replace_range(m.start()..m.end(), &secret_word);
+                            request = request
+                                .try_clone()
+                                .unwrap()
+                                .header(k.clone(), hydrated_header);
+                            did_hydrate = true;
+                        }
+                    }
                 }
             }
-        } else {
+        }
+
+        // Otherwise, add the header as is.
+        if !did_hydrate {
             request = request.try_clone().unwrap().header(k, v);
         }
     }
@@ -126,6 +147,57 @@ async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder 
         .unwrap_or("Not found".into())
 }
 
+#[post("/secret_approve")]
+async fn secret_approve(req: web::Json<SignedRequest<SecretApprove>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
+
+    // Create and validate filepaths.
+    let secrets_path = Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+    let user_secrets_path = secrets_path.join(req.signer.to_string());
+    let secret_path = user_secrets_path.join(format!("{}.txt", req.msg.name));
+    let secret_delegates_path = user_secrets_path.join(format!("{}.delegates", req.msg.name));
+    assert!(secret_path.exists());
+
+    // Read the list of current delegates.
+    let mut delegates = if secret_delegates_path.exists() {
+        fs::read_to_string(secret_delegates_path.clone()).unwrap()
+    } else {
+        "".to_string()
+    };
+
+    // Add delegate to the delegates file.
+    if !delegates.contains(req.msg.delegate.to_string().as_str()) {
+        delegates.push_str(format!("{}\n", req.msg.delegate).as_str());
+    }
+    fs::write(secret_delegates_path, delegates).unwrap();
+
+    "Ok"
+}
+
+#[post("/secret_revoke")]
+async fn secret_revoke(req: web::Json<SignedRequest<SecretRevoke>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
+
+    // Create and validate filepaths.
+    let secrets_path = Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+    let user_secrets_path = secrets_path.join(req.signer.to_string());
+    let secret_path = user_secrets_path.join(format!("{}.txt", req.msg.name));
+    let secret_delegates_path = user_secrets_path.join(format!("{}.delegates", req.msg.name));
+    assert!(secret_path.exists());
+
+    // Read the list of current delegates.
+    if secret_delegates_path.exists() {
+        let mut delegates = fs::read_to_string(secret_delegates_path.clone()).unwrap();
+        delegates = delegates.replace(format!("{}\n", req.msg.delegate).as_str(), "");
+        fs::write(secret_delegates_path, delegates).unwrap();
+    }
+
+    "Ok"
+}
 const NORMALIZED_SECRET_LENGTH: usize = 64;
 const PLAINTEXT_CHUNK_SIZE: usize = 4;
 const CIPHERTEXT_CHUNK_SIZE: usize = 64;
@@ -185,6 +257,21 @@ async fn fetch_decrypted_secret(user: Pubkey, name: String) -> Option<String> {
     } else {
         None
     }
+}
+
+fn is_approved(delegate: Pubkey, user: Pubkey, secret_name: String) -> bool {
+    // Read the list of current delegates.
+    let secret_delegates_path = Path::new(SECRETS_PATH.into())
+        .join(user.to_string())
+        .join(format!("{}.delegates", secret_name));
+    let delegates = if secret_delegates_path.exists() {
+        fs::read_to_string(secret_delegates_path.clone()).unwrap()
+    } else {
+        "".to_string()
+    };
+
+    // Return true if the user owns the secret or is approved to use it.
+    delegate.eq(&user) || delegates.contains(delegate.to_string().as_str())
 }
 
 #[cfg(test)]

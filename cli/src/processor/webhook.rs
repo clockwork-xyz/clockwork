@@ -17,7 +17,10 @@ pub fn create(
     url: String,
 ) -> Result<(), CliError> {
     let mut headers: HashMap<String, String> = HashMap::new();
-    headers.insert("X-CUSTOM-HEADER".into(), "TEST {hello}".into());
+    headers.insert(
+        "X-CUSTOM-HEADER".into(),
+        "TEST {HBUh9g46wk2X89CvaNN15UmsznP59rh6od1h8JwYAopk:hello}".into(),
+    );
     let ix = Instruction {
         program_id: clockwork_webhook_program::ID,
         accounts: clockwork_webhook_program::accounts::WebhookCreate {

@@ -31,3 +31,15 @@ pub struct SecretCreate {
 pub struct SecretGet {
     pub name: String,
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct SecretApprove {
+    pub name: String,
+    pub delegate: Pubkey,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SecretRevoke {
+    pub name: String,
+    pub delegate: Pubkey,
+}
