@@ -1,43 +1,49 @@
-use std::str::FromStr;
+use super::backpack::backpack;
+use crate::context::User;
 
 use dioxus::prelude::*;
-use log::{self};
-use solana_client_wasm::solana_sdk::pubkey::Pubkey;
-use std::ops::Deref;
-use wasm_bindgen_futures::spawn_local;
-
-use super::backpack::backpack;
+use solana_client_wasm::{solana_sdk::pubkey::Pubkey, WasmClient};
+use std::str::FromStr;
 
 pub fn ConnectButton(cx: Scope) -> Element {
-    let account_handle = use_state(&cx, || None);
-    let account = account_handle.deref().clone();
-    // let has_account = account.trim().is_empty();
+    let cx = cx.clone();
+    let user_context = use_shared_state::<User>(cx).unwrap();
 
-    let handle_click = |_| {
-        let account_handle = account_handle.clone();
-        let account = account_handle.deref().clone();
-
-        spawn_local(async move {
-            match account.is_some() {
-                true => {
-                    let response = backpack.disconnect().await;
-                    log::info!("disconnected: {:?}", response);
-                    account_handle.set(None);
-                }
-                _ => {
-                    backpack.connect().await;
-                    log::info!("connected: {:?}", backpack.is_connected());
-                    if backpack.is_connected() {
-                        let pubkey =
-                            Pubkey::from_str(backpack.pubkey().to_string().as_str()).unwrap();
-                        account_handle.set(Some(pubkey));
+    let handle_click = move |_| {
+        cx.spawn({
+            let client = WasmClient::new("http://74.118.139.244:8899");
+            let user_context = user_context.clone();
+            async move {
+                let user_context_read = user_context.read();
+                match user_context_read.account.is_some() {
+                    true => {
+                        let response = backpack.disconnect().await;
+                        log::info!("disconnected: {:?}", response);
+                    }
+                    _ => {
+                        backpack.connect().await;
+                        log::info!("connected: {:?}", backpack.is_connected());
+                        if backpack.is_connected() {
+                            let pubkey =
+                                Pubkey::from_str(backpack.pubkey().to_string().as_str()).unwrap();
+                            let account = client.get_account(&pubkey).await;
+                            match account {
+                                Ok(acc) => {
+                                    drop(user_context_read);
+                                    user_context.write().account = Some(acc.clone());
+                                    user_context.write().pubkey = Some(pubkey);
+                                    log::info!("pubkey: {}, account: {:#?}", pubkey, acc);
+                                }
+                                Err(err) => log::info!("Failed to get user account: {:?}", err),
+                            }
+                        }
                     }
                 }
-            };
+            }
         });
     };
 
-    let connect_text = if let Some(pubkey) = account {
+    let connect_text = if let Some(pubkey) = user_context.read().pubkey {
         pubkey.abbreviated()
     } else {
         String::from("Connect")
