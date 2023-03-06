@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+mod clockwork;
 mod components;
 mod hot_keys;
 mod pages;
