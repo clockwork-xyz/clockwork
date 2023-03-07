@@ -1,6 +1,4 @@
-use crate::{components::ConnectButton, context::User};
-
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
+use crate::{components::ConnectButton, context::User, utils::format_balance};
 use dioxus::prelude::*;
 use dioxus_router::Link;
 
@@ -45,9 +43,4 @@ fn Balance(cx: Scope) -> Element {
             user_balance
         }
     })
-}
-
-fn format_balance(lamports: u64) -> String {
-    let balance = lamports as f64 / LAMPORTS_PER_SOL as f64;
-    String::from(format!("⊚ {:.4}", balance.to_string()))
 }
