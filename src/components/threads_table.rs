@@ -1,120 +1,146 @@
-use crate::clockwork::get_threads;
-use chrono::{Duration, TimeZone, Utc};
-use clockwork_sdk::state::Thread;
+use crate::{
+    clockwork::get_threads,
+    utils::{format_balance, format_timestamp},
+};
+use clockwork_sdk::state::{Thread, Trigger};
 use dioxus::prelude::*;
-use dotenv_codegen::dotenv;
-use solana_client_wasm::WasmClient;
+use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let threads = use_state::<Vec<Thread>>(&cx, || vec![]);
+    let threads = use_state::<Vec<(Thread, Account)>>(&cx, || vec![]);
 
     use_future(&cx, (), |_| {
         let threads = threads.clone();
         async move { threads.set(get_threads().await) }
     });
 
-    cx.render(rsx! {
-        div {
+    if threads.get().len() > 0 {
+        cx.render(rsx! {
             h1 {
              class: "text-2xl font-semibold pb-2",
              "Threads"
             }
-            Header {}
-            for thread in threads.get().iter() {
-                Row {
-                    elem_id: thread.id.as_str(),
-                    thread: thread.clone(),
+            table {
+                class: "min-w-full divide-y divide-gray-300",
+                Header {}
+                tbody {
+                    for (i, thread) in threads.get().iter().enumerate() {
+                        Row {
+                            thread: thread.0.clone(),
+                            account: thread.1.clone(),
+                            elem_id: format!("list-item-{}", i),
+                        }
+                    }
+                }
+            }
+        })
+    } else {
+        cx.render(rsx! {
+            div {
+                "loading..."
+            }
+        })
+    }
+}
+
+fn Header(cx: Scope) -> Element {
+    cx.render(rsx! {
+        thead {
+            tr {
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Address"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "balance"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "created at"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "ID"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "paused"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "trigger"
                 }
             }
         }
     })
 }
 
-fn Header(cx: Scope) -> Element {
-    cx.render(rsx! {
-        div {
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 font-medium text-sm text-slate-600",
-            p {
-                "Address"
-            }
-            p {
-                "last exec at"
-            }
-        }
-    })
-}
-
 #[derive(PartialEq, Props)]
-struct RowProps<'a> {
+struct RowProps {
     thread: Thread,
-    elem_id: &'a str,
+    account: Account,
+    elem_id: String,
 }
 
-fn Row<'a>(cx: Scope<'a, RowProps<'a>>) -> Element {
+fn Row(cx: Scope<RowProps>) -> Element {
     let thread = cx.props.thread.clone();
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id.clone()).to_string();
-    let last_exec_at = use_state(&cx, || String::from(""));
-
-    use_future(&cx, (), |_| {
-        let last_exec_at = last_exec_at.clone();
-        async move { last_exec_at.set(time_duration(thread).await) }
-    });
+    let balance = format_balance(cx.props.account.lamports);
+    let created_at = format_timestamp(thread.created_at.unix_timestamp);
+    let ID = thread.id;
+    let paused = thread.paused.to_string();
+    let trigger = match thread.trigger {
+        Trigger::Account {
+            address: _,
+            offset: _,
+            size: _,
+        } => "Account".to_string(),
+        Trigger::Cron {
+            schedule: _,
+            skippable: _,
+        } => "Cron".to_string(),
+        Trigger::Immediate => "Immediate".to_string(),
+    };
 
     cx.render(rsx! {
-        a {
-            href: "/thread/{thread_pubkey}",
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
-            id: cx.props.elem_id,
-            p {
-                "{thread_pubkey}"
-            }
-            p {
-                "{last_exec_at}"
-            }
+        tr {
+            class: "px-3 text-sm border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
+            // TODO:
+            // a {
+            // href: "/thread/{thread_pubkey}",
+            id: cx.props.elem_id.as_str(),
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{thread_pubkey}"
+                }
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{balance}"
+                }
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{created_at}"
+                }
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{ID}"
+                }
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{paused}"
+                }
+                td {
+                    class: "whitespace-nowrap px-3 py-4",
+                    "{trigger}"
+                }
+            // }
         }
     })
-}
-
-async fn time_duration(thread: Thread) -> String {
-    let client = WasmClient::new("http://74.118.139.244:8899");
-    // const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    // let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    // let helius_rpc_endpoint = url.as_str();
-    // let client = WasmClient::new(helius_rpc_endpoint);
-
-    if thread.exec_context.is_none() {
-        return String::from("");
-    }
-
-    let last_exec_at = thread.exec_context.unwrap().last_exec_at;
-    let lea_ts = client.get_block_time(last_exec_at).await.unwrap();
-    let now_ts = Utc::now().timestamp();
-    let diff_ts = now_ts.checked_sub(lea_ts).unwrap();
-    let diff = Duration::seconds(diff_ts);
-
-    if diff.num_weeks() > 0 {
-        if diff.num_weeks() == 1 {
-            return String::from(format!("{} week ago", diff.num_weeks()));
-        }
-        return String::from(format!("{} weeks ago", diff.num_weeks()));
-    } else if diff.num_days() > 0 {
-        if diff.num_days() == 1 {
-            return String::from(format!("{} day ago", diff.num_days()));
-        }
-        return String::from(format!("{} days ago", diff.num_days()));
-    } else if diff.num_hours() > 0 {
-        if diff.num_hours() == 1 {
-            return String::from(format!("{} hour ago", diff.num_hours()));
-        }
-        return String::from(format!("{} hours ago", diff.num_hours()));
-    } else if diff.num_minutes() > 0 {
-        if diff.num_minutes() == 1 {
-            return String::from(format!("{} minute ago", diff.num_minutes()));
-        }
-        return String::from(format!("{} minutes ago", diff.num_minutes()));
-    } else if diff.num_seconds() > 30 {
-        return String::from(format!("{} seconds ago", diff.num_seconds()));
-    } else {
-        return String::from("a few seconds ago");
-    }
 }
