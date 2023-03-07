@@ -5,6 +5,7 @@ mod context;
 mod hot_keys;
 mod pages;
 mod pyth;
+mod utils;
 
 use components::*;
 use context::*;
@@ -35,6 +36,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/", HomePage{} }
                 Route { to: "/data", DataPage{} }
                 Route { to: "/data/market/:address", MarketPage{} }
+                Route { to: "/thread/:address", ThreadPage {} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "", NotFoundPage{} }
