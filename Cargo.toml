@@ -1,11 +1,18 @@
 [workspace]
 members = [
+    "app",
     "cli",
     "client",
     "cron",
     "macros",
     "plugin",
     "programs/*",
+    "relayer",
     "sdk",
     "utils"
 ]
+
+[patch.crates-io]
+dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
+dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
+dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }

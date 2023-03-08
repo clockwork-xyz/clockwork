@@ -94,6 +94,14 @@ impl Executors {
             )
             .await?;
 
+        // Process webhook requests.
+        let executable_webhooks = observers.webhook.clone().process_slot(slot).await?;
+        log::info!("Executable webhooks: {:?}", executable_webhooks);
+        self.webhook
+            .clone()
+            .execute_webhooks(self.client.clone(), executable_webhooks)
+            .await?;
+
         // Release the lock.
         self.clone()
             .lock
