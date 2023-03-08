@@ -43,6 +43,12 @@ pub fn HotKeys(cx: Scope) -> Element {
                             goto_mode = false;
                         }
                     }
+                    "S" | "s" => {
+                        if goto_mode {
+                            router.navigate_to("/secrets");
+                            goto_mode = false;
+                        }
+                    }
                     "J" | "j" => {
                         goto_mode = false;
                         let id = list_index.map_or(0, |i| i + 1);

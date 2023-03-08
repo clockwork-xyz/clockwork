@@ -5,6 +5,7 @@ pub mod market;
 pub mod not_found;
 pub mod page;
 pub mod programs;
+pub mod secrets;
 pub mod thread;
 
 pub use data::*;
@@ -14,4 +15,5 @@ pub use market::*;
 pub use not_found::*;
 pub use page::*;
 pub use programs::*;
+pub use secrets::*;
 pub use thread::*;

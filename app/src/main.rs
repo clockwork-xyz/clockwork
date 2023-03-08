@@ -39,6 +39,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/thread/:address", ThreadPage {} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }
+                Route { to: "/secrets", SecretsPage{} }
                 Route { to: "", NotFoundPage{} }
             }
         }

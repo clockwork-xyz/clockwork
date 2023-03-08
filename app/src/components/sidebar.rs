@@ -17,6 +17,10 @@ pub fn Sidebar(cx: Scope) -> Element {
                     title: "Programs",
                     route: "/programs"
                 }
+                SidebarButton {
+                    title: "Secrets",
+                    route: "/secrets"
+                }
         }
     })
 }
