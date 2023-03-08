@@ -4,6 +4,7 @@ use crate::{
 };
 use clockwork_sdk::state::{Thread, Trigger};
 use dioxus::prelude::*;
+use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
@@ -16,10 +17,10 @@ pub fn ThreadsTable(cx: Scope) -> Element {
 
     if threads.get().len() > 0 {
         cx.render(rsx! {
-            h1 {
-             class: "text-2xl font-semibold pb-2",
-             "Threads"
-            }
+            // h1 {
+            //  class: "text-2xl font-semibold pb-2",
+            //  "Threads"
+            // }
             table {
                 class: "min-w-full divide-y divide-gray-300",
                 Header {}
@@ -37,7 +38,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
     } else {
         cx.render(rsx! {
             div {
-                "loading..."
+                "Loading..."
             }
         })
     }
@@ -55,12 +56,12 @@ fn Header(cx: Scope) -> Element {
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
                     scope: "col",
-                    "balance"
+                    "Balance"
                 }
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
                     scope: "col",
-                    "created at"
+                    "Created at"
                 }
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
@@ -70,12 +71,12 @@ fn Header(cx: Scope) -> Element {
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
                     scope: "col",
-                    "paused"
+                    "Paused"
                 }
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
                     scope: "col",
-                    "trigger"
+                    "Trigger"
                 }
             }
         }
@@ -94,7 +95,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id.clone()).to_string();
     let balance = format_balance(cx.props.account.lamports);
     let created_at = format_timestamp(thread.created_at.unix_timestamp);
-    let ID = thread.id;
+    let id = thread.id;
     let paused = thread.paused.to_string();
     let trigger = match thread.trigger {
         Trigger::Account {
@@ -108,39 +109,34 @@ fn Row(cx: Scope<RowProps>) -> Element {
         } => "Cron".to_string(),
         Trigger::Immediate => "Immediate".to_string(),
     };
-
     cx.render(rsx! {
         tr {
-            class: "px-3 text-sm border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
-            // TODO:
-            // a {
-            // href: "/thread/{thread_pubkey}",
-            id: cx.props.elem_id.as_str(),
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{thread_pubkey}"
-                }
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{balance}"
-                }
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{created_at}"
-                }
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{ID}"
-                }
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{paused}"
-                }
-                td {
-                    class: "whitespace-nowrap px-3 py-4",
-                    "{trigger}"
-                }
-            // }
+             class: "px-3 text-sm border-b border-slate-800 hover:bg-slate-900 hover:cursor-pointer focus:bg-slate-900",
+             id: cx.props.elem_id.as_str(),
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{thread_pubkey}"
+             }
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{balance}"
+             }
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{created_at}"
+             }
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{id}"
+             }
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{paused}"
+             }
+             td {
+                 class: "whitespace-nowrap px-3 py-4",
+                 "{trigger}"
+             }
         }
     })
 }
