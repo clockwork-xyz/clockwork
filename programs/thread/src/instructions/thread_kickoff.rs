@@ -186,7 +186,7 @@ fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
         .next_after(&DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(after, 0),
+            NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
             Utc,
         ))
         .take()

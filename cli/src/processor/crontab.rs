@@ -12,7 +12,7 @@ pub fn get(client: &Client, schedule: String) -> Result<(), CliError> {
 
     let mut i = 0;
     for t in schedule.after(&DateTime::<Utc>::from_utc(
-        NaiveDateTime::from_timestamp(clock.unix_timestamp, 0),
+        NaiveDateTime::from_timestamp_opt(clock.unix_timestamp, 0).unwrap(),
         Utc,
     )) {
         println!("{:#?}", t);
