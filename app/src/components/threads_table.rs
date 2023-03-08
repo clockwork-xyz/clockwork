@@ -4,7 +4,6 @@ use crate::{
 };
 use clockwork_sdk::state::{Thread, Trigger};
 use dioxus::prelude::*;
-use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
