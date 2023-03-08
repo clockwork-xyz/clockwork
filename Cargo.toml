@@ -12,6 +12,7 @@ members = [
     "utils"
 ]
 
-# [patch.crates-io]
-# shadow-drive-sdk = { path = "../shadow-drive-rust/sdk" }
-
+[patch.crates-io]
+dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
+dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
+dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
