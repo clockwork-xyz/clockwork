@@ -22,31 +22,31 @@ pub fn BlocksTable(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
-        h1 {
-            class: "text-2xl font-semibold mb-6",
-            "Blocks"
-        }
-        table {
-            class: "min-w-full divide-y divide-gray-300",
-            Header {}
-            if let Some(block) = block.get() {
-                rsx! {
-                    tbody {
-                        tr {
-                            class: "px-3 text-base border-b border-slate-800 text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
-                            td {
-                                class: "whitespace-nowrap px-3 py-4",
-                                "{block.blockhash}"
-                            }
-                            td {
-                                class: "whitespace-nowrap px-3 py-4",
-                                "{ block.signatures.as_ref().unwrap_or(&vec![]).len()}"
+            h1 {
+                class: "text-2xl font-semibold mb-6",
+                "Blocks"
+            }
+            table {
+                class: "min-w-full divide-y divide-gray-300",
+                Header {}
+                if let Some(block) = block.get() {
+                    rsx! {
+                        tbody {
+                            tr {
+                                class: "px-3 text-base border-b border-slate-800 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+                                td {
+                                    class: "whitespace-nowrap px-3 py-4",
+                                    "{block.blockhash}"
+                                }
+                                td {
+                                    class: "whitespace-nowrap px-3 py-4",
+                                    "{ block.signatures.as_ref().unwrap_or(&vec![]).len()}"
+                                }
                             }
                         }
                     }
                 }
             }
-        }
         }
     })
 }

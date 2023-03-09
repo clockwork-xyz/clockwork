@@ -21,11 +21,16 @@ pub fn MarketsTable(cx: Scope) -> Element {
                 class: "text-2xl font-semibold pb-2",
                 "Markets"
             }
-            Header {}
-            for (i, feed) in market_data.get().iter().enumerate() {
-                Row {
-                    elem_id: format!("list-item-{}", i),
-                    price: feed.clone(),
+            table {
+                class: "min-w-full divide-y divide-gray-300",
+                Header {}
+                tbody {
+                    for (i, feed) in market_data.get().iter().enumerate() {
+                        Row {
+                            elem_id: format!("list-item-{}", i),
+                            price: feed.clone(),
+                        }
+                    }
                 }
             }
         }
@@ -34,13 +39,18 @@ pub fn MarketsTable(cx: Scope) -> Element {
 
 fn Header(cx: Scope) -> Element {
     cx.render(rsx! {
-        div {
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 font-medium text-sm text-slate-600",
-            p {
-                "Ticker"
-            }
-            p {
-                "Price"
+        thead {
+            tr {
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Ticker"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Price"
+                }
             }
         }
     })
@@ -55,14 +65,15 @@ struct RowProps<'a> {
 fn Row<'a>(cx: Scope<'a, RowProps<'a>>) -> Element {
     let quote = cx.props.price.price.quote();
     cx.render(rsx! {
-        a {
-            href: "/blocks/pyth/{cx.props.price.pubkey}",
-            class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
+        tr {
+            class: "px-3 text-base border-b border-slate-800 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
             id: cx.props.elem_id.as_str(),
-            p {
+            td {
+                class: "whitespace-nowrap px-3 py-4",
                 "{cx.props.price.ticker}"
             }
-            p {
+            td {
+                class: "whitespace-nowrap px-3 py-4",
                 "{quote}"
             }
         }
