@@ -17,6 +17,7 @@ pub fn MarketsTable(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
+            class: "max-w-lg",
             h1 {
                 class: "text-2xl font-semibold pb-2",
                 "Markets"

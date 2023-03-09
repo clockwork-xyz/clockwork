@@ -1,8 +1,11 @@
 use dioxus::prelude::*;
+use dioxus_router::use_router;
 
 use super::Page;
 
 pub fn NewSecretPage(cx: Scope) -> Element {
+    let router = use_router(&cx);
+
     cx.render(rsx! {
         Page {
             div {
@@ -41,11 +44,13 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                     div {
                         class: "flex flex-row w-full justify-between",
                         button {
-                            class: "border border-transparent hover:border-white transition py-3 w-full",
+                            class: "font-normal text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
+                            onclick: move |_| { router.pop_route() },
                             "Cancel"
                         }
                         button {
-                            class: "bg-white py-3 w-full text-slate-800 font-semibold",
+                            class: "font-semibold text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
+                            onclick: move |_| {},
                             "Continue"
                         }
                     }
