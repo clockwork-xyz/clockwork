@@ -56,7 +56,7 @@ fn Row<'a>(cx: Scope<'a, RowProps<'a>>) -> Element {
     let quote = cx.props.price.price.quote();
     cx.render(rsx! {
         a {
-            href: "/data/pyth/{cx.props.price.pubkey}",
+            href: "/blocks/pyth/{cx.props.price.pubkey}",
             class: "w-full flex flex-row justify-between py-3 border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
             id: cx.props.elem_id.as_str(),
             p {
