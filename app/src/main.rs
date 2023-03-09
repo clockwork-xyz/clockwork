@@ -40,6 +40,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "/secrets", SecretsPage{} }
+                Route { to: "/secrets/new", NewSecretPage{} }
                 Route { to: "", NotFoundPage{} }
             }
         }

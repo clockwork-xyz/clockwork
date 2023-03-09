@@ -16,10 +16,6 @@ pub fn ThreadsTable(cx: Scope) -> Element {
 
     if threads.get().len() > 0 {
         cx.render(rsx! {
-            // h1 {
-            //  class: "text-2xl font-semibold pb-2",
-            //  "Threads"
-            // }
             table {
                 class: "min-w-full divide-y divide-gray-300",
                 Header {}
