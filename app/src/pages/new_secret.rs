@@ -24,7 +24,7 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                                 "Name"
                             }
                             input {
-                                class: "bg-transparent border-b text-sm font-normal py-2 w-full",
+                                class: "bg-transparent border-b text-base font-normal py-3 px-3 w-full hover:bg-slate-100 hover:text-slate-900",
                                 r#type: "text",
                                 name: "Name"
                             }
@@ -35,7 +35,7 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                                 "Value"
                             }
                             input {
-                                class: "bg-transparent border-b text-sm font-normal py-2 w-full",
+                                class: "bg-transparent border-b text-base font-normal py-3 px-3 w-full hover:bg-slate-100 hover:text-slate-900",
                                 r#type: "text",
                                 name: "Value"
                             }
@@ -50,7 +50,9 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                         }
                         button {
                             class: "font-semibold text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
-                            onclick: move |_| {},
+                            onclick: move |_| {
+                                // TODO
+                            },
                             "Continue"
                         }
                     }
