@@ -106,7 +106,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     };
     cx.render(rsx! {
         tr {
-             class: "px-3 text-sm border-b border-slate-800 hover:bg-slate-900 hover:cursor-pointer focus:bg-slate-900",
+             class: "px-3 text-base border-b border-slate-800 text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
              id: cx.props.elem_id.as_str(),
              td {
                  class: "whitespace-nowrap px-3 py-4",
