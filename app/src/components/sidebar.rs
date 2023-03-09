@@ -40,9 +40,12 @@ pub fn SidebarButton<'a>(cx: Scope<'a, SidebarButtonProps<'a>>) -> Element {
         Link {
             to: cx.props.route,
             class: if is_selected {
-                "w-full py-2 px-8 flex flex-row text-left hover:bg-slate-900"
+            // "px-4 py-2 border rounded-full text-slate-100 hover:bg-slate-100 hover:text-slate-900 font-semibold",
+                // "w-full py-2 px-8 flex flex-row text-left hover:bg-slate-900"
+            "w-full px-8 py-2 text-left text-slate-100 hover:bg-slate-100 hover:text-slate-900 font-semibold"
             } else {
-                "w-full py-2 px-8 flex flex-row text-left text-slate-600 hover:bg-slate-900"
+            "w-full px-8 py-2 text-left text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold"
+                // "w-full py-2 px-8 flex flex-row text-left text-slate-600 hover:bg-slate-900"
             },
             "{cx.props.title}"
         }

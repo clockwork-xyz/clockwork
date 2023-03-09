@@ -14,7 +14,7 @@ pub fn SecretsPage(cx: Scope) -> Element {
                 }
                 Link {
                     to: "/secrets/new"
-                    class: "bg-white text-slate-900 font-semibold py-2 px-4 hover:bg-slate-200 transition",
+                    class: "hover:bg-white hover:text-slate-900 text-slate-100 font-semibold py-2 px-4 hover:bg-slate-200 transition",
                     "New secret"
                 }
             }

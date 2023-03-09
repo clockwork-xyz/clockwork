@@ -46,7 +46,7 @@ fn Header(cx: Scope) -> Element {
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
                     scope: "col",
-                    "Address"
+                    "Thread"
                 }
                 th {
                     class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
