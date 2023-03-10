@@ -147,7 +147,7 @@ async fn secret_list(req: web::Json<SignedRequest<SecretList>>) -> impl Responde
     let secrets_path = Path::new(SECRETS_PATH.into());
     assert!(secrets_path.is_dir());
     let user_secrets_path = secrets_path.join(req.signer.to_string());
-    if user_secrets_path.is_dir() {
+    if user_secrets_path.exists() && user_secrets_path.is_dir() {
         let paths = user_secrets_path.read_dir().unwrap();
         web::Json(SecretListResponse {
             secrets: paths

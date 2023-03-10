@@ -13,7 +13,7 @@ pub fn Page<'a>(cx: Scope<'a, PageProps<'a>>) -> Element {
             class: "w-full h-full flex flex-row overflow-clip",
             Sidebar {}
             div {
-                class: "w-full p-8 pb-24 pr-12 overflow-y-auto",
+                class: "w-full pl-8 pt-8 pb-24 pr-8 overflow-y-auto",
                 &cx.props.children
             }
         }

@@ -43,10 +43,53 @@ pub fn SecretsPage(cx: Scope) -> Element {
                         "No secrets"
                     }
                 }
+            } else {
+                rsx! {
+                    table {
+                        class: "min-w-full divide-y divide-gray-300",
+                        Header {}
+                        for secret in secrets.get() {
+                            tr {
+                                 class: "px-3 text-base border-b border-slate-800 text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+                                 td {
+                                     class: "whitespace-nowrap px-3 py-4",
+                                     "{secret}"
+                                 }
+                                 td {
+                                     class: "whitespace-nowrap px-3 py-4",
+                                     "–"
+                                 }
+                                 td {
+                                     class: "whitespace-nowrap px-3 py-4",
+                                     "–"
+                                 }
+                            }
+                        }
+                    }
+                }
             }
-            for secret in secrets.get() {
-                h1 {
-                    "{secret}"
+        }
+    })
+}
+
+fn Header(cx: Scope) -> Element {
+    cx.render(rsx! {
+        thead {
+            tr {
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Name"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Created at"
+                }
+                th {
+                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    scope: "col",
+                    "Shared with"
                 }
             }
         }
