@@ -1,8 +1,16 @@
-use {
-    crate::{config::PluginConfig, observers::webhook::HttpRequest},
-    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
-    std::{fmt::Debug, sync::Arc},
-};
+use std::{fmt::Debug, sync::Arc};
+
+use anchor_lang::prelude::Pubkey;
+use clockwork_client::webhook::state::Webhook;
+use clockwork_relayer_api::Relay;
+use log::info;
+use reqwest::header::CONTENT_TYPE;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+
+use crate::config::PluginConfig;
+
+use super::AccountGet;
 
 pub struct WebhookExecutor {
     pub config: PluginConfig,
@@ -15,14 +23,11 @@ impl WebhookExecutor {
         }
     }
 
-    pub fn execute_requests(self: Arc<Self>) -> PluginResult<()> {
-        // for request in self.clone().observers.webhook.webhook_requests.iter() {
-        //     self.clone().execute_request(request.clone())?;
-        // }
-        Ok(())
-    }
-
-    fn _execute_request(self: Arc<Self>, _http_request: HttpRequest) -> PluginResult<()> {
+    pub async fn execute_webhooks(
+        self: Arc<Self>,
+        client: Arc<RpcClient>,
+        pubkeys: Vec<Pubkey>,
+    ) -> PluginResult<()> {
         // self.spawn(|this| async move {
         //     let url = http_request.clone().request.url;
         //     let res = match http_request.request.method {
@@ -44,12 +49,35 @@ impl WebhookExecutor {
         //         .remove(&http_request);
         //     Ok(())
         // })
+        // TODO Route to correct relayer
+        for webhook_pubkey in pubkeys {
+            let webhook = client
+                .clone()
+                .get::<Webhook>(&webhook_pubkey)
+                .await
+                .unwrap();
+            info!("webhook: {} {:?}", webhook_pubkey, webhook);
+            let url = "http://127.0.0.1:8000/relay";
+            let client = reqwest::Client::new();
+            // for request_pubkey in requests {
+            let res = dbg!(
+                client
+                    .post(url)
+                    .header(CONTENT_TYPE, "application/json")
+                    .json(&Relay {
+                        webhook: webhook_pubkey,
+                    })
+                    .send()
+                    .await
+            );
+        }
+        // }
         Ok(())
     }
 }
 
 impl Debug for WebhookExecutor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "http-executor")
+        write!(f, "webhook-executor")
     }
 }

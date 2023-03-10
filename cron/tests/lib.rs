@@ -63,6 +63,26 @@ mod tests {
     }
 
     #[test]
+    fn test_day() {
+        let expression = "0 0 0 * * FRI";
+        let schedule = Schedule::from_str(expression).expect("Failed to parse @yearly.");
+        let starting_date = Utc.ymd(2023, 3, 1).and_hms(14, 29, 36);
+        let mut events = schedule.after(&starting_date);
+        assert_eq!(
+            Utc.ymd(2023, 03, 03).and_hms(0, 0, 0),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2023, 03, 10).and_hms(0, 0, 0),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2023, 03, 17).and_hms(0, 0, 0),
+            events.next().unwrap()
+        );
+    }
+
+    #[test]
     fn test_weekly() {
         let expression = "@weekly";
         let schedule = Schedule::from_str(expression).expect("Failed to parse @weekly.");

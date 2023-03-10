@@ -87,14 +87,16 @@ impl Schedule {
                                 self.fields.seconds.ordinals().range(second_range).cloned()
                             {
                                 let timezone = after.timezone();
-                                let candidate = if let Some(candidate) = timezone
-                                    .ymd(year as i32, month, day_of_month)
-                                    .and_hms_opt(hour, minute, second)
-                                {
-                                    candidate
-                                } else {
-                                    continue;
-                                };
+                                let candidate = timezone
+                                    .with_ymd_and_hms(
+                                        year as i32,
+                                        month,
+                                        day_of_month,
+                                        hour,
+                                        minute,
+                                        second,
+                                    )
+                                    .unwrap();
                                 if !self
                                     .fields
                                     .days_of_week
@@ -217,14 +219,16 @@ impl Schedule {
                                 .cloned()
                             {
                                 let timezone = before.timezone();
-                                let candidate = if let Some(candidate) = timezone
-                                    .ymd(year as i32, month, day_of_month)
-                                    .and_hms_opt(hour, minute, second)
-                                {
-                                    candidate
-                                } else {
-                                    continue;
-                                };
+                                let candidate = timezone
+                                    .with_ymd_and_hms(
+                                        year as i32,
+                                        month,
+                                        day_of_month,
+                                        hour,
+                                        minute,
+                                        second,
+                                    )
+                                    .unwrap();
                                 if !self
                                     .fields
                                     .days_of_week

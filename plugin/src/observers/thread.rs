@@ -289,7 +289,7 @@ fn next_moment(after: i64, schedule: String) -> Option<i64> {
         Err(_) => None,
         Ok(schedule) => schedule
             .next_after(&DateTime::<Utc>::from_utc(
-                NaiveDateTime::from_timestamp(after, 0),
+                NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
                 Utc,
             ))
             .take()

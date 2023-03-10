@@ -17,7 +17,6 @@ impl TryFrom<&ArgMatches> for CliCommand {
 
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         match matches.subcommand() {
-            Some(("api", matches)) => parse_api_command(matches),
             Some(("config", matches)) => parse_config_command(matches),
             Some(("crontab", matches)) => parse_crontab_command(matches),
             Some(("delegation", matches)) => parse_delegation_command(matches),
@@ -25,6 +24,7 @@ impl TryFrom<&ArgMatches> for CliCommand {
             Some(("initialize", matches)) => parse_initialize_command(matches),
             Some(("localnet", matches)) => parse_bpf_command(matches),
             Some(("pool", matches)) => parse_pool_command(matches),
+            Some(("secret", matches)) => parse_secret_command(matches),
             Some(("thread", matches)) => parse_thread_command(matches),
             Some(("registry", matches)) => parse_registry_command(matches),
             Some(("webhook", matches)) => parse_webhook_command(matches),
@@ -86,18 +86,6 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         network_url: parse_string("url", matches).ok(),
         program_infos,
     })
-}
-
-fn parse_api_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    match matches.subcommand() {
-        Some(("new", matches)) => Ok(CliCommand::ApiNew {
-            ack_authority: parse_pubkey("ack_authority", matches)?,
-            base_url: parse_string("base_url", matches)?,
-        }),
-        _ => Err(CliError::CommandNotRecognized(
-            matches.subcommand().unwrap().0.into(),
-        )),
-    }
 }
 
 fn parse_config_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
@@ -179,6 +167,30 @@ fn parse_pool_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     }
 }
 
+fn parse_secret_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
+    match matches.subcommand() {
+        Some(("approve", matches)) => Ok(CliCommand::SecretApprove {
+            name: parse_string("name", matches)?,
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
+        Some(("get", matches)) => Ok(CliCommand::SecretGet {
+            name: parse_string("name", matches)?,
+        }),
+        Some(("list", _matches)) => Ok(CliCommand::SecretList {}),
+        Some(("create", matches)) => Ok(CliCommand::SecretCreate {
+            name: parse_string("name", matches)?,
+            word: parse_string("word", matches)?,
+        }),
+        Some(("revoke", matches)) => Ok(CliCommand::SecretRevoke {
+            name: parse_string("name", matches)?,
+            delegate: parse_pubkey("delegate", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
+}
+
 fn parse_thread_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
     match matches.subcommand() {
         Some(("crate-info", _)) => Ok(CliCommand::ThreadCrateInfo {}),
@@ -225,12 +237,20 @@ fn parse_registry_command(matches: &ArgMatches) -> Result<CliCommand, CliError> 
 }
 
 fn parse_webhook_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
-    Ok(CliCommand::WebhookRequestNew {
-        api: parse_pubkey("api", matches)?,
-        id: parse_string("id", matches)?,
-        method: parse_http_method("method", matches)?,
-        route: parse_string("route", matches)?,
-    })
+    match matches.subcommand() {
+        Some(("get", matches)) => Ok(CliCommand::WebhookGet {
+            id: parse_string("id", matches)?.into_bytes(),
+        }),
+        Some(("create", matches)) => Ok(CliCommand::WebhookCreate {
+            body: parse_string("body", matches)?.into_bytes(),
+            id: parse_string("id", matches)?.into_bytes(),
+            method: parse_http_method("method", matches)?,
+            url: parse_string("url", matches)?,
+        }),
+        _ => Err(CliError::CommandNotRecognized(
+            matches.subcommand().unwrap().0.into(),
+        )),
+    }
 }
 
 fn parse_worker_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
