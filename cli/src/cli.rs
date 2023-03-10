@@ -114,6 +114,7 @@ pub enum CliCommand {
     SecretGet {
         name: String,
     },
+    SecretList {},
     SecretRevoke {
         name: String,
         delegate: Pubkey,
@@ -426,6 +427,10 @@ pub fn app() -> Command<'static> {
                                 .required(true)
                                 .help("The delegate to approve")
                         )
+                )
+                .subcommand(
+                    Command::new("list")
+                        .about("List your secrets")
                 )
                 .subcommand(
                     Command::new("create")

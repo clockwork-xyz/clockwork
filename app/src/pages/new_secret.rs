@@ -1,10 +1,22 @@
+use std::str::FromStr;
+
+use anchor_lang::prelude::Pubkey;
+use clockwork_relayer_api::{SecretCreate, SignedRequest};
 use dioxus::prelude::*;
 use dioxus_router::use_router;
+use dotenv_codegen::dotenv;
+use reqwest::header::CONTENT_TYPE;
+use solana_client_wasm::solana_sdk::signature::Signature;
+
+use crate::components::backpack;
 
 use super::Page;
 
 pub fn NewSecretPage(cx: Scope) -> Element {
     let router = use_router(&cx);
+
+    let name = use_state(cx, || "".to_string());
+    let word = use_state(cx, || "".to_string());
 
     cx.render(rsx! {
         Page {
@@ -26,7 +38,9 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                             input {
                                 class: "bg-transparent border-b text-base font-normal py-3 px-3 w-full hover:bg-slate-100 hover:text-slate-900",
                                 r#type: "text",
-                                name: "Name"
+                                name: "Name",
+                                value: "{name}",
+                                oninput: move |e| name.set(e.value.clone()),
                             }
                         }
                         div {
@@ -37,7 +51,9 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                             input {
                                 class: "bg-transparent border-b text-base font-normal py-3 px-3 w-full hover:bg-slate-100 hover:text-slate-900",
                                 r#type: "text",
-                                name: "Value"
+                                name: "Value",
+                                value: "{word}",
+                                oninput: move |e| word.set(e.value.clone()),
                             }
                         }
                     }
@@ -50,8 +66,12 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                         }
                         button {
                             class: "font-semibold text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
-                            onclick: move |_| {
-                                // TODO
+                            onclick: |_| {
+                                let name = name.clone();
+                                let word = word.clone();
+                                async move {
+                                    create_secret(name.get().clone(), word.get().clone()).await;
+                                }
                             },
                             "Continue"
                         }
@@ -60,4 +80,32 @@ pub fn NewSecretPage(cx: Scope) -> Element {
             }
         }
     })
+}
+
+pub async fn create_secret(name: String, word: String) -> String {
+    let msg = SecretCreate { name, word };
+    let msg_bytes = bincode::serialize(&msg).unwrap();
+    let pubkey = Pubkey::from_str(backpack.pubkey().to_string().as_str()).unwrap();
+    let req = SignedRequest {
+        msg,
+        signer: pubkey,
+        signature: Signature::new(
+            &*js_sys::Uint8Array::new(
+                &(backpack
+                    .sign_message(msg_bytes, Some(backpack.pubkey()))
+                    .await),
+            )
+            .to_vec(),
+        ),
+    };
+    reqwest::Client::new()
+        .post(format!("{}/secret_create", dotenv!("RELAYER_URL")))
+        .header(CONTENT_TYPE, "application/json")
+        .json(&req)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap()
 }

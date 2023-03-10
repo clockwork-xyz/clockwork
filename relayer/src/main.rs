@@ -1,9 +1,11 @@
 use std::{fs, path::Path, str::FromStr};
 
-use actix_web::{post, web, App, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{get, post, web, App, HttpServer, Responder};
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use clockwork_relayer_api::{
-    Relay, SecretApprove, SecretCreate, SecretGet, SecretRevoke, SignedRequest,
+    Relay, SecretApprove, SecretCreate, SecretGet, SecretList, SecretListResponse, SecretRevoke,
+    SignedRequest,
 };
 use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
@@ -13,7 +15,7 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
-static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
+// static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
 static SECRETS_PATH: &str = "/home/ubuntu/secrets";
 static RPC_URL: &str = "http://127.0.0.1:8899";
 // static RPC_URL: &str = "http://74.118.139.244:8899";
@@ -35,16 +37,32 @@ async fn main() -> std::io::Result<()> {
 
     // Start the webserver.
     HttpServer::new(|| {
+        let cors = Cors::permissive()
+            // ::default()
+            // .allow_any_origin()
+            // .disable_preflight()
+            // .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            // .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            // .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
         App::new()
+            .wrap(cors)
+            .service(health)
             .service(relay)
             .service(secret_create)
             .service(secret_get)
+            .service(secret_list)
             .service(secret_approve)
             .service(secret_revoke)
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("0.0.0.0", 8000))?
     .run()
     .await
+}
+
+#[get("/health")]
+async fn health() -> impl Responder {
+    "Ok"
 }
 
 #[post("/relay")]
@@ -118,6 +136,27 @@ async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder 
     fetch_decrypted_secret(req.signer, req.msg.name.to_string())
         .await
         .unwrap_or("Not found".into())
+}
+
+#[post("/secret_list")]
+async fn secret_list(req: web::Json<SignedRequest<SecretList>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
+
+    // Read the filepaths from the user's secrets directory.
+    let secrets_path = Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+    let user_secrets_path = secrets_path.join(req.signer.to_string());
+    if user_secrets_path.is_dir() {
+        let paths = user_secrets_path.read_dir().unwrap();
+        web::Json(SecretListResponse {
+            secrets: paths
+                .map(|path| path.unwrap().file_name().into_string().unwrap())
+                .collect::<Vec<String>>(),
+        })
+    } else {
+        web::Json(SecretListResponse { secrets: vec![] })
+    }
 }
 
 #[post("/secret_approve")]

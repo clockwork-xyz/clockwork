@@ -87,6 +87,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         CliCommand::SecretRevoke { name, delegate } => secret::revoke(&client, name, delegate),
         CliCommand::SecretCreate { name, word } => secret::create(&client, name, word),
         CliCommand::SecretGet { name } => secret::get(&client, name),
+        CliCommand::SecretList {} => secret::list(&client),
         CliCommand::ThreadCrateInfo {} => thread::crate_info(&client),
         CliCommand::ThreadCreate {
             id,

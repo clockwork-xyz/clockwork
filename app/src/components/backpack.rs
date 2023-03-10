@@ -14,6 +14,8 @@ extern "C" {
     pub async fn disconnect(this: &Backpack);
     #[wasm_bindgen(method, getter=publicKey)]
     pub fn pubkey(this: &Backpack) -> N;
+    #[wasm_bindgen(method, js_name=signMessage)]
+    pub async fn sign_message(this: &Backpack, message: Vec<u8>, pubkey: Option<N>) -> JsValue;
 }
 
 #[wasm_bindgen]

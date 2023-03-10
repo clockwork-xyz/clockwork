@@ -6,6 +6,7 @@ author = ["Nick Garfield"]
 
 [dependencies]
 anchor-lang = "0.26.0"
+bincode = "1.3.3"
 bytemuck = "1.13.0"
 chrono = "0.4.23"
 clockwork-sdk = "1.4.2"
