@@ -19,20 +19,18 @@ pub fn MarketsTable(cx: Scope) -> Element {
         div {
             class: "max-w-lg",
             h1 {
-                class: "text-2xl font-semibold pb-2",
+                class: "text-2xl font-semibold mb-6",
                 "Markets"
             }
             table {
-                class: "min-w-full divide-y divide-gray-300",
+                class: "w-full divide-y divide-slate-800",
                 Header {}
-                tbody {
                     for (i, feed) in market_data.get().iter().enumerate() {
                         Row {
                             elem_id: format!("list-item-{}", i),
                             price: feed.clone(),
                         }
                     }
-                }
             }
         }
     })
@@ -42,13 +40,14 @@ fn Header(cx: Scope) -> Element {
     cx.render(rsx! {
         thead {
             tr {
+                class: "text-left text-sm text-slate-500",
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Ticker"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Price"
                 }
@@ -67,7 +66,7 @@ fn Row<'a>(cx: Scope<'a, RowProps<'a>>) -> Element {
     let quote = cx.props.price.price.quote();
     cx.render(rsx! {
         tr {
-            class: "px-3 text-base border-b border-slate-800 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+            class: "px-3 text-base hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
             id: cx.props.elem_id.as_str(),
             td {
                 class: "whitespace-nowrap px-3 py-4",

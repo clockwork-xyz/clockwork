@@ -17,15 +17,13 @@ pub fn ThreadsTable(cx: Scope) -> Element {
     if threads.get().len() > 0 {
         cx.render(rsx! {
             table {
-                class: "min-w-full divide-y divide-gray-300",
+                class: "w-full divide-y divide-slate-800",
                 Header {}
-                tbody {
-                    for (i, thread) in threads.get().iter().enumerate() {
-                        Row {
-                            thread: thread.0.clone(),
-                            account: thread.1.clone(),
-                            elem_id: format!("list-item-{}", i),
-                        }
+                for (i, thread) in threads.get().iter().enumerate() {
+                    Row {
+                        thread: thread.0.clone(),
+                        account: thread.1.clone(),
+                        elem_id: format!("list-item-{}", i),
                     }
                 }
             }
@@ -43,33 +41,34 @@ fn Header(cx: Scope) -> Element {
     cx.render(rsx! {
         thead {
             tr {
+                class: "text-left text-sm text-slate-500",
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-4 px-3 font-medium",
                     scope: "col",
                     "Thread"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-4 px-3 font-medium",
                     scope: "col",
                     "Balance"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Created at"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "ID"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Paused"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Trigger"
                 }
@@ -106,7 +105,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     };
     cx.render(rsx! {
         tr {
-             class: "px-3 text-base border-b border-slate-800 text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+             class: "px-3 text-base text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
              id: cx.props.elem_id.as_str(),
              td {
                  class: "whitespace-nowrap px-3 py-4",

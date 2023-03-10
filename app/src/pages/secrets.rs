@@ -46,11 +46,11 @@ pub fn SecretsPage(cx: Scope) -> Element {
             } else {
                 rsx! {
                     table {
-                        class: "min-w-full divide-y divide-gray-300",
+                        class: "min-w-full divide-y divide-slate-800",
                         Header {}
                         for secret in secrets.get() {
                             tr {
-                                 class: "px-3 text-base border-b border-slate-800 text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+                                 class: "px-3 text-base text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
                                  td {
                                      class: "whitespace-nowrap px-3 py-4",
                                      "{secret}"
@@ -75,19 +75,24 @@ pub fn SecretsPage(cx: Scope) -> Element {
 fn Header(cx: Scope) -> Element {
     cx.render(rsx! {
         thead {
+            // class: "border-b border-slate-100",
+                class: "text-left text-sm text-slate-500",
             tr {
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    // class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Name"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    // class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Created at"
                 }
                 th {
-                    class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    // class: "py-3.5 text-left text-sm font-semibold sm:pl-3",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Shared with"
                 }
