@@ -9,6 +9,8 @@ anchor-lang = "0.26.0"
 bytemuck = "1.13.0"
 chrono = "0.4.23"
 clockwork-sdk = "1.4.2"
+clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2" }
+clockwork-network-program-v1 = { package = "clockwork-network-program", version = "1.4.2" }
 dioxus = "0.3.1"
 dioxus-router = { version = "0.3.0", features = ["web"] }
 dioxus-web = "0.3.0"
@@ -20,8 +22,10 @@ js-sys = "0.3.61"
 log = "0.4"
 pyth-sdk-solana = "0.7.1"
 serde = "1.0.152"
-solana-client-wasm = "1.14.11"
-solana-extra-wasm = "1.14.11"
+# solana-client-wasm = "1.14.11"
+# solana-extra-wasm = "1.14.11"
+solana-client-wasm = { git = "https://github.com/Eliascm17/solana-playground", branch = "master" }
+solana-extra-wasm = { git = "https://github.com/Eliascm17/solana-playground", branch = "master" }
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"
@@ -31,3 +35,5 @@ web-sys = "0.3.61"
 dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
 dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
+# solana-client-wasm = { git = "https://github.com/Eliascm17/solana-playground", branch = "master" }
+# solana-extra-wasm = { git = "https://github.com/Eliascm17/solana-playground", branch = "master" }
