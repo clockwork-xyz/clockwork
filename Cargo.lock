@@ -1126,8 +1126,10 @@ dependencies = [
  "bincode",
  "bytemuck",
  "chrono",
+ "clockwork-network-program 1.4.2",
  "clockwork-relayer-api",
  "clockwork-sdk 1.4.2",
+ "clockwork-thread-program 1.4.2",
  "dioxus",
  "dioxus-router",
  "dioxus-web",
@@ -4958,8 +4960,7 @@ dependencies = [
 [[package]]
 name = "solana-client-wasm"
 version = "1.14.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26a86f901e07beac8a4ea37be6d6c4a42e4af43c10a67c72e194fd7d485f7dfe"
+source = "git+https://github.com/Eliascm17/solana-playground?branch=master#6d1d179ea6e267c902e7f6c6a0a73c193fb6a22f"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
@@ -4993,8 +4994,7 @@ dependencies = [
 [[package]]
 name = "solana-extra-wasm"
 version = "1.14.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62f0fd09e0ed2bda0edfa01bc2932bb51746be233619b4b4e7169bf84347b887"
+source = "git+https://github.com/Eliascm17/solana-playground?branch=master#6d1d179ea6e267c902e7f6c6a0a73c193fb6a22f"
 dependencies = [
  "Inflector",
  "arrayref",

@@ -104,33 +104,34 @@ fn Row(cx: Scope<RowProps>) -> Element {
         Trigger::Immediate => "Immediate".to_string(),
     };
     cx.render(rsx! {
-        tr {
-             class: "px-3 text-base text-slate-100 hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
-             id: cx.props.elem_id.as_str(),
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{thread_pubkey}"
-             }
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{balance}"
-             }
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{created_at}"
-             }
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{id}"
-             }
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{paused}"
-             }
-             td {
-                 class: "whitespace-nowrap px-3 py-4",
-                 "{trigger}"
-             }
+        a {
+            class: "table-row px-3 text-sm border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
+            href: "/thread/{thread_pubkey}",
+            id: cx.props.elem_id.as_str(),
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{thread_pubkey}"
+            }
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{balance}"
+            }
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{created_at}"
+            }
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{id}"
+            }
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{paused}"
+            }
+            div {
+                class: "table-cell whitespace-nowrap px-3 py-4",
+                "{trigger}"
+            }
         }
     })
 }
