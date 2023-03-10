@@ -13,6 +13,7 @@ keywords = ["solana"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-cors = "0.6.4"
 actix-web = "4.3.1"
 anchor-lang = "0.26.0"
 byte-unit = "4.0.18"
@@ -22,6 +23,7 @@ curve25519-dalek = "3.2.1"
 lazy_static = "1.4.0"
 reqwest = "0.11.14"
 serde = "1.0.152"
+serde_json = "1.0.94"
 # shadow-drive-sdk = "0.6.1"
 solana-client = "1.14.15"
 solana-zk-token-sdk = "1.14.15"

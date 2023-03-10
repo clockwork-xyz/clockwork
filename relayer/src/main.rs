@@ -1,19 +1,22 @@
 use std::{fs, path::Path, str::FromStr};
 
-use actix_web::{post, web, App, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{get, post, web, App, HttpServer, Responder};
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use clockwork_relayer_api::{
-    Relay, SecretApprove, SecretCreate, SecretGet, SecretRevoke, SignedRequest,
+    Relay, SecretApprove, SecretCreate, SecretGet, SecretList, SecretListResponse, SecretRevoke,
+    SignedRequest,
 };
 use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
-static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
+// static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
 static SECRETS_PATH: &str = "/home/ubuntu/secrets";
 static RPC_URL: &str = "http://127.0.0.1:8899";
 // static RPC_URL: &str = "http://74.118.139.244:8899";
@@ -35,16 +38,32 @@ async fn main() -> std::io::Result<()> {
 
     // Start the webserver.
     HttpServer::new(|| {
+        let cors = Cors::permissive()
+            // ::default()
+            // .allow_any_origin()
+            // .disable_preflight()
+            // .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            // .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            // .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
         App::new()
+            .wrap(cors)
+            .service(health)
             .service(relay)
             .service(secret_create)
             .service(secret_get)
+            .service(secret_list)
             .service(secret_approve)
             .service(secret_revoke)
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("0.0.0.0", 8000))?
     .run()
     .await
+}
+
+#[get("/health")]
+async fn health() -> impl Responder {
+    "Ok"
 }
 
 #[post("/relay")]
@@ -105,8 +124,21 @@ async fn secret_create(req: web::Json<SignedRequest<SecretCreate>>) -> impl Resp
         fs::create_dir(user_secrets_path.clone()).unwrap();
     }
     let secret_filepath = user_secrets_path.join(format!("{}.txt", req.msg.name));
-    fs::write(secret_filepath, ciphertext).unwrap();
+    let filetext = serde_json::to_vec(&Secret {
+        created_at: 123,
+        delegates: vec![],
+        ciphertext,
+    })
+    .unwrap();
+    fs::write(secret_filepath, filetext).unwrap();
     "Ok"
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Secret {
+    pub created_at: u64,
+    pub delegates: Vec<Pubkey>,
+    pub ciphertext: Vec<u8>,
 }
 
 #[post("/secret_get")]
@@ -115,9 +147,34 @@ async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder 
     assert!(req.0.authenticate());
 
     // Decrypt the ciphertext.
-    fetch_decrypted_secret(req.signer, req.msg.name.to_string())
+    // fetch_decrypted_secret(req.signer, req.msg.name.to_string())
+    //     .await
+    //     .unwrap_or("Not found".into())
+    fetch_secret(req.signer, req.msg.name.to_string())
         .await
-        .unwrap_or("Not found".into())
+        .map_or("Not found".into(), |s| serde_json::to_string(&s).unwrap())
+    // .unwrap_or("Not found".into())
+}
+
+#[post("/secret_list")]
+async fn secret_list(req: web::Json<SignedRequest<SecretList>>) -> impl Responder {
+    // Authenticate the request.
+    assert!(req.0.authenticate());
+
+    // Read the filepaths from the user's secrets directory.
+    let secrets_path = Path::new(SECRETS_PATH.into());
+    assert!(secrets_path.is_dir());
+    let user_secrets_path = secrets_path.join(req.signer.to_string());
+    if user_secrets_path.exists() && user_secrets_path.is_dir() {
+        let paths = user_secrets_path.read_dir().unwrap();
+        web::Json(SecretListResponse {
+            secrets: paths
+                .map(|path| path.unwrap().file_name().into_string().unwrap())
+                .collect::<Vec<String>>(),
+        })
+    } else {
+        web::Json(SecretListResponse { secrets: vec![] })
+    }
 }
 
 #[post("/secret_approve")]
@@ -225,9 +282,22 @@ async fn fetch_decrypted_secret(user: Pubkey, name: String) -> Option<String> {
     let secret_filepath = Path::new(SECRETS_PATH.into())
         .join(user.to_string())
         .join(format!("{}.txt", name));
-    if let Ok(ciphertext) = fs::read(secret_filepath) {
-        let plaintext = decrypt(keypair, ciphertext);
+    if let Ok(filetext) = fs::read(secret_filepath) {
+        let secret: Secret = serde_json::from_slice(&filetext).unwrap();
+        let plaintext = decrypt(keypair, secret.ciphertext);
         Some(plaintext)
+    } else {
+        None
+    }
+}
+
+async fn fetch_secret(user: Pubkey, name: String) -> Option<Secret> {
+    let secret_filepath = Path::new(SECRETS_PATH.into())
+        .join(user.to_string())
+        .join(format!("{}.txt", name));
+    if let Ok(filetext) = fs::read(secret_filepath) {
+        let secret: Secret = serde_json::from_slice(&filetext).unwrap();
+        Some(secret)
     } else {
         None
     }

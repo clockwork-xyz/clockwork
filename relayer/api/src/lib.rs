@@ -33,6 +33,14 @@ pub struct SecretGet {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct SecretList {}
+
+#[derive(Deserialize, Serialize)]
+pub struct SecretListResponse {
+    pub secrets: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct SecretApprove {
     pub name: String,
     pub delegate: Pubkey,

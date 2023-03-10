@@ -176,6 +176,7 @@ fn parse_secret_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         Some(("get", matches)) => Ok(CliCommand::SecretGet {
             name: parse_string("name", matches)?,
         }),
+        Some(("list", _matches)) => Ok(CliCommand::SecretList {}),
         Some(("create", matches)) => Ok(CliCommand::SecretCreate {
             name: parse_string("name", matches)?,
             word: parse_string("word", matches)?,

@@ -51,7 +51,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
 
     cx.render(rsx! {
         button {
-            class: "px-4 py-2 border rounded-full",
+            class: "px-6 py-3 border rounded-full text-slate-100 hover:bg-slate-100 hover:text-slate-900 font-semibold",
             onclick: handle_click,
             connect_text
         }

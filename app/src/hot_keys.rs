@@ -19,9 +19,9 @@ pub fn HotKeys(cx: Scope) -> Element {
                     "G" | "g" => {
                         goto_mode = true;
                     }
-                    "D" | "d" => {
+                    "B" | "b" => {
                         if goto_mode {
-                            router.navigate_to("/data");
+                            router.navigate_to("/blocks");
                             goto_mode = false;
                         }
                     }
@@ -40,6 +40,12 @@ pub fn HotKeys(cx: Scope) -> Element {
                     "P" | "p" => {
                         if goto_mode {
                             router.navigate_to("/programs");
+                            goto_mode = false;
+                        }
+                    }
+                    "S" | "s" => {
+                        if goto_mode {
+                            router.navigate_to("/secrets");
                             goto_mode = false;
                         }
                     }

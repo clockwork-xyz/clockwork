@@ -32,13 +32,14 @@ fn App(cx: Scope) -> Element {
             Router {
                 HotKeys {}
                 Navbar {}
-                Clock {}
                 Route { to: "/", HomePage{} }
-                Route { to: "/data", DataPage{} }
-                Route { to: "/data/market/:address", MarketPage{} }
+                Route { to: "/blocks", BlocksPage{} }
+                Route { to: "/blocks/market/:address", MarketPage{} }
                 Route { to: "/thread/:address", ThreadPage {} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }
+                Route { to: "/secrets", SecretsPage{} }
+                Route { to: "/secrets/new", NewSecretPage{} }
                 Route { to: "", NotFoundPage{} }
             }
         }
