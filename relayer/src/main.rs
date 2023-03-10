@@ -10,6 +10,7 @@ use clockwork_relayer_api::{
 use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use rayon::prelude::*;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
@@ -123,8 +124,21 @@ async fn secret_create(req: web::Json<SignedRequest<SecretCreate>>) -> impl Resp
         fs::create_dir(user_secrets_path.clone()).unwrap();
     }
     let secret_filepath = user_secrets_path.join(format!("{}.txt", req.msg.name));
-    fs::write(secret_filepath, ciphertext).unwrap();
+    let filetext = serde_json::to_vec(&Secret {
+        created_at: 123,
+        delegates: vec![],
+        ciphertext,
+    })
+    .unwrap();
+    fs::write(secret_filepath, filetext).unwrap();
     "Ok"
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Secret {
+    pub created_at: u64,
+    pub delegates: Vec<Pubkey>,
+    pub ciphertext: Vec<u8>,
 }
 
 #[post("/secret_get")]
@@ -133,9 +147,13 @@ async fn secret_get(req: web::Json<SignedRequest<SecretGet>>) -> impl Responder 
     assert!(req.0.authenticate());
 
     // Decrypt the ciphertext.
-    fetch_decrypted_secret(req.signer, req.msg.name.to_string())
+    // fetch_decrypted_secret(req.signer, req.msg.name.to_string())
+    //     .await
+    //     .unwrap_or("Not found".into())
+    fetch_secret(req.signer, req.msg.name.to_string())
         .await
-        .unwrap_or("Not found".into())
+        .map_or("Not found".into(), |s| serde_json::to_string(&s).unwrap())
+    // .unwrap_or("Not found".into())
 }
 
 #[post("/secret_list")]
@@ -264,9 +282,22 @@ async fn fetch_decrypted_secret(user: Pubkey, name: String) -> Option<String> {
     let secret_filepath = Path::new(SECRETS_PATH.into())
         .join(user.to_string())
         .join(format!("{}.txt", name));
-    if let Ok(ciphertext) = fs::read(secret_filepath) {
-        let plaintext = decrypt(keypair, ciphertext);
+    if let Ok(filetext) = fs::read(secret_filepath) {
+        let secret: Secret = serde_json::from_slice(&filetext).unwrap();
+        let plaintext = decrypt(keypair, secret.ciphertext);
         Some(plaintext)
+    } else {
+        None
+    }
+}
+
+async fn fetch_secret(user: Pubkey, name: String) -> Option<Secret> {
+    let secret_filepath = Path::new(SECRETS_PATH.into())
+        .join(user.to_string())
+        .join(format!("{}.txt", name));
+    if let Ok(filetext) = fs::read(secret_filepath) {
+        let secret: Secret = serde_json::from_slice(&filetext).unwrap();
+        Some(secret)
     } else {
         None
     }

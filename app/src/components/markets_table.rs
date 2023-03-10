@@ -25,12 +25,12 @@ pub fn MarketsTable(cx: Scope) -> Element {
             table {
                 class: "w-full divide-y divide-slate-800",
                 Header {}
-                    for (i, feed) in market_data.get().iter().enumerate() {
-                        Row {
-                            elem_id: format!("list-item-{}", i),
-                            price: feed.clone(),
-                        }
+                for (i, feed) in market_data.get().iter().enumerate() {
+                    Row {
+                        elem_id: format!("list-item-{}", i),
+                        price: feed.clone(),
                     }
+                }
             }
         }
     })
