@@ -122,7 +122,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
             }
             div {
                 class: "table-cell whitespace-nowrap px-3 py-4",
-                "{ID}"
+                "{id}"
             }
             div {
                 class: "table-cell whitespace-nowrap px-3 py-4",
