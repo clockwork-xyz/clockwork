@@ -61,7 +61,7 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                         class: "flex flex-row w-full justify-between",
                         button {
                             class: "font-normal text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
-                            onclick: move |_| { router.pop_route() },
+                            onclick: move |_| { router.navigate_to("/secrets") },
                             "Cancel"
                         }
                         button {
