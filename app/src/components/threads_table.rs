@@ -4,6 +4,7 @@ use crate::{
 };
 use clockwork_sdk::state::{Thread, Trigger};
 use dioxus::prelude::*;
+use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
@@ -104,9 +105,9 @@ fn Row(cx: Scope<RowProps>) -> Element {
         Trigger::Immediate => "Immediate".to_string(),
     };
     cx.render(rsx! {
-        a {
-            class: "table-row px-3 text-sm border-b border-slate-800 hover:bg-slate-900 focus:bg-slate-900",
-            href: "/thread/{thread_pubkey}",
+        Link {
+            class: "table-row px-3 text-base hover:bg-slate-100 hover:text-slate-900",
+            to: "/thread/{thread_pubkey}",
             id: cx.props.elem_id.as_str(),
             div {
                 class: "table-cell whitespace-nowrap px-3 py-4",
