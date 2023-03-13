@@ -59,7 +59,7 @@ pub async fn get_threads() -> Vec<(Thread, Account)> {
     accounts[0..10].to_vec()
 }
 
-pub async fn get_thread(pubkey: Pubkey) -> Thread {
+pub async fn get_thread(pubkey: Pubkey) -> Option<Thread> {
     // let client = WasmClient::new("http://74.118.139.8899");
     const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
     log::info!("API KEY: {}", HELIUS_API_KEY);
@@ -81,7 +81,7 @@ pub async fn get_thread(pubkey: Pubkey) -> Thread {
         .unwrap()
         .unwrap();
 
-    Thread::try_from(account.data).unwrap()
+    Some(Thread::try_from(account.data).unwrap())
 }
 
 pub async fn simulate_thread(
