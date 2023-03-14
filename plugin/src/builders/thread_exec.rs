@@ -200,15 +200,14 @@ fn build_kickoff_ix(mut thread: Thread, signatory_pubkey: Pubkey, worker_id: u64
     kickoff_ix
 }
 
-fn build_exec_ix(mut thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
-    dbg!(&thread);
+fn build_exec_ix(thread: Thread, signatory_pubkey: Pubkey, worker_id: u64) -> Instruction {
     // Build the instruction.
     let thread_pubkey = Thread::pubkey(thread.authority, thread.id);
-    let mut exec_ix = dbg!(clockwork_client::thread::instruction::thread_exec(
+    let mut exec_ix = clockwork_client::thread::instruction::thread_exec(
         signatory_pubkey,
         thread_pubkey,
         Worker::pubkey(worker_id),
-    ));
+    );
 
     if let Some(next_instruction) = thread.next_instruction {
         // Inject the target program account.

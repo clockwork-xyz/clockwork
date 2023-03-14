@@ -5,6 +5,7 @@ use std::{
         atomic::{AtomicU64, Ordering},
         Arc,
     },
+    time::Duration,
 };
 
 use anchor_lang::{prelude::AccountMeta, InstructionData};
@@ -20,7 +21,7 @@ use log::info;
 use sha2::{Digest, Sha256};
 use solana_client::{
     nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
-    rpc_config::{RpcSendTransactionConfig, RpcSimulateTransactionConfig},
+    rpc_config::RpcSimulateTransactionConfig,
     tpu_client::TpuClientConfig,
 };
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -495,19 +496,44 @@ impl TxExecutor {
                             data: data.to_vec(),
                         };
                         let upload_ix_data = upload.data();
+                        log::info!("upload tx is uploading to {metadata_pubkey}");
+                        let metadata_token_account = Pubkey::find_program_address(
+                            &[metadata_pubkey.as_ref()],
+                            &chain_drive::ID,
+                        )
+                        .0;
                         let upload_ix = Instruction {
                             program_id: chain_drive::ID,
                             accounts: vec![
+                                // uploader
                                 AccountMeta::new(self.keypair.pubkey(), true),
+                                // metadata
                                 AccountMeta::new(metadata_pubkey, false),
+                                // metadata token account
+                                AccountMeta::new(metadata_token_account, false),
+                                // shdw payout account
+                                AccountMeta::new(chain_drive::payout_account(), false),
+                                // thread
                                 AccountMeta::new(
                                     Thread::pubkey(
                                         metadata_pubkey,
-                                        metadata_pubkey.to_bytes().to_vec(),
+                                        metadata
+                                            .unique_thread
+                                            .map(|id| id.to_le_bytes().to_vec())
+                                            .unwrap_or_else(|| {
+                                                <str as AsRef<[u8]>>::as_ref(
+                                                    metadata.filename.as_ref(),
+                                                )
+                                                .to_vec()
+                                            }),
                                     ),
                                     false,
                                 ),
+                                // thread program
                                 AccountMeta::new_readonly(clockwork_client::thread::ID, false),
+                                // token program
+                                AccountMeta::new_readonly(chain_drive::TOKEN_PROGRAM_ID, false),
+                                // system program
                                 AccountMeta::new_readonly(
                                     solana_program::system_program::ID,
                                     false,
@@ -521,7 +547,13 @@ impl TxExecutor {
                             &[&self.keypair],
                             client.get_latest_blockhash().await.expect("TODO"),
                         );
-                        TPU_CLIENT.get().await.send_transaction(&transaction).await;
+                        if let Err(e) = client.send_and_confirm_transaction(&transaction).await {
+                            log::error!("upload failed {e:#?}");
+                            tokio::time::sleep(Duration::from_millis(400)).await;
+                            TPU_CLIENT.get().await.send_transaction(&transaction).await;
+                        };
+                    } else {
+                        log::error!("invalid hash");
                     }
                 }
             }

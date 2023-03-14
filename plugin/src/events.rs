@@ -69,17 +69,16 @@ impl TryFrom<ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         }
 
         // If the account belongs to shadow program
-        if dbg!(owner_pubkey).eq(dbg!(&chain_drive::ID)) && account_info.data.len() > 8 {
-            dbg!("found sdrive ix");
+        if owner_pubkey.eq(&chain_drive::ID) && account_info.data.len() > 8 {
             let d = &account_info.data[..8];
-            if dbg!(d).eq(dbg!(&DataToBeSummoned::DISCRIMINATOR)) {
-                dbg!("found summon account");
+            if d.eq(&DataToBeSummoned::DISCRIMINATOR) {
                 let mut account_info = account_info;
                 return Ok(AccountUpdateEvent::Upload {
-                    metadata: dbg!(DataToBeSummoned::try_deserialize(&mut account_info.data))
-                        .map_err(|_| GeyserPluginError::AccountsUpdateError {
+                    metadata: DataToBeSummoned::try_deserialize(&mut account_info.data).map_err(
+                        |_| GeyserPluginError::AccountsUpdateError {
                             msg: "Failed to parse DataToBeSummoned account".into(),
-                        })?,
+                        },
+                    )?,
                 });
             }
         }
