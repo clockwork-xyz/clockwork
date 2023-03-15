@@ -3,7 +3,8 @@ use anchor_lang::{
     AccountDeserialize,
 };
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
-use clockwork_thread_program_v2::state::{
+
+use crate::{
     ClockData, ExecContext, SerializableAccount, SerializableInstruction, Thread as ThreadV2,
     Trigger, TriggerContext,
 };
@@ -78,6 +79,13 @@ impl VersionedThread {
         match self {
             Self::V1(t) => t.paused,
             Self::V2(t) => t.paused,
+        }
+    }
+
+    pub fn program_id(&self) -> Pubkey {
+        match self {
+            Self::V1(_) => clockwork_thread_program_v1::ID,
+            Self::V2(_) => crate::ID,
         }
     }
 

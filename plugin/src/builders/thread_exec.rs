@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anchor_lang::{InstructionData, ToAccountMetas};
 use clockwork_client::{network::state::Worker, thread::state::Trigger};
+use clockwork_thread_program_v2::state::VersionedThread;
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -22,8 +23,6 @@ use solana_sdk::{
     compute_budget::ComputeBudgetInstruction, signature::Keypair, signer::Signer,
     transaction::Transaction,
 };
-
-use crate::versioned_thread::VersionedThread;
 
 /// Max byte size of a serialized transaction.
 static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;

@@ -8,14 +8,13 @@ use std::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
+use clockwork_thread_program_v2::state::VersionedThread;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey};
 use tokio::sync::RwLock;
-
-use crate::versioned_thread::VersionedThread;
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.

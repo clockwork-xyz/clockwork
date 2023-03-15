@@ -2,13 +2,11 @@ use anchor_lang::{AccountDeserialize, Discriminator};
 use bincode::deserialize;
 use clockwork_client::webhook::state::Webhook;
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
-use clockwork_thread_program_v2::state::Thread as ThreadV2;
+use clockwork_thread_program_v2::state::{Thread as ThreadV2, VersionedThread};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
-
-use crate::versioned_thread::VersionedThread;
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
