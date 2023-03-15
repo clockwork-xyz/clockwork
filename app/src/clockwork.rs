@@ -15,15 +15,14 @@ use solana_client_wasm::{
     },
     utils::{
         rpc_config::{
-            RpcAccountInfoConfig, RpcProgramAccountsConfig, RpcSimulateTransactionAccountsConfig,
-            RpcSimulateTransactionConfig,
+            RpcAccountInfoConfig, RpcProgramAccountsConfig,
         },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
     },
     ClientResult, WasmClient,
 };
 use solana_extra_wasm::{
-    account_decoder::UiAccountEncoding, transaction_status::UiTransactionEncoding,
+    account_decoder::UiAccountEncoding,
 };
 use std::str::FromStr;
 
