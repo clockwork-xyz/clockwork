@@ -9,7 +9,7 @@ use crate::{
     Trigger, TriggerContext,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum VersionedThread {
     V1(ThreadV1),
     V2(ThreadV2),
@@ -52,6 +52,13 @@ impl VersionedThread {
         }
     }
 
+    pub fn id(&self) -> VersionedID {
+        match self {
+            Self::V1(t) => VersionedID::String(t.id.clone()),
+            Self::V2(t) => VersionedID::Vec(t.id.clone())
+        }
+    }
+
     pub fn next_instruction(&self) -> Option<SerializableInstruction> {
         match self {
             Self::V1(t) => match &t.next_instruction {
@@ -86,6 +93,17 @@ impl VersionedThread {
         match self {
             Self::V1(_) => clockwork_thread_program_v1::ID,
             Self::V2(_) => crate::ID,
+        }
+    }
+
+    pub fn pubkey(&self) -> Pubkey {
+        match self {
+            Self::V1(_) => {
+                ThreadV1::pubkey(self.authority(), self.id().to_string().unwrap())
+            },
+            Self::V2(_) => {
+                ThreadV2::pubkey(self.authority(), self.id().to_vec().unwrap())
+            }
         }
     }
 
@@ -141,5 +159,27 @@ impl TryFrom<Vec<u8>> for VersionedThread {
     type Error = Error;
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         VersionedThread::try_deserialize(&mut data.as_slice())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum VersionedID {
+    String(String),
+    Vec(Vec<u8>),
+}
+
+impl VersionedID {
+    pub fn to_string(self) -> Option<String> {
+        if let VersionedID::String(id) = self {
+            return Some(id);
+        } 
+        None
+    }
+
+    pub fn to_vec(self) -> Option<Vec<u8>> {
+        if let VersionedID::Vec(id) = self {
+            return Some(id);
+        }
+        None
     }
 }
