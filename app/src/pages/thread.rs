@@ -19,9 +19,7 @@ pub fn ThreadPage(cx: Scope) -> Element {
 
     use_future(&cx, (), |_| {
         let thread = thread.clone();
-        let thread_pubkey = thread_pubkey.clone();
-            let logs = logs.clone();
-            let log_errors = log_errors.clone();
+        let thread_pubkey = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
         async move { 
             let t = get_thread(thread_pubkey).await;
                 thread.set(Some(t.clone())) ;
@@ -129,6 +127,67 @@ pub fn ThreadPage(cx: Scope) -> Element {
 }
 
 #[derive(PartialEq, Props)]
+struct ThreadInfoTableProps{
+    thread: Thread,
+}
+
+fn ThreadInfoTable(cx: Scope<ThreadInfoTableProps>) -> Element {
+    let thread = &cx.props.thread;
+    let address = Thread::pubkey(thread.authority, thread.id.clone());
+    let created_at = format_timestamp(thread.created_at.unix_timestamp);
+    let trigger = match thread.trigger.clone() {
+        Trigger::Account {
+            address,
+            offset: _,
+            size: _,
+        } => address.to_string(),
+        Trigger::Cron {
+            schedule,
+            skippable: _,
+        } => schedule.clone(),
+        Trigger::Immediate => "Immediate".to_string(),
+    };
+
+
+    cx.render(rsx! {
+        table {
+            class: "w-full divide-y divide-slate-800",
+            tbody {
+                Row {
+                    label: "Address".to_string(),
+                    value: address.to_string()
+                }
+                Row {
+                    label: "Authority".to_string(),
+                    value: thread.authority.to_string(),
+                }
+                Row {
+                    label: "Created at".to_string(),
+                    value: created_at,
+                }
+                Row {
+                    label: "Fee".to_string(),
+                    value: thread.fee.to_string(),
+                }
+                Row {
+                    label: "ID".to_string(),
+                    value: thread.id.to_string(),
+                }
+                Row {
+                    label: "Paused".to_string(),
+                    value: thread.paused.to_string(),
+                }
+                Row {
+                    label: "Trigger".to_string(),
+                    value: trigger,
+                }
+            }
+        }
+    })
+}
+
+
+#[derive(PartialEq, Props)]
 struct RowProps {
     label: String,
     value: String,
@@ -149,4 +208,60 @@ fn Row(cx: Scope<RowProps>) -> Element {
             }
         }
     })
+}
+
+#[derive(PartialEq, Props)]
+struct SimulationLogsProps{
+    thread: Thread,
+}
+
+
+fn SimulationLogs(cx: Scope<SimulationLogsProps>) -> Element {
+    let logs = use_state::<Vec<String>>(cx, || vec![]);
+    let log_errors = use_state::<Option<TransactionError>>(cx, || None);
+
+    use_future(&cx, (), |_| {
+        let thread = cx.props.thread.clone();
+        let logs = logs.clone();
+        let log_errors = log_errors.clone();
+        async move { 
+            match simulate_thread(thread.to_owned()).await {
+                Ok(res) => {
+                    logs.set(res.1.unwrap());                           
+                    log_errors.set(res.0);                                
+                },
+                Err(_err) => {}
+            }
+        }
+    });
+
+
+    cx.render(rsx! {
+        div {
+            class: "flex flex-col mb-6",
+            h1 {
+                class: "text-2xl text-slate-100 font-semibold font-header",
+                "Simulation Logs"
+            }
+            code {
+                class: "w-full h-auto flex flex-col px-4 py-4 font-mono text-base text-slate-100 break-all",
+                for log in logs.get().iter() {
+                  p {
+                        "{log}"
+                    }   
+                }
+            }
+        }
+    })
+}
+
+fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
+    Schedule::from_str(&schedule)
+        .unwrap()
+        .next_after(&DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
+            Utc,
+        ))
+        .take()
+        .map(|datetime| datetime.timestamp())
 }

@@ -44,12 +44,12 @@ fn Header(cx: Scope) -> Element {
             tr {
                 class: "text-left text-sm text-slate-500",
                 th {
-                    class: "py-4 px-3 font-medium",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Thread"
                 }
                 th {
-                    class: "py-4 px-3 font-medium",
+                    class: "py-3 px-3 font-medium",
                     scope: "col",
                     "Balance"
                 }
@@ -110,27 +110,27 @@ fn Row(cx: Scope<RowProps>) -> Element {
             to: "/thread/{thread_pubkey}",
             id: cx.props.elem_id.as_str(),
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{thread_pubkey}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{balance}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{created_at}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{id}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{paused}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-3 py-4",
+                class: "table-cell whitespace-nowrap px-4 py-4",
                 "{trigger}"
             }
         }
