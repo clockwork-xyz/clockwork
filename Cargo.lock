@@ -1127,7 +1127,6 @@ dependencies = [
  "bytemuck",
  "chrono",
  "clockwork-cron 2.0.1",
- "clockwork-network-program 1.4.2",
  "clockwork-network-program 2.0.1",
  "clockwork-relayer-api",
  "clockwork-sdk 1.4.2",

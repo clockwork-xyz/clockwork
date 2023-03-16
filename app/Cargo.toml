@@ -12,8 +12,7 @@ chrono = "0.4.23"
 clockwork-sdk = "1.4.2"
 clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2" }
 clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread", version = "2.0.1", features = ["no-entrypoint"] }
-clockwork-network-program-v1 = { package = "clockwork-network-program", version = "1.4.2" }
-clockwork-network-program-v2 = { package = "clockwork-network-program", path = "../programs/network", version = "2.0.1", features = ["no-entrypoint"] }
+clockwork-network-program = { package = "clockwork-network-program", path = "../programs/network", version = "2.0.1", features = ["no-entrypoint"] }
 clockwork-relayer-api = { path = "../relayer/api", version = "2.0.1" }
 clockwork-cron = { path = "../cron", version = "2.0.1" }
 dioxus = "0.3.1"

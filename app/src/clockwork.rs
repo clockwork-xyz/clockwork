@@ -14,16 +14,12 @@ use solana_client_wasm::{
         transaction::{Transaction, TransactionError},
     },
     utils::{
-        rpc_config::{
-            RpcAccountInfoConfig, RpcProgramAccountsConfig,
-        },
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
     },
     ClientResult, WasmClient,
 };
-use solana_extra_wasm::{
-    account_decoder::UiAccountEncoding,
-};
+use solana_extra_wasm::account_decoder::UiAccountEncoding;
 use std::str::FromStr;
 
 pub async fn get_threads() -> Vec<(Thread, Account)> {
@@ -182,9 +178,9 @@ fn build_exec_ix(
         VersionedThread::V1(_) => Instruction {
             program_id: thread.program_id(),
             accounts: clockwork_thread_program_v1::accounts::ThreadExec {
-                fee: clockwork_network_program_v1::state::Fee::pubkey(worker_pubkey),
-                penalty: clockwork_network_program_v1::state::Penalty::pubkey(worker_pubkey),
-                pool: clockwork_network_program_v1::state::Pool::pubkey(0),
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                penalty: clockwork_network_program::state::Penalty::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
                 signatory: signatory_pubkey,
                 thread: thread_pubkey,
                 worker: worker_pubkey,
@@ -195,8 +191,8 @@ fn build_exec_ix(
         VersionedThread::V2(_) => Instruction {
             program_id: thread.program_id(),
             accounts: clockwork_thread_program_v2::accounts::ThreadExec {
-                fee: clockwork_network_program_v2::state::Fee::pubkey(worker_pubkey),
-                pool: clockwork_network_program_v2::state::Pool::pubkey(0),
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
                 signatory: signatory_pubkey,
                 thread: thread_pubkey,
                 worker: worker_pubkey,
