@@ -55,7 +55,7 @@ impl VersionedThread {
     pub fn id(&self) -> VersionedID {
         match self {
             Self::V1(t) => VersionedID::String(t.id.clone()),
-            Self::V2(t) => VersionedID::Vec(t.id.clone())
+            Self::V2(t) => VersionedID::Vec(t.id.clone()),
         }
     }
 
@@ -98,12 +98,8 @@ impl VersionedThread {
 
     pub fn pubkey(&self) -> Pubkey {
         match self {
-            Self::V1(_) => {
-                ThreadV1::pubkey(self.authority(), self.id().to_string().unwrap())
-            },
-            Self::V2(_) => {
-                ThreadV2::pubkey(self.authority(), self.id().to_vec().unwrap())
-            }
+            Self::V1(_) => ThreadV1::pubkey(self.authority(), self.id().to_string().unwrap()),
+            Self::V2(_) => ThreadV2::pubkey(self.authority(), self.id().to_vec().unwrap()),
         }
     }
 
@@ -172,7 +168,7 @@ impl VersionedID {
     pub fn to_string(self) -> Option<String> {
         if let VersionedID::String(id) = self {
             return Some(id);
-        } 
+        }
         None
     }
 
