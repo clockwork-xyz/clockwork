@@ -86,18 +86,17 @@ impl ThreadObserver {
         }
 
         // Get the set of threads were triggered by an account update.
-        let mut w_account_threads = self.account_threads.write().await;
+        let r_account_threads = self.account_threads.read().await;
         let mut w_updated_accounts = self.updated_accounts.write().await;
         w_updated_accounts.iter().for_each(|account_pubkey| {
-            if let Some(thread_pubkeys) = w_account_threads.get(&account_pubkey) {
+            if let Some(thread_pubkeys) = r_account_threads.get(&account_pubkey) {
                 thread_pubkeys.iter().for_each(|pubkey| {
                     executable_threads.insert(*pubkey);
                 });
-                w_account_threads.remove(&account_pubkey);
             }
         });
         w_updated_accounts.clear();
-        drop(w_account_threads);
+        drop(r_account_threads);
         drop(w_updated_accounts);
 
         // Get the set of threads that were triggered by a slot update.
