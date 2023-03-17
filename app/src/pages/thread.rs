@@ -74,6 +74,7 @@ fn ThreadInfoTable(cx: Scope<ThreadInfoTableProps>) -> Element {
         Trigger::Now => "Now".to_string(),
         Trigger::Slot { slot } => slot.to_string(),
         Trigger::Epoch { epoch } => epoch.to_string(),
+        Trigger::Timestamp { unix_ts } => unix_ts.to_string()
     };
 
     let thread_id = match thread.id() {
