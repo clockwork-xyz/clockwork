@@ -169,6 +169,21 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 trigger_context: TriggerContext::Epoch { started_at: epoch },
             })
         }
+        Trigger::Timestamp { unix_ts } => {
+            require!(
+                clock.unix_timestamp.ge(&unix_ts),
+                ClockworkError::TriggerNotActive
+            );
+            thread.exec_context = Some(ExecContext {
+                exec_index: 0,
+                execs_since_reimbursement: 0,
+                execs_since_slot: 0,
+                last_exec_at: clock.slot,
+                trigger_context: TriggerContext::Timestamp {
+                    started_at: unix_ts,
+                },
+            })
+        }
     }
 
     // If we make it here, the trigger is active. Update the next instruction and be done.

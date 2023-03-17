@@ -70,10 +70,18 @@ pub enum Trigger {
     Now,
 
     /// Allows a thread to be kicked off according to a slot.
-    Slot { slot: u64 },
+    Slot {
+        slot: u64,
+    },
 
     /// Allows a thread to be kicked off according to an epoch number.
-    Epoch { epoch: u64 },
+    Epoch {
+        epoch: u64,
+    },
+
+    Timestamp {
+        unix_ts: i64,
+    },
 }
 
 /// A response value target programs can return to update the thread.
