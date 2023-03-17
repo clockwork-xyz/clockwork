@@ -10,6 +10,7 @@ use std::{
 use async_once::AsyncOnce;
 use bincode::serialize;
 use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
+use clockwork_thread_program_v2::state::VersionedThread;
 use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
@@ -28,10 +29,7 @@ use solana_sdk::{
 };
 use tokio::{runtime::Runtime, sync::RwLock};
 
-use crate::{
-    config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair,
-    versioned_thread::VersionedThread,
-};
+use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
 
 use super::AccountGet;
 

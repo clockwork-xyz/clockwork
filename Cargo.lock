@@ -1126,10 +1126,12 @@ dependencies = [
  "bincode",
  "bytemuck",
  "chrono",
- "clockwork-network-program 1.4.2",
+ "clockwork-cron 2.0.1",
+ "clockwork-network-program 2.0.1",
  "clockwork-relayer-api",
  "clockwork-sdk 1.4.2",
  "clockwork-thread-program 1.4.2",
+ "clockwork-thread-program 2.0.1",
  "dioxus",
  "dioxus-router",
  "dioxus-web",
@@ -1331,6 +1333,7 @@ dependencies = [
  "chrono",
  "clockwork-cron 2.0.2",
  "clockwork-network-program 2.0.2",
+ "clockwork-thread-program 1.4.2",
  "clockwork-utils 2.0.2",
  "static-pubkey",
  "version",
@@ -4960,7 +4963,7 @@ dependencies = [
 [[package]]
 name = "solana-client-wasm"
 version = "1.14.15"
-source = "git+https://github.com/Eliascm17/solana-playground?branch=master#6d1d179ea6e267c902e7f6c6a0a73c193fb6a22f"
+source = "git+https://github.com/solana-playground/solana-playground?branch=master#12b72cbdb36532125a77f9bd6ec1c5aefaf2d4de"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
@@ -4994,7 +4997,7 @@ dependencies = [
 [[package]]
 name = "solana-extra-wasm"
 version = "1.14.15"
-source = "git+https://github.com/Eliascm17/solana-playground?branch=master#6d1d179ea6e267c902e7f6c6a0a73c193fb6a22f"
+source = "git+https://github.com/solana-playground/solana-playground?branch=master#12b72cbdb36532125a77f9bd6ec1c5aefaf2d4de"
 dependencies = [
  "Inflector",
  "arrayref",
