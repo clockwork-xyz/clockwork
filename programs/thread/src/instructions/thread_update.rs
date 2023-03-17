@@ -60,7 +60,21 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
             std::mem::discriminant(&thread.trigger) == std::mem::discriminant(&trigger),
             ClockworkError::InvalidTriggerVariant
         );
-        thread.trigger = trigger;
+        thread.trigger = trigger.clone();
+
+        // If the user updates an account trigger, the trigger context is no longer valid.
+        // Here we reset the trigger context to zero to re-prime the trigger.
+        thread.exec_context = Some(ExecContext {
+            trigger_context: match trigger {
+                Trigger::Account {
+                    address: _,
+                    offset: _,
+                    size: _,
+                } => TriggerContext::Account { data_hash: 0 },
+                _ => thread.exec_context.unwrap().trigger_context,
+            },
+            ..thread.exec_context.unwrap()
+        })
     }
 
     // Reallocate mem for the thread account
