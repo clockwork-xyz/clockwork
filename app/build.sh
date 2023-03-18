@@ -18,3 +18,6 @@ rustup target add wasm32-unknown-unknown
 
 # Build the project
 trunk build --release
+
+# Move favicon into /dist folder.
+cp favicon.ico dist/favicon.ico
