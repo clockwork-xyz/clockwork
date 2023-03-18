@@ -21,7 +21,7 @@ use solana_client_wasm::{
 use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
 use std::str::FromStr;
 
-static RPC_URL: &str = "https://rpc.heliux.xyz/?api-key=8f29b4e9-37a6-4775-88c6-6f971fe180ca";
+static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
 
 pub async fn get_threads() -> Vec<(Thread, Account)> {
     WasmClient::new(RPC_URL)
