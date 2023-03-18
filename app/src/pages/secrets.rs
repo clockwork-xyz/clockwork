@@ -4,7 +4,6 @@ use anchor_lang::prelude::Pubkey;
 use clockwork_relayer_api::{SecretList, SecretListResponse, SignedRequest};
 use dioxus::prelude::*;
 use dioxus_router::Link;
-use dotenv_codegen::dotenv;
 use reqwest::header::CONTENT_TYPE;
 use solana_client_wasm::solana_sdk::signature::Signature;
 
@@ -120,7 +119,7 @@ pub async fn get_secrets() -> Vec<String> {
         ),
     };
     match reqwest::Client::new()
-        .post(format!("{}/secret_list", dotenv!("RELAYER_URL")))
+        .post("http://devbox:8000/secret_list")
         .header(CONTENT_TYPE, "application/json")
         .json(&req)
         .send()

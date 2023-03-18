@@ -5,7 +5,6 @@ use anchor_lang::{
 };
 use clockwork_sdk::{state::Thread, utils::PAYER_PUBKEY};
 use clockwork_thread_program_v2::state::{Trigger, VersionedThread};
-use dotenv_codegen::dotenv;
 use solana_client_wasm::{
     solana_sdk::{
         account::Account,
@@ -14,22 +13,18 @@ use solana_client_wasm::{
         transaction::{Transaction, TransactionError},
     },
     utils::{
-        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+        rpc_config::{RpcAccountInfoConfig, RpcBlockConfig, RpcProgramAccountsConfig},
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
     },
     ClientResult, WasmClient,
 };
-use solana_extra_wasm::account_decoder::UiAccountEncoding;
+use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
 use std::str::FromStr;
 
-pub async fn get_threads() -> Vec<(Thread, Account)> {
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
-    // let client = WasmClient::new("http://74.118.139.244:8899");
+static RPC_URL: &str = "https://rpc.heliux.xyz/?api-key=8f29b4e9-37a6-4775-88c6-6f971fe180ca";
 
-    let accounts = client
+pub async fn get_threads() -> Vec<(Thread, Account)> {
+    WasmClient::new(RPC_URL)
         .get_program_accounts_with_config(
             &clockwork_sdk::ID,
             RpcProgramAccountsConfig {
@@ -51,19 +46,12 @@ pub async fn get_threads() -> Vec<(Thread, Account)> {
         .unwrap()
         .iter()
         .map(|acc| (Thread::try_from(acc.1.data.clone()).unwrap(), acc.1.clone()))
-        .collect::<Vec<(Thread, Account)>>();
-    accounts[0..10].to_vec()
+        .collect::<Vec<(Thread, Account)>>()[0..10]
+        .to_vec()
 }
 
 pub async fn get_thread(pubkey: Pubkey) -> VersionedThread {
-    // let client = WasmClient::new("http://74.118.139.8899");
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    log::info!("API KEY: {}", HELIUS_API_KEY);
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
-
-    let account = client
+    let account = WasmClient::new(RPC_URL)
         .get_account_with_config(
             &pubkey,
             RpcAccountInfoConfig {
@@ -84,10 +72,6 @@ pub async fn simulate_thread(
     thread: VersionedThread,
     thread_pubkey: Pubkey,
 ) -> ClientResult<(Option<TransactionError>, Option<Vec<String>>)> {
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
     let signatory_pubkey =
         Pubkey::from_str("GuJVu6wky7zeVaPkGaasC5vx1eVoiySbEv7UFKZAu837").unwrap();
     let worker_pubkey = Pubkey::from_str("EvoeDp2WL1TFdLdf9bfJaznsf3YVByisvHM5juYdFBuq").unwrap();
@@ -116,7 +100,10 @@ pub async fn simulate_thread(
     let tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
 
     // simulate transaction
-    let sim_tx = client.simulate_transaction(&tx).await.unwrap();
+    let sim_tx = WasmClient::new(RPC_URL)
+        .simulate_transaction(&tx)
+        .await
+        .unwrap();
     Ok((sim_tx.err, sim_tx.logs))
 }
 
@@ -224,4 +211,28 @@ fn build_exec_ix(
     }
 
     exec_ix
+}
+
+pub async fn get_block() -> Option<UiConfirmedBlock> {
+    let client = WasmClient::new(RPC_URL);
+    let slot = client
+        .get_latest_blockhash_with_commitment(CommitmentConfig::processed())
+        .await
+        .unwrap()
+        .1;
+    client
+        .get_block_with_config(
+            slot,
+            RpcBlockConfig {
+                encoding: None,
+                transaction_details: Some(
+                    solana_extra_wasm::transaction_status::TransactionDetails::Signatures,
+                ),
+                rewards: Some(true),
+                commitment: Some(CommitmentConfig::processed()),
+                max_supported_transaction_version: None,
+            },
+        )
+        .await
+        .ok()
 }

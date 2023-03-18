@@ -4,7 +4,6 @@ use anchor_lang::prelude::Pubkey;
 use clockwork_relayer_api::{SecretCreate, SignedRequest};
 use dioxus::prelude::*;
 use dioxus_router::use_router;
-use dotenv_codegen::dotenv;
 use reqwest::header::CONTENT_TYPE;
 use solana_client_wasm::solana_sdk::signature::Signature;
 
@@ -99,7 +98,7 @@ pub async fn create_secret(name: String, word: String) -> String {
         ),
     };
     reqwest::Client::new()
-        .post(format!("{}/secret_create", dotenv!("RELAYER_URL")))
+        .post("http://3.83.67.25:8000/secret_create")
         .header(CONTENT_TYPE, "application/json")
         .json(&req)
         .send()

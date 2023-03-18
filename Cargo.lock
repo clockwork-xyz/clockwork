@@ -1126,16 +1126,15 @@ dependencies = [
  "bincode",
  "bytemuck",
  "chrono",
- "clockwork-cron 2.0.1",
- "clockwork-network-program 2.0.1",
+ "clockwork-cron 2.0.2",
+ "clockwork-network-program 2.0.2",
  "clockwork-relayer-api",
  "clockwork-sdk 1.4.2",
  "clockwork-thread-program 1.4.2",
- "clockwork-thread-program 2.0.1",
+ "clockwork-thread-program 2.0.2",
  "dioxus",
  "dioxus-router",
  "dioxus-web",
- "dotenv_codegen",
  "gloo-events",
  "gloo-timers",
  "gloo-utils",
@@ -2006,35 +2005,6 @@ dependencies = [
  "libc",
  "quote 0.6.13",
  "syn 0.15.44",
-]
-
-[[package]]
-name = "dotenv"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
-
-[[package]]
-name = "dotenv_codegen"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56966279c10e4f8ee8c22123a15ed74e7c8150b658b26c619c53f4a56eb4a8aa"
-dependencies = [
- "dotenv_codegen_implementation",
- "proc-macro-hack",
-]
-
-[[package]]
-name = "dotenv_codegen_implementation"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e737a3522cd45f6adc19b644ce43ef53e1e9045f2d2de425c1f468abd4cf33"
-dependencies = [
- "dotenv",
- "proc-macro-hack",
- "proc-macro2 1.0.51",
- "quote 1.0.23",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -3853,12 +3823,6 @@ dependencies = [
  "quote 1.0.23",
  "version_check 0.9.4",
 ]
-
-[[package]]
-name = "proc-macro-hack"
-version = "0.5.20+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
 
 [[package]]
 name = "proc-macro2"
