@@ -92,7 +92,8 @@ pub struct PythFeedPrice<'a> {
 }
 
 pub async fn get_price_feeds<'a>() -> Vec<PythFeedPrice<'a>> {
-    let client = WasmClient::new("http://74.118.139.244:8899");
+    let client =
+        WasmClient::new("https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6");
     let pyth_feed_pubkeys = PythFeed::all_pubkeys();
     let pyth_feed_ticker = PythFeed::all_tickers();
     client
