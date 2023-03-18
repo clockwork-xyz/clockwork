@@ -11,6 +11,10 @@
       "dest": "/dist/img/$1"
     },
     {
+      "src": "/(.*)\\.(js|css|html|ico|json)",
+      "dest": "/dist/$1.$2"
+    },
+    {
       "src": "/(.*)",
       "dest": "/dist/index.html",
       "status": 200
