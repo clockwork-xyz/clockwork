@@ -8,7 +8,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/www/$1"
+      "dest": "/dist/$1"
     }
   ]
 }
