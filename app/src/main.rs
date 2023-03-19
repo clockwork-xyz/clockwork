@@ -33,8 +33,8 @@ fn App(cx: Scope) -> Element {
                 HotKeys {}
                 Navbar {}
                 Route { to: "/", HomePage{} }
-                Route { to: "/blocks", BlocksPage{} }
-                Route { to: "/blocks/market/:address", MarketPage{} }
+                Route { to: "/accounts", AccountsPage{} }
+                Route { to: "/accounts/market/:address", MarketPage{} }
                 Route { to: "/thread/:address", ThreadPage {} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }

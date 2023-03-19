@@ -154,65 +154,75 @@ struct SimulationLogsProps{
 
 
 fn SimulationLogs(cx: Scope<SimulationLogsProps>) -> Element {
-    let logs = use_state::<Vec<String>>(cx, || vec![]);
-    let log_errors = use_state::<Option<TransactionError>>(cx, || None);
+    let sim_logs = use_state::<Vec<String>>(cx, || vec![]);
+    let sim_error = use_state::<Option<TransactionError>>(cx, || None);
 
-    let tx_err = if log_errors.get().is_some() {
-        let mut hex: Option<String> = None;
-        let raw_text = log_errors.as_ref().unwrap().to_string();
-        let mut error_string = String::new();
-        for word in raw_text.split(" ").collect::<Vec<_>>().iter() {
-            hex = match word.strip_prefix("0x") {
-                Some(d) => Some(String::from(d.to_string())),
-                None => {
-                    let w = String::from(format!("{} ", word));
-                    error_string.push_str(w.as_str());
-                    None
-                },
-            }
-        }
+    // let tx_err = if sim_error.get().is_some() {
+    //     let mut hex: Option<String> = None;
+    //     let raw_text = sim_error.as_ref().unwrap().to_string();
+    //     let mut error_string = String::new();
+    //     for word in raw_text.split(" ").collect::<Vec<_>>().iter() {
+    //         hex = match word.strip_prefix("0x") {
+    //             Some(d) => Some(String::from(d.to_string())),
+    //             None => {
+    //                 let w = String::from(format!("{} ", word));
+    //                 error_string.push_str(w.as_str());
+    //                 None
+    //             },
+    //         }
+    //     }
 
-        if hex.is_some() {
-            let dec = i64::from_str_radix(hex.unwrap().as_str(), 16);
-            String::from(format!("{}{}", error_string, dec.unwrap()))
-        } else {
-            String::from(format!("{}", error_string))
-        }
+    //     if hex.is_some() {
+    //         let dec = i64::from_str_radix(hex.unwrap().as_str(), 16);
+    //         String::from(format!("{}{}", error_string, dec.unwrap()))
+    //     } else {
+    //         String::from(format!("{}", error_string))
+    //     }
         
-    } else {
-        String::from("")
-    };
+    // } else {
+    //     String::from("")
+    // };
 
     use_future(&cx, (), |_| {
         let thread = cx.props.thread.clone();
-        let logs = logs.clone();
-        let log_errors = log_errors.clone();
+        let sim_logs = sim_logs.clone();
+        let sim_error = sim_error.clone();
         async move { 
             match simulate_thread(thread.to_owned(), thread.pubkey()).await {
-                Ok(res) => {
-                    logs.set(res.1.unwrap());                           
-                    log_errors.set(res.0);                                
+                Ok((err, logs)) => {
+                    sim_logs.set(logs.unwrap_or(vec![]));
+                    sim_error.set(err);
                 },
                 Err(_err) => {}
             }
         }
     });
 
-
     cx.render(rsx! {
         div {
-            class: "flex flex-col mb-6",
+            class: "flex flex-col",
             h1 {
-                class: "text-2xl text-slate-100 font-semibold font-header",
+                class: "text-2xl text-slate-100 font-semibold font-header mb-4",
                 "Simulation Logs"
             }
-            code {
-                class: "w-full h-auto flex flex-col px-4 py-4 mt-2 font-mono text-base text-slate-100 break-all rounded-md bg-red-500",
-                "{tx_err}"
+            if let Some(err) = sim_error.get() {
+                rsx! {
+                    div {
+                        class: "w-full h-auto flex flex-col p-4 space-y-2 break-all rounded bg-red-500",
+                        p {
+                            class: "text-slate-100 text-sm",
+                            "ERROR"
+                        }
+                        p {
+                            class: "text-slate-100 text-base",
+                            "{err}"
+                        }
+                    }
+                }
             }
             code {
                 class: "w-full h-auto flex flex-col px-4 py-2 font-mono text-base text-slate-100 break-all",
-                for log in logs.get().iter() {
+                for log in sim_logs.get().iter() {
                     p {
                         "{log}"
                     }   
@@ -222,13 +232,13 @@ fn SimulationLogs(cx: Scope<SimulationLogsProps>) -> Element {
     })
 }
 
-fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
-    clockwork_cron::Schedule::from_str(&schedule)
-        .unwrap()
-        .next_after(&DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
-            Utc,
-        ))
-        .take()
-        .map(|datetime| datetime.timestamp())
-}
+// fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
+//     clockwork_cron::Schedule::from_str(&schedule)
+//         .unwrap()
+//         .next_after(&DateTime::<Utc>::from_utc(
+//             NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
+//             Utc,
+//         ))
+//         .take()
+//         .map(|datetime| datetime.timestamp())
+// }

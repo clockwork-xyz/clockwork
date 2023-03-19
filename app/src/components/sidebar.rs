@@ -6,8 +6,8 @@ pub fn Sidebar(cx: Scope) -> Element {
         div {
             class: "h-full w-48 flex flex-col items-start py-8",
                 SidebarButton {
-                    title: "Blocks",
-                    route: "/blocks"
+                    title: "Accounts",
+                    route: "/accounts"
                 }
                 SidebarButton {
                     title: "Files",

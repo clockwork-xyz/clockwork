@@ -1,6 +1,11 @@
-use crate::{components::ConnectButton, context::User, utils::format_balance};
 use dioxus::prelude::*;
 use dioxus_router::Link;
+
+use crate::{
+    components::{ConnectButton, SearchButton},
+    context::User,
+    utils::format_balance,
+};
 
 pub fn Navbar(cx: Scope) -> Element {
     cx.render(rsx! {
@@ -9,6 +14,7 @@ pub fn Navbar(cx: Scope) -> Element {
             Logo {}
             div {
                 class: "flex items-center space-x-4",
+                SearchButton {}
                 Balance {}
                 ConnectButton {}
             }

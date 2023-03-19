@@ -100,11 +100,11 @@ pub async fn simulate_thread(
     let tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
 
     // simulate transaction
-    let sim_tx = WasmClient::new(RPC_URL)
+    let sim_result = WasmClient::new(RPC_URL)
         .simulate_transaction(&tx)
         .await
         .unwrap();
-    Ok((sim_tx.err, sim_tx.logs))
+    Ok((sim_result.err, sim_result.logs))
 }
 
 fn build_kickoff_ix(

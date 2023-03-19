@@ -1,4 +1,4 @@
-pub mod blocks;
+pub mod accounts;
 pub mod files;
 pub mod home;
 pub mod market;
@@ -9,7 +9,7 @@ pub mod programs;
 pub mod secrets;
 pub mod thread;
 
-pub use blocks::*;
+pub use accounts::*;
 pub use files::*;
 pub use home::*;
 pub use market::*;
