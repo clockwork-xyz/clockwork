@@ -19,7 +19,7 @@ pub enum ClockworkError {
 
     /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been met.
     #[msg("The trigger condition has not been activated")]
-    TriggerNotActive,
+    TriggerConditionFailed,
 
     #[msg("This operation cannot be processes because the thread is currently busy")]
     ThreadBusy,

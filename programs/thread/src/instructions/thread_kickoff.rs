@@ -56,7 +56,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                     // Verify the remaining account is the account this thread is listening for.
                     require!(
                         address.eq(account_info.key),
-                        ClockworkError::TriggerNotActive
+                        ClockworkError::TriggerConditionFailed
                     );
 
                     // Begin computing the data hash of this account.
@@ -79,7 +79,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                             } => {
                                 require!(
                                     data_hash.ne(&prior_data_hash),
-                                    ClockworkError::TriggerNotActive
+                                    ClockworkError::TriggerConditionFailed
                                 )
                             }
                             _ => return Err(ClockworkError::InvalidThreadState.into()),
@@ -112,10 +112,10 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
 
             // Verify the current timestamp is greater than or equal to the threshold timestamp.
             let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone())
-                .ok_or(ClockworkError::TriggerNotActive)?;
+                .ok_or(ClockworkError::TriggerConditionFailed)?;
             require!(
                 clock.unix_timestamp.ge(&threshold_timestamp),
-                ClockworkError::TriggerNotActive
+                ClockworkError::TriggerConditionFailed
             );
 
             // If the schedule is marked as skippable, set the started_at of the exec context to be the current timestamp.
@@ -150,7 +150,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
             });
         }
         Trigger::Slot { slot } => {
-            require!(clock.slot.ge(&slot), ClockworkError::TriggerNotActive);
+            require!(clock.slot.ge(&slot), ClockworkError::TriggerConditionFailed);
             thread.exec_context = Some(ExecContext {
                 exec_index: 0,
                 execs_since_reimbursement: 0,
@@ -160,7 +160,10 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
             });
         }
         Trigger::Epoch { epoch } => {
-            require!(clock.epoch.ge(&epoch), ClockworkError::TriggerNotActive);
+            require!(
+                clock.epoch.ge(&epoch),
+                ClockworkError::TriggerConditionFailed
+            );
             thread.exec_context = Some(ExecContext {
                 exec_index: 0,
                 execs_since_reimbursement: 0,
@@ -172,7 +175,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
         Trigger::Timestamp { unix_ts } => {
             require!(
                 clock.unix_timestamp.ge(&unix_ts),
-                ClockworkError::TriggerNotActive
+                ClockworkError::TriggerConditionFailed
             );
             thread.exec_context = Some(ExecContext {
                 exec_index: 0,
