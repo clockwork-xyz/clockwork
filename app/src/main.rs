@@ -20,7 +20,16 @@ fn main() {
     dioxus_web::launch(App);
 }
 
+pub struct SearchState {
+    pub is_searching: bool,
+    pub query: String,
+}
+
 fn App(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || SearchState {
+        is_searching: false,
+        query: String::new(),
+    });
     use_shared_state_provider(cx, || User {
         pubkey: None,
         account: None,
@@ -38,9 +47,10 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/thread/:address", ThreadPage {} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/programs", ProgramsPage{} }
-                Route { to: "/secrets", SecretsPage{} }
-                Route { to: "/secrets/new", NewSecretPage{} }
+                Route { to: "/keys", KeysPage{} }
+                Route { to: "/keys/new", NewKeyPage{} }
                 Route { to: "", NotFoundPage{} }
+                SearchPage {}
             }
         }
     })

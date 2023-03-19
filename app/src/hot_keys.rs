@@ -4,10 +4,14 @@ use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::HtmlElement;
 
+use crate::SearchState;
+
 pub fn HotKeys(cx: Scope) -> Element {
     let router = use_router(&cx);
+    let search_state = use_shared_state::<SearchState>(cx).unwrap();
     use_future(&cx, (), |_| {
         let router = router.clone();
+        let search_state = search_state.clone();
         async move {
             let document = gloo_utils::document();
             let mut goto_mode = false;
@@ -16,6 +20,10 @@ pub fn HotKeys(cx: Scope) -> Element {
                 let document = gloo_utils::document();
                 let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
                 match event.key().as_str() {
+                    "/" => {
+                        let mut w_search_state = search_state.write();
+                        w_search_state.is_searching = true;
+                    }
                     "G" | "g" => {
                         goto_mode = true;
                     }
@@ -43,9 +51,9 @@ pub fn HotKeys(cx: Scope) -> Element {
                             goto_mode = false;
                         }
                     }
-                    "S" | "s" => {
+                    "K" | "k" => {
                         if goto_mode {
-                            router.navigate_to("/secrets");
+                            router.navigate_to("/keys");
                             goto_mode = false;
                         }
                     }

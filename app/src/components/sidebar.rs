@@ -14,12 +14,12 @@ pub fn Sidebar(cx: Scope) -> Element {
                     route: "/files"
                 }
                 SidebarButton {
-                    title: "Programs",
-                    route: "/programs"
+                    title: "Keys",
+                    route: "/keys"
                 }
                 SidebarButton {
-                    title: "Secrets",
-                    route: "/secrets"
+                    title: "Programs",
+                    route: "/programs"
                 }
         }
     })

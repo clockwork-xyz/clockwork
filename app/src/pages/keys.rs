@@ -9,7 +9,7 @@ use solana_client_wasm::solana_sdk::signature::Signature;
 
 use super::Page;
 
-pub fn SecretsPage(cx: Scope) -> Element {
+pub fn KeysPage(cx: Scope) -> Element {
     let secrets = use_state::<Vec<String>>(&cx, || vec![]);
 
     use_future(&cx, (), |_| {
@@ -27,12 +27,12 @@ pub fn SecretsPage(cx: Scope) -> Element {
                 class: "flex flex-row justify-between mb-6",
                 h1 {
                     class: "text-2xl font-semibold",
-                    "Secrets"
+                    "Keys"
                 }
                 Link {
-                    to: "/secrets/new"
+                    to: "/keys/new"
                     class: "hover:bg-white hover:text-slate-900 text-slate-100 font-semibold py-3 px-6 hover:bg-slate-200 transition",
-                    "New secret"
+                    "New key"
                 }
             }
             if secrets.is_empty() {
