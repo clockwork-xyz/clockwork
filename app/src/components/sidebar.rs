@@ -4,7 +4,7 @@ use dioxus_router::{use_route, Link};
 pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
-            class: "h-full w-48 flex flex-col items-start py-8",
+            class: "h-full w-48 flex flex-col items-start py-8 pl-4",
                 SidebarButton {
                     title: "Accounts",
                     route: "/accounts"
@@ -40,9 +40,9 @@ pub fn SidebarButton<'a>(cx: Scope<'a, SidebarButtonProps<'a>>) -> Element {
         Link {
             to: cx.props.route,
             class: if is_selected {
-                "w-full px-8 py-3 text-left transition text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 font-medium"
+                "w-40 px-4 py-3 text-left rounded transition text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 font-medium"
             } else {
-                "w-full px-8 py-3 text-left transition text-slate-500 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 font-medium"
+                "w-40 px-4 py-3 text-left rounded transition text-slate-500 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 font-medium"
             },
             "{cx.props.title}"
         }

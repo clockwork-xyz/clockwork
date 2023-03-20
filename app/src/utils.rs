@@ -12,5 +12,4 @@ pub fn format_timestamp(timestamp: i64) -> String {
         Utc,
     );
     format!("{}", dt.format("%F %H:%M UTC"))
-    // dt.to_rfc2822()
 }
