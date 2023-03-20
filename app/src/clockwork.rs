@@ -23,7 +23,7 @@ use std::str::FromStr;
 
 static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
 
-pub async fn get_threads() -> Vec<(Thread, Account)> {
+pub async fn get_threads() -> Vec<(VersionedThread, Account)> {
     WasmClient::new(RPC_URL)
         .get_program_accounts_with_config(
             &clockwork_sdk::ID,
@@ -45,12 +45,17 @@ pub async fn get_threads() -> Vec<(Thread, Account)> {
         .await
         .unwrap()
         .iter()
-        .map(|acc| (Thread::try_from(acc.1.data.clone()).unwrap(), acc.1.clone()))
-        .collect::<Vec<(Thread, Account)>>()[0..10]
+        .map(|acc| {
+            (
+                VersionedThread::try_from(acc.1.data.clone()).unwrap(),
+                acc.1.clone(),
+            )
+        })
+        .collect::<Vec<(VersionedThread, Account)>>()[0..10]
         .to_vec()
 }
 
-pub async fn get_thread(pubkey: Pubkey) -> VersionedThread {
+pub async fn get_thread(pubkey: Pubkey) -> (VersionedThread, Account) {
     let account = WasmClient::new(RPC_URL)
         .get_account_with_config(
             &pubkey,
@@ -64,8 +69,10 @@ pub async fn get_thread(pubkey: Pubkey) -> VersionedThread {
         .await
         .unwrap()
         .unwrap();
-
-    VersionedThread::try_from(account.data).unwrap()
+    (
+        VersionedThread::try_from(account.clone().data).unwrap(),
+        account,
+    )
 }
 
 pub async fn simulate_thread(

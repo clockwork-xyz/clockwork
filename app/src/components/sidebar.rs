@@ -5,22 +5,22 @@ pub fn Sidebar(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
             class: "h-full w-48 flex flex-col items-start py-8 pl-4",
-                SidebarButton {
-                    title: "Accounts",
-                    route: "/accounts"
-                }
-                SidebarButton {
-                    title: "Files",
-                    route: "/files"
-                }
-                SidebarButton {
-                    title: "Keys",
-                    route: "/keys"
-                }
-                SidebarButton {
-                    title: "Programs",
-                    route: "/programs"
-                }
+            SidebarButton {
+                title: "Accounts",
+                route: "/accounts"
+            }
+            SidebarButton {
+                title: "Files",
+                route: "/files"
+            }
+            SidebarButton {
+                title: "Keys",
+                route: "/keys"
+            }
+            SidebarButton {
+                title: "Programs",
+                route: "/programs"
+            }
         }
     })
 }

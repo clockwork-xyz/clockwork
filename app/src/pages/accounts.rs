@@ -9,7 +9,7 @@ pub fn AccountsPage(cx: Scope) -> Element {
         Page {
             div {
                 class: "flex flex-col space-y-16",
-                BlocksTable {}
+                // BlocksTable {}
                 MarketsTable {}
             }
         }

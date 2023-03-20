@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_router::Link;
 
 use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
 
@@ -23,7 +24,7 @@ pub fn MarketsTable(cx: Scope) -> Element {
                 "Markets"
             }
             table {
-                class: "w-full divide-y divide-slate-800",
+                class: "w-full",
                 Header {}
                 for (i, feed) in market_data.get().iter().enumerate() {
                     Row {
@@ -63,17 +64,23 @@ struct RowProps<'a> {
 }
 
 fn Row<'a>(cx: Scope<'a, RowProps<'a>>) -> Element {
+    let address = cx.props.price.pubkey;
     let quote = cx.props.price.price.quote();
+    let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
     cx.render(rsx! {
-        tr {
-            class: "px-3 text-base hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+        Link {
+            // class: "px-3 text-base hover:bg-slate-100 hover:text-slate-900 hover:cursor-pointer focus:bg-slate-900",
+            to: "/accounts/markets/{address}",
+            class: "table-row font-mono text-sm transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
             id: cx.props.elem_id.as_str(),
-            td {
-                class: "whitespace-nowrap px-3 py-4",
+            div {
+                // class: "whitespace-nowrap px-3 py-4",
+                class: cell_class,
                 "{cx.props.price.ticker}"
             }
-            td {
-                class: "whitespace-nowrap px-3 py-4",
+            div {
+                // class: "whitespace-nowrap px-3 py-4",
+                class: cell_class,
                 "{quote}"
             }
         }

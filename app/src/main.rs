@@ -45,10 +45,11 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/accounts", AccountsPage{} }
                 Route { to: "/accounts/markets/:address", MarketPage{} }
                 Route { to: "/files", FilesPage{} }
-                Route { to: "/programs", ProgramsPage{} }
-                Route { to: "/programs/threads/:address", ThreadPage {} }
                 Route { to: "/keys", KeysPage{} }
                 Route { to: "/keys/new", NewKeyPage{} }
+                Route { to: "/programs", ProgramsPage{} }
+                Route { to: "/programs/threads/:address", ThreadPage {} }
+                Route { to: "/settings", SettingsPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
             }
