@@ -1132,6 +1132,7 @@ dependencies = [
  "clockwork-sdk 1.4.2",
  "clockwork-thread-program 1.4.2",
  "clockwork-thread-program 2.0.2",
+ "clockwork-utils 2.0.2",
  "dioxus",
  "dioxus-router",
  "dioxus-web",

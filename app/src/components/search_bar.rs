@@ -83,7 +83,7 @@ pub fn SearchButton(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
     cx.render(rsx! {
         button {
-            class: "rounded-full bg-transparent text-slate-100 hover:text-slate-900 hover:bg-slate-100 p-3",
+            class: "rounded-full bg-transparent text-slate-100 transition hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 p-3",
             onclick: move |_| {
                 let mut w_search_state = search_state.write();
                 w_search_state.is_searching = true;

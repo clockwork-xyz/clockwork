@@ -11,5 +11,6 @@ pub fn format_timestamp(timestamp: i64) -> String {
         NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap(),
         Utc,
     );
-    dt.to_rfc2822()
+    format!("{}", dt.format("%F %H:%M UTC"))
+    // dt.to_rfc2822()
 }

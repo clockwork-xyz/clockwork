@@ -31,7 +31,7 @@ pub fn KeysPage(cx: Scope) -> Element {
                 }
                 Link {
                     to: "/keys/new"
-                    class: "hover:bg-white hover:text-slate-900 text-slate-100 font-semibold py-3 px-6 hover:bg-slate-200 transition",
+                    class: "text-slate-100 font-semibold py-3 px-6 transition hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
                     "New key"
                 }
             }

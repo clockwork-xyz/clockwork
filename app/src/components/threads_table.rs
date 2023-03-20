@@ -1,11 +1,13 @@
+use clockwork_sdk::state::{Thread, Trigger};
+use clockwork_utils::pubkey::Abbreviated;
+use dioxus::prelude::*;
+use dioxus_router::{use_router, Link};
+use solana_client_wasm::solana_sdk::account::Account;
+
 use crate::{
     clockwork::get_threads,
     utils::{format_balance, format_timestamp},
 };
-use clockwork_sdk::state::{Thread, Trigger};
-use dioxus::prelude::*;
-use dioxus_router::Link;
-use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
     let threads = use_state::<Vec<(Thread, Account)>>(&cx, || vec![]);
@@ -18,13 +20,16 @@ pub fn ThreadsTable(cx: Scope) -> Element {
     if threads.get().len() > 0 {
         cx.render(rsx! {
             table {
-                class: "w-full divide-y divide-slate-800",
+                class: "w-full",
                 Header {}
-                for (i, thread) in threads.get().iter().enumerate() {
-                    Row {
-                        thread: thread.0.clone(),
-                        account: thread.1.clone(),
-                        elem_id: format!("list-item-{}", i),
+                div {
+                    class: "table-row-group",
+                    for (i, thread) in threads.get().iter().enumerate() {
+                        Row {
+                            thread: thread.0.clone(),
+                            account: thread.1.clone(),
+                            elem_id: format!("list-item-{}", i),
+                        }
                     }
                 }
             }
@@ -39,37 +44,44 @@ pub fn ThreadsTable(cx: Scope) -> Element {
 }
 
 fn Header(cx: Scope) -> Element {
+    let cell_class = "table-cell font-medium py-2 first:pl-3";
     cx.render(rsx! {
         thead {
-            tr {
-                class: "text-left text-sm text-slate-500",
+            class: "table-header-group",
+            div {
+                class: "table-row text-left text-sm text-slate-500",
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Thread"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Balance"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Created at"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "ID"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
+                    scope: "col",
+                    "Last exec"
+                }
+                th {
+                    class: cell_class,
                     scope: "col",
                     "Paused"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Trigger"
                 }
@@ -86,51 +98,62 @@ struct RowProps {
 }
 
 fn Row(cx: Scope<RowProps>) -> Element {
+    let router = use_router(cx);
     let thread = cx.props.thread.clone();
-    let thread_pubkey = Thread::pubkey(thread.authority, thread.id.clone()).to_string();
+    let address = Thread::pubkey(thread.authority, thread.id.clone());
+    let address_abbr = address.abbreviated();
     let balance = format_balance(cx.props.account.lamports);
     let created_at = format_timestamp(thread.created_at.unix_timestamp);
     let id = thread.id;
     let paused = thread.paused.to_string();
+    let last_exec_at = match thread.exec_context {
+        None => String::from("–"),
+        Some(exec_context) => format!("{}", exec_context.last_exec_at)
+    };
     let trigger = match thread.trigger {
         Trigger::Account {
-            address: _,
+            address,
             offset: _,
             size: _,
-        } => "Account".to_string(),
+        } => address.abbreviated(),
         Trigger::Cron {
-            schedule: _,
+            schedule,
             skippable: _,
-        } => "Cron".to_string(),
-        Trigger::Immediate => "Immediate".to_string(),
+        } => schedule,
+        Trigger::Immediate => "–".to_string(),
     };
+    let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
     cx.render(rsx! {
         Link {
-            class: "table-row px-3 text-base hover:bg-slate-100 hover:text-slate-900",
-            to: "/thread/{thread_pubkey}",
+            class: "table-row font-mono text-sm transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
+            to: "/programs/threads/{address}",
             id: cx.props.elem_id.as_str(),
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
-                "{thread_pubkey}"
+                class: cell_class,
+                "{address_abbr}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{balance}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{created_at}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{id}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
+                "{last_exec_at}"
+            }
+            div {
+                class: cell_class,
                 "{paused}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{trigger}"
             }
         }

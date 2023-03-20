@@ -1,5 +1,6 @@
-pub mod thread;
 pub mod explorer;
+pub mod pubkey;
+pub mod thread;
 
 use std::fmt::{Debug, Display, Formatter};
 
