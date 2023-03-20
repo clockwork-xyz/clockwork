@@ -13,8 +13,12 @@ use solana_client_wasm::{
         transaction::{Transaction, TransactionError},
     },
     utils::{
-        rpc_config::{RpcAccountInfoConfig, RpcBlockConfig, RpcProgramAccountsConfig},
+        rpc_config::{
+            GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
+            RpcProgramAccountsConfig,
+        },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
+        rpc_response::RpcConfirmedTransactionStatusWithSignature,
     },
     ClientResult, WasmClient,
 };
@@ -242,4 +246,19 @@ pub async fn get_block() -> Option<UiConfirmedBlock> {
         )
         .await
         .ok()
+}
+
+pub async fn get_transactions(address: Pubkey) -> Vec<RpcConfirmedTransactionStatusWithSignature> {
+    WasmClient::new(RPC_URL)
+        .get_signatures_for_address_with_config(
+            &address,
+            GetConfirmedSignaturesForAddress2Config {
+                before: None,
+                until: None,
+                limit: Some(10),
+                commitment: Some(CommitmentConfig::processed()),
+            },
+        )
+        .await
+        .unwrap()
 }
