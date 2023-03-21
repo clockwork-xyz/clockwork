@@ -2,6 +2,7 @@
 mod clockwork;
 mod components;
 mod context;
+mod hooks;
 mod hot_keys;
 mod pages;
 mod pyth;
