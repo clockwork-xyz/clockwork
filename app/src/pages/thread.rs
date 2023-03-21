@@ -25,7 +25,7 @@ pub fn ThreadPage(cx: Scope) -> Element {
             thread.set(Some(t.clone()));
         }
     });
-
+    
     if let Some(t) = thread.get() {
         cx.render(rsx! {
             Page {

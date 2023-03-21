@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_thread_program_v2::state::{Thread, Trigger, TriggerContext, VersionedThread};
+use clockwork_thread_program_v2::state::{Trigger, TriggerContext, VersionedThread};
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
 use dioxus_router::{use_router, Link};
@@ -9,31 +9,49 @@ use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
     clockwork::get_threads,
+    hooks::use_pagination,
     utils::{format_balance, format_timestamp},
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let threads = use_state::<Vec<(VersionedThread, Account)>>(&cx, || vec![]);
+    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, 15, || vec![]);
 
     use_future(&cx, (), |_| {
-        let threads = threads.clone();
-        async move { threads.set(get_threads().await) }
+        let paginated_threads = paginated_threads.clone();
+        async move { paginated_threads.set(get_threads().await) }
     });
 
-    if threads.get().len() > 0 {
+     if let Some(threads) = paginated_threads.get() {
         cx.render(rsx! {
             table {
                 class: "w-full",
                 Header {}
                 div {
                     class: "table-row-group",
-                    for (i, thread) in threads.get().iter().enumerate() {
+                    for (i, thread) in threads.iter().enumerate() {
                         Row {
                             thread: thread.0.clone(),
                             account: thread.1.clone(),
                             elem_id: format!("list-item-{}", i),
                         }
                     }
+                }
+            }
+            div {
+                class: "flex items-center justify-center space-x-2",
+                button {
+                    class: "py-2 px-6 dark:text-white-200 hover:bg-slate-600 text-black-100 text-sm font-medium rounded-lg",
+                    onclick: move |_| { paginated_threads.prev_page() },
+                    "←"
+                }
+                div {
+                    class: "text-sm text-gray-100",
+                    "{paginated_threads.current_page() + 1}"
+                }
+                button {
+                    class: "py-2 px-6 dark:text-white-200 hover:bg-slate-600 text-black-100 text-sm font-medium rounded-lg",
+                    onclick: move |_| { paginated_threads.next_page() },
+                    "→"
                 }
             }
         })
