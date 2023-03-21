@@ -1,0 +1,42 @@
+name: Publish Crates (Manually)
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+obs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set env vars
+        run: |
+          source scripts/ci/rust-version.sh
+          echo "RUST_STABLE=$rust_stable" | tee -a $GITHUB_ENV
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_STABLE }}
+          override: true
+          profile: minimal
+          components: rustfmt
+
+      - name: Check Solana version
+        run: |
+          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+          echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
+          SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
+          SOLANA_VERSION="v${SOLANA_VERSION#=}"
+          echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"
+
+      - name: Grant permissions to build-all.sh
+        run: chmod +x ./scripts/build-all.sh
+        
+      - name: Publish crates to crates.io
+        uses: katyo/publish-crates@v2
+        with:
+          path: cli,client,cron,sdk,utils
+          token: ${{ secrets.CRATES_TOKEN }}
