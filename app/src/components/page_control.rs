@@ -1,15 +1,13 @@
-use clockwork_thread_program_v2::state::VersionedThread;
 use dioxus::prelude::*;
-use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::hooks::UsePagination;
 
 #[derive(Clone, Props)]
-pub struct PaginationControlsProps<'a, T> {
+pub struct PaginationControlsProps<'a, T: Clone + 'static> {
     pub paginated_data: &'a UsePagination<T>,
 }
 
-impl<'a> PartialEq for PaginationControlsProps<'a> {
+impl<'a, T: Clone + 'static> PartialEq for PaginationControlsProps<'a, T> {
     fn eq(&self, other: &Self) -> bool {
         self.paginated_data
             .table_id
@@ -17,7 +15,9 @@ impl<'a> PartialEq for PaginationControlsProps<'a> {
     }
 }
 
-pub fn PageControl<'a>(cx: Scope<'a, PaginationControlsProps<'a>>) -> Element<'a> {
+pub fn PageControl<'a, T: Clone + 'static>(
+    cx: Scope<'a, PaginationControlsProps<'a, T>>,
+) -> Element<'a> {
     let paginated_data = &cx.props.paginated_data;
     let button_class = "py-2 px-6 text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 transition text-sm font-medium rounded";
     let hidden_button_class = "py-2 px-6 text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 transition text-sm font-medium rounded invisible";
