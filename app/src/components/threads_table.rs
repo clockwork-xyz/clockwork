@@ -74,33 +74,38 @@ fn Header(cx: Scope) -> Element {
                 th {
                     class: cell_class,
                     scope: "col",
-                    "Thread"
+                    "ID"
+                }
+                // th {
+                //     class: cell_class,
+                //     scope: "col",
+                //     "Thread"
+                // }
+                th {
+                    class: cell_class,
+                    scope: "col",
+                    "Authority"
                 }
                 th {
                     class: cell_class,
                     scope: "col",
                     "Balance"
                 }
-                th {
-                    class: cell_class,
-                    scope: "col",
-                    "Created at"
-                }
-                th {
-                    class: cell_class,
-                    scope: "col",
-                    "ID"
-                }
+                // th {
+                //     class: cell_class,
+                //     scope: "col",
+                //     "Created at"
+                // }
                 th {
                     class: cell_class,
                     scope: "col",
                     "Last exec"
                 }
-                th {
-                    class: cell_class,
-                    scope: "col",
-                    "Paused"
-                }
+                // th {
+                //     class: cell_class,
+                //     scope: "col",
+                //     "Paused"
+                // }
                 th {
                     class: cell_class,
                     scope: "col",
@@ -128,6 +133,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     let thread = cx.props.thread.clone();
     let address = thread.pubkey(); // Thread::pubkey(thread.authority(), thread.id().clone());
     let address_abbr = address.abbreviated();
+    let authority = thread.authority().abbreviated();
     let balance = format_balance(cx.props.account.lamports, true);
     let created_at = format_timestamp(thread.created_at().unix_timestamp);
     let id = String::from_utf8(thread.id()).unwrap();
@@ -208,28 +214,32 @@ fn Row(cx: Scope<RowProps>) -> Element {
             id: cx.props.elem_id.as_str(),
             div {
                 class: cell_class,
-                "{address_abbr}"
+                "{id}"
+            }
+            // div {
+            //     class: cell_class,
+            //     "{address_abbr}"
+            // }
+            div {
+                class: cell_class,
+                "{authority}"
             }
             div {
                 class: cell_class,
                 "{balance}"
             }
-            div {
-                class: cell_class,
-                "{created_at}"
-            }
-            div {
-                class: cell_class,
-                "{id}"
-            }
+            // div {
+            //     class: cell_class,
+            //     "{created_at}"
+            // }
             div {
                 class: cell_class,
                 "{last_exec_at}"
             }
-            div {
-                class: cell_class,
-                "{paused}"
-            }
+            // div {
+            //     class: cell_class,
+            //     "{paused}"
+            // }
             div {
                 class: cell_class,
                 div {
@@ -245,12 +255,13 @@ fn Row(cx: Scope<RowProps>) -> Element {
 }
 
 fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
-    clockwork_cron::Schedule::from_str(&schedule)
-        .unwrap()
-        .next_after(&DateTime::<Utc>::from_utc(
+    match clockwork_cron::Schedule::from_str(&schedule) {
+       Ok(schedule) => schedule.next_after(&DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
             Utc,
         ))
         .take()
-        .map(|datetime| datetime.timestamp())
+        .map(|datetime| datetime.timestamp()),
+        Err(_err) => None
+    }
 }

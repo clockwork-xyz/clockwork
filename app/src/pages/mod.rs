@@ -1,3 +1,4 @@
+pub mod account;
 pub mod accounts;
 pub mod files;
 pub mod home;
@@ -10,6 +11,7 @@ pub mod programs;
 pub mod settings;
 pub mod thread;
 
+pub use account::*;
 pub use accounts::*;
 pub use files::*;
 pub use home::*;

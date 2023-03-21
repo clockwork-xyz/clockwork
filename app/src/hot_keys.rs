@@ -20,9 +20,16 @@ pub fn HotKeys(cx: Scope) -> Element {
                 let document = gloo_utils::document();
                 let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap_throw();
                 match event.key().as_str() {
+                    // "Esc" | "Escape" => {
+                    //     log::info!("Escape!");
+                    //     let mut w_search_state = search_state.write();
+                    //     w_search_state.active = false;
+                    //     w_search_state.query = "".to_string();
+                    // }
                     "/" => {
                         let mut w_search_state = search_state.write();
-                        w_search_state.is_searching = true;
+                        w_search_state.active = !w_search_state.active;
+                        w_search_state.query = "".to_string();
                     }
                     "G" | "g" => {
                         goto_mode = true;
