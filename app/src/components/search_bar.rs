@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anchor_lang::prelude::Pubkey;
+use clockwork_utils::pubkey::Abbreviated;
 use dioxus::{html::input_data::keyboard_types::Key, prelude::*};
 use dioxus_router::{use_router, Link};
 use wasm_bindgen::JsCast;
@@ -19,7 +20,7 @@ pub fn SearchPage(cx: Scope) -> Element {
                 },
                 class: "absolute top-0 left-0 w-screen h-screen backdrop-opacity-10 bg-white/10 transition content-center flex flex-col",
                 div {
-                    class: "max-w-3xl w-full mx-auto mt-40 bg-[#0e0e10] flex flex-col rounded drop-shadow-md",
+                    class: "max-w-3xl w-full mx-auto mt-40 bg-[#0e0e10] p-1 flex flex-col rounded drop-shadow-md",
                     SearchBar {}
                     SearchResults {}
                 }
@@ -91,7 +92,7 @@ pub fn SearchResults(cx: Scope) -> Element {
             if let Ok(address) = Pubkey::from_str(&query) {
                 log::info!("Found address: {:?}", address);
                 vec![SearchResult {
-                    title: format!("Go to account {}", address),
+                    title: format!("Go to account {}", address.abbreviated()),
                     route: format!("/accounts/{}", address),
                 }]
             } else {
@@ -150,7 +151,7 @@ pub fn SearchResultRow(cx: Scope<SearchResultRowProps>) -> Element {
                 }
             }
             p {
-                class: "text-sm my-auto",
+                class: "text-base my-auto",
                 "{title}"
             }
         }
