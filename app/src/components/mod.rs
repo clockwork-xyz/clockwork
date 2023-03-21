@@ -1,3 +1,4 @@
+pub mod account_info_table;
 pub mod backpack;
 pub mod blocks_table;
 pub mod clock;
@@ -10,6 +11,7 @@ pub mod thread_info_table;
 pub mod thread_sim_logs;
 pub mod threads_table;
 
+pub use account_info_table::*;
 pub use backpack::*;
 pub use blocks_table::*;
 pub use clock::*;

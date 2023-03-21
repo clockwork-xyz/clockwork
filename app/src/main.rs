@@ -25,6 +25,12 @@ pub struct SearchState {
     pub query: String,
 }
 
+impl PartialEq for SearchState {
+    fn eq(&self, other: &Self) -> bool {
+        self.is_searching.eq(&other.is_searching)
+    }
+}
+
 fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || SearchState {
         is_searching: false,
@@ -43,6 +49,7 @@ fn App(cx: Scope) -> Element {
                 Navbar {}
                 Route { to: "/", HomePage{} }
                 Route { to: "/accounts", AccountsPage{} }
+                Route { to: "/accounts/:address", AccountPage{} }
                 Route { to: "/accounts/markets/:address", MarketPage{} }
                 Route { to: "/files", FilesPage{} }
                 Route { to: "/keys", KeysPage{} }

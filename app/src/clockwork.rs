@@ -27,6 +27,21 @@ use std::str::FromStr;
 
 static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
 
+pub async fn get_account(address: Pubkey) -> ClientResult<Option<Account>> {
+    WasmClient::new(RPC_URL)
+        .get_account_with_config(
+            &address,
+            RpcAccountInfoConfig {
+                encoding: Some(UiAccountEncoding::Base64),
+                data_slice: None,
+                commitment: Some(CommitmentConfig::finalized()),
+                min_context_slot: None,
+            },
+        )
+        .await
+    // .unwrap_or()
+}
+
 pub async fn get_threads() -> Vec<(VersionedThread, Account)> {
     WasmClient::new(RPC_URL)
         .get_program_accounts_with_config(
