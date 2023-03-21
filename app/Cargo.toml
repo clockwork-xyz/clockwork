@@ -3,6 +3,7 @@ name = "clockwork-app"
 version = "0.1.0"
 edition = "2021"
 author = ["Nick Garfield"]
+publish = false
 
 [dependencies]
 anchor-lang = "0.26.0"
