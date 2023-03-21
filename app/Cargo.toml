@@ -34,8 +34,3 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"
 web-sys = "0.3.61"
-
-[patch.crates-io]
-dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
-dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
