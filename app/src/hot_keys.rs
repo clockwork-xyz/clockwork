@@ -23,12 +23,12 @@ pub fn HotKeys(cx: Scope) -> Element {
                     // "Esc" | "Escape" => {
                     //     log::info!("Escape!");
                     //     let mut w_search_state = search_state.write();
-                    //     w_search_state.is_searching = false;
+                    //     w_search_state.active = false;
                     //     w_search_state.query = "".to_string();
                     // }
                     "/" => {
                         let mut w_search_state = search_state.write();
-                        w_search_state.is_searching = !w_search_state.is_searching;
+                        w_search_state.active = !w_search_state.active;
                         w_search_state.query = "".to_string();
                     }
                     "G" | "g" => {

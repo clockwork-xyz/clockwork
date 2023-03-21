@@ -2,25 +2,27 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::Pubkey;
 use dioxus::{html::input_data::keyboard_types::Key, prelude::*};
-use dioxus_router::use_router;
+use dioxus_router::{use_router, Link};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 
-use crate::SearchState;
+use crate::{SearchResult, SearchState};
 
 pub fn SearchPage(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
-    let r_search_state = search_state.read();
-    if r_search_state.is_searching {
+    if search_state.read().active {
         cx.render(rsx! {
             div {
                 onclick: move |_| {
                     let mut w_search_state = search_state.write();
-                    w_search_state.is_searching = false;
-                    w_search_state.query = "".to_string();
+                    w_search_state.active = false;
                 },
-                class: "absolute top-0 left-0 w-screen h-screen backdrop-blur content-center flex flex-col",
-                SearchBar{}
+                class: "absolute top-0 left-0 w-screen h-screen backdrop-opacity-10 bg-white/10 transition content-center flex flex-col",
+                div {
+                    class: "max-w-3xl w-full mx-auto mt-40 bg-[#0e0e10] flex flex-col rounded drop-shadow-md",
+                    SearchBar {}
+                    SearchResults {}
+                }
             }
         })
     } else {
@@ -33,22 +35,19 @@ pub fn SearchBar(cx: Scope) -> Element {
     let query = &search_state.read().query;
     let router = use_router(cx);
 
-    use_future(&cx, search_state, |_| {
-        let search_state = search_state.clone();
-        async move {
-            gloo_timers::future::TimeoutFuture::new(50).await;
-            let document = gloo_utils::document();
-            if search_state.read().is_searching {
-                if let Some(element) = document.get_element_by_id("search-bar") {
-                    element.unchecked_into::<HtmlElement>().focus().ok();
-                }
-            }
+    // Move the focus to the search bar.
+    // autofocus property on input is having issues: https://github.com/DioxusLabs/dioxus/issues/725
+    use_effect(&cx, (), |_| async move {
+        gloo_timers::future::TimeoutFuture::new(50).await;
+        let document = gloo_utils::document();
+        if let Some(element) = document.get_element_by_id("search-bar") {
+            element.unchecked_into::<HtmlElement>().focus().ok();
         }
     });
 
     cx.render(rsx! {
         input {
-            class: "border border-slate-700 rounded bg-slate-900 text-slate-100 p-4 w-full mx-auto max-w-3xl w-full mt-32",
+            class: "rounded bg-[#0e0e10] text-slate-100 p-5 w-full focus:ring-0 focus:outline-0 text-base",
             id: "search-bar",
             r#type: "text",
             placeholder: "Search",
@@ -69,14 +68,91 @@ pub fn SearchBar(cx: Scope) -> Element {
                     // TODO Parse the query into a pubkey address and navigate to the correct page.
                     if let Ok(address) = Pubkey::from_str(&query) {
                         router.navigate_to(&*format!("/accounts/{}", address.to_string()));
-                        w_search_state.is_searching = false;
+                        w_search_state.active = false;
                         w_search_state.query = "".to_string();
                     } else {
-                        // TODO Display "invalid address" error to user 
+                        // TODO Display "invalid address" error to user
                         log::info!("Invalid address");
                     }
                 }
             },
+        }
+    })
+}
+
+pub fn SearchResults(cx: Scope) -> Element {
+    let search_state = use_shared_state::<SearchState>(cx).unwrap();
+    let query = &search_state.read().query;
+
+    let results = use_future(&cx, query, |_| {
+        let query = query.clone();
+        async move {
+            log::info!("Parsing query: {:?}", query);
+            if let Ok(address) = Pubkey::from_str(&query) {
+                log::info!("Found address: {:?}", address);
+                vec![SearchResult {
+                    title: format!("Go to account {}", address),
+                    route: format!("/accounts/{}", address),
+                }]
+            } else {
+                // TODO Display "invalid address" error to user
+                log::info!("Invalid address");
+                vec![]
+            }
+        }
+    });
+
+    if let Some(search_results) = results.value() {
+        cx.render(rsx! {
+            div {
+                class: "flex flex-col w-full",
+                for search_result in search_results.iter() {
+                    rsx! {
+                        SearchResultRow {
+                            result: search_result.clone(),
+                        }
+                    }
+                }
+            }
+        })
+    } else {
+        None
+    }
+}
+
+#[derive(PartialEq, Props)]
+pub struct SearchResultRowProps {
+    result: SearchResult,
+}
+
+pub fn SearchResultRow(cx: Scope<SearchResultRowProps>) -> Element {
+    let route = &cx.props.result.route;
+    let title = &cx.props.result.title;
+    let search_state = use_shared_state::<SearchState>(cx).unwrap();
+    cx.render(rsx! {
+        Link {
+            to: route,
+            class: "flex flex-row gap-x-2 mx-2 p-3 text-slate-100 transition hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 rounded last:mb-2",
+            onclick: move |_| {
+                let mut w_search_state = search_state.write();
+                w_search_state.active = false;
+            },
+            svg {
+                class: "w-6 h-6",
+                fill: "none",
+                view_box: "0 0 24 24",
+                stroke_width: "1.5",
+                stroke: "currentColor",
+                path {
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    d: "M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3",
+                }
+            }
+            p {
+                class: "text-sm my-auto",
+                "{title}"
+            }
         }
     })
 }
@@ -88,7 +164,7 @@ pub fn SearchButton(cx: Scope) -> Element {
             class: "rounded-full bg-transparent text-slate-100 transition hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 p-3",
             onclick: move |_| {
                 let mut w_search_state = search_state.write();
-                w_search_state.is_searching = true;
+                w_search_state.active = true;
             },
             svg {
                 class: "w-6 h-6",

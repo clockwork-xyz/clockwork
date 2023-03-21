@@ -20,21 +20,32 @@ fn main() {
     dioxus_web::launch(App);
 }
 
+#[derive(Debug)]
 pub struct SearchState {
-    pub is_searching: bool,
+    pub active: bool,
+    pub busy: bool,
     pub query: String,
+    pub results: Vec<SearchResult>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct SearchResult {
+    pub title: String,
+    pub route: String,
 }
 
 impl PartialEq for SearchState {
     fn eq(&self, other: &Self) -> bool {
-        self.is_searching.eq(&other.is_searching)
+        self.active.eq(&other.active)
     }
 }
 
 fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || SearchState {
-        is_searching: false,
+        active: false,
+        busy: false,
         query: String::new(),
+        results: vec![],
     });
     use_shared_state_provider(cx, || User {
         pubkey: None,
