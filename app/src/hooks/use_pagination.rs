@@ -3,6 +3,7 @@ use std::{cell::RefCell, ops::Rem, rc::Rc, sync::Arc};
 
 pub fn use_pagination<T: Clone + 'static>(
     cx: &ScopeState,
+    table_id: String,
     page_size: usize,
     initial_state_fn: impl FnOnce() -> Vec<T>,
 ) -> &UsePagination<T> {
@@ -74,6 +75,7 @@ pub fn use_pagination<T: Clone + 'static>(
             total_pages_setter,
             update_callback,
             page_size,
+            table_id,
         }
     });
 
@@ -96,6 +98,7 @@ pub struct UsePagination<T: Clone + 'static> {
     total_pages_setter: Rc<dyn Fn(usize)>,
     update_callback: Arc<dyn Fn()>,
     page_size: usize,
+    pub table_id: String,
 }
 
 impl<T: Clone + 'static> UsePagination<T> {
@@ -138,6 +141,10 @@ impl<T: Clone + 'static> UsePagination<T> {
     pub fn current_page(&self) -> &usize {
         &self.current_page
     }
+
+    pub fn total_pages(&self) -> &usize {
+        &self.total_pages
+    }
 }
 
 impl<T: Clone + 'static> Clone for UsePagination<T> {
@@ -154,6 +161,7 @@ impl<T: Clone + 'static> Clone for UsePagination<T> {
             total_pages_setter: self.total_pages_setter.clone(),
             update_callback: self.update_callback.clone(),
             page_size: self.page_size.clone(),
+            table_id: self.table_id.clone(),
         }
     }
 }

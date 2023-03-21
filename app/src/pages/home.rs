@@ -1,7 +1,10 @@
 use dioxus::prelude::*;
+use dioxus_router::Redirect;
 
 pub fn HomePage(cx: Scope) -> Element {
     cx.render(rsx! {
-        h1 { "Home" }
+        Redirect {
+            to: "/accounts"
+        }
     })
 }

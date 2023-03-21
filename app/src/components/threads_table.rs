@@ -4,17 +4,17 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_thread_program_v2::state::{Trigger, TriggerContext, VersionedThread};
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
-use dioxus_router::{use_router, Link};
+use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
     clockwork::get_threads,
     hooks::use_pagination,
-    utils::{format_balance, format_timestamp},
+    utils::{format_balance, format_timestamp}, components::page_control::PageControl,
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, 15, || vec![]);
+    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, "threads".to_string(), 15, || vec![]);
 
     use_future(&cx, (), |_| {
         let paginated_threads = paginated_threads.clone();
@@ -37,22 +37,8 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                     }
                 }
             }
-            div {
-                class: "flex items-center justify-center space-x-2",
-                button {
-                    class: "py-2 px-6 dark:text-white-200 hover:bg-slate-600 text-black-100 text-sm font-medium rounded-lg",
-                    onclick: move |_| { paginated_threads.prev_page() },
-                    "←"
-                }
-                div {
-                    class: "text-sm text-gray-100",
-                    "{paginated_threads.current_page() + 1}"
-                }
-                button {
-                    class: "py-2 px-6 dark:text-white-200 hover:bg-slate-600 text-black-100 text-sm font-medium rounded-lg",
-                    onclick: move |_| { paginated_threads.next_page() },
-                    "→"
-                }
+            PageControl {
+                paginated_data: paginated_threads,
             }
         })
     } else {
@@ -65,7 +51,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
 }
 
 fn Header(cx: Scope) -> Element {
-    let cell_class = "table-cell font-medium py-2 first:pl-3";
+    let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
     cx.render(rsx! {
         thead {
             class: "table-header-group",
@@ -129,15 +115,14 @@ struct RowProps {
 }
 
 fn Row(cx: Scope<RowProps>) -> Element {
-    let router = use_router(cx);
     let thread = cx.props.thread.clone();
-    let address = thread.pubkey(); // Thread::pubkey(thread.authority(), thread.id().clone());
-    let address_abbr = address.abbreviated();
+    let address = thread.pubkey(); 
+    // let address_abbr = address.abbreviated();
     let authority = thread.authority().abbreviated();
     let balance = format_balance(cx.props.account.lamports, true);
-    let created_at = format_timestamp(thread.created_at().unix_timestamp);
+    // let created_at = format_timestamp(thread.created_at().unix_timestamp);
     let id = String::from_utf8(thread.id()).unwrap();
-    let paused = thread.paused().to_string();
+    // let paused = thread.paused().to_string();
     let last_exec_at = match thread.exec_context() {
         None => String::from("–"),
         Some(exec_context) => format!("{}", exec_context.last_exec_at),
@@ -206,7 +191,8 @@ fn Row(cx: Scope<RowProps>) -> Element {
         ThreadStatus::Unhealthy => "w-3 h-3 bg-red-500 rounded-full ml-4",
         ThreadStatus::Unknown =>"w-3 h-3 bg-slate-500 rounded-full ml-4",
     };
-    let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
+    // let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
+    let cell_class = "table-cell whitespace-nowrap font-medium py-2 px-5 first:pl-3 first:truncate last:pr-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br";
     cx.render(rsx! {
         Link {
             class: "table-row font-mono text-sm items-start transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
