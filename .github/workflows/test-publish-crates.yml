@@ -41,6 +41,6 @@ jobs:
       - name: Publish crates to crates.io
         uses: katyo/publish-crates@v2
         with:
-          path: cli,client,cron,sdk,utils
+          path: cli
           token: ${{ secrets.CRATES_TOKEN }}
           dry-run: true
