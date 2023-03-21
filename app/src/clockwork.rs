@@ -39,7 +39,6 @@ pub async fn get_account(address: Pubkey) -> ClientResult<Option<Account>> {
             },
         )
         .await
-    // .unwrap_or()
 }
 
 pub async fn get_threads() -> Vec<(VersionedThread, Account)> {
@@ -70,7 +69,7 @@ pub async fn get_threads() -> Vec<(VersionedThread, Account)> {
                 acc.1.clone(),
             )
         })
-        .collect::<Vec<(VersionedThread, Account)>>()[0..10]
+        .collect::<Vec<(VersionedThread, Account)>>()
         .to_vec()
 }
 

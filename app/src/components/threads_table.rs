@@ -255,12 +255,13 @@ fn Row(cx: Scope<RowProps>) -> Element {
 }
 
 fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
-    clockwork_cron::Schedule::from_str(&schedule)
-        .unwrap()
-        .next_after(&DateTime::<Utc>::from_utc(
+    match clockwork_cron::Schedule::from_str(&schedule) {
+       Ok(schedule) => schedule.next_after(&DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
             Utc,
         ))
         .take()
-        .map(|datetime| datetime.timestamp())
+        .map(|datetime| datetime.timestamp()),
+        Err(_err) => None
+    }
 }
