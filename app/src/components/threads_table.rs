@@ -21,12 +21,13 @@ pub fn ThreadsTable(cx: Scope) -> Element {
         async move { paginated_threads.set(get_threads().await) }
     });
 
-    if let Some(threads) = paginated_threads.get() {
+     if let Some(threads) = paginated_threads.get() {
         cx.render(rsx! {
             table {
-                class: "table-row-group",
+                class: "w-full",
                 Header {}
                 div {
+                    class: "table-row-group",
                     for (i, thread) in threads.iter().enumerate() {
                         Row {
                             thread: thread.0.clone(),
@@ -35,6 +36,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                         }
                     }
                 }
+            }
             div {
                 class: "flex items-center justify-center space-x-2",
                 button {
@@ -52,7 +54,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                     "→"
                 }
             }
-    }})
+        })
     } else {
         cx.render(rsx! {
             div {
