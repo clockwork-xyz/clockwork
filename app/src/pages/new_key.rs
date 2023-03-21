@@ -4,7 +4,6 @@ use anchor_lang::prelude::Pubkey;
 use clockwork_relayer_api::{SecretCreate, SignedRequest};
 use dioxus::prelude::*;
 use dioxus_router::use_router;
-use dotenv_codegen::dotenv;
 use reqwest::header::CONTENT_TYPE;
 use solana_client_wasm::solana_sdk::signature::Signature;
 
@@ -12,11 +11,13 @@ use crate::components::backpack;
 
 use super::Page;
 
-pub fn NewSecretPage(cx: Scope) -> Element {
+pub fn NewKeyPage(cx: Scope) -> Element {
     let router = use_router(&cx);
 
     let name = use_state(cx, || "".to_string());
     let word = use_state(cx, || "".to_string());
+
+    // TODO: Connect a new key to the user profile.
 
     cx.render(rsx! {
         Page {
@@ -26,7 +27,7 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                     class: "flex flex-col m-auto w-full max-w-3xl space-y-6",
                     h1 {
                         class: "text-2xl font-semibold",
-                        "New Secret"
+                        "New Key"
                     }
                     form {
                         class: "flex flex-col space-y-8 w-full",
@@ -61,7 +62,7 @@ pub fn NewSecretPage(cx: Scope) -> Element {
                         class: "flex flex-row w-full justify-between",
                         button {
                             class: "font-normal text-slate-100 bg-transparent hover:bg-slate-100 hover:text-slate-900 transition py-3 w-full",
-                            onclick: move |_| { router.navigate_to("/secrets") },
+                            onclick: move |_| { router.navigate_to("/keys") },
                             "Cancel"
                         }
                         button {
@@ -99,7 +100,7 @@ pub async fn create_secret(name: String, word: String) -> String {
         ),
     };
     reqwest::Client::new()
-        .post(format!("{}/secret_create", dotenv!("RELAYER_URL")))
+        .post("http://3.83.67.25:8000/secret_create")
         .header(CONTENT_TYPE, "application/json")
         .json(&req)
         .send()

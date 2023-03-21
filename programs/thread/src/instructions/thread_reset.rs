@@ -25,8 +25,10 @@ pub fn handler(ctx: Context<ThreadReset>) -> Result<()> {
     // Get accounts
     let thread = &mut ctx.accounts.thread;
 
-    // Reset the next instruction.
+    // Full reset the thread state.
     thread.next_instruction = None;
+    thread.exec_context = None;
+    thread.created_at = Clock::get().unwrap().into();
 
     Ok(())
 }

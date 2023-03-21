@@ -1,9 +1,7 @@
 use dioxus::prelude::*;
-use dotenv_codegen::dotenv;
-use solana_client_wasm::{
-    solana_sdk::commitment_config::CommitmentConfig, utils::rpc_config::RpcBlockConfig, WasmClient,
-};
 use solana_extra_wasm::transaction_status::UiConfirmedBlock;
+
+use crate::clockwork::get_block;
 
 pub fn BlocksTable(cx: Scope) -> Element {
     let block = use_state::<Option<UiConfirmedBlock>>(&cx, || None);
@@ -67,31 +65,4 @@ fn Header(cx: Scope) -> Element {
             }
         }
     })
-}
-
-pub async fn get_block() -> Option<UiConfirmedBlock> {
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
-    let slot = client
-        .get_latest_blockhash_with_commitment(CommitmentConfig::processed())
-        .await
-        .unwrap()
-        .1;
-    client
-        .get_block_with_config(
-            slot,
-            RpcBlockConfig {
-                encoding: None,
-                transaction_details: Some(
-                    solana_extra_wasm::transaction_status::TransactionDetails::Signatures,
-                ),
-                rewards: Some(true),
-                commitment: Some(CommitmentConfig::processed()),
-                max_supported_transaction_version: None,
-            },
-        )
-        .await
-        .ok()
 }

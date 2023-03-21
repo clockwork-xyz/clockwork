@@ -15,10 +15,10 @@ clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "..
 clockwork-network-program = { package = "clockwork-network-program", path = "../programs/network", version = "2.0.1", features = ["no-entrypoint"] }
 clockwork-relayer-api = { path = "../relayer/api", version = "2.0.1" }
 clockwork-cron = { path = "../cron", version = "2.0.1" }
+clockwork-utils = { path = "../utils", version = "2.0.1" }
 dioxus = "0.3.1"
 dioxus-router = { version = "0.3.0", features = ["web"] }
 dioxus-web = "0.3.0"
-dotenv_codegen = "0.15.0"
 gloo-events = "0.1.2"
 gloo-timers = "0.2.6"
 gloo-utils = "0.1.6"

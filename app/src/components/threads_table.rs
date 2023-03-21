@@ -1,16 +1,20 @@
+use std::str::FromStr;
+
+use chrono::{DateTime, NaiveDateTime, Utc};
+use clockwork_thread_program_v2::state::{Trigger, TriggerContext, VersionedThread};
+use clockwork_utils::pubkey::Abbreviated;
+use dioxus::prelude::*;
+use dioxus_router::{use_router, Link};
+use solana_client_wasm::solana_sdk::account::Account;
+
 use crate::{
     clockwork::get_threads,
     hooks::use_pagination,
     utils::{format_balance, format_timestamp},
 };
-use clockwork_sdk::state::{Thread, Trigger};
-use clockwork_thread_program_v2::state::VersionedThread;
-use dioxus::prelude::*;
-use dioxus_router::Link;
-use solana_client_wasm::solana_sdk::account::Account;
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let paginated_threads = use_pagination::<(Thread, Account)>(&cx, 15, || vec![]);
+    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, 15, || vec![]);
 
     use_future(&cx, (), |_| {
         let paginated_threads = paginated_threads.clone();
@@ -20,16 +24,17 @@ pub fn ThreadsTable(cx: Scope) -> Element {
     if let Some(threads) = paginated_threads.get() {
         cx.render(rsx! {
             table {
-                class: "w-full divide-y divide-slate-800",
+                class: "table-row-group",
                 Header {}
-                for (i, thread) in threads.iter().enumerate() {
-                    Row {
-                        thread: thread.0.clone(),
-                        account: thread.1.clone(),
-                        elem_id: format!("list-item-{}", i),
+                div {
+                    for (i, thread) in threads.iter().enumerate() {
+                        Row {
+                            thread: thread.0.clone(),
+                            account: thread.1.clone(),
+                            elem_id: format!("list-item-{}", i),
+                        }
                     }
                 }
-            }
             div {
                 class: "flex items-center justify-center space-x-2",
                 button {
@@ -37,7 +42,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                     onclick: move |_| { paginated_threads.prev_page() },
                     "←"
                 }
-                p {
+                div {
                     class: "text-sm text-gray-100",
                     "{paginated_threads.current_page() + 1}"
                 }
@@ -47,7 +52,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                     "→"
                 }
             }
-        })
+    }})
     } else {
         cx.render(rsx! {
             div {
@@ -58,37 +63,49 @@ pub fn ThreadsTable(cx: Scope) -> Element {
 }
 
 fn Header(cx: Scope) -> Element {
+    let cell_class = "table-cell font-medium py-2 first:pl-3";
     cx.render(rsx! {
         thead {
-            tr {
-                class: "text-left text-sm text-slate-500",
+            class: "table-header-group",
+            div {
+                class: "table-row text-left text-sm text-slate-500",
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Thread"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Balance"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "Created at"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
                     scope: "col",
                     "ID"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
+                    scope: "col",
+                    "Last exec"
+                }
+                th {
+                    class: cell_class,
                     scope: "col",
                     "Paused"
                 }
                 th {
-                    class: "py-3 px-3 font-medium",
+                    class: cell_class,
+                    scope: "col",
+                    "Status"
+                }
+                th {
+                    class: cell_class,
                     scope: "col",
                     "Trigger"
                 }
@@ -99,59 +116,139 @@ fn Header(cx: Scope) -> Element {
 
 #[derive(PartialEq, Props)]
 struct RowProps {
-    thread: Thread,
+    thread: VersionedThread,
     account: Account,
     elem_id: String,
 }
 
 fn Row(cx: Scope<RowProps>) -> Element {
+    let router = use_router(cx);
     let thread = cx.props.thread.clone();
-    let thread_pubkey = Thread::pubkey(thread.authority, thread.id.clone()).to_string();
-    let balance = format_balance(cx.props.account.lamports);
-    let created_at = format_timestamp(thread.created_at.unix_timestamp);
-    let id = thread.id;
-    let paused = thread.paused.to_string();
-    let trigger = match thread.trigger {
+    let address = thread.pubkey(); // Thread::pubkey(thread.authority(), thread.id().clone());
+    let address_abbr = address.abbreviated();
+    let balance = format_balance(cx.props.account.lamports, true);
+    let created_at = format_timestamp(thread.created_at().unix_timestamp);
+    let id = String::from_utf8(thread.id()).unwrap();
+    let paused = thread.paused().to_string();
+    let last_exec_at = match thread.exec_context() {
+        None => String::from("–"),
+        Some(exec_context) => format!("{}", exec_context.last_exec_at),
+    };
+    let trigger = match thread.trigger() {
         Trigger::Account {
-            address: _,
+            address,
             offset: _,
             size: _,
-        } => "Account".to_string(),
+        } => address.abbreviated(),
         Trigger::Cron {
-            schedule: _,
+            schedule,
             skippable: _,
-        } => "Cron".to_string(),
-        Trigger::Immediate => "Immediate".to_string(),
+        } => {
+            let reference_timestamp = match thread.exec_context().clone() {
+                None => thread.created_at().unix_timestamp,
+                Some(exec_context) => match exec_context.trigger_context {
+                    TriggerContext::Cron { started_at } => started_at,
+                    _ => 0,
+                },
+            };
+            next_timestamp(reference_timestamp, schedule)
+                .map_or("–".to_string(), |v| format_timestamp(v))
+        }
+        Trigger::Now => "–".to_string(),
+        Trigger::Slot { slot } => slot.to_string(),
+        Trigger::Epoch { epoch } => epoch.to_string(),
+        Trigger::Timestamp { unix_ts } => unix_ts.to_string(),
     };
+    enum ThreadStatus {
+        Healthy,
+        Unhealthy,
+        Unknown,
+    }
+    let status = match thread.trigger() {
+        Trigger::Account {
+            address,
+            offset: _,
+            size: _,
+        } => ThreadStatus::Unknown,
+        Trigger::Cron {
+            schedule,
+            skippable: _,
+        } => {
+            let reference_timestamp = match thread.exec_context().clone() {
+                None => thread.created_at().unix_timestamp,
+                Some(exec_context) => match exec_context.trigger_context {
+                    TriggerContext::Cron { started_at } => started_at,
+                    _ => 0,
+                },
+            };
+            if let Some(target_ts) = next_timestamp(reference_timestamp, schedule) {
+                // TODO Compare the target timestamp to the current timestamp. If this thread should have fired a while ago, it is "unhealthy".
+                ThreadStatus::Healthy
+            } else {
+                ThreadStatus::Healthy
+            }
+        }
+        Trigger::Now => ThreadStatus::Unhealthy,
+        Trigger::Slot { slot: _ } => ThreadStatus::Unknown,
+        Trigger::Epoch { epoch: _ } => ThreadStatus::Unknown,
+        Trigger::Timestamp { unix_ts: _ } => ThreadStatus::Unknown,
+    };
+    let status_class = match status {
+        ThreadStatus::Healthy => "w-3 h-3 bg-green-500 rounded-full ml-4",
+        ThreadStatus::Unhealthy => "w-3 h-3 bg-red-500 rounded-full ml-4",
+        ThreadStatus::Unknown =>"w-3 h-3 bg-slate-500 rounded-full ml-4",
+    };
+    let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
     cx.render(rsx! {
         Link {
-            class: "table-row px-3 text-base hover:bg-slate-100 hover:text-slate-900",
-            to: "/thread/{thread_pubkey}",
+            class: "table-row font-mono text-sm items-start transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
+            to: "/programs/threads/{address}",
             id: cx.props.elem_id.as_str(),
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
-                "{thread_pubkey}"
+                class: cell_class,
+                "{address_abbr}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{balance}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{created_at}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
                 "{id}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
+                "{last_exec_at}"
+            }
+            div {
+                class: cell_class,
                 "{paused}"
             }
             div {
-                class: "table-cell whitespace-nowrap px-4 py-4",
+                class: cell_class,
+                div {
+                    class: status_class, 
+                }
+            }
+            div {
+                class: cell_class,
                 "{trigger}"
             }
         }
     })
+}
+
+fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
+    clockwork_cron::Schedule::from_str(&schedule)
+        .unwrap()
+        .next_after(&DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
+            Utc,
+        ))
+        .take()
+        .map(|datetime| datetime.timestamp())
 }

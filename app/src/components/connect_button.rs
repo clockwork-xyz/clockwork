@@ -1,9 +1,11 @@
-use super::backpack::backpack;
-use crate::context::User;
+use std::str::FromStr;
 
+use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
 use solana_client_wasm::{solana_sdk::pubkey::Pubkey, WasmClient};
-use std::str::FromStr;
+
+use super::backpack::backpack;
+use crate::context::User;
 
 pub fn ConnectButton(cx: Scope) -> Element {
     let cx = cx.clone();
@@ -51,26 +53,9 @@ pub fn ConnectButton(cx: Scope) -> Element {
 
     cx.render(rsx! {
         button {
-            class: "px-6 py-3 border rounded-full text-slate-100 hover:bg-slate-100 hover:text-slate-900 font-semibold",
+            class: "px-6 py-3 border rounded-full transition text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 font-semibold",
             onclick: handle_click,
             connect_text
         }
     })
-}
-
-trait Abbreviated {
-    fn abbreviated(&self) -> String;
-}
-
-impl Abbreviated for Pubkey {
-    fn abbreviated(&self) -> String {
-        let s = self.to_string();
-        let len = s.len();
-        format!(
-            "{}...{}",
-            s.get(0..4).unwrap(),
-            s.get(len - 4..len).unwrap()
-        )
-        .to_string()
-    }
 }

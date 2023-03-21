@@ -52,10 +52,10 @@ impl VersionedThread {
         }
     }
 
-    pub fn id(&self) -> VersionedID {
+    pub fn id(&self) -> Vec<u8> {
         match self {
-            Self::V1(t) => VersionedID::String(t.id.clone()),
-            Self::V2(t) => VersionedID::Vec(t.id.clone()),
+            Self::V1(t) => t.id.as_bytes().to_vec(),
+            Self::V2(t) => t.id.clone(),
         }
     }
 
@@ -98,8 +98,10 @@ impl VersionedThread {
 
     pub fn pubkey(&self) -> Pubkey {
         match self {
-            Self::V1(_) => ThreadV1::pubkey(self.authority(), self.id().to_string().unwrap()),
-            Self::V2(_) => ThreadV2::pubkey(self.authority(), self.id().to_vec().unwrap()),
+            Self::V1(_) => {
+                ThreadV1::pubkey(self.authority(), String::from_utf8(self.id()).unwrap())
+            }
+            Self::V2(_) => ThreadV2::pubkey(self.authority(), self.id()),
         }
     }
 
@@ -158,24 +160,24 @@ impl TryFrom<Vec<u8>> for VersionedThread {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum VersionedID {
-    String(String),
-    Vec(Vec<u8>),
-}
+// #[derive(Clone, Debug)]
+// pub enum VersionedID {
+//     String(String),
+//     Vec(Vec<u8>),
+// }
 
-impl VersionedID {
-    pub fn to_string(self) -> Option<String> {
-        if let VersionedID::String(id) = self {
-            return Some(id);
-        }
-        None
-    }
+// impl VersionedID {
+//     pub fn to_string(self) -> Option<String> {
+//         if let VersionedID::String(id) = self {
+//             return Some(id);
+//         }
+//         None
+//     }
 
-    pub fn to_vec(self) -> Option<Vec<u8>> {
-        if let VersionedID::Vec(id) = self {
-            return Some(id);
-        }
-        None
-    }
-}
+//     pub fn to_vec(self) -> Option<Vec<u8>> {
+//         if let VersionedID::Vec(id) = self {
+//             return Some(id);
+//         }
+//         None
+//     }
+// }

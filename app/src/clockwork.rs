@@ -5,7 +5,6 @@ use anchor_lang::{
 };
 use clockwork_sdk::{state::Thread, utils::PAYER_PUBKEY};
 use clockwork_thread_program_v2::state::{Trigger, VersionedThread};
-use dotenv_codegen::dotenv;
 use solana_client_wasm::{
     solana_sdk::{
         account::Account,
@@ -14,22 +13,22 @@ use solana_client_wasm::{
         transaction::{Transaction, TransactionError},
     },
     utils::{
-        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+        rpc_config::{
+            GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
+            RpcProgramAccountsConfig,
+        },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
+        rpc_response::RpcConfirmedTransactionStatusWithSignature,
     },
     ClientResult, WasmClient,
 };
-use solana_extra_wasm::account_decoder::UiAccountEncoding;
+use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
 use std::str::FromStr;
 
-pub async fn get_threads() -> Vec<(Thread, Account)> {
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
-    // let client = WasmClient::new("http://74.118.139.244:8899");
+static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
 
-    let accounts = client
+pub async fn get_threads() -> Vec<(VersionedThread, Account)> {
+    WasmClient::new(RPC_URL)
         .get_program_accounts_with_config(
             &clockwork_sdk::ID,
             RpcProgramAccountsConfig {
@@ -50,20 +49,18 @@ pub async fn get_threads() -> Vec<(Thread, Account)> {
         .await
         .unwrap()
         .iter()
-        .map(|acc| (Thread::try_from(acc.1.data.clone()).unwrap(), acc.1.clone()))
-        .collect::<Vec<(Thread, Account)>>();
-    accounts[0..10].to_vec()
+        .map(|acc| {
+            (
+                VersionedThread::try_from(acc.1.data.clone()).unwrap(),
+                acc.1.clone(),
+            )
+        })
+        .collect::<Vec<(VersionedThread, Account)>>()[0..10]
+        .to_vec()
 }
 
-pub async fn get_thread(pubkey: Pubkey) -> VersionedThread {
-    // let client = WasmClient::new("http://74.118.139.8899");
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    log::info!("API KEY: {}", HELIUS_API_KEY);
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
-
-    let account = client
+pub async fn get_thread(pubkey: Pubkey) -> (VersionedThread, Account) {
+    let account = WasmClient::new(RPC_URL)
         .get_account_with_config(
             &pubkey,
             RpcAccountInfoConfig {
@@ -76,18 +73,16 @@ pub async fn get_thread(pubkey: Pubkey) -> VersionedThread {
         .await
         .unwrap()
         .unwrap();
-
-    VersionedThread::try_from(account.data).unwrap()
+    (
+        VersionedThread::try_from(account.clone().data).unwrap(),
+        account,
+    )
 }
 
 pub async fn simulate_thread(
     thread: VersionedThread,
     thread_pubkey: Pubkey,
 ) -> ClientResult<(Option<TransactionError>, Option<Vec<String>>)> {
-    const HELIUS_API_KEY: &str = dotenv!("HELIUS_API_KEY");
-    let url = format!("https://rpc.helius.xyz/?api-key={}", HELIUS_API_KEY);
-    let helius_rpc_endpoint = url.as_str();
-    let client = WasmClient::new(helius_rpc_endpoint);
     let signatory_pubkey =
         Pubkey::from_str("GuJVu6wky7zeVaPkGaasC5vx1eVoiySbEv7UFKZAu837").unwrap();
     let worker_pubkey = Pubkey::from_str("EvoeDp2WL1TFdLdf9bfJaznsf3YVByisvHM5juYdFBuq").unwrap();
@@ -116,8 +111,156 @@ pub async fn simulate_thread(
     let tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
 
     // simulate transaction
-    let sim_tx = client.simulate_transaction(&tx).await.unwrap();
-    Ok((sim_tx.err, sim_tx.logs))
+    let sim_result = WasmClient::new(RPC_URL)
+        .simulate_transaction(&tx)
+        .await
+        .unwrap();
+    Ok((sim_result.err, sim_result.logs))
+}
+
+fn build_kickoff_ix(
+    thread: VersionedThread,
+    thread_pubkey: Pubkey,
+    signatory_pubkey: Pubkey,
+    worker_pubkey: Pubkey,
+) -> Instruction {
+    // Build the instruction.
+    let mut kickoff_ix = match thread {
+        VersionedThread::V1(_) => Instruction {
+            program_id: thread.program_id(),
+            accounts: clockwork_thread_program_v1::accounts::ThreadKickoff {
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(false)),
+            data: clockwork_thread_program_v1::instruction::ThreadKickoff {}.data(),
+        },
+        VersionedThread::V2(_) => Instruction {
+            program_id: thread.program_id(),
+            accounts: clockwork_thread_program_v2::accounts::ThreadKickoff {
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(false)),
+            data: clockwork_thread_program_v2::instruction::ThreadKickoff {}.data(),
+        },
+    };
+
+    // If the thread's trigger is account-based, inject the triggering account.
+    match thread.trigger() {
+        Trigger::Account {
+            address,
+            offset: _,
+            size: _,
+        } => kickoff_ix.accounts.push(AccountMeta {
+            pubkey: address,
+            is_signer: false,
+            is_writable: false,
+        }),
+        _ => {}
+    }
+
+    kickoff_ix
+}
+
+fn build_exec_ix(
+    thread: VersionedThread,
+    thread_pubkey: Pubkey,
+    signatory_pubkey: Pubkey,
+    worker_pubkey: Pubkey,
+) -> Instruction {
+    // Build the instruction.
+    let mut exec_ix = match thread {
+        VersionedThread::V1(_) => Instruction {
+            program_id: thread.program_id(),
+            accounts: clockwork_thread_program_v1::accounts::ThreadExec {
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                penalty: clockwork_network_program::state::Penalty::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(true)),
+            data: clockwork_thread_program_v1::instruction::ThreadExec {}.data(),
+        },
+        VersionedThread::V2(_) => Instruction {
+            program_id: thread.program_id(),
+            accounts: clockwork_thread_program_v2::accounts::ThreadExec {
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
+                signatory: signatory_pubkey,
+                thread: thread_pubkey,
+                worker: worker_pubkey,
+            }
+            .to_account_metas(Some(true)),
+            data: clockwork_thread_program_v2::instruction::ThreadExec {}.data(),
+        },
+    };
+
+    if let Some(next_instruction) = thread.next_instruction() {
+        // Inject the target program account.
+        exec_ix.accounts.push(AccountMeta::new_readonly(
+            next_instruction.program_id,
+            false,
+        ));
+
+        // Inject the worker pubkey as the dynamic "payer" account.
+        for acc in next_instruction.clone().accounts {
+            let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
+                signatory_pubkey
+            } else {
+                acc.pubkey
+            };
+            exec_ix.accounts.push(match acc.is_writable {
+                true => AccountMeta::new(acc_pubkey, false),
+                false => AccountMeta::new_readonly(acc_pubkey, false),
+            })
+        }
+    }
+
+    exec_ix
+}
+
+pub async fn get_block() -> Option<UiConfirmedBlock> {
+    let client = WasmClient::new(RPC_URL);
+    let slot = client
+        .get_latest_blockhash_with_commitment(CommitmentConfig::processed())
+        .await
+        .unwrap()
+        .1;
+    client
+        .get_block_with_config(
+            slot,
+            RpcBlockConfig {
+                encoding: None,
+                transaction_details: Some(
+                    solana_extra_wasm::transaction_status::TransactionDetails::Signatures,
+                ),
+                rewards: Some(true),
+                commitment: Some(CommitmentConfig::processed()),
+                max_supported_transaction_version: None,
+            },
+        )
+        .await
+        .ok()
+}
+
+pub async fn get_transactions(address: Pubkey) -> Vec<RpcConfirmedTransactionStatusWithSignature> {
+    WasmClient::new(RPC_URL)
+        .get_signatures_for_address_with_config(
+            &address,
+            GetConfirmedSignaturesForAddress2Config {
+                before: None,
+                until: None,
+                limit: Some(10),
+                commitment: Some(CommitmentConfig::processed()),
+            },
+        )
+        .await
+        .unwrap()
 }
 
 fn build_kickoff_ix(

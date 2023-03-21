@@ -4,13 +4,12 @@ use anchor_lang::prelude::Pubkey;
 use clockwork_relayer_api::{SecretList, SecretListResponse, SignedRequest};
 use dioxus::prelude::*;
 use dioxus_router::Link;
-use dotenv_codegen::dotenv;
 use reqwest::header::CONTENT_TYPE;
 use solana_client_wasm::solana_sdk::signature::Signature;
 
 use super::Page;
 
-pub fn SecretsPage(cx: Scope) -> Element {
+pub fn KeysPage(cx: Scope) -> Element {
     let secrets = use_state::<Vec<String>>(&cx, || vec![]);
 
     use_future(&cx, (), |_| {
@@ -28,12 +27,12 @@ pub fn SecretsPage(cx: Scope) -> Element {
                 class: "flex flex-row justify-between mb-6",
                 h1 {
                     class: "text-2xl font-semibold",
-                    "Secrets"
+                    "Keys"
                 }
                 Link {
-                    to: "/secrets/new"
-                    class: "hover:bg-white hover:text-slate-900 text-slate-100 font-semibold py-3 px-6 hover:bg-slate-200 transition",
-                    "New secret"
+                    to: "/keys/new"
+                    class: "text-slate-100 font-semibold py-3 px-6 transition hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
+                    "New key"
                 }
             }
             if secrets.is_empty() {
@@ -120,7 +119,7 @@ pub async fn get_secrets() -> Vec<String> {
         ),
     };
     match reqwest::Client::new()
-        .post(format!("{}/secret_list", dotenv!("RELAYER_URL")))
+        .post("http://devbox:8000/secret_list")
         .header(CONTENT_TYPE, "application/json")
         .json(&req)
         .send()
