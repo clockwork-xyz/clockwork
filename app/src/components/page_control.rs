@@ -5,8 +5,8 @@ use solana_client_wasm::solana_sdk::account::Account;
 use crate::hooks::UsePagination;
 
 #[derive(Clone, Props)]
-pub struct PaginationControlsProps<'a> {
-    pub paginated_data: &'a UsePagination<(VersionedThread, Account)>,
+pub struct PaginationControlsProps<'a, T> {
+    pub paginated_data: &'a UsePagination<T>,
 }
 
 impl<'a> PartialEq for PaginationControlsProps<'a> {
