@@ -1,14 +1,15 @@
 [package]
 name = "clockwork-network-program"
-version = "2.0.2"
+repository = "https://github.com/clockwork-xyz/programs/network"
 description = "Clockwork networking protocol"
-edition = "2021"
-license = "AGPL-3.0-or-later"
-homepage = "https://clockwork.xyz"
-repository = "https://github.com/clockwork-xyz/clockwork"
-documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-keywords = ["solana"]
+authors = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+version = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -22,7 +23,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.26.0"
-anchor-spl = { features = ["mint", "token"], version = "0.26.0" }
-# clockwork-macros = { path = "../../macros", version = "2.0.0-gamma" }
-clockwork-utils = { path = "../../utils", version = "2.0.2" }
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true, features = ["mint", "token"]}
+clockwork-utils = { workspace = true }

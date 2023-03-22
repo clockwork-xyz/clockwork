@@ -1,14 +1,15 @@
 [package]
 name = "clockwork-macros"
-version = "2.0.2"
+repository = "https://github.com/clockwork-xyz/macros"
 description = "Macros for Clockwork"
-edition = "2021"
-license = "AGPL-3.0-or-later"
-homepage = "https://clockwork.xyz"
-repository = "https://github.com/clockwork-xyz/clockwork"
-documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-keywords = ["solana"]
+authors = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+version = { workspace = true }
 
 [lib]
 name = "clockwork_macros"
