@@ -1224,16 +1224,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clockwork-macros"
-version = "2.0.2"
-dependencies = [
- "anchor-syn",
- "proc-macro2 1.0.52",
- "quote 1.0.26",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "clockwork-network-program"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

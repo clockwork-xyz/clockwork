@@ -5,7 +5,6 @@ members = [
     "client",
     "cron",
 #    "localnet",
-    "macros",
     "plugin",
     "programs/*",
     "relayer",
