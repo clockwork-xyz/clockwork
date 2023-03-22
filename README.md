@@ -38,8 +38,8 @@
 
 # Notes
 - Clockwork is under active development. All interfaces and implementations are subject to change. 
-- Program deployments are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by a core team of maintainers. 
-- Solana mainnet currently has 3 independent worker node operators. To join the workernet, you can [install](#deploying-a-worker) the Clockwork plugin and request an earlybird token delegation in the workernet [Discord channel](https://discord.gg/mwmFtU5BtA).
+- Official program deployments to Solana Mainnet programs are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by a core team of maintainers. 
+- On Solana mainnet, Clockwork automations are powered by a permissionless network of independent node operators. To join the workernet, you can [install](#deploying-a-worker) the Clockwork geyser plugin and request an earlybird token delegation in the workernet channel [on Discord](https://discord.gg/mwmFtU5BtA).
 - Occassionally, a new release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
 - The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. 
 
