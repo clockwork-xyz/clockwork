@@ -1,21 +1,28 @@
 [package]
 name = "clockwork-app"
-version = "0.1.0"
-edition = "2021"
-author = ["Nick Garfield"]
+repository = "https://github.com/clockwork-xyz/app"
+description = "The Clockwork Dashboard"
+readme = "./README.md"
+authors = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+version = { workspace = true }
 
 [dependencies]
-anchor-lang = "0.26.0"
+anchor-lang = { workspace = true }
 bincode = "1.3.3"
 bytemuck = "1.13.0"
 chrono = "0.4.23"
-clockwork-sdk = "1.4.2"
-clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2" }
-clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread", version = "2.0.1", features = ["no-entrypoint"] }
-clockwork-network-program = { package = "clockwork-network-program", path = "../programs/network", version = "2.0.1", features = ["no-entrypoint"] }
-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.1" }
-clockwork-cron = { path = "../cron", version = "2.0.1" }
-clockwork-utils = { path = "../utils", version = "2.0.1" }
+clockwork-sdk = "~1.4"
+clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2", features = ["no-entrypoint"] }
+clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread", version = "=2.0.2", features = ["no-entrypoint"] }
+clockwork-network-program = { workspace = true, features = ["no-entrypoint"] }
+clockwork-relayer-api = { workspace = true }
+clockwork-cron = { workspace = true }
+clockwork-utils = { workspace = true }
 dioxus = "0.3.1"
 dioxus-router = { version = "0.3.0", features = ["web"] }
 dioxus-web = "0.3.0"
@@ -33,8 +40,3 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"
 web-sys = "0.3.61"
-
-[patch.crates-io]
-dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
-dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
