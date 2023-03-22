@@ -32,7 +32,7 @@ clockwork-relayer-api = { path = "relayer/api", version = "=2.0.2" }
 clockwork-sdk = { path = "sdk", version = "=2.0.2" }
 clockwork-utils = { path = "utils", version = "=2.0.2" }
 clockwork-thread-program = { package = "clockwork-thread-program", path = "programs/thread", version = "=2.0.2"  }
-clockwork-thread-program-v1 = { package = "clockwork-thread-program", path = "programs/thread", version = "=1.4.2"  }
+clockwork-thread-program-v1 = { package = "clockwork-thread-program", path = "programs/thread", version = "=1.4.2"}
 clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "programs/thread", version = "=2.0.2"  }
 clockwork-webhook-program = { path = "programs/webhook", version = "=2.0.2" }
 solana-account-decoder = "=1.14.15"
