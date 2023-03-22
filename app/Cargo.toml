@@ -17,7 +17,7 @@ bincode = "1.3.3"
 bytemuck = "1.13.0"
 chrono = "0.4.23"
 clockwork-sdk = "~1.4"
-clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2" }
+clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2", features = ["no-entrypoint"] }
 clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread", version = "=2.0.2", features = ["no-entrypoint"] }
 clockwork-network-program = { workspace = true, features = ["no-entrypoint"] }
 clockwork-relayer-api = { workspace = true }
@@ -40,8 +40,3 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"
 web-sys = "0.3.61"
-
-[patch.crates-io]
-dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
-dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
