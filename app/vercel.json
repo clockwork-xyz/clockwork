@@ -16,7 +16,7 @@
     },
     {
       "source": "/programs",
-      "destination": "/dist/index.html",
+      "destination": "/dist/index.html"
     },
     {
       "source": "/(.*)\\.(js|css|html|ico|json|wasm)",

@@ -42,7 +42,7 @@ impl ToString for Cluster {
 impl FromStr for Cluster {
     type Err = RuntimeError;
 
-    fn from_str(expression: &str) -> Result<Self, Self::Err>  {
+    fn from_str(expression: &str) -> Result<Self, Self::Err> {
         match expression {
             "Mainnet" => Ok(Self::Mainnet),
             "Devnet" => Ok(Self::Devnet),
