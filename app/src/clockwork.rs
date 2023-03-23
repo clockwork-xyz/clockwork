@@ -1,6 +1,6 @@
 use anchor_lang::{
-    prelude::{AccountMeta, Pubkey},
-    solana_program::instruction::Instruction,
+    prelude::{AccountMeta, Clock, Pubkey},
+    solana_program::{instruction::Instruction, sysvar},
     Discriminator, InstructionData, ToAccountMetas,
 };
 use clockwork_sdk::{state::Thread, utils::PAYER_PUBKEY};
@@ -25,7 +25,7 @@ use solana_client_wasm::{
 use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
 use std::str::FromStr;
 
-static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
+pub static RPC_URL: &str = "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6";
 
 pub async fn get_account(address: Pubkey) -> ClientResult<Option<Account>> {
     WasmClient::new(RPC_URL)
@@ -39,6 +39,21 @@ pub async fn get_account(address: Pubkey) -> ClientResult<Option<Account>> {
             },
         )
         .await
+}
+
+pub async fn get_clock() -> ClientResult<Clock> {
+    WasmClient::new(RPC_URL)
+        .get_account_with_config(
+            &sysvar::clock::ID,
+            RpcAccountInfoConfig {
+                encoding: Some(UiAccountEncoding::Base64),
+                data_slice: None,
+                commitment: Some(CommitmentConfig::finalized()),
+                min_context_slot: None,
+            },
+        )
+        .await
+        .map(|account| bincode::deserialize::<Clock>(account.unwrap().data.as_slice()).unwrap())
 }
 
 pub async fn get_threads() -> Vec<(VersionedThread, Account)> {

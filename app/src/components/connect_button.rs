@@ -4,13 +4,11 @@ use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
 use gloo_events::EventListener;
 use gloo_storage::{LocalStorage, Storage};
-use solana_client_wasm::{
-    solana_sdk::pubkey::Pubkey,
-    WasmClient,
-};
+use solana_client_wasm::{solana_sdk::pubkey::Pubkey, WasmClient};
 
 use super::backpack::backpack;
 use crate::{
+    clockwork::RPC_URL,
     context::{Cluster, User},
     utils::format_balance,
 };
@@ -37,7 +35,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
 
     let handle_click = move |_| {
         cx.spawn({
-            let client = WasmClient::new("http://74.118.139.244:8899");
+            let client = WasmClient::new(RPC_URL);
             let user_context = user_context.clone();
             let show_popover = show_popover.clone();
 
