@@ -48,10 +48,7 @@ fn App(cx: Scope) -> Element {
         query: String::new(),
         results: vec![],
     });
-    use_shared_state_provider(cx, || User {
-        pubkey: None,
-        account: None,
-    });
+    use_shared_state_provider(cx, || User::default());
 
     cx.render(rsx! {
         div {
