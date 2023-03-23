@@ -19,7 +19,7 @@
       "dest": "/dist/$1.$2"
     },
     {
-      "src": "/(**/.*)",
+      "src": "/(.*)",
       "dest": "/dist/index.html"
     }
   ]
