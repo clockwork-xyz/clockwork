@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
-use anchor_lang::prelude::Pubkey;
+use anchor_lang::{prelude::Pubkey, Discriminator};
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::{html::input_data::keyboard_types::Key, prelude::*};
 use dioxus_router::{use_router, Link};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 
-use crate::{SearchResult, SearchState};
+use crate::{clockwork::get_account, SearchResult, SearchState};
 
 pub fn SearchPage(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
@@ -66,7 +66,7 @@ pub fn SearchBar(cx: Scope) -> Element {
                     let mut w_search_state = search_state.write();
                     let query = &w_search_state.query;
 
-                    // TODO Parse the query into a pubkey address and navigate to the correct page.
+                    // TODO Select navigation desination from the search results.
                     if let Ok(address) = Pubkey::from_str(&query) {
                         router.navigate_to(&*format!("/accounts/{}", address.to_string()));
                         w_search_state.active = false;
@@ -85,16 +85,49 @@ pub fn SearchResults(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
     let query = &search_state.read().query;
 
+    // Search for search results.
     let results = use_future(&cx, query, |_| {
         let query = query.clone();
         async move {
             log::info!("Parsing query: {:?}", query);
             if let Ok(address) = Pubkey::from_str(&query) {
-                log::info!("Found address: {:?}", address);
-                vec![SearchResult {
-                    title: format!("Go to account {}", address.abbreviated()),
-                    route: format!("/accounts/{}", address),
-                }]
+                // Fetch the account
+                match get_account(address).await.unwrap_or(None) {
+                    Some(account) => {
+                        // If account belongs to the thread program, go to /programs/thread/:address
+                        if account.owner.eq(&clockwork_thread_program_v1::ID) {
+                            let d = &account.data[..8];
+                            if d.eq(&clockwork_thread_program_v1::state::Thread::discriminator()) {
+                                return vec![SearchResult {
+                                    title: format!("Go to thread {}", address.abbreviated()),
+                                    route: format!("/programs/threads/{}", address),
+                                }];
+                            }
+                        }
+
+                        // If account belongs to the thread program, go to /programs/thread/:address
+                        if account.owner.eq(&clockwork_thread_program_v2::ID) {
+                            let d = &account.data[..8];
+                            if d.eq(&clockwork_thread_program_v2::state::Thread::discriminator()) {
+                                return vec![SearchResult {
+                                    title: format!("Go to thread {}", address.abbreviated()),
+                                    route: format!("/programs/threads/{}", address),
+                                }];
+                            }
+                        }
+
+                        vec![SearchResult {
+                            title: format!("Go to account {}", address.abbreviated()),
+                            route: format!("/accounts/{}", address),
+                        }]
+                    }
+                    None => {
+                        vec![SearchResult {
+                            title: format!("Go to account {}", address.abbreviated()),
+                            route: format!("/accounts/{}", address),
+                        }]
+                    }
+                }
             } else {
                 // TODO Display "invalid address" error to user
                 log::info!("Invalid address");

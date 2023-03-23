@@ -3,7 +3,7 @@ use std::process::Command;
 
 fn main() {
     let output = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
+        .args(["rev-parse", "HEAD"])
         .output()
         .unwrap();
     let commit_hash = String::from_utf8(output.stdout).unwrap();
@@ -20,9 +20,11 @@ fn main() {
     );
 }
 
-fn get_geyser_interface_version<'a>() -> String {
-    let plugin_manifest = Manifest::from_path("./Cargo.toml").unwrap();
-    let plugin_interface = plugin_manifest
+fn get_geyser_interface_version() -> String {
+    let root_manifest= Manifest::from_path("../Cargo.toml")
+        .expect("Unable to parse root Cargo.toml");
+    let workspace = root_manifest.workspace.unwrap();
+    let plugin_interface = workspace
         .dependencies
         .get("solana-geyser-plugin-interface")
         .unwrap();
