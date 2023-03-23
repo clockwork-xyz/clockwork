@@ -15,15 +15,11 @@
       "destination": "/dist/favicon.ico"
     },
     {
-      "source": "/(.*)\\.(js|css|html|ico|json)",
+      "source": "/(.*)\\.(js|css|html|ico|json|wasm)",
       "destination": "/dist/$1.$2"
     },
     {
       "source": "/(.*)",
-      "destination": "/dist/index.html"
-    },
-    {
-      "source": "/:path*",
       "destination": "/dist/index.html"
     }
   ]
