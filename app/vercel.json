@@ -15,20 +15,12 @@
       "destination": "/dist/favicon.ico"
     },
     {
-      "source": "/programs",
-      "destination": "/dist/index.html"
-    },
-    {
-      "source": "/keys",
-      "destination": "/"
-    },
-    {
       "source": "/(.*)\\.(js|css|html|ico|json|wasm)",
       "destination": "/dist/$1.$2"
     },
     {
       "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "destination": "/"
     }
   ]
 }
