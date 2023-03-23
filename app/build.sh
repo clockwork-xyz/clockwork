@@ -25,3 +25,5 @@ cp favicon.ico dist/favicon.ico
 # Create the _redirects file in the dist folder
 echo "/* /index.html 200" > dist/_redirects
 
+ls dist
+
