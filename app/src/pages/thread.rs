@@ -7,8 +7,8 @@ use dioxus_router::use_route;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
-    clockwork::get_thread,
     components::{thread_info_table::ThreadInfoTable, thread_sim_logs::ThreadSimLogs},
+    context::Client,
 };
 
 use super::Page;
@@ -16,16 +16,22 @@ use super::Page;
 pub fn ThreadPage(cx: Scope) -> Element {
     let route = use_route(cx);
     let thread = use_state::<Option<(VersionedThread, Account)>>(cx, || None);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     use_future(&cx, (), |_| {
         let thread = thread.clone();
+        let client_context = client_context.clone();
         let thread_pubkey = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
         async move {
-            let t = get_thread(thread_pubkey).await;
+            let t = client_context
+                .read()
+                .get_thread(thread_pubkey)
+                .await
+                .unwrap();
             thread.set(Some(t.clone()));
         }
     });
-    
+
     if let Some(t) = thread.get() {
         cx.render(rsx! {
             Page {

@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use clockwork_thread_program_v2::state::VersionedThread;
 use solana_client_wasm::solana_sdk::transaction::TransactionError;
 
-use crate::clockwork::simulate_thread;
+use crate::context::Client;
 
 #[derive(PartialEq, Props)]
 pub struct ThreadSimLogsProps{
@@ -14,13 +14,15 @@ pub struct ThreadSimLogsProps{
 pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
     let sim_logs = use_state::<Vec<String>>(cx, || vec![]);
     let sim_error = use_state::<Option<String>>(cx, || None);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     use_future(&cx, (), |_| {
         let thread = cx.props.thread.clone();
+        let client_context = client_context.clone();
         let sim_logs = sim_logs.clone();
         let sim_error = sim_error.clone();
         async move { 
-            match simulate_thread(thread.to_owned(), thread.pubkey()).await {
+            match client_context.read().simulate_thread(thread.to_owned(), thread.pubkey()).await {
                 Ok((err, logs)) => {
                     sim_logs.set(logs.unwrap_or(vec![]));
                     let err_msg = if let Some(err) = err {

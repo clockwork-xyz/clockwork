@@ -8,17 +8,19 @@ use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
-    clockwork::get_threads,
+    context::Client,   
     hooks::use_pagination,
     utils::{format_balance, format_timestamp}, components::page_control::PageControl,
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
     let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, "threads".to_string(), 15, || vec![]);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     use_future(&cx, (), |_| {
         let paginated_threads = paginated_threads.clone();
-        async move { paginated_threads.set(get_threads().await) }
+        let client_context = client_context.clone();
+        async move { paginated_threads.set(client_context.read().get_threads().await.unwrap()) }
     });
 
      if let Some(threads) = paginated_threads.get() {
