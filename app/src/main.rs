@@ -48,10 +48,7 @@ fn App(cx: Scope) -> Element {
         query: String::new(),
         results: vec![],
     });
-    use_shared_state_provider(cx, || User {
-        pubkey: None,
-        account: None,
-    });
+    use_shared_state_provider(cx, || User::default());
 
     cx.render(rsx! {
         div {
@@ -68,7 +65,6 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/keys/new", NewKeyPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "/programs/threads/:address", ThreadPage {} }
-                Route { to: "/settings", SettingsPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
             }

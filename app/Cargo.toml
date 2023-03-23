@@ -27,6 +27,7 @@ dioxus = "0.3.1"
 dioxus-router = { version = "0.3.0", features = ["web"] }
 dioxus-web = "0.3.0"
 gloo-events = "0.1.2"
+gloo-storage = "0.2.2"
 gloo-timers = "0.2.6"
 gloo-utils = "0.1.6"
 js-sys = "0.3.61"
@@ -39,4 +40,4 @@ solana-extra-wasm = { git = "https://github.com/solana-playground/solana-playgro
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"
-web-sys = "0.3.61"
+web-sys = { version = "0.3.61", features = ["Element"] }
