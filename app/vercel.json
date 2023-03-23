@@ -5,22 +5,22 @@
       "use": "@vercel/static-build"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(img/.*)",
-      "destination": "/dist/img/$1"
+      "src": "/(img/.*)",
+      "dest": "/dist/img/$1"
     },
     {
-      "source": "/favicon.ico",
-      "destination": "/dist/favicon.ico"
+      "src": "/favicon.ico",
+      "dest": "/dist/favicon.ico"
     },
     {
-      "source": "/(.*)\\.(js|css|html|ico|json)",
-      "destination": "/dist/$1.$2"
+      "src": "/(.*)\\.(js|css|html|ico|json)",
+      "dest": "/dist/$1.$2"
     },
     {
-      "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
     }
   ]
 }

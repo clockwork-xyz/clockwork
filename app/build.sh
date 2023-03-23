@@ -21,3 +21,7 @@ trunk build --release
 
 # Move favicon into /dist folder.
 cp favicon.ico dist/favicon.ico
+
+# Create the _redirects file in the dist folder
+echo "/* /index.html 200" > dist/_redirects
+
