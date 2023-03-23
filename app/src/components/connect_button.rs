@@ -4,43 +4,50 @@ use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
 use gloo_events::EventListener;
 use gloo_storage::{LocalStorage, Storage};
-use solana_client_wasm::{solana_sdk::pubkey::Pubkey, WasmClient};
+use solana_client_wasm::solana_sdk::pubkey::Pubkey;
 
 use super::backpack::backpack;
 use crate::{
-    clockwork::RPC_URL,
-    context::{Cluster, User},
+    context::{Client, Cluster, User},
     utils::format_balance,
 };
 
 pub fn ConnectButton(cx: Scope) -> Element {
     let user_context = use_shared_state::<User>(cx).unwrap();
+    let client_context = use_shared_state::<Client>(cx).unwrap();
     let show_popover = use_state(&cx, || false);
     let show_cluster_dropdown = use_state(&cx, || false);
 
     {
         let user_context = user_context.clone();
+        let client_context = client_context.clone();
         use_effect(cx, (), |_| async move {
+            // load user from local storage
             match LocalStorage::get::<User>("user_context") {
                 Ok(u) => {
                     let mut uc_write = user_context.write();
                     uc_write.account = u.account;
                     uc_write.pubkey = u.pubkey;
-                    uc_write.cluster = u.cluster;
                 }
                 Err(_err) => log::info!("user is not logged in"),
+            }
+            // load cluster from local storage
+            match LocalStorage::get::<Cluster>("cluster") {
+                Ok(cluster) => *client_context.write() = Client::new_with_config(cluster),
+                Err(_err) => log::info!("cached cluster not found"),
             }
         });
     }
 
     let handle_click = move |_| {
         cx.spawn({
-            let client = WasmClient::new(RPC_URL);
             let user_context = user_context.clone();
+            let client_context = client_context.clone();
             let show_popover = show_popover.clone();
-
+            let client_context = client_context.clone();
             async move {
                 let user_context_read = user_context.read();
+                let client_context = client_context.read();
                 match user_context_read.account.is_some() {
                     true => {
                         show_popover.set(!*show_popover.get());
@@ -51,7 +58,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                         if backpack.is_connected() {
                             let pubkey =
                                 Pubkey::from_str(backpack.pubkey().to_string().as_str()).unwrap();
-                            let account = client.get_account(&pubkey).await;
+                            let account = client_context.client.get_account(&pubkey).await;
                             match account {
                                 Ok(acc) => {
                                     drop(user_context_read);
@@ -62,11 +69,13 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                         User {
                                             pubkey: user_context.read().pubkey,
                                             account: user_context.read().account.clone(),
-                                            cluster: user_context.read().cluster.clone(),
                                         },
                                     )
                                     .unwrap();
+                                    LocalStorage::set("cluster", client_context.cluster.clone())
+                                        .unwrap();
                                 }
+
                                 Err(err) => log::info!("Failed to get user account: {:?}", err),
                             }
                         }
@@ -77,7 +86,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
     };
 
     use_future(&cx, (), |_| {
-        let user_context = user_context.clone();
+        let client_context = client_context.clone();
         let show_cluster_dropdown = show_cluster_dropdown.clone();
         async move {
             let document = gloo_utils::document();
@@ -88,16 +97,10 @@ pub fn ConnectButton(cx: Scope) -> Element {
                     let e_id = element_id.as_str();
                     match e_id {
                         "Mainnet" | "Devnet" | "Testnet" => {
-                            user_context.write().cluster = Cluster::from_str(e_id).unwrap();
-                            LocalStorage::set(
-                                "user_context",
-                                User {
-                                    pubkey: user_context.read().pubkey,
-                                    account: user_context.read().account.clone(),
-                                    cluster: user_context.read().cluster.clone(),
-                                },
-                            )
-                            .unwrap();
+                            let cluster = Cluster::from_str(e_id).unwrap();
+                            *client_context.write() = Client::new_with_config(cluster);
+                            LocalStorage::set("cluster", client_context.write().cluster.clone())
+                                .unwrap();
                             show_cluster_dropdown.set(false);
                         }
                         _ => {}
@@ -134,7 +137,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                     button {
                         class: "inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
                         onclick: move |_| { show_cluster_dropdown.set(true) },
-                        "{user_context.read().cluster.to_string()}"
+                        "{client_context.read().cluster.to_string()}"
                         svg {
                             class: "-mr-1 h-5 w-5 text-slate-800", 
                             view_box: "0 0 20 20",

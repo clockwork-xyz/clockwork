@@ -5,22 +5,24 @@ use dioxus::prelude::*;
 use dioxus_router::use_route;
 use solana_client_wasm::solana_sdk::account::Account;
 
-use crate::{clockwork::get_account, components::account_info_table::AccountInfoTable};
+use crate::{components::account_info_table::AccountInfoTable, context::Client};
 
 use super::Page;
 
 pub fn AccountPage(cx: Scope) -> Element {
     let route = use_route(cx);
     let account = use_state::<Option<Account>>(cx, || None);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     // TODO Unwrap address safely
     let address = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
 
     use_future(&cx, (), |_| {
         let account = account.clone();
+        let client_context = client_context.clone();
         async move {
             log::info!("Address: {:?}", address);
-            match get_account(address).await {
+            match client_context.read().get_account(address).await {
                 Ok(maybe_account) => {
                     account.set(maybe_account);
                 }
