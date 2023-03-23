@@ -19,6 +19,10 @@
       "destination": "/dist/index.html"
     },
     {
+      "source": "/keys",
+      "destination": "/"
+    },
+    {
       "source": "/(.*)\\.(js|css|html|ico|json|wasm)",
       "destination": "/dist/$1.$2"
     },
