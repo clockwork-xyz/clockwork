@@ -46,7 +46,10 @@ pub fn ConnectButton(cx: Scope) -> Element {
                         show_popover.set(!*show_popover.get());
                     }
                     _ => {
-                        backpack.connect().await;
+                        // Check if the provider is not connected before connecting
+                        if !backpack.is_connected() {
+                            backpack.connect().await;
+                        }
                         log::info!("connected: {:?}", backpack.is_connected());
                         if backpack.is_connected() {
                             let pubkey =
