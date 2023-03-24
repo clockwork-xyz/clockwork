@@ -5,7 +5,10 @@ use dioxus::prelude::*;
 use dioxus_router::use_route;
 use solana_client_wasm::solana_sdk::account::Account;
 
-use crate::{components::account_info_table::AccountInfoTable, context::Client};
+use crate::{
+    components::{account_info_table::AccountInfoTable, TransactionHistoryTable},
+    context::Client,
+};
 
 use super::Page;
 
@@ -21,12 +24,11 @@ pub fn AccountPage(cx: Scope) -> Element {
         let account = account.clone();
         let client_context = client_context.clone();
         async move {
-            log::info!("Address: {:?}", address);
             match client_context.read().get_account(address).await {
                 Ok(maybe_account) => {
                     account.set(maybe_account);
                 }
-                Err(err) => {
+                Err(_err) => {
                     // TODO Handle error
                 }
             }
@@ -48,6 +50,7 @@ pub fn AccountPage(cx: Scope) -> Element {
                             account: account.clone(),
                             address: address,
                         }
+                        TransactionHistoryTable { address: address }
                     }
                 } else {
                     rsx! {

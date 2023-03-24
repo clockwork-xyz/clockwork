@@ -167,9 +167,10 @@ pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
                 }
             }
             code {
-                class: "w-full h-auto flex flex-col px-4 py-2 font-mono text-base text-slate-100 break-all",
+                class: "w-full h-auto flex flex-col px-4 py-2 font-mono text-sm text-slate-100 break-all",
                 for log in sim_logs.get().iter() {
                     p {
+                        class: "my-1",
                         "{log}"
                     }   
                 }
