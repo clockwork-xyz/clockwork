@@ -1,10 +1,9 @@
-use std::str::FromStr;
-
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
 use gloo_events::EventListener;
 use gloo_storage::{LocalStorage, Storage};
 use solana_client_wasm::solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
 
 use super::backpack::backpack;
 use crate::{
@@ -18,10 +17,10 @@ pub fn ConnectButton(cx: Scope) -> Element {
     let show_popover = use_state(&cx, || false);
     let show_cluster_dropdown = use_state(&cx, || false);
 
-    {
+    use_effect(cx, (), |_| {
         let user_context = user_context.clone();
         let client_context = client_context.clone();
-        use_effect(cx, (), |_| async move {
+        async move {
             // load user from local storage
             match LocalStorage::get::<User>("user_context") {
                 Ok(u) => {
@@ -36,8 +35,8 @@ pub fn ConnectButton(cx: Scope) -> Element {
                 Ok(cluster) => *client_context.write() = Client::new_with_config(cluster),
                 Err(_err) => log::info!("cached cluster not found"),
             }
-        });
-    }
+        }
+    });
 
     let handle_click = move |_| {
         cx.spawn({
@@ -99,11 +98,12 @@ pub fn ConnectButton(cx: Scope) -> Element {
                     let element_id = element.id();
                     let e_id = element_id.as_str();
                     match e_id {
-                        "Mainnet" | "Devnet" | "Testnet" => {
+                        "Mainnet" | "Devnet" => {
                             let cluster = Cluster::from_str(e_id).unwrap();
                             *client_context.write() = Client::new_with_config(cluster);
                             LocalStorage::set("cluster", client_context.write().cluster.clone())
                                 .unwrap();
+                            let _ = web_sys::window().unwrap().location().reload();
                             show_cluster_dropdown.set(false);
                         }
                         _ => {}
@@ -168,11 +168,6 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                         class: "text-slate-800 block px-4 py-2 text-sm",
                                         id: "Devnet",
                                         "Devnet"
-                                    }
-                                    button {
-                                        class: "text-slate-800 block px-4 py-2 text-sm",
-                                        id: "Testnet",
-                                        "Testnet",
                                     }
                                 }
                             }
