@@ -7,7 +7,7 @@ use dioxus_router::{use_router, Link};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 
-use crate::{clockwork::get_account, SearchResult, SearchState};
+use crate::{context::Client, SearchResult, SearchState};
 
 pub fn SearchPage(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
@@ -83,16 +83,23 @@ pub fn SearchBar(cx: Scope) -> Element {
 
 pub fn SearchResults(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
+    let client_context = use_shared_state::<Client>(cx).unwrap();
     let query = &search_state.read().query;
 
     // Search for search results.
     let results = use_future(&cx, query, |_| {
         let query = query.clone();
+        let client_context = client_context.clone();
         async move {
             log::info!("Parsing query: {:?}", query);
             if let Ok(address) = Pubkey::from_str(&query) {
                 // Fetch the account
-                match get_account(address).await.unwrap_or(None) {
+                match client_context
+                    .read()
+                    .get_account(address)
+                    .await
+                    .unwrap_or(None)
+                {
                     Some(account) => {
                         // If account belongs to the thread program, go to /programs/thread/:address
                         if account.owner.eq(&clockwork_thread_program_v1::ID) {

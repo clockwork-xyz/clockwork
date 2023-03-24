@@ -9,7 +9,7 @@ use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
-    clockwork::{get_threads, get_clock, get_account},
+    context::Client,   
     hooks::use_pagination,
     utils::{format_balance, format_timestamp}, components::page_control::PageControl,
 };
@@ -17,12 +17,15 @@ use crate::{
 pub fn ThreadsTable(cx: Scope) -> Element {
     let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, "threads".to_string(), 15, || vec![]);
     let clock = use_state::<Option<Clock>>(cx, || None);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     use_future(&cx, (), |_| {
         let clock = clock.clone();
         let paginated_threads = paginated_threads.clone();
+        let client_context = client_context.clone();
         async move { 
-            let mut threads = get_threads().await;
+            let client = client_context.read();
+            let mut threads = client.get_threads().await.unwrap();
             threads.sort_by(|a, b| {
                 if let Some(exec_context_a) = a.0.exec_context() {
                     if let Some(exec_context_b) = b.0.exec_context() {
@@ -34,7 +37,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                     Ordering::Greater
                 }
             });
-            clock.set(get_clock().await.ok());
+            clock.set(client.get_clock().await.ok());
             paginated_threads.set(threads); 
         }
     });
@@ -159,6 +162,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     let balance = format_balance(cx.props.account.lamports, true);
     // let created_at = format_timestamp(thread.created_at().unix_timestamp);
     let id = String::from_utf8(thread.id()).unwrap();
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     let last_exec = match thread.exec_context() {
         None => String::from("–"),
@@ -228,8 +232,12 @@ fn Row(cx: Scope<RowProps>) -> Element {
                 size,
             } => {
                 // Begin computing the data hash of this account.
-                match use_future(cx, (), |_| async move {
-                    get_account(taddress).await 
+                match use_future(cx, (), |_| {
+                    let client_context = client_context.clone();
+                    async move {
+                        let client = client_context.read();
+                        client.get_account(taddress).await 
+                    }
                 }).value() {
                     Some(res) => {
                         match res {

@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-mod clockwork;
 mod components;
 mod context;
 mod hooks;
@@ -49,6 +48,7 @@ fn App(cx: Scope) -> Element {
         results: vec![],
     });
     use_shared_state_provider(cx, || User::default());
+    use_shared_state_provider(cx, || Client::new());
 
     cx.render(rsx! {
         div {

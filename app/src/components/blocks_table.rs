@@ -1,16 +1,18 @@
 use dioxus::prelude::*;
 use solana_extra_wasm::transaction_status::UiConfirmedBlock;
 
-use crate::clockwork::get_block;
+use crate::context::Client;
 
 pub fn BlocksTable(cx: Scope) -> Element {
     let block = use_state::<Option<UiConfirmedBlock>>(&cx, || None);
+    let client_context = use_shared_state::<Client>(cx).unwrap();
 
     use_future(&cx, (), |_| {
         let block = block.clone();
+        let client_context = client_context.clone();
         async move {
             loop {
-                if let Some(recent_block) = get_block().await {
+                if let Some(recent_block) = client_context.read().get_block().await {
                     block.set(Some(recent_block));
                 }
                 gloo_timers::future::TimeoutFuture::new(1000).await;
