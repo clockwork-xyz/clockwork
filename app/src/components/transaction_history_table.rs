@@ -2,7 +2,7 @@ use anchor_lang::solana_program::pubkey::Pubkey;
 use dioxus::prelude::*;
 use solana_client_wasm::utils::rpc_response::RpcConfirmedTransactionStatusWithSignature;
 
-use crate::context::Client;
+use crate::{context::Client, utils::format_timestamp};
 
 #[derive(Clone, Props, PartialEq)]
 pub struct TransactionHistoryTableProps {
@@ -72,6 +72,16 @@ fn Header(cx: Scope) -> Element {
                 th {
                     class: cell_class,
                     scope: "col",
+                    "Age"
+                }
+                // th {
+                //     class: cell_class,
+                //     scope: "col",
+                //     "Timestamp"
+                // }
+                th {
+                    class: cell_class,
+                    scope: "col",
                     "Block"
                 }
                 th {
@@ -91,23 +101,41 @@ struct RowProps {
 }
 
 fn Row(cx: Scope<RowProps>) -> Element {
-    // let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
     let cell_class = "table-cell whitespace-nowrap font-medium py-2 px-5 first:pl-3 first:truncate last:pr-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br";
     let result_class = if cx.props.transaction.err.is_some() {
-        "whitespace-nowrap text-xs font-sans font-medium py-1 px-2 rounded text-slate-100 bg-red-500"
+        "bg-red-500 rounded-full w-3 h-3 ml-4"
     } else {
-        "whitespace-nowrap text-xs font-sans font-medium py-1 px-2 rounded text-slate-100 bg-green-500"
+        "bg-green-500 rounded-full w-3 h-3 ml-4"
     };
-    let result_str = if cx.props.transaction.err.is_some() {
-        "Error"
+    // let timestamp = if let Some(block_time) = cx.props.transaction.block_time {
+    //     format_timestamp(block_time)
+    // } else {
+    //     "–".to_string()
+    // };
+    let age = if let Some(block_time) = cx.props.transaction.block_time {
+        let now = js_sys::Date::new_0().get_time() as i64 / 1000;
+        let age_secs = now - block_time;
+        if age_secs > 86_400 * 2 {
+            format!("{} days ago", age_secs / 86_400)
+        } else if age_secs > 86_400 {
+            format!("an day ago")
+        } else if age_secs > 3_600 * 2 {
+            format!("{} hours ago", age_secs / 3_600)
+        } else if age_secs > 3_600 {
+            format!("an hour ago")
+        } else if age_secs > 120 {
+            format!("{} minutes ago", age_secs / 60)
+        } else if age_secs > 60 {
+            format!("a minute ago")
+        } else {
+            format!("a few seconds ago")
+        }
     } else {
-        "Succcess"
+        "_".to_string()
     };
-    // let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
     cx.render(rsx! {
         tr {
             id: cx.props.elem_id.as_str(),
-            // class: "table-row font-mono text-sm transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
             class: "table-row font-mono text-sm items-start transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
             td {
                 class: cell_class,
@@ -115,13 +143,21 @@ fn Row(cx: Scope<RowProps>) -> Element {
             }
             td {
                 class: cell_class,
+                "{age}"
+            }
+            // td {
+            //     class: cell_class,
+            //     "{timestamp}"
+            // }
+            td {
+                class: cell_class,
                 "{cx.props.transaction.slot}"
             }
             td {
                 class: cell_class,
-                p {
+                div {
                     class: result_class,
-                    "{result_str}"
+                    // "{result_str}"
                 }
             }
         }
