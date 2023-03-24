@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
-use anchor_lang::{InstructionData, ToAccountMetas};
+use anchor_lang::{AnchorDeserialize, InstructionData, ToAccountMetas};
+use chain_drive::{instructions::summon::DataToBeSummoned, ID as SHADOW_PORTAL_ID};
 use clockwork_client::{network::state::Worker, thread::state::Trigger};
 use clockwork_thread_program_v2::state::VersionedThread;
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
+use sha2::{Digest, Sha256};
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
@@ -68,6 +70,7 @@ pub async fn build_thread_exec_tx(
     // TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
+        // uploads
         first_instruction,
     ];
     let mut successful_ixs: Vec<Instruction> = vec![];
@@ -302,7 +305,7 @@ fn build_exec_ix(
         ));
 
         // Inject the worker pubkey as the dynamic "payer" account.
-        for acc in next_instruction.clone().accounts {
+        for acc in &next_instruction.accounts {
             let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
                 signatory_pubkey
             } else {

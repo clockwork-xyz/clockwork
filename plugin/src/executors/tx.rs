@@ -5,14 +5,21 @@ use std::{
         atomic::{AtomicU64, Ordering},
         Arc,
     },
+    time::Duration,
 };
 
+use anchor_lang::{prelude::AccountMeta, InstructionData};
 use async_once::AsyncOnce;
 use bincode::serialize;
-use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
+use chain_drive::{instruction::Upload, instructions::summon::DataToBeSummoned};
+use clockwork_client::{
+    network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker},
+    thread::state::Thread,
+};
 use clockwork_thread_program_v2::state::VersionedThread;
 use lazy_static::lazy_static;
 use log::info;
+use sha2::{Digest, Sha256};
 use solana_client::{
     nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
     rpc_config::RpcSimulateTransactionConfig,
@@ -21,10 +28,11 @@ use solana_client::{
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
-use solana_program::pubkey::Pubkey;
+use solana_program::{hash::Hash, instruction::Instruction, message::Message, pubkey::Pubkey};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
+    signer::Signer,
     transaction::Transaction,
 };
 use tokio::{runtime::Runtime, sync::RwLock};
@@ -447,10 +455,13 @@ impl TxExecutor {
     }
 
     async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        TPU_CLIENT
-            .get()
-            .await
-            .rpc_client()
+        let rpc_client = Arc::new(RpcClient::new_with_commitment(
+            LOCAL_RPC_URL.into(),
+            CommitmentConfig::processed(),
+        ));
+        log::debug!("got rpc for sim");
+
+        rpc_client
             .simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
@@ -482,6 +493,89 @@ impl TxExecutor {
             ));
         }
         Ok(tx.clone())
+    }
+
+    pub(crate) async fn upload_tx(
+        self: Arc<Self>,
+        metadata: &DataToBeSummoned,
+        metadata_pubkey: Pubkey,
+        client: Arc<RpcClient>,
+    ) -> PluginResult<()> {
+        // TODO: deserialization will happen every time. need to make it only try deser/upload once
+        if !metadata.uploaded {
+            if let Ok(response) = reqwest::get(metadata.get_source()).await {
+                if let Ok(data) = response.bytes().await {
+                    // Check if hash is right
+                    let mut hasher = Sha256::new();
+                    hasher.update(&data);
+                    if (*hasher.finalize()).eq(&metadata.hash) {
+                        let upload = Upload {
+                            data: data.to_vec(),
+                        };
+                        let upload_ix_data = upload.data();
+                        log::info!("upload tx is uploading to {metadata_pubkey}");
+                        let metadata_token_account = Pubkey::find_program_address(
+                            &[metadata_pubkey.as_ref()],
+                            &chain_drive::ID,
+                        )
+                        .0;
+                        let upload_ix = Instruction {
+                            program_id: chain_drive::ID,
+                            accounts: vec![
+                                // uploader
+                                AccountMeta::new(self.keypair.pubkey(), true),
+                                // metadata
+                                AccountMeta::new(metadata_pubkey, false),
+                                // metadata token account
+                                AccountMeta::new(metadata_token_account, false),
+                                // shdw payout account
+                                AccountMeta::new(chain_drive::payout_account(), false),
+                                // thread
+                                AccountMeta::new(
+                                    Thread::pubkey(
+                                        metadata_pubkey,
+                                        metadata
+                                            .unique_thread
+                                            .map(|id| id.to_le_bytes().to_vec())
+                                            .unwrap_or_else(|| {
+                                                <str as AsRef<[u8]>>::as_ref(
+                                                    metadata.filename.as_ref(),
+                                                )
+                                                .to_vec()
+                                            }),
+                                    ),
+                                    false,
+                                ),
+                                // thread program
+                                AccountMeta::new_readonly(clockwork_client::thread::ID, false),
+                                // token program
+                                AccountMeta::new_readonly(chain_drive::TOKEN_PROGRAM_ID, false),
+                                // system program
+                                AccountMeta::new_readonly(
+                                    solana_program::system_program::ID,
+                                    false,
+                                ),
+                            ],
+                            data: upload_ix_data,
+                        };
+                        let mut transaction =
+                            Transaction::new_with_payer(&[upload_ix], Some(&self.keypair.pubkey()));
+                        transaction.sign(
+                            &[&self.keypair],
+                            client.get_latest_blockhash().await.expect("TODO"),
+                        );
+                        if let Err(e) = client.send_and_confirm_transaction(&transaction).await {
+                            log::error!("upload failed {e:#?}");
+                            tokio::time::sleep(Duration::from_millis(400)).await;
+                            TPU_CLIENT.get().await.send_transaction(&transaction).await;
+                        };
+                    } else {
+                        log::error!("invalid hash");
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 

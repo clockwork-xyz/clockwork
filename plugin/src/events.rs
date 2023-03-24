@@ -1,8 +1,10 @@
-use anchor_lang::{AccountDeserialize, Discriminator};
+use anchor_lang::{AccountDeserialize, AnchorDeserialize, Discriminator};
 use bincode::deserialize;
-use clockwork_client::webhook::state::Webhook;
+use chain_drive::instructions::summon::DataToBeSummoned;
+use clockwork_client::{thread::state::Thread, webhook::state::Webhook};
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
 use clockwork_thread_program_v2::state::{Thread as ThreadV2, VersionedThread};
+use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
@@ -13,6 +15,7 @@ pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     Thread { thread: VersionedThread },
     Webhook { webhook: Webhook },
+    Upload { metadata: DataToBeSummoned },
 }
 
 impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
@@ -74,6 +77,21 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                     }
                 })?,
             });
+        }
+
+        // If the account belongs to shadow program
+        if owner_pubkey.eq(&chain_drive::ID) && account_info.data.len() > 8 {
+            let d = &account_info.data[..8];
+            if d.eq(&DataToBeSummoned::DISCRIMINATOR) {
+                let mut account_info = account_info;
+                return Ok(AccountUpdateEvent::Upload {
+                    metadata: DataToBeSummoned::try_deserialize(&mut account_info.data).map_err(
+                        |_| GeyserPluginError::AccountsUpdateError {
+                            msg: "Failed to parse DataToBeSummoned account".into(),
+                        },
+                    )?,
+                });
+            }
         }
 
         Err(GeyserPluginError::AccountsUpdateError {
