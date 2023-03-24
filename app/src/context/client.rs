@@ -17,7 +17,7 @@ use solana_client_wasm::{
     utils::{
         rpc_config::{
             GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
-            RpcProgramAccountsConfig,
+            RpcProgramAccountsConfig, RpcTransactionConfig,
         },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
         rpc_response::RpcConfirmedTransactionStatusWithSignature,
@@ -106,6 +106,23 @@ impl Client {
             .to_vec();
 
         Ok(accounts)
+    }
+
+    pub async fn get_transaction_history(
+        &self,
+        address: Pubkey,
+    ) -> ClientResult<Vec<RpcConfirmedTransactionStatusWithSignature>> {
+        self.client
+            .get_signatures_for_address_with_config(
+                &address,
+                GetConfirmedSignaturesForAddress2Config {
+                    before: None,
+                    until: None,
+                    limit: Some(10),
+                    commitment: Some(CommitmentConfig::confirmed()),
+                },
+            )
+            .await
     }
 
     pub async fn get_thread(&self, pubkey: Pubkey) -> ClientResult<(VersionedThread, Account)> {

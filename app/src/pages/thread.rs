@@ -4,10 +4,14 @@ use anchor_lang::solana_program::pubkey::Pubkey;
 use clockwork_thread_program_v2::state::VersionedThread;
 use dioxus::prelude::*;
 use dioxus_router::use_route;
-use solana_client_wasm::solana_sdk::account::Account;
+use solana_client_wasm::{
+    solana_sdk::account::Account, utils::rpc_response::RpcConfirmedTransactionStatusWithSignature,
+};
 
 use crate::{
-    components::{thread_info_table::ThreadInfoTable, thread_sim_logs::ThreadSimLogs},
+    components::{
+        thread_info_table::ThreadInfoTable, thread_sim_logs::ThreadSimLogs, TransactionHistoryTable,
+    },
     context::Client,
 };
 
@@ -46,6 +50,7 @@ pub fn ThreadPage(cx: Scope) -> Element {
                         ThreadInfoTable { account: t.clone().1, thread: t.clone().0 }
                     }
                     ThreadSimLogs { thread: t.clone().0 }
+                    TransactionHistoryTable { address: t.clone().0.pubkey() }
                 }
             }
         })
