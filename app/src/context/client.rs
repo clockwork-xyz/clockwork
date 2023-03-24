@@ -316,13 +316,12 @@ fn build_exec_ix(
 
     exec_ix
 }
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 pub enum Cluster {
     #[default]
     Mainnet,
     Devnet,
-    Testnet,
-    Custom(String),
+    // Custom(String),
 }
 
 impl Cluster {
@@ -332,8 +331,7 @@ impl Cluster {
                 "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6".to_string()
             }
             Self::Devnet => "https://api.devnet.solana.com".to_string(),
-            Self::Testnet => "https://api.testnet.solana.com".to_string(),
-            Self::Custom(rpc_url) => rpc_url.to_string(),
+            // Self::Custom(rpc_url) => rpc_url.to_string(),
         }
     }
 }
@@ -343,8 +341,7 @@ impl ToString for Cluster {
         match self {
             Self::Mainnet => "Mainnet".to_string(),
             Self::Devnet => "Devnet".to_string(),
-            Self::Testnet => "Testnet".to_string(),
-            Self::Custom(rpc_url) => String::from(format!("Custom: {}", rpc_url)),
+            // Self::Custom(rpc_url) => String::from(format!("Custom: {}", rpc_url)),
         }
     }
 }
@@ -356,8 +353,7 @@ impl FromStr for Cluster {
         match expression {
             "Mainnet" => Ok(Self::Mainnet),
             "Devnet" => Ok(Self::Devnet),
-            "Testnet" => Ok(Self::Testnet),
-            "Custom" => Ok(Self::Custom("".to_string())),
+            // "Custom" => Ok(Self::Custom("".to_string())),
             _ => Err(RuntimeError::new("Invalid expression")),
         }
     }
