@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, process::Stdio};
 
 #[allow(deprecated)]
 use {
@@ -33,19 +33,24 @@ pub fn start(
 ) -> Result<(), CliError> {
     check_test_validator_version();
     // Start the validator
+    println!("\nStarting Test Validator\n");
     let validator_process =
         &mut start_test_validator(client, program_infos, network_url, clone_addresses)
             .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
 
     // Initialize Clockwork
+    println!("\nMinting Clockwork Token\n");
     let mint_pubkey =
         mint_clockwork_token(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
     super::initialize::initialize(client, mint_pubkey)?;
+    println!("\nRegistering Worker\n");
     register_worker(client).map_err(|err| CliError::FailedTransaction(err.to_string()))?;
+    println!("\nCreating Threads\n");
     create_threads(client, mint_pubkey)
         .map_err(|err| CliError::FailedTransaction(err.to_string()))?;
 
     // Wait for process to be killed.
+    println!("\nLocalnet Deployed\n");
     _ = validator_process.wait();
 
     Ok(())
@@ -240,11 +245,12 @@ fn start_test_validator(
         .clone_addresses(clone_addresses)
         .add_programs_with_path(program_infos)
         .geyser_plugin_config(home_dir)
+        .stdout(Stdio::null())
         .spawn()
         .expect("Failed to start local test validator");
 
     // Wait for the validator to become healthy
-    let ms_wait = 10_000;
+    let ms_wait = 100_000;
     let mut count = 0;
     while count < ms_wait {
         match client.get_block_height() {
@@ -260,8 +266,14 @@ fn start_test_validator(
             }
         }
     }
+
+    // let mut process2 = Command::new("solana logs")
+    //     .spawn()
+    //     .expect("failed to start logs");
+
     if count == ms_wait {
         process.kill()?;
+        // process2.kill()?;
         std::process::exit(1);
     }
 

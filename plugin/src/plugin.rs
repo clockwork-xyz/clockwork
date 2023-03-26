@@ -130,6 +130,19 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
+                    AccountUpdateEvent::Upload { metadata } => {
+                        inner
+                            .executors
+                            .tx
+                            .clone()
+                            .upload_tx(
+                                &metadata,
+                                account_pubkey,
+                                Arc::clone(&inner.executors.client),
+                            )
+                            .await
+                            .ok();
+                    }
                 }
             }
             Ok(())
