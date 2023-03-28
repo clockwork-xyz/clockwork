@@ -1120,7 +1120,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-app"
-version = "0.1.0"
+version = "2.0.2"
 dependencies = [
  "anchor-lang",
  "bincode",
@@ -1246,7 +1246,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-relayer"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-relayer-api"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "bincode",
  "serde",
