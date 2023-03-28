@@ -15,3 +15,4 @@ members = [
 dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
 dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
+# solana-client-wasm = { git = "https://github.com/clockwork-xyz/solana-playground", branch = "nick/anchor-0.27.0" }
