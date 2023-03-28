@@ -1,21 +1,20 @@
 [package]
 name = "clockwork-utils"
-repository = "https://github.com/clockwork-xyz/utils"
-description = "Helpers to build with Clockwork"
+version = "2.0.2"
+description = "Tools for building blocks on Solana"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-authors = { workspace = true }
-documentation = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-keywords = { workspace = true }
-license = { workspace = true }
-version = { workspace = true }
+keywords = ["solana"]
 
 [lib]
 name = "clockwork_utils"
 
 [dependencies]
-anchor-lang = { workspace = true }
+anchor-lang = "0.26.0"
 base64 = "~0.13"
 static-pubkey = "1.0.3"
 

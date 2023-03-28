@@ -1,34 +1,33 @@
 [package]
 name = "clockwork_plugin"
-repository = "https://github.com/clockwork-xyz/plugin"
+version = "2.0.2"
+edition = "2021"
 description = "Clockwork plugin for Solana validators"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/plugin"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
+keywords = ["solana"]
 build = "build.rs"
-authors = { workspace = true }
-documentation = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-keywords = { workspace = true }
-license = { workspace = true }
-version = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-anchor-lang = { workspace = true }
+anchor-lang = "0.26.0"
 async_once = "0.2.6"
 async-trait = "0.1.64"
 bincode = "1.3.3"
 bs58 = "0.4.0"
 bugsnag = "0.2.1"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-client = { workspace = true }
-clockwork-cron = { workspace = true }
-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.1" }
+clockwork-client = { path = "../client", version = "2.0.2" }
+clockwork-cron = { path = "../cron", version = "2.0.2" }
+clockwork-relayer-api = { path = "../relayer/api", version = "2.0.2" }
 clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2" }
 clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread" }
-clockwork-utils = { workspace = true }
+clockwork-utils = { path = "../utils", version = "2.0.2" }
 lazy_static = "1.4.0"
 log = "0.4"
 prost = "0.10.0"
@@ -37,19 +36,19 @@ sentry = "0.27.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 simple-error = "0.2.3"
-solana-account-decoder = { workspace = true }
-solana-client = { workspace = true }
-solana-geyser-plugin-interface = { workspace = true }
-solana-logger = { workspace = true }
-solana-program = { workspace = true }
-solana-sdk = { workspace = true }
-solana-transaction-status = { workspace = true }
+solana-account-decoder = "~1.14.15"
+solana-client = "~1.14.15"
+solana-geyser-plugin-interface = "~1.14.15"
+solana-logger = "~1.14.15"
+solana-program = "~1.14.15"
+solana-sdk = "~1.14.15"
+solana-transaction-status = "~1.14.15"
 thiserror = "1.0.30"
 tokio = "1.18.4"
 futures = "0.3.26"
 
 [build-dependencies]
-cargo_toml = "0.15"
+cargo_toml = "0.13.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
