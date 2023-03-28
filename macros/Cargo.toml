@@ -1,7 +1,7 @@
 [package]
-name = "clockwork-cron"
+name = "clockwork-macros"
 version = "2.0.2"
-description = "A cron expression parser that's safe to use in the Solana runtime"
+description = "Macros for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 homepage = "https://clockwork.xyz"
@@ -11,10 +11,11 @@ readme = "./README.md"
 keywords = ["solana"]
 
 [lib]
-name = "clockwork_cron"
+name = "clockwork_macros"
+proc-macro = true
 
 [dependencies]
-chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-nom = "~7"
-once_cell = "1.5.2"
-
+anchor-syn = "0.26.0"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "1.0.60", features = ["full"] }

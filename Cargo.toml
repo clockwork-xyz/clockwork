@@ -4,51 +4,13 @@ members = [
     "cli",
     "client",
     "cron",
-#    "localnet",
+    "macros",
     "plugin",
     "programs/*",
     "relayer",
     "sdk",
     "utils"
 ]
-
-[workspace.package]
-version = "2.0.2"
-authors = ["Clockwork maintainers"]
-repository = "https://github.com/clockwork-xyz/clockwork"
-homepage = "https://clockwork.xyz"
-license = "AGPL-3.0-or-later"
-edition = "2021"
-documentation = "https://docs.clockwork.xyz"
-keywords = ["automation", "threads", "blockchain", "rust", "solana"]
-
-[workspace.dependencies]
-anchor-lang = "=0.26.0"
-anchor-spl = "=0.26.0"
-clockwork-client = { path = "client", version = "=2.0.2" }
-clockwork-cron = { path = "cron", version = "=2.0.2" }
-clockwork-network-program = { path = "programs/network", version = "=2.0.2" }
-clockwork-relayer-api = { path = "relayer/api", version = "=2.0.2" }
-clockwork-sdk = { path = "sdk", version = "=2.0.2" }
-clockwork-utils = { path = "utils", version = "=2.0.2" }
-clockwork-thread-program = { package = "clockwork-thread-program", path = "programs/thread", version = "=2.0.2"  }
-clockwork-thread-program-v1 = { package = "clockwork-thread-program", path = "programs/thread", version = "=1.4.2"}
-clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "programs/thread", version = "=2.0.2"  }
-clockwork-webhook-program = { path = "programs/webhook", version = "=2.0.2" }
-solana-account-decoder = "=1.14.15"
-solana-client = "=1.14.15"
-solana-clap-utils = "=1.14.15"
-solana-cli-config = "=1.14.15"
-solana-geyser-plugin-interface = "=1.14.15"
-solana-logger = "=1.14.15"
-solana-program = "=1.14.15"
-solana-sdk = "=1.14.15"
-solana-transaction-status = "=1.14.15"
-solana-validator = "=1.14.15"
-solana-zk-token-sdk = "=1.14.15"
-spl-associated-token-account = "1.1.1"
-spl-memo = "3.0.1"
-spl-token = "~3.5.0"
 
 [patch.crates-io]
 dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }

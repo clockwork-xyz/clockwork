@@ -1,15 +1,14 @@
 [package]
 name = "clockwork-thread-program"
-repository = "https://github.com/clockwork-xyz/programs/thread"
+version = "2.0.2"
 description = "Clockwork thread program"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-authors = { workspace = true }
-documentation = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-keywords = { workspace = true }
-license = { workspace = true }
-version = { workspace = true }
+keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -23,11 +22,12 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { workspace = true }
+anchor-lang = "0.26.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-cron = { workspace = true }
-clockwork-network-program = { workspace = true, features = ["cpi"]}
+clockwork-cron = { path = "../../cron", version = "2.0.2" }
+# clockwork-macros = { path = "../../macros", version = "2.0.0-gamma" }
+clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.2" }
 clockwork-thread-program-v1 = { package = "clockwork-thread-program", version = "1.4.2", features = ["no-entrypoint"] }
-clockwork-utils = { workspace = true }
+clockwork-utils = { path = "../../utils", version = "2.0.2" }
 static-pubkey = "1.0.3"
 version = "3.0.0"
