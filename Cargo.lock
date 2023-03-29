@@ -312,7 +312,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf7d535e1381be3de2c0716c0a1c1e32ad9df1042cddcf7bc18d743569e53319"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
@@ -326,7 +326,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3bcd731f21048a032be27c7791701120e44f3f6371358fc4261a7f716283d29"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "bs58 0.4.0",
  "proc-macro2 1.0.52",
@@ -341,7 +341,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1be64a48e395fe00b8217287f226078be2cf32dae42fdf8a885b997945c3d28"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "proc-macro2 1.0.52",
  "syn 1.0.109",
 ]
@@ -352,7 +352,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38ea6713d1938c0da03656ff8a693b17dc0396da66d1ba320557f07e86eca0d4"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
  "syn 1.0.109",
@@ -364,7 +364,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d401f11efb3644285685f8339829a9786d43ed7490bb1699f33c478d04d5a582"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
@@ -377,7 +377,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c6700a6f5c888a9c33fe8afc0c64fd8575fa28d05446037306d0f96102ae4480"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "heck 0.3.3",
  "proc-macro2 1.0.52",
@@ -391,7 +391,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ad769993b5266714e8939e47fbdede90e5c030333c7522d99a4d4748cf26712"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
@@ -404,7 +404,7 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e677fae4a016a554acdd0e3b7f178d3acafaa7e7ffac6b8690cf4e171f1c116"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
@@ -417,10 +417,52 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "340beef6809d1c3fcc7ae219153d981e95a8a277ff31985bd7050e32645dc9a8"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.26.0",
  "anyhow",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-gen"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
+dependencies = [
+ "anchor-generate-cpi-crate",
+ "anchor-generate-cpi-interface",
+]
+
+[[package]]
+name = "anchor-generate-cpi-crate"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
+dependencies = [
+ "anchor-idl",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-generate-cpi-interface"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
+dependencies = [
+ "anchor-idl",
+ "darling",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-idl"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
+dependencies = [
+ "anchor-syn 0.27.0",
+ "darling",
+ "heck 0.4.1",
+ "proc-macro2 1.0.52",
+ "quote 1.0.26",
+ "serde_json",
  "syn 1.0.109",
 ]
 
@@ -471,6 +513,24 @@ dependencies = [
  "heck 0.3.3",
  "proc-macro2 1.0.52",
  "proc-macro2-diagnostics",
+ "quote 1.0.26",
+ "serde",
+ "serde_json",
+ "sha2 0.9.9",
+ "syn 1.0.109",
+ "thiserror",
+]
+
+[[package]]
+name = "anchor-syn"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11cb31fe143aedb36fc41409ea072aa0b840cbea727e62eb2ff6e7b6cea036ff"
+dependencies = [
+ "anyhow",
+ "bs58 0.3.1",
+ "heck 0.3.3",
+ "proc-macro2 1.0.52",
  "quote 1.0.26",
  "serde",
  "serde_json",
@@ -1324,10 +1384,18 @@ dependencies = [
  "chrono",
  "clockwork-cron 2.0.2",
  "clockwork-network-program 2.0.2",
- "clockwork-thread-program 1.4.2",
+ "clockwork-thread-program-v1",
  "clockwork-utils 2.0.2",
  "static-pubkey",
  "version",
+]
+
+[[package]]
+name = "clockwork-thread-program-v1"
+version = "2.0.2"
+dependencies = [
+ "anchor-gen",
+ "anchor-lang",
 ]
 
 [[package]]
@@ -1375,8 +1443,8 @@ dependencies = [
  "clockwork-client",
  "clockwork-cron 2.0.2",
  "clockwork-relayer-api",
- "clockwork-thread-program 1.4.2",
  "clockwork-thread-program 2.0.2",
+ "clockwork-thread-program-v1",
  "clockwork-utils 2.0.2",
  "futures",
  "lazy_static",
@@ -1680,6 +1748,7 @@ dependencies = [
  "ident_case",
  "proc-macro2 1.0.52",
  "quote 1.0.26",
+ "strsim 0.10.0",
  "syn 1.0.109",
 ]
 

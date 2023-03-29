@@ -1,13 +1,20 @@
 use anchor_lang::{
-    prelude::{Error, Pubkey},
+    prelude::{borsh::BorshSchema, *},
     AccountDeserialize,
 };
-use clockwork_thread_program_v1::state::Thread as ThreadV1;
+use clockwork_thread_program_v1::{
+    state::Thread as ThreadV1,
+    typedefs::{
+        ExecContext as ExecContextV1, Trigger as TriggerV1, TriggerContext as TriggerContextV1,
+    },
+};
+use clockwork_utils::thread::SerializableAccount;
 
 use crate::{
-    ClockData, ExecContext, SerializableAccount, SerializableInstruction, Thread as ThreadV2,
-    Trigger, TriggerContext,
+    ClockData, ExecContext, SerializableInstruction, Thread as ThreadV2, Trigger, TriggerContext,
 };
+
+use super::SEED_THREAD;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum VersionedThread {
@@ -42,10 +49,7 @@ impl VersionedThread {
                 execs_since_slot: e.execs_since_slot,
                 last_exec_at: e.last_exec_at,
                 trigger_context: unsafe {
-                    std::mem::transmute::<
-                        clockwork_thread_program_v1::state::TriggerContext,
-                        TriggerContext,
-                    >(e.trigger_context)
+                    std::mem::transmute::<TriggerContextV1, TriggerContext>(e.trigger_context)
                 },
             }),
             Self::V2(t) => t.exec_context,
@@ -70,7 +74,7 @@ impl VersionedThread {
                         .iter()
                         .map(|a| unsafe {
                             std::mem::transmute_copy::<
-                                clockwork_thread_program_v1::state::AccountMetaData,
+                                clockwork_thread_program_v1::typedefs::AccountMetaData,
                                 SerializableAccount,
                             >(a)
                         })
@@ -115,7 +119,7 @@ impl VersionedThread {
     pub fn trigger(&self) -> Trigger {
         match self {
             Self::V1(t) => match &t.trigger {
-                clockwork_thread_program_v1::state::Trigger::Account {
+                TriggerV1::Account {
                     address,
                     offset,
                     size,
@@ -124,14 +128,14 @@ impl VersionedThread {
                     offset: *offset as u64,
                     size: *size as u64,
                 },
-                clockwork_thread_program_v1::state::Trigger::Cron {
+                TriggerV1::Cron {
                     schedule,
                     skippable,
                 } => Trigger::Cron {
                     schedule: schedule.clone(),
                     skippable: *skippable,
                 },
-                clockwork_thread_program_v1::state::Trigger::Immediate => Trigger::Now,
+                TriggerV1::Immediate => Trigger::Now,
             },
             Self::V2(t) => t.trigger.clone(),
         }
@@ -159,25 +163,3 @@ impl TryFrom<Vec<u8>> for VersionedThread {
         VersionedThread::try_deserialize(&mut data.as_slice())
     }
 }
-
-// #[derive(Clone, Debug)]
-// pub enum VersionedID {
-//     String(String),
-//     Vec(Vec<u8>),
-// }
-
-// impl VersionedID {
-//     pub fn to_string(self) -> Option<String> {
-//         if let VersionedID::String(id) = self {
-//             return Some(id);
-//         }
-//         None
-//     }
-
-//     pub fn to_vec(self) -> Option<Vec<u8>> {
-//         if let VersionedID::Vec(id) = self {
-//             return Some(id);
-//         }
-//         None
-//     }
-// }
