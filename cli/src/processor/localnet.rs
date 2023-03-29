@@ -63,7 +63,7 @@ fn check_test_validator_version() {
             This behavior is undefined. \
             You have '{}' installed, but the Clockwork Engine requires {} \
             We recommend you to run `solana-install init {}`\nDo you want to continue anyway? \
-            More info: https://github.com/clockwork-xyz/docs/blob/main/FAQ.md#clockwork-engine",
+            More info: https://github.com/clockwork-xyz/docs/blob/main/developers/faq.md#why-is-localnet-not-working",
             validator_version, clockwork_version, clockwork_version
         );
         println!("⚠️  \x1b[93m{}️\x1b[0m", err);
@@ -79,7 +79,7 @@ fn get_validator_version() -> String {
         .output()
         .map_or("unknown".into(), |output| {
             let version = String::from_utf8_lossy(&output.stdout);
-            let re = Regex::new(r"(\d\.\d{2}\.\d)").unwrap();
+            let re = Regex::new(r"(\d+\.\d+\.\d+)").unwrap();
             let caps = re.captures(&version).unwrap();
             caps.get(1)
                 .map_or("unknown (error parsing solana-validator version)", |m| {
