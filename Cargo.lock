@@ -427,6 +427,7 @@ dependencies = [
 [[package]]
 name = "anchor-gen"
 version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
 dependencies = [
  "anchor-generate-cpi-crate",
  "anchor-generate-cpi-interface",
@@ -435,6 +436,7 @@ dependencies = [
 [[package]]
 name = "anchor-generate-cpi-crate"
 version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
 dependencies = [
  "anchor-idl",
  "syn 1.0.109",
@@ -443,6 +445,7 @@ dependencies = [
 [[package]]
 name = "anchor-generate-cpi-interface"
 version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
 dependencies = [
  "anchor-idl",
  "darling",
@@ -452,6 +455,7 @@ dependencies = [
 [[package]]
 name = "anchor-idl"
 version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
 dependencies = [
  "anchor-syn 0.27.0",
  "darling",

@@ -16,9 +16,5 @@ cpi = ["no-entrypoint"]
 
 [dependencies]
 anchor-lang = "0.26.0"
-# anchor-gen = { git = "https://github.com/eliascm17/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
-anchor-gen = { path = "../../../../anchor-gen/crates/anchor-gen/", version = "^0.3.1", features = ["compat-program-result"] }
-# anchor-gen = { path = "../../../../anchor-gen/", version = "^0.3.1", features = ["compat-program-result"] }
-
-# anchor-gen = { git = "https://github.com/clockwork-xyz/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
+anchor-gen = { git = "https://github.com/clockwork-xyz/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
 
