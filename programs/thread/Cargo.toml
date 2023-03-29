@@ -22,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.26.0"
+anchor-lang = "0.27.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 clockwork-cron = { path = "../../cron", version = "2.0.2" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.2" }

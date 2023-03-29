@@ -22,6 +22,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.26.0"
-anchor-spl = { features = ["mint", "token"], version = "0.26.0" }
+anchor-lang = "0.27.0"
+anchor-spl = { features = ["mint", "token"], version = "0.27.0" }
 clockwork-utils = { path = "../../utils", version = "2.0.2" }
