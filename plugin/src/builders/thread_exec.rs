@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anchor_lang::{InstructionData, ToAccountMetas};
 use clockwork_client::{network::state::Worker, thread::state::Trigger};
-use clockwork_thread_program_v2::state::VersionedThread;
+use clockwork_thread_program::state::VersionedThread;
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -231,14 +231,14 @@ fn build_kickoff_ix(
             data: clockwork_thread_program_v1::instruction::ThreadKickoff {}.data(),
         },
         VersionedThread::V2(_) => Instruction {
-            program_id: clockwork_thread_program_v2::ID,
-            accounts: clockwork_thread_program_v2::accounts::ThreadKickoff {
+            program_id: clockwork_thread_program::ID,
+            accounts: clockwork_thread_program::accounts::ThreadKickoff {
                 signatory: signatory_pubkey,
                 thread: thread_pubkey,
                 worker: worker_pubkey,
             }
             .to_account_metas(Some(false)),
-            data: clockwork_thread_program_v2::instruction::ThreadKickoff {}.data(),
+            data: clockwork_thread_program::instruction::ThreadKickoff {}.data(),
         },
     };
 
@@ -281,8 +281,8 @@ fn build_exec_ix(
             data: clockwork_thread_program_v1::instruction::ThreadExec {}.data(),
         },
         VersionedThread::V2(_) => Instruction {
-            program_id: clockwork_thread_program_v2::ID,
-            accounts: clockwork_thread_program_v2::accounts::ThreadExec {
+            program_id: clockwork_thread_program::ID,
+            accounts: clockwork_thread_program::accounts::ThreadExec {
                 fee: clockwork_client::network::state::Fee::pubkey(worker_pubkey),
                 pool: clockwork_client::network::state::Pool::pubkey(0),
                 signatory: signatory_pubkey,
@@ -290,7 +290,7 @@ fn build_exec_ix(
                 worker: worker_pubkey,
             }
             .to_account_metas(Some(true)),
-            data: clockwork_thread_program_v2::instruction::ThreadExec {}.data(),
+            data: clockwork_thread_program::instruction::ThreadExec {}.data(),
         },
     };
 

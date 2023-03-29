@@ -2,6 +2,13 @@ use anchor_lang::{
     prelude::{borsh::BorshSchema, *},
     AccountDeserialize,
 };
+use clockwork_thread_program_v1::{
+    state::Thread as ThreadV1,
+    typedefs::{
+        ExecContext as ExecContextV1, Trigger as TriggerV1, TriggerContext as TriggerContextV1,
+    },
+};
+use clockwork_utils::thread::SerializableAccount;
 
 use crate::{
     ClockData, ExecContext, SerializableInstruction, Thread as ThreadV2, Trigger, TriggerContext,
@@ -58,7 +65,23 @@ impl VersionedThread {
 
     pub fn next_instruction(&self) -> Option<SerializableInstruction> {
         match self {
-            Self::V1(t) => t.next_instruction.clone(),
+            Self::V1(t) => match &t.next_instruction {
+                None => None,
+                Some(ix) => Some(SerializableInstruction {
+                    program_id: ix.program_id,
+                    accounts: ix
+                        .accounts
+                        .iter()
+                        .map(|a| unsafe {
+                            std::mem::transmute_copy::<
+                                clockwork_thread_program_v1::typedefs::AccountMetaData,
+                                SerializableAccount,
+                            >(a)
+                        })
+                        .collect::<Vec<SerializableAccount>>(),
+                    data: ix.data.clone(),
+                }),
+            },
             Self::V2(t) => t.next_instruction.clone(),
         }
     }
@@ -139,133 +162,4 @@ impl TryFrom<Vec<u8>> for VersionedThread {
     fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         VersionedThread::try_deserialize(&mut data.as_slice())
     }
-}
-
-// V1
-pub mod clockwork_thread_program_v1 {
-    use anchor_lang::declare_id;
-
-    declare_id!("3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv");
-}
-
-/// Tracks the current state of a transaction thread on Solana.
-#[account]
-#[derive(Debug)]
-pub struct ThreadV1 {
-    /// The owner of this thread.
-    pub authority: Pubkey,
-    /// The cluster clock at the moment the thread was created.
-    pub created_at: ClockDataV1,
-    /// The context of the thread's current execution state.
-    pub exec_context: Option<ExecContextV1>,
-    /// The number of lamports to payout to workers per execution.
-    pub fee: u64,
-    /// The id of the thread, given by the authority.
-    pub id: String,
-    /// The instruction to kick-off the thread.
-    pub kickoff_instruction: SerializableInstruction,
-    /// The next instruction in the thread.
-    pub next_instruction: Option<SerializableInstruction>,
-    /// Whether or not the thread is currently paused.
-    pub paused: bool,
-    /// The maximum number of execs allowed per slot.
-    pub rate_limit: u64,
-    /// The triggering event to kickoff a thread.
-    pub trigger: TriggerV1,
-}
-
-impl ThreadV1 {
-    /// Derive the pubkey of a thread account.
-    pub fn pubkey(authority: Pubkey, id: String) -> Pubkey {
-        Pubkey::find_program_address(
-            &[SEED_THREAD, authority.as_ref(), id.as_bytes()],
-            &clockwork_thread_program_v1::ID,
-        )
-        .0
-    }
-}
-
-impl PartialEq for ThreadV1 {
-    fn eq(&self, other: &Self) -> bool {
-        self.authority.eq(&other.authority) && self.id.eq(&other.id)
-    }
-}
-
-/// The triggering conditions of a thread.
-#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone, PartialEq)]
-pub enum TriggerV1 {
-    /// Allows a thread to be kicked off whenever the data of an account changes.
-    Account {
-        /// The address of the account to monitor.
-        address: Pubkey,
-        /// The byte offset of the account data to monitor.
-        offset: usize,
-        /// The size of the byte slice to monitor (must be less than 1kb)
-        size: usize,
-    },
-
-    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
-    Cron {
-        /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
-        schedule: String,
-
-        /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
-        /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
-        skippable: bool,
-    },
-
-    /// Allows a thread to be kicked off as soon as it's created.
-    Immediate,
-}
-
-/// The execution context of a particular transaction thread.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct ExecContextV1 {
-    /// Number of execs since the last tx reimbursement.
-    pub execs_since_reimbursement: u64,
-
-    /// Number of execs in this slot.
-    pub execs_since_slot: u64,
-
-    /// Slot of the last exec
-    pub last_exec_at: u64,
-
-    /// Context for the triggering condition
-    pub trigger_context: TriggerContextV1,
-}
-
-/// The event which allowed a particular transaction thread to be triggered.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum TriggerContextV1 {
-    /// A running hash of the observed account data.
-    Account {
-        /// The account's data hash.
-        data_hash: u64,
-    },
-
-    /// A cron execution context.
-    Cron {
-        /// The threshold moment the schedule was waiting for.
-        started_at: i64,
-    },
-
-    /// The immediate trigger context.
-    Immediate,
-}
-
-/// The clock object, representing a specific moment in time recorded by a Solana cluster.
-#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, PartialEq)]
-pub struct ClockDataV1 {
-    /// The current slot.
-    pub slot: u64,
-    /// The timestamp of the first slot in this Solana epoch.
-    pub epoch_start_timestamp: i64,
-    /// The bank epoch.
-    pub epoch: u64,
-    /// The future epoch for which the leader schedule has most recently been calculated.
-    pub leader_schedule_epoch: u64,
-    /// Originally computed from genesis creation time and network time
-    /// in slots (drifty); corrected using validator timestamp oracle as of
-    /// timestamp_correction and timestamp_bounding features.
-    pub unix_timestamp: i64,
 }

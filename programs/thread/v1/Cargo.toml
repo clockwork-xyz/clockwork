@@ -1,0 +1,24 @@
+[package]
+name = "clockwork-thread-program-v1"
+version = "2.0.2"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "clockwork_thread_program_v1"
+
+[features]
+default = ["cpi"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+anchor-lang = "0.26.0"
+# anchor-gen = { git = "https://github.com/eliascm17/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
+anchor-gen = { path = "../../../../anchor-gen/crates/anchor-gen/", version = "^0.3.1", features = ["compat-program-result"] }
+# anchor-gen = { path = "../../../../anchor-gen/", version = "^0.3.1", features = ["compat-program-result"] }
+
+# anchor-gen = { git = "https://github.com/clockwork-xyz/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
+
