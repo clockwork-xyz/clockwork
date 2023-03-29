@@ -10,7 +10,7 @@ use std::{
 use async_once::AsyncOnce;
 use bincode::serialize;
 use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
-use clockwork_thread_program_v2::state::VersionedThread;
+use clockwork_thread_program::state::VersionedThread;
 use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
@@ -270,24 +270,23 @@ impl TxExecutor {
         // Get the set of thread pubkeys that are executable.
         // Note we parallelize using rayon because this work is CPU heavy.
         let r_executable_threads = self.executable_threads.read().await;
-        let thread_pubkeys = if pool_position.current_position.is_none()
-            && !pool_position.workers.is_empty()
-        {
-            // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
-            r_executable_threads
-                .iter()
-                .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
-                .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
-                .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
-                .collect::<Vec<(Pubkey, u64)>>()
-        } else {
-            // This worker is in the pool. Get pubkeys executable threads.
-            r_executable_threads
-                .iter()
-                .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
-                .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
-                .collect::<Vec<(Pubkey, u64)>>()
-        };
+        let thread_pubkeys =
+            if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
+                // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
+                r_executable_threads
+                    .iter()
+                    .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
+            } else {
+                // This worker is in the pool. Get pubkeys executable threads.
+                r_executable_threads
+                    .iter()
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
+                    .collect::<Vec<(Pubkey, u64)>>()
+            };
         drop(r_executable_threads);
         Ok(thread_pubkeys)
     }
@@ -380,11 +379,7 @@ impl TxExecutor {
         due_slot: u64,
         thread_pubkey: Pubkey,
     ) -> Option<(Pubkey, Transaction)> {
-        let thread = match client
-            .clone()
-            .get::<VersionedThread>(&thread_pubkey)
-            .await
-        {
+        let thread = match client.clone().get::<VersionedThread>(&thread_pubkey).await {
             Err(_err) => {
                 self.increment_simulation_failure(thread_pubkey).await;
                 return None;
