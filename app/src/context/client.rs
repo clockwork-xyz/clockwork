@@ -3,8 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, sysvar},
     Discriminator, InstructionData, ToAccountMetas,
 };
-use clockwork_sdk::{state::Thread, utils::PAYER_PUBKEY};
-use clockwork_thread_program_v2::state::{Trigger, VersionedThread};
+use clockwork_thread_program_v2::state::{Thread, Trigger, VersionedThread, PAYER_PUBKEY};
 use js_sys::WebAssembly::RuntimeError;
 use serde::{Deserialize, Serialize};
 use solana_client_wasm::{
@@ -17,7 +16,7 @@ use solana_client_wasm::{
     utils::{
         rpc_config::{
             GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
-            RpcProgramAccountsConfig, RpcTransactionConfig,
+            RpcProgramAccountsConfig,
         },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
         rpc_response::RpcConfirmedTransactionStatusWithSignature,
@@ -77,7 +76,7 @@ impl Client {
         let accounts = self
             .client
             .get_program_accounts_with_config(
-                &clockwork_sdk::ID,
+                &clockwork_thread_program_v2::ID,
                 RpcProgramAccountsConfig {
                     filters: Some(vec![RpcFilterType::Memcmp(Memcmp {
                         offset: 0,
