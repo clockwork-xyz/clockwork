@@ -5123,7 +5123,7 @@ dependencies = [
 [[package]]
 name = "solana-client-wasm"
 version = "1.14.16"
-source = "git+https://github.com/clockwork-xyz/solana-playground?branch=nick/anchor-0.27.0#cb11f2e9a564878da129146547a8fa7d585cb411"
+source = "git+https://github.com/clockwork-xyz/solana-playground?rev=83e485fbb8f8f09a6411d65ffe63823080847cda#83e485fbb8f8f09a6411d65ffe63823080847cda"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
@@ -5157,7 +5157,7 @@ dependencies = [
 [[package]]
 name = "solana-extra-wasm"
 version = "1.14.16"
-source = "git+https://github.com/clockwork-xyz/solana-playground?branch=nick/anchor-0.27.0#cb11f2e9a564878da129146547a8fa7d585cb411"
+source = "git+https://github.com/clockwork-xyz/solana-playground?rev=83e485fbb8f8f09a6411d65ffe63823080847cda#83e485fbb8f8f09a6411d65ffe63823080847cda"
 dependencies = [
  "Inflector",
  "arrayref",
