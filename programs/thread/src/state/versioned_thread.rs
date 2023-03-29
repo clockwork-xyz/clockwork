@@ -1,20 +1,13 @@
-use anchor_lang::{
-    prelude::{borsh::BorshSchema, *},
-    AccountDeserialize,
-};
+use anchor_lang::{prelude::*, AccountDeserialize};
 use clockwork_thread_program_v1::{
     state::Thread as ThreadV1,
-    typedefs::{
-        ExecContext as ExecContextV1, Trigger as TriggerV1, TriggerContext as TriggerContextV1,
-    },
+    typedefs::{Trigger as TriggerV1, TriggerContext as TriggerContextV1},
 };
 use clockwork_utils::thread::SerializableAccount;
 
 use crate::{
     ClockData, ExecContext, SerializableInstruction, Thread as ThreadV2, Trigger, TriggerContext,
 };
-
-use super::SEED_THREAD;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum VersionedThread {
