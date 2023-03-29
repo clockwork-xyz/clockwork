@@ -8,7 +8,7 @@ use std::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
-use clockwork_thread_program_v2::state::VersionedThread;
+use clockwork_thread_program::state::VersionedThread;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,

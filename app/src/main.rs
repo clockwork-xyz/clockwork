@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-mod clockwork;
 mod components;
 mod context;
 mod hooks;
@@ -48,10 +47,8 @@ fn App(cx: Scope) -> Element {
         query: String::new(),
         results: vec![],
     });
-    use_shared_state_provider(cx, || User {
-        pubkey: None,
-        account: None,
-    });
+    use_shared_state_provider(cx, || User::default());
+    use_shared_state_provider(cx, || Client::new());
 
     cx.render(rsx! {
         div {
@@ -68,7 +65,6 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/keys/new", NewKeyPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "/programs/threads/:address", ThreadPage {} }
-                Route { to: "/settings", SettingsPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
             }

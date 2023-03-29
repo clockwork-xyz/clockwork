@@ -22,8 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { features = ["init-if-needed"], version = "0.26.0" }
-# clockwork-macros = { path = "../../macros", version = "2.0.0-gamma" }
+anchor-lang = { features = ["init-if-needed"], version = "0.27.0" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.2" }
 clockwork-utils = { path = "../../utils", version = "2.0.2" }
 serde = "1.0.152"

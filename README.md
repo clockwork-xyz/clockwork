@@ -2,7 +2,7 @@
   <h1>Clockwork</h1>
 
   <p>
-    <strong>Automation engine for Solana programs</strong>
+    <strong>Solana automation engine</strong>
   </p>
 
   <p>
@@ -26,7 +26,7 @@
 | Program | Address| Devnet | Mainnet |
 | ------- | ------ | ------ | ------- |
 | Network | `F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa` | [v2.0.0](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa) | [v2.0.0](https://explorer.solana.com/address/F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa) |
-| Thread v2 | `CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh` | [v2.0.0](https://explorer.solana.com/address/CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh?cluster=devnet) | [v2.0.0](https://explorer.solana.com/address/CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh) |
+| Thread v2 | `CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh` | [v2.0.1](https://explorer.solana.com/address/CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh?cluster=devnet) | [v2.0.0](https://explorer.solana.com/address/CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh) |
 | Thread v1 | `3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv` | [v1.4.2](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv?cluster=devnet) | [v1.4.2](https://explorer.solana.com/address/3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv) |
 
 # SDKs
@@ -38,9 +38,9 @@
 
 # Notes
 - Clockwork is under active development. All interfaces and implementations are subject to change. 
-- Program deployments are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by a core team of maintainers. 
-- Solana mainnet currently has 3 independent worker node operators. To join the workernet, you can [install](#deploying-a-worker) the Clockwork plugin and request an earlybird token delegation in the workernet [Discord channel](https://discord.gg/mwmFtU5BtA).
-- Occassionally, a new release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
+- Official program deployments to Solana mainnet are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by the core team of software maintainers. 
+- To deploy a worker node on mainnet or devnet, please [install](#deploying-a-worker) the Clockwork geyser plugin on your Solana validator or RPC node and request an earlybird token delegation in the workernet channel [on Discord](https://discord.gg/mwmFtU5BtA).
+- Occassionally, a new software release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
 - The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. 
 
 # Getting Started
