@@ -1,15 +1,14 @@
 [package]
 name = "clockwork-webhook-program"
-repository = "https://github.com/clockwork-xyz/programs/webhook"
+version = "2.0.2"
 description = "Clockwork webhook program"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
-authors = { workspace = true }
-documentation = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-keywords = { workspace = true }
-license = { workspace = true }
-version = { workspace = true }
+keywords = ["solana"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -23,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { workspace = true, features = ["init-if-needed"] }
-clockwork-network-program = { workspace = true, features = ["cpi"]}
-clockwork-utils = { workspace = true }
+anchor-lang = { features = ["init-if-needed"], version = "0.27.0" }
+clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.2" }
+clockwork-utils = { path = "../../utils", version = "2.0.2" }
 serde = "1.0.152"

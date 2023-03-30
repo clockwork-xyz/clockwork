@@ -1,15 +1,6 @@
 #!/bin/bash
 
-set -e
-
-# Cross-platform sed
-replace_in_file() {
-  if [ "$(uname)" == "Darwin" ]; then
-    sed -i '' -e "$1" "$2"
-  else
-    sed -i'' -e "$1" "$2"
-  fi
-}
+# TODO Borrow the increment-cargo-version.sh script from Solana
 
 # Get new version
 current_version=$(cat ./VERSION)
@@ -20,46 +11,51 @@ read -r -p "    New version: " new_version
 #RUSTFLAGS="--deny warnings" cargo build || (echo "Build failed" && exit)
 cargo build || (echo "Build failed" && exit)
 
-# Bump the shared version in the root Cargo.toml
-(
-  set -x
-  replace_in_file "1,/^version =/ s/\(version = \"\)[^\"]*\"/\1$new_version\"/" Cargo.toml
-)
+# Bump libs
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cron/Cargo.toml
 
-# Bump the version for all the deps
-crates=(
-  clockwork-client
-  clockwork-cron
-  clockwork-network-program
-  clockwork-relayer-api
-  clockwork-sdk
-  clockwork-utils
-  clockwork-thread-program
-  clockwork-thread-program-v2
-  clockwork-webhook-program
-)
+# Bump programs
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/network/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/thread/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' programs/webhook/Cargo.toml
 
-for crate in "${crates[@]}"; do
-  (
-    set -x
-    replace_in_file "
-      s/^$crate = { *path *= *\"\([^\"]*\)\" *, *version *= *\"[^\"]*\"\(.*\)} *\$/$crate = \{ path = \"\1\", version = \"=$new_version\"\2\}/
-    " Cargo.toml
-    replace_in_file "
-      s/^$crate = { *package *= *\"\([^\"]*\)\" *, *path *= *\"\([^\"]*\)\" *, *version *= *\"[^\"]*\"\(.*\)} *\$/$crate = \{ package = \"\1\", path = \"\2\", version = \"=$new_version\"\3\}/
-    " Cargo.toml
-  )
-done
+# Bump network program dependencies
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/network/Cargo.toml
 
-# Force thread program v1 to stay on 1.4.2
-thread_v1="1.4.2"
-(
-  set -x
-  replace_in_file "
-    s/^clockwork-thread-program-v1 = { *package *= *\"\([^\"]*\)\" *, *path *= *\"\([^\"]*\)\" *, *version *= *\"[^\"]*\"\(.*\)} *\$/clockwork-thread-program-v1 = \{ package = \"\1\", path = \"\2\", version = \"=$thread_v1\"}/
-  " Cargo.toml
-)
+# Bump thread program dependencies
+sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/..\/cron", version = "'${new_version}'" }/g' programs/thread/Cargo.toml
+sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/thread/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/thread/Cargo.toml
 
+# Bump webhook program dependencies
+sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/network", features = ["cpi"], version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/..\/utils", version = "'${new_version}'" }/g' programs/webhook/Cargo.toml
+
+# Bump clockwork-client
+sed -i '' -e 's/^clockwork-network-program =.*/clockwork-network-program = { path = "..\/programs\/network", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e 's/^clockwork-webhook-program =.*/clockwork-webhook-program = { path = "..\/programs\/webhook", features = ["no-entrypoint"], version = "'${new_version}'" }/g' client/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' client/Cargo.toml
+
+# Bump clockwork-cli
+sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' cli/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' cli/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' cli/Cargo.toml
+
+# Bump clockwork-plugin
+sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e 's/^clockwork-cron =.*/clockwork-cron = { path = "..\/cron", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e 's/^clockwork-utils =.*/clockwork-utils = { path = "..\/utils", version = "'${new_version}'" }/g' plugin/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' plugin/Cargo.toml
+
+# Bump clockwork-sdk
+sed -i '' -e 's/^clockwork-client =.*/clockwork-client = { path = "..\/client", version = "'${new_version}'", optional = true }/g' sdk/Cargo.toml
+sed -i '' -e 's/^clockwork-thread-program =.*/clockwork-thread-program = { path = "..\/programs\/thread", features = ["cpi"], version = "'${new_version}'" }/g' sdk/Cargo.toml
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' sdk/Cargo.toml
+
+# Bump clockwork-utils
+sed -i '' -e '3s/^version = "'${current_version}'"/version = "'${new_version}'"/g' utils/Cargo.toml
 
 # Update version
 echo $new_version > VERSION
