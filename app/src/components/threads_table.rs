@@ -1,5 +1,4 @@
 use std::{str::FromStr, cmp::Ordering, collections::hash_map::DefaultHasher, hash::{Hash, Hasher}};
-
 use anchor_lang::prelude::Clock;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_thread_program_v2::state::{Trigger, TriggerContext, VersionedThread};
@@ -9,76 +8,166 @@ use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
-    context::Client,   
+    context::{Client, User},   
     hooks::use_pagination,
     utils::{format_balance, format_timestamp}, components::page_control::PageControl,
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, "threads".to_string(), 15, || vec![]);
+    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, 15, || vec![]);
     let clock = use_state::<Option<Clock>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
+    let user_context = use_shared_state::<User>(cx).unwrap();
+    let filter = use_state(cx, || false);
+    let filter_dropdown_open = use_state(cx, || false);
+    let is_loading = use_state(cx, || false);
 
-    use_future(&cx, (), |_| {
+    use_future!(cx, |(filter,)| {
+        let client_context = client_context.clone();
+        let user_context = user_context.clone();
+        let is_loading = is_loading.clone();
         let clock = clock.clone();
         let paginated_threads = paginated_threads.clone();
-        let client_context = client_context.clone();
-        async move { 
+        async move {
+            is_loading.set(true);
             let client = client_context.read();
-            let mut threads = client.get_threads().await.unwrap();
-            threads.sort_by(|a, b| {
-                if let Some(exec_context_a) = a.0.exec_context() {
-                    if let Some(exec_context_b) = b.0.exec_context() {
-                        exec_context_b.last_exec_at.partial_cmp(&exec_context_a.last_exec_at).unwrap_or(Ordering::Equal)
-                    } else {
-                        Ordering::Less
-                    }
-                } else {
-                    Ordering::Greater
-                }
+            let user_pubkey = user_context.read().pubkey.unwrap();
+            let threads = client.get_threads().await.unwrap();
+            let mut sorted_threads = threads.clone();
+            sorted_threads.sort_by(|a, b| {
+                 if let Some(exec_context_a) = a.0.exec_context() {
+                     if let Some(exec_context_b) = b.0.exec_context() {
+                         exec_context_b.last_exec_at.partial_cmp(&exec_context_a.last_exec_at).unwrap_or(Ordering::Equal)
+                     } else {
+                         Ordering::Less
+                     }
+                 } else {
+                     Ordering::Greater
+                 }
             });
+            if *filter.get() {
+                let filtered_threads = sorted_threads.clone();
+                    let ft = filtered_threads
+                        .into_iter()
+                        .filter(|(vt, _a)| vt.authority().eq(&user_pubkey))
+                        .collect::<Vec<(VersionedThread, Account)>>();
+                paginated_threads.set(ft); 
+            } else {
+                paginated_threads.set(sorted_threads);
+            }
             clock.set(client.get_clock().await.ok());
-            paginated_threads.set(threads); 
-        }
+            is_loading.set(false);
+        } 
     });
 
-    if let Some(threads) = paginated_threads.get() {
-        if let Some(clock) = clock.get() {
-            cx.render(rsx! {
-                table {
-                    class: "w-full",
-                    Header {}
-                    div {
-                        class: "table-row-group",
-                        for (i, thread) in threads.iter().enumerate() {
-                            Row {
-                                thread: thread.0.clone(),
-                                account: thread.1.clone(),
-                                elem_id: format!("list-item-{}", i),
-                                clock: clock.clone()
+    cx.render(rsx! {
+        if *is_loading.get() {
+            rsx! {
+                div {
+                    "loading..."
+                }
+            }
+        } else {           
+            rsx! {
+                div {
+                    class: "flex flex-row w-full justify-end",
+                    button {
+                        class: "py-2 px-2 text-slate-100 hover:bg-slate-800 active:bg-slate-100 active:text-slate-900 active:ring-0 active:focus-0 transition text-sm font-medium rounded",
+                        onclick: move |_| { filter_dropdown_open.set(!filter_dropdown_open.get()) },
+                        svg {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            fill: "none",
+                            view_box: "0 0 24 24", 
+                            stroke_width: "1.5", 
+                            stroke: "currentColor", 
+                            class: "w-5 h-5",
+                            path {
+                                d: "M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z",
+                                "stroke-linecap": "round",
+                                "stroke-linejoin": "round"
                             }
                         }
                     }
+                    if *filter_dropdown_open.get() {
+                        rsx! {
+                            div {
+                                class: "absolute mt-10 mr-2 w-56 h-24 bg-slate-700 rounded-lg",
+                                div {
+                                    class: "flex flex-col w-full p-4 justify-start space-y-2",
+                                    p {
+                                        class: "text-sm text-slate-400",
+                                        "Filter by:"
+                                    }
+                                    div {
+                                        class: "w-full h-0.5 bg-gray-400 rounded-xl border-0"
+                                    }    
+                                    div {
+                                        class: "flex flex-row py-2 space-x-2 items-center", 
+                                        input {
+                                            class: "h-4 w-4 rounded border-gray-300",
+                                            r#type: "checkbox",
+                                            value: "filter",
+                                            checked: "{filter.get()}",
+                                            id: "authority",
+                                            onchange: move |_| { 
+                                                let val = *filter.get();
+                                                filter.set(!val); 
+                                            }
+                                        }
+                                        p {
+                                            class: "text-sm",
+                                            "Authority"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+                if let Some(threads) = paginated_threads.get() {
+                    if let Some(clock) = clock.get() {
+                        rsx! {
+                            div {}
+                            table {
+                                class: "w-full",
+                                Header {}
+                                div {
+                                    class: "table-row-group",
+                                    for (i, thread) in threads.clone().iter().enumerate() {
+                                        div {}
+                                        Row {
+                                            client_context: client_context.clone(),
+                                            thread: thread.0.clone(),
+                                            account: thread.1.clone(),
+                                            elem_id: format!("list-item-{}", i),
+                                            clock: clock.clone()
+                                        }
+                                    }
+                                }
+                            }
+                            PageControl {
+                                paginated_data: paginated_threads.clone(),
+                            }
+                        }
+                    } 
+                    else {
+                        rsx! {
+                            div {
+                                "no clock"
+                            }
+                        }
+                    }
+                } else {
+                    rsx! { 
+                        div {
+                            "No Results"
+                        }
+                    }
                 }
-                PageControl {
-                    paginated_data: paginated_threads,
-                }
-            })
-        } else {
-            cx.render(rsx! {
-                div {
-                    "Loading..."
-                }
-            })
-        }
-    } else {
-        cx.render(rsx! {
-            div {
-                "Loading..."
             }
-        })
-    }
-}
+        }
+    })
+}    
 
 fn Header(cx: Scope) -> Element {
     let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
@@ -139,6 +228,7 @@ fn Header(cx: Scope) -> Element {
 
 #[derive(Clone, Props)]
 struct RowProps {
+    client_context: UseSharedState<Client>,
     thread: VersionedThread,
     account: Account,
     elem_id: String,
@@ -162,7 +252,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
     let balance = format_balance(cx.props.account.lamports, true);
     // let created_at = format_timestamp(thread.created_at().unix_timestamp);
     let id = String::from_utf8(thread.id()).unwrap();
-    let client_context = use_shared_state::<Client>(cx).unwrap();
+    let client_context = cx.props.client_context.clone();
 
     let last_exec = match thread.exec_context() {
         None => String::from("–"),
