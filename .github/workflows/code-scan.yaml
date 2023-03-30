@@ -46,10 +46,11 @@ jobs:
           rustup default stable
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
           ./install.sh
-          ls
-          echo $HOME
-          cd $HOME
           rustup default bpf
+          echo $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
+          ls
+          cd $GITHUB_WORKSPACE/clockwork
           cargo update
 
       - name: Run soteria on ${{ matrix.node.path }}
