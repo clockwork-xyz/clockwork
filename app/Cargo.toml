@@ -35,6 +35,7 @@ reqwest = "0.11.14"
 serde = "1.0.152"
 solana-client-wasm = { git = "https://github.com/clockwork-xyz/solana-playground", rev = "83e485fbb8f8f09a6411d65ffe63823080847cda" }
 solana-extra-wasm = { git = "https://github.com/clockwork-xyz/solana-playground", rev = "83e485fbb8f8f09a6411d65ffe63823080847cda" }
+uuid = { version = "1.3.0", features = ["v4"] }
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"
 wasm-logger = "0.2"

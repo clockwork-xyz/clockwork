@@ -1171,6 +1171,7 @@ dependencies = [
  "serde",
  "solana-client-wasm",
  "solana-extra-wasm",
+ "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-logger",
