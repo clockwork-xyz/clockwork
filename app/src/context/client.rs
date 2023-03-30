@@ -347,7 +347,10 @@ impl Cluster {
             Self::Mainnet => {
                 "https://rpc.helius.xyz/?api-key=cafb5acc-3dc2-47a0-8505-77ea5ebc7ec6".to_string()
             }
-            Self::Devnet => "https://api.devnet.solana.com".to_string(),
+            Self::Devnet => {
+                "https://rpc-devnet.helius.xyz/?api-key=8f29b4e9-37a6-4775-88c6-6f971fe180ca"
+                    .to_string()
+            }
             // Self::Custom(rpc_url) => rpc_url.to_string(),
         }
     }
