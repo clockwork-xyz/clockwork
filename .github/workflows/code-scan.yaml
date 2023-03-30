@@ -51,5 +51,6 @@ jobs:
           cd $HOME
           rustup default bpf
           cargo update
+
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
