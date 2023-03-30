@@ -22,6 +22,7 @@ jobs:
         run: rustup default stable
       - name: Cargo build
         run: cargo build
+
   audit:
     needs: build
     name: Audit ${{ matrix.node.path }}
@@ -47,5 +48,6 @@ jobs:
           ./install.sh
           cd $HOME
           rustup default bpf
+          cargo update
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
