@@ -1171,6 +1171,7 @@ dependencies = [
  "serde",
  "solana-client-wasm",
  "solana-extra-wasm",
+ "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-logger",
@@ -1318,6 +1319,8 @@ version = "2.0.2"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
+ "serde",
+ "serde_json",
  "static-pubkey",
 ]
 
