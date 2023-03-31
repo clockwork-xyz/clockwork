@@ -1319,6 +1319,8 @@ version = "2.0.2"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
+ "serde",
+ "serde_json",
  "static-pubkey",
 ]
 
