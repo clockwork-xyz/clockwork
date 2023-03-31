@@ -7,6 +7,7 @@ use anchor_lang::{
     solana_program::{self, instruction::Instruction},
     AnchorDeserialize,
 };
+use serde::{Deserialize, Serialize};
 use static_pubkey::static_pubkey;
 
 /// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
@@ -108,7 +109,17 @@ impl Default for ThreadResponse {
 }
 
 /// The data needed execute an instruction on Solana.
-#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Serialize,
+    Deserialize,
+    BorshSchema,
+    Clone,
+    Debug,
+    Hash,
+    PartialEq,
+)]
 pub struct SerializableInstruction {
     /// Pubkey of the instruction processor that executes this instruction
     pub program_id: Pubkey,
@@ -165,7 +176,17 @@ impl TryFrom<Vec<u8>> for SerializableInstruction {
 }
 
 /// Account metadata needed to execute an instruction on Solana.
-#[derive(AnchorDeserialize, AnchorSerialize, BorshSchema, Clone, Debug, Hash, PartialEq)]
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Serialize,
+    Deserialize,
+    BorshSchema,
+    Clone,
+    Debug,
+    Hash,
+    PartialEq,
+)]
 pub struct SerializableAccount {
     /// An account's public key
     pub pubkey: Pubkey,
