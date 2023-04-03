@@ -1,0 +1,48 @@
+name: Bump version
+
+on:
+  dispatch:
+    inputs:
+      bump:
+        description: '[valid values: major, minor, patch, rc, beta, alpha]'
+        required: true
+      extra_args:
+        description: 'Extra arguments to pass to the bump-version.sh script.'
+        required: false
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set env vars
+        run: |
+          source scripts/ci/rust-version.sh
+          echo "RUST_STABLE=$rust_stable" | tee -a $GITHUB_ENV
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_STABLE }}
+          override: true
+          profile: minimal
+          components: rustfmt
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null
+          then
+            sudo apt-get update
+            sudo apt-get install jq -y
+          fi
+
+      - name: Run version bump script
+        run: |
+          cd ${{ github.workspace }}
+          ./bump-version.sh --bump ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
+        env:
+          RUST_BACKTRACE: full
