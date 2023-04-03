@@ -1,11 +1,20 @@
 name: Bump version
 
 on:
-  dispatch:
+  workflow_dispatch:
     inputs:
       bump:
-        description: '[valid values: major, minor, patch, rc, beta, alpha]'
+        description: 'New version'
         required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - rc
+          - beta
+          - alpha
       extra_args:
         description: 'Extra arguments to pass to the bump-version.sh script.'
         required: false
