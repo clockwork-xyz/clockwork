@@ -4,16 +4,16 @@
 # You can pull the latest published image from Dockerhub (https://hub.docker.com/r/clockworkxyz/dev)
 # Or you can build an image from source using the Docker CLI:
 #  ```sh
-#  docker build -t clockworkxyz/dev .
+#  docker build -t clockworkxyz/solana .
 #  ```
 # 
 # Note: When building Docker images on an M1 Mac, you should use the `--platform linux/amd64` flag.
 # 
 
-FROM projectserum/build
+FROM projectserum/build:v0.27.0
 
 # Set dependency versions.
-ENV SOLANA_VERSION=v1.10.34
+ENV SOLANA_VERSION=v1.14.16
 
 # Configure path.
 ENV HOME="/root"
@@ -31,12 +31,12 @@ RUN mkdir -p /workdir && \
 WORKDIR ${HOME}
 
 # Install Rust.
-RUN curl "https://sh.rustup.rs" -sfo rustup.sh && \
-    sh rustup.sh -y && \
-    rustup component add rustfmt clippy
+# RUN curl "https://sh.rustup.rs" -sfo rustup.sh && \
+#     sh rustup.sh -y && \
+#     rustup component add rustfmt clippy
 
 # Install Solana.
-RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
+# RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
 
 # Install Soteria.
 RUN sh -c "$(curl -k https://supercompiler.xyz/install)"
