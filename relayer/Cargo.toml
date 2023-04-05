@@ -9,6 +9,7 @@ repository = "https://github.com/clockwork-xyz/relayer"
 documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
