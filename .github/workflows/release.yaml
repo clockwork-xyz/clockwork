@@ -68,4 +68,4 @@ jobs:
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-        run: cargo publish-workspace --crate-prefix mat-clockwork
+        run: cargo publish-workspace --crate-prefix clockwork
