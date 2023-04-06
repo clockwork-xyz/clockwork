@@ -1,6 +1,8 @@
 [package]
 name = "clockwork_plugin"
 version = "2.0.2"
+# this needs to match whatever solana uses!
+rust-version = "1.60.0"
 edition = "2021"
 description = "Clockwork plugin for Solana validators"
 license = "AGPL-3.0-or-later"
@@ -10,6 +12,7 @@ documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 build = "build.rs"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]

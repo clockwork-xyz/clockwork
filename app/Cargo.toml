@@ -9,6 +9,7 @@ repository = "https://github.com/clockwork-xyz/app"
 documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
+publish = false
 
 [dependencies]
 anchor-lang = "0.27.0"
