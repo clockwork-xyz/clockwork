@@ -20,12 +20,12 @@ jobs:
 
       - name: Set env vars
         run: |
-          source scripts/ci/rust-version.sh
-          echo "RUST_STABLE=$rust_stable" | tee -a $GITHUB_ENV
+          source scripts/ci/rust-version.sh stable
+          echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ env.RUST_STABLE }}
+          toolchain: stable
           override: true
           profile: minimal
           components: rustfmt
@@ -41,22 +41,31 @@ jobs:
       - name: Grant permissions to create-tarball.sh
         run: chmod +x ./scripts/ci/create-tarball.sh
 
+      - uses: Swatinem/rust-cache@v2
       - name: Grant permissions to build-all.sh
         run: chmod +x ./scripts/build-all.sh
-
-      # - name: Install libudev-dev
-      #   run: sudo apt-get install libudev-dev
 
       - name: Build release tarball
         run: ./scripts/ci/create-tarball.sh
 
       - name: Release
         uses: softprops/action-gh-release@v1
+
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body: |
             clockwork-geyser-plugin ${{ env.CI_TAG }}
             solana ${{ env.SOLANA_VERSION }}
-            rust ${{ env.RUST_STABLE }}
+            rust ${{ env.PLUGIN_RUST_VERSION }}
           files: |
             clockwork-geyser-plugin-release-*
+
+      - name: Install cargo-publish-workspace-v2
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-publish-workspace-v2
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo publish-workspace --crate-prefix clockwork

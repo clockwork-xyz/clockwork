@@ -2,6 +2,9 @@
 name = "clockwork-thread-program-v1"
 version = "2.0.2"
 edition = "2021"
+readme = "./README.md"
+description = "Clockwork thread program v1"
+license = "AGPL-3.0-or-later"
 
 [lib]
 crate-type = ["cdylib", "lib"]
