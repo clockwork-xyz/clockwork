@@ -36,7 +36,7 @@ WORKDIR ${HOME}
 #     rustup component add rustfmt clippy
 
 # Install Solana.
-# RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
+RUN sh -c "$(curl -sSfL https://release.solana.com/${SOLANA_VERSION}/install)"
 
 # Install Soteria.
 RUN sh -c "$(curl -k https://supercompiler.xyz/install)"
