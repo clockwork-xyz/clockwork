@@ -409,48 +409,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anchor-gen"
-version = "0.3.1"
-source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
-dependencies = [
- "anchor-generate-cpi-crate",
- "anchor-generate-cpi-interface",
-]
-
-[[package]]
-name = "anchor-generate-cpi-crate"
-version = "0.3.1"
-source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
-dependencies = [
- "anchor-idl",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "anchor-generate-cpi-interface"
-version = "0.3.1"
-source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
-dependencies = [
- "anchor-idl",
- "darling",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "anchor-idl"
-version = "0.3.1"
-source = "git+https://github.com/clockwork-xyz/anchor-gen#cc4bad5720d770c627070b80427a38e1aedba18f"
-dependencies = [
- "anchor-syn",
- "darling",
- "heck 0.4.1",
- "proc-macro2 1.0.54",
- "quote 1.0.26",
- "serde_json",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "anchor-lang"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1144,6 +1102,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-anchor-gen"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen?branch=master#073b7d926a33c34dc040555115d2db559f017e30"
+dependencies = [
+ "clockwork-anchor-generate-cpi-crate",
+ "clockwork-anchor-generate-cpi-interface",
+]
+
+[[package]]
+name = "clockwork-anchor-generate-cpi-crate"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen?branch=master#073b7d926a33c34dc040555115d2db559f017e30"
+dependencies = [
+ "clockwork-anchor-idl",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "clockwork-anchor-generate-cpi-interface"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen?branch=master#073b7d926a33c34dc040555115d2db559f017e30"
+dependencies = [
+ "clockwork-anchor-idl",
+ "darling",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "clockwork-anchor-idl"
+version = "0.3.1"
+source = "git+https://github.com/clockwork-xyz/anchor-gen?branch=master#073b7d926a33c34dc040555115d2db559f017e30"
+dependencies = [
+ "anchor-syn",
+ "darling",
+ "heck 0.4.1",
+ "proc-macro2 1.0.54",
+ "quote 1.0.26",
+ "serde_json",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "clockwork-app"
 version = "2.0.2"
 dependencies = [
@@ -1309,8 +1309,8 @@ dependencies = [
 name = "clockwork-thread-program-v1"
 version = "2.0.2"
 dependencies = [
- "anchor-gen",
  "anchor-lang",
+ "clockwork-anchor-gen",
 ]
 
 [[package]]
