@@ -48,7 +48,9 @@ jobs:
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
           pwd
           ls
+          rustup toolchain list
           ./install.sh
+          rustup toolchain list
           rustup default bpf
           cd $GITHUB_WORKSPACE
           cargo update
