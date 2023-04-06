@@ -44,7 +44,10 @@ jobs:
       - name: Install BPF toolchain
         run: |
           rustup default stable
+          pwd
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
+          pwd
+          ls
           ./install.sh
           rustup default bpf
           cd $GITHUB_WORKSPACE
