@@ -7,9 +7,9 @@ use web_sys::HtmlElement;
 use crate::SearchState;
 
 pub fn HotKeys(cx: Scope) -> Element {
-    let router = use_router(&cx);
+    let router = use_router(cx);
     let search_state = use_shared_state::<SearchState>(cx).unwrap();
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let router = router.clone();
         let search_state = search_state.clone();
         async move {
@@ -68,7 +68,7 @@ pub fn HotKeys(cx: Scope) -> Element {
                         goto_mode = false;
                         let id = list_index.map_or(0, |i| i + 1);
                         let elem_id = format!("list-item-{}", id);
-                        if let Some(element) = document.get_element_by_id(&*elem_id) {
+                        if let Some(element) = document.get_element_by_id(&elem_id) {
                             if element.unchecked_into::<HtmlElement>().focus().is_ok() {
                                 list_index = Some(id);
                             }
@@ -78,7 +78,7 @@ pub fn HotKeys(cx: Scope) -> Element {
                         goto_mode = false;
                         let id = list_index.map_or(0, |i| i.saturating_sub(1));
                         let elem_id = format!("list-item-{}", id);
-                        if let Some(element) = document.get_element_by_id(&*elem_id) {
+                        if let Some(element) = document.get_element_by_id(&elem_id) {
                             if element.unchecked_into::<HtmlElement>().focus().is_ok() {
                                 list_index = Some(id);
                             }

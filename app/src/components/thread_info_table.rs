@@ -15,7 +15,7 @@ pub fn ThreadInfoTable(cx: Scope<ThreadInfoTableProps>) -> Element {
     let address = thread.pubkey();
     let balance = format_balance(cx.props.account.lamports, false);
     let created_at = format_timestamp(thread.created_at().unix_timestamp);
-    let trigger = match thread.trigger().clone() {
+    let trigger = match thread.trigger() {
         Trigger::Account {
             address,
             offset: _,
@@ -24,7 +24,7 @@ pub fn ThreadInfoTable(cx: Scope<ThreadInfoTableProps>) -> Element {
         Trigger::Cron {
             schedule,
             skippable: _,
-        } => schedule.clone(),
+        } => schedule,
         Trigger::Now => "Now".to_string(),
         Trigger::Slot { slot } => slot.to_string(),
         Trigger::Epoch { epoch } => epoch.to_string(),

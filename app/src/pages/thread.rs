@@ -5,7 +5,7 @@ use clockwork_thread_program_v2::state::VersionedThread;
 use dioxus::prelude::*;
 use dioxus_router::use_route;
 use solana_client_wasm::{
-    solana_sdk::account::Account, utils::rpc_response::RpcConfirmedTransactionStatusWithSignature,
+    solana_sdk::account::Account,
 };
 
 use crate::{
@@ -22,7 +22,7 @@ pub fn ThreadPage(cx: Scope) -> Element {
     let thread = use_state::<Option<(VersionedThread, Account)>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let thread = thread.clone();
         let client_context = client_context.clone();
         let thread_pubkey = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
@@ -32,7 +32,7 @@ pub fn ThreadPage(cx: Scope) -> Element {
                 .get_thread(thread_pubkey)
                 .await
                 .unwrap();
-            thread.set(Some(t.clone()));
+            thread.set(Some(t));
         }
     });
 

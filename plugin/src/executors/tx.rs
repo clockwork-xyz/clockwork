@@ -128,7 +128,7 @@ impl TxExecutor {
                     .iter()
                     .position(|k| k.eq(&worker_pubkey))
                     .map(|i| i as u64),
-                workers: workers.make_contiguous().to_vec().clone(),
+                workers: workers.make_contiguous().to_vec(),
             }
         }) {
             // Rotate into the worker pool.
@@ -276,14 +276,14 @@ impl TxExecutor {
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
-                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(metadata))
                     .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
                     .collect::<Vec<(Pubkey, u64)>>()
             } else {
                 // This worker is in the pool. Get pubkeys executable threads.
                 r_executable_threads
                     .iter()
-                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(*metadata))
+                    .filter(|(_pubkey, metadata)| slot >= exponential_backoff_threshold(metadata))
                     .map(|(pubkey, metadata)| (*pubkey, metadata.due_slot))
                     .collect::<Vec<(Pubkey, u64)>>()
             };
@@ -434,7 +434,7 @@ impl TxExecutor {
         let r_transaction_history = self.transaction_history.read().await;
         if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
             if metadata.signature.eq(&tx.signatures[0]) && metadata.slot_sent.le(&slot) {
-                return Err(GeyserPluginError::Custom(format!("Transaction signature is a duplicate of a previously submitted transaction").into()));
+                return Err(GeyserPluginError::Custom("Transaction signature is a duplicate of a previously submitted transaction".to_string().into()));
             }
         }
         drop(r_transaction_history);
@@ -499,13 +499,13 @@ lazy_static! {
             LOCAL_RPC_URL.into(),
             CommitmentConfig::processed(),
         ));
-        let tpu_client = TpuClient::new(
+        
+        TpuClient::new(
             rpc_client,
-            LOCAL_WEBSOCKET_URL.into(),
+            LOCAL_WEBSOCKET_URL,
             TpuClientConfig::default(),
         )
         .await
-        .unwrap();
-        tpu_client
+        .unwrap()
     });
 }

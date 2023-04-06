@@ -12,7 +12,7 @@ use crate::components::backpack;
 use super::Page;
 
 pub fn NewKeyPage(cx: Scope) -> Element {
-    let router = use_router(&cx);
+    let router = use_router(cx);
 
     let name = use_state(cx, || "".to_string());
     let word = use_state(cx, || "".to_string());
@@ -91,7 +91,7 @@ pub async fn create_secret(name: String, word: String) -> String {
         msg,
         signer: pubkey,
         signature: Signature::new(
-            &*js_sys::Uint8Array::new(
+            &js_sys::Uint8Array::new(
                 &(backpack
                     .sign_message(msg_bytes, Some(backpack.pubkey()))
                     .await),

@@ -38,7 +38,7 @@ pub fn SearchBar(cx: Scope) -> Element {
 
     // Move the focus to the search bar.
     // autofocus property on input is having issues: https://github.com/DioxusLabs/dioxus/issues/725
-    use_effect(&cx, (), |_| async move {
+    use_effect(cx, (), |_| async move {
         gloo_timers::future::TimeoutFuture::new(50).await;
         let document = gloo_utils::document();
         if let Some(element) = document.get_element_by_id("search-bar") {
@@ -67,8 +67,8 @@ pub fn SearchBar(cx: Scope) -> Element {
                     let query = &w_search_state.query;
 
                     // TODO Select navigation desination from the search results.
-                    if let Ok(address) = Pubkey::from_str(&query) {
-                        router.navigate_to(&*format!("/accounts/{}", address.to_string()));
+                    if let Ok(address) = Pubkey::from_str(query) {
+                        router.navigate_to(&format!("/accounts/{}", address));
                         w_search_state.active = false;
                         w_search_state.query = "".to_string();
                     } else {
@@ -87,7 +87,7 @@ pub fn SearchResults(cx: Scope) -> Element {
     let query = &search_state.read().query;
 
     // Search for search results.
-    let results = use_future(&cx, query, |_| {
+    let results = use_future(cx, query, |_| {
         let query = query.clone();
         let client_context = client_context.clone();
         async move {

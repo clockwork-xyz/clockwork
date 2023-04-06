@@ -4,11 +4,11 @@ use dioxus_router::Link;
 use solana_client_wasm::WasmClient;
 
 pub fn Clock(cx: Scope) -> Element {
-    let blockhash = use_state(&cx, || String::new());
-    let slot = use_state(&cx, || 0);
-    let time = use_state(&cx, || Utc::now());
+    let blockhash = use_state(cx, String::new);
+    let slot = use_state(cx, || 0);
+    let time = use_state(cx, Utc::now);
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let blockhash = blockhash.clone();
         let slot = slot.clone();
         let time = time.clone();

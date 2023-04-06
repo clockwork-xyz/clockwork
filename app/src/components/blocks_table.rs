@@ -4,10 +4,10 @@ use solana_extra_wasm::transaction_status::UiConfirmedBlock;
 use crate::context::Client;
 
 pub fn BlocksTable(cx: Scope) -> Element {
-    let block = use_state::<Option<UiConfirmedBlock>>(&cx, || None);
+    let block = use_state::<Option<UiConfirmedBlock>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let block = block.clone();
         let client_context = client_context.clone();
         async move {

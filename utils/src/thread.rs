@@ -87,6 +87,7 @@ pub enum Trigger {
 
 /// A response value target programs can return to update the thread.
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
+#[derive(Default)]
 pub struct ThreadResponse {
     /// If set, the thread will automatically close and return lamports to the provided address.
     /// If dynamic_instruction is also set, close_to will take precedence and the dynamic instruction will not be executed.
@@ -98,15 +99,7 @@ pub struct ThreadResponse {
     pub trigger: Option<Trigger>,
 }
 
-impl Default for ThreadResponse {
-    fn default() -> Self {
-        return Self {
-            close_to: None,
-            dynamic_instruction: None,
-            trigger: None,
-        };
-    }
-}
+
 
 /// The data needed execute an instruction on Solana.
 #[derive(

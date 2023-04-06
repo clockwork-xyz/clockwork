@@ -4,9 +4,9 @@ use dioxus_router::Link;
 use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
 
 pub fn MarketsTable(cx: Scope) -> Element {
-    let market_data = use_state(&cx, || vec![]);
+    let market_data = use_state(cx, std::vec::Vec::new);
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let market_data = market_data.clone();
         async move {
             loop {

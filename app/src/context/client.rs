@@ -317,7 +317,7 @@ fn build_exec_ix(
         ));
 
         // Inject the worker pubkey as the dynamic "payer" account.
-        for acc in next_instruction.clone().accounts {
+        for acc in next_instruction.accounts {
             let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
                 signatory_pubkey
             } else {

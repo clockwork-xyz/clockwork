@@ -103,15 +103,11 @@ pub async fn get_price_feeds<'a>() -> Vec<PythFeedPrice<'a>> {
         .iter()
         .enumerate()
         .filter_map(|(i, account)| {
-            if let Some(acc) = account {
-                Some(PythFeedPrice {
+            account.as_ref().map(|acc| PythFeedPrice {
                     ticker: pyth_feed_ticker.get(i).unwrap(),
                     pubkey: *pyth_feed_pubkeys.get(i).unwrap(),
                     price: *load::<PriceAccount>(acc.data.as_slice()).unwrap(),
                 })
-            } else {
-                None
-            }
         })
         .collect::<Vec<PythFeedPrice>>()
 }
@@ -136,13 +132,13 @@ impl Quotable for PriceAccount {
         let mut fprice = self.agg.price as f64;
         let mut fconf = self.agg.conf as f64;
         for _ in 0..self.expo.abs() {
-            fprice = fprice / 10 as f64;
-            fconf = fconf / 10 as f64;
+            fprice /= 10_f64;
+            fconf /= 10_f64;
         }
         if fprice < 0.001 {
-            format!("${:.3e} ± {:.3e}", fprice, fconf).into()
+            format!("${:.3e} ± {:.3e}", fprice, fconf)
         } else {
-            format!("${:.3} ± {:.3}", fprice, fconf).into()
+            format!("${:.3} ± {:.3}", fprice, fconf)
         }
     }
 }

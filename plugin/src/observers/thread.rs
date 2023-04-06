@@ -88,7 +88,7 @@ impl ThreadObserver {
         let r_account_threads = self.account_threads.read().await;
         let mut w_updated_accounts = self.updated_accounts.write().await;
         w_updated_accounts.iter().for_each(|account_pubkey| {
-            if let Some(thread_pubkeys) = r_account_threads.get(&account_pubkey) {
+            if let Some(thread_pubkeys) = r_account_threads.get(account_pubkey) {
                 thread_pubkeys.iter().for_each(|pubkey| {
                     executable_threads.insert(*pubkey);
                 });

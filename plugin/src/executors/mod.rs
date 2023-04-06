@@ -37,7 +37,7 @@ impl Executors {
     pub fn new(config: PluginConfig) -> Self {
         Executors {
             tx: Arc::new(TxExecutor::new(config.clone())),
-            webhook: Arc::new(WebhookExecutor::new(config.clone())),
+            webhook: Arc::new(WebhookExecutor::new(config)),
             client: Arc::new(RpcClient::new_with_commitment(
                 LOCAL_RPC_URL.into(),
                 CommitmentConfig::processed(),
@@ -131,9 +131,7 @@ impl AccountGet for RpcClient {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
         let data = self.get_account_data(pubkey).await?;
         T::try_deserialize(&mut data.as_slice()).map_err(|_| {
-            ClientError::from(ClientErrorKind::Custom(format!(
-                "Failed to deserialize account data"
-            )))
+            ClientError::from(ClientErrorKind::Custom("Failed to deserialize account data".to_string()))
         })
     }
 }

@@ -13,7 +13,7 @@ use dioxus::prelude::*;
 use dioxus_router::{Route, Router};
 use hot_keys::HotKeys;
 use pages::*;
-use wasm_logger;
+
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
@@ -47,8 +47,8 @@ fn App(cx: Scope) -> Element {
         query: String::new(),
         results: vec![],
     });
-    use_shared_state_provider(cx, || User::default());
-    use_shared_state_provider(cx, || Client::new());
+    use_shared_state_provider(cx, User::default);
+    use_shared_state_provider(cx, Client::new);
 
     cx.render(rsx! {
         div {

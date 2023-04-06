@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let paginated_threads = use_pagination::<(VersionedThread, Account)>(&cx, 15, || vec![]);
+    let paginated_threads = use_pagination::<(VersionedThread, Account)>(cx, 15, std::vec::Vec::new);
     let clock = use_state::<Option<Clock>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
     let user_context = use_shared_state::<User>(cx).unwrap();
@@ -133,7 +133,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                                 Header {}
                                 div {
                                     class: "table-row-group",
-                                    for (i, thread) in threads.clone().iter().enumerate() {
+                                    for (i, thread) in threads.iter().enumerate() {
                                         div {}
                                         Row {
                                             client_context: client_context.clone(),
@@ -243,10 +243,10 @@ impl PartialEq for RowProps {
 
 fn Row(cx: Scope<RowProps>) -> Element {
     let thread = cx.props.thread.clone();
-    let account = cx.props.account.clone();
+    let _account = cx.props.account.clone();
     let clock = cx.props.clock.clone();
     let address = thread.pubkey();
-    let address_state = use_state(cx, || address);
+    let _address_state = use_state(cx, || address);
     // let address_abbr = address.abbreviated();
     let authority = thread.authority().abbreviated();
     let balance = format_balance(cx.props.account.lamports, true);
@@ -281,7 +281,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
             schedule,
             skippable: _,
         } => {
-            let reference_timestamp = match thread.exec_context().clone() {
+            let reference_timestamp = match thread.exec_context() {
                 None => thread.created_at().unix_timestamp,
                 Some(exec_context) => match exec_context.trigger_context {
                     TriggerContext::Cron { started_at } => started_at,
@@ -289,7 +289,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
                 },
             };
             next_timestamp(reference_timestamp, schedule)
-                .map_or("–".to_string(), |v| format_timestamp(v))
+                .map_or("–".to_string(), format_timestamp)
         }
         Trigger::Now => "–".to_string(),
         Trigger::Slot { slot } => slot.to_string(),
@@ -336,7 +336,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
                                     let mut hasher = DefaultHasher::new();
                                     let data = &taccount.data;
                                     let offset = offset as usize;
-                                    let range_end = offset.checked_add(size as usize).unwrap() as usize;
+                                    let range_end = offset.checked_add(size as usize).unwrap();
                                     if data.len().gt(&range_end) {
                                         data[offset..range_end].hash(&mut hasher);
                                     } else {
@@ -395,7 +395,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
                 schedule,
                 skippable: _,
             } => {
-                let reference_timestamp = match thread.exec_context().clone() {
+                let reference_timestamp = match thread.exec_context() {
                     None => thread.created_at().unix_timestamp,
                     Some(exec_context) => match exec_context.trigger_context {
                         TriggerContext::Cron { started_at } => started_at,

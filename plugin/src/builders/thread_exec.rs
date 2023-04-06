@@ -111,7 +111,7 @@ pub async fn build_thread_exec_tx(
                             } => {
                                 if code.eq(&JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED) {
                                     return Err(GeyserPluginError::Custom(
-                                        format!("RPC client has not reached min context slot")
+                                        "RPC client has not reached min context slot".to_string()
                                             .into(),
                                     ));
                                 }
@@ -302,7 +302,7 @@ fn build_exec_ix(
         ));
 
         // Inject the worker pubkey as the dynamic "payer" account.
-        for acc in next_instruction.clone().accounts {
+        for acc in next_instruction.accounts {
             let acc_pubkey = if acc.pubkey == PAYER_PUBKEY {
                 signatory_pubkey
             } else {

@@ -124,7 +124,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
 fn set_solana_config() -> Result<()> {
     let mut process = std::process::Command::new("solana")
-        .args(&["config", "set", "--url", "l"])
+        .args(["config", "set", "--url", "l"])
         .spawn()
         .expect("Failed to set solana config");
     process.wait()?;

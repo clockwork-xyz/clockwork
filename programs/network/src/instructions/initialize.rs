@@ -35,7 +35,7 @@ pub struct Initialize<'info> {
         init,
         seeds = [
             SEED_SNAPSHOT,
-            (0 as u64).to_be_bytes().as_ref(),
+            0_u64.to_be_bytes().as_ref(),
         ],
         bump,
         payer = admin,

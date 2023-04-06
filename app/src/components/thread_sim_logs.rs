@@ -12,11 +12,11 @@ pub struct ThreadSimLogsProps{
 }
 
 pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
-    let sim_logs = use_state::<Vec<String>>(cx, || vec![]);
+    let sim_logs = use_state::<Vec<String>>(cx, std::vec::Vec::new);
     let sim_error = use_state::<Option<String>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let thread = cx.props.thread.clone();
         let client_context = client_context.clone();
         let sim_logs = sim_logs.clone();

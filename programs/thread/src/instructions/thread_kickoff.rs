@@ -63,7 +63,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                     let mut hasher = DefaultHasher::new();
                     let data = &account_info.try_borrow_data().unwrap();
                     let offset = offset as usize;
-                    let range_end = offset.checked_add(size as usize).unwrap() as usize;
+                    let range_end = offset.checked_add(size as usize).unwrap();
                     if data.len().gt(&range_end) {
                         data[offset..range_end].hash(&mut hasher);
                     } else {
@@ -102,7 +102,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
             skippable,
         } => {
             // Get the reference timestamp for calculating the thread's scheduled target timestamp.
-            let reference_timestamp = match thread.exec_context.clone() {
+            let reference_timestamp = match thread.exec_context {
                 None => thread.created_at.unix_timestamp,
                 Some(exec_context) => match exec_context.trigger_context {
                     TriggerContext::Cron { started_at } => started_at,
@@ -111,7 +111,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
             };
 
             // Verify the current timestamp is greater than or equal to the threshold timestamp.
-            let threshold_timestamp = next_timestamp(reference_timestamp, schedule.clone())
+            let threshold_timestamp = next_timestamp(reference_timestamp, schedule)
                 .ok_or(ClockworkError::TriggerConditionFailed)?;
             require!(
                 clock.unix_timestamp.ge(&threshold_timestamp),

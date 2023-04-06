@@ -10,7 +10,7 @@ pub fn use_pagination<T: Clone + 'static>(
     let data = use_ref(cx, || Pagination {
         data: initial_state_fn(),
         uuid: Uuid::new_v4(),
-        page_size: page_size.clone(),
+        page_size,
         current_page: 0,
         total_pages: 0,
     });
@@ -47,9 +47,9 @@ impl<T: Clone + 'static> UsePagination<T> {
 
     pub fn get(&self) -> Option<Vec<T>> {
         let data_read = self.data.read();
-        if data_read.data.len() > 0 {
-            let start = (data_read.current_page * data_read.page_size) as usize;
-            let end = start + data_read.page_size as usize;
+        if !data_read.data.is_empty() {
+            let start = data_read.current_page * data_read.page_size;
+            let end = start + data_read.page_size;
             if data_read.current_page == data_read.total_pages {
                 return Some(data_read.data[start..].to_vec());
             }

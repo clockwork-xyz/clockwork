@@ -10,9 +10,9 @@ use solana_client_wasm::solana_sdk::signature::Signature;
 use super::Page;
 
 pub fn KeysPage(cx: Scope) -> Element {
-    let secrets = use_state::<Vec<String>>(&cx, || vec![]);
+    let secrets = use_state::<Vec<String>>(cx, std::vec::Vec::new);
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let secrets = secrets.clone();
         async move {
             if backpack.is_connected() {
@@ -110,7 +110,7 @@ pub async fn get_secrets() -> Vec<String> {
         msg,
         signer: pubkey,
         signature: Signature::new(
-            &*js_sys::Uint8Array::new(
+            &js_sys::Uint8Array::new(
                 &(backpack
                     .sign_message(msg_bytes, Some(backpack.pubkey()))
                     .await),

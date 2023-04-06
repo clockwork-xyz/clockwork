@@ -13,7 +13,7 @@ pub fn TransactionHistoryTable(cx: Scope<TransactionHistoryTableProps>) -> Eleme
     let address = cx.props.address;
     let client_context = use_shared_state::<Client>(cx).unwrap();
 
-    let transaction_data = use_future(&cx, (), |_| {
+    let transaction_data = use_future(cx, (), |_| {
         let client = client_context.clone();
         async move {
             client

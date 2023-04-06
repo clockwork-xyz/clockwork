@@ -91,14 +91,10 @@ pub fn update(
     schedule: Option<String>,
 ) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
-    let trigger = if let Some(schedule) = schedule {
-        Some(Trigger::Cron {
+    let trigger = schedule.map(|schedule| Trigger::Cron {
             schedule,
             skippable: true,
-        })
-    } else {
-        None
-    };
+        });
     let settings = ThreadSettings {
         fee: None,
         instructions: None,

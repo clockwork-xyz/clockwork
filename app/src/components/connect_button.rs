@@ -14,8 +14,8 @@ use crate::{
 pub fn ConnectButton(cx: Scope) -> Element {
     let user_context = use_shared_state::<User>(cx).unwrap();
     let client_context = use_shared_state::<Client>(cx).unwrap();
-    let show_popover = use_state(&cx, || false);
-    let show_cluster_dropdown = use_state(&cx, || false);
+    let show_popover = use_state(cx, || false);
+    let show_cluster_dropdown = use_state(cx, || false);
 
     use_effect(cx, (), |_| {
         let user_context = user_context.clone();
@@ -43,7 +43,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
             let user_context = user_context.clone();
             let client_context = client_context.clone();
             let show_popover = show_popover.clone();
-            let client_context = client_context.clone();
+            let client_context = client_context;
             async move {
                 let user_context_read = user_context.read();
                 let client_context = client_context.read();
@@ -64,7 +64,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                             match account {
                                 Ok(acc) => {
                                     drop(user_context_read);
-                                    user_context.write().account = Some(acc.clone());
+                                    user_context.write().account = Some(acc);
                                     user_context.write().pubkey = Some(pubkey);
                                     LocalStorage::set(
                                         "user_context",
@@ -74,7 +74,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                         },
                                     )
                                     .unwrap();
-                                    LocalStorage::set("cluster", client_context.cluster.clone())
+                                    LocalStorage::set("cluster", client_context.cluster)
                                         .unwrap();
                                 }
 
@@ -87,7 +87,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
         });
     };
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let client_context = client_context.clone();
         let show_cluster_dropdown = show_cluster_dropdown.clone();
         async move {
@@ -101,7 +101,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                         "Mainnet" | "Devnet" => {
                             let cluster = Cluster::from_str(e_id).unwrap();
                             *client_context.write() = Client::new_with_config(cluster);
-                            LocalStorage::set("cluster", client_context.write().cluster.clone())
+                            LocalStorage::set("cluster", client_context.write().cluster)
                                 .unwrap();
                             let _ = web_sys::window().unwrap().location().reload();
                             show_cluster_dropdown.set(false);

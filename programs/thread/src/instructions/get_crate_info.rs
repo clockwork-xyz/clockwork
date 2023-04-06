@@ -19,7 +19,7 @@ pub fn handler(_ctx: Context<GetCrateInfo>) -> Result<CrateInfo> {
     );
     let blob = "";
     let info = CrateInfo {
-        spec: spec.into(),
+        spec,
         blob: blob.into(),
     };
     msg!("{}", info);

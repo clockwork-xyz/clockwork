@@ -5,7 +5,7 @@ pub mod thread;
 use std::fmt::{Debug, Display, Formatter};
 
 use anchor_lang::{prelude::Pubkey, prelude::*, AnchorDeserialize};
-use base64;
+
 
 /// Crate build information
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
@@ -43,7 +43,7 @@ where
         // A Program's return data appears in the log in this format:
         // "Program return: <program-id> <program-generated-data-in-base64>"
         // https://github.com/solana-labs/solana/blob/b8837c04ec3976c9c16d028fbee86f87823fb97f/program-runtime/src/stable_log.rs#L68
-        let preimage = format!("Program return: {} ", program_id.to_string());
+        let preimage = format!("Program return: {} ", program_id);
 
         // Extract the return data after Program return: <program-id>
         let get_return_data_base64 = program_logs

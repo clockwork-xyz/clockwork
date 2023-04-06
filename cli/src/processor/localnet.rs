@@ -170,8 +170,8 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         },
     );
 
-    client.send_and_confirm(&vec![ix_a], &[client.payer()])?;
-    client.send_and_confirm(&vec![ix_b, ix_c], &[client.payer()])?;
+    client.send_and_confirm(&[ix_a], &[client.payer()])?;
+    client.send_and_confirm(&[ix_b, ix_c], &[client.payer()])?;
 
     Ok(())
 }

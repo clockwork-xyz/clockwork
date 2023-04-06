@@ -47,7 +47,7 @@ pub fn create(
 }
 
 pub fn get(client: &Client, id: Vec<u8>) -> Result<(), CliError> {
-    let address = Webhook::pubkey(client.payer_pubkey(), id.clone());
+    let address = Webhook::pubkey(client.payer_pubkey(), id);
     let webhook = client
         .get::<Webhook>(&address)
         .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;

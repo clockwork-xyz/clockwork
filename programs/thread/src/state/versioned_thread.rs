@@ -58,9 +58,7 @@ impl VersionedThread {
 
     pub fn next_instruction(&self) -> Option<SerializableInstruction> {
         match self {
-            Self::V1(t) => match &t.next_instruction {
-                None => None,
-                Some(ix) => Some(SerializableInstruction {
+            Self::V1(t) => t.next_instruction.as_ref().map(|ix| SerializableInstruction {
                     program_id: ix.program_id,
                     accounts: ix
                         .accounts
@@ -74,7 +72,6 @@ impl VersionedThread {
                         .collect::<Vec<SerializableAccount>>(),
                     data: ix.data.clone(),
                 }),
-            },
             Self::V2(t) => t.next_instruction.clone(),
         }
     }
@@ -118,8 +115,8 @@ impl VersionedThread {
                     size,
                 } => Trigger::Account {
                     address: *address,
-                    offset: *offset as u64,
-                    size: *size as u64,
+                    offset: *offset,
+                    size: *size,
                 },
                 TriggerV1::Cron {
                     schedule,

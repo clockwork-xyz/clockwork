@@ -4,9 +4,9 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 pub fn format_balance(lamports: u64, short: bool) -> String {
     let balance = lamports as f64 / LAMPORTS_PER_SOL as f64;
     if short {
-        String::from(format!("⊚ {:.5}", balance.to_string()))
+        format!("⊚ {:.5}", balance.to_string())
     } else {
-        String::from(format!("⊚ {:.9}", balance.to_string()))
+        format!("⊚ {:.9}", balance.to_string())
     }
 }
 

@@ -20,7 +20,7 @@ pub fn AccountPage(cx: Scope) -> Element {
     // TODO Unwrap address safely
     let address = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
 
-    use_future(&cx, (), |_| {
+    use_future(cx, (), |_| {
         let account = account.clone();
         let client_context = client_context.clone();
         async move {

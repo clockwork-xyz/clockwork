@@ -73,5 +73,5 @@ pub async fn build_pool_rotation_tx<'a>(
     // Build and sign tx.
     let mut tx = Transaction::new_with_payer(&[ix.clone()], Some(&keypair.pubkey()));
     tx.sign(&[keypair], client.get_latest_blockhash().await.unwrap());
-    return Some(tx);
+    Some(tx)
 }

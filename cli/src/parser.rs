@@ -304,18 +304,18 @@ fn parse_instruction_file(
 }
 
 fn parse_keypair_file(arg: &str, matches: &ArgMatches) -> Result<Keypair, CliError> {
-    Ok(read_keypair_file(parse_string(arg, matches)?)
-        .map_err(|_err| CliError::BadParameter(arg.into()))?)
+    read_keypair_file(parse_string(arg, matches)?)
+        .map_err(|_err| CliError::BadParameter(arg.into()))
 }
 
 fn parse_http_method(arg: &str, matches: &ArgMatches) -> Result<HttpMethod, CliError> {
-    Ok(HttpMethod::from_str(parse_string(arg, matches)?.as_str())
-        .map_err(|_err| CliError::BadParameter(arg.into()))?)
+    HttpMethod::from_str(parse_string(arg, matches)?.as_str())
+        .map_err(|_err| CliError::BadParameter(arg.into()))
 }
 
 fn parse_pubkey(arg: &str, matches: &ArgMatches) -> Result<Pubkey, CliError> {
-    Ok(Pubkey::from_str(parse_string(arg, matches)?.as_str())
-        .map_err(|_err| CliError::BadParameter(arg.into()))?)
+    Pubkey::from_str(parse_string(arg, matches)?.as_str())
+        .map_err(|_err| CliError::BadParameter(arg.into()))
 }
 
 fn parse_string(arg: &str, matches: &ArgMatches) -> Result<String, CliError> {

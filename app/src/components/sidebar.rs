@@ -10,7 +10,7 @@ pub enum SidebarOption {
 }
 
 impl SidebarOption {
-    pub fn title(self: Self) -> &'static str {
+    pub fn title(self) -> &'static str {
         match self {
             SidebarOption::Accounts => "Accounts",
             SidebarOption::Files => "Files",
@@ -18,7 +18,7 @@ impl SidebarOption {
             SidebarOption::Programs => "Programs",
         }
     }
-    pub fn route(self: Self) -> &'static str {
+    pub fn route(self) -> &'static str {
         match self {
             SidebarOption::Accounts => "/accounts",
             SidebarOption::Files => "/files",
@@ -26,7 +26,7 @@ impl SidebarOption {
             SidebarOption::Programs => "/programs",
         }
     }
-    pub fn icon(self: Self, cx: Scope<SidebarButtonProps>) -> Element {
+    pub fn icon(self, cx: Scope<SidebarButtonProps>) -> Element {
         cx.render(rsx! {
             match self {
                 SidebarOption::Accounts => rsx! { AccountsIcon {} },
@@ -69,9 +69,9 @@ pub fn SidebarButton(cx: Scope<SidebarButtonProps>) -> Element {
     let route = option.clone().route();
     let icon = option.clone().icon(cx);
 
-    let is_selected = use_route(&cx)
+    let is_selected = use_route(cx)
         .nth_segment(0)
-        .eq(&Some(route.trim_start_matches("/")));
+        .eq(&Some(route.trim_start_matches('/')));
 
     cx.render(rsx! {
         Link {
