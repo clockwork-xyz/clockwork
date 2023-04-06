@@ -1,16 +1,18 @@
 use std::str::FromStr;
 
-use anchor_lang::solana_program::pubkey::Pubkey;
-use clockwork_thread_program_v2::state::VersionedThread;
-use dioxus::prelude::*;
-use dioxus_router::use_route;
-use solana_client_wasm::{
-    solana_sdk::account::Account,
+use {
+    anchor_lang::solana_program::pubkey::Pubkey,
+    clockwork_thread_program_v2::state::VersionedThread,
+    dioxus::prelude::*,
+    dioxus_router::use_route,
+    solana_client_wasm::solana_sdk::account::Account,
 };
 
 use crate::{
     components::{
-        thread_info_table::ThreadInfoTable, thread_sim_logs::ThreadSimLogs, TransactionHistoryTable,
+        thread_info_table::ThreadInfoTable,
+        thread_sim_logs::ThreadSimLogs,
+        TransactionHistoryTable,
     },
     context::Client,
 };

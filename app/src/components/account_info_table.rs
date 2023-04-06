@@ -1,6 +1,8 @@
-use anchor_lang::prelude::Pubkey;
-use dioxus::prelude::*;
-use solana_client_wasm::solana_sdk::account::Account;
+use {
+    anchor_lang::prelude::Pubkey,
+    dioxus::prelude::*,
+    solana_client_wasm::solana_sdk::account::Account,
+};
 
 use crate::utils::format_balance;
 

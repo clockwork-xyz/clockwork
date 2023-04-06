@@ -1,5 +1,7 @@
-use dioxus::prelude::*;
-use dioxus_router::Redirect;
+use {
+    dioxus::prelude::*,
+    dioxus_router::Redirect,
+};
 
 pub fn HomePage(cx: Scope) -> Element {
     cx.render(rsx! {

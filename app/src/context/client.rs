@@ -1,30 +1,62 @@
-use anchor_lang::{
-    prelude::{AccountMeta, Clock, Pubkey},
-    solana_program::{instruction::Instruction, sysvar},
-    Discriminator, InstructionData, ToAccountMetas,
-};
-use clockwork_thread_program_v2::state::{Thread, Trigger, VersionedThread, PAYER_PUBKEY};
-use js_sys::WebAssembly::RuntimeError;
-use serde::{Deserialize, Serialize};
-use solana_client_wasm::{
-    solana_sdk::{
-        account::Account,
-        commitment_config::CommitmentConfig,
-        compute_budget::ComputeBudgetInstruction,
-        transaction::{Transaction, TransactionError},
-    },
-    utils::{
-        rpc_config::{
-            GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
-            RpcProgramAccountsConfig,
+use {
+    anchor_lang::{
+        prelude::{
+            AccountMeta,
+            Clock,
+            Pubkey,
         },
-        rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
-        rpc_response::RpcConfirmedTransactionStatusWithSignature,
+        solana_program::{
+            instruction::Instruction,
+            sysvar,
+        },
+        Discriminator,
+        InstructionData,
+        ToAccountMetas,
     },
-    ClientResult, WasmClient,
+    clockwork_thread_program_v2::state::{
+        Thread,
+        Trigger,
+        VersionedThread,
+        PAYER_PUBKEY,
+    },
+    js_sys::WebAssembly::RuntimeError,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    solana_client_wasm::{
+        solana_sdk::{
+            account::Account,
+            commitment_config::CommitmentConfig,
+            compute_budget::ComputeBudgetInstruction,
+            transaction::{
+                Transaction,
+                TransactionError,
+            },
+        },
+        utils::{
+            rpc_config::{
+                GetConfirmedSignaturesForAddress2Config,
+                RpcAccountInfoConfig,
+                RpcBlockConfig,
+                RpcProgramAccountsConfig,
+            },
+            rpc_filter::{
+                Memcmp,
+                MemcmpEncodedBytes,
+                RpcFilterType,
+            },
+            rpc_response::RpcConfirmedTransactionStatusWithSignature,
+        },
+        ClientResult,
+        WasmClient,
+    },
+    solana_extra_wasm::{
+        account_decoder::UiAccountEncoding,
+        transaction_status::UiConfirmedBlock,
+    },
+    std::str::FromStr,
 };
-use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
-use std::str::FromStr;
 
 pub struct Client {
     pub client: WasmClient,
@@ -349,8 +381,7 @@ impl Cluster {
             Self::Devnet => {
                 "https://rpc-devnet.helius.xyz/?api-key=8f29b4e9-37a6-4775-88c6-6f971fe180ca"
                     .to_string()
-            }
-            // Self::Custom(rpc_url) => rpc_url.to_string(),
+            } // Self::Custom(rpc_url) => rpc_url.to_string(),
         }
     }
 }

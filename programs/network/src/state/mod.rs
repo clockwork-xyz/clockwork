@@ -10,14 +10,16 @@ mod snapshot_frame;
 mod unstake;
 mod worker;
 
-pub use config::*;
-pub use delegation::*;
-pub use fee::*;
-pub use penalty::*;
-pub use pool::*;
-pub use registry::*;
-pub use snapshot::*;
-pub use snapshot_entry::*;
-pub use snapshot_frame::*;
-pub use unstake::*;
-pub use worker::*;
+pub use {
+    config::*,
+    delegation::*,
+    fee::*,
+    penalty::*,
+    pool::*,
+    registry::*,
+    snapshot::*,
+    snapshot_entry::*,
+    snapshot_frame::*,
+    unstake::*,
+    worker::*,
+};

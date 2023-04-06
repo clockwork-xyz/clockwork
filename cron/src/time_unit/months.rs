@@ -1,7 +1,14 @@
-use crate::error::*;
-use crate::ordinal::{Ordinal, OrdinalSet};
-use crate::time_unit::TimeUnitField;
-use std::borrow::Cow;
+use {
+    crate::{
+        error::*,
+        ordinal::{
+            Ordinal,
+            OrdinalSet,
+        },
+        time_unit::TimeUnitField,
+    },
+    std::borrow::Cow,
+};
 
 #[derive(Clone, Debug, Eq)]
 pub struct Months {

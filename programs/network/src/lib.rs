@@ -9,11 +9,13 @@ pub mod state;
 mod instructions;
 mod jobs;
 
-use anchor_lang::prelude::*;
-use clockwork_utils::thread::*;
-use instructions::*;
-use jobs::*;
-use state::*;
+use {
+    anchor_lang::prelude::*,
+    clockwork_utils::thread::*,
+    instructions::*,
+    jobs::*,
+    state::*,
+};
 
 declare_id!("F8dKseqmBoAkHx3c58Lmb9TgJv5qeTf3BbtZZSEzYvUa");
 

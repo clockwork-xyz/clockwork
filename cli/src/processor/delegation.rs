@@ -1,9 +1,15 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    network::state::{Config, Delegation, Worker},
-    Client,
+use {
+    anchor_lang::AccountDeserialize,
+    clockwork_client::{
+        network::state::{
+            Config,
+            Delegation,
+            Worker,
+        },
+        Client,
+    },
+    spl_associated_token_account::get_associated_token_address,
 };
-use spl_associated_token_account::get_associated_token_address;
 
 use crate::errors::CliError;
 

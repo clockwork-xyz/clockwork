@@ -1,11 +1,28 @@
-use chrono::offset::TimeZone;
-use chrono::{DateTime, Datelike, Timelike};
-use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::ops::Bound::{Included, Unbounded};
+use {
+    chrono::{
+        offset::TimeZone,
+        DateTime,
+        Datelike,
+        Timelike,
+    },
+    std::{
+        fmt::{
+            Display,
+            Formatter,
+            Result as FmtResult,
+        },
+        ops::Bound::{
+            Included,
+            Unbounded,
+        },
+    },
+};
 
-use crate::ordinal::*;
-use crate::queries::*;
-use crate::time_unit::*;
+use crate::{
+    ordinal::*,
+    queries::*,
+    time_unit::*,
+};
 
 impl From<Schedule> for String {
     fn from(schedule: Schedule) -> String {
@@ -253,8 +270,8 @@ impl Schedule {
         None
     }
 
-    // /// Provides an iterator which will return each DateTime that matches the schedule starting with
-    // /// the current time if applicable.
+    // /// Provides an iterator which will return each DateTime that matches the schedule starting
+    // with /// the current time if applicable.
     // pub fn upcoming<Z>(&self, timezone: Z) -> ScheduleIterator<'_, Z>
     // where
     //     Z: TimeZone,
@@ -319,14 +336,14 @@ impl Schedule {
         &self.fields.hours
     }
 
-    /// Returns a [TimeUnitSpec](trait.TimeUnitSpec.html) describing the minutes of the hour included
-    /// in this [Schedule](struct.Schedule.html).
+    /// Returns a [TimeUnitSpec](trait.TimeUnitSpec.html) describing the minutes of the hour
+    /// included in this [Schedule](struct.Schedule.html).
     pub fn minutes(&self) -> &impl TimeUnitSpec {
         &self.fields.minutes
     }
 
-    /// Returns a [TimeUnitSpec](trait.TimeUnitSpec.html) describing the seconds of the minute included
-    /// in this [Schedule](struct.Schedule.html).
+    /// Returns a [TimeUnitSpec](trait.TimeUnitSpec.html) describing the seconds of the minute
+    /// included in this [Schedule](struct.Schedule.html).
     pub fn seconds(&self) -> &impl TimeUnitSpec {
         &self.fields.seconds
     }
@@ -462,8 +479,10 @@ fn days_in_month(month: Ordinal, year: Ordinal) -> u32 {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use std::str::FromStr;
+    use {
+        super::*,
+        std::str::FromStr,
+    };
 
     // #[test]
     // fn test_next_and_prev_from() {

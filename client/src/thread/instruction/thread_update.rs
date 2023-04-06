@@ -2,7 +2,10 @@ use clockwork_thread_program::state::ThreadSettings;
 
 use anchor_lang::{
     solana_program::{
-        instruction::{AccountMeta, Instruction},
+        instruction::{
+            AccountMeta,
+            Instruction,
+        },
         pubkey::Pubkey,
         system_program,
     },

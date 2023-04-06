@@ -1,20 +1,39 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{
-        instruction::Instruction,
-        program::{get_return_data, invoke_signed},
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::{
+            instruction::Instruction,
+            program::{
+                get_return_data,
+                invoke_signed,
+            },
+        },
+        AnchorDeserialize,
+        InstructionData,
     },
-    AnchorDeserialize, InstructionData,
+    clockwork_network_program::state::{
+        Fee,
+        Pool,
+        Worker,
+        WorkerAccount,
+    },
+    clockwork_utils::thread::{
+        SerializableInstruction,
+        ThreadResponse,
+        PAYER_PUBKEY,
+    },
 };
-use clockwork_network_program::state::{Fee, Pool, Worker, WorkerAccount};
-use clockwork_utils::thread::{SerializableInstruction, ThreadResponse, PAYER_PUBKEY};
 
-use crate::{errors::ClockworkError, state::*};
+use crate::{
+    errors::ClockworkError,
+    state::*,
+};
 
 /// The ID of the pool workers must be a member of to collect fees.
 const POOL_ID: u64 = 0;
 
-/// The number of lamports to reimburse the worker with after they've submitted a transaction's worth of exec instructions.
+/// The number of lamports to reimburse the worker with after they've submitted a transaction's
+/// worth of exec instructions.
 const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
 
 /// Accounts required by the `thread_exec` instruction.
@@ -219,7 +238,8 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             .unwrap();
     }
 
-    // If the worker is in the pool, debit from the thread account and payout to the worker's fee account.
+    // If the worker is in the pool, debit from the thread account and payout to the worker's fee
+    // account.
     if pool.clone().into_inner().workers.contains(&worker.key()) {
         **thread.to_account_info().try_borrow_mut_lamports()? = thread
             .to_account_info()
@@ -233,8 +253,8 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             .unwrap();
     }
 
-    // If the thread has no more work or the number of execs since the last payout has reached the rate limit,
-    // reimburse the worker for the transaction base fee.
+    // If the thread has no more work or the number of execs since the last payout has reached the
+    // rate limit, reimburse the worker for the transaction base fee.
     if thread.next_instruction.is_none()
         || thread.exec_context.unwrap().execs_since_reimbursement >= thread.rate_limit
     {

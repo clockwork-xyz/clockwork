@@ -1,9 +1,21 @@
 use std::sync::Arc;
 
-use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
-use log::info;
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
+use {
+    clockwork_client::network::state::{
+        Pool,
+        Registry,
+        Snapshot,
+        SnapshotFrame,
+        Worker,
+    },
+    log::info,
+    solana_client::nonblocking::rpc_client::RpcClient,
+    solana_sdk::{
+        signature::Keypair,
+        signer::Signer,
+        transaction::Transaction,
+    },
+};
 
 use crate::pool_position::PoolPosition;
 

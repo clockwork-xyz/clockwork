@@ -4,25 +4,40 @@ pub mod webhook;
 use std::{
     fmt::Debug,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{
+            AtomicBool,
+            Ordering,
+        },
         Arc,
     },
 };
 
-use anchor_lang::{prelude::Pubkey, AccountDeserialize};
-use async_trait::async_trait;
-use log::info;
-use solana_client::{
-    client_error::{ClientError, ClientErrorKind, Result as ClientResult},
-    nonblocking::rpc_client::RpcClient,
+use {
+    anchor_lang::{
+        prelude::Pubkey,
+        AccountDeserialize,
+    },
+    async_trait::async_trait,
+    log::info,
+    solana_client::{
+        client_error::{
+            ClientError,
+            ClientErrorKind,
+            Result as ClientResult,
+        },
+        nonblocking::rpc_client::RpcClient,
+    },
+    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
+    solana_sdk::commitment_config::CommitmentConfig,
+    tokio::runtime::Runtime,
+    tx::TxExecutor,
+    webhook::WebhookExecutor,
 };
-use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
-use solana_sdk::commitment_config::CommitmentConfig;
-use tokio::runtime::Runtime;
-use tx::TxExecutor;
-use webhook::WebhookExecutor;
 
-use crate::{config::PluginConfig, observers::Observers};
+use crate::{
+    config::PluginConfig,
+    observers::Observers,
+};
 
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 
@@ -131,7 +146,9 @@ impl AccountGet for RpcClient {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
         let data = self.get_account_data(pubkey).await?;
         T::try_deserialize(&mut data.as_slice()).map_err(|_| {
-            ClientError::from(ClientErrorKind::Custom("Failed to deserialize account data".to_string()))
+            ClientError::from(ClientErrorKind::Custom(
+                "Failed to deserialize account data".to_string(),
+            ))
         })
     }
 }

@@ -1,8 +1,22 @@
-use chrono::offset::TimeZone;
-use chrono::{DateTime, Datelike, Duration, Timelike};
+use chrono::{
+    offset::TimeZone,
+    DateTime,
+    Datelike,
+    Duration,
+    Timelike,
+};
 
-use crate::ordinal::Ordinal;
-use crate::time_unit::{DaysOfMonth, Hours, Minutes, Months, Seconds, TimeUnitField};
+use crate::{
+    ordinal::Ordinal,
+    time_unit::{
+        DaysOfMonth,
+        Hours,
+        Minutes,
+        Months,
+        Seconds,
+        TimeUnitField,
+    },
+};
 
 // TODO: Possibility of one query struct?
 

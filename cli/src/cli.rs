@@ -1,10 +1,22 @@
-use crate::parser::ProgramInfo;
-use clap::{Arg, ArgGroup, Command};
-use clockwork_client::{
-    thread::state::{SerializableInstruction, Trigger},
-    webhook::state::HttpMethod,
+use {
+    crate::parser::ProgramInfo,
+    clap::{
+        Arg,
+        ArgGroup,
+        Command,
+    },
+    clockwork_client::{
+        thread::state::{
+            SerializableInstruction,
+            Trigger,
+        },
+        webhook::state::HttpMethod,
+    },
+    solana_sdk::{
+        pubkey::Pubkey,
+        signature::Keypair,
+    },
 };
-use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Debug, PartialEq)]
 pub enum CliCommand {

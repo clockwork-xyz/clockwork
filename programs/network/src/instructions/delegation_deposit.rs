@@ -1,7 +1,12 @@
 use {
     crate::state::*,
     anchor_lang::prelude::*,
-    anchor_spl::token::{transfer, Token, TokenAccount, Transfer},
+    anchor_spl::token::{
+        transfer,
+        Token,
+        TokenAccount,
+        Transfer,
+    },
 };
 
 #[derive(Accounts)]

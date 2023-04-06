@@ -1,11 +1,22 @@
 use std::{
     collections::HashMap,
-    fmt::{Display, Formatter},
+    fmt::{
+        Display,
+        Formatter,
+    },
     str::FromStr,
 };
 
-use anchor_lang::{prelude::*, AnchorDeserialize};
-use serde::{Deserialize, Serialize};
+use {
+    anchor_lang::{
+        prelude::*,
+        AnchorDeserialize,
+    },
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+};
 
 use crate::errors::ClockworkError;
 

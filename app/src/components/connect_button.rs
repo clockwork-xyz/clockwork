@@ -1,14 +1,25 @@
-use clockwork_utils::pubkey::Abbreviated;
-use dioxus::prelude::*;
-use gloo_events::EventListener;
-use gloo_storage::{LocalStorage, Storage};
-use solana_client_wasm::solana_sdk::pubkey::Pubkey;
-use std::str::FromStr;
+use {
+    clockwork_utils::pubkey::Abbreviated,
+    dioxus::prelude::*,
+    gloo_events::EventListener,
+    gloo_storage::{
+        LocalStorage,
+        Storage,
+    },
+    solana_client_wasm::solana_sdk::pubkey::Pubkey,
+    std::str::FromStr,
+};
 
-use super::backpack::backpack;
-use crate::{
-    context::{Client, Cluster, User},
-    utils::format_balance,
+use {
+    super::backpack::backpack,
+    crate::{
+        context::{
+            Client,
+            Cluster,
+            User,
+        },
+        utils::format_balance,
+    },
 };
 
 pub fn ConnectButton(cx: Scope) -> Element {
@@ -74,8 +85,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                         },
                                     )
                                     .unwrap();
-                                    LocalStorage::set("cluster", client_context.cluster)
-                                        .unwrap();
+                                    LocalStorage::set("cluster", client_context.cluster).unwrap();
                                 }
 
                                 Err(err) => log::info!("Failed to get user account: {:?}", err),
@@ -101,8 +111,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                         "Mainnet" | "Devnet" => {
                             let cluster = Cluster::from_str(e_id).unwrap();
                             *client_context.write() = Client::new_with_config(cluster);
-                            LocalStorage::set("cluster", client_context.write().cluster)
-                                .unwrap();
+                            LocalStorage::set("cluster", client_context.write().cluster).unwrap();
                             let _ = web_sys::window().unwrap().location().reload();
                             show_cluster_dropdown.set(false);
                         }

@@ -1,5 +1,8 @@
 use {
-    crate::{errors::*, state::*},
+    crate::{
+        errors::*,
+        state::*,
+    },
     anchor_lang::prelude::*,
 };
 

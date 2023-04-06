@@ -1,6 +1,8 @@
-use anchor_lang::solana_program::pubkey::Pubkey;
-use dioxus::prelude::*;
-use solana_client_wasm::utils::rpc_response::RpcConfirmedTransactionStatusWithSignature;
+use {
+    anchor_lang::solana_program::pubkey::Pubkey,
+    dioxus::prelude::*,
+    solana_client_wasm::utils::rpc_response::RpcConfirmedTransactionStatusWithSignature,
+};
 
 use crate::context::Client;
 
@@ -91,7 +93,8 @@ struct RowProps {
 }
 
 fn Row(cx: Scope<RowProps>) -> Element {
-    // let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br py-2";
+    // let cell_class = "table-cell whitespace-nowrap first:pl-3 first:rounded-tl first:rounded-bl
+    // last:rounded-tr last:rounded-br py-2";
     let cell_class = "table-cell whitespace-nowrap font-medium py-2 px-5 first:pl-3 first:truncate last:pr-3 first:rounded-tl first:rounded-bl last:rounded-tr last:rounded-br";
     let result_class = if cx.props.transaction.err.is_some() {
         "whitespace-nowrap text-xs font-sans font-medium py-1 px-2 rounded text-slate-100 bg-red-500"
@@ -103,7 +106,8 @@ fn Row(cx: Scope<RowProps>) -> Element {
     } else {
         "Succcess"
     };
-    // let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
+    // let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate
+    // last:pr-3";
     cx.render(rsx! {
         tr {
             id: cx.props.elem_id.as_str(),

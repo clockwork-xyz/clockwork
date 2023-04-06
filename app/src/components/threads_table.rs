@@ -1,20 +1,46 @@
-use std::{str::FromStr, cmp::Ordering, collections::hash_map::DefaultHasher, hash::{Hash, Hasher}};
-use anchor_lang::prelude::Clock;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_thread_program_v2::state::{Trigger, TriggerContext, VersionedThread};
-use clockwork_utils::pubkey::Abbreviated;
-use dioxus::prelude::*;
-use dioxus_router::Link;
-use solana_client_wasm::solana_sdk::account::Account;
+use {
+    anchor_lang::prelude::Clock,
+    chrono::{
+        DateTime,
+        NaiveDateTime,
+        Utc,
+    },
+    clockwork_thread_program_v2::state::{
+        Trigger,
+        TriggerContext,
+        VersionedThread,
+    },
+    clockwork_utils::pubkey::Abbreviated,
+    dioxus::prelude::*,
+    dioxus_router::Link,
+    solana_client_wasm::solana_sdk::account::Account,
+    std::{
+        cmp::Ordering,
+        collections::hash_map::DefaultHasher,
+        hash::{
+            Hash,
+            Hasher,
+        },
+        str::FromStr,
+    },
+};
 
 use crate::{
-    context::{Client, User},   
+    components::page_control::PageControl,
+    context::{
+        Client,
+        User,
+    },
     hooks::use_pagination,
-    utils::{format_balance, format_timestamp}, components::page_control::PageControl,
+    utils::{
+        format_balance,
+        format_timestamp,
+    },
 };
 
 pub fn ThreadsTable(cx: Scope) -> Element {
-    let paginated_threads = use_pagination::<(VersionedThread, Account)>(cx, 15, std::vec::Vec::new);
+    let paginated_threads =
+        use_pagination::<(VersionedThread, Account)>(cx, 15, std::vec::Vec::new);
     let clock = use_state::<Option<Clock>>(cx, || None);
     let client_context = use_shared_state::<Client>(cx).unwrap();
     let user_context = use_shared_state::<User>(cx).unwrap();
@@ -35,29 +61,32 @@ pub fn ThreadsTable(cx: Scope) -> Element {
             let threads = client.get_threads().await.unwrap();
             let mut sorted_threads = threads.clone();
             sorted_threads.sort_by(|a, b| {
-                 if let Some(exec_context_a) = a.0.exec_context() {
-                     if let Some(exec_context_b) = b.0.exec_context() {
-                         exec_context_b.last_exec_at.partial_cmp(&exec_context_a.last_exec_at).unwrap_or(Ordering::Equal)
-                     } else {
-                         Ordering::Less
-                     }
-                 } else {
-                     Ordering::Greater
-                 }
+                if let Some(exec_context_a) = a.0.exec_context() {
+                    if let Some(exec_context_b) = b.0.exec_context() {
+                        exec_context_b
+                            .last_exec_at
+                            .partial_cmp(&exec_context_a.last_exec_at)
+                            .unwrap_or(Ordering::Equal)
+                    } else {
+                        Ordering::Less
+                    }
+                } else {
+                    Ordering::Greater
+                }
             });
             if *filter.get() {
                 let filtered_threads = sorted_threads.clone();
-                    let ft = filtered_threads
-                        .into_iter()
-                        .filter(|(vt, _a)| vt.authority().eq(&user_pubkey))
-                        .collect::<Vec<(VersionedThread, Account)>>();
-                paginated_threads.set(ft); 
+                let ft = filtered_threads
+                    .into_iter()
+                    .filter(|(vt, _a)| vt.authority().eq(&user_pubkey))
+                    .collect::<Vec<(VersionedThread, Account)>>();
+                paginated_threads.set(ft);
             } else {
                 paginated_threads.set(sorted_threads);
             }
             clock.set(client.get_clock().await.ok());
             is_loading.set(false);
-        } 
+        }
     });
 
     cx.render(rsx! {
@@ -167,10 +196,11 @@ pub fn ThreadsTable(cx: Scope) -> Element {
             }
         }
     })
-}    
+}
 
 fn Header(cx: Scope) -> Element {
-    let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
+    let cell_class =
+        "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
     cx.render(rsx! {
         thead {
             class: "table-header-group",
@@ -232,7 +262,7 @@ struct RowProps {
     thread: VersionedThread,
     account: Account,
     elem_id: String,
-    clock: Clock
+    clock: Clock,
 }
 
 impl PartialEq for RowProps {
@@ -268,7 +298,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
             } else {
                 format!("{} sec ago", last_exec_est_secs)
             }
-        },
+        }
     };
 
     let trigger = match thread.trigger() {
@@ -288,8 +318,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
                     _ => 0,
                 },
             };
-            next_timestamp(reference_timestamp, schedule)
-                .map_or("–".to_string(), format_timestamp)
+            next_timestamp(reference_timestamp, schedule).map_or("–".to_string(), format_timestamp)
         }
         Trigger::Now => "–".to_string(),
         Trigger::Slot { slot } => slot.to_string(),
@@ -326,48 +355,52 @@ fn Row(cx: Scope<RowProps>) -> Element {
                     let client_context = client_context.clone();
                     async move {
                         let client = client_context.read();
-                        client.get_account(taddress).await 
+                        client.get_account(taddress).await
                     }
-                }).value() {
-                    Some(res) => {
-                        match res {
-                            Ok(maybe_taccount) => {
-                                if let Some(taccount) = maybe_taccount {
-                                    let mut hasher = DefaultHasher::new();
-                                    let data = &taccount.data;
-                                    let offset = offset as usize;
-                                    let range_end = offset.checked_add(size as usize).unwrap();
-                                    if data.len().gt(&range_end) {
-                                        data[offset..range_end].hash(&mut hasher);
-                                    } else {
-                                        data[offset..].hash(&mut hasher)
-                                    }
-                                    let data_hash = hasher.finish();
-                                    if let Some(exec_context) = thread.exec_context() {
-                                        match exec_context.trigger_context {
-                                            TriggerContext::Account { data_hash: prior_data_hash } => {
-                                                log::info!("Data: {:?}", data);
-                                                log::info!("Data hash: {:?} {:?}", data_hash, prior_data_hash);
-                                                if data_hash.eq(&prior_data_hash) {
-                                                    Status::Healthy
-                                                } else {
-                                                    Status::Unhealthy
-                                                }
+                })
+                .value()
+                {
+                    Some(res) => match res {
+                        Ok(maybe_taccount) => {
+                            if let Some(taccount) = maybe_taccount {
+                                let mut hasher = DefaultHasher::new();
+                                let data = &taccount.data;
+                                let offset = offset as usize;
+                                let range_end = offset.checked_add(size as usize).unwrap();
+                                if data.len().gt(&range_end) {
+                                    data[offset..range_end].hash(&mut hasher);
+                                } else {
+                                    data[offset..].hash(&mut hasher)
+                                }
+                                let data_hash = hasher.finish();
+                                if let Some(exec_context) = thread.exec_context() {
+                                    match exec_context.trigger_context {
+                                        TriggerContext::Account {
+                                            data_hash: prior_data_hash,
+                                        } => {
+                                            log::info!("Data: {:?}", data);
+                                            log::info!(
+                                                "Data hash: {:?} {:?}",
+                                                data_hash,
+                                                prior_data_hash
+                                            );
+                                            if data_hash.eq(&prior_data_hash) {
+                                                Status::Healthy
+                                            } else {
+                                                Status::Unhealthy
                                             }
-                                            _ => Status::Unknown
                                         }
-                                    } else {
-                                        Status::Healthy
+                                        _ => Status::Unknown,
                                     }
                                 } else {
                                     Status::Healthy
                                 }
-                            }
-                            Err(_err) => {
+                            } else {
                                 Status::Healthy
                             }
                         }
-                    }
+                        Err(_err) => Status::Healthy,
+                    },
                     None => {
                         // TODO
                         Status::Healthy
@@ -390,7 +423,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
                 // }
 
                 // Status::Unknown
-            },
+            }
             Trigger::Cron {
                 schedule,
                 skippable: _,
@@ -403,7 +436,8 @@ fn Row(cx: Scope<RowProps>) -> Element {
                     },
                 };
                 if let Some(target_ts) = next_timestamp(reference_timestamp, schedule) {
-                    // TODO Compare the target timestamp to the current timestamp. If this thread should have fired a while ago, it is "unhealthy".
+                    // TODO Compare the target timestamp to the current timestamp. If this thread
+                    // should have fired a while ago, it is "unhealthy".
                     if (target_ts + 10).gt(&clock.unix_timestamp) {
                         Status::Healthy
                     } else {
@@ -476,12 +510,13 @@ fn Row(cx: Scope<RowProps>) -> Element {
 
 fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
     match clockwork_cron::Schedule::from_str(&schedule) {
-       Ok(schedule) => schedule.next_after(&DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
-            Utc,
-        ))
-        .take()
-        .map(|datetime| datetime.timestamp()),
-        Err(_err) => None
+        Ok(schedule) => schedule
+            .next_after(&DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
+                Utc,
+            ))
+            .take()
+            .map(|datetime| datetime.timestamp()),
+        Err(_err) => None,
     }
 }

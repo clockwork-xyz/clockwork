@@ -17,7 +17,8 @@ pub enum ClockworkError {
     #[msg("The trigger variant cannot be changed")]
     InvalidTriggerVariant,
 
-    /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been met.
+    /// Thrown if a exec instruction is invalid because the thread's trigger condition has not been
+    /// met.
     #[msg("The trigger condition has not been activated")]
     TriggerConditionFailed,
 
@@ -40,7 +41,8 @@ pub enum ClockworkError {
     #[msg("Inner instruction attempted to write to an unauthorized address")]
     UnauthorizedWrite,
 
-    /// Thrown if the user attempts to withdraw SOL that would put a thread below it's minimum rent threshold.
+    /// Thrown if the user attempts to withdraw SOL that would put a thread below it's minimum rent
+    /// threshold.
     #[msg("Withdrawing this amount would leave the thread with less than the minimum required SOL for rent exemption")]
     WithdrawalTooLarge,
 }

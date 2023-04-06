@@ -3,7 +3,10 @@ use clockwork_client::network::state::PoolSettings;
 use {
     crate::errors::CliError,
     clockwork_client::{
-        network::state::{Pool, Registry},
+        network::state::{
+            Pool,
+            Registry,
+        },
         Client,
     },
 };

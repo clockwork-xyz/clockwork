@@ -1,16 +1,31 @@
-use std::{convert::TryFrom, fmt::Debug, hash::Hash};
-
-use anchor_lang::{
-    prelude::borsh::BorshSchema,
-    prelude::Pubkey,
-    prelude::*,
-    solana_program::{self, instruction::Instruction},
-    AnchorDeserialize,
+use std::{
+    convert::TryFrom,
+    fmt::Debug,
+    hash::Hash,
 };
-use serde::{Deserialize, Serialize};
-use static_pubkey::static_pubkey;
 
-/// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by the user for lamports spent during this delegation.
+use {
+    anchor_lang::{
+        prelude::{
+            borsh::BorshSchema,
+            Pubkey,
+            *,
+        },
+        solana_program::{
+            self,
+            instruction::Instruction,
+        },
+        AnchorDeserialize,
+    },
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    static_pubkey::static_pubkey,
+};
+
+/// The stand-in pubkey for delegating a payer address to a worker. All workers are re-imbursed by
+/// the user for lamports spent during this delegation.
 pub static PAYER_PUBKEY: Pubkey = static_pubkey!("C1ockworkPayer11111111111111111111111111111");
 
 /// The clock object, representing a specific moment in time recorded by a Solana cluster.
@@ -62,8 +77,9 @@ pub enum Trigger {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
 
-        /// Boolean value indicating whether triggering moments may be skipped if they are missed (e.g. due to network downtime).
-        /// If false, any "missed" triggering moments will simply be executed as soon as the network comes back online.
+        /// Boolean value indicating whether triggering moments may be skipped if they are missed
+        /// (e.g. due to network downtime). If false, any "missed" triggering moments will
+        /// simply be executed as soon as the network comes back online.
         skippable: bool,
     },
 
@@ -86,20 +102,19 @@ pub enum Trigger {
 }
 
 /// A response value target programs can return to update the thread.
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]
-#[derive(Default)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, Default)]
 pub struct ThreadResponse {
     /// If set, the thread will automatically close and return lamports to the provided address.
-    /// If dynamic_instruction is also set, close_to will take precedence and the dynamic instruction will not be executed.
+    /// If dynamic_instruction is also set, close_to will take precedence and the dynamic
+    /// instruction will not be executed.
     pub close_to: Option<Pubkey>,
     /// A dynamic instruction to execute next.
-    /// If close_to is also set, it will take precedence and the dynamic instruction will not be executed.
+    /// If close_to is also set, it will take precedence and the dynamic instruction will not be
+    /// executed.
     pub dynamic_instruction: Option<SerializableInstruction>,
     /// Value to update the thread trigger to.
     pub trigger: Option<Trigger>,
 }
-
-
 
 /// The data needed execute an instruction on Solana.
 #[derive(

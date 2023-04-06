@@ -1,11 +1,23 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    network::state::{
-        Config, Fee, Penalty, Registry, Snapshot, SnapshotFrame, Worker, WorkerSettings,
+use {
+    anchor_lang::AccountDeserialize,
+    clockwork_client::{
+        network::state::{
+            Config,
+            Fee,
+            Penalty,
+            Registry,
+            Snapshot,
+            SnapshotFrame,
+            Worker,
+            WorkerSettings,
+        },
+        Client,
     },
-    Client,
+    solana_sdk::signature::{
+        Keypair,
+        Signer,
+    },
 };
-use solana_sdk::signature::{Keypair, Signer};
 
 use crate::errors::CliError;
 

@@ -1,4 +1,7 @@
-use {crate::state::*, anchor_lang::prelude::*};
+use {
+    crate::state::*,
+    anchor_lang::prelude::*,
+};
 
 /// Accounts required by the `thread_resume` instruction.
 #[derive(Accounts)]

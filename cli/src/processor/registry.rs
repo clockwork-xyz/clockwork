@@ -1,7 +1,10 @@
 use {
     crate::errors::CliError,
     clockwork_client::{
-        network::state::{Registry, Snapshot},
+        network::state::{
+            Registry,
+            Snapshot,
+        },
         Client,
     },
 };

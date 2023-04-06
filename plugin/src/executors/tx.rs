@@ -1,35 +1,63 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{
+        HashMap,
+        HashSet,
+    },
     fmt::Debug,
     sync::{
-        atomic::{AtomicU64, Ordering},
+        atomic::{
+            AtomicU64,
+            Ordering,
+        },
         Arc,
     },
 };
 
-use async_once::AsyncOnce;
-use bincode::serialize;
-use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
-use clockwork_thread_program::state::VersionedThread;
-use lazy_static::lazy_static;
-use log::info;
-use solana_client::{
-    nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
-    rpc_config::RpcSimulateTransactionConfig,
-    tpu_client::TpuClientConfig,
+use {
+    async_once::AsyncOnce,
+    bincode::serialize,
+    clockwork_client::network::state::{
+        Pool,
+        Registry,
+        Snapshot,
+        SnapshotFrame,
+        Worker,
+    },
+    clockwork_thread_program::state::VersionedThread,
+    lazy_static::lazy_static,
+    log::info,
+    solana_client::{
+        nonblocking::{
+            rpc_client::RpcClient,
+            tpu_client::TpuClient,
+        },
+        rpc_config::RpcSimulateTransactionConfig,
+        tpu_client::TpuClientConfig,
+    },
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPluginError,
+        Result as PluginResult,
+    },
+    solana_program::pubkey::Pubkey,
+    solana_sdk::{
+        commitment_config::CommitmentConfig,
+        signature::{
+            Keypair,
+            Signature,
+        },
+        transaction::Transaction,
+    },
+    tokio::{
+        runtime::Runtime,
+        sync::RwLock,
+    },
 };
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, Result as PluginResult,
-};
-use solana_program::pubkey::Pubkey;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    signature::{Keypair, Signature},
-    transaction::Transaction,
-};
-use tokio::{runtime::Runtime, sync::RwLock};
 
-use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
+use crate::{
+    config::PluginConfig,
+    pool_position::PoolPosition,
+    utils::read_or_new_keypair,
+};
 
 use super::AccountGet;
 
@@ -272,7 +300,8 @@ impl TxExecutor {
         let r_executable_threads = self.executable_threads.read().await;
         let thread_pubkeys =
             if pool_position.current_position.is_none() && !pool_position.workers.is_empty() {
-                // This worker is not in the pool. Get pubkeys of threads that are beyond the timeout window.
+                // This worker is not in the pool. Get pubkeys of threads that are beyond the
+                // timeout window.
                 r_executable_threads
                     .iter()
                     .filter(|(_pubkey, metadata)| slot > metadata.due_slot + THREAD_TIMEOUT_WINDOW)
@@ -341,7 +370,8 @@ impl TxExecutor {
         // Batch submit transactions to the leader.
         // TODO Explore rewriting the TPU client for optimized performance.
         //      This currently is by far the most expensive part of processing threads.
-        //      Submitting transactions takes 8x longer (>200ms) than simulating and building transactions.
+        //      Submitting transactions takes 8x longer (>200ms) than simulating and building
+        // transactions.
         match TPU_CLIENT
             .get()
             .await
@@ -434,7 +464,11 @@ impl TxExecutor {
         let r_transaction_history = self.transaction_history.read().await;
         if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
             if metadata.signature.eq(&tx.signatures[0]) && metadata.slot_sent.le(&slot) {
-                return Err(GeyserPluginError::Custom("Transaction signature is a duplicate of a previously submitted transaction".to_string().into()));
+                return Err(GeyserPluginError::Custom(
+                    "Transaction signature is a duplicate of a previously submitted transaction"
+                        .to_string()
+                        .into(),
+                ));
             }
         }
         drop(r_transaction_history);
@@ -499,13 +533,9 @@ lazy_static! {
             LOCAL_RPC_URL.into(),
             CommitmentConfig::processed(),
         ));
-        
-        TpuClient::new(
-            rpc_client,
-            LOCAL_WEBSOCKET_URL,
-            TpuClientConfig::default(),
-        )
-        .await
-        .unwrap()
+
+        TpuClient::new(rpc_client, LOCAL_WEBSOCKET_URL, TpuClientConfig::default())
+            .await
+            .unwrap()
     });
 }

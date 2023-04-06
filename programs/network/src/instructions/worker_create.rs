@@ -1,16 +1,25 @@
 use {
-    crate::{errors::*, state::*},
+    crate::{
+        errors::*,
+        state::*,
+    },
     anchor_lang::{
         prelude::*,
-        solana_program::{system_program, sysvar},
+        solana_program::{
+            system_program,
+            sysvar,
+        },
     },
     anchor_spl::{
         associated_token::AssociatedToken,
-        token::{Mint, Token, TokenAccount},
+        token::{
+            Mint,
+            Token,
+            TokenAccount,
+        },
     },
     std::mem::size_of,
 };
-
 
 #[derive(Accounts)]
 pub struct WorkerCreate<'info> {
@@ -89,7 +98,6 @@ pub struct WorkerCreate<'info> {
         associated_token::mint = mint,
     )]
     pub worker_tokens: Account<'info, TokenAccount>,
-
 }
 
 pub fn handler(ctx: Context<WorkerCreate>) -> Result<()> {

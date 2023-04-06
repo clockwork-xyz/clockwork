@@ -15,19 +15,21 @@ pub mod worker_claim;
 pub mod worker_create;
 pub mod worker_update;
 
-pub use config_update::*;
-pub use delegation_claim::*;
-pub use delegation_create::*;
-pub use delegation_deposit::*;
-pub use delegation_withdraw::*;
-pub use initialize::*;
-pub use penalty_claim::*;
-pub use pool_create::*;
-pub use pool_rotate::*;
-pub use pool_update::*;
-pub use registry_nonce_hash::*;
-pub use registry_unlock::*;
-pub use unstake_create::*;
-pub use worker_claim::*;
-pub use worker_create::*;
-pub use worker_update::*;
+pub use {
+    config_update::*,
+    delegation_claim::*,
+    delegation_create::*,
+    delegation_deposit::*,
+    delegation_withdraw::*,
+    initialize::*,
+    penalty_claim::*,
+    pool_create::*,
+    pool_rotate::*,
+    pool_update::*,
+    registry_nonce_hash::*,
+    registry_unlock::*,
+    unstake_create::*,
+    worker_claim::*,
+    worker_create::*,
+    worker_update::*,
+};

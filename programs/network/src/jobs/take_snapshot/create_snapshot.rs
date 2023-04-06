@@ -1,12 +1,20 @@
 use std::mem::size_of;
 
-use anchor_lang::{
-    prelude::*,
-    solana_program::{instruction::Instruction, system_program},
-    InstructionData,
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::{
+            instruction::Instruction,
+            system_program,
+        },
+        InstructionData,
+    },
+    anchor_spl::associated_token::get_associated_token_address,
+    clockwork_utils::thread::{
+        ThreadResponse,
+        PAYER_PUBKEY,
+    },
 };
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 

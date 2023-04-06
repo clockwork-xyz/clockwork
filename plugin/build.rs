@@ -1,5 +1,10 @@
-use cargo_toml::{Dependency, Manifest};
-use std::process::Command;
+use {
+    cargo_toml::{
+        Dependency,
+        Manifest,
+    },
+    std::process::Command,
+};
 
 fn main() {
     let output = Command::new("git")

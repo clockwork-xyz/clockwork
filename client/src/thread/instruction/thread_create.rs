@@ -1,12 +1,20 @@
-use anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        system_program,
+use {
+    anchor_lang::{
+        solana_program::{
+            instruction::{
+                AccountMeta,
+                Instruction,
+            },
+            pubkey::Pubkey,
+            system_program,
+        },
+        InstructionData,
     },
-    InstructionData,
+    clockwork_thread_program::state::{
+        SerializableInstruction,
+        Trigger,
+    },
 };
-use clockwork_thread_program::state::{SerializableInstruction, Trigger};
 
 pub fn thread_create(
     amount: u64,

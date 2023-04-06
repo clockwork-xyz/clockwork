@@ -6,26 +6,50 @@ mod months;
 mod seconds;
 mod years;
 
-pub use self::days_of_month::DaysOfMonth;
-pub use self::days_of_week::DaysOfWeek;
-pub use self::hours::Hours;
-pub use self::minutes::Minutes;
-pub use self::months::Months;
-pub use self::seconds::Seconds;
-pub use self::years::Years;
+pub use self::{
+    days_of_month::DaysOfMonth,
+    days_of_week::DaysOfWeek,
+    hours::Hours,
+    minutes::Minutes,
+    months::Months,
+    seconds::Seconds,
+    years::Years,
+};
 
-use crate::error::*;
-use crate::ordinal::{Ordinal, OrdinalSet};
-use crate::specifier::{RootSpecifier, Specifier};
-use std::borrow::Cow;
-use std::iter;
+use {
+    crate::{
+        error::*,
+        ordinal::{
+            Ordinal,
+            OrdinalSet,
+        },
+        specifier::{
+            RootSpecifier,
+            Specifier,
+        },
+    },
+    std::{
+        borrow::Cow,
+        iter,
+    },
+};
 
 /// Methods exposing a schedule's configured ordinals for each individual unit of time.
 /// # Example
 /// ```
-/// use clockwork_cron::{Schedule,TimeUnitSpec};
-/// use std::ops::Bound::{Included,Excluded};
-/// use std::str::FromStr;
+/// use {
+///     clockwork_cron::{
+///         Schedule,
+///         TimeUnitSpec,
+///     },
+///     std::{
+///         ops::Bound::{
+///             Excluded,
+///             Included,
+///         },
+///         str::FromStr,
+///     },
+/// };
 ///
 /// let expression = "* * * * * * 2015-2044";
 /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -42,8 +66,13 @@ pub trait TimeUnitSpec {
     /// being described.
     /// # Example
     /// ```
-    /// use clockwork_cron::{Schedule,TimeUnitSpec};
-    /// use std::str::FromStr;
+    /// use {
+    ///     clockwork_cron::{
+    ///         Schedule,
+    ///         TimeUnitSpec,
+    ///     },
+    ///     std::str::FromStr,
+    /// };
     ///
     /// let expression = "* * * * * * 2015-2044";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -57,8 +86,13 @@ pub trait TimeUnitSpec {
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
     /// ```
-    /// use clockwork_cron::{Schedule,TimeUnitSpec};
-    /// use std::str::FromStr;
+    /// use {
+    ///     clockwork_cron::{
+    ///         Schedule,
+    ///         TimeUnitSpec,
+    ///     },
+    ///     std::str::FromStr,
+    /// };
     ///
     /// let expression = "* * * 1,15 * * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -67,11 +101,16 @@ pub trait TimeUnitSpec {
     /// ```
     fn count(&self) -> u32;
 
-    /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or in the case of weekdays '1-7')
-    /// # Example
+    /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or
+    /// in the case of weekdays '1-7') # Example
     /// ```
-    /// use clockwork_cron::{Schedule,TimeUnitSpec};
-    /// use std::str::FromStr;
+    /// use {
+    ///     clockwork_cron::{
+    ///         Schedule,
+    ///         TimeUnitSpec,
+    ///     },
+    ///     std::str::FromStr,
+    /// };
     ///
     /// let expression = "* * * 1,15 * * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");

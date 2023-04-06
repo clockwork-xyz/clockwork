@@ -1,5 +1,11 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 
@@ -88,7 +94,8 @@ pub fn handler(ctx: Context<DistributeFeesProcessFrame>) -> Result<ThreadRespons
 
     // Build next instruction for the thread.
     let dynamic_instruction = if snapshot_frame.total_entries.gt(&0) {
-        // This snapshot frame has entries. Distribute fees to the delegations associated with the entries.
+        // This snapshot frame has entries. Distribute fees to the delegations associated with the
+        // entries.
         let delegation_pubkey = Delegation::pubkey(worker.key(), 0);
         let snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
         Some(

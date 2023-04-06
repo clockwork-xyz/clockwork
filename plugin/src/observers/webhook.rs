@@ -1,9 +1,15 @@
-use std::{collections::HashSet, fmt::Debug, sync::Arc};
+use std::{
+    collections::HashSet,
+    fmt::Debug,
+    sync::Arc,
+};
 
-use clockwork_client::webhook::state::Webhook;
-use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
-use solana_program::pubkey::Pubkey;
-use tokio::sync::RwLock;
+use {
+    clockwork_client::webhook::state::Webhook,
+    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
+    solana_program::pubkey::Pubkey,
+    tokio::sync::RwLock,
+};
 
 pub struct WebhookObserver {
     // The set of webhook that can be processed.

@@ -1,20 +1,39 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{
+        HashMap,
+        HashSet,
+    },
     fmt::Debug,
     str::FromStr,
-    sync::{atomic::AtomicU64, Arc},
+    sync::{
+        atomic::AtomicU64,
+        Arc,
+    },
 };
 
-use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::thread::state::{Trigger, TriggerContext};
-use clockwork_cron::Schedule;
-use clockwork_thread_program::state::VersionedThread;
-use log::info;
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, Result as PluginResult,
+use {
+    chrono::{
+        DateTime,
+        NaiveDateTime,
+        Utc,
+    },
+    clockwork_client::thread::state::{
+        Trigger,
+        TriggerContext,
+    },
+    clockwork_cron::Schedule,
+    clockwork_thread_program::state::VersionedThread,
+    log::info,
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPluginError,
+        Result as PluginResult,
+    },
+    solana_program::{
+        clock::Clock,
+        pubkey::Pubkey,
+    },
+    tokio::sync::RwLock,
 };
-use solana_program::{clock::Clock, pubkey::Pubkey};
-use tokio::sync::RwLock;
 
 pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.

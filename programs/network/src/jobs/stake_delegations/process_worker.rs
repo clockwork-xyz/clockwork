@@ -1,6 +1,12 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    anchor_spl::associated_token::get_associated_token_address,
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 

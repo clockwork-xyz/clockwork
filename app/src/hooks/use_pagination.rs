@@ -1,6 +1,12 @@
-use dioxus::prelude::{use_ref, ScopeState, UseRef};
-use std::ops::Rem;
-use uuid::Uuid;
+use {
+    dioxus::prelude::{
+        use_ref,
+        ScopeState,
+        UseRef,
+    },
+    std::ops::Rem,
+    uuid::Uuid,
+};
 
 pub fn use_pagination<T: Clone + 'static>(
     cx: &ScopeState,

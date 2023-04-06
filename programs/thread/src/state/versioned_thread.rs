@@ -1,12 +1,25 @@
-use anchor_lang::{prelude::*, AccountDeserialize};
-use clockwork_thread_program_v1::{
-    state::Thread as ThreadV1,
-    typedefs::{Trigger as TriggerV1, TriggerContext as TriggerContextV1},
+use {
+    anchor_lang::{
+        prelude::*,
+        AccountDeserialize,
+    },
+    clockwork_thread_program_v1::{
+        state::Thread as ThreadV1,
+        typedefs::{
+            Trigger as TriggerV1,
+            TriggerContext as TriggerContextV1,
+        },
+    },
+    clockwork_utils::thread::SerializableAccount,
 };
-use clockwork_utils::thread::SerializableAccount;
 
 use crate::{
-    ClockData, ExecContext, SerializableInstruction, Thread as ThreadV2, Trigger, TriggerContext,
+    ClockData,
+    ExecContext,
+    SerializableInstruction,
+    Thread as ThreadV2,
+    Trigger,
+    TriggerContext,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -58,7 +71,10 @@ impl VersionedThread {
 
     pub fn next_instruction(&self) -> Option<SerializableInstruction> {
         match self {
-            Self::V1(t) => t.next_instruction.as_ref().map(|ix| SerializableInstruction {
+            Self::V1(t) => t
+                .next_instruction
+                .as_ref()
+                .map(|ix| SerializableInstruction {
                     program_id: ix.program_id,
                     accounts: ix
                         .accounts

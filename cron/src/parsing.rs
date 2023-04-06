@@ -1,19 +1,49 @@
-use nom::branch::alt;
-use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, digit1, multispace0};
-use nom::combinator::{all_consuming, eof, map, map_res, opt};
-use nom::multi::separated_list1;
-use nom::sequence::{delimited, separated_pair, terminated, tuple};
-use nom::IResult;
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::{
+        alpha1,
+        digit1,
+        multispace0,
+    },
+    combinator::{
+        all_consuming,
+        eof,
+        map,
+        map_res,
+        opt,
+    },
+    multi::separated_list1,
+    sequence::{
+        delimited,
+        separated_pair,
+        terminated,
+        tuple,
+    },
+    IResult,
+};
 
-use std::convert::TryFrom;
-use std::str::{self, FromStr};
+use std::{
+    convert::TryFrom,
+    str::{
+        self,
+        FromStr,
+    },
+};
 
-use crate::error::{Error, ErrorKind};
-use crate::schedule::{ScheduleFields, Schedule};
-use crate::specifier::*;
-use crate::time_unit::*;
-use crate::ordinal::*;
+use crate::{
+    error::{
+        Error,
+        ErrorKind,
+    },
+    ordinal::*,
+    schedule::{
+        Schedule,
+        ScheduleFields,
+    },
+    specifier::*,
+    time_unit::*,
+};
 
 impl FromStr for Schedule {
     type Err = Error;
@@ -22,7 +52,7 @@ impl FromStr for Schedule {
             Ok((_, schedule_fields)) => {
                 Ok(Schedule::new(String::from(expression), schedule_fields))
             } // Extract from nom tuple
-            Err(_) => Err(ErrorKind::Expression("Invalid cron expression.".to_owned()).into()), //TODO: Details
+            Err(_) => Err(ErrorKind::Expression("Invalid cron expression.".to_owned()).into()), /* TODO: Details */
         }
     }
 }
@@ -52,10 +82,12 @@ where
     T: TimeUnitField,
 {
     fn from_field(field: Field) -> Result<T, Error> {
-        if field.specifiers.len() == 1 && 
-            field.specifiers.get(0).unwrap() == &RootSpecifier::from(Specifier::All) 
-            { return Ok(T::all()); }
-        let mut ordinals = OrdinalSet::new(); 
+        if field.specifiers.len() == 1
+            && field.specifiers.get(0).unwrap() == &RootSpecifier::from(Specifier::All)
+        {
+            return Ok(T::all());
+        }
+        let mut ordinals = OrdinalSet::new();
         for specifier in field.specifiers {
             let specifier_ordinals: OrdinalSet = T::ordinals_from_root_specifier(&specifier)?;
             for ordinal in specifier_ordinals {
@@ -255,7 +287,15 @@ fn longhand(i: &str) -> IResult<&str, ScheduleFields> {
     let months = map_res(field, Months::from_field);
     let days_of_week = map_res(field_with_any, DaysOfWeek::from_field);
     let years = opt(map_res(field, Years::from_field));
-    let fields = tuple((seconds, minutes, hours, days_of_month, months, days_of_week, years));
+    let fields = tuple((
+        seconds,
+        minutes,
+        hours,
+        days_of_month,
+        months,
+        days_of_week,
+        years,
+    ));
 
     map(
         terminated(fields, eof),

@@ -1,6 +1,12 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use anchor_spl::associated_token::get_associated_token_address;
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    anchor_spl::associated_token::get_associated_token_address,
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 
@@ -36,7 +42,10 @@ pub fn handler(ctx: Context<UnstakePreprocess>) -> Result<ThreadResponse> {
                 program_id: crate::ID,
                 accounts: crate::accounts::UnstakeProcess {
                     authority: unstake.authority,
-                    authority_tokens: get_associated_token_address(&unstake.authority, &config.mint),
+                    authority_tokens: get_associated_token_address(
+                        &unstake.authority,
+                        &config.mint,
+                    ),
                     config: config.key(),
                     delegation: unstake.delegation,
                     registry: registry.key(),

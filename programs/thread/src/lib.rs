@@ -1,6 +1,7 @@
-//! This program allows users to create transaction threads on Solana. Threads are dynamic, long-running
-//! transaction threads that can persist across blocks and even run indefinitely. Developers can use threads
-//! to schedule transactions and automate smart-contracts without relying on centralized infrastructure.
+//! This program allows users to create transaction threads on Solana. Threads are dynamic,
+//! long-running transaction threads that can persist across blocks and even run indefinitely.
+//! Developers can use threads to schedule transactions and automate smart-contracts without relying
+//! on centralized infrastructure.
 #[macro_use]
 extern crate version;
 
@@ -9,13 +10,18 @@ pub mod state;
 
 mod instructions;
 
-use anchor_lang::prelude::*;
-use clockwork_utils::{
-    thread::{SerializableInstruction, Trigger},
-    CrateInfo,
+use {
+    anchor_lang::prelude::*,
+    clockwork_utils::{
+        thread::{
+            SerializableInstruction,
+            Trigger,
+        },
+        CrateInfo,
+    },
+    instructions::*,
+    state::*,
 };
-use instructions::*;
-use state::*;
 
 declare_id!("CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh");
 

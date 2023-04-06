@@ -1,7 +1,13 @@
-use dioxus::prelude::*;
-use dioxus_router::Link;
+use {
+    dioxus::prelude::*,
+    dioxus_router::Link,
+};
 
-use crate::pyth::{get_price_feeds, PythFeedPrice, Quotable};
+use crate::pyth::{
+    get_price_feeds,
+    PythFeedPrice,
+    Quotable,
+};
 
 pub fn MarketsTable(cx: Scope) -> Element {
     let market_data = use_state(cx, std::vec::Vec::new);

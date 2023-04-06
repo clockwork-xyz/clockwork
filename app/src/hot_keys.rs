@@ -1,8 +1,13 @@
-use dioxus::prelude::*;
-use dioxus_router::use_router;
-use gloo_events::EventListener;
-use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use web_sys::HtmlElement;
+use {
+    dioxus::prelude::*,
+    dioxus_router::use_router,
+    gloo_events::EventListener,
+    wasm_bindgen::{
+        JsCast,
+        UnwrapThrowExt,
+    },
+    web_sys::HtmlElement,
+};
 
 use crate::SearchState;
 

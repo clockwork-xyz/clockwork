@@ -1,10 +1,15 @@
 pub mod thread;
 pub mod webhook;
 
-use std::{fmt::Debug, sync::Arc};
+use std::{
+    fmt::Debug,
+    sync::Arc,
+};
 
-use thread::ThreadObserver;
-use webhook::WebhookObserver;
+use {
+    thread::ThreadObserver,
+    webhook::WebhookObserver,
+};
 
 pub struct Observers {
     pub thread: Arc<ThreadObserver>,

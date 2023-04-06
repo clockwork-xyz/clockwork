@@ -3,7 +3,10 @@ use {
     anchor_lang::{
         prelude::*,
         solana_program::system_program,
-        system_program::{transfer, Transfer},
+        system_program::{
+            transfer,
+            Transfer,
+        },
     },
 };
 

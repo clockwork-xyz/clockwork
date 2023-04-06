@@ -1,9 +1,15 @@
-use crate::{errors::ClockworkError, state::*};
+use crate::{
+    errors::ClockworkError,
+    state::*,
+};
 
 use anchor_lang::{
     prelude::*,
     solana_program::system_program,
-    system_program::{transfer, Transfer},
+    system_program::{
+        transfer,
+        Transfer,
+    },
 };
 
 /// Accounts required by the `thread_update` instruction.

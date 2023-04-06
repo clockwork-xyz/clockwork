@@ -1,10 +1,18 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    thread::state::{SerializableInstruction, Thread, ThreadSettings, Trigger, VersionedThread},
-    Client,
+use {
+    anchor_lang::AccountDeserialize,
+    clockwork_client::{
+        thread::state::{
+            SerializableInstruction,
+            Thread,
+            ThreadSettings,
+            Trigger,
+            VersionedThread,
+        },
+        Client,
+    },
+    clockwork_utils::CrateInfo,
+    solana_sdk::pubkey::Pubkey,
 };
-use clockwork_utils::CrateInfo;
-use solana_sdk::pubkey::Pubkey;
 
 use crate::errors::CliError;
 
@@ -92,9 +100,9 @@ pub fn update(
 ) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
     let trigger = schedule.map(|schedule| Trigger::Cron {
-            schedule,
-            skippable: true,
-        });
+        schedule,
+        skippable: true,
+    });
     let settings = ThreadSettings {
         fee: None,
         instructions: None,

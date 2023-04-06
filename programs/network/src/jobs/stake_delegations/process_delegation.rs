@@ -1,9 +1,20 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use anchor_spl::{
-    associated_token::get_associated_token_address,
-    token::{transfer, Token, TokenAccount, Transfer},
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    anchor_spl::{
+        associated_token::get_associated_token_address,
+        token::{
+            transfer,
+            Token,
+            TokenAccount,
+            Transfer,
+        },
+    },
+    clockwork_utils::thread::ThreadResponse,
 };
-use clockwork_utils::thread::ThreadResponse;
 
 use crate::state::*;
 

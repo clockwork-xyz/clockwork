@@ -1,12 +1,17 @@
-use anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        system_program,
+use {
+    anchor_lang::{
+        solana_program::{
+            instruction::{
+                AccountMeta,
+                Instruction,
+            },
+            pubkey::Pubkey,
+            system_program,
+        },
+        InstructionData,
     },
-    InstructionData,
+    clockwork_network_program::state::*,
 };
-use clockwork_network_program::state::*;
 
 pub fn worker_update(authority: Pubkey, settings: WorkerSettings, worker: Pubkey) -> Instruction {
     Instruction {

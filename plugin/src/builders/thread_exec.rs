@@ -1,27 +1,45 @@
 use std::sync::Arc;
 
-use anchor_lang::{InstructionData, ToAccountMetas};
-use clockwork_client::{network::state::Worker, thread::state::Trigger};
-use clockwork_thread_program::state::VersionedThread;
-use clockwork_utils::thread::PAYER_PUBKEY;
-use log::info;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::{
-    nonblocking::rpc_client::RpcClient,
-    rpc_config::{RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig},
-    rpc_custom_error::JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
-};
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPluginError, Result as PluginResult,
-};
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
-use solana_sdk::{
-    account::Account, commitment_config::CommitmentConfig,
-    compute_budget::ComputeBudgetInstruction, signature::Keypair, signer::Signer,
-    transaction::Transaction,
+use {
+    anchor_lang::{
+        InstructionData,
+        ToAccountMetas,
+    },
+    clockwork_client::{
+        network::state::Worker,
+        thread::state::Trigger,
+    },
+    clockwork_thread_program::state::VersionedThread,
+    clockwork_utils::thread::PAYER_PUBKEY,
+    log::info,
+    solana_account_decoder::UiAccountEncoding,
+    solana_client::{
+        nonblocking::rpc_client::RpcClient,
+        rpc_config::{
+            RpcSimulateTransactionAccountsConfig,
+            RpcSimulateTransactionConfig,
+        },
+        rpc_custom_error::JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
+    },
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPluginError,
+        Result as PluginResult,
+    },
+    solana_program::{
+        instruction::{
+            AccountMeta,
+            Instruction,
+        },
+        pubkey::Pubkey,
+    },
+    solana_sdk::{
+        account::Account,
+        commitment_config::CommitmentConfig,
+        compute_budget::ComputeBudgetInstruction,
+        signature::Keypair,
+        signer::Signer,
+        transaction::Transaction,
+    },
 };
 
 /// Max byte size of a serialized transaction.
@@ -30,7 +48,8 @@ static TRANSACTION_MESSAGE_SIZE_LIMIT: usize = 1_232;
 /// Max compute units that may be used by transaction.
 static TRANSACTION_COMPUTE_UNIT_LIMIT: u32 = 1_400_000;
 
-/// The buffer amount to add to transactions' compute units in case on-chain PDA derivations take more CUs than used in simulation.
+/// The buffer amount to add to transactions' compute units in case on-chain PDA derivations take
+/// more CUs than used in simulation.
 static TRANSACTION_COMPUTE_UNIT_BUFFER: u32 = 1000;
 
 pub async fn build_thread_exec_tx(
@@ -64,8 +83,8 @@ pub async fn build_thread_exec_tx(
         )
     };
 
-    // Simulate the transaction and pack as many instructions as possible until we hit mem/cpu limits.
-    // TODO Migrate to versioned transactions.
+    // Simulate the transaction and pack as many instructions as possible until we hit mem/cpu
+    // limits. TODO Migrate to versioned transactions.
     let mut ixs: Vec<Instruction> = vec![
         ComputeBudgetInstruction::set_compute_unit_limit(TRANSACTION_COMPUTE_UNIT_LIMIT),
         first_instruction,
@@ -111,7 +130,8 @@ pub async fn build_thread_exec_tx(
                             } => {
                                 if code.eq(&JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED) {
                                     return Err(GeyserPluginError::Custom(
-                                        "RPC client has not reached min context slot".to_string()
+                                        "RPC client has not reached min context slot"
+                                            .to_string()
                                             .into(),
                                     ));
                                 }
@@ -185,7 +205,8 @@ pub async fn build_thread_exec_tx(
         return Ok(None);
     }
 
-    // Set the transaction's compute unit limit to be exactly the amount that was used in simulation.
+    // Set the transaction's compute unit limit to be exactly the amount that was used in
+    // simulation.
     if let Some(units_consumed) = units_consumed {
         let units_committed = std::cmp::min(
             (units_consumed as u32) + TRANSACTION_COMPUTE_UNIT_BUFFER,

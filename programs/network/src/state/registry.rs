@@ -1,9 +1,15 @@
 use std::{
     collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
+    hash::{
+        Hash,
+        Hasher,
+    },
 };
 
-use anchor_lang::{prelude::*, AnchorDeserialize};
+use anchor_lang::{
+    prelude::*,
+    AnchorDeserialize,
+};
 
 pub const SEED_REGISTRY: &[u8] = b"registry";
 

@@ -15,8 +15,9 @@ pub use plugin::ClockworkPlugin;
 #[allow(improper_ctypes_definitions)]
 /// # Safety
 ///
-/// The Solana validator and this plugin must be compiled with the same Rust compiler version and Solana core version.
-/// Loading this plugin with mismatching versions is undefined behavior and will likely cause memory corruption.
+/// The Solana validator and this plugin must be compiled with the same Rust compiler version and
+/// Solana core version. Loading this plugin with mismatching versions is undefined behavior and
+/// will likely cause memory corruption.
 pub unsafe extern "C" fn _create_plugin() -> *mut dyn GeyserPlugin {
     let plugin: Box<dyn GeyserPlugin> = Box::<ClockworkPlugin>::default();
     Box::into_raw(plugin)

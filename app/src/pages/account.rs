@@ -1,12 +1,17 @@
 use std::str::FromStr;
 
-use anchor_lang::prelude::Pubkey;
-use dioxus::prelude::*;
-use dioxus_router::use_route;
-use solana_client_wasm::solana_sdk::account::Account;
+use {
+    anchor_lang::prelude::Pubkey,
+    dioxus::prelude::*,
+    dioxus_router::use_route,
+    solana_client_wasm::solana_sdk::account::Account,
+};
 
 use crate::{
-    components::{account_info_table::AccountInfoTable, TransactionHistoryTable},
+    components::{
+        account_info_table::AccountInfoTable,
+        TransactionHistoryTable,
+    },
     context::Client,
 };
 

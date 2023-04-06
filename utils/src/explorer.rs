@@ -1,7 +1,6 @@
 const EXPLORER_URL: &str = "https://explorer.solana.com";
 const CK_EXPLORER_URL: &str = "https://explorer.clockwork.xyz";
 
-
 #[derive(Default)]
 pub struct Explorer {
     cluster: String,
@@ -14,9 +13,7 @@ impl From<String> for Explorer {
             url if url.contains("devnet") => Explorer::devnet(),
             url if url.contains("testnet") => Explorer::testnet(),
             url if url.contains("mainnet") => Explorer::mainnet(),
-            _ => {
-                Explorer::custom(json_rpc_url)
-            }
+            _ => Explorer::custom(json_rpc_url),
         }
     }
 }
@@ -65,10 +62,15 @@ impl Explorer {
     /// Ex: https://explorer.clockwork.xyz/thread/{thread}
     ///     ?network=custom
     ///     &customRPC=http://localhost:8899
-    pub fn thread_url<T: std::fmt::Display, U: std::fmt::Display>(&self, thread: T, program_id: U) -> String {
-        let url = format!("{}/address/{}?programID={}&network={}", CK_EXPLORER_URL,
-                          thread, program_id, self
-            .cluster);
+    pub fn thread_url<T: std::fmt::Display, U: std::fmt::Display>(
+        &self,
+        thread: T,
+        program_id: U,
+    ) -> String {
+        let url = format!(
+            "{}/address/{}?programID={}&network={}",
+            CK_EXPLORER_URL, thread, program_id, self.cluster
+        );
         if self.cluster == "custom" {
             url + "&customRPC=" + self.custom_rpc.as_ref().unwrap()
         } else {

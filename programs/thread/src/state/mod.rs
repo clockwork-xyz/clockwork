@@ -3,6 +3,8 @@
 mod thread;
 mod versioned_thread;
 
-pub use clockwork_utils::thread::*;
-pub use thread::*;
-pub use versioned_thread::*;
+pub use {
+    clockwork_utils::thread::*,
+    thread::*,
+    versioned_thread::*,
+};

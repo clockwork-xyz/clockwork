@@ -7,13 +7,17 @@ mod pages;
 mod pyth;
 mod utils;
 
-use components::*;
-use context::*;
-use dioxus::prelude::*;
-use dioxus_router::{Route, Router};
-use hot_keys::HotKeys;
-use pages::*;
-
+use {
+    components::*,
+    context::*,
+    dioxus::prelude::*,
+    dioxus_router::{
+        Route,
+        Router,
+    },
+    hot_keys::HotKeys,
+    pages::*,
+};
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());

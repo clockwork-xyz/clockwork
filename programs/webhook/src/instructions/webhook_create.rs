@@ -1,14 +1,25 @@
-use std::{collections::HashMap, mem::size_of};
+use std::{
+    collections::HashMap,
+    mem::size_of,
+};
 
 use anchor_lang::{
     prelude::*,
     solana_program::system_program,
-    system_program::{transfer, Transfer},
+    system_program::{
+        transfer,
+        Transfer,
+    },
 };
 
-use crate::state::{Relayer, HttpMethod, Webhook, SEED_WEBHOOK};
+use crate::state::{
+    HttpMethod,
+    Relayer,
+    Webhook,
+    SEED_WEBHOOK,
+};
 
-static WEBHOOK_FEE: u64 = 1_000_000; 
+static WEBHOOK_FEE: u64 = 1_000_000;
 
 #[derive(Accounts)]
 #[instruction(

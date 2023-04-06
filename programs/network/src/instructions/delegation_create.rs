@@ -2,11 +2,18 @@ use {
     crate::state::*,
     anchor_lang::{
         prelude::*,
-        solana_program::{system_program, sysvar},
+        solana_program::{
+            system_program,
+            sysvar,
+        },
     },
     anchor_spl::{
         associated_token::AssociatedToken,
-        token::{Mint, Token, TokenAccount},
+        token::{
+            Mint,
+            Token,
+            TokenAccount,
+        },
     },
     std::mem::size_of,
 };

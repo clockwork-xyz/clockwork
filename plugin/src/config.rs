@@ -1,9 +1,13 @@
 use {
     serde::Deserialize,
     solana_geyser_plugin_interface::geyser_plugin_interface::{
-        GeyserPluginError, Result as PluginResult,
+        GeyserPluginError,
+        Result as PluginResult,
     },
-    std::{fs::File, path::Path},
+    std::{
+        fs::File,
+        path::Path,
+    },
 };
 
 static DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD: u64 = 150;

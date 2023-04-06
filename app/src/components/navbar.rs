@@ -1,7 +1,12 @@
-use dioxus::prelude::*;
-use dioxus_router::Link;
+use {
+    dioxus::prelude::*,
+    dioxus_router::Link,
+};
 
-use crate::components::{ConnectButton, SearchButton};
+use crate::components::{
+    ConnectButton,
+    SearchButton,
+};
 
 pub fn Navbar(cx: Scope) -> Element {
     cx.render(rsx! {

@@ -1,15 +1,29 @@
-use std::{fmt::Debug, sync::Arc};
-
-use log::info;
-use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPlugin, ReplicaAccountInfo, ReplicaAccountInfoVersions, Result as PluginResult,
-    SlotStatus,
+use std::{
+    fmt::Debug,
+    sync::Arc,
 };
-use solana_program::pubkey::Pubkey;
-use tokio::runtime::{Builder, Runtime};
+
+use {
+    log::info,
+    solana_geyser_plugin_interface::geyser_plugin_interface::{
+        GeyserPlugin,
+        ReplicaAccountInfo,
+        ReplicaAccountInfoVersions,
+        Result as PluginResult,
+        SlotStatus,
+    },
+    solana_program::pubkey::Pubkey,
+    tokio::runtime::{
+        Builder,
+        Runtime,
+    },
+};
 
 use crate::{
-    config::PluginConfig, events::AccountUpdateEvent, executors::Executors, observers::Observers,
+    config::PluginConfig,
+    events::AccountUpdateEvent,
+    executors::Executors,
+    observers::Observers,
 };
 
 pub struct ClockworkPlugin {

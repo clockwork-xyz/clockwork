@@ -1,13 +1,28 @@
 use std::str::FromStr;
 
-use anchor_lang::{prelude::Pubkey, Discriminator};
-use clockwork_utils::pubkey::Abbreviated;
-use dioxus::{html::input_data::keyboard_types::Key, prelude::*};
-use dioxus_router::{use_router, Link};
-use wasm_bindgen::JsCast;
-use web_sys::HtmlElement;
+use {
+    anchor_lang::{
+        prelude::Pubkey,
+        Discriminator,
+    },
+    clockwork_utils::pubkey::Abbreviated,
+    dioxus::{
+        html::input_data::keyboard_types::Key,
+        prelude::*,
+    },
+    dioxus_router::{
+        use_router,
+        Link,
+    },
+    wasm_bindgen::JsCast,
+    web_sys::HtmlElement,
+};
 
-use crate::{context::Client, SearchResult, SearchState};
+use crate::{
+    context::Client,
+    SearchResult,
+    SearchState,
+};
 
 pub fn SearchPage(cx: Scope) -> Element {
     let search_state = use_shared_state::<SearchState>(cx).unwrap();

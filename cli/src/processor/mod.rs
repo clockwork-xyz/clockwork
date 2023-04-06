@@ -11,13 +11,17 @@ mod thread;
 mod webhook;
 mod worker;
 
-use anyhow::Result;
-use clap::ArgMatches;
-use clockwork_client::Client;
-use solana_sdk::signature::read_keypair_file;
+use {
+    anyhow::Result,
+    clap::ArgMatches,
+    clockwork_client::Client,
+    solana_sdk::signature::read_keypair_file,
+};
 
 use crate::{
-    cli::CliCommand, config::CliConfig, errors::CliError,
+    cli::CliCommand,
+    config::CliConfig,
+    errors::CliError,
     processor::thread::parse_pubkey_from_id_or_address,
 };
 

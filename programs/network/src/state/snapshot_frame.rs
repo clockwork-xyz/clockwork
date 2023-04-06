@@ -1,4 +1,7 @@
-use anchor_lang::{prelude::*, AnchorDeserialize};
+use anchor_lang::{
+    prelude::*,
+    AnchorDeserialize,
+};
 
 pub const SEED_SNAPSHOT_FRAME: &[u8] = b"snapshot_frame";
 

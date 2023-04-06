@@ -7,12 +7,14 @@ mod errors;
 mod parser;
 mod processor;
 
-use cli::app;
-use errors::CliError;
-use processor::process;
+use {
+    cli::app,
+    errors::CliError,
+    processor::process,
+};
 
-fn main() -> Result<(), CliError>{
-    process(&app().get_matches()).map_err(|e|{
+fn main() -> Result<(), CliError> {
+    process(&app().get_matches()).map_err(|e| {
         println!("{}", e);
         e
     })

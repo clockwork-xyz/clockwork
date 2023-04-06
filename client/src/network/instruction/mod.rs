@@ -11,15 +11,17 @@ mod registry_unlock;
 mod worker_create;
 mod worker_update;
 
-pub use config_update::*;
-pub use delegation_create::*;
-pub use delegation_deposit::*;
-pub use delegation_withdraw::*;
-pub use initialize::*;
-pub use pool_create::*;
-pub use pool_rotate::*;
-pub use pool_update::*;
-pub use registry_nonce_hash::*;
-pub use registry_unlock::*;
-pub use worker_create::*;
-pub use worker_update::*;
+pub use {
+    config_update::*,
+    delegation_create::*,
+    delegation_deposit::*,
+    delegation_withdraw::*,
+    initialize::*,
+    pool_create::*,
+    pool_rotate::*,
+    pool_update::*,
+    registry_nonce_hash::*,
+    registry_unlock::*,
+    worker_create::*,
+    worker_update::*,
+};

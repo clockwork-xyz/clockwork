@@ -1,9 +1,17 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{instruction::Instruction, system_program},
-    InstructionData,
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::{
+            instruction::Instruction,
+            system_program,
+        },
+        InstructionData,
+    },
+    clockwork_utils::thread::{
+        ThreadResponse,
+        PAYER_PUBKEY,
+    },
 };
-use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
 
 use crate::state::*;
 

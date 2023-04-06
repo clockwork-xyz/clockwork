@@ -1,5 +1,11 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 

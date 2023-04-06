@@ -2,10 +2,19 @@ pub mod explorer;
 pub mod pubkey;
 pub mod thread;
 
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{
+    Debug,
+    Display,
+    Formatter,
+};
 
-use anchor_lang::{prelude::Pubkey, prelude::*, AnchorDeserialize};
-
+use anchor_lang::{
+    prelude::{
+        Pubkey,
+        *,
+    },
+    AnchorDeserialize,
+};
 
 /// Crate build information
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug)]

@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::components::{MarketsTable};
+use crate::components::MarketsTable;
 
 use super::Page;
 

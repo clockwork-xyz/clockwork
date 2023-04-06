@@ -1,5 +1,7 @@
-use dioxus::prelude::*;
-use solana_extra_wasm::transaction_status::UiConfirmedBlock;
+use {
+    dioxus::prelude::*,
+    solana_extra_wasm::transaction_status::UiConfirmedBlock,
+};
 
 use crate::context::Client;
 

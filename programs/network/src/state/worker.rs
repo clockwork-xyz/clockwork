@@ -1,4 +1,7 @@
-use anchor_lang::{prelude::*, AnchorDeserialize};
+use anchor_lang::{
+    prelude::*,
+    AnchorDeserialize,
+};
 
 use crate::errors::*;
 
@@ -12,7 +15,8 @@ pub struct Worker {
     pub authority: Pubkey,
     /// The number of lamports claimable by the authority as commission for running the worker.
     pub commission_balance: u64,
-    /// Integer between 0 and 100 determining the percentage of fees worker will keep as commission.
+    /// Integer between 0 and 100 determining the percentage of fees worker will keep as
+    /// commission.
     pub commission_rate: u64,
     /// The worker's id.
     pub id: u64,

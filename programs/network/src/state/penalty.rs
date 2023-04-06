@@ -1,4 +1,7 @@
-use anchor_lang::{prelude::*, AnchorDeserialize};
+use anchor_lang::{
+    prelude::*,
+    AnchorDeserialize,
+};
 
 pub const SEED_PENALTY: &[u8] = b"penalty";
 

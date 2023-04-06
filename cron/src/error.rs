@@ -1,4 +1,7 @@
-use std::{error, fmt};
+use std::{
+    error,
+    fmt,
+};
 
 #[derive(Debug)]
 pub struct Error {

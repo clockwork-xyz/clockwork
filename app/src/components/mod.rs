@@ -13,17 +13,19 @@ pub mod thread_sim_logs;
 pub mod threads_table;
 pub mod transaction_history_table;
 
-pub use account_info_table::*;
-pub use backpack::*;
-pub use blocks_table::*;
-pub use clock::*;
-pub use connect_button::*;
-pub use markets_table::*;
-pub use navbar::*;
-pub use page_control::*;
-pub use search_bar::*;
-pub use sidebar::*;
-pub use thread_info_table::*;
-pub use thread_sim_logs::*;
-pub use threads_table::*;
-pub use transaction_history_table::*;
+pub use {
+    account_info_table::*,
+    backpack::*,
+    blocks_table::*,
+    clock::*,
+    connect_button::*,
+    markets_table::*,
+    navbar::*,
+    page_control::*,
+    search_bar::*,
+    sidebar::*,
+    thread_info_table::*,
+    thread_sim_logs::*,
+    threads_table::*,
+    transaction_history_table::*,
+};

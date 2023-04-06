@@ -1,10 +1,20 @@
-use std::mem::size_of;
-use std::str::FromStr;
+use std::{
+    mem::size_of,
+    str::FromStr,
+};
 
-use anchor_lang::prelude::Pubkey;
-use bytemuck::{cast_slice, from_bytes, try_cast_slice, Pod, PodCastError};
-use pyth_sdk_solana::state::PriceAccount;
-use solana_client_wasm::WasmClient;
+use {
+    anchor_lang::prelude::Pubkey,
+    bytemuck::{
+        cast_slice,
+        from_bytes,
+        try_cast_slice,
+        Pod,
+        PodCastError,
+    },
+    pyth_sdk_solana::state::PriceAccount,
+    solana_client_wasm::WasmClient,
+};
 
 pub enum PythFeed {
     AptUsd,
@@ -104,10 +114,10 @@ pub async fn get_price_feeds<'a>() -> Vec<PythFeedPrice<'a>> {
         .enumerate()
         .filter_map(|(i, account)| {
             account.as_ref().map(|acc| PythFeedPrice {
-                    ticker: pyth_feed_ticker.get(i).unwrap(),
-                    pubkey: *pyth_feed_pubkeys.get(i).unwrap(),
-                    price: *load::<PriceAccount>(acc.data.as_slice()).unwrap(),
-                })
+                ticker: pyth_feed_ticker.get(i).unwrap(),
+                pubkey: *pyth_feed_pubkeys.get(i).unwrap(),
+                price: *load::<PriceAccount>(acc.data.as_slice()).unwrap(),
+            })
         })
         .collect::<Vec<PythFeedPrice>>()
 }

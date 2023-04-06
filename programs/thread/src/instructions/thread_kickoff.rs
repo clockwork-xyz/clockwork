@@ -1,16 +1,31 @@
 use std::{
     collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
+    hash::{
+        Hash,
+        Hasher,
+    },
     str::FromStr,
 };
 
-use anchor_lang::prelude::*;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_cron::Schedule;
-use clockwork_network_program::state::{Worker, WorkerAccount};
-use clockwork_utils::thread::Trigger;
+use {
+    anchor_lang::prelude::*,
+    chrono::{
+        DateTime,
+        NaiveDateTime,
+        Utc,
+    },
+    clockwork_cron::Schedule,
+    clockwork_network_program::state::{
+        Worker,
+        WorkerAccount,
+    },
+    clockwork_utils::thread::Trigger,
+};
 
-use crate::{errors::*, state::*};
+use crate::{
+    errors::*,
+    state::*,
+};
 
 /// Accounts required by the `thread_kickoff` instruction.
 #[derive(Accounts)]
@@ -118,8 +133,9 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 ClockworkError::TriggerConditionFailed
             );
 
-            // If the schedule is marked as skippable, set the started_at of the exec context to be the current timestamp.
-            // Otherwise, the exec context must iterate through each scheduled kickoff moment.
+            // If the schedule is marked as skippable, set the started_at of the exec context to be
+            // the current timestamp. Otherwise, the exec context must iterate through
+            // each scheduled kickoff moment.
             let started_at = if skippable {
                 clock.unix_timestamp
             } else {

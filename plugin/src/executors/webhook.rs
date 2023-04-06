@@ -1,12 +1,17 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{
+    fmt::Debug,
+    sync::Arc,
+};
 
-use anchor_lang::prelude::Pubkey;
-use clockwork_client::webhook::state::Webhook;
-use clockwork_relayer_api::Relay;
-use log::info;
-use reqwest::header::CONTENT_TYPE;
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+use {
+    anchor_lang::prelude::Pubkey,
+    clockwork_client::webhook::state::Webhook,
+    clockwork_relayer_api::Relay,
+    log::info,
+    reqwest::header::CONTENT_TYPE,
+    solana_client::nonblocking::rpc_client::RpcClient,
+    solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult,
+};
 
 use crate::config::PluginConfig;
 
@@ -18,9 +23,7 @@ pub struct WebhookExecutor {
 
 impl WebhookExecutor {
     pub fn new(config: PluginConfig) -> Self {
-        Self {
-            config,
-        }
+        Self { config }
     }
 
     pub async fn execute_webhooks(

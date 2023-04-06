@@ -1,7 +1,13 @@
 use {
-    crate::{errors::*, state::*}, 
-    anchor_lang::{prelude::*, solana_program::system_program},
-    std::mem::size_of
+    crate::{
+        errors::*,
+        state::*,
+    },
+    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+    },
+    std::mem::size_of,
 };
 
 #[derive(Accounts)]
@@ -58,10 +64,19 @@ pub fn handler(ctx: Context<UnstakeCreate>, amount: u64) -> Result<()> {
     let worker = &ctx.accounts.worker;
 
     // Validate the request is valid.
-    require!(amount.le(&delegation.stake_amount), ClockworkError::InvalidUnstakeAmount);
+    require!(
+        amount.le(&delegation.stake_amount),
+        ClockworkError::InvalidUnstakeAmount
+    );
 
     // Initialize the unstake account.
-    unstake.init(amount, authority.key(), delegation.key(), registry.total_unstakes, worker.key())?;
+    unstake.init(
+        amount,
+        authority.key(),
+        delegation.key(),
+        registry.total_unstakes,
+        worker.key(),
+    )?;
 
     // Increment the registry's unstake counter.
     registry.total_unstakes = registry.total_unstakes.checked_add(1).unwrap();

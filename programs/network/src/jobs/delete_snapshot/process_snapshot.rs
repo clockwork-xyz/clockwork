@@ -1,5 +1,11 @@
-use clockwork_utils::thread::ThreadResponse;
-use anchor_lang::{prelude::*, InstructionData, solana_program::instruction::Instruction};
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 
@@ -62,14 +68,20 @@ pub fn handler(ctx: Context<DeleteSnapshotProcessSnapshot>) -> Result<ThreadResp
                     snapshot: snapshot.key(),
                     snapshot_frame: SnapshotFrame::pubkey(snapshot.key(), 0),
                     thread: thread.key(),
-                }.to_account_metas(Some(true)),
-                data: crate::instruction::DeleteSnapshotProcessFrame{}.data()
-            }.into()
+                }
+                .to_account_metas(Some(true)),
+                data: crate::instruction::DeleteSnapshotProcessFrame {}.data(),
+            }
+            .into(),
         )
     } else {
         // This snaphot has no frames. We are done!
         None
     };
 
-    Ok(ThreadResponse { dynamic_instruction, close_to:None, trigger: None })
+    Ok(ThreadResponse {
+        dynamic_instruction,
+        close_to: None,
+        trigger: None,
+    })
 }

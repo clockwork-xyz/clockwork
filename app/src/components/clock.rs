@@ -1,7 +1,9 @@
-use chrono::Utc;
-use dioxus::prelude::*;
-use dioxus_router::Link;
-use solana_client_wasm::WasmClient;
+use {
+    chrono::Utc,
+    dioxus::prelude::*,
+    dioxus_router::Link,
+    solana_client_wasm::WasmClient,
+};
 
 pub fn Clock(cx: Scope) -> Element {
     let blockhash = use_state(cx, String::new);

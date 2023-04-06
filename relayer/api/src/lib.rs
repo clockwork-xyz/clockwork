@@ -1,5 +1,13 @@
-use serde::{Deserialize, Serialize};
-use solana_sdk::{pubkey::Pubkey, signature::Signature};
+use {
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    solana_sdk::{
+        pubkey::Pubkey,
+        signature::Signature,
+    },
+};
 
 #[derive(Deserialize, Serialize)]
 pub struct SignedRequest<T: Sized> {

@@ -1,8 +1,22 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    anchor_spl::token::{
+        transfer,
+        Token,
+        TokenAccount,
+        Transfer,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
-use crate::{errors::*, state::*};
+use crate::{
+    errors::*,
+    state::*,
+};
 
 #[derive(Accounts)]
 pub struct UnstakeProcess<'info> {

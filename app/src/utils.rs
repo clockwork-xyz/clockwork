@@ -1,5 +1,11 @@
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use {
+    anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL,
+    chrono::{
+        DateTime,
+        NaiveDateTime,
+        Utc,
+    },
+};
 
 pub fn format_balance(lamports: u64, short: bool) -> String {
     let balance = lamports as f64 / LAMPORTS_PER_SOL as f64;

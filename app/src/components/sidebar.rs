@@ -1,5 +1,10 @@
-use dioxus::prelude::*;
-use dioxus_router::{use_route, Link};
+use {
+    dioxus::prelude::*,
+    dioxus_router::{
+        use_route,
+        Link,
+    },
+};
 
 #[derive(Clone, PartialEq)]
 pub enum SidebarOption {

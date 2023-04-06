@@ -1,19 +1,50 @@
-use std::{fs, path::Path, str::FromStr};
-
-use actix_cors::Cors;
-use actix_web::{get, post, web, App, HttpServer, Responder};
-use anchor_lang::{prelude::Pubkey, AccountDeserialize};
-use clockwork_relayer_api::{
-    Relay, SecretApprove, SecretCreate, SecretGet, SecretList, SecretListResponse, SecretRevoke,
-    SignedRequest,
+use std::{
+    fs,
+    path::Path,
+    str::FromStr,
 };
-use clockwork_webhook_program::state::{HttpMethod, Webhook};
-use rayon::prelude::*;
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_zk_token_sdk::encryption::elgamal::{ElGamalCiphertext, ElGamalKeypair};
+
+use {
+    actix_cors::Cors,
+    actix_web::{
+        get,
+        post,
+        web,
+        App,
+        HttpServer,
+        Responder,
+    },
+    anchor_lang::{
+        prelude::Pubkey,
+        AccountDeserialize,
+    },
+    clockwork_relayer_api::{
+        Relay,
+        SecretApprove,
+        SecretCreate,
+        SecretGet,
+        SecretList,
+        SecretListResponse,
+        SecretRevoke,
+        SignedRequest,
+    },
+    clockwork_webhook_program::state::{
+        HttpMethod,
+        Webhook,
+    },
+    rayon::prelude::*,
+    regex::Regex,
+    serde::{
+        Deserialize,
+        Serialize,
+    },
+    solana_client::nonblocking::rpc_client::RpcClient,
+    solana_sdk::commitment_config::CommitmentConfig,
+    solana_zk_token_sdk::encryption::elgamal::{
+        ElGamalCiphertext,
+        ElGamalKeypair,
+    },
+};
 
 static ENCRYPTION_KEYPAIR_PATH: &str = "/home/ubuntu/encryption-keypair.json";
 // static RELAYER_KEYPAIR_PATH: &str = "/home/ubuntu/relayer-keypair.json";
@@ -344,7 +375,10 @@ async fn hydrate_secret(phrase: String, user: Pubkey) -> String {
 mod tests {
     use solana_zk_token_sdk::encryption::elgamal::ElGamalKeypair;
 
-    use crate::{decrypt, encrypt};
+    use crate::{
+        decrypt,
+        encrypt,
+    };
 
     #[test]
     fn test_encrypt_decrypt_correctness() {

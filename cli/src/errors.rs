@@ -22,7 +22,9 @@ pub enum CliError {
     InvalidAddress,
     #[error("Program file does not exist")]
     InvalidProgramFile,
-    #[error("No default signer found in {0}, \
-     run `solana-keygen new`, or `solana config set —keypair <FILEPATH>`")]
+    #[error(
+        "No default signer found in {0}, \
+     run `solana-keygen new`, or `solana config set —keypair <FILEPATH>`"
+    )]
     KeypairNotFound(String),
 }

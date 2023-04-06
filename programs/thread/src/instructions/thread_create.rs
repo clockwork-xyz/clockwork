@@ -1,11 +1,19 @@
 use std::mem::size_of;
 
-use anchor_lang::{
-    prelude::*,
-    solana_program::system_program,
-    system_program::{transfer, Transfer}
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::system_program,
+        system_program::{
+            transfer,
+            Transfer,
+        },
+    },
+    clockwork_utils::thread::{
+        SerializableInstruction,
+        Trigger,
+    },
 };
-use clockwork_utils::thread::{Trigger, SerializableInstruction};
 
 use crate::state::*;
 
@@ -20,7 +28,7 @@ pub struct ThreadCreate<'info> {
     #[account()]
     pub authority: Signer<'info>,
 
-    /// The payer for account initializations. 
+    /// The payer for account initializations.
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -49,7 +57,13 @@ pub struct ThreadCreate<'info> {
     pub thread: Account<'info, Thread>,
 }
 
-pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instructions: Vec<SerializableInstruction>, trigger: Trigger) -> Result<()> {
+pub fn handler(
+    ctx: Context<ThreadCreate>,
+    amount: u64,
+    id: Vec<u8>,
+    instructions: Vec<SerializableInstruction>,
+    trigger: Trigger,
+) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let payer = &ctx.accounts.payer;
@@ -80,7 +94,7 @@ pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instruction
                 to: thread.to_account_info(),
             },
         ),
-        amount
+        amount,
     )?;
 
     Ok(())

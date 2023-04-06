@@ -10,14 +10,16 @@ pub mod page;
 pub mod programs;
 pub mod thread;
 
-pub use account::*;
-pub use accounts::*;
-pub use files::*;
-pub use home::*;
-pub use keys::*;
-pub use market::*;
-pub use new_key::*;
-pub use not_found::*;
-pub use page::*;
-pub use programs::*;
-pub use thread::*;
+pub use {
+    account::*,
+    accounts::*,
+    files::*,
+    home::*,
+    keys::*,
+    market::*,
+    new_key::*,
+    not_found::*,
+    page::*,
+    programs::*,
+    thread::*,
+};

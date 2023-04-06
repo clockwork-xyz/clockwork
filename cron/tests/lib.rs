@@ -1,8 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use chrono::*;
-    use clockwork_cron::{Schedule, TimeUnitSpec};
-    use std::str::FromStr;
+    use {
+        chrono::*,
+        clockwork_cron::{
+            Schedule,
+            TimeUnitSpec,
+        },
+        std::str::FromStr,
+    };
 
     #[test]
     fn test_parse_with_year() {

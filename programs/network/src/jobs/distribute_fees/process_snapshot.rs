@@ -1,14 +1,21 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 
 // DONE Payout yield.
-//      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake balance distributions of the current Epoch's SnapshotEntries.
+//      Transfer lamports collected by Fee accounts to Delegation accounts based on the stake
+// balance distributions of the current Epoch's SnapshotEntries.
 
 // DONE Process unstake requests.
-//      For each "unstake request" transfer tokens from the Worker stake account to the Delegation authority's token account.
-//      Decrement the Delegation's stake balance by the amount unstaked.
+//      For each "unstake request" transfer tokens from the Worker stake account to the Delegation
+// authority's token account.      Decrement the Delegation's stake balance by the amount unstaked.
 
 // DONE Lock delegated stakes.
 //      Transfer tokens from the Delegation's stake account to the Worker's stake account.

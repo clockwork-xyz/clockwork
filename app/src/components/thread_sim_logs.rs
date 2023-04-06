@@ -1,13 +1,15 @@
 use std::convert::From;
 
-use dioxus::prelude::*;
-use clockwork_thread_program_v2::state::VersionedThread;
-use solana_client_wasm::solana_sdk::transaction::TransactionError;
+use {
+    clockwork_thread_program_v2::state::VersionedThread,
+    dioxus::prelude::*,
+    solana_client_wasm::solana_sdk::transaction::TransactionError,
+};
 
 use crate::context::Client;
 
 #[derive(PartialEq, Props)]
-pub struct ThreadSimLogsProps{
+pub struct ThreadSimLogsProps {
     thread: VersionedThread,
 }
 
@@ -21,8 +23,12 @@ pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
         let client_context = client_context.clone();
         let sim_logs = sim_logs.clone();
         let sim_error = sim_error.clone();
-        async move { 
-            match client_context.read().simulate_thread(thread.to_owned(), thread.pubkey()).await {
+        async move {
+            match client_context
+                .read()
+                .simulate_thread(thread.to_owned(), thread.pubkey())
+                .await
+            {
                 Ok((err, logs)) => {
                     sim_logs.set(logs.unwrap_or(vec![]));
                     let err_msg = if let Some(err) = err {
@@ -100,7 +106,7 @@ pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
                                 }
                                 // Some(err.to_string())
                                 // Some(String::from("whats"))
-                            },
+                            }
                             // TransactionError::CallChainTooDeep => todo!(),
                             // TransactionError::MissingSignatureForFee => todo!(),
                             // TransactionError::InvalidAccountIndex => todo!(),
@@ -131,14 +137,14 @@ pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
                                 } else {
                                     Some(err.to_string())
                                 }
-                            },
-                            _ => Some(err.to_string())
+                            }
+                            _ => Some(err.to_string()),
                         }
                     } else {
-                            None
-                        };
+                        None
+                    };
                     sim_error.set(err_msg);
-                },
+                }
                 Err(_err) => {}
             }
         }
@@ -178,4 +184,3 @@ pub fn ThreadSimLogs(cx: Scope<ThreadSimLogsProps>) -> Element {
         }
     })
 }
-

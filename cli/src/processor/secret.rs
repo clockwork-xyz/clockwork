@@ -1,10 +1,17 @@
-use anchor_lang::prelude::Pubkey;
-use clockwork_client::Client;
-use clockwork_relayer_api::{
-    SecretApprove, SecretCreate, SecretGet, SecretList, SecretRevoke, SignedRequest,
+use {
+    anchor_lang::prelude::Pubkey,
+    clockwork_client::Client,
+    clockwork_relayer_api::{
+        SecretApprove,
+        SecretCreate,
+        SecretGet,
+        SecretList,
+        SecretRevoke,
+        SignedRequest,
+    },
+    reqwest::header::CONTENT_TYPE,
+    solana_sdk::signer::Signer,
 };
-use reqwest::header::CONTENT_TYPE;
-use solana_sdk::signer::Signer;
 
 use crate::errors::CliError;
 

@@ -1,6 +1,9 @@
 use std::collections::VecDeque;
 
-use anchor_lang::{prelude::*, AnchorDeserialize};
+use anchor_lang::{
+    prelude::*,
+    AnchorDeserialize,
+};
 
 pub const SEED_POOL: &[u8] = b"pool";
 

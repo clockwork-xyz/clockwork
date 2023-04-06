@@ -1,5 +1,11 @@
-use anchor_lang::{prelude::*, solana_program::instruction::Instruction, InstructionData};
-use clockwork_utils::thread::ThreadResponse;
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::instruction::Instruction,
+        InstructionData,
+    },
+    clockwork_utils::thread::ThreadResponse,
+};
 
 use crate::state::*;
 
@@ -73,7 +79,8 @@ pub fn handler(ctx: Context<DistributeFeesProcessEntry>) -> Result<ThreadRespons
     let thread = &ctx.accounts.thread;
     let worker = &ctx.accounts.worker;
 
-    // Calculate the balance of this particular delegation, based on the weight of its stake with this worker.
+    // Calculate the balance of this particular delegation, based on the weight of its stake with
+    // this worker.
     let distribution_balance = if snapshot_frame.stake_amount.gt(&0) {
         fee.distributable_balance
             .checked_mul(snapshot_entry.stake_amount)

@@ -1,11 +1,19 @@
-use anchor_lang::{
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
+use {
+    anchor_lang::{
+        solana_program::{
+            instruction::{
+                AccountMeta,
+                Instruction,
+            },
+            pubkey::Pubkey,
+        },
+        InstructionData,
     },
-    InstructionData,
+    clockwork_network_program::state::{
+        Fee,
+        Pool,
+    },
 };
-use clockwork_network_program::state::{Fee, Pool};
 
 pub fn thread_exec(signatory: Pubkey, thread: Pubkey, worker: Pubkey) -> Instruction {
     Instruction {

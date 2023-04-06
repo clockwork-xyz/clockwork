@@ -1,11 +1,22 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{instruction::Instruction, system_program},
-    InstructionData,
+use {
+    anchor_lang::{
+        prelude::*,
+        solana_program::{
+            instruction::Instruction,
+            system_program,
+        },
+        InstructionData,
+    },
+    anchor_spl::{
+        associated_token::get_associated_token_address,
+        token::TokenAccount,
+    },
+    clockwork_utils::thread::{
+        ThreadResponse,
+        PAYER_PUBKEY,
+    },
+    std::mem::size_of,
 };
-use anchor_spl::{associated_token::get_associated_token_address, token::TokenAccount};
-use clockwork_utils::thread::{ThreadResponse, PAYER_PUBKEY};
-use std::mem::size_of;
 
 use crate::state::*;
 
@@ -96,7 +107,8 @@ pub fn handler(ctx: Context<TakeSnapshotCreateFrame>) -> Result<ThreadResponse> 
 
     // Build the next instruction for the thread.
     let dynamic_instruction = if worker.total_delegations.gt(&0) {
-        // This worker has delegations. Create a snapshot entry for each delegation associated with this worker.
+        // This worker has delegations. Create a snapshot entry for each delegation associated with
+        // this worker.
         let zeroth_delegation_pubkey = Delegation::pubkey(worker.pubkey(), 0);
         let zeroth_snapshot_entry_pubkey = SnapshotEntry::pubkey(snapshot_frame.key(), 0);
         Some(
