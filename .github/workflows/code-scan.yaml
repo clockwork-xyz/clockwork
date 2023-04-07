@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - cmd: cd programs/network && echo $PATH && which soteria && soteria -analyzeAll .
+          - cmd: pwd && ls && export PATH=$PWD/soteria-linux-develop/bin:$PATH && cd programs/network && echo $PATH && which soteria && soteria -analyzeAll .
             path: programs/network
           - cmd: cd programs/thread && soteria -analyzeAll .
             path: programs/thread
