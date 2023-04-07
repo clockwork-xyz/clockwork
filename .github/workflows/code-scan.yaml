@@ -52,7 +52,11 @@ jobs:
           cargo update
       - name: Install Soteria auditor
         run : |
+          pwd
+          ls
           sh -c "$(curl -k https://supercompiler.xyz/install)"
+          ls
           export PATH=$PWD/soteria-linux-develop/bin/:$PATH
+          which soteria
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
