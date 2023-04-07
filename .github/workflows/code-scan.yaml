@@ -53,5 +53,6 @@ jobs:
       - name: Install Soteria auditor
         run : |
           sh -c "$(curl -k https://supercompiler.xyz/install)"
+          export PATH=$PWD/soteria-linux-develop/bin/:$PATH
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
