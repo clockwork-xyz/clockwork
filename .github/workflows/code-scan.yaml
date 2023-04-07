@@ -14,7 +14,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: clockworkxyz/solana:v1.14.16
+    container: projectserum/build:v0.27.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
     needs: build
     name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
-    container: clockworkxyz/solana:v1.14.16
+    container: projectserum/build:v0.27.0
     strategy:
       fail-fast: false
       matrix:
@@ -44,16 +44,14 @@ jobs:
       - name: Install BPF toolchain
         run: |
           rustup default stable
-          pwd
           cd /root/.local/share/solana/install/active_release/bin/sdk/bpf
-          pwd
-          ls
-          rustup toolchain list
           rm -rf dependencies/*
           ./scripts/install.sh
-          rustup toolchain list
           rustup default bpf
           cd $GITHUB_WORKSPACE
           cargo update
+      - name: Install Soteria auditor
+        run : |
+          sh -c "$(curl -k https://supercompiler.xyz/install)"
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
