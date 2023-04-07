@@ -45,11 +45,12 @@ jobs:
         run: |
           rustup default stable
           pwd
-          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf/scripts
+          cd /root/.local/share/solana/install/active_release/bin/sdk/bpf
           pwd
           ls
           rustup toolchain list
-          ./install.sh
+          rm -rf dependencies/*
+          ./scripts/install.sh
           rustup toolchain list
           rustup default bpf
           cd $GITHUB_WORKSPACE
