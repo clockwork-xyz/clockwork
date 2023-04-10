@@ -1,5 +1,13 @@
 name: Release
 
+# on:
+#   push:
+#     tags:
+#       - "v*"
+#   pull_request:
+#     paths:
+#       - ".github/workflows/release.yml"
+
 on:
   workflow_dispatch:
     inputs:
@@ -25,8 +33,6 @@ env:
 
 jobs:
   bump-version:
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
     runs-on: ubuntu-latest
     name: Bump version
     steps:
@@ -51,13 +57,11 @@ jobs:
           version: "0.11.9"
 
       - name: Run version bump script
-        id: bump
         run: |
           cd ${{ github.workspace }}
           source ./scripts/ci/bump-version.sh ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
           echo "OLD_VERSION=$old_version" | tee -a $GITHUB_ENV
           echo "NEW_VERSION=$new_version" | tee -a $GITHUB_ENV
-          echo "version=v$new_version" >> $GITHUB_OUTPUT
         env:
           RUST_BACKTRACE: full
 
@@ -92,7 +96,7 @@ jobs:
 
       - name: Check Solana version
         run: |
-          echo "CI_TAG=${{ needs.bump-version.outputs.version }}" >> "$GITHUB_ENV"
+          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
           echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
           SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
           SOLANA_VERSION="v${SOLANA_VERSION#=}"
