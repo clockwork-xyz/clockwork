@@ -93,6 +93,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.CI_TAG }}
           body: |
             clockwork-geyser-plugin ${{ env.CI_TAG }}
             solana ${{ env.SOLANA_VERSION }}
