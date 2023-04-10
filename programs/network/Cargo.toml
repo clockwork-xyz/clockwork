@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-network-program"
-version = "2.0.2"
+version = "2.0.3"
 description = "Clockwork networking protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -24,4 +24,4 @@ default = []
 [dependencies]
 anchor-lang = "0.27.0"
 anchor-spl = { features = ["mint", "token"], version = "0.27.0" }
-clockwork-utils = { path = "../../utils", version = "2.0.2" }
+clockwork-utils = { path = "../../utils", version = "2.0.3" }

@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-client"
-version = "2.0.2"
+version = "2.0.3"
 edition = "2021"
 description = "Clockwork client"
 license = "AGPL-3.0-or-later"
@@ -19,10 +19,10 @@ anchor-lang = "0.27.0"
 anchor-spl = { features = ["mint", "token"], version = "0.27.0" }
 bincode = "1.3.3"
 borsh = "0.9.3"
-clockwork-network-program = { path = "../programs/network", features = ["no-entrypoint"], version = "2.0.2" }
-clockwork-thread-program = { path = "../programs/thread", features = ["no-entrypoint"], version = "2.0.2" }
-clockwork-utils = { path = "../utils", version = "2.0.2" }
-clockwork-webhook-program = { path = "../programs/webhook", features = ["no-entrypoint"], version = "2.0.2" }
+clockwork-network-program = { path = "../programs/network", features = ["no-entrypoint"], version = "2.0.3" }
+clockwork-thread-program = { path = "../programs/thread", features = ["no-entrypoint"], version = "2.0.3" }
+clockwork-utils = { path = "../utils", version = "2.0.3" }
+clockwork-webhook-program = { path = "../programs/webhook", features = ["no-entrypoint"], version = "2.0.3" }
 solana-client = "~1.14.16"
 solana-sdk = "~1.14.16"
 spl-associated-token-account = { version = "1.1.1", features = ["no-entrypoint"] }
