@@ -54,6 +54,5 @@ jobs:
         run : |
           sh -c "$(curl -k https://supercompiler.xyz/install)"
           export PATH=$PWD/soteria-linux-develop/bin:$PATH
-          which soteria
       - name: Run soteria on ${{ matrix.node.path }}
         run: ${{ matrix.node.cmd }}
