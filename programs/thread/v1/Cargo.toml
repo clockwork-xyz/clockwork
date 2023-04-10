@@ -2,6 +2,9 @@
 name = "clockwork-thread-program-v1"
 version = "2.0.2"
 edition = "2021"
+readme = "./README.md"
+description = "Clockwork thread program v1"
+license = "AGPL-3.0-or-later"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -16,5 +19,4 @@ cpi = ["no-entrypoint"]
 
 [dependencies]
 anchor-lang = "0.27.0"
-anchor-gen = { git = "https://github.com/clockwork-xyz/anchor-gen", version = "^0.3.1", features = ["compat-program-result"] }
-
+clockwork-anchor-gen = { version = "0.3.2", features = ["compat-program-result"] }

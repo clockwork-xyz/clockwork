@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-cli"
-version = "2.0.2"
+version = "2.0.3"
 description = "Command line interface for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -15,11 +15,11 @@ anchor-lang = "0.27.0"
 anyhow = "1.0.61"
 bincode = "1.3.3"
 clap = { version = "3.1.2", features = ["derive"] }
-clockwork-client = { path = "../client", version = "2.0.2" }
-clockwork-cron = { path = "../cron", version = "2.0.0-alpha" }
-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.2" }
-clockwork-utils = { path = "../utils", version = "2.0.2" }
-clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.2" }
+clockwork-client = { path = "../client", version = "2.0.3" }
+clockwork-cron = { path = "../cron", version = "2.0.3" }
+clockwork-relayer-api = { path = "../relayer/api", version = "2.0.3" }
+clockwork-utils = { path = "../utils", version = "2.0.3" }
+clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.3" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 dirs-next = "2.0.0"
 regex = "1.6.0"

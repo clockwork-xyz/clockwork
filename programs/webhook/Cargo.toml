@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-webhook-program"
-version = "2.0.2"
+version = "2.0.3"
 description = "Clockwork webhook program"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -23,6 +23,6 @@ default = []
 
 [dependencies]
 anchor-lang = { features = ["init-if-needed"], version = "0.27.0" }
-clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.2" }
-clockwork-utils = { path = "../../utils", version = "2.0.2" }
+clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.3" }
+clockwork-utils = { path = "../../utils", version = "2.0.3" }
 serde = "1.0.152"

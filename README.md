@@ -20,7 +20,6 @@
   </h4>  
 </div>
 
-
 # Deployments
 
 | Program | Address| Devnet | Mainnet |
@@ -40,7 +39,7 @@
 - Clockwork is under active development. All interfaces and implementations are subject to change. 
 - Official program deployments to Solana mainnet are secured by a 2-of-2 [multisig](https://v3.squads.so/info/7gqj7UgvKgHihyPsXALW8QKJ3gUTEaLeBYwWbAtZhoCq) and managed by the core team of software maintainers. 
 - To deploy a worker node on mainnet or devnet, please [install](#deploying-a-worker) the Clockwork geyser plugin on your Solana validator or RPC node and request an earlybird token delegation in the workernet channel [on Discord](https://discord.gg/mwmFtU5BtA).
-- Occassionally, a new software release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
+- Occasionally, a new software release may change the state schema and require users to migrate to a new program. These releases will be marked by a new major version upgrade (e.g. `v2.x`, `v3.x`, etc.). 
 - The smart-contracts in this repository are automatically scanned by [Sec3's](https://www.sec3.dev/) auto-auditing software and are currently being reviewed by the team at [Ottersec](https://osec.io/). Their audit report is in progress and will be published soon. 
 
 # Getting Started
