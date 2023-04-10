@@ -1,13 +1,5 @@
 name: Release
 
-# on:
-#   push:
-#     tags:
-#       - "v*"
-#   pull_request:
-#     paths:
-#       - ".github/workflows/release.yml"
-
 on:
   workflow_dispatch:
     inputs:
@@ -32,9 +24,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  bump-version:
+  bump-release:
     runs-on: ubuntu-latest
-    name: Bump version
+    name: Bump version and release
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
