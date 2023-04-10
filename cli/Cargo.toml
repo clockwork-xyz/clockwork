@@ -22,7 +22,6 @@ clockwork-utils = { path = "../utils", version = "2.0.10" }
 clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.10" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 dirs-next = "2.0.0"
-regex = "1.6.0"
 reqwest = "0.11.14"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
@@ -41,7 +40,3 @@ version = "3.0.0"
 [[bin]]
 name = "clockwork"
 path = "src/main.rs"
-
-[build-dependencies]
-cargo_toml = "0.13.0"
-regex = "1.6.0"
