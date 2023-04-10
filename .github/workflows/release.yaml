@@ -24,11 +24,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  bump-version:
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
+  bump-release:
     runs-on: ubuntu-latest
-    name: Bump version
+    name: Bump version and release
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -43,6 +41,7 @@ jobs:
           toolchain: stable
           override: true
           profile: minimal
+          components: rustfmt
 
       - name: Install cargo-edit
         uses: baptiste0928/cargo-install@v2
@@ -51,13 +50,11 @@ jobs:
           version: "0.11.9"
 
       - name: Run version bump script
-        id: bump
         run: |
           cd ${{ github.workspace }}
           source ./scripts/ci/bump-version.sh ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
           echo "OLD_VERSION=$old_version" | tee -a $GITHUB_ENV
           echo "NEW_VERSION=$new_version" | tee -a $GITHUB_ENV
-          echo "version=v$new_version" >> $GITHUB_OUTPUT
         env:
           RUST_BACKTRACE: full
 
@@ -71,28 +68,14 @@ jobs:
           message: Bump from ${{ env.OLD_VERSION }} to ${{ env.NEW_VERSION }}
           tag: v${{ env.NEW_VERSION }}
 
-  release:
-    name: Release
-    needs: bump-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
       - name: Set env vars
         run: |
           source scripts/ci/rust-version.sh stable
           echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: rustfmt
-
       - name: Check Solana version
         run: |
-          echo "CI_TAG=${{ needs.bump-version.outputs.version }}" >> "$GITHUB_ENV"
+          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
           echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
           SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
           SOLANA_VERSION="v${SOLANA_VERSION#=}"
@@ -101,7 +84,6 @@ jobs:
       - name: Grant permissions to create-tarball.sh
         run: chmod +x ./scripts/ci/create-tarball.sh
 
-      - uses: Swatinem/rust-cache@v2
       - name: Grant permissions to build-all.sh
         run: chmod +x ./scripts/build-all.sh
 
