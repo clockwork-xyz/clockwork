@@ -19,4 +19,4 @@ cpi = ["no-entrypoint"]
 
 [dependencies]
 anchor-lang = "0.27.0"
-clockwork-anchor-gen = { git = "https://github.com/clockwork-xyz/anchor-gen", rev = "86a75fb0a6b9b0dc0870a86a8310d913f0a72a5a", features = ["compat-program-result"] }
+clockwork-anchor-gen = { version = "0.3.2", features = ["compat-program-result"] }
