@@ -1,6 +1,6 @@
 [package]
 name = "clockwork_plugin"
-version = "2.0.6"
+version = "2.0.7"
 # this needs to match whatever solana uses!
 rust-version = "1.60.0"
 edition = "2021"
@@ -25,12 +25,12 @@ bincode = "1.3.3"
 bs58 = "0.4.0"
 bugsnag = "0.2.1"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-client = { path = "../client", version = "2.0.6" }
-clockwork-cron = { path = "../cron", version = "2.0.6" }
-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.6" }
-clockwork-thread-program = { package = "clockwork-thread-program", path = "../programs/thread", version = "2.0.6" }
+clockwork-client = { path = "../client", version = "2.0.7" }
+clockwork-cron = { path = "../cron", version = "2.0.7" }
+clockwork-relayer-api = { path = "../relayer/api", version = "2.0.7" }
+clockwork-thread-program = { package = "clockwork-thread-program", path = "../programs/thread", version = "2.0.7" }
 clockwork-thread-program-v1 = { package = "clockwork-thread-program-v1", path = "../programs/thread/v1", version = "2.0.2" }
-clockwork-utils = { path = "../utils", version = "2.0.6" }
+clockwork-utils = { path = "../utils", version = "2.0.7" }
 lazy_static = "1.4.0"
 log = "0.4"
 prost = "0.10.0"

@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-utils"
-version = "2.0.6"
+version = "2.0.7"
 description = "Tools for building blocks on Solana"
 edition = "2021"
 license = "AGPL-3.0-or-later"
