@@ -49,6 +49,7 @@ jobs:
           toolchain: stable
           override: true
           profile: minimal
+          components: rustfmt
 
       - name: Install cargo-edit
         uses: baptiste0928/cargo-install@v2
@@ -75,24 +76,10 @@ jobs:
           message: Bump from ${{ env.OLD_VERSION }} to ${{ env.NEW_VERSION }}
           tag: v${{ env.NEW_VERSION }}
 
-  release:
-    name: Release
-    needs: bump-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
       - name: Set env vars
         run: |
           source scripts/ci/rust-version.sh stable
           echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: rustfmt
 
       - name: Check Solana version
         run: |
