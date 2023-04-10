@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-thread-program"
-version = "2.0.7"
+version = "2.0.8"
 description = "Clockwork thread program"
 edition = "2021"
 license = "AGPL-3.0-or-later"
@@ -24,9 +24,9 @@ default = []
 [dependencies]
 anchor-lang = "0.27.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-cron = { path = "../../cron", version = "2.0.7" }
-clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.7" }
+clockwork-cron = { path = "../../cron", version = "2.0.8" }
+clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.8" }
 clockwork-thread-program-v1 = { path = "v1", version = "1.4.3" }
-clockwork-utils = { path = "../../utils", version = "2.0.7" }
+clockwork-utils = { path = "../../utils", version = "2.0.8" }
 static-pubkey = "1.0.3"
 version = "3.0.0"
