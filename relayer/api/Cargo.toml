@@ -9,6 +9,7 @@ repository = "https://github.com/clockwork-xyz/relayer"
 documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
+publish = false
 
 [lib]
 crate-type = ["cdylib", "lib"]

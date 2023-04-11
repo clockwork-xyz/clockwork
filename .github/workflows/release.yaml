@@ -84,6 +84,7 @@ jobs:
       - name: Grant permissions to create-tarball.sh
         run: chmod +x ./scripts/ci/create-tarball.sh
 
+      - uses: Swatinem/rust-cache@v2
       - name: Grant permissions to build-all.sh
         run: chmod +x ./scripts/build-all.sh
 
