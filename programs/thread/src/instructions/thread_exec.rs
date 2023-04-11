@@ -15,7 +15,7 @@ use crate::{errors::ClockworkError, state::*};
 const POOL_ID: u64 = 0;
 
 /// The number of lamports to reimburse the worker with after they've submitted a transaction's worth of exec instructions.
-const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
+pub const TRANSACTION_BASE_FEE_REIMBURSEMENT: u64 = 5_000;
 
 /// Accounts required by the `thread_exec` instruction.
 #[derive(Accounts)]
