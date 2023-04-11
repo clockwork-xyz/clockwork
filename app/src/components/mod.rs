@@ -1,6 +1,7 @@
 pub mod account_info_table;
 pub mod backpack;
 pub mod blocks_table;
+pub mod chat;
 pub mod clock;
 pub mod connect_button;
 pub mod markets_table;
@@ -16,6 +17,7 @@ pub mod transaction_history_table;
 pub use account_info_table::*;
 pub use backpack::*;
 pub use blocks_table::*;
+pub use chat::*;
 pub use clock::*;
 pub use connect_button::*;
 pub use markets_table::*;
