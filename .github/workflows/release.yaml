@@ -1,38 +1,81 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
-  pull_request:
-    paths:
-      - ".github/workflows/release.yml"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'New version'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - rc
+          - beta
+          - alpha
+      extra_args:
+        description: 'Extra args to pass to bump-version.sh, e.g: --dry-run.'
+        required: false
+        default: '--exclude clockwork-thread-program-v1'
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  release:
-    name: Release
+  bump-release:
     runs-on: ubuntu-latest
+    name: Bump version and release
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set env vars
-        run: |
-          source scripts/ci/rust-version.sh stable
-          echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: jq
 
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
           components: rustfmt
 
+      - name: Install cargo-edit
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-edit
+          version: "0.11.9"
+
+      - name: Run version bump script
+        run: |
+          cd ${{ github.workspace }}
+          source ./scripts/ci/bump-version.sh ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
+          echo "OLD_VERSION=$old_version" | tee -a $GITHUB_ENV
+          echo "NEW_VERSION=$new_version" | tee -a $GITHUB_ENV
+        env:
+          RUST_BACKTRACE: full
+
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Commit and tag
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: Bump from ${{ env.OLD_VERSION }} to ${{ env.NEW_VERSION }}
+          tag: v${{ env.NEW_VERSION }}
+
+      - name: Set env vars
+        run: |
+          source scripts/ci/rust-version.sh stable
+          echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
+
       - name: Check Solana version
         run: |
-          echo "CI_TAG=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+          echo "CI_TAG=v${{ env.NEW_VERSION }}" >> "$GITHUB_ENV"
           echo "CI_OS_NAME=linux" >> "$GITHUB_ENV"
           SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
           SOLANA_VERSION="v${SOLANA_VERSION#=}"
@@ -50,9 +93,9 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v1
-
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: ${{ env.CI_TAG }}
+          tag_name: ${{ env.CI_TAG }}
           body: |
             clockwork-geyser-plugin ${{ env.CI_TAG }}
             solana ${{ env.SOLANA_VERSION }}

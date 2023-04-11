@@ -1,5 +1,3 @@
-use std::io::Write;
-
 #[allow(deprecated)]
 use {
     crate::{errors::CliError, parser::ProgramInfo},
@@ -9,7 +7,6 @@ use {
         thread::state::{Thread, Trigger},
         Client,
     },
-    regex::Regex,
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -31,7 +28,6 @@ pub fn start(
     network_url: Option<String>,
     program_infos: Vec<ProgramInfo>,
 ) -> Result<(), CliError> {
-    check_test_validator_version();
     // Start the validator
     let validator_process =
         &mut start_test_validator(client, program_infos, network_url, clone_addresses)
@@ -49,44 +45,6 @@ pub fn start(
     _ = validator_process.wait();
 
     Ok(())
-}
-
-fn check_test_validator_version() {
-    let validator_version = get_validator_version();
-    let clockwork_version = env!("GEYSER_INTERFACE_VERSION");
-
-    if validator_version != clockwork_version {
-        let mut line = String::new();
-
-        let err = format!(
-            "Your Solana version and the Clockwork Engine's Solana version differs. \
-            This behavior is undefined. \
-            You have '{}' installed, but the Clockwork Engine requires {} \
-            We recommend you to run `solana-install init {}`\nDo you want to continue anyway? \
-            More info: https://github.com/clockwork-xyz/docs/blob/main/developers/faq.md#why-is-localnet-not-working",
-            validator_version, clockwork_version, clockwork_version
-        );
-        println!("⚠️  \x1b[93m{}️\x1b[0m", err);
-
-        std::io::stdout().flush().unwrap();
-        std::io::stdin().read_line(&mut line).unwrap_or_default();
-    }
-}
-
-fn get_validator_version() -> String {
-    Command::new("solana-test-validator")
-        .arg("--version")
-        .output()
-        .map_or("unknown".into(), |output| {
-            let version = String::from_utf8_lossy(&output.stdout);
-            let re = Regex::new(r"(\d+\.\d+\.\d+)").unwrap();
-            let caps = re.captures(&version).unwrap();
-            caps.get(1)
-                .map_or("unknown (error parsing solana-validator version)", |m| {
-                    m.as_str()
-                })
-                .into()
-        })
 }
 
 fn mint_clockwork_token(client: &Client) -> Result<Pubkey> {
