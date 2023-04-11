@@ -128,7 +128,8 @@ pub trait ThreadAccount {
         worker: &Account<Worker>,
     ) -> Result<()>;
 
-    fn kickoff(&mut self, remaining_accounts: &[AccountInfo]) -> Result<()>;
+    fn kickoff(&mut self, signatory: &mut Signer, remaining_accounts: &[AccountInfo])
+        -> Result<()>;
 
     /// Reallocate the memory allocation for the account.
     fn realloc(&mut self) -> Result<()>;
@@ -236,16 +237,18 @@ impl ThreadAccount for Account<'_, Thread> {
         };
 
         // Increment the exec count
-        let current_slot = Clock::get().unwrap().slot;
+        let clock = Clock::get().unwrap();
+        let current_slot = clock.slot;
+        let should_reimburse_transaction = clock.slot > self.exec_context.unwrap().last_exec_at;
         match self.exec_context {
             None => return Err(ClockworkError::InvalidThreadState.into()),
             Some(exec_context) => {
                 // Update the exec context
                 self.exec_context = Some(ExecContext {
-                    execs_since_reimbursement: exec_context
-                        .execs_since_reimbursement
-                        .checked_add(1)
-                        .unwrap(),
+                    // execs_since_reimbursement: exec_context
+                    //     .execs_since_reimbursement
+                    //     .checked_add(1)
+                    //     .unwrap(),
                     execs_since_slot: if current_slot == exec_context.last_exec_at {
                         exec_context.execs_since_slot.checked_add(1).unwrap()
                     } else {
@@ -260,10 +263,15 @@ impl ThreadAccount for Account<'_, Thread> {
         // Realloc the thread account
         self.realloc()?;
 
-        // Reimbursement signatory for lamports paid during inner ix
+        // Reimbursement signatory for the transaction and lamports paid during inner ix
         let signatory_lamports_post = signatory.lamports();
-        let signatory_reimbursement =
+        let mut signatory_reimbursement =
             signatory_lamports_pre.saturating_sub(signatory_lamports_post);
+        if should_reimburse_transaction {
+            signatory_reimbursement = signatory_reimbursement
+                .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+                .unwrap();
+        }
         if signatory_reimbursement.gt(&0) {
             **self.to_account_info().try_borrow_mut_lamports()? = self
                 .to_account_info()
@@ -301,34 +309,34 @@ impl ThreadAccount for Account<'_, Thread> {
 
         // If the self has no more work or the number of execs since the last payout has reached the rate limit,
         // reimburse the worker for the transaction base fee.
-        match self.exec_context {
-            None => {
-                return Err(ClockworkError::InvalidThreadState.into());
-            }
-            Some(exec_context) => {
-                if self.next_instruction.is_none()
-                    || exec_context.execs_since_reimbursement >= self.rate_limit
-                {
-                    // Pay reimbursment for base transaction fee
-                    **self.to_account_info().try_borrow_mut_lamports()? = self
-                        .to_account_info()
-                        .lamports()
-                        .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-                        .unwrap();
-                    **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-                        .to_account_info()
-                        .lamports()
-                        .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-                        .unwrap();
+        // match self.exec_context {
+        //     None => {
+        //         return Err(ClockworkError::InvalidThreadState.into());
+        //     }
+        //     Some(exec_context) => {
+        //         if self.next_instruction.is_none()
+        //             || exec_context.execs_since_reimbursement >= self.rate_limit
+        //         {
+        //             // Pay reimbursment for base transaction fee
+        //             **self.to_account_info().try_borrow_mut_lamports()? = self
+        //                 .to_account_info()
+        //                 .lamports()
+        //                 .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+        //                 .unwrap();
+        //             **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+        //                 .to_account_info()
+        //                 .lamports()
+        //                 .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+        //                 .unwrap();
 
-                    // Update the exec context to mark that a reimbursement happened this slot.
-                    self.exec_context = Some(ExecContext {
-                        execs_since_reimbursement: 0,
-                        ..exec_context
-                    });
-                }
-            }
-        }
+        //             // Update the exec context to mark that a reimbursement happened this slot.
+        //             self.exec_context = Some(ExecContext {
+        //                 execs_since_reimbursement: 0,
+        //                 ..exec_context
+        //             });
+        //         }
+        //     }
+        // }
 
         Ok(())
     }
@@ -371,7 +379,11 @@ impl ThreadAccount for Account<'_, Thread> {
         Ok(())
     }
 
-    fn kickoff(&mut self, remaining_accounts: &[AccountInfo]) -> Result<()> {
+    fn kickoff(
+        &mut self,
+        signatory: &mut Signer,
+        remaining_accounts: &[AccountInfo],
+    ) -> Result<()> {
         let clock = Clock::get().unwrap();
         match self.trigger.clone() {
             Trigger::Account {
@@ -482,6 +494,18 @@ impl ThreadAccount for Account<'_, Thread> {
 
         // Realloc the thread account
         self.realloc()?;
+
+        // Reimburse worker for transaction fess.
+        **self.to_account_info().try_borrow_mut_lamports()? = self
+            .to_account_info()
+            .lamports()
+            .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+            .unwrap();
+        **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+            .to_account_info()
+            .lamports()
+            .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+            .unwrap();
 
         Ok(())
     }
