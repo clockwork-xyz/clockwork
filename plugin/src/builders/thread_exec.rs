@@ -46,6 +46,7 @@ pub async fn build_thread_exec_tx(
     let blockhash = client.get_latest_blockhash().await.unwrap();
     let signatory_pubkey = payer.pubkey();
     let worker_pubkey = Worker::pubkey(worker_id);
+    let mut has_kickoff = false;
 
     // Build the first instruction of the transaction.
     let first_instruction = if thread.next_instruction().is_some() {
@@ -56,6 +57,7 @@ pub async fn build_thread_exec_tx(
             worker_pubkey,
         )
     } else {
+        has_kickoff = true;
         build_kickoff_ix(
             thread.clone(),
             thread_pubkey,
@@ -181,7 +183,8 @@ pub async fn build_thread_exec_tx(
     }
 
     // If there were no successful instructions, then exit early. There is nothing to do.
-    if successful_ixs.is_empty() {
+    // Alternatively, exit early if only the kickoff instruction (and no execs) succeeded.
+    if successful_ixs.is_empty() || (successful_ixs.len() == 1 && has_kickoff) {
         return Ok(None);
     }
 
