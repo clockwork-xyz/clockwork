@@ -42,21 +42,17 @@ pub fn ChatBar(cx: Scope, chat_state: UseState<ChatState>) -> Element {
                 let payload = serde_json::json!({
                     "message": "Hello, my name is Nick. What is your name?"
                 });
-
-                let req = reqwest::Client::new()
+                let res = reqwest::Client::new()
                     .post("http://127.0.0.1:5000/chat")
-                    .header("Access-Control-Allow-Origin", "http://127.0.0.1:5000")
-                    .json(&payload);
-                    // .fetch_mode_no_cors();
-
-                // let mut headers = HeaderMap::new();
-                // headers.insert(CONTENT_TYPE, HeaderValue::from_str("application/json").unwrap());
-                // let client = reqwest::Client::builder().default_headers(headers).build().unwrap();
-                // let req = client.post("http://127.0.0.1:5000/chat").json(&payload).fetch_mode_no_cors();
-                
-                log::info!("response: {:#?}", req);
-                let res = req.send().await;
-
+                    .header(CONTENT_TYPE, "application/json")
+                    .json(&payload)
+                    .send()
+                    .await
+                    .unwrap()
+                    .text()
+                    .await
+                    .unwrap();
+                log::info!("response: {:#?}", res);
                 chat_state.modify(|cs| ChatState { busy: false, query:"".to_string(), results: cs.results.clone()});
             }
         }
