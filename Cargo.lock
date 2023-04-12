@@ -1180,6 +1180,7 @@ dependencies = [
  "pyth-sdk-solana",
  "reqwest",
  "serde",
+ "serde_json",
  "solana-client-wasm",
  "solana-extra-wasm",
  "uuid",
