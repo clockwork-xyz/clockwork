@@ -1,6 +1,5 @@
 use dioxus::{html::input_data::keyboard_types::Key, prelude::*};
-use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
-use reqwest_wasm::{header::{CONTENT_TYPE, ACCESS_CONTROL_ALLOW_ORIGIN}, Body};
+use reqwest::header::CONTENT_TYPE;
 use serde::{Serialize, Deserialize};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
@@ -10,7 +9,7 @@ pub fn Chat(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
-            class: "absolute inset-x-0 bottom-0 flex flex-col-reverse max-h-72 px-3 pb-2 bg-slate-800 rounded-xl",
+            class: "absolute inset-x-0 bottom-0 flex flex-col-reverse max-h-[300px] px-3 pb-2 bg-slate-800 rounded-xl",
             ChatBar {
                 chat_state: chat_state.clone()
             }
@@ -39,9 +38,10 @@ pub fn ChatBar(cx: Scope, chat_state: UseState<ChatState>) -> Element {
     use_future!(cx, |(chat_state,)| {
         async move {
             if chat_state.busy && chat_state.query.len() > 0 {
-                let payload = serde_json::json!({
-                    "message": "Hello, my name is Nick. What is your name?"
-                });
+                let payload = ChatRequest {
+                    message: chat_state.query.clone()
+                };
+                
                 let res = reqwest::Client::new()
                     .post("http://127.0.0.1:5000/chat")
                     .header(CONTENT_TYPE, "application/json")
@@ -52,8 +52,22 @@ pub fn ChatBar(cx: Scope, chat_state: UseState<ChatState>) -> Element {
                     .text()
                     .await
                     .unwrap();
-                log::info!("response: {:#?}", res);
-                chat_state.modify(|cs| ChatState { busy: false, query:"".to_string(), results: cs.results.clone()});
+
+                
+                let split_text: Vec<String> = res.split('\n').map(|s| s.to_string()).collect();
+
+                chat_state.modify(|cs| 
+                    {
+                        let mut results = cs.results.clone();
+                        results.push(format!("You: {}", chat_state.query.clone()));
+                        for text in split_text.iter() {
+                            if text.ne(&"Thought: Do I need to use a tool? No".to_string()) {
+                               results.push(text.clone());     
+                            }
+                        }
+                        ChatState { busy: false, query:"".to_string(), results }
+                    }
+                );
             }
         }
     });
@@ -104,25 +118,17 @@ pub fn ChatBar(cx: Scope, chat_state: UseState<ChatState>) -> Element {
 
 #[inline_props]
 pub fn ChatResults(cx: Scope, chat_state: UseState<ChatState>) -> Element {
-    let query = &chat_state.get().query;
+    let results = chat_state.results.clone();
 
-    // Search for search results.
-    let results = use_future(&cx, query, |_| {
-        let _query = query.clone();
-        async move {
-            let x: Vec<String> = Vec::new();
-            x
-        }
-    });
-
-    if let Some(chat_results) = results.value() {
+    if !results.is_empty() {
         cx.render(rsx! {
             div {
+                id: "results",
                 class: "flex flex-col w-full mt-2 space-y-4 mx-auto px-4 overflow-y-auto",
-                for chat_result in chat_results.iter() {
+                for result in results.iter() {
                     rsx! {
                         ChatResultRow {
-                            chat_result: chat_result.to_string(),
+                            chat_result: result.to_string(),
                         }
                     }
                 }
@@ -133,10 +139,6 @@ pub fn ChatResults(cx: Scope, chat_state: UseState<ChatState>) -> Element {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChatRequest {
-    message: String
-}
 
 #[derive(PartialEq, Clone, Props)]
 pub struct ChatResultRowProps {
@@ -144,12 +146,24 @@ pub struct ChatResultRowProps {
 }
 
 pub fn ChatResultRow(cx: Scope<ChatResultRowProps>) -> Element {
+    use_effect(&cx, (), |_| async move {
+        let document = gloo_utils::document();
+        if let Some(element) = document.get_element_by_id("results")  {
+            element.unchecked_into::<HtmlElement>().set_scroll_top(10000);
+         }
+    });
+
     cx.render(rsx! {
         p {
             class: "text-md text-slate-400",
             "{cx.props.chat_result}"
         }
     })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatRequest {
+    message: String
 }
 
 #[derive(Debug, Default)]
