@@ -67,6 +67,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/programs/threads/:address", ThreadPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
+                Chat {}
             }
         }
     })
