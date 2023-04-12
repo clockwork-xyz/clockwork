@@ -75,7 +75,7 @@ done
 # Build the repo
 (
   set -x
-  cargo $maybeRustVersion build $maybeReleaseFlag "${binArgs[@]}" --lib
+  cargo $maybeRustVersion build --locked $maybeReleaseFlag "${binArgs[@]}" --lib
 )
 
 # Copy binaries

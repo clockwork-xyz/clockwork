@@ -60,7 +60,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --locked
 
       - name: Commit and tag
         uses: EndBug/add-and-commit@v9
@@ -70,7 +70,7 @@ jobs:
 
       - name: Set env vars
         run: |
-          source scripts/ci/rust-version.sh stable
+          source scripts/ci/rust-version.sh
           echo "PLUGIN_RUST_VERSION=$rust_stable" | tee -a $GITHUB_ENV
 
       - name: Check Solana version
