@@ -32,7 +32,6 @@ gloo-utils = "0.1.6"
 js-sys = "0.3.61"
 log = "0.4"
 pyth-sdk-solana = "0.7.1"
-reqwest-wasm = { version = "0.11.16", features = ["blocking", "json"] }
 reqwest = { version = "0.11.16", features = ["blocking", "json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
