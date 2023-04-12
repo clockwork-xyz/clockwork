@@ -11,7 +11,7 @@ curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 export PATH="$CARGO_HOME/bin:$PATH"
 
 # Install trunk
-cargo install trunk
+cargo install --locked trunk
 
 # Update wasm target
 rustup target add wasm32-unknown-unknown
