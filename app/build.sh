@@ -10,6 +10,9 @@ export RUSTUP_HOME="$HOME/.rustup"
 curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 export PATH="$CARGO_HOME/bin:$PATH"
 
+# Set rustc to stable
+rustup override set stable
+
 # Install trunk
 cargo install trunk
 
