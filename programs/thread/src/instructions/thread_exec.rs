@@ -240,29 +240,5 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
             .unwrap();
     }
 
-    // If the thread has no more work or the number of execs since the last payout has reached the rate limit,
-    // reimburse the worker for the transaction base fee.
-    // if thread.next_instruction.is_none()
-    //     || thread.exec_context.unwrap().execs_since_reimbursement >= thread.rate_limit
-    // if thread.exec_context.unwrap() {
-    //     // Pay reimbursment for base transaction fee.
-    //     **thread.to_account_info().try_borrow_mut_lamports()? = thread
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-    //         .unwrap();
-    //     **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
-    //         .to_account_info()
-    //         .lamports()
-    //         .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-    //         .unwrap();
-
-    //     // Update the exec context to mark that a reimbursement happened this slot.
-    //     thread.exec_context = Some(ExecContext {
-    //         execs_since_reimbursement: 0,
-    //         ..thread.exec_context.unwrap()
-    //     });
-    // }
-
     Ok(())
 }
