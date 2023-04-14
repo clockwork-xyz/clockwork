@@ -37,6 +37,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 solana-client-wasm = { git = "https://github.com/clockwork-xyz/solana-playground", rev = "83e485fbb8f8f09a6411d65ffe63823080847cda" }
 solana-extra-wasm = { git = "https://github.com/clockwork-xyz/solana-playground", rev = "83e485fbb8f8f09a6411d65ffe63823080847cda" }
+url = "2.3.1"
 uuid = { version = "1.3.0", features = ["v4"] }
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.29"

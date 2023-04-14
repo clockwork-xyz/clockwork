@@ -1183,6 +1183,7 @@ dependencies = [
  "serde_json",
  "solana-client-wasm",
  "solana-extra-wasm",
+ "url 2.3.1",
  "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
