@@ -1,5 +1,6 @@
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
+use dioxus_router::{use_route, use_router};
 use gloo_events::EventListener;
 use gloo_storage::{LocalStorage, Storage};
 use solana_client_wasm::solana_sdk::pubkey::Pubkey;
@@ -8,32 +9,106 @@ use std::str::FromStr;
 use super::backpack::backpack;
 use crate::{
     context::{Client, Cluster, User},
-    utils::format_balance,
+    utils::{current_route, format_balance},
 };
 
 pub fn ConnectButton(cx: Scope) -> Element {
+    let route = use_route(&cx);
+    let router = use_router(&cx);
     let user_context = use_shared_state::<User>(cx).unwrap();
     let client_context = use_shared_state::<Client>(cx).unwrap();
     let show_popover = use_state(&cx, || false);
     let show_cluster_dropdown = use_state(&cx, || false);
 
+    let cluster_query_param = route
+        .query_param("cluster")
+        .unwrap_or(std::borrow::Cow::Borrowed(""))
+        .into_owned();
+    let url = route.url().to_string();
+    let current_route = current_route(&url).unwrap();
+
     use_effect(cx, (), |_| {
         let user_context = user_context.clone();
         let client_context = client_context.clone();
+        let current_route = current_route.clone();
+
+        to_owned![router];
         async move {
-            // load user from local storage
             match LocalStorage::get::<User>("user_context") {
                 Ok(u) => {
+                    // load cached user into user context
+                    // TODO: update stale data in cache after X amount of time.
                     let mut uc_write = user_context.write();
                     uc_write.account = u.account;
                     uc_write.pubkey = u.pubkey;
+                    // query param: ?cluster=devnet || ?cluster=mainnet
+                    if cluster_query_param.eq("devnet") || cluster_query_param.eq("mainnet") {
+                        // load local storage "cluster"
+                        match LocalStorage::get::<Cluster>("cluster") {
+                            Ok(cached_cluster) => {
+                                let cluster_from_query_param =
+                                    Cluster::from_str(&cluster_query_param).unwrap();
+                                // if cached cluster is different than query param, cache query param
+                                if cached_cluster.ne(&cluster_from_query_param) {
+                                    *client_context.write() =
+                                        Client::new_with_config(cluster_from_query_param);
+                                    LocalStorage::set(
+                                        "cluster",
+                                        &cluster_from_query_param.to_string(),
+                                    )
+                                    .unwrap();
+                                }
+
+                                router.navigate_to(
+                                    format!(
+                                        "{}?cluster={}",
+                                        current_route,
+                                        cluster_from_query_param.to_string()
+                                    )
+                                    .as_str(),
+                                );
+                            }
+                            Err(_err) => {
+                                log::info!(
+                                "cached cluster not found despite being logged in, caching query paramater: {}",
+                                cluster_query_param
+                            );
+                                LocalStorage::set("cluster", &cluster_query_param).unwrap();
+                                let cluster_from_from_query_param =
+                                    Cluster::from_str(&cluster_query_param).unwrap();
+                                *client_context.write() =
+                                    Client::new_with_config(cluster_from_from_query_param);
+                                router.navigate_to(
+                                    format!(
+                                        "{}?cluster={}",
+                                        current_route,
+                                        &cluster_from_from_query_param.to_string()
+                                    )
+                                    .as_str(),
+                                );
+                            }
+                        }
+                    }
                 }
-                Err(_err) => log::info!("user is not logged in"),
-            }
-            // load cluster from local storage
-            match LocalStorage::get::<Cluster>("cluster") {
-                Ok(cluster) => *client_context.write() = Client::new_with_config(cluster),
-                Err(_err) => log::info!("cached cluster not found"),
+                Err(_err) => {
+                    log::info!("user is NOT logged in");
+                    if cluster_query_param.eq("devnet") || cluster_query_param.eq("mainnet") {
+                        let cluster_from_from_query_param =
+                            Cluster::from_str(&cluster_query_param).unwrap();
+                        *client_context.write() =
+                            Client::new_with_config(cluster_from_from_query_param);
+                        router.navigate_to(
+                            format!(
+                                "{}?cluster={}",
+                                current_route,
+                                &cluster_from_from_query_param.to_string()
+                            )
+                            .as_str(),
+                        );
+                    } else {
+                        router.navigate_to(format!("{}?cluster=mainnet", current_route).as_str());
+                    }
+                }
             }
         }
     });
@@ -90,6 +165,8 @@ pub fn ConnectButton(cx: Scope) -> Element {
     use_future(&cx, (), |_| {
         let client_context = client_context.clone();
         let show_cluster_dropdown = show_cluster_dropdown.clone();
+        to_owned![router];
+
         async move {
             let document = gloo_utils::document();
             Some(EventListener::new(&document, "click", move |_| {
@@ -98,11 +175,14 @@ pub fn ConnectButton(cx: Scope) -> Element {
                     let element_id = element.id();
                     let e_id = element_id.as_str();
                     match e_id {
-                        "Mainnet" | "Devnet" => {
+                        "mainnet" | "devnet" => {
                             let cluster = Cluster::from_str(e_id).unwrap();
                             *client_context.write() = Client::new_with_config(cluster);
-                            LocalStorage::set("cluster", client_context.write().cluster.clone())
-                                .unwrap();
+                            LocalStorage::set("cluster", cluster.to_string()).unwrap();
+                            router.navigate_to(
+                                format!("{}?cluster={}", current_route, cluster.to_string())
+                                    .as_str(),
+                            );
                             let _ = web_sys::window().unwrap().location().reload();
                             show_cluster_dropdown.set(false);
                         }
@@ -118,6 +198,21 @@ pub fn ConnectButton(cx: Scope) -> Element {
     } else {
         String::from("Connect")
     };
+
+    let current_cluster_text: String = client_context
+        .read()
+        .cluster
+        .to_string()
+        .chars()
+        .enumerate()
+        .map(|(i, c)| {
+            if i == 0 {
+                c.to_uppercase().collect::<String>()
+            } else {
+                c.to_string()
+            }
+        })
+        .collect();
 
     cx.render(rsx! {
         button {
@@ -140,7 +235,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                     button {
                         class: "inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50",
                         onclick: move |_| { show_cluster_dropdown.set(true) },
-                        "{client_context.read().cluster.to_string()}"
+                        "{current_cluster_text}"
                         svg {
                             class: "-mr-1 h-5 w-5 text-slate-800", 
                             view_box: "0 0 20 20",
@@ -161,12 +256,12 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                     class: "py-1",
                                     button {
                                         class: "text-slate-800 block px-4 py-2 text-sm",
-                                        id: "Mainnet",
+                                        id: "mainnet",
                                         "Mainnet"
                                     }
                                     button {
                                         class: "text-slate-800 block px-4 py-2 text-sm",
-                                        id: "Devnet",
+                                        id: "devnet",
                                         "Devnet"
                                     }
                                 }
