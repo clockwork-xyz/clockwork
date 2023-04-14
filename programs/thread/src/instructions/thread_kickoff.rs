@@ -32,10 +32,11 @@ pub struct ThreadKickoff<'info> {
 
 pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
     // Get accounts.
+    let signatory = &mut ctx.accounts.signatory;
     let thread = &mut ctx.accounts.thread;
 
     // If this thread does not have a next_instruction, verify the thread's trigger condition is active.
-    thread.kickoff(ctx.remaining_accounts)?;
+    thread.kickoff(signatory, ctx.remaining_accounts)?;
 
     Ok(())
 }
