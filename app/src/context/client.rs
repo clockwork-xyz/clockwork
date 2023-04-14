@@ -332,7 +332,7 @@ fn build_exec_ix(
 
     exec_ix
 }
-#[derive(Copy, Clone, Default, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub enum Cluster {
     #[default]
     Mainnet,
@@ -349,8 +349,7 @@ impl Cluster {
             Self::Devnet => {
                 "https://rpc-devnet.helius.xyz/?api-key=8f29b4e9-37a6-4775-88c6-6f971fe180ca"
                     .to_string()
-            }
-            // Self::Custom(rpc_url) => rpc_url.to_string(),
+            } // Self::Custom(rpc_url) => rpc_url.to_string(),
         }
     }
 }
@@ -358,8 +357,8 @@ impl Cluster {
 impl ToString for Cluster {
     fn to_string(&self) -> String {
         match self {
-            Self::Mainnet => "Mainnet".to_string(),
-            Self::Devnet => "Devnet".to_string(),
+            Self::Mainnet => "mainnet".to_string(),
+            Self::Devnet => "devnet".to_string(),
             // Self::Custom(rpc_url) => String::from(format!("Custom: {}", rpc_url)),
         }
     }
@@ -370,8 +369,8 @@ impl FromStr for Cluster {
 
     fn from_str(expression: &str) -> Result<Self, Self::Err> {
         match expression {
-            "Mainnet" => Ok(Self::Mainnet),
-            "Devnet" => Ok(Self::Devnet),
+            "mainnet" => Ok(Self::Mainnet),
+            "devnet" => Ok(Self::Devnet),
             // "Custom" => Ok(Self::Custom("".to_string())),
             _ => Err(RuntimeError::new("Invalid expression")),
         }
