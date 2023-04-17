@@ -5,7 +5,7 @@ use dioxus_router::use_route;
 use solana_client_wasm::solana_sdk::signature::Signature;
 use solana_extra_wasm::transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 
-use crate::{pages::page::Page, context::Client};
+use crate::{components::TransactionInfo, context::Client, pages::page::Page};
 
 pub fn TransactionPage(cx: Scope) -> Element {
     let route = use_route(cx);
@@ -36,10 +36,7 @@ pub fn TransactionPage(cx: Scope) -> Element {
                              class: "text-2xl font-semibold mb-6",
                              "TRANSACTION"
                         }
-                        h1 {
-                            class: "text-2xl font-semibold mb-6",
-                            t.clone().slot.to_string()
-                       }
+                        TransactionInfo { data: t.clone() }
                     }
                 }
             }

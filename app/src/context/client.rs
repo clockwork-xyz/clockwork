@@ -72,7 +72,7 @@ impl Client {
             .map(|account| bincode::deserialize::<Clock>(account.unwrap().data.as_slice()).unwrap())
     }
 
-    pub async fn get_account_transaction(&self, signature:  &Signature) -> ClientResult<EncodedConfirmedTransactionWithStatusMeta> {
+    pub async fn get_account_transaction(&self, signature:  &Signature) -> ClientResult<EncodedConfirmedTransactionWithStatusMeta> {        
         self.client.get_transaction_with_config(
             signature, 
             RpcTransactionConfig {
