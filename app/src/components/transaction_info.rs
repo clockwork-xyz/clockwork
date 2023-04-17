@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use solana_client_wasm::solana_sdk::transaction::TransactionVersion;
 use solana_extra_wasm::transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 
 use crate::utils::{format_balance, format_timestamp};
@@ -13,17 +12,9 @@ pub fn TransactionInfo(cx: Scope<TransactionInfoProps>) -> Element {
     let slot = cx.props.data.slot.to_string();
     let time_stamp = format_timestamp(cx.props.data.block_time.unwrap());
     let fee = format_balance(cx.props.data.transaction.meta.as_ref().unwrap().fee, false);
-    let error = cx
-        .props
-        .data
-        .transaction
-        .meta
-        .as_ref()
-        .unwrap()
-        .err
-        .as_ref()
-        .map(|err| err.to_string())
-        .unwrap_or("".to_string());
+    let error = cx.props.data.transaction.meta.as_ref()
+        .and_then(|meta| meta.err.as_ref().map(|err| err.to_string()))
+        .unwrap_or_else(String::new);
     let signature = cx
         .props
         .data
