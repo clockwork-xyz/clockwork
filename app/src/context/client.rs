@@ -11,19 +11,19 @@ use solana_client_wasm::{
         account::Account,
         commitment_config::CommitmentConfig,
         compute_budget::ComputeBudgetInstruction,
-        transaction::{Transaction, TransactionError},
+        transaction::{Transaction, TransactionError}, signature::Signature,
     },
     utils::{
         rpc_config::{
             GetConfirmedSignaturesForAddress2Config, RpcAccountInfoConfig, RpcBlockConfig,
-            RpcProgramAccountsConfig,
+            RpcProgramAccountsConfig, RpcTransactionConfig,
         },
         rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
         rpc_response::RpcConfirmedTransactionStatusWithSignature,
     },
     ClientResult, WasmClient,
 };
-use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::UiConfirmedBlock};
+use solana_extra_wasm::{account_decoder::UiAccountEncoding, transaction_status::{UiConfirmedBlock, EncodedConfirmedTransactionWithStatusMeta, UiTransactionEncoding}};
 use std::str::FromStr;
 
 pub struct Client {
@@ -70,6 +70,18 @@ impl Client {
             )
             .await
             .map(|account| bincode::deserialize::<Clock>(account.unwrap().data.as_slice()).unwrap())
+    }
+
+    pub async fn get_account_transaction(&self, signature:  &Signature) -> ClientResult<EncodedConfirmedTransactionWithStatusMeta> {
+        self.client.get_transaction_with_config(
+            signature, 
+            RpcTransactionConfig {
+                encoding: Some(UiTransactionEncoding::Base64),
+                commitment: Some(CommitmentConfig::finalized()),
+                max_supported_transaction_version: None,
+            },
+        )
+        .await
     }
 
     pub async fn get_threads(&self) -> ClientResult<Vec<(VersionedThread, Account)>> {
