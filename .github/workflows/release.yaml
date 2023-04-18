@@ -60,7 +60,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --locked
+        run: cargo build --release --locked
 
       - name: Commit and tag
         uses: EndBug/add-and-commit@v9
