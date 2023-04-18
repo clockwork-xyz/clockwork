@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "app",
     "cli",
     "client",
     "cron",
@@ -11,9 +10,8 @@ members = [
     "utils"
 ]
 
+exclude = [ "app" ]
+
 [patch.crates-io]
 anchor-lang = { git = "https://github.com/coral-xyz/anchor", branch = "master" }
 anchor-spl = { git = "https://github.com/coral-xyz/anchor", branch = "master", features = ["mint", "token"] }
-dioxus = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }
-dioxus-router = { git = "https://github.com/DioxusLabs/dioxus", branch = "master", features = ["web"] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", branch = "master" }

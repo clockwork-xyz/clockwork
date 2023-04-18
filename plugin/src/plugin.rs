@@ -38,19 +38,13 @@ impl GeyserPlugin for ClockworkPlugin {
     fn on_load(&mut self, config_file: &str) -> PluginResult<()> {
         solana_logger::setup_with_default("info");
         info!(
-            "clockwork-plugin crate-info - spec: {}, geyser_interface_version: {}",
+            "clockwork-plugin crate-info - spec: {}, geyser_interface_version: {}, rustc: {}",
             env!("SPEC"),
-            env!("GEYSER_INTERFACE_VERSION")
+            env!("GEYSER_INTERFACE_VERSION"),
+            env!("RUSTC_VERSION")
         );
         info!("Loading snapshot...");
         let config = PluginConfig::read_from(config_file)?;
-        let _guard = sentry::init((
-            config.clone().sentry_url,
-            sentry::ClientOptions {
-                release: sentry::release_name!(),
-                ..Default::default()
-            },
-        ));
         *self = ClockworkPlugin::new_from_config(config);
         Ok(())
     }

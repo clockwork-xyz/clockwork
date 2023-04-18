@@ -23,7 +23,7 @@ clockwork-network-program = { path = "../programs/network", features = ["no-entr
 clockwork-thread-program = { path = "../programs/thread", features = ["no-entrypoint"], version = "2.0.15" }
 clockwork-utils = { path = "../utils", version = "2.0.15" }
 clockwork-webhook-program = { path = "../programs/webhook", features = ["no-entrypoint"], version = "2.0.15" }
-solana-client = "~1.14.16"
-solana-sdk = "~1.14.16"
+solana-client = "=1.14.16"
+solana-sdk = "=1.14.16"
 spl-associated-token-account = { version = "1.1.1", features = ["no-entrypoint"] }
 thiserror = "1.0.31"
