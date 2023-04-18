@@ -11,13 +11,17 @@ mod thread;
 mod webhook;
 mod worker;
 
-use anyhow::Result;
-use clap::ArgMatches;
-use clockwork_client::Client;
-use solana_sdk::signature::read_keypair_file;
+use {
+    anyhow::Result,
+    clap::ArgMatches,
+    clockwork_client::Client,
+    solana_sdk::signature::read_keypair_file,
+};
 
 use crate::{
-    cli::CliCommand, config::CliConfig, errors::CliError,
+    cli::CliCommand,
+    config::CliConfig,
+    errors::CliError,
     processor::thread::parse_pubkey_from_id_or_address,
 };
 
@@ -27,11 +31,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
 
     match command {
         // Set solana config if using localnet command
-        CliCommand::Localnet {
-            clone_addresses: _,
-            network_url: _,
-            program_infos: _,
-        } => {
+        CliCommand::Localnet { .. } => {
             // TODO Verify the Solana CLI version is compatable with this build.
             set_solana_config().map_err(|err| CliError::FailedLocalnet(err.to_string()))?
         }
@@ -79,7 +79,19 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             clone_addresses,
             network_url,
             program_infos,
-        } => localnet::start(&client, clone_addresses, network_url, program_infos),
+            force_init,
+            solana_archive,
+            clockwork_archive,
+        } => localnet::start(
+            &config,
+            &client,
+            clone_addresses,
+            network_url,
+            program_infos,
+            force_init,
+            solana_archive,
+            clockwork_archive,
+        ),
         CliCommand::PoolGet { id } => pool::get(&client, id),
         CliCommand::PoolList {} => pool::list(&client),
         CliCommand::PoolUpdate { id, size } => pool::update(&client, id, size),

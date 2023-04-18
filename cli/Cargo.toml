@@ -1,27 +1,31 @@
 [package]
-name = "clockwork-cli"
-version = "2.0.15"
+name = "mat-clockwork-cli"
+version = "2.0.42"
 description = "Command line interface for Clockwork"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://clockwork.xyz"
-repository = "https://github.com/clockwork-xyz/cli"
-documentation = "https://docs.clockwork.xyz"
+homepage = "https://mat-clockwork.xyz"
+repository = "https://github.com/mat-clockwork-xyz/cli"
+documentation = "https://docs.mat-clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
+build = "build.rs"
 
 [dependencies]
 anchor-lang = "0.27.0"
 anyhow = "1.0.61"
 bincode = "1.3.3"
+bzip2 = "0.4"
 clap = { version = "3.1.2", features = ["derive"] }
-clockwork-client = { path = "../client", version = "2.0.15" }
-clockwork-cron = { path = "../cron", version = "2.0.15" }
-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.15" }
-clockwork-utils = { path = "../utils", version = "2.0.15" }
-clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.15" }
+mat-clockwork-client = { path = "../client", version = "2.0.42" }
+mat-clockwork-cron = { path = "../cron", version = "2.0.42" }
+mat-clockwork-relayer-api = { path = "../relayer/api", version = "2.0.42" }
+mat-clockwork-plugin-utils= { path = "../plugin/utils", version = "2.0.42" }
+mat-clockwork-utils = { path = "../utils", version = "2.0.42" }
+mat-clockwork-webhook-program = { path = "../programs/webhook", version = "2.0.42" }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 dirs-next = "2.0.0"
+indicatif = "0.16"
 reqwest = "0.11.14"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
@@ -34,9 +38,13 @@ solana-sdk = "=1.14.16"
 spl-associated-token-account = "1.1.1"
 spl-memo = "3.0.1"
 spl-token = "~3.5.0"
+tar = "0.4"
 thiserror = "1.0.30"
-version = "3.0.0"
+termcolor = "1.2.0"
 
 [[bin]]
 name = "clockwork"
 path = "src/main.rs"
+
+[build-dependencies]
+cargo_metadata = "=0.14.0"

@@ -1,0 +1,20 @@
+name: "Setup Rust"
+description: "Setup Rust"
+runs:
+  using: "composite"
+  steps:
+      - name: Set up cargo cache ${{ env.PLUGIN_RUST_VERSION }}
+        uses: Swatinem/rust-cache@v2
+
+      - name: Get Rustc version
+        run: |
+          source scripts/ci/rust-version.sh
+          echo "PLUGIN_RUST_VERSION=$rust_stable" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Install Rust ${{ env.PLUGIN_RUST_VERSION }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.PLUGIN_RUST_VERSION }}
+          override: true
+          profile: minimal

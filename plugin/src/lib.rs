@@ -1,12 +1,21 @@
+pub mod config {
+    pub use clockwork_plugin_utils::PluginConfig;
+}
+
 use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
 
 mod builders;
-mod config;
+
 mod events;
+
 mod executors;
+
 mod observers;
+
 mod plugin;
+
 mod pool_position;
+
 mod utils;
 
 pub use plugin::ClockworkPlugin;

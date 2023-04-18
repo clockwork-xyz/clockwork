@@ -9,27 +9,40 @@ usage() {
     echo "Error: $*"
   fi
   cat <<EOF
-usage: $0 [+<cargo version>] [--debug] <install directory>
+usage: $0 [+<cargo version>] [--release] [--target <target triple>] <install directory>
 EOF
   exit $exitcode
 }
 
+# Set default target triple from 'cargo -vV'
+defaultTargetTriple=$(cargo -vV | grep 'host:' | cut -d ' ' -f2)
+
 # Set build flags
-maybeRustVersion=+1.60.0
+
+# Setup rust the default rust-version
+maybeRustVersion=
 installDir=
 buildVariant=debug
 maybeReleaseFlag=
+targetTriple="$defaultTargetTriple"
 while [[ -n $1 ]]; do
   if [[ ${1:0:1} = - ]]; then
-    if [[ $1 = --release ]]; then
-      maybeReleaseFlag=--release
-      buildVariant=release
-      shift
-    else
-      usage "Unknown option: $1"
-    fi
-  elif [[ ${1:0:1} = \+ ]]; then
-    maybeRustVersion=$1
+    case $1 in
+      --release)
+        maybeReleaseFlag=--release
+        buildVariant=release
+        shift
+        ;;
+      --target)
+        targetTriple=$2
+        shift 2
+        ;;
+      *)
+        usage "Unknown option: $1"
+        ;;
+    esac
+  elif [[ ${1:0:1} = + ]]; then
+    maybeRustVersion=${1:1}
     shift
   else
     installDir=$1
@@ -37,19 +50,24 @@ while [[ -n $1 ]]; do
   fi
 done
 
-# Get the output filetype
-if [[ $OSTYPE == darwin* ]]; then
-  libExt=dylib 
-elif [[ $OSTYPE == linux* ]]; then
-  libExt=so
-else 
-  echo OS unsupported
-  exit 1
+# If target triple is still unset, use default
+if [[ -z "$targetTriple" ]]; then
+  targetTriple="$defaultTargetTriple"
 fi
 
-# Install 1.60 if not installed
-rustup install "${maybeRustVersion:1}"
+if [ -z "$maybeRustVersion" ]; then
+    source scripts/ci/rust-version.sh
+    maybeRustVersion="$rust_stable"
+else
+    rustup install "$maybeRustVersion"
+fi
 
+# Print final configuration
+echo "Using Rust version: $maybeRustVersion"
+echo "Build variant: $buildVariant"
+echo "Target triple: $targetTriple"
+echo "Install directory: $installDir"
+echo "Release flag: ${maybeReleaseFlag:---not-set}"
 
 # Check the install directory is provided
 if [[ -z "$installDir" ]]; then
@@ -76,53 +94,48 @@ for bin in "${BINS[@]}"; do
   binArgs+=(--bin "$bin")
 done
 
+# Build programs
+(
+  set -x
+  anchor build
+)
+
+# Define lib extension
+case $targetTriple in
+  *darwin*)
+    pluginFilename=libclockwork_plugin.dylib
+    ;;
+  *)
+    pluginFilename=libclockwork_plugin.so
+    ;;
+esac
+
 # Build the repo
 (
   set -x
-  rustc -V
-  cargo "$maybeRustVersion" build --locked $maybeReleaseFlag "${binArgs[@]}" --lib
+  cargo +"$maybeRustVersion" build --locked $maybeReleaseFlag "${binArgs[@]}" --lib --target "$targetTriple"
+  # Copy binaries
+  case $targetTriple in
+    *darwin*)
+      pluginFilename=libclockwork_plugin.dylib
+      cp -fv "target/$targetTriple/$buildVariant/$pluginFilename" "$installDir"/lib
+      mv "$installDir"/lib/libclockwork_plugin.dylib "$installDir"/lib/libclockwork_plugin.so
+      ;;
+    *)
+      pluginFilename=libclockwork_plugin.so
+      cp -fv "target/$targetTriple/$buildVariant/$pluginFilename" "$installDir"/lib
+      ;;
+  esac
+
+  for bin in "${BINS[@]}"; do
+    rm -fv "$installDir/bin/$bin"
+    cp -fv "target/$targetTriple/$buildVariant/$bin" "$installDir/bin"
+  done
+
+  cp -fv "target/deploy/clockwork_network_program.so" "$installDir/lib"
+  cp -fv "target/deploy/clockwork_thread_program.so" "$installDir/lib"
+  cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir/lib"
 )
-
-# Copy binaries
-cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
-for bin in "${BINS}"; do
-  rm -fv "$installDir/bin/$bin"
-  cp -fv "target/$buildVariant/$bin" "$installDir"/bin
-done
-
-
-# Build programs
-if command -v anchor &> /dev/null; then
-  set -x
-  anchor build
-
-  # Copy program binaries into lib folder
-  cp -fv "target/deploy/clockwork_network_program.so" "$installDir"/lib
-  cp -fv "target/deploy/clockwork_thread_program.so" "$installDir"/lib
-  cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir"/lib
-fi
-
-# Create new Geyser plugin config 
-touch "$installDir"/lib/geyser-plugin-config.json
-echo "{
-  \"libpath\": \"$installDir/lib/libclockwork_plugin.$libExt\",
-  \"keypath\": \"$installDir/lib/clockwork-worker-keypair.json\",
-  \"transaction_timeout_threshold\": 150,
-  \"thread_count\": 10,
-  \"worker_id\": 0
-}" > "$installDir"/lib/geyser-plugin-config.json
-
-# Create a worker keypair
-if command -v solana-keygen &> /dev/null; then
-  echo
-  solana-keygen new -f -s --no-bip39-passphrase -o $installDir/lib/clockwork-worker-keypair.json
-  echo
-fi
-
-# Create local Clockwork config file
-mkdir -p ~/.config/solana/clockwork
-touch ~/.config/solana/clockwork/config.yml
-echo "home: $installDir" > ~/.config/solana/clockwork/config.yml
 
 # Success message
 echo "Done after $SECONDS seconds"

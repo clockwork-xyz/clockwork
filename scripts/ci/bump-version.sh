@@ -34,7 +34,7 @@ if [ -n "$dry_run" ]; then
 fi
 
 # We need to retrieve the actual semver version from the Cargo.toml files
-actual_version=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "clockwork-sdk") | .version')
+actual_version=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "mat-clockwork-sdk") | .version')
 echo $actual_version >VERSION
 echo "New version: $actual_version"
 

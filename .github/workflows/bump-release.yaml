@@ -1,0 +1,224 @@
+name: Bump and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'New version'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - rc
+          - beta
+          - alpha
+      extra_args:
+        description: 'Extra args to pass to bump-version.sh, e.g: --dry-run.'
+        required: false
+        default: '--exclude mat-clockwork-thread-program-v1'
+
+env:
+  CARGO_TERM_COLOR: always
+  ANCHOR_VERSION: v0.27.0
+  PUBLISH_PREFIX: mat
+
+jobs:
+  build-all:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3 
+
+      - name: Install core deps for mac if needed
+        if: contains(runner.os, 'mac')
+        run: |
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install jq
+      - name: Install core deps
+        if: contains(runner.os, 'linux')
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: jq pkg-config build-essential libudev-dev libssl-dev
+          execute_install_scripts: true
+          
+      - name: Install Rust Stable to use with tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Install cargo-edit
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-edit
+          version: "0.11.9"
+
+      - name: Run version bump script
+        run: |
+          source ./scripts/ci/bump-version.sh ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
+          echo "$old_version" > OLD_VERSION
+
+      - name: Create artificats of changes from diff
+        run: |
+          git status --porcelain | sed s/^...// | tar -cvf changes.tar --files-from -
+          mkdir -p changes
+          cd changes
+          mv ../changes.tar .
+          tar -xvf changes.tar
+          rm changes.tar
+          cd -
+        shell: bash
+
+      - name: Upload source with bumped version
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: bumped_source
+          path: changes/**/*
+
+      - name: Env variables
+        run: |
+          chmod +x ./scripts/ci/solana-version.sh
+          echo "CI_TAG=v$(cat VERSION)" >> $GITHUB_ENV
+          SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
+          SOLANA_VERSION="v${SOLANA_VERSION#=}"
+          echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/setup-solana/
+
+      - name: Install anchor
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: anchor-cli
+          args: --git https://github.com/coral-xyz/anchor --tag ${{ env.ANCHOR_VERSION }}
+
+      - name: Install Rust ${{ env.PLUGIN_RUST_VERSION }}
+        uses: ./.github/actions/setup-rust/
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: tarball-${{ runner.target }}-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build release tarball
+        run: |
+          chmod +x ./scripts/ci/create-tarball.sh
+          chmod +x ./scripts/build-all.sh
+          ./scripts/ci/create-tarball.sh --target ${{ matrix.target }}
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: release_build
+          path: clockwork-geyser-plugin-release-*
+
+
+  release:
+    needs:
+      - build-all
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/download-artifact@v3
+        with:
+          name: bumped_source
+
+      - name: Install jq
+        if: contains(runner.os, 'mac')
+        run: |
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install jq
+      - name: Install jq
+        if: contains(runner.os, 'linux')
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: jq
+          execute_install_scripts: true 
+
+      - name: Install Rust Stable to use with tools
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Env variables
+        run: |
+          chmod +x ./scripts/ci/solana-version.sh
+          echo "CI_TAG=v$(cat VERSION)" >> $GITHUB_ENV
+          echo "OLD_VERSION=v$(cat OLD_VERSION)" >> $GITHUB_ENV 
+          SOLANA_VERSION="$(./scripts/ci/solana-version.sh)"
+          SOLANA_VERSION="v${SOLANA_VERSION#=}"
+          echo "SOLANA_VERSION=$SOLANA_VERSION" >> "$GITHUB_ENV"
+          chmod +x ./scripts/ci/rust-version.sh
+          source scripts/ci/rust-version.sh
+          echo "PLUGIN_RUST_VERSION=$rust_stable" >> $GITHUB_ENV
+
+      - name: Commit and tag
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: Bump from ${{ env.OLD_VERSION }} to ${{ env.CI_TAG }}
+          tag: ${{ env.CI_TAG }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: release_build
+
+      - name: Publish Github release
+        uses: softprops/action-gh-release@v1
+        with:
+          fail_on_unmatched_files: true
+          name: ${{ env.CI_TAG }}
+          tag_name: ${{ env.CI_TAG }}
+          body: |
+            clockwork-geyser-plugin ${{ env.CI_TAG }}
+            solana ${{ env.SOLANA_VERSION }}
+            rust ${{ env.PLUGIN_RUST_VERSION }}
+          # this gh action ignores the working directory, and defaults to the root of the repo
+          files: |
+            clockwork-geyser-plugin-release-*
+
+
+  publish-crate:
+    needs:
+      - build-all
+      - release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/download-artifact@v3
+        with:
+          name: bumped_source
+
+      - name: Install Rust Stable to use with tools
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          toolchain: stable
+          profile: minimal
+
+      - name: Install cargo-publish-workspace-v2
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-publish-workspace-v2
+
+      - name: Env variables
+        run: |
+          echo "CI_TAG=v$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          cargo +stable publish-workspace --crate-prefix ${{ env.PUBLISH_PREFIX }} -- --allow-dirty --no-verify
+          

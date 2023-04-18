@@ -16,7 +16,7 @@ anchor-lang = "0.27.0"
 bincode = "1.3.3"
 bytemuck = "1.13.0"
 chrono = "0.4.23"
-clockwork-thread-program-v1 = { package = "clockwork-thread-program-v1", path = "../programs/thread/v1", version = "1.4.4", features = ["no-entrypoint"] }
+clockwork-thread-program-v1 = { package = "clockwork-thread-program-v1", path = "../programs/thread/v1", version = "1.4.5", features = ["no-entrypoint"] }
 clockwork-thread-program-v2 = { package = "clockwork-thread-program", path = "../programs/thread", version = "2.0.15", features = ["no-entrypoint"] }
 clockwork-network-program = { package = "clockwork-network-program", path = "../programs/network", version = "2.0.15", features = ["no-entrypoint"] }
 clockwork-relayer-api = { path = "../relayer/api", version = "2.0.15" }

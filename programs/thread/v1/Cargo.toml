@@ -1,5 +1,5 @@
 [package]
-name = "clockwork-thread-program-v1"
+name = "mat-clockwork-thread-program-v1"
 version = "1.4.4"
 edition = "2021"
 readme = "./README.md"

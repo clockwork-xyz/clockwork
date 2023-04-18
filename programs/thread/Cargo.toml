@@ -1,12 +1,12 @@
 [package]
-name = "clockwork-thread-program"
-version = "2.0.15"
+name = "mat-clockwork-thread-program"
+version = "2.0.42"
 description = "Clockwork thread program"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://clockwork.xyz"
-repository = "https://github.com/clockwork-xyz/clockwork"
-documentation = "https://docs.clockwork.xyz"
+homepage = "https://mat-clockwork.xyz"
+repository = "https://github.com/mat-clockwork-xyz/mat-clockwork"
+documentation = "https://docs.mat-clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
@@ -24,10 +24,10 @@ default = []
 [dependencies]
 anchor-lang = "0.27.0"
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-clockwork-cron = { path = "../../cron", version = "2.0.15" }
-clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.15" }
-clockwork-thread-program-v1 = { path = "v1", version = "1.4.4" }
-clockwork-utils = { path = "../../utils", version = "2.0.15" }
+mat-clockwork-cron = { path = "../../cron", version = "2.0.42" }
+mat-clockwork-network-program = { path = "../network", features = ["cpi"], version = "2.0.42" }
+mat-clockwork-thread-program-v1 = { path = "v1", version = "1.4.4" }
+mat-clockwork-utils = { path = "../../utils", version = "2.0.42" }
 pyth-sdk-solana = "0.7.1"
 static-pubkey = "1.0.3"
 version = "3.0.0"

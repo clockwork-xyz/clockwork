@@ -1,0 +1,34 @@
+#!/bin/sh
+
+{ # this ensures the entire script is downloaded #
+
+set -xe
+
+toolchain=1.60.0
+crate=mat-clockwork-cli
+
+main() {
+    need_cmd rustup
+    need_cmd cargo
+
+    rustup install $toolchain --profile minimal
+    cargo +$toolchain install -f --locked $crate
+
+    clockwork localnet --help
+}
+
+
+need_cmd() {
+    if ! check_cmd "$1"; then
+    ┆   err "need '$1' (command not found)"
+    fi
+}
+
+check_cmd() {
+    command -v "$1" > /dev/null 2>&1
+}
+
+
+main "$@"
+
+}
