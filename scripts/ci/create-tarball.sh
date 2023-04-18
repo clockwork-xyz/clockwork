@@ -48,7 +48,7 @@ echo --- Creating release tarball
 
   source ./scripts/ci/rust-version.sh stable
   # shellcheck disable=SC2154
-  ./scripts/build-all.sh --release +"$rust_stable" "${RELEASE_BASENAME}"
+  ./scripts/build-all.sh --release "${RELEASE_BASENAME}"
 
   tar cvf "${TARBALL_BASENAME}"-$TARGET.tar "${RELEASE_BASENAME}"
   bzip2 "${TARBALL_BASENAME}"-$TARGET.tar
