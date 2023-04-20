@@ -9,6 +9,7 @@ pub mod not_found;
 pub mod page;
 pub mod programs;
 pub mod thread;
+pub mod transaction;
 
 pub use account::*;
 pub use accounts::*;
@@ -21,3 +22,4 @@ pub use not_found::*;
 pub use page::*;
 pub use programs::*;
 pub use thread::*;
+pub use transaction::*;

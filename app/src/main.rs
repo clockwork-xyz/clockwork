@@ -15,6 +15,8 @@ use hot_keys::HotKeys;
 use pages::*;
 use wasm_logger;
 
+use crate::pages::transaction::TransactionPage;
+
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
     dioxus_web::launch(App);
@@ -65,6 +67,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/keys/new", NewKeyPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "/programs/threads/:address", ThreadPage {} }
+                Route { to: "/programs/transaction/:signature", TransactionPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
                 Chat {}

@@ -13,6 +13,7 @@ pub mod thread_info_table;
 pub mod thread_sim_logs;
 pub mod threads_table;
 pub mod transaction_history_table;
+pub mod transaction_info;
 
 pub use account_info_table::*;
 pub use backpack::*;
@@ -29,3 +30,4 @@ pub use thread_info_table::*;
 pub use thread_sim_logs::*;
 pub use threads_table::*;
 pub use transaction_history_table::*;
+pub use transaction_info::*;
