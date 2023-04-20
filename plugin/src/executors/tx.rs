@@ -235,14 +235,23 @@ impl TxExecutor {
     async fn execute_pool_rotate_txs(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        _slot: u64,
+        slot: u64,
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
-        let registry = client.get::<Registry>(&Registry::pubkey()).await.unwrap();
+        let registry = client
+            .get_account_with_min_context_slot::<Registry>(&Registry::pubkey(), slot)
+            .await
+            .unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
         let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
-        if let Ok(snapshot) = client.get::<Snapshot>(&snapshot_pubkey).await {
-            if let Ok(snapshot_frame) = client.get::<SnapshotFrame>(&snapshot_frame_pubkey).await {
+        if let Ok(snapshot) = client
+            .get_account_with_min_context_slot::<Snapshot>(&snapshot_pubkey, slot)
+            .await
+        {
+            if let Ok(snapshot_frame) = client
+                .get_account_with_min_context_slot::<SnapshotFrame>(&snapshot_frame_pubkey, slot)
+                .await
+            {
                 if let Some(tx) = crate::builders::build_pool_rotation_tx(
                     client.clone(),
                     &self.keypair,
@@ -254,7 +263,7 @@ impl TxExecutor {
                 )
                 .await
                 {
-                    self.clone().simulate_tx(&tx).await?;
+                    self.clone().simulate_tx(&tx, slot).await?;
                     self.clone().submit_tx(&tx).await?;
                 }
             }
@@ -441,7 +450,11 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    async fn simulate_tx(
+        self: Arc<Self>,
+        tx: &Transaction,
+        min_context_slot: u64,
+    ) -> PluginResult<Transaction> {
         TPU_CLIENT
             .get()
             .await
@@ -450,7 +463,9 @@ impl TxExecutor {
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
-                    commitment: Some(CommitmentConfig::processed()),
+                    commitment: None,
+                    min_context_slot: Some(min_context_slot),
+                    // commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
             )

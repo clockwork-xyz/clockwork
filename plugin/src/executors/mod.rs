@@ -12,9 +12,11 @@ use std::{
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use async_trait::async_trait;
 use log::info;
+use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     client_error::{ClientError, ClientErrorKind, Result as ClientResult},
     nonblocking::rpc_client::RpcClient,
+    rpc_config::RpcAccountInfoConfig,
 };
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -124,12 +126,41 @@ impl Debug for Executors {
 #[async_trait]
 pub trait AccountGet {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T>;
+    async fn get_account_with_min_context_slot<T: AccountDeserialize>(
+        &self,
+        pubkey: &Pubkey,
+        min_context_slot: u64,
+    ) -> ClientResult<T>;
 }
 
 #[async_trait]
 impl AccountGet for RpcClient {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T> {
         let data = self.get_account_data(pubkey).await?;
+        T::try_deserialize(&mut data.as_slice()).map_err(|_| {
+            ClientError::from(ClientErrorKind::Custom(format!(
+                "Failed to deserialize account data"
+            )))
+        })
+    }
+
+    async fn get_account_with_min_context_slot<T: AccountDeserialize>(
+        &self,
+        pubkey: &Pubkey,
+        min_context_slot: u64,
+    ) -> ClientResult<T> {
+        let config = RpcAccountInfoConfig {
+            encoding: Some(UiAccountEncoding::Base64Zstd),
+            data_slice: None,
+            commitment: None,
+            min_context_slot: Some(min_context_slot),
+        };
+        let data = self
+            .get_account_with_config(pubkey, config)
+            .await?
+            .value
+            .unwrap()
+            .data;
         T::try_deserialize(&mut data.as_slice()).map_err(|_| {
             ClientError::from(ClientErrorKind::Custom(format!(
                 "Failed to deserialize account data"
