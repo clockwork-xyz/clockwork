@@ -18,27 +18,3 @@ pub fn format_timestamp(timestamp: i64) -> String {
     );
     format!("{}", dt.format("%F %H:%M UTC"))
 }
-
-pub fn parse_url(url_str: &str) -> Result<(String, String, String), url::ParseError> {
-    let url = Url::parse(url_str)?;
-
-    let domain = format!(
-        "{}://{}{}",
-        url.scheme(),
-        url.host_str().unwrap_or(""),
-        url.port()
-            .map(|p| format!(":{}", p))
-            .unwrap_or_else(|| "".to_string())
-    );
-    let route = url.path().to_string();
-    let query = url.query().unwrap_or("").to_string();
-
-    Ok((domain, route, query))
-}
-
-pub fn current_route(url_str: &str) -> Result<String, url::ParseError> {
-    let url = Url::parse(url_str)?;
-    let route = url.path().to_string();
-
-    Ok(route)
-}
