@@ -16,6 +16,7 @@ use crate::{
 };
 
 use super::Page;
+use crate::context::Cluster;
 
 pub fn ThreadPage(cx: Scope) -> Element {
     let route = use_route(cx);
@@ -27,11 +28,9 @@ pub fn ThreadPage(cx: Scope) -> Element {
         let client_context = client_context.clone();
         let thread_pubkey = Pubkey::from_str(route.last_segment().unwrap()).unwrap();
         async move {
-            let t = client_context
-                .read()
-                .get_thread(thread_pubkey)
-                .await
-                .unwrap();
+            let cluster_config = client_context.read().cluster.clone();
+            drop(client_context);
+            let t = get_thread(thread_pubkey, cluster_config).await;
             thread.set(Some(t.clone()));
         }
     });
@@ -63,4 +62,9 @@ pub fn ThreadPage(cx: Scope) -> Element {
             }
         })
     }
+}
+
+async fn get_thread(thread_pubkey: Pubkey, cluster: Cluster) -> (VersionedThread, Account) {
+    let client = Client::new_with_config(cluster);
+    client.get_thread(thread_pubkey).await.unwrap()
 }

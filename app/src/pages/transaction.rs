@@ -5,7 +5,7 @@ use dioxus_router::use_route;
 use solana_client_wasm::solana_sdk::signature::Signature;
 use solana_extra_wasm::transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 
-use crate::{components::TransactionInfo, context::Client, pages::page::Page};
+use crate::{components::TransactionInfo, context::{Client, Cluster}, pages::page::Page};
 
 pub fn TransactionPage(cx: Scope) -> Element {
     let route = use_route(cx);
@@ -16,11 +16,9 @@ pub fn TransactionPage(cx: Scope) -> Element {
         let client_context = client_context.clone();
         let transaction_signature = Signature::from_str(route.last_segment().unwrap()).unwrap();
         async move {
-            let t = client_context
-                .read()
-                .get_account_transaction(&transaction_signature)
-                .await
-                .unwrap();
+            let cluster_config = client_context.read().cluster.clone();
+            drop(client_context);
+            let t = get_account_transaction(&transaction_signature, cluster_config).await;
             transaction.set(Some(t.clone()));
         }
     });
@@ -50,4 +48,9 @@ pub fn TransactionPage(cx: Scope) -> Element {
             }
         })
     }
+}
+
+async fn get_account_transaction(signature: &Signature, cluster: Cluster) -> EncodedConfirmedTransactionWithStatusMeta {
+    let client = Client::new_with_config(cluster);
+    client.get_account_transaction(signature).await.unwrap()
 }
