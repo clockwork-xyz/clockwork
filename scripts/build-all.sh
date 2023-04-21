@@ -80,6 +80,7 @@ done
 
 # Copy binaries
 cp -fv "target/$buildVariant/libclockwork_plugin.$libExt" "$installDir"/lib
+cp -fv "target/$buildVariant/libclockwork_metrics.$libExt" "$installDir"/lib
 for bin in "${BINS}"; do
   rm -fv "$installDir/bin/$bin"
   cp -fv "target/$buildVariant/$bin" "$installDir"/bin
@@ -106,6 +107,12 @@ echo "{
   \"thread_count\": 10,
   \"worker_id\": 0
 }" > "$installDir"/lib/geyser-plugin-config.json
+
+# Create new Geyser config for metrics plugin
+touch "$installDir"/lib/geyser-plugin-config-metrics.json
+echo "{
+  \"libpath\": \"$installDir/lib/libclockwork_metrics.$libExt\",
+}" > "$installDir"/lib/geyser-plugin-config-metrics.json
 
 # Create a worker keypair
 if command -v solana-keygen &> /dev/null; then

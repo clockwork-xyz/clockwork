@@ -1,14 +1,15 @@
 use std::{fmt::Debug, sync::Arc};
 
+use anchor_lang::Discriminator;
 use log::info;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
-    GeyserPlugin, ReplicaAccountInfo, ReplicaAccountInfoVersions, Result as PluginResult,
-    SlotStatus,
+    GeyserPlugin, ReplicaAccountInfo, ReplicaAccountInfoVersions, ReplicaTransactionInfoV2,
+    Result as PluginResult, SlotStatus,
 };
 use solana_program::pubkey::Pubkey;
 use tokio::runtime::{Builder, Runtime};
 
-use crate::{config::PluginConfig, events::AccountUpdateEvent};
+use crate::events::AccountUpdateEvent;
 
 pub struct ClockworkMetricsPlugin {
     pub inner: Arc<Inner>,
@@ -22,7 +23,6 @@ impl Debug for ClockworkMetricsPlugin {
 
 #[derive(Debug)]
 pub struct Inner {
-    pub config: PluginConfig,
     pub runtime: Arc<Runtime>,
 }
 
@@ -40,8 +40,7 @@ impl GeyserPlugin for ClockworkMetricsPlugin {
             env!("RUSTC_VERSION")
         );
         info!("Loading snapshot...");
-        let config = PluginConfig::read_from(config_file)?;
-        *self = ClockworkMetricsPlugin::new_from_config(config);
+        *self = ClockworkMetricsPlugin::default();
         Ok(())
     }
 
@@ -49,86 +48,14 @@ impl GeyserPlugin for ClockworkMetricsPlugin {
 
     fn update_account(
         &mut self,
-        account: ReplicaAccountInfoVersions,
-        slot: u64,
-        is_startup: bool,
+        _account: ReplicaAccountInfoVersions,
+        _slot: u64,
+        _is_startup: bool,
     ) -> PluginResult<()> {
-        // Parse account info.
-        // let account_info = &mut match account {
-        //     ReplicaAccountInfoVersions::V0_0_1(account_info) => ReplicaAccountInfo {
-        //         pubkey: account_info.pubkey,
-        //         lamports: account_info.lamports,
-        //         owner: account_info.owner,
-        //         executable: account_info.executable,
-        //         rent_epoch: account_info.rent_epoch,
-        //         data: account_info.data,
-        //         write_version: account_info.write_version,
-        //     },
-        //     ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
-        //         pubkey: account_info.pubkey,
-        //         lamports: account_info.lamports,
-        //         owner: account_info.owner,
-        //         executable: account_info.executable,
-        //         rent_epoch: account_info.rent_epoch,
-        //         data: account_info.data,
-        //         write_version: account_info.write_version,
-        //     },
-        // };
-        // let account_pubkey = Pubkey::try_from(account_info.pubkey).unwrap();
-        // let event = AccountUpdateEvent::try_from(account_info);
-
-        // Process event on tokio task.
-        // self.inner.clone().spawn(|inner| async move {
-        //     // Send all account updates to the thread observer for account listeners.
-        //     // Only process account updates if we're past the startup phase.
-        //     if !is_startup {
-        //         inner
-        //             .observers
-        //             .thread
-        //             .clone()
-        //             .observe_account(account_pubkey, slot)
-        //             .await?;
-        //     }
-
-        //     // Parse and process specific update events.
-        //     if let Ok(event) = event {
-        //         match event {
-        //             AccountUpdateEvent::Clock { clock } => {
-        //                 inner
-        //                     .observers
-        //                     .thread
-        //                     .clone()
-        //                     .observe_clock(clock)
-        //                     .await
-        //                     .ok();
-        //             }
-        //             AccountUpdateEvent::Thread { thread } => {
-        //                 inner
-        //                     .observers
-        //                     .thread
-        //                     .clone()
-        //                     .observe_thread(thread, account_pubkey, slot)
-        //                     .await
-        //                     .ok();
-        //             }
-        //             AccountUpdateEvent::Webhook { webhook } => {
-        //                 inner
-        //                     .observers
-        //                     .webhook
-        //                     .clone()
-        //                     .observe_webhook(webhook, account_pubkey)
-        //                     .await
-        //                     .ok();
-        //             }
-        //         }
-        //     }
-        //     Ok(())
-        // });
         Ok(())
     }
 
     fn notify_end_of_startup(&mut self) -> PluginResult<()> {
-        info!("Snapshot loaded");
         Ok(())
     }
 
@@ -138,27 +65,71 @@ impl GeyserPlugin for ClockworkMetricsPlugin {
         _parent: Option<u64>,
         status: SlotStatus,
     ) -> PluginResult<()> {
-        // self.inner.clone().spawn(|inner| async move {
-        //     match status {
-        //         SlotStatus::Processed => {
-        //             inner
-        //                 .executors
-        //                 .clone()
-        //                 .process_slot(inner.observers.clone(), slot, inner.runtime.clone())
-        //                 .await?;
-        //         }
-        //         _ => (),
-        //     }
-        //     Ok(())
-        // });
         Ok(())
     }
 
     fn notify_transaction(
         &mut self,
-        _transaction: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions,
-        _slot: u64,
+        transaction: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions,
+        slot: u64,
     ) -> PluginResult<()> {
+        let tx_info = match transaction {
+            solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions::V0_0_1(t) => {
+                ReplicaTransactionInfoV2 {
+                    signature: t.signature,
+                    is_vote: t.is_vote,
+                    transaction: t.transaction,
+                    transaction_status_meta: t.transaction_status_meta,
+                    index: 0,
+                }
+            },
+            solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions::V0_0_2(t) => {
+                ReplicaTransactionInfoV2 {
+                    signature: t.signature,
+                    is_vote: t.is_vote,
+                    transaction: t.transaction,
+                    transaction_status_meta: t.transaction_status_meta,
+                    index: t.index,
+                }
+            },
+        };
+
+        let is_clockwork_tx = if tx_info.is_vote {
+            false
+        } else {
+            match tx_info.transaction.message() {
+                solana_program::message::SanitizedMessage::Legacy(msg) => {
+                    let program_ids = msg.message.program_ids();
+                    if program_ids.contains(&&clockwork_thread_program_v1::ID)
+                        || program_ids.contains(&&clockwork_thread_program::ID)
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                }
+                solana_program::message::SanitizedMessage::V0(_) => false,
+            }
+        };
+
+        if is_clockwork_tx {
+            let tx_sig = tx_info.signature;
+            // let tx_status = tx_info.transaction_status_meta.status.is_ok();
+            // let tx_err = tx_info.transaction_status_meta.status.unwrap_err;
+            for (program_id, _ix) in tx_info.transaction.message().program_instructions_iter() {
+                if program_id.eq(&clockwork_thread_program_v1::ID) {
+                    info!("tx_sig: {} ix_program_id: {}", tx_sig, program_id);
+                } else if program_id.eq(&clockwork_thread_program::ID) {
+                    info!("tx_sig: {} ix_program_id: {}", tx_sig, program_id);
+                }
+            }
+
+            // Instruction type
+            // Transaction status
+            // Compute units
+            // If kickoff or exec, we want the target program
+        }
+
         Ok(())
     }
 
@@ -170,26 +141,11 @@ impl GeyserPlugin for ClockworkMetricsPlugin {
     }
 
     fn account_data_notifications_enabled(&self) -> bool {
-        true
+        false
     }
 
     fn transaction_notifications_enabled(&self) -> bool {
-        false
-    }
-}
-
-impl ClockworkMetricsPlugin {
-    fn new_from_config(config: PluginConfig) -> Self {
-        let runtime = build_runtime(config.clone());
-        Self {
-            inner: Arc::new(Inner { config, runtime }),
-        }
-    }
-}
-
-impl Default for ClockworkMetricsPlugin {
-    fn default() -> Self {
-        Self::new_from_config(PluginConfig::default())
+        true
     }
 }
 
@@ -202,13 +158,23 @@ impl Inner {
     }
 }
 
-fn build_runtime(config: PluginConfig) -> Arc<Runtime> {
+impl Default for ClockworkMetricsPlugin {
+    fn default() -> Self {
+        ClockworkMetricsPlugin {
+            inner: Arc::new(Inner {
+                runtime: build_runtime(),
+            }),
+        }
+    }
+}
+
+fn build_runtime() -> Arc<Runtime> {
     Arc::new(
         Builder::new_multi_thread()
             .enable_all()
             .thread_name("clockwork-plugin")
-            .worker_threads(config.thread_count)
-            .max_blocking_threads(config.thread_count)
+            .worker_threads(10)
+            .max_blocking_threads(10)
             .build()
             .unwrap(),
     )

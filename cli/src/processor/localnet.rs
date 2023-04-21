@@ -197,7 +197,8 @@ fn start_test_validator(
         .network_url(network_url)
         .clone_addresses(clone_addresses)
         .add_programs_with_path(program_infos)
-        .geyser_plugin_config(home_dir)
+        .geyser_plugin_config(home_dir, "geyser-plugin-config.json")
+        .geyser_plugin_config(home_dir, "geyser-plugin-config-metrics.json")
         .spawn()
         .expect("Failed to start local test validator");
 
@@ -253,7 +254,7 @@ trait TestValidatorHelpers {
         program_id: Pubkey,
         program_name: &str,
     ) -> &mut Command;
-    fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command;
+    fn geyser_plugin_config(&mut self, home_dir: &str, filename: &str) -> &mut Command;
     fn network_url(&mut self, url: Option<String>) -> &mut Command;
     fn clone_addresses(&mut self, clone_addresses: Vec<Pubkey>) -> &mut Command;
 }
@@ -280,9 +281,9 @@ impl TestValidatorHelpers for Command {
             .arg(lib_path(home_dir, filename.as_str()))
     }
 
-    fn geyser_plugin_config(&mut self, home_dir: &str) -> &mut Command {
+    fn geyser_plugin_config(&mut self, home_dir: &str, filename: &str) -> &mut Command {
         self.arg("--geyser-plugin-config")
-            .arg(lib_path(home_dir, "geyser-plugin-config.json"))
+            .arg(lib_path(home_dir, filename))
     }
 
     fn network_url(&mut self, url: Option<String>) -> &mut Command {
