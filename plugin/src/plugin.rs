@@ -144,7 +144,8 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         self.inner.clone().spawn(|inner| async move {
             match status {
-                SlotStatus::Processed => {
+                // SlotStatus::Processed => {
+                SlotStatus::Confirmed => {
                     inner
                         .executors
                         .clone()

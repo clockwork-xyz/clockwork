@@ -120,21 +120,19 @@ impl TxExecutor {
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
-        if let Ok(pool_position) = client
-            .get_account_with_min_context_slot::<Pool>(&Pool::pubkey(0), slot)
-            .await
-            .map(|pool| {
-                let workers = &mut pool.workers.clone();
-                PoolPosition {
-                    current_position: pool
-                        .workers
-                        .iter()
-                        .position(|k| k.eq(&worker_pubkey))
-                        .map(|i| i as u64),
-                    workers: workers.make_contiguous().to_vec().clone(),
-                }
-            })
-        {
+        let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
+        log::info!("Get acc: {:?}", acc);
+        if let Ok(pool_position) = acc.map(|pool| {
+            let workers = &mut pool.workers.clone();
+            PoolPosition {
+                current_position: pool
+                    .workers
+                    .iter()
+                    .position(|k| k.eq(&worker_pubkey))
+                    .map(|i| i as u64),
+                workers: workers.make_contiguous().to_vec().clone(),
+            }
+        }) {
             info!("pool_position: {:?}", pool_position);
 
             // Rotate into the worker pool.
@@ -184,7 +182,8 @@ impl TxExecutor {
             match client
                 .get_signature_status_with_commitment(
                     &data.signature,
-                    CommitmentConfig::processed(),
+                    // CommitmentConfig::processed(),
+                    CommitmentConfig::confirmed(),
                 )
                 .await
             {
@@ -244,20 +243,11 @@ impl TxExecutor {
         slot: u64,
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
-        let registry = client
-            .get_account_with_min_context_slot::<Registry>(&Registry::pubkey(), slot)
-            .await
-            .unwrap();
+        let registry = client.get::<Registry>(&Registry::pubkey()).await.unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
         let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
-        if let Ok(snapshot) = client
-            .get_account_with_min_context_slot::<Snapshot>(&snapshot_pubkey, slot)
-            .await
-        {
-            if let Ok(snapshot_frame) = client
-                .get_account_with_min_context_slot::<SnapshotFrame>(&snapshot_frame_pubkey, slot)
-                .await
-            {
+        if let Ok(snapshot) = client.get::<Snapshot>(&snapshot_pubkey).await {
+            if let Ok(snapshot_frame) = client.get::<SnapshotFrame>(&snapshot_frame_pubkey).await {
                 if let Some(tx) = crate::builders::build_pool_rotation_tx(
                     client.clone(),
                     &self.keypair,
@@ -469,8 +459,9 @@ impl TxExecutor {
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
-                    commitment: None,
-                    min_context_slot: Some(min_context_slot),
+                    // commitment: None,
+                    // min_context_slot: Some(min_context_slot),
+                    commitment: Some(CommitmentConfig::confirmed()),
                     // commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
@@ -518,7 +509,8 @@ lazy_static! {
     static ref TPU_CLIENT: AsyncOnce<TpuClient> = AsyncOnce::new(async {
         let rpc_client = Arc::new(RpcClient::new_with_commitment(
             LOCAL_RPC_URL.into(),
-            CommitmentConfig::processed(),
+            // CommitmentConfig::processed(),
+            CommitmentConfig::confirmed()
         ));
         let tpu_client = TpuClient::new(
             rpc_client,

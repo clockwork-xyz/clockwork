@@ -88,7 +88,8 @@ pub async fn build_thread_exec_tx(
                 RpcSimulateTransactionConfig {
                     sig_verify: false,
                     replace_recent_blockhash: true,
-                    commitment: Some(CommitmentConfig::processed()),
+                    // commitment: Some(CommitmentConfig::processed()),
+                    commitment: Some(CommitmentConfig::confirmed()),
                     accounts: Some(RpcSimulateTransactionAccountsConfig {
                         encoding: Some(UiAccountEncoding::Base64Zstd),
                         addresses: vec![thread_pubkey.to_string()],
