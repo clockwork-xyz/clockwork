@@ -181,6 +181,7 @@ pub async fn build_thread_exec_tx(
     }
 
     // If there were no successful instructions, then exit early. There is nothing to do.
+    // Alternatively, exit early if only the kickoff instruction (and no execs) succeeded.
     if successful_ixs.is_empty() {
         return Ok(None);
     }

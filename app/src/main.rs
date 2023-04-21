@@ -71,6 +71,7 @@ fn App(cx: Scope) -> Element {
                 Route { to: "/keys/new", NewKeyPage{} }
                 Route { to: "/programs", ProgramsPage{} }
                 Route { to: "/programs/threads/:address", ThreadPage {} }
+                Route { to: "/programs/transaction/:signature", TransactionPage {} }
                 Route { to: "", NotFoundPage{} }
                 SearchPage {}
                 Chat {}

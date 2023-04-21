@@ -1,5 +1,6 @@
 use anchor_lang::solana_program::pubkey::Pubkey;
 use dioxus::prelude::*;
+use dioxus_router::Link;
 use solana_client_wasm::utils::rpc_response::RpcConfirmedTransactionStatusWithSignature;
 
 use crate::context::Client;
@@ -103,11 +104,12 @@ fn Row(cx: Scope<RowProps>) -> Element {
     } else {
         "Succcess"
     };
-    // let cell_class = "table-cell font-medium py-2 px-5 first:pl-3 first:w-full first:truncate last:pr-3";
+    
+    let id = cx.props.transaction.signature.to_string();
     cx.render(rsx! {
-        tr {
-            id: cx.props.elem_id.as_str(),
-            // class: "table-row font-mono text-sm transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
+        Link {
+            id,
+            to: "/programs/transaction/{id}",
             class: "table-row font-mono text-sm items-start transition hover:cursor-pointer hover:bg-slate-800 active:bg-slate-100 active:text-slate-900",
             td {
                 class: cell_class,

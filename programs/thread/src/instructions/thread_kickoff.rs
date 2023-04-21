@@ -12,6 +12,8 @@ use clockwork_utils::thread::Trigger;
 
 use crate::{errors::*, state::*};
 
+use super::TRANSACTION_BASE_FEE_REIMBURSEMENT;
+
 /// Accounts required by the `thread_kickoff` instruction.
 #[derive(Accounts)]
 pub struct ThreadKickoff<'info> {
@@ -40,6 +42,7 @@ pub struct ThreadKickoff<'info> {
 
 pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
     // Get accounts.
+    let signatory = &mut ctx.accounts.signatory;
     let thread = &mut ctx.accounts.thread;
     let clock = Clock::get().unwrap();
 
@@ -196,6 +199,18 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
 
     // Realloc the thread account
     thread.realloc()?;
+
+    // Reimburse signatory for transaction fee.
+    **thread.to_account_info().try_borrow_mut_lamports()? = thread
+        .to_account_info()
+        .lamports()
+        .checked_sub(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+        .unwrap();
+    **signatory.to_account_info().try_borrow_mut_lamports()? = signatory
+        .to_account_info()
+        .lamports()
+        .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
+        .unwrap();
 
     Ok(())
 }

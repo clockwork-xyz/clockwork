@@ -81,6 +81,7 @@ pub struct ExecContext {
     pub exec_index: u64,
 
     /// Number of execs since the last tx reimbursement.
+    /// To be deprecated in v3 since we now reimburse for every transaction.
     pub execs_since_reimbursement: u64,
 
     /// Number of execs in this slot.
