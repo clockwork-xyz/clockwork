@@ -1203,6 +1203,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork_metrics"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "async-trait",
+ "async_once",
+ "bincode",
+ "bs58 0.4.0",
+ "cargo_toml",
+ "clockwork-thread-program",
+ "clockwork-thread-program-v1",
+ "clockwork-utils",
+ "futures",
+ "log 0.4.17",
+ "prost",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "simple-error",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-geyser-plugin-interface",
+ "solana-logger",
+ "solana-program",
+ "solana-sdk",
+ "solana-transaction-status",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "clockwork_plugin"
 version = "2.0.15"
 dependencies = [
