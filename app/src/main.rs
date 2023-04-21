@@ -15,6 +15,9 @@ use hot_keys::HotKeys;
 use pages::*;
 use wasm_logger;
 
+use gloo_storage::{LocalStorage, Storage};
+use std::str::FromStr;
+
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
     dioxus_web::launch(App);
@@ -48,7 +51,10 @@ fn App(cx: Scope) -> Element {
         results: vec![],
     });
     use_shared_state_provider(cx, || User::default());
-    use_shared_state_provider(cx, || Client::new());
+    use_shared_state_provider(cx, || match LocalStorage::get::<String>("cluster") {
+        Ok(cluster) => Client::new_with_config(Cluster::from_str(&cluster.to_lowercase()).unwrap()),
+        Err(_) => Client::new(),
+    });
 
     cx.render(rsx! {
         div {
