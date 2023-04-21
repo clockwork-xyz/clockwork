@@ -126,7 +126,7 @@ impl Debug for Executors {
 #[async_trait]
 pub trait AccountGet {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T>;
-    async fn get_account_with_min_context_slot<T: AccountDeserialize>(
+    async fn get_account_with_min_context_slot<T: AccountDeserialize + Debug>(
         &self,
         pubkey: &Pubkey,
         min_context_slot: u64,
@@ -144,7 +144,7 @@ impl AccountGet for RpcClient {
         })
     }
 
-    async fn get_account_with_min_context_slot<T: AccountDeserialize>(
+    async fn get_account_with_min_context_slot<T: AccountDeserialize + Debug>(
         &self,
         pubkey: &Pubkey,
         min_context_slot: u64,
@@ -161,10 +161,12 @@ impl AccountGet for RpcClient {
             .value
             .unwrap()
             .data;
-        T::try_deserialize(&mut data.as_slice()).map_err(|_| {
+        let r = T::try_deserialize(&mut data.as_slice()).map_err(|_| {
             ClientError::from(ClientErrorKind::Custom(format!(
                 "Failed to deserialize account data"
             )))
-        })
+        });
+        log::info!("get_account min_slot: {:?} res: {:?}", min_context_slot, r);
+        r
     }
 }

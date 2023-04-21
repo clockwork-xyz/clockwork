@@ -135,6 +135,8 @@ impl TxExecutor {
                 }
             })
         {
+            info!("pool_position: {:?}", pool_position);
+
             // Rotate into the worker pool.
             if pool_position.current_position.is_none() {
                 self.clone()
