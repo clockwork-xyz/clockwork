@@ -83,6 +83,7 @@ impl TxExecutor {
         thread_pubkeys: HashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
+        pool: Pool,
     ) -> PluginResult<()> {
         // Index the provided threads as executable.
         let mut w_executable_threads = self.executable_threads.write().await;
@@ -120,35 +121,45 @@ impl TxExecutor {
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
-        let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
-        log::info!("Get acc: {:?}", acc);
-        if let Ok(pool_position) = acc.map(|pool| {
-            let workers = &mut pool.workers.clone();
-            PoolPosition {
-                current_position: pool
-                    .workers
-                    .iter()
-                    .position(|k| k.eq(&worker_pubkey))
-                    .map(|i| i as u64),
-                workers: workers.make_contiguous().to_vec().clone(),
-            }
-        }) {
-            info!("pool_position: {:?}", pool_position);
+        // let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
 
-            // Rotate into the worker pool.
-            if pool_position.current_position.is_none() {
-                self.clone()
-                    .execute_pool_rotate_txs(client.clone(), slot, pool_position.clone())
-                    .await
-                    .ok();
-            }
+        let workers = &mut pool.workers.clone();
+        let pool_position = PoolPosition {
+            current_position: pool
+                .workers
+                .iter()
+                .position(|k| k.eq(&worker_pubkey))
+                .map(|i| i as u64),
+            workers: workers.make_contiguous().to_vec().clone(),
+        };
+        // log::info!("Get acc: {:?}", acc);
+        // if let Ok(pool_position) = acc.map(|pool| {
+        //     let workers = &mut pool.workers.clone();
+        //     PoolPosition {
+        //         current_position: pool
+        //             .workers
+        //             .iter()
+        //             .position(|k| k.eq(&worker_pubkey))
+        //             .map(|i| i as u64),
+        //         workers: workers.make_contiguous().to_vec().clone(),
+        //     }
+        // }) {
+        info!("pool_position: {:?}", pool_position);
 
-            // Execute thread transactions.
+        // Rotate into the worker pool.
+        if pool_position.current_position.is_none() {
             self.clone()
-                .execute_thread_exec_txs(client.clone(), slot, pool_position, runtime.clone())
+                .execute_pool_rotate_txs(client.clone(), slot, pool_position.clone())
                 .await
                 .ok();
         }
+
+        // Execute thread transactions.
+        self.clone()
+            .execute_thread_exec_txs(client.clone(), slot, pool_position, runtime.clone())
+            .await
+            .ok();
+        // }
 
         Ok(())
     }
@@ -182,8 +193,7 @@ impl TxExecutor {
             match client
                 .get_signature_status_with_commitment(
                     &data.signature,
-                    // CommitmentConfig::processed(),
-                    CommitmentConfig::confirmed(),
+                    CommitmentConfig::processed(),
                 )
                 .await
             {
@@ -449,7 +459,7 @@ impl TxExecutor {
     async fn simulate_tx(
         self: Arc<Self>,
         tx: &Transaction,
-        min_context_slot: u64,
+        _min_context_slot: u64,
     ) -> PluginResult<Transaction> {
         TPU_CLIENT
             .get()
@@ -461,8 +471,7 @@ impl TxExecutor {
                     replace_recent_blockhash: false,
                     // commitment: None,
                     // min_context_slot: Some(min_context_slot),
-                    commitment: Some(CommitmentConfig::confirmed()),
-                    // commitment: Some(CommitmentConfig::processed()),
+                    commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
             )
@@ -509,8 +518,7 @@ lazy_static! {
     static ref TPU_CLIENT: AsyncOnce<TpuClient> = AsyncOnce::new(async {
         let rpc_client = Arc::new(RpcClient::new_with_commitment(
             LOCAL_RPC_URL.into(),
-            // CommitmentConfig::processed(),
-            CommitmentConfig::confirmed()
+            CommitmentConfig::processed(),
         ));
         let tpu_client = TpuClient::new(
             rpc_client,

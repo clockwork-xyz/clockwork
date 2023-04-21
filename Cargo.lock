@@ -1216,6 +1216,7 @@ dependencies = [
  "chrono",
  "clockwork-client",
  "clockwork-cron",
+ "clockwork-network-program",
  "clockwork-relayer-api",
  "clockwork-thread-program",
  "clockwork-thread-program-v1",

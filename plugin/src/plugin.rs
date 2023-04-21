@@ -115,6 +115,10 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
+                    AccountUpdateEvent::Pool { pool } => {
+                        log::info!("Observed new pool: {:?} slot: {:?}", pool, slot);
+                        inner.observers.thread.clone().observe_pool(pool).await.ok();
+                    }
                     AccountUpdateEvent::Webhook { webhook } => {
                         inner
                             .observers
@@ -144,8 +148,7 @@ impl GeyserPlugin for ClockworkPlugin {
     ) -> PluginResult<()> {
         self.inner.clone().spawn(|inner| async move {
             match status {
-                // SlotStatus::Processed => {
-                SlotStatus::Confirmed => {
+                SlotStatus::Processed => {
                     inner
                         .executors
                         .clone()
