@@ -8,7 +8,7 @@ use dioxus_router::Link;
 use solana_client_wasm::solana_sdk::account::Account;
 
 use crate::{
-    context::{Client, User},   
+    context::{Client, User, Cluster},   
     hooks::use_pagination,
     utils::{format_balance, format_timestamp}, components::page_control::PageControl,
 };
@@ -30,10 +30,12 @@ pub fn ThreadsTable(cx: Scope) -> Element {
         let paginated_threads = paginated_threads.clone();
         async move {
             is_loading.set(true);
-            let client = client_context.read();
-            let user_pubkey = user_context.read().pubkey.unwrap();
-            let threads = client.get_threads().await.unwrap();
-            let mut sorted_threads = threads.clone();
+            // the four lines under this comment are necessary because dioxus doesn't allow you to call <some use_shared_state hook>.read().async_function_call().await
+            // while also calling <the same use_shared_state hook>.read()/.write() in another async block
+            let cluster_config = client_context.read().cluster.clone();
+            drop(client_context);
+            let mut sorted_threads = get_threads(cluster_config).await;
+            let current_clock = get_clock(cluster_config).await; 
             sorted_threads.sort_by(|a, b| {
                  if let Some(exec_context_a) = a.0.exec_context() {
                      if let Some(exec_context_b) = b.0.exec_context() {
@@ -46,6 +48,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
                  }
             });
             if *filter.get() {
+                let user_pubkey = user_context.read().pubkey.unwrap();
                 let filtered_threads = sorted_threads.clone();
                     let ft = filtered_threads
                         .into_iter()
@@ -55,7 +58,7 @@ pub fn ThreadsTable(cx: Scope) -> Element {
             } else {
                 paginated_threads.set(sorted_threads);
             }
-            clock.set(client.get_clock().await.ok());
+            clock.set(current_clock);
             is_loading.set(false);
         } 
     });
@@ -484,4 +487,14 @@ fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
         .map(|datetime| datetime.timestamp()),
         Err(_err) => None
     }
+}
+
+// This function is needed to decouple reading of the client context with a .await call
+async fn get_threads(cluster: Cluster) -> Vec<(VersionedThread, Account)> {
+    let client = Client::new_with_config(cluster);
+    client.get_threads().await.unwrap()
+}
+async fn get_clock(cluster: Cluster) -> Option<Clock> {
+    let client = Client::new_with_config(cluster);
+    client.get_clock().await.ok()
 }
