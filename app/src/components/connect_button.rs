@@ -1,15 +1,16 @@
 use clockwork_utils::pubkey::Abbreviated;
 use dioxus::prelude::*;
-use dioxus_router::{use_route, use_router};
+use dioxus_router::{use_route, use_router, RouterService};
 use gloo_events::EventListener;
 use gloo_storage::{LocalStorage, Storage};
 use solana_client_wasm::solana_sdk::pubkey::Pubkey;
-use std::str::FromStr;
+use std::{rc::Rc, str::FromStr};
+use url::Url;
 
 use super::backpack::backpack;
 use crate::{
     context::{Client, Cluster, User},
-    utils::{current_route, format_balance},
+    utils::format_balance,
 };
 
 pub fn ConnectButton(cx: Scope) -> Element {
@@ -24,95 +25,38 @@ pub fn ConnectButton(cx: Scope) -> Element {
         .query_param("cluster")
         .unwrap_or(std::borrow::Cow::Borrowed(""))
         .into_owned();
-    let url = route.url().to_string();
-    let current_route = current_route(&url).unwrap();
+    let url = Url::parse(&route.url().to_string()).unwrap();
+    let current_route = if url.path() == "/" {
+        String::from("/accounts")
+    } else {
+        String::from_str(url.path()).unwrap()
+    };
 
-    use_effect(cx, (), |_| {
+    // handle cluster config with query param and local storage
+    use_effect(cx, (&url,), |_| {
         let user_context = user_context.clone();
         let client_context = client_context.clone();
         let current_route = current_route.clone();
 
         to_owned![router];
         async move {
-            match LocalStorage::get::<User>("user_context") {
-                Ok(u) => {
-                    // load cached user into user context
-                    // TODO: update stale data in cache after X amount of time.
-                    let mut uc_write = user_context.write();
-                    uc_write.account = u.account;
-                    uc_write.pubkey = u.pubkey;
-                    // query param: ?cluster=devnet || ?cluster=mainnet
-                    if cluster_query_param.eq("devnet") || cluster_query_param.eq("mainnet") {
-                        // load local storage "cluster"
-                        match LocalStorage::get::<Cluster>("cluster") {
-                            Ok(cached_cluster) => {
-                                let cluster_from_query_param =
-                                    Cluster::from_str(&cluster_query_param).unwrap();
-                                // if cached cluster is different than query param, cache query param
-                                if cached_cluster.ne(&cluster_from_query_param) {
-                                    *client_context.write() =
-                                        Client::new_with_config(cluster_from_query_param);
-                                    LocalStorage::set(
-                                        "cluster",
-                                        &cluster_from_query_param.to_string(),
-                                    )
-                                    .unwrap();
-                                }
-
-                                router.navigate_to(
-                                    format!(
-                                        "{}?cluster={}",
-                                        current_route,
-                                        cluster_from_query_param.to_string()
-                                    )
-                                    .as_str(),
-                                );
-                            }
-                            Err(_err) => {
-                                log::info!(
-                                "cached cluster not found despite being logged in, caching query paramater: {}",
-                                cluster_query_param
-                            );
-                                LocalStorage::set("cluster", &cluster_query_param).unwrap();
-                                let cluster_from_from_query_param =
-                                    Cluster::from_str(&cluster_query_param).unwrap();
-                                *client_context.write() =
-                                    Client::new_with_config(cluster_from_from_query_param);
-                                router.navigate_to(
-                                    format!(
-                                        "{}?cluster={}",
-                                        current_route,
-                                        &cluster_from_from_query_param.to_string()
-                                    )
-                                    .as_str(),
-                                );
-                            }
-                        }
-                    }
-                }
-                Err(_err) => {
-                    log::info!("user is NOT logged in");
-                    if cluster_query_param.eq("devnet") || cluster_query_param.eq("mainnet") {
-                        let cluster_from_from_query_param =
-                            Cluster::from_str(&cluster_query_param).unwrap();
-                        *client_context.write() =
-                            Client::new_with_config(cluster_from_from_query_param);
-                        router.navigate_to(
-                            format!(
-                                "{}?cluster={}",
-                                current_route,
-                                &cluster_from_from_query_param.to_string()
-                            )
-                            .as_str(),
-                        );
-                    } else {
-                        router.navigate_to(format!("{}?cluster=mainnet", current_route).as_str());
-                    }
-                }
+            if let Ok(user) = LocalStorage::get::<User>("user_context") {
+                log::info!("user is logged in!");
+                // TODO: refetch user account data/ask user to log in after a certain timeframe
+                let mut uc_write = user_context.write();
+                uc_write.account = user.account;
+                uc_write.pubkey = user.pubkey;
             }
+            update_cluster_and_navigate(
+                cluster_query_param,
+                client_context,
+                &router,
+                &current_route,
+            );
         }
     });
 
+    // wallet connect flow
     let handle_click = move |_| {
         cx.spawn({
             let user_context = user_context.clone();
@@ -141,6 +85,7 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                     drop(user_context_read);
                                     user_context.write().account = Some(acc.clone());
                                     user_context.write().pubkey = Some(pubkey);
+                                    log::info!("A");
                                     LocalStorage::set(
                                         "user_context",
                                         User {
@@ -149,8 +94,11 @@ pub fn ConnectButton(cx: Scope) -> Element {
                                         },
                                     )
                                     .unwrap();
-                                    LocalStorage::set("cluster", client_context.cluster.clone())
-                                        .unwrap();
+                                    LocalStorage::set(
+                                        "cluster",
+                                        client_context.cluster.to_string().to_lowercase(),
+                                    )
+                                    .unwrap();
                                 }
 
                                 Err(err) => log::info!("Failed to get user account: {:?}", err),
@@ -178,7 +126,8 @@ pub fn ConnectButton(cx: Scope) -> Element {
                         "mainnet" | "devnet" => {
                             let cluster = Cluster::from_str(e_id).unwrap();
                             *client_context.write() = Client::new_with_config(cluster);
-                            LocalStorage::set("cluster", cluster.to_string()).unwrap();
+                            LocalStorage::set("cluster", cluster.to_string().to_lowercase())
+                                .unwrap();
                             router.navigate_to(
                                 format!("{}?cluster={}", current_route, cluster.to_string())
                                     .as_str(),
@@ -213,6 +162,10 @@ pub fn ConnectButton(cx: Scope) -> Element {
             }
         })
         .collect();
+    // log::info!(
+    //     "client_context.read().cluster: {}",
+    //     client_context.read().cluster.to_string()
+    // );
 
     cx.render(rsx! {
         button {
@@ -289,4 +242,51 @@ fn Balance(cx: Scope) -> Element {
             user_balance
         }
     })
+}
+
+fn update_cluster_and_navigate(
+    cluster_query_param: String,
+    client_context: UseSharedState<Client>,
+    router: &Rc<RouterService>,
+    current_route: &str,
+) {
+    let cluster_from_query_param = get_cluster_from_query_param(cluster_query_param);
+    let cached_cluster = get_cached_cluster();
+
+    let cluster_to_use = cluster_from_query_param
+        .or(cached_cluster
+            .as_ref()
+            .map(|s| Cluster::from_str(&s))
+            .transpose()
+            .unwrap())
+        .unwrap_or_else(|| Cluster::from_str("mainnet").unwrap());
+
+    update_client_context_and_cache(client_context, cluster_to_use);
+    navigate_to_route_with_cluster(router, current_route, &cluster_to_use.to_string());
+}
+
+fn get_cluster_from_query_param(query_param: String) -> Option<Cluster> {
+    if query_param.eq("devnet") || query_param.eq("mainnet") {
+        Cluster::from_str(&query_param).ok()
+    } else {
+        None
+    }
+}
+
+fn get_cached_cluster() -> Option<String> {
+    LocalStorage::get::<String>("cluster").ok()
+}
+
+fn update_client_context_and_cache(client_context: UseSharedState<Client>, cluster: Cluster) {
+    log::info!("updating cluster cache to: {}", cluster.to_string());
+    *client_context.write() = Client::new_with_config(cluster);
+    LocalStorage::set("cluster", &cluster.to_string().to_lowercase()).unwrap();
+}
+
+fn navigate_to_route_with_cluster(
+    router: &Rc<RouterService>,
+    current_route: &str,
+    cluster_query_param: &str,
+) {
+    router.navigate_to(format!("{}?cluster={}", current_route, cluster_query_param).as_str());
 }
