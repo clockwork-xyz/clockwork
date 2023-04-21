@@ -153,7 +153,7 @@ impl AccountGet for RpcClient {
             encoding: Some(UiAccountEncoding::Base64Zstd),
             data_slice: None,
             commitment: None,
-            min_context_slot: Some(min_context_slot),
+            min_context_slot: Some(min_context_slot - 1),
         };
         let data = self
             .get_account_with_config(pubkey, config)
