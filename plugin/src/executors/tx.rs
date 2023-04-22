@@ -45,11 +45,15 @@ static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 /// The constant of the exponential backoff function.
 static EXPONENTIAL_BACKOFF_CONSTANT: u32 = 2;
 
+/// The number of slots to wait since the last rotation attempt.
+static ROTATION_CONFIRMATION_PERIOD: u64 = 9;
+
 /// TxExecutor
 pub struct TxExecutor {
     pub config: PluginConfig,
     pub executable_threads: RwLock<HashMap<Pubkey, ExecutableThreadMetadata>>,
     pub transaction_history: RwLock<HashMap<Pubkey, TransactionMetadata>>,
+    pub rotation_history: RwLock<Option<TransactionMetadata>>,
     pub dropped_threads: AtomicU64,
     pub keypair: Keypair,
 }
@@ -72,6 +76,7 @@ impl TxExecutor {
             config: config.clone(),
             executable_threads: RwLock::new(HashMap::new()),
             transaction_history: RwLock::new(HashMap::new()),
+            rotation_history: RwLock::new(None),
             dropped_threads: AtomicU64::new(0),
             keypair: read_or_new_keypair(config.keypath),
         }
@@ -83,7 +88,6 @@ impl TxExecutor {
         thread_pubkeys: HashSet<Pubkey>,
         slot: u64,
         runtime: Arc<Runtime>,
-        pool: Pool,
     ) -> PluginResult<()> {
         // Index the provided threads as executable.
         let mut w_executable_threads = self.executable_threads.write().await;
@@ -121,45 +125,35 @@ impl TxExecutor {
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
-        // let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
+        let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
+        log::info!("Get acc: {:?}", acc);
+        if let Ok(pool_position) = acc.map(|pool| {
+            let workers = &mut pool.workers.clone();
+            PoolPosition {
+                current_position: pool
+                    .workers
+                    .iter()
+                    .position(|k| k.eq(&worker_pubkey))
+                    .map(|i| i as u64),
+                workers: workers.make_contiguous().to_vec().clone(),
+            }
+        }) {
+            info!("pool_position: {:?}", pool_position);
 
-        let workers = &mut pool.workers.clone();
-        let pool_position = PoolPosition {
-            current_position: pool
-                .workers
-                .iter()
-                .position(|k| k.eq(&worker_pubkey))
-                .map(|i| i as u64),
-            workers: workers.make_contiguous().to_vec().clone(),
-        };
-        // log::info!("Get acc: {:?}", acc);
-        // if let Ok(pool_position) = acc.map(|pool| {
-        //     let workers = &mut pool.workers.clone();
-        //     PoolPosition {
-        //         current_position: pool
-        //             .workers
-        //             .iter()
-        //             .position(|k| k.eq(&worker_pubkey))
-        //             .map(|i| i as u64),
-        //         workers: workers.make_contiguous().to_vec().clone(),
-        //     }
-        // }) {
-        info!("pool_position: {:?}", pool_position);
+            // Rotate into the worker pool.
+            if pool_position.current_position.is_none() {
+                self.clone()
+                    .execute_pool_rotate_txs(client.clone(), slot, pool_position.clone())
+                    .await
+                    .ok();
+            }
 
-        // Rotate into the worker pool.
-        if pool_position.current_position.is_none() {
+            // Execute thread transactions.
             self.clone()
-                .execute_pool_rotate_txs(client.clone(), slot, pool_position.clone())
+                .execute_thread_exec_txs(client.clone(), slot, pool_position, runtime.clone())
                 .await
                 .ok();
         }
-
-        // Execute thread transactions.
-        self.clone()
-            .execute_thread_exec_txs(client.clone(), slot, pool_position, runtime.clone())
-            .await
-            .ok();
-        // }
 
         Ok(())
     }
@@ -253,6 +247,38 @@ impl TxExecutor {
         slot: u64,
         pool_position: PoolPosition,
     ) -> PluginResult<()> {
+        let r_rotation_history = self.rotation_history.read().await;
+        log::info!("Rotation history {:?}", r_rotation_history);
+        let should_attempt = if r_rotation_history.is_some() {
+            let rotation_history = r_rotation_history.as_ref().unwrap();
+            if slot
+                > rotation_history
+                    .slot_sent
+                    .checked_add(ROTATION_CONFIRMATION_PERIOD)
+                    .unwrap()
+            {
+                if let Ok(sig_status) = client
+                    .get_signature_status(&rotation_history.signature)
+                    .await
+                {
+                    if let Some(status) = sig_status {
+                        status.is_err()
+                    } else {
+                        true
+                    }
+                } else {
+                    true
+                }
+            } else {
+                false
+            }
+        } else {
+            true
+        };
+        drop(r_rotation_history);
+        if !should_attempt {
+            return Ok(());
+        }
         let registry = client.get::<Registry>(&Registry::pubkey()).await.unwrap();
         let snapshot_pubkey = Snapshot::pubkey(registry.current_epoch);
         let snapshot_frame_pubkey = SnapshotFrame::pubkey(snapshot_pubkey, self.config.worker_id);
@@ -271,6 +297,12 @@ impl TxExecutor {
                 {
                     self.clone().simulate_tx(&tx, slot).await?;
                     self.clone().submit_tx(&tx).await?;
+                    let mut w_rotation_history = self.rotation_history.write().await;
+                    *w_rotation_history = Some(TransactionMetadata {
+                        slot_sent: slot,
+                        signature: tx.signatures[0],
+                    });
+                    drop(w_rotation_history);
                 }
             }
         }

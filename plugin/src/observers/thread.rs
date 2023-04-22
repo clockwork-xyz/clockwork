@@ -45,9 +45,6 @@ pub struct ThreadObserver {
 
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
-
-    // Map from pool ids to the last seen pool.
-    pub pools: RwLock<HashMap<u64, Pool>>,
 }
 
 impl ThreadObserver {
@@ -61,7 +58,6 @@ impl ThreadObserver {
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
-            pools: RwLock::new(HashMap::new()),
         }
     }
 
@@ -143,13 +139,6 @@ impl ThreadObserver {
         drop(w_now_threads);
 
         Ok(executable_threads)
-    }
-
-    pub async fn observe_pool(self: Arc<Self>, pool: Pool) -> PluginResult<()> {
-        let mut w_pools = self.pools.write().await;
-        w_pools.insert(pool.id, pool);
-        drop(w_pools);
-        Ok(())
     }
 
     pub async fn observe_clock(self: Arc<Self>, clock: Clock) -> PluginResult<()> {

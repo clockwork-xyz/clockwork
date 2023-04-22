@@ -115,10 +115,6 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
-                    AccountUpdateEvent::Pool { pool } => {
-                        log::info!("Observed new pool: {:?} slot: {:?}", pool, slot);
-                        inner.observers.thread.clone().observe_pool(pool).await.ok();
-                    }
                     AccountUpdateEvent::Webhook { webhook } => {
                         inner
                             .observers

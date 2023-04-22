@@ -86,20 +86,15 @@ impl Executors {
         let executable_threads = observers.thread.clone().process_slot(slot).await?;
 
         // Process the slot in the transaction executor.
-        let r_pool = observers.thread.pools.read().await;
-        if let Some(pool) = r_pool.get(&0) {
-            self.tx
-                .clone()
-                .execute_txs(
-                    self.client.clone(),
-                    executable_threads,
-                    slot,
-                    runtime.clone(),
-                    pool.clone(),
-                )
-                .await?;
-        }
-        drop(r_pool);
+        self.tx
+            .clone()
+            .execute_txs(
+                self.client.clone(),
+                executable_threads,
+                slot,
+                runtime.clone(),
+            )
+            .await?;
 
         // Process webhook requests.
         let executable_webhooks = observers.webhook.clone().process_slot(slot).await?;
