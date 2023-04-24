@@ -15,7 +15,7 @@ EOF
 }
 
 # Set build flags
-maybeRustVersion=
+maybeRustVersion=+1.60.0
 installDir=
 buildVariant=debug
 maybeReleaseFlag=
@@ -46,6 +46,10 @@ else
   echo OS unsupported
   exit 1
 fi
+
+# Install 1.60 if not installed
+rustup install "${maybeRustVersion:1}"
+
 
 # Check the install directory is provided
 if [[ -z "$installDir" ]]; then
