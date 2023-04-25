@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 use bincode::deserialize;
-use clockwork_client::{network::state::Pool, webhook::state::Webhook};
+use clockwork_client::webhook::state::Webhook;
 use clockwork_thread_program::state::{Thread as ThreadV2, VersionedThread};
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{

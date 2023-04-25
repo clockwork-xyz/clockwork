@@ -6,10 +6,7 @@ use std::{
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::{
-    network::state::Pool,
-    thread::state::{Trigger, TriggerContext},
-};
+use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
 use clockwork_thread_program::state::VersionedThread;
 use log::info;
