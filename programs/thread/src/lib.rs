@@ -95,4 +95,25 @@ pub mod thread_program {
     pub fn thread_withdraw(ctx: Context<ThreadWithdraw>, amount: u64) -> Result<()> {
         thread_withdraw::handler(ctx, amount)
     }
+
+    /// Allows the owner to create an account to hold lookup tables
+    pub fn thread_lookup_tables_create(ctx: Context<LookupTablesCreate>, address_lookup_tables: Vec<Pubkey>) -> Result<()> {
+        thread_lookup_tables_create::handler(ctx, address_lookup_tables)
+    }
+    
+    /// Allows the owner to add lookup tables
+    pub fn thread_lookup_tables_add(ctx: Context<LookupTablesAdd>, address_lookup_tables: Vec<Pubkey>) -> Result<()> {
+        thread_lookup_tables_add::handler(ctx, address_lookup_tables)
+    }
+    
+    /// Allows the owner to remove a lookup table
+    pub fn thread_lookup_tables_remove(ctx: Context<LookupTablesRemove>, index: u64) -> Result<()> {
+        thread_lookup_tables_remove::handler(ctx, index)
+    }
+
+    /// Allows the owner to delete the lookup account
+    pub fn thread_lookup_tables_delete(ctx: Context<LookupTablesDelete>) -> Result<()> {
+        thread_lookup_tables_delete::handler(ctx)
+    }
+
 }

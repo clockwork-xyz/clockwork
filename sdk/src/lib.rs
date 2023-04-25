@@ -15,11 +15,11 @@ pub mod utils {
 }
 
 pub mod cpi {
-    use anchor_lang::prelude::{CpiContext, Result};
+    use anchor_lang::prelude::{CpiContext, Result, Pubkey};
 
     pub use clockwork_thread_program::cpi::accounts::{
         ThreadCreate, ThreadDelete, ThreadPause, ThreadReset, ThreadResume, ThreadUpdate,
-        ThreadWithdraw,
+        ThreadWithdraw, LookupTablesAdd, LookupTablesCreate, LookupTablesDelete, LookupTablesRemove
     };
 
     pub fn thread_create<'info>(
@@ -68,5 +68,32 @@ pub mod cpi {
         amount: u64,
     ) -> Result<()> {
         clockwork_thread_program::cpi::thread_withdraw(ctx, amount)
+    }
+    
+    pub fn thread_lookup_tables_create<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesCreate<'info>>,
+        address_lookup_tables: Vec<Pubkey>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_create(ctx, address_lookup_tables)
+    }
+
+    pub fn thread_lookup_tables_add<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesAdd<'info>>,
+        address_lookup_tables: Vec<Pubkey>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_add(ctx, address_lookup_tables)
+    }
+    
+    pub fn thread_lookup_tables_remove<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesRemove<'info>>,
+        index: u64,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_remove(ctx, index)
+    }
+    
+    pub fn thread_lookup_tables_delete<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesDelete<'info>>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_delete(ctx)
     }
 }
