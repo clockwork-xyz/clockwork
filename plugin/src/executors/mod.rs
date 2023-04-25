@@ -12,11 +12,9 @@ use std::{
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use async_trait::async_trait;
 use log::info;
-use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     client_error::{ClientError, ClientErrorKind, Result as ClientResult},
     nonblocking::rpc_client::RpcClient,
-    rpc_config::RpcAccountInfoConfig,
 };
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
 use solana_sdk::commitment_config::CommitmentConfig;
