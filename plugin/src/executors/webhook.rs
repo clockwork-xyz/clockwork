@@ -60,7 +60,7 @@ impl WebhookExecutor {
             let url = "http://127.0.0.1:8000/relay";
             let client = reqwest::Client::new();
             // for request_pubkey in requests {
-            let res = dbg!(
+            let _res = dbg!(
                 client
                     .post(url)
                     .header(CONTENT_TYPE, "application/json")
