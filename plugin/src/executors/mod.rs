@@ -126,11 +126,6 @@ impl Debug for Executors {
 #[async_trait]
 pub trait AccountGet {
     async fn get<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> ClientResult<T>;
-    // async fn get_account_with_min_context_slot<T: AccountDeserialize + Debug>(
-    //     &self,
-    //     pubkey: &Pubkey,
-    //     min_context_slot: u64,
-    // ) -> ClientResult<T>;
 }
 
 #[async_trait]
@@ -143,44 +138,4 @@ impl AccountGet for RpcClient {
             )))
         })
     }
-
-    // async fn get_account_with_min_context_slot<T: AccountDeserialize + Debug>(
-    //     &self,
-    //     pubkey: &Pubkey,
-    //     min_context_slot: u64,
-    // ) -> ClientResult<T> {
-    //     let config = RpcAccountInfoConfig {
-    //         encoding: Some(UiAccountEncoding::Base64Zstd),
-    //         data_slice: None,
-    //         commitment: None,
-    //         min_context_slot: Some(min_context_slot.saturating_sub(8)),
-    //     };
-    //     log::info!(
-    //         "Getting account: {:?} min_context_slot: {:?}",
-    //         pubkey,
-    //         min_context_slot,
-    //     );
-    //     match self.get_account_with_config(pubkey, config).await?.value {
-    //         None => {
-    //             log::info!(
-    //                 "Account not found: {:?} min_context_slot: {:?}",
-    //                 pubkey,
-    //                 min_context_slot,
-    //             );
-    //             Err(ClientError::from(ClientErrorKind::Custom(String::from(
-    //                 "Account not found",
-    //             ))))
-    //         }
-    //         Some(v) => {
-    //             log::info!("Got pool: {:?}", v);
-    //             let r = T::try_deserialize(&mut v.data.as_slice()).map_err(|_| {
-    //                 ClientError::from(ClientErrorKind::Custom(format!(
-    //                     "Failed to deserialize account data"
-    //                 )))
-    //             });
-    //             log::info!("get_account min_slot: {:?} res: {:?}", min_context_slot, r);
-    //             r
-    //         }
-    //     }
-    // }
 }

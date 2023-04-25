@@ -125,9 +125,7 @@ impl TxExecutor {
 
         // Get self worker's position in the delegate pool.
         let worker_pubkey = Worker::pubkey(self.config.worker_id);
-        let acc = client.get::<Pool>(&Pool::pubkey(0)).await;
-        log::info!("Get acc: {:?}", acc);
-        if let Ok(pool_position) = acc.map(|pool| {
+        if let Ok(pool_position) = (client.get::<Pool>(&Pool::pubkey(0)).await).map(|pool| {
             let workers = &mut pool.workers.clone();
             PoolPosition {
                 current_position: pool
@@ -295,7 +293,7 @@ impl TxExecutor {
                 )
                 .await
                 {
-                    self.clone().simulate_tx(&tx, slot).await?;
+                    self.clone().simulate_tx(&tx).await?;
                     self.clone().submit_tx(&tx).await?;
                     let mut w_rotation_history = self.rotation_history.write().await;
                     *w_rotation_history = Some(TransactionMetadata {
@@ -488,11 +486,7 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn simulate_tx(
-        self: Arc<Self>,
-        tx: &Transaction,
-        _min_context_slot: u64,
-    ) -> PluginResult<Transaction> {
+    async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
         TPU_CLIENT
             .get()
             .await
@@ -501,8 +495,6 @@ impl TxExecutor {
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
-                    // commitment: None,
-                    // min_context_slot: Some(min_context_slot),
                     commitment: Some(CommitmentConfig::processed()),
                     ..RpcSimulateTransactionConfig::default()
                 },
@@ -555,7 +547,7 @@ lazy_static! {
         let tpu_client = TpuClient::new(
             rpc_client,
             LOCAL_WEBSOCKET_URL.into(),
-            TpuClientConfig::default(),
+            TpuClientConfig { fanout_slots: 24 },
         )
         .await
         .unwrap();
