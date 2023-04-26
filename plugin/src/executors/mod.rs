@@ -11,12 +11,15 @@ use std::{
 
 use anchor_lang::{prelude::Pubkey, AccountDeserialize};
 use async_trait::async_trait;
+use clockwork_thread_program::state::LookupTables;
 use log::info;
+use solana_address_lookup_table_program::state::AddressLookupTable;
 use solana_client::{
     client_error::{ClientError, ClientErrorKind, Result as ClientResult},
     nonblocking::rpc_client::RpcClient,
 };
 use solana_geyser_plugin_interface::geyser_plugin_interface::Result as PluginResult;
+use solana_program::address_lookup_table_account::AddressLookupTableAccount;
 use solana_sdk::commitment_config::CommitmentConfig;
 use tokio::runtime::Runtime;
 use tx::TxExecutor;
@@ -135,5 +138,62 @@ impl AccountGet for RpcClient {
                 "Failed to deserialize account data"
             )))
         })
+    }
+}
+
+#[async_trait]
+pub trait LookupTablesGet {
+    async fn get_lookup_tables(
+        &self,
+        pubkey: &Pubkey,
+    ) -> ClientResult<Vec<AddressLookupTableAccount>>;
+}
+
+#[async_trait]
+impl LookupTablesGet for RpcClient {
+    async fn get_lookup_tables(
+        &self,
+        pubkey: &Pubkey,
+    ) -> ClientResult<Vec<AddressLookupTableAccount>> {
+        let lookup_account = self
+            .get_account_with_commitment(pubkey, self.commitment()) // returns Ok(None) if lookup account is not initialized
+            .await
+            .expect("error getting lookup account")
+            .value;
+        match lookup_account {
+            // return empty vec if lookup account has not been initialized
+            None => Ok(vec![]),
+
+            // get lookup tables in lookup accounts if account has been initialized
+            Some(lookup) => {
+                let lookup_keys = LookupTables::try_deserialize(&mut lookup.data.as_slice())
+                    .map_err(|_| {
+                        ClientError::from(ClientErrorKind::Custom(format!(
+                            "Failed to deserialize account data"
+                        )))
+                    })
+                    .expect("Failed to deserialize lookup data")
+                    .lookup_tables;
+
+                let mut lookup_tables: Vec<AddressLookupTableAccount> = vec![];
+
+                for key in lookup_keys {
+                    let raw_account = self
+                        .get_account(&key)
+                        .await
+                        .expect("Could not fetch Address Lookup Table account");
+                    let address_lookup_table = AddressLookupTable::deserialize(&raw_account.data)
+                        .expect("Could not deserialise Address Lookup Table");
+                    let address_lookup_table_account = AddressLookupTableAccount {
+                        key,
+                        addresses: address_lookup_table.addresses.to_vec(),
+                    };
+
+                    lookup_tables.push(address_lookup_table_account)
+                }
+
+                return Ok(lookup_tables);
+            }
+        }
     }
 }

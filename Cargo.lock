@@ -1275,6 +1275,7 @@ dependencies = [
  "serde_json",
  "simple-error",
  "solana-account-decoder",
+ "solana-address-lookup-table-program",
  "solana-client",
  "solana-geyser-plugin-interface",
  "solana-logger",

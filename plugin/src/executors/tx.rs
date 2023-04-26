@@ -10,7 +10,7 @@ use std::{
 use async_once::AsyncOnce;
 use bincode::serialize;
 use clockwork_network_program::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
-use clockwork_thread_program::state::VersionedThread;
+use clockwork_thread_program::state::{LookupTables, VersionedThread};
 use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
@@ -31,7 +31,7 @@ use tokio::{runtime::Runtime, sync::RwLock};
 
 use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
 
-use super::AccountGet;
+use super::{AccountGet, LookupTablesGet};
 
 /// Number of slots to wait before checking for a confirmed transaction.
 static TRANSACTION_CONFIRMATION_PERIOD: u64 = 24;
@@ -443,6 +443,14 @@ impl TxExecutor {
                 return None;
             }
         }
+        let lookup_tables_key = LookupTables::pubkey(thread.authority(), thread.pubkey());
+        
+        let address_lookup_tables = match client.clone().get_lookup_tables(&lookup_tables_key).await {
+            Err(_err) => {
+                return None;
+            }
+            Ok(address_lookup_tables) => address_lookup_tables,
+        };
 
         if let Ok(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
@@ -451,6 +459,7 @@ impl TxExecutor {
             thread,
             thread_pubkey,
             self.config.worker_id,
+            address_lookup_tables
         )
         .await
         {
