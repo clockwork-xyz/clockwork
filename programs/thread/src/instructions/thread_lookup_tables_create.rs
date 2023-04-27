@@ -8,7 +8,7 @@ use anchor_lang::{
 use crate::state::*;
 
 
-/// Accounts required by the `thread_create` instruction.
+/// Accounts required by the `thread_lookup_tables_create` instruction.
 #[derive(Accounts)]
 #[instruction(address_lookup_tables: Vec<Pubkey>)]
 pub struct LookupTablesCreate<'info> {
@@ -36,7 +36,7 @@ pub struct LookupTablesCreate<'info> {
     )]
     pub thread: Account<'info, Thread>,
 
-    /// The thread to be created.
+    /// The lookup_tables account to be created.
     #[account(
         init,
         seeds = [
