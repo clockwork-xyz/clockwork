@@ -8,8 +8,9 @@ use std::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::VersionedThread;
+use clockwork_thread_program::state::{Equality, VersionedThread};
 use log::info;
+use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
@@ -41,10 +42,17 @@ pub struct ThreadObserver {
     pub epoch_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
     // The set of threads with a pyth trigger.
-    pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
+    pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<PythThread>>>,
 
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
+}
+
+#[derive(Eq, Hash, PartialEq)]
+pub struct PythThread {
+    pub thread_pubkey: Pubkey,
+    pub equality: Equality,
+    pub limit: i64,
 }
 
 impl ThreadObserver {
@@ -162,6 +170,44 @@ impl ThreadObserver {
             drop(w_updated_accounts);
         }
         drop(r_account_threads);
+        Ok(())
+    }
+
+    pub async fn observe_price_feed(
+        self: Arc<Self>,
+        account_pubkey: Pubkey,
+        price_feed: PriceFeed,
+    ) -> PluginResult<()> {
+        let r_pyth_threads = self.pyth_threads.read().await;
+        if let Some(pyth_threads) = r_pyth_threads.get(&account_pubkey) {
+            for pyth_thread in pyth_threads {
+                match pyth_thread.equality {
+                    Equality::GreaterThanOrEqual => {
+                        if price_feed
+                            .get_price_unchecked()
+                            .price
+                            .ge(&pyth_thread.limit)
+                        {
+                            let mut w_updated_accounts = self.updated_accounts.write().await;
+                            w_updated_accounts.insert(account_pubkey);
+                            drop(w_updated_accounts);
+                        }
+                    }
+                    Equality::LessThanOrEqual => {
+                        if price_feed
+                            .get_price_unchecked()
+                            .price
+                            .le(&pyth_thread.limit)
+                        {
+                            let mut w_updated_accounts = self.updated_accounts.write().await;
+                            w_updated_accounts.insert(account_pubkey);
+                            drop(w_updated_accounts);
+                        }
+                    }
+                }
+            }
+        }
+        drop(r_pyth_threads);
         Ok(())
     }
 
@@ -296,11 +342,19 @@ impl ThreadObserver {
                     w_pyth_threads
                         .entry(price_feed)
                         .and_modify(|v| {
-                            v.insert(thread_pubkey);
+                            v.insert(PythThread {
+                                thread_pubkey,
+                                equality: equality.clone(),
+                                limit,
+                            });
                         })
                         .or_insert_with(|| {
                             let mut v = HashSet::new();
-                            v.insert(thread_pubkey);
+                            v.insert(PythThread {
+                                thread_pubkey,
+                                equality,
+                                limit,
+                            });
                             v
                         });
                     drop(w_pyth_threads);

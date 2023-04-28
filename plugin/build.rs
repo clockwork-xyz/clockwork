@@ -4,7 +4,7 @@ use std::process::Command;
 
 fn main() {
     let rustc_v = version().unwrap().to_string();
-    let expected_v = "1.65.0".to_string();
+    let expected_v = "1.60.0".to_string();
 
     // Check for a minimum version
     if rustc_v != expected_v {

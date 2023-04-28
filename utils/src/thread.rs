@@ -89,7 +89,7 @@ pub enum Trigger {
 
 /// Values for comparing
 #[repr(u8)]
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Equality {
     GreaterThanOrEqual,
     LessThanOrEqual,

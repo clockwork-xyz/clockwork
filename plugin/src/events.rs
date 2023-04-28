@@ -3,7 +3,7 @@ use bincode::deserialize;
 use clockwork_client::webhook::state::Webhook;
 use clockwork_thread_program::state::{Thread as ThreadV2, VersionedThread};
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
-use pyth_sdk_solana::load_price_feed_from_account_info;
+use pyth_sdk_solana::{load_price_feed_from_account_info, PriceFeed};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
@@ -19,7 +19,7 @@ static PYTH_ORACLE_PROGRAM_ID_DEVNET: Pubkey =
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     Thread { thread: VersionedThread },
-    // Price { price: Price },
+    PriceFeed { price_feed: PriceFeed },
     Webhook { webhook: Webhook },
 }
 
@@ -74,11 +74,10 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         }
 
         // If the account belongs to Pyth, attempt to parse it.
-        // if owner_pubkey.eq()
         if owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_MAINNET)
             || owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_DEVNET)
         {
-            let mut data = account_info.data;
+            let data = &mut account_info.data.to_vec();
             let acc_info = AccountInfo::new(
                 &account_pubkey,
                 false,
@@ -89,13 +88,12 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                 account_info.executable,
                 account_info.rent_epoch,
             );
-            let price = load_price_feed_from_account_info(&acc_info).map_err(|_| {
+            let price_feed = load_price_feed_from_account_info(&acc_info).map_err(|_| {
                 GeyserPluginError::AccountsUpdateError {
                     msg: "Failed to parse Pyth price account".into(),
                 }
             })?;
-
-            todo!("Parse the pyth account")
+            return Ok(AccountUpdateEvent::PriceFeed { price_feed });
         }
 
         // If the account belongs to the webhook program, parse in
