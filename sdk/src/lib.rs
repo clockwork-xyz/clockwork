@@ -11,6 +11,7 @@ pub mod state {
 
 pub mod utils {
     pub use clockwork_thread_program::state::PAYER_PUBKEY;
+    pub use clockwork_utils::thread::Equality;
 }
 
 pub mod cpi {
