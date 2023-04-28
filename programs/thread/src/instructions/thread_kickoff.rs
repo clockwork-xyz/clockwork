@@ -9,6 +9,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
 use clockwork_network_program::state::{Worker, WorkerAccount};
 use clockwork_utils::thread::Trigger;
+use pyth_sdk_solana::load_price_feed_from_account_info;
 
 use crate::{errors::*, state::*};
 
@@ -54,7 +55,9 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
         } => {
             // Verify proof that account data has been updated.
             match ctx.remaining_accounts.first() {
-                None => {}
+                None => {
+                    return Err(ClockworkError::TriggerConditionFailed.into());
+                }
                 Some(account_info) => {
                     // Verify the remaining account is the account this thread is listening for.
                     require!(
@@ -189,6 +192,58 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                     started_at: unix_ts,
                 },
             })
+        }
+        Trigger::Pyth {
+            price_feed: price_feed_pubkey,
+            equality,
+            limit,
+        } => {
+            // Verify price limit has been reached.
+            match ctx.remaining_accounts.first() {
+                None => {
+                    return Err(ClockworkError::TriggerConditionFailed.into());
+                }
+                Some(account_info) => {
+                    require!(
+                        price_feed_pubkey.eq(account_info.key),
+                        ClockworkError::TriggerConditionFailed
+                    );
+                    const STALENESS_THRESHOLD: u64 = 60; // staleness threshold in seconds
+                    let price_feed = load_price_feed_from_account_info(account_info).unwrap();
+                    let current_timestamp = Clock::get()?.unix_timestamp;
+                    let current_price = price_feed
+                        .get_price_no_older_than(current_timestamp, STALENESS_THRESHOLD)
+                        .unwrap();
+                    match equality {
+                        Equality::GreaterThanOrEqual => {
+                            if current_price.price >= limit {
+                                thread.exec_context = Some(ExecContext {
+                                    exec_index: 0,
+                                    execs_since_reimbursement: 0,
+                                    execs_since_slot: 0,
+                                    last_exec_at: clock.slot,
+                                    trigger_context: TriggerContext::Pyth {
+                                        price: current_price.price,
+                                    },
+                                });
+                            }
+                        }
+                        Equality::LessThanOrEqual => {
+                            if current_price.price <= limit {
+                                thread.exec_context = Some(ExecContext {
+                                    exec_index: 0,
+                                    execs_since_reimbursement: 0,
+                                    execs_since_slot: 0,
+                                    last_exec_at: clock.slot,
+                                    trigger_context: TriggerContext::Pyth {
+                                        price: current_price.price,
+                                    },
+                                });
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

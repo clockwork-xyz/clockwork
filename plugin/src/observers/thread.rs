@@ -40,6 +40,9 @@ pub struct ThreadObserver {
     // The set of threads with an epoch trigger.
     pub epoch_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
+    // The set of threads with a pyth trigger.
+    pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
@@ -54,6 +57,7 @@ impl ThreadObserver {
             now_threads: RwLock::new(HashSet::new()),
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
+            pyth_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -282,6 +286,24 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_epoch_threads);
+                }
+                Trigger::Pyth {
+                    price_feed,
+                    equality,
+                    limit,
+                } => {
+                    let mut w_pyth_threads = self.pyth_threads.write().await;
+                    w_pyth_threads
+                        .entry(price_feed)
+                        .and_modify(|v| {
+                            v.insert(thread_pubkey);
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(thread_pubkey);
+                            v
+                        });
+                    drop(w_pyth_threads);
                 }
             }
         }

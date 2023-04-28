@@ -71,18 +71,28 @@ pub enum Trigger {
     Now,
 
     /// Allows a thread to be kicked off according to a slot.
-    Slot {
-        slot: u64,
-    },
+    Slot { slot: u64 },
 
     /// Allows a thread to be kicked off according to an epoch number.
-    Epoch {
-        epoch: u64,
-    },
+    Epoch { epoch: u64 },
 
-    Timestamp {
-        unix_ts: i64,
+    /// Allows a thread to be kicked off according to a unix timestamp.
+    Timestamp { unix_ts: i64 },
+
+    /// Allows a thread to be kicked off according to a Pyth price feed movement.
+    Pyth {
+        price_feed: Pubkey,
+        equality: Equality,
+        limit: i64,
     },
+}
+
+/// Values for comparing
+#[repr(u8)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq)]
+pub enum Equality {
+    GreaterThanOrEqual,
+    LessThanOrEqual,
 }
 
 /// A response value target programs can return to update the thread.
