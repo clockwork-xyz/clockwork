@@ -191,7 +191,7 @@ impl ThreadObserver {
                             .ge(&pyth_thread.limit)
                         {
                             let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(account_pubkey);
+                            w_now_threads.insert(pyth_thread.thread_pubkey);
                             drop(w_now_threads);
                         }
                     }
@@ -202,7 +202,7 @@ impl ThreadObserver {
                             .le(&pyth_thread.limit)
                         {
                             let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(account_pubkey);
+                            w_now_threads.insert(pyth_thread.thread_pubkey);
                             drop(w_now_threads);
                         }
                     }
