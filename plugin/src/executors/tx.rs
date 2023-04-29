@@ -544,7 +544,7 @@ impl TxExecutor {
         self: Arc<Self>,
         tx: &VersionedTransaction,
     ) -> PluginResult<VersionedTransaction> {
-        let serialized_tx = serialize(&tx).unwrap();
+        let serialized_tx = serialize(tx).unwrap();
 
         if !TPU_CLIENT.get().await.send_wire_transaction(serialized_tx).await {
             return Err(GeyserPluginError::Custom(
