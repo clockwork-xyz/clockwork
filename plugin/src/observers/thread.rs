@@ -188,9 +188,9 @@ impl ThreadObserver {
                             .price
                             .ge(&pyth_thread.limit)
                         {
-                            let mut w_updated_accounts = self.updated_accounts.write().await;
-                            w_updated_accounts.insert(account_pubkey);
-                            drop(w_updated_accounts);
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(account_pubkey);
+                            drop(w_now_threads);
                         }
                     }
                     Equality::LessThanOrEqual => {
@@ -199,9 +199,9 @@ impl ThreadObserver {
                             .price
                             .le(&pyth_thread.limit)
                         {
-                            let mut w_updated_accounts = self.updated_accounts.write().await;
-                            w_updated_accounts.insert(account_pubkey);
-                            drop(w_updated_accounts);
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(account_pubkey);
+                            drop(w_now_threads);
                         }
                     }
                 }
