@@ -175,22 +175,18 @@ impl LookupTablesGet for RpcClient {
                     .expect("Failed to deserialize lookup data")
                     .lookup_tables;
 
-                let mut lookup_tables: Vec<AddressLookupTableAccount> = vec![];
-
-                for key in lookup_keys {
+                let lookup_tables = futures::future::join_all(lookup_keys.iter().map(|key| async move {
                     let raw_account = self
-                        .get_account(&key)
+                        .get_account(key)
                         .await
                         .expect("Could not fetch Address Lookup Table account");
                     let address_lookup_table = AddressLookupTable::deserialize(&raw_account.data)
                         .expect("Could not deserialise Address Lookup Table");
-                    let address_lookup_table_account = AddressLookupTableAccount {
-                        key,
+                    AddressLookupTableAccount {
+                        key: *key,
                         addresses: address_lookup_table.addresses.to_vec(),
-                    };
-
-                    lookup_tables.push(address_lookup_table_account)
-                }
+                    }
+                })).await;
 
                 return Ok(lookup_tables);
             }
