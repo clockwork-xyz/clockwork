@@ -125,6 +125,7 @@ impl GeyserPlugin for ClockworkPlugin {
                             .ok();
                     }
                     AccountUpdateEvent::PriceFeed { price_feed } => {
+                        log::info!("Got price_feed evenet: {:?}", price_feed);
                         inner
                             .observers
                             .thread

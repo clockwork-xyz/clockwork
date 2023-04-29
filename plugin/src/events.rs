@@ -13,7 +13,7 @@ use static_pubkey::static_pubkey;
 static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey =
     static_pubkey!("GjphYQcbP1m3FuDyCTUJf2mUMxKPE3j6feWU1rxvC7Ps");
 static PYTH_ORACLE_PROGRAM_ID_DEVNET: Pubkey =
-    static_pubkey!("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH");
+    static_pubkey!("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s");
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
@@ -77,6 +77,7 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         if owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_MAINNET)
             || owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_DEVNET)
         {
+            log::info!("Observed pyth oracle change");
             let data = &mut account_info.data.to_vec();
             let acc_info = AccountInfo::new(
                 &account_pubkey,
