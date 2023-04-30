@@ -180,9 +180,7 @@ impl ThreadObserver {
     ) -> PluginResult<()> {
         let r_pyth_threads = self.pyth_threads.read().await;
         if let Some(pyth_threads) = r_pyth_threads.get(&account_pubkey) {
-            log::info!("Pyth threads {:?} watching price feed {:?}", pyth_threads.len(), account_pubkey);
             for pyth_thread in pyth_threads {
-                log::info!("comparing equality: {:?} {:?} {:?}", price_feed.get_price_unchecked().price, pyth_thread.equality, pyth_thread.limit);
                 match pyth_thread.equality {
                     Equality::GreaterThanOrEqual => {
                         if price_feed
@@ -224,7 +222,7 @@ impl ThreadObserver {
             return Ok(());
         }
 
-        info!("indexing thread: {:?} slot: {}", thread_pubkey, slot);
+        info!("Indexing thread: {:?} slot: {}", thread_pubkey, slot);
         if thread.next_instruction().is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_now_threads = self.now_threads.write().await;

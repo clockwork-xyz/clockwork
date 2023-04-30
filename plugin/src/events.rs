@@ -77,7 +77,6 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
         if owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_MAINNET)
             || owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_DEVNET)
         {
-            log::info!("Observed pyth oracle change");
             let data = &mut account_info.data.to_vec();
             let acc_info = AccountInfo::new(
                 &account_pubkey,
