@@ -1091,6 +1091,217 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-cli"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "anyhow",
+ "bincode",
+ "bzip2",
+ "cargo_metadata",
+ "chrono",
+ "clap 3.2.23",
+ "clockwork-client",
+ "clockwork-cron",
+ "clockwork-plugin-utils",
+ "clockwork-relayer-api",
+ "clockwork-utils",
+ "clockwork-webhook-program",
+ "dirs-next",
+ "indicatif",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml 0.9.21",
+ "solana-account-decoder",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-sdk",
+ "spl-associated-token-account",
+ "spl-memo",
+ "spl-token",
+ "tar",
+ "termcolor",
+ "thiserror",
+]
+
+[[package]]
+name = "clockwork-client"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bincode",
+ "borsh",
+ "clockwork-network-program",
+ "clockwork-thread-program",
+ "clockwork-utils",
+ "clockwork-webhook-program",
+ "solana-client",
+ "solana-sdk",
+ "spl-associated-token-account",
+ "thiserror",
+]
+
+[[package]]
+name = "clockwork-cron"
+version = "2.0.15"
+dependencies = [
+ "chrono",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
+name = "clockwork-network-program"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "clockwork-utils",
+ "winnow",
+]
+
+[[package]]
+name = "clockwork-plugin-utils"
+version = "2.0.15"
+dependencies = [
+ "serde",
+ "serde_json",
+ "solana-geyser-plugin-interface",
+]
+
+[[package]]
+name = "clockwork-relayer"
+version = "2.0.15"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "anchor-lang",
+ "bincode",
+ "byte-unit",
+ "clockwork-relayer-api",
+ "clockwork-webhook-program",
+ "curve25519-dalek",
+ "lazy_static",
+ "rayon",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "solana-client",
+ "solana-sdk",
+ "solana-zk-token-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "clockwork-relayer-api"
+version = "2.0.15"
+dependencies = [
+ "bincode",
+ "serde",
+ "solana-sdk",
+]
+
+[[package]]
+name = "clockwork-sdk"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-thread-program",
+ "nom",
+ "once_cell",
+]
+
+[[package]]
+name = "clockwork-thread-program"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "chrono",
+ "clockwork-cron",
+ "clockwork-network-program",
+ "clockwork-thread-program-v1",
+ "clockwork-utils",
+ "pyth-sdk-solana",
+ "static-pubkey",
+ "version",
+]
+
+[[package]]
+name = "clockwork-thread-program-v1"
+version = "1.4.4"
+dependencies = [
+ "anchor-lang",
+ "clockwork-anchor-gen",
+]
+
+[[package]]
+name = "clockwork-utils"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "base64 0.13.1",
+ "serde",
+ "serde_json",
+ "static-pubkey",
+]
+
+[[package]]
+name = "clockwork-webhook-program"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "clockwork-network-program",
+ "clockwork-utils",
+ "serde",
+]
+
+[[package]]
+name = "clockwork_plugin"
+version = "2.0.15"
+dependencies = [
+ "anchor-lang",
+ "async-trait",
+ "async_once",
+ "bincode",
+ "bs58 0.4.0",
+ "bugsnag",
+ "cargo_metadata",
+ "chrono",
+ "clockwork-client",
+ "clockwork-cron",
+ "clockwork-plugin-utils",
+ "clockwork-relayer-api",
+ "clockwork-thread-program",
+ "clockwork-thread-program-v1",
+ "clockwork-utils",
+ "futures",
+ "lazy_static",
+ "log 0.4.17",
+ "prost",
+ "pyth-sdk-solana",
+ "reqwest",
+ "rustc_version",
+ "serde",
+ "serde_json",
+ "simple-error",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-geyser-plugin-interface",
+ "solana-logger",
+ "solana-program",
+ "solana-sdk",
+ "solana-transaction-status",
+ "static-pubkey",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2418,217 +2629,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "mat-clockwork-cli"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "anyhow",
- "bincode",
- "bzip2",
- "cargo_metadata",
- "chrono",
- "clap 3.2.23",
- "dirs-next",
- "indicatif",
- "mat-clockwork-client",
- "mat-clockwork-cron",
- "mat-clockwork-plugin-utils",
- "mat-clockwork-relayer-api",
- "mat-clockwork-utils",
- "mat-clockwork-webhook-program",
- "reqwest",
- "serde",
- "serde_json",
- "serde_yaml 0.9.21",
- "solana-account-decoder",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-sdk",
- "spl-associated-token-account",
- "spl-memo",
- "spl-token",
- "tar",
- "termcolor",
- "thiserror",
-]
-
-[[package]]
-name = "mat-clockwork-client"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bincode",
- "borsh",
- "mat-clockwork-network-program",
- "mat-clockwork-thread-program",
- "mat-clockwork-utils",
- "mat-clockwork-webhook-program",
- "solana-client",
- "solana-sdk",
- "spl-associated-token-account",
- "thiserror",
-]
-
-[[package]]
-name = "mat-clockwork-cron"
-version = "2.0.42"
-dependencies = [
- "chrono",
- "nom",
- "once_cell",
-]
-
-[[package]]
-name = "mat-clockwork-network-program"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "mat-clockwork-utils",
- "winnow",
-]
-
-[[package]]
-name = "mat-clockwork-plugin-utils"
-version = "2.0.42"
-dependencies = [
- "serde",
- "serde_json",
- "solana-geyser-plugin-interface",
-]
-
-[[package]]
-name = "mat-clockwork-relayer"
-version = "2.0.42"
-dependencies = [
- "actix-cors",
- "actix-web",
- "anchor-lang",
- "bincode",
- "byte-unit",
- "curve25519-dalek",
- "lazy_static",
- "mat-clockwork-relayer-api",
- "mat-clockwork-webhook-program",
- "rayon",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "solana-client",
- "solana-sdk",
- "solana-zk-token-sdk",
- "tokio",
-]
-
-[[package]]
-name = "mat-clockwork-relayer-api"
-version = "2.0.42"
-dependencies = [
- "bincode",
- "serde",
- "solana-sdk",
-]
-
-[[package]]
-name = "mat-clockwork-sdk"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "chrono",
- "mat-clockwork-thread-program",
- "nom",
- "once_cell",
-]
-
-[[package]]
-name = "mat-clockwork-thread-program"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "chrono",
- "mat-clockwork-cron",
- "mat-clockwork-network-program",
- "mat-clockwork-thread-program-v1",
- "mat-clockwork-utils",
- "pyth-sdk-solana",
- "static-pubkey",
- "version",
-]
-
-[[package]]
-name = "mat-clockwork-thread-program-v1"
-version = "1.4.4"
-dependencies = [
- "anchor-lang",
- "clockwork-anchor-gen",
-]
-
-[[package]]
-name = "mat-clockwork-utils"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "base64 0.13.1",
- "serde",
- "serde_json",
- "static-pubkey",
-]
-
-[[package]]
-name = "mat-clockwork-webhook-program"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "mat-clockwork-network-program",
- "mat-clockwork-utils",
- "serde",
-]
-
-[[package]]
-name = "mat_clockwork_plugin"
-version = "2.0.42"
-dependencies = [
- "anchor-lang",
- "async-trait",
- "async_once",
- "bincode",
- "bs58 0.4.0",
- "bugsnag",
- "cargo_metadata",
- "chrono",
- "futures",
- "lazy_static",
- "log 0.4.17",
- "mat-clockwork-client",
- "mat-clockwork-cron",
- "mat-clockwork-plugin-utils",
- "mat-clockwork-relayer-api",
- "mat-clockwork-thread-program",
- "mat-clockwork-thread-program-v1",
- "mat-clockwork-utils",
- "prost",
- "pyth-sdk-solana",
- "reqwest",
- "rustc_version",
- "serde",
- "serde_json",
- "simple-error",
- "solana-account-decoder",
- "solana-client",
- "solana-geyser-plugin-interface",
- "solana-logger",
- "solana-program",
- "solana-sdk",
- "solana-transaction-status",
- "static-pubkey",
- "thiserror",
- "tokio",
 ]
 
 [[package]]

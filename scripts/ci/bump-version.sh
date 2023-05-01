@@ -27,14 +27,14 @@ current_version=$(cat ./VERSION)
 echo "Current version: $current_version"
 
 # Run cargo set-version
-cargo set-version --locked --workspace --bump $bump $dry_run "${args[@]}"
+cargo set-version --locked --workspace --bump "$bump" $dry_run "${args[@]}"
 if [ -n "$dry_run" ]; then
  echo "Dry run, exiting..."
    exit 0
 fi
 
 # We need to retrieve the actual semver version from the Cargo.toml files
-actual_version=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "mat-clockwork-sdk") | .version')
+actual_version=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name == "clockwork-sdk") | .version')
 echo $actual_version >VERSION
 echo "New version: $actual_version"
 

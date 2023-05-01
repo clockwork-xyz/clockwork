@@ -1,12 +1,12 @@
 [package]
-name = "mat-clockwork-plugin-utils"
-version = "2.0.42"
+name = "clockwork-plugin-utils"
+version = "2.0.15"
 edition = "2021"
 description = "Clockwork Plugin Utils"
 license = "AGPL-3.0-or-later"
-homepage = "https://mat-clockwork.xyz"
-repository = "https://github.com/mat-clockwork-xyz/plugin/utils"
-documentation = "https://docs.mat-clockwork.xyz"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/plugin/utils"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 

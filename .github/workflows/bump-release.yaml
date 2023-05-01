@@ -18,12 +18,12 @@ on:
       extra_args:
         description: 'Extra args to pass to bump-version.sh, e.g: --dry-run.'
         required: false
-        default: '--exclude mat-clockwork-thread-program-v1'
+        default: '--exclude clockwork-thread-program-v1'
 
 env:
   CARGO_TERM_COLOR: always
   ANCHOR_VERSION: v0.27.0
-  PUBLISH_PREFIX: mat
+  PUBLISH_PREFIX: clockwork
 
 jobs:
   build-all:

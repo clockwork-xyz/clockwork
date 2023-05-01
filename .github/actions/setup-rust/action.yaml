@@ -18,3 +18,4 @@ runs:
           toolchain: ${{ env.PLUGIN_RUST_VERSION }}
           override: true
           profile: minimal
+

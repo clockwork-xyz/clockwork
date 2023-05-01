@@ -1,12 +1,12 @@
 [package]
-name = "mat-clockwork-network-program"
-version = "2.0.42"
+name = "clockwork-network-program"
+version = "2.0.15"
 description = "Clockwork networking protocol"
 edition = "2021"
 license = "AGPL-3.0-or-later"
-homepage = "https://mat-clockwork.xyz"
-repository = "https://github.com/mat-clockwork-xyz/mat-clockwork"
-documentation = "https://docs.mat-clockwork.xyz"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/clockwork"
+documentation = "https://docs.clockwork.xyz"
 readme = "./README.md"
 keywords = ["solana"]
 
@@ -24,5 +24,5 @@ default = []
 [dependencies]
 anchor-lang = "0.27.0"
 anchor-spl = { features = ["mint", "token"], version = "0.27.0" }
-mat-clockwork-utils = { path = "../../utils", version = "2.0.42" }
+clockwork-utils = { path = "../../utils", version = "=2.0.15" }
 winnow = "=0.4.1"
