@@ -9,7 +9,7 @@ use std::{
 
 use async_once::AsyncOnce;
 use bincode::serialize;
-use clockwork_client::network::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
+use clockwork_network_program::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use clockwork_thread_program::state::VersionedThread;
 use lazy_static::lazy_static;
 use log::info;

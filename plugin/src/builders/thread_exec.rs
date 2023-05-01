@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use anchor_lang::{InstructionData, ToAccountMetas};
-use clockwork_client::{network::state::Worker, thread::state::Trigger};
-use clockwork_thread_program::state::VersionedThread;
+use clockwork_thread_program::state::{VersionedThread, Trigger};
+use clockwork_network_program::state::Worker;
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -280,9 +280,9 @@ fn build_exec_ix(
         VersionedThread::V1(_) => Instruction {
             program_id: clockwork_thread_program_v1::ID,
             accounts: clockwork_thread_program_v1::accounts::ThreadExec {
-                fee: clockwork_client::network::state::Fee::pubkey(worker_pubkey),
-                penalty: clockwork_client::network::state::Penalty::pubkey(worker_pubkey),
-                pool: clockwork_client::network::state::Pool::pubkey(0),
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                penalty: clockwork_network_program::state::Penalty::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
                 signatory: signatory_pubkey,
                 thread: thread_pubkey,
                 worker: worker_pubkey,
@@ -293,8 +293,8 @@ fn build_exec_ix(
         VersionedThread::V2(_) => Instruction {
             program_id: clockwork_thread_program::ID,
             accounts: clockwork_thread_program::accounts::ThreadExec {
-                fee: clockwork_client::network::state::Fee::pubkey(worker_pubkey),
-                pool: clockwork_client::network::state::Pool::pubkey(0),
+                fee: clockwork_network_program::state::Fee::pubkey(worker_pubkey),
+                pool: clockwork_network_program::state::Pool::pubkey(0),
                 signatory: signatory_pubkey,
                 thread: thread_pubkey,
                 worker: worker_pubkey,
