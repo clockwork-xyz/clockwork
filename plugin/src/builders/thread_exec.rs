@@ -254,6 +254,15 @@ fn build_kickoff_ix(
             is_signer: false,
             is_writable: false,
         }),
+        Trigger::Pyth {
+            price_feed,
+            equality: _,
+            limit: _,
+        } => kickoff_ix.accounts.push(AccountMeta {
+            pubkey: price_feed,
+            is_signer: false,
+            is_writable: false,
+        }),
         _ => {}
     }
 

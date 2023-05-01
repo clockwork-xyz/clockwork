@@ -34,6 +34,7 @@ clockwork-utils = { path = "../utils", version = "2.0.15" }
 lazy_static = "1.4.0"
 log = "0.4"
 prost = "0.10.0"
+pyth-sdk-solana = "0.7.1"
 reqwest = "0.11.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -48,6 +49,7 @@ solana-transaction-status = "=1.14.16"
 thiserror = "1.0.30"
 tokio = "1.18.4"
 futures = "0.3.26"
+static-pubkey = "1.0.3"
 
 [build-dependencies]
 cargo_toml = "0.13.0"

@@ -1,5 +1,5 @@
-use rustc_version::{version};
 use cargo_toml::{Dependency, Manifest};
+use rustc_version::version;
 use std::process::Command;
 
 fn main() {
@@ -8,16 +8,14 @@ fn main() {
 
     // Check for a minimum version
     if rustc_v != expected_v {
-        println!("cargo:warning=trying to compile with rustc {}, we should be using {}",
-                 version().unwrap().to_string(),
-                 expected_v,
+        println!(
+            "cargo:warning=trying to compile with rustc {}, we should be using {}",
+            version().unwrap().to_string(),
+            expected_v,
         );
         std::process::exit(1);
     }
-    println!(
-        "cargo:rustc-env=RUSTC_VERSION={:#?}",
-        rustc_v,
-    );
+    println!("cargo:rustc-env=RUSTC_VERSION={:#?}", rustc_v,);
 
     let output = Command::new("git")
         .args(&["rev-parse", "HEAD"])

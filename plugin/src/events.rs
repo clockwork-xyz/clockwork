@@ -1,17 +1,25 @@
-use anchor_lang::{AccountDeserialize, Discriminator};
+use anchor_lang::{prelude::AccountInfo, AccountDeserialize, Discriminator};
 use bincode::deserialize;
 use clockwork_client::webhook::state::Webhook;
 use clockwork_thread_program::state::{Thread as ThreadV2, VersionedThread};
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
+use pyth_sdk_solana::{load_price_feed_from_account_info, PriceFeed};
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, ReplicaAccountInfo,
 };
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
+use static_pubkey::static_pubkey;
+
+static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey =
+    static_pubkey!("GjphYQcbP1m3FuDyCTUJf2mUMxKPE3j6feWU1rxvC7Ps");
+static PYTH_ORACLE_PROGRAM_ID_DEVNET: Pubkey =
+    static_pubkey!("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s");
 
 #[derive(Debug)]
 pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     Thread { thread: VersionedThread },
+    PriceFeed { price_feed: PriceFeed },
     Webhook { webhook: Webhook },
 }
 
@@ -63,6 +71,29 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                     ),
                 });
             }
+        }
+
+        // If the account belongs to Pyth, attempt to parse it.
+        if owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_MAINNET)
+            || owner_pubkey.eq(&PYTH_ORACLE_PROGRAM_ID_DEVNET)
+        {
+            let data = &mut account_info.data.to_vec();
+            let acc_info = AccountInfo::new(
+                &account_pubkey,
+                false,
+                false,
+                &mut account_info.lamports,
+                data,
+                &owner_pubkey,
+                account_info.executable,
+                account_info.rent_epoch,
+            );
+            let price_feed = load_price_feed_from_account_info(&acc_info).map_err(|_| {
+                GeyserPluginError::AccountsUpdateError {
+                    msg: "Failed to parse Pyth price account".into(),
+                }
+            })?;
+            return Ok(AccountUpdateEvent::PriceFeed { price_feed });
         }
 
         // If the account belongs to the webhook program, parse in

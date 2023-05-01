@@ -1,6 +1,8 @@
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_utils::thread::{ClockData, SerializableInstruction, Trigger};
 
+pub use clockwork_utils::thread::Equality;
+
 pub const SEED_THREAD: &[u8] = b"thread";
 
 /// Tracks the current state of a transaction thread on Solana.
@@ -129,6 +131,9 @@ pub enum TriggerContext {
         /// The threshold moment the schedule was waiting for.
         started_at: i64,
     },
+
+    /// The trigger context for threads with a "pyth" trigger.
+    Pyth { price: i64 },
 }
 
 /// The properties of threads which are updatable.

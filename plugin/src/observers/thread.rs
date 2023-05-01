@@ -8,8 +8,9 @@ use std::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::VersionedThread;
+use clockwork_thread_program::state::{Equality, VersionedThread};
 use log::info;
+use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
@@ -40,8 +41,18 @@ pub struct ThreadObserver {
     // The set of threads with an epoch trigger.
     pub epoch_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
+    // The set of threads with a pyth trigger.
+    pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<PythThread>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
+}
+
+#[derive(Eq, Hash, PartialEq)]
+pub struct PythThread {
+    pub thread_pubkey: Pubkey,
+    pub equality: Equality,
+    pub limit: i64,
 }
 
 impl ThreadObserver {
@@ -54,6 +65,7 @@ impl ThreadObserver {
             now_threads: RwLock::new(HashSet::new()),
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
+            pyth_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -161,6 +173,44 @@ impl ThreadObserver {
         Ok(())
     }
 
+    pub async fn observe_price_feed(
+        self: Arc<Self>,
+        account_pubkey: Pubkey,
+        price_feed: PriceFeed,
+    ) -> PluginResult<()> {
+        let r_pyth_threads = self.pyth_threads.read().await;
+        if let Some(pyth_threads) = r_pyth_threads.get(&account_pubkey) {
+            for pyth_thread in pyth_threads {
+                match pyth_thread.equality {
+                    Equality::GreaterThanOrEqual => {
+                        if price_feed
+                            .get_price_unchecked()
+                            .price
+                            .ge(&pyth_thread.limit)
+                        {
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(pyth_thread.thread_pubkey);
+                            drop(w_now_threads);
+                        }
+                    }
+                    Equality::LessThanOrEqual => {
+                        if price_feed
+                            .get_price_unchecked()
+                            .price
+                            .le(&pyth_thread.limit)
+                        {
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(pyth_thread.thread_pubkey);
+                            drop(w_now_threads);
+                        }
+                    }
+                }
+            }
+        }
+        drop(r_pyth_threads);
+        Ok(())
+    }
+
     pub async fn observe_thread(
         self: Arc<Self>,
         thread: VersionedThread,
@@ -172,7 +222,7 @@ impl ThreadObserver {
             return Ok(());
         }
 
-        info!("indexing thread: {:?} slot: {}", thread_pubkey, slot);
+        info!("Indexing thread: {:?} slot: {}", thread_pubkey, slot);
         if thread.next_instruction().is_some() {
             // If the thread has a next instruction, index it as executable.
             let mut w_now_threads = self.now_threads.write().await;
@@ -282,6 +332,32 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_epoch_threads);
+                }
+                Trigger::Pyth {
+                    price_feed,
+                    equality,
+                    limit,
+                } => {
+                    let mut w_pyth_threads = self.pyth_threads.write().await;
+                    w_pyth_threads
+                        .entry(price_feed)
+                        .and_modify(|v| {
+                            v.insert(PythThread {
+                                thread_pubkey,
+                                equality: equality.clone(),
+                                limit,
+                            });
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(PythThread {
+                                thread_pubkey,
+                                equality,
+                                limit,
+                            });
+                            v
+                        });
+                    drop(w_pyth_threads);
                 }
             }
         }

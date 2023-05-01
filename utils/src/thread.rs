@@ -57,7 +57,7 @@ pub enum Trigger {
         size: u64,
     },
 
-    /// Allows an thread to be kicked off according to a one-time or recurring schedule.
+    /// Allows a thread to be kicked off according to a one-time or recurring schedule.
     Cron {
         /// The schedule in cron syntax. Value must be parsable by the `clockwork_cron` package.
         schedule: String,
@@ -67,22 +67,35 @@ pub enum Trigger {
         skippable: bool,
     },
 
-    /// Allows an thread to be kicked off as soon as it's created.
+    /// Allows a thread to be kicked off as soon as it's created.
     Now,
 
     /// Allows a thread to be kicked off according to a slot.
-    Slot {
-        slot: u64,
-    },
+    Slot { slot: u64 },
 
     /// Allows a thread to be kicked off according to an epoch number.
-    Epoch {
-        epoch: u64,
-    },
+    Epoch { epoch: u64 },
 
-    Timestamp {
-        unix_ts: i64,
+    /// Allows a thread to be kicked off according to a unix timestamp.
+    Timestamp { unix_ts: i64 },
+
+    /// Allows a thread to be kicked off according to a Pyth price feed movement.
+    Pyth {
+        /// The address of the price feed to monitor.
+        price_feed: Pubkey,
+        /// The equality operator (gte or lte) used to compare prices. 
+        equality: Equality,
+        /// The limit price to compare the Pyth feed to. 
+        limit: i64,
     },
+}
+
+/// Operators for describing how to compare two values to one another.  
+#[repr(u8)]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, Eq, PartialEq, Hash)]
+pub enum Equality {
+    GreaterThanOrEqual,
+    LessThanOrEqual,
 }
 
 /// A response value target programs can return to update the thread.

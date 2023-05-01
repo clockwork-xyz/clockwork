@@ -295,6 +295,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
         Trigger::Slot { slot } => slot.to_string(),
         Trigger::Epoch { epoch } => epoch.to_string(),
         Trigger::Timestamp { unix_ts } => unix_ts.to_string(),
+        Trigger::Pyth { price_feed: _, equality: _, limit: _ } => "Pyth".to_string(),
     };
 
     enum Status {
@@ -417,6 +418,7 @@ fn Row(cx: Scope<RowProps>) -> Element {
             Trigger::Slot { slot: _ } => Status::Unknown,
             Trigger::Epoch { epoch: _ } => Status::Unknown,
             Trigger::Timestamp { unix_ts: _ } => Status::Unknown,
+            Trigger::Pyth { price_feed: _, equality: _, limit: _ } => Status::Unknown,
         }
     };
     let status_class = match health {
