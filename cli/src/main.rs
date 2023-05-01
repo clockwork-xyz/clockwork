@@ -2,6 +2,7 @@
 extern crate version;
 
 mod cli;
+mod client;
 mod config;
 mod errors;
 mod parser;

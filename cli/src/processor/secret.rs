@@ -1,12 +1,11 @@
 use anchor_lang::prelude::Pubkey;
-use clockwork_client::Client;
 use clockwork_relayer_api::{
     SecretApprove, SecretCreate, SecretGet, SecretList, SecretRevoke, SignedRequest,
 };
 use reqwest::header::CONTENT_TYPE;
 use solana_sdk::signer::Signer;
 
-use crate::errors::CliError;
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client, name: String) -> Result<(), CliError> {
     let keypair = &client.payer;

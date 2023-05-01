@@ -1,13 +1,17 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    network::state::{
-        Config, Fee, Penalty, Registry, Snapshot, SnapshotFrame, Worker, WorkerSettings,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        system_program, sysvar,
     },
-    Client,
+    AccountDeserialize, InstructionData,
+};
+use anchor_spl::{associated_token, associated_token::get_associated_token_address, token};
+use clockwork_network_program::state::{
+    Config, Fee, Penalty, Registry, Snapshot, SnapshotFrame, Worker, WorkerSettings,
 };
 use solana_sdk::signature::{Keypair, Signer};
 
-use crate::errors::CliError;
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let worker_pubkey = Worker::pubkey(id);
@@ -87,12 +91,25 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     // Build ix
     let worker_id = registry.total_workers;
     let worker_pubkey = Worker::pubkey(worker_id);
-    let ix = clockwork_client::network::instruction::worker_create(
-        client.payer_pubkey(),
-        config.mint,
-        signatory.pubkey(),
-        worker_pubkey,
-    );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(associated_token::ID, false),
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Fee::pubkey(worker_pubkey), false),
+            AccountMeta::new(Penalty::pubkey(worker_pubkey), false),
+            AccountMeta::new_readonly(config.mint, false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(sysvar::rent::ID, false),
+            AccountMeta::new_readonly(signatory.pubkey(), true),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new_readonly(token::ID, false),
+            AccountMeta::new(worker_pubkey, false),
+            AccountMeta::new(get_associated_token_address(&worker_pubkey, &config.mint), false),
+        ],
+        data: clockwork_network_program::instruction::WorkerCreate {}.data(),
+    };
     client
         .send_and_confirm(&[ix], &[client.payer(), &signatory])
         .unwrap();
@@ -114,11 +131,20 @@ pub fn update(client: &Client, id: u64, signatory: Option<Keypair>) -> Result<()
         commission_rate: 0,
         signatory: signatory.map_or(worker.signatory, |v| v.pubkey()),
     };
-    let ix = clockwork_client::network::instruction::worker_update(
-        client.payer_pubkey(),
-        settings,
-        worker_pubkey,
-    );
+    // let ix = clockwork_client::network::instruction::worker_update(
+    //     client.payer_pubkey(),
+    //     settings,
+    //     worker_pubkey,
+    // );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(worker_pubkey, false),
+        ],
+        data: clockwork_network_program::instruction::WorkerUpdate { settings }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, worker.id)?;
     Ok(())

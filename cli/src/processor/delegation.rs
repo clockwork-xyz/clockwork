@@ -1,11 +1,14 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    network::state::{Config, Delegation, Worker},
-    Client,
+use anchor_lang::{
+    solana_program::{
+        instruction::{AccountMeta, Instruction},
+        system_program, sysvar
+    },
+    InstructionData, AccountDeserialize
 };
+use clockwork_network_program::state::{Config, Delegation, Worker};
 use spl_associated_token_account::get_associated_token_address;
 
-use crate::errors::CliError;
+use crate::{client::Client, errors::CliError};
 
 pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
     // Get config data
@@ -26,12 +29,28 @@ pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
 
     // Build ix
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, worker.total_delegations);
-    let ix = clockwork_client::network::instruction::delegation_create(
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-        worker_pubkey,
-    );
+    // let ix = clockwork_client::network::instruction::delegation_create(
+    //     client.payer_pubkey(),
+    //     delegation_pubkey,
+    //     config.mint,
+    //     worker_pubkey,
+    // );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(anchor_spl::associated_token::ID, false),
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(delegation_pubkey, false),
+            AccountMeta::new(get_associated_token_address(&delegation_pubkey, &config.mint), false),
+            AccountMeta::new_readonly(config.mint, false),
+            AccountMeta::new_readonly(sysvar::rent::ID, false),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new_readonly(anchor_spl::token::ID, false),
+            AccountMeta::new(worker_pubkey, false),
+        ],
+        data: clockwork_network_program::instruction::DelegationCreate {}.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
@@ -56,12 +75,24 @@ pub fn deposit(
     // Build ix
     let worker_pubkey = Worker::pubkey(worker_id);
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
-    let ix = clockwork_client::network::instruction::delegation_deposit(
-        amount,
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-    );
+    // let ix = clockwork_client::network::instruction::delegation_deposit(
+    //     amount,
+    //     client.payer_pubkey(),
+    //     delegation_pubkey,
+    //     config.mint,
+    // );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new(get_associated_token_address(&client.payer_pubkey(), &config.mint), false),
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(delegation_pubkey, false),
+            AccountMeta::new(get_associated_token_address(&delegation_pubkey, &config.mint), false),
+            AccountMeta::new_readonly(anchor_spl::token::ID, false),
+        ],
+        data: clockwork_network_program::instruction::DelegationDeposit { amount }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
@@ -86,12 +117,24 @@ pub fn withdraw(
     // Build ix
     let worker_pubkey = Worker::pubkey(worker_id);
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
-    let ix = clockwork_client::network::instruction::delegation_withdraw(
-        amount,
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-    );
+    // let ix = clockwork_client::network::instruction::delegation_withdraw(
+    //     amount,
+    //     client.payer_pubkey(),
+    //     delegation_pubkey,
+    //     config.mint,
+    // );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new(get_associated_token_address(&client.payer_pubkey(), &config.mint), false),
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(delegation_pubkey, false),
+            AccountMeta::new(get_associated_token_address(&delegation_pubkey, &config.mint), false),
+            AccountMeta::new_readonly(anchor_spl::token::ID, false),
+        ],
+        data: clockwork_network_program::instruction::DelegationWithdraw { amount }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())

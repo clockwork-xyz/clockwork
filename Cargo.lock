@@ -1053,13 +1053,15 @@ name = "clockwork-cli"
 version = "2.0.15"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "anyhow",
  "bincode",
  "chrono",
  "clap 3.2.23",
- "clockwork-client",
  "clockwork-cron",
+ "clockwork-network-program",
  "clockwork-relayer-api",
+ "clockwork-thread-program",
  "clockwork-utils",
  "clockwork-webhook-program",
  "dirs-next",
@@ -1077,24 +1079,6 @@ dependencies = [
  "spl-token",
  "thiserror",
  "version",
-]
-
-[[package]]
-name = "clockwork-client"
-version = "2.0.15"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "bincode",
- "borsh",
- "clockwork-network-program",
- "clockwork-thread-program",
- "clockwork-utils",
- "clockwork-webhook-program",
- "solana-client",
- "solana-sdk",
- "spl-associated-token-account",
- "thiserror",
 ]
 
 [[package]]

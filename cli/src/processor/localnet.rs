@@ -1,12 +1,13 @@
 #[allow(deprecated)]
 use {
-    crate::{errors::CliError, parser::ProgramInfo},
+    crate::{client::Client, errors::CliError, parser::ProgramInfo},
     anyhow::Result,
-    clockwork_client::{
-        network::state::ConfigSettings,
-        thread::state::{Thread, Trigger},
-        Client,
+    anchor_lang::{
+        solana_program::{instruction::{AccountMeta, Instruction}, system_program},
+        InstructionData,
     },
+    clockwork_network_program::state::{Config, ConfigSettings, Registry},
+    clockwork_thread_program::state::{Thread, Trigger},
     solana_sdk::{
         native_token::LAMPORTS_PER_SOL,
         program_pack::Pack,
@@ -120,55 +121,118 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     // Create epoch thread.
     let epoch_thread_id = "clockwork.network.epoch";
     let epoch_thread_pubkey = Thread::pubkey(client.payer_pubkey(), epoch_thread_id.into());
-    let ix_a = clockwork_client::thread::instruction::thread_create(
-        LAMPORTS_PER_SOL,
-        client.payer_pubkey(),
-        epoch_thread_id.into(),
-        vec![
-            clockwork_client::network::job::distribute_fees(epoch_thread_pubkey).into(),
-            clockwork_client::network::job::process_unstakes(epoch_thread_pubkey).into(),
-            clockwork_client::network::job::stake_delegations(epoch_thread_pubkey).into(),
-            clockwork_client::network::job::take_snapshot(epoch_thread_pubkey).into(),
-            clockwork_client::network::job::increment_epoch(epoch_thread_pubkey).into(),
-            clockwork_client::network::job::delete_snapshot(epoch_thread_pubkey).into(),
+    // let ix_a = clockwork_client::thread::instruction::thread_create(
+    //     LAMPORTS_PER_SOL,
+    //     client.payer_pubkey(),
+    //     epoch_thread_id.into(),
+    //     vec![
+    //         // clockwork_client::network::job::distribute_fees(epoch_thread_pubkey).into(),
+    //         // clockwork_client::network::job::process_unstakes(epoch_thread_pubkey).into(),
+    //         // clockwork_client::network::job::stake_delegations(epoch_thread_pubkey).into(),
+    //         // clockwork_client::network::job::take_snapshot(epoch_thread_pubkey).into(),
+    //         // clockwork_client::network::job::increment_epoch(epoch_thread_pubkey).into(),
+    //         // clockwork_client::network::job::delete_snapshot(epoch_thread_pubkey).into(),
+    //     ],
+    //     client.payer_pubkey(),
+    //     epoch_thread_pubkey,
+    //     Trigger::Cron {
+    //         schedule: "0 * * * * * *".into(),
+    //         skippable: true,
+    //     },
+    // );
+    let ix_a = Instruction {
+        program_id: clockwork_thread_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(client.payer_pubkey(), true),
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(epoch_thread_pubkey, false),
         ],
-        client.payer_pubkey(),
-        epoch_thread_pubkey,
-        Trigger::Cron {
-            schedule: "0 * * * * * *".into(),
-            skippable: true,
-        },
-    );
+        data: clockwork_thread_program::instruction::ThreadCreate {
+            amount: LAMPORTS_PER_SOL,
+            id: epoch_thread_id.into(),
+            instructions: vec![],
+            trigger: Trigger::Cron {
+                schedule: "0 * * * * * *".into(),
+                skippable: true,
+            },
+        }
+        .data(),
+    };
 
     // Create hasher thread.
     let hasher_thread_id = "clockwork.network.hasher";
     let hasher_thread_pubkey = Thread::pubkey(client.payer_pubkey(), hasher_thread_id.into());
-    let ix_b = clockwork_client::thread::instruction::thread_create(
-        LAMPORTS_PER_SOL,
-        client.payer_pubkey(),
-        hasher_thread_id.into(),
-        vec![
-            clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey)
-                .into(),
+    // let ix_b = clockwork_client::thread::instruction::thread_create(
+    //     LAMPORTS_PER_SOL,
+    //     client.payer_pubkey(),
+    //     hasher_thread_id.into(),
+    //     vec![
+    //         clockwork_client::network::instruction::registry_nonce_hash(hasher_thread_pubkey)
+    //             .into(),
+    //     ],
+    //     client.payer_pubkey(),
+    //     hasher_thread_pubkey,
+    //     Trigger::Cron {
+    //         schedule: "*/15 * * * * * *".into(),
+    //         skippable: true,
+    //     },
+    // );
+    let registry_hash_ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(hasher_thread_pubkey, true),
         ],
-        client.payer_pubkey(),
-        hasher_thread_pubkey,
-        Trigger::Cron {
-            schedule: "*/15 * * * * * *".into(),
-            skippable: true,
-        },
-    );
+        data: clockwork_network_program::instruction::RegistryNonceHash {}.data(),
+    };
+    let ix_b = Instruction {
+        program_id: clockwork_thread_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(client.payer_pubkey(), true),
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new(hasher_thread_pubkey, false),
+        ],
+        data: clockwork_thread_program::instruction::ThreadCreate {
+            amount: LAMPORTS_PER_SOL,
+            id: hasher_thread_id.into(),
+            instructions: vec![
+                registry_hash_ix.into(),
+            ],
+            trigger: Trigger::Cron {
+                schedule: "*/15 * * * * * *".into(),
+                skippable: true,
+            },
+        }
+        .data(),
+    };
 
     // Update config with thread pubkeys
-    let ix_c = clockwork_client::network::instruction::config_update(
-        client.payer_pubkey(),
-        ConfigSettings {
-            admin: client.payer_pubkey(),
-            epoch_thread: epoch_thread_pubkey,
-            hasher_thread: hasher_thread_pubkey,
-            mint: mint_pubkey,
-        },
-    );
+    // let ix_c = clockwork_client::network::instruction::config_update(
+    //     client.payer_pubkey(),
+    //     ConfigSettings {
+    //         admin: client.payer_pubkey(),
+    //         epoch_thread: epoch_thread_pubkey,
+    //         hasher_thread: hasher_thread_pubkey,
+    //         mint: mint_pubkey,
+    //     },
+    // );
+    let settings = ConfigSettings {
+        admin: client.payer_pubkey(),
+        epoch_thread: epoch_thread_pubkey,
+        hasher_thread: hasher_thread_pubkey,
+        mint: mint_pubkey,
+    };
+    let ix_c = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new(client.payer_pubkey(), true),
+            AccountMeta::new(Config::pubkey(), false),
+        ],
+        data: clockwork_network_program::instruction::ConfigUpdate { settings }.data(),
+    };
 
     client.send_and_confirm(&vec![ix_a], &[client.payer()])?;
     client.send_and_confirm(&vec![ix_b, ix_c], &[client.payer()])?;
@@ -191,9 +255,9 @@ fn start_test_validator(
     // TODO Build a custom plugin config
     let mut process = Command::new("solana-test-validator")
         .arg("-r")
-        .bpf_program(home_dir, clockwork_client::network::ID, "network")
-        .bpf_program(home_dir, clockwork_client::thread::ID, "thread")
-        .bpf_program(home_dir, clockwork_client::webhook::ID, "webhook")
+        .bpf_program(home_dir, clockwork_network_program::ID, "network")
+        .bpf_program(home_dir, clockwork_thread_program::ID, "thread")
+        .bpf_program(home_dir, clockwork_webhook_program::ID, "webhook")
         .network_url(network_url)
         .clone_addresses(clone_addresses)
         .add_programs_with_path(program_infos)
