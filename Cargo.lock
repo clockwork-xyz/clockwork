@@ -1092,7 +1092,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cli"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "chrono",
  "nom",
@@ -1139,7 +1139,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1149,7 +1149,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-plugin-utils"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "serde",
  "serde_json",
@@ -1158,7 +1158,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-relayer"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -1182,7 +1182,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-relayer-api"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "bincode",
  "serde",
@@ -1191,7 +1191,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-sdk"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -1202,7 +1202,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-thread-program"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "chrono",
@@ -1225,7 +1225,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-utils"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "base64 0.13.1",
@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork-webhook-program"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "clockwork-network-program",
@@ -1246,7 +1246,7 @@ dependencies = [
 
 [[package]]
 name = "clockwork_plugin"
-version = "2.0.15"
+version = "2.0.16"
 dependencies = [
  "anchor-lang",
  "async-trait",

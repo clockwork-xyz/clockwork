@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-plugin-utils"
-version = "2.0.15"
+version = "2.0.16"
 edition = "2021"
 description = "Clockwork Plugin Utils"
 license = "AGPL-3.0-or-later"

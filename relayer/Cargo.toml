@@ -1,6 +1,6 @@
 [package]
 name = "clockwork-relayer"
-version = "2.0.15"
+version = "2.0.16"
 edition = "2021"
 description = "Clockwork relayer for webhook requests"
 license = "AGPL-3.0-or-later"
@@ -18,8 +18,8 @@ actix-cors = "0.6.4"
 actix-web = "4.3.1"
 anchor-lang = "0.27.0"
 byte-unit = "4.0.18"
-clockwork-webhook-program = { path = "../programs/webhook", version = "=2.0.15" }
-clockwork-relayer-api = { path = "api", version = "=2.0.15" }
+clockwork-webhook-program = { path = "../programs/webhook", version = "=2.0.16" }
+clockwork-relayer-api = { path = "api", version = "=2.0.16" }
 curve25519-dalek = "3.2.1"
 lazy_static = "1.4.0"
 reqwest = "0.11.14"
