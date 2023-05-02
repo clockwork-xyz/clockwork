@@ -140,6 +140,60 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
     //         skippable: true,
     //     },
     // );
+    let ix_a1 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::DistributeFeesJob {}.data(),
+    };
+    let ix_a2 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new_readonly(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::ProcessUnstakesJob {}.data(),
+    };
+    let ix_a3 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::StakeDelegationsJob {}.data(),
+    };
+    let ix_a4 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::TakeSnapshotJob {}.data(),
+    };
+    let ix_a5 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::IncrementEpoch {}.data(),
+    };
+    let ix_a6 = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: vec![
+            AccountMeta::new_readonly(Config::pubkey(), false),
+            AccountMeta::new(Registry::pubkey(), false),
+            AccountMeta::new_readonly(epoch_thread_pubkey, true),
+        ],
+        data: clockwork_network_program::instruction::DeleteSnapshotJob {}.data(),
+    };
     let ix_a = Instruction {
         program_id: clockwork_thread_program::ID,
         accounts: vec![
@@ -151,7 +205,14 @@ fn create_threads(client: &Client, mint_pubkey: Pubkey) -> Result<()> {
         data: clockwork_thread_program::instruction::ThreadCreate {
             amount: LAMPORTS_PER_SOL,
             id: epoch_thread_id.into(),
-            instructions: vec![],
+            instructions: vec![
+                ix_a1.into(),
+                ix_a2.into(),
+                ix_a3.into(),
+                ix_a4.into(),
+                ix_a5.into(),
+                ix_a6.into(),
+            ],
             trigger: Trigger::Cron {
                 schedule: "0 * * * * * *".into(),
                 skippable: true,
