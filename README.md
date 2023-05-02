@@ -48,40 +48,39 @@
 
 # Local Development
 
-#### 1. Download the source code.
+#### 1. Install clockwork-cli.
+If you are on linux, you might need to run this:
 ```sh
-git clone https://github.com/clockwork-xyz/clockwork
-cd clockwork
+sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
+```
+Install with cargo:
+```sh
+cargo install -f --locked clockwork-cli
 ```
 
-#### 2. Checkout the latest stable release branch.
-```sh
-git describe --tags `git rev-list --tags --max-count=1`
-git checkout tags/...
-```
-> ⚠️ Make sure the version of your program or client matches the version of the engine that you are running. E.g., if you are using `clockwork-sdk = 2.0.0`, you should also `git checkout tags/v2.0.0`. We use semantic versioning, but main branch is probably not what you want.
-
-
-#### 3. Build the repo.
-```sh
-./scripts/build-all.sh .
-export PATH=$PWD/bin:$PATH
-```
-
-#### 4. Start a localnet for development.
+#### 2. Run a localnet node.
 ```sh
 clockwork localnet
 ```
 
-#### 5. Stream program logs.
+#### 3. Stream program logs.
 ```sh
 solana logs --url localhost
 ```
 
+---
 
 # Deploying a worker
+> If you just want to test your smart contracts on localnet, check the previous section.
+#### 1. Either build from scratch or install the pre-built binary.
+```sh
+git checkout -b v2.0 origin/v2.0
+./scripts/ci/create-tarball.sh
+cd clockwork-geyser-plugin-release
+export PATH=$PWD/bin:$PATH
+```
 
-#### 1. Either build from scratch (see above) or install the pre-built binary.
+
 ```sh
 curl -s https://api.github.com/repos/clockwork-xyz/clockwork/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
 tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
@@ -102,6 +101,8 @@ clockwork worker create clockwork-worker-keypair.json
 
 
 #### 5. Setup the plugin config file.
+
+Create a new file `~/clockwork-geyser-config.json`:
 ```json
 {
   "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
@@ -112,6 +113,7 @@ clockwork worker create clockwork-worker-keypair.json
   "worker_id": 0, 
 }
 ```
+> Assuming `clockwork-geyser-plugin-release` is in your home directory.
 
 #### 6. Configure your validator to run with the Clockwork plugin.
 ```sh

@@ -27,7 +27,7 @@ current_version=$(cat ./VERSION)
 echo "Current version: $current_version"
 
 # Run cargo set-version
-cargo set-version --locked --workspace --bump $bump $dry_run "${args[@]}"
+cargo set-version --locked --workspace --bump "$bump" $dry_run "${args[@]}"
 if [ -n "$dry_run" ]; then
  echo "Dry run, exiting..."
    exit 0

@@ -1,0 +1,20 @@
+[package]
+name = "clockwork-plugin-utils"
+version = "2.0.15"
+edition = "2021"
+description = "Clockwork Plugin Utils"
+license = "AGPL-3.0-or-later"
+homepage = "https://clockwork.xyz"
+repository = "https://github.com/clockwork-xyz/plugin/utils"
+documentation = "https://docs.clockwork.xyz"
+readme = "./README.md"
+keywords = ["solana"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "clockwork_plugin_utils"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+solana-geyser-plugin-interface = "=1.14.16"
