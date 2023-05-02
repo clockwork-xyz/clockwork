@@ -1,11 +1,12 @@
-use {
-    crate::errors::CliError,
-    clockwork_client::{
-        network::state::{Config, ConfigSettings},
-        Client,
+use anchor_lang::{
+    solana_program::{
+        instruction::Instruction, pubkey::Pubkey,
     },
-    solana_sdk::pubkey::Pubkey,
+    InstructionData, ToAccountMetas
 };
+use clockwork_network_program::state::{Config, ConfigSettings};
+
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client) -> Result<(), CliError> {
     let config = client
@@ -35,7 +36,14 @@ pub fn set(
     };
 
     // Submit tx
-    let ix = clockwork_client::network::instruction::config_update(client.payer_pubkey(), settings);
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: clockwork_network_program::accounts::ConfigUpdate {
+            admin: client.payer_pubkey(),
+            config: Config::pubkey(),
+        }.to_account_metas(Some(false)),
+        data: clockwork_network_program::instruction::ConfigUpdate { settings }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client)?;
     Ok(())

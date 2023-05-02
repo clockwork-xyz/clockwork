@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
-// use anchor_lang::prelude::*;
 use anchor_lang::{InstructionData, ToAccountMetas};
-use clockwork_client::{
-    webhook::state::{HttpMethod, Webhook},
-    Client,
-};
+use clockwork_webhook_program::state::{HttpMethod, Webhook};
 use solana_sdk::{instruction::Instruction, system_program};
 
-use crate::errors::CliError;
+use crate::{client::Client, errors::CliError};
 
 pub fn create(
     client: &Client,

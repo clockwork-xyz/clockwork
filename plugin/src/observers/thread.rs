@@ -6,9 +6,8 @@ use std::{
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clockwork_client::thread::state::{Trigger, TriggerContext};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::{Equality, VersionedThread};
+use clockwork_thread_program::state::{Trigger, TriggerContext, Equality, VersionedThread};
 use log::info;
 use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{

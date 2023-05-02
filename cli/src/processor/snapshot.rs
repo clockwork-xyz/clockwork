@@ -1,7 +1,7 @@
-use clockwork_client::network::objects::{Registry, Snapshot, SnapshotEntry};
+use clockwork_network_program::state::{Registry, Snapshot, SnapshotEntry};
 use solana_sdk::pubkey::Pubkey;
 
-use {crate::errors::CliError, clockwork_client::Client};
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client, entry_id: Option<u64>) -> Result<(), CliError> {
     let registry_pubkey = clockwork_client::network::objects::Registry::pubkey();

@@ -11,14 +11,12 @@ mod thread;
 mod webhook;
 mod worker;
 
-use {
-    anyhow::Result,
-    clap::ArgMatches,
-    clockwork_client::Client,
-    solana_sdk::signature::read_keypair_file,
-};
+use anyhow::Result;
+use clap::ArgMatches;
+use solana_sdk::signature::read_keypair_file;
 
 use crate::{
+    client::Client,
     cli::CliCommand,
     config::CliConfig,
     errors::CliError,

@@ -1,11 +1,13 @@
-use anchor_lang::AccountDeserialize;
-use clockwork_client::{
-    network::state::{Config, Delegation, Worker},
-    Client,
+use anchor_lang::{
+    solana_program::{
+        instruction::Instruction, system_program, sysvar
+    },
+    InstructionData, AccountDeserialize, ToAccountMetas
 };
+use clockwork_network_program::state::{Config, Delegation, Worker};
 use spl_associated_token_account::get_associated_token_address;
 
-use crate::errors::CliError;
+use crate::{client::Client, errors::CliError};
 
 pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
     // Get config data
@@ -26,12 +28,22 @@ pub fn create(client: &Client, worker_id: u64) -> Result<(), CliError> {
 
     // Build ix
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, worker.total_delegations);
-    let ix = clockwork_client::network::instruction::delegation_create(
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-        worker_pubkey,
-    );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: clockwork_network_program::accounts::DelegationCreate {
+            associated_token_program: anchor_spl::associated_token::ID,
+            authority: client.payer_pubkey(),
+            config: Config::pubkey(),
+            delegation: delegation_pubkey,
+            delegation_tokens: get_associated_token_address(&delegation_pubkey, &config.mint),
+            mint: config.mint,
+            rent: sysvar::rent::ID,
+            system_program: system_program::ID,
+            token_program: anchor_spl::token::ID,
+            worker: worker_pubkey,
+        }.to_account_metas(Some(false)),
+        data: clockwork_network_program::instruction::DelegationCreate {}.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
@@ -56,12 +68,18 @@ pub fn deposit(
     // Build ix
     let worker_pubkey = Worker::pubkey(worker_id);
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
-    let ix = clockwork_client::network::instruction::delegation_deposit(
-        amount,
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-    );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: clockwork_network_program::accounts::DelegationDeposit {
+            authority: client.payer_pubkey(),
+            authority_tokens: get_associated_token_address(&client.payer_pubkey(), &config.mint),
+            config: Config::pubkey(),
+            delegation: delegation_pubkey,
+            delegation_tokens: get_associated_token_address(&delegation_pubkey, &config.mint),
+            token_program: anchor_spl::token::ID, 
+        }.to_account_metas(Some(false)),
+        data: clockwork_network_program::instruction::DelegationDeposit { amount }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())
@@ -86,12 +104,18 @@ pub fn withdraw(
     // Build ix
     let worker_pubkey = Worker::pubkey(worker_id);
     let delegation_pubkey = Delegation::pubkey(worker_pubkey, delegation_id);
-    let ix = clockwork_client::network::instruction::delegation_withdraw(
-        amount,
-        client.payer_pubkey(),
-        delegation_pubkey,
-        config.mint,
-    );
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: clockwork_network_program::accounts::DelegationWithdraw {
+            authority: client.payer_pubkey(),
+            authority_tokens: get_associated_token_address(&client.payer_pubkey(), &config.mint),
+            config: Config::pubkey(),
+            delegation: delegation_pubkey,
+            delegation_tokens: get_associated_token_address(&delegation_pubkey, &config.mint),
+            token_program: anchor_spl::token::ID, 
+        }.to_account_metas(Some(false)),
+        data: clockwork_network_program::instruction::DelegationWithdraw { amount }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
 
     Ok(())

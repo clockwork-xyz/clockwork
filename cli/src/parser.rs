@@ -1,36 +1,16 @@
-use {
-    crate::{
-        cli::CliCommand,
-        errors::CliError,
-    },
-    clap::ArgMatches,
-    clockwork_client::{
-        thread::state::{
-            SerializableAccount,
-            SerializableInstruction,
-            Trigger,
-        },
-        webhook::state::HttpMethod,
-    },
-    serde::{
-        Deserialize as JsonDeserialize,
-        Serialize as JsonSerialize,
-    },
-    solana_sdk::{
-        pubkey::Pubkey,
-        signature::{
-            read_keypair_file,
-            Keypair,
-        },
-        signer::Signer,
-    },
-    std::{
-        convert::TryFrom,
-        fs,
-        path::PathBuf,
-        str::FromStr,
-    },
+use std::{convert::TryFrom, fs, path::PathBuf, str::FromStr};
+
+use clap::ArgMatches;
+use clockwork_thread_program::state::{SerializableAccount, SerializableInstruction, Trigger};
+use clockwork_webhook_program::state::HttpMethod;
+use serde::{Deserialize as JsonDeserialize, Serialize as JsonSerialize};
+use solana_sdk::{
+    pubkey::Pubkey,
+    signature::{read_keypair_file, Keypair},
+    signer::Signer,
 };
+
+use crate::{cli::CliCommand, errors::CliError};
 
 impl TryFrom<&ArgMatches> for CliCommand {
     type Error = CliError;

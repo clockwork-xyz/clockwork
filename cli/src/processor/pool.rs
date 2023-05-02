@@ -1,12 +1,12 @@
-use clockwork_client::network::state::PoolSettings;
-
-use {
-    crate::errors::CliError,
-    clockwork_client::{
-        network::state::{Pool, Registry},
-        Client,
+use anchor_lang::{
+    solana_program::{
+        instruction::Instruction, system_program,
     },
+    InstructionData, ToAccountMetas
 };
+use clockwork_network_program::state::{Config, Pool, Registry, PoolSettings};
+
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client, id: u64) -> Result<(), CliError> {
     let pool_pubkey = Pool::pubkey(id);
@@ -36,12 +36,18 @@ pub fn list(client: &Client) -> Result<(), CliError> {
 
 pub fn update(client: &Client, id: u64, size: usize) -> Result<(), CliError> {
     let pool_pubkey = Pool::pubkey(id);
-    let ix = clockwork_client::network::instruction::pool_update(
-        client.payer_pubkey(),
-        client.payer_pubkey(),
-        pool_pubkey,
-        PoolSettings { size },
-    );
+    let settings = PoolSettings { size };
+    let ix = Instruction {
+        program_id: clockwork_network_program::ID,
+        accounts: clockwork_network_program::accounts::PoolUpdate {
+            admin: client.payer_pubkey(),
+            config: Config::pubkey(),
+            payer: client.payer_pubkey(),
+            pool: pool_pubkey,
+            system_program: system_program::ID,
+        }.to_account_metas(Some(false)),
+        data: clockwork_network_program::instruction::PoolUpdate { settings }.data(),
+    };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
     get(client, id)?;
     Ok(())

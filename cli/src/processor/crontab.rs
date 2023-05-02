@@ -1,10 +1,8 @@
-use {
-    crate::errors::CliError,
-    chrono::{DateTime, NaiveDateTime, Utc},
-    clockwork_client::Client,
-    clockwork_cron::Schedule,
-    std::str::FromStr,
-};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use clockwork_cron::Schedule;
+use std::str::FromStr;
+
+use crate::{client::Client, errors::CliError};
 
 pub fn get(client: &Client, schedule: String) -> Result<(), CliError> {
     let clock = client.get_clock().unwrap();
