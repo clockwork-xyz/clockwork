@@ -1,4 +1,5 @@
-use crate::{cli::CliCommand, errors::CliError};
+use std::{convert::TryFrom, fs, path::PathBuf, str::FromStr};
+
 use clap::ArgMatches;
 use clockwork_thread_program::state::{SerializableAccount, SerializableInstruction, Trigger};
 use clockwork_webhook_program::state::HttpMethod;
@@ -8,7 +9,8 @@ use solana_sdk::{
     signature::{read_keypair_file, Keypair},
     signer::Signer,
 };
-use std::{convert::TryFrom, fs, path::PathBuf, str::FromStr};
+
+use crate::{cli::CliCommand, errors::CliError};
 
 impl TryFrom<&ArgMatches> for CliCommand {
     type Error = CliError;
@@ -83,6 +85,9 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         clone_addresses,
         network_url: parse_string("url", matches).ok(),
         program_infos,
+        force_init: matches.is_present("force_init"),
+        solana_archive: parse_string("solana_archive", matches).ok(),
+        clockwork_archive: parse_string("clockwork_archive", matches).ok(),
     })
 }
 

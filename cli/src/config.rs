@@ -1,11 +1,30 @@
-use std::time::Duration;
-
-use solana_sdk::commitment_config::CommitmentConfig;
+use {
+    crate::deps::ToTagVersion,
+    clap::crate_version,
+    solana_sdk::commitment_config::CommitmentConfig,
+    std::{
+        env,
+        path::PathBuf,
+        time::Duration,
+    },
+};
 
 pub const DEFAULT_RPC_TIMEOUT_SECONDS: Duration = Duration::from_secs(30);
 pub const DEFAULT_CONFIRM_TX_TIMEOUT_SECONDS: Duration = Duration::from_secs(5);
+pub const RELAYER_URL: &str = "http://localhost:8000/";
+pub const CLOCKWORK_RELEASE_BASE_URL: &str =
+    "https://github.com/clockwork-xyz/clockwork/releases/download";
+pub const CLOCKWORK_DEPS: &[&str] = &[
+    "clockwork_network_program.so",
+    "clockwork_thread_program.so",
+    "clockwork_webhook_program.so",
+    "libclockwork_plugin.so",
+];
+pub const SOLANA_RELEASE_BASE_URL: &str = "https://github.com/solana-labs/solana/releases/download";
+pub const SOLANA_DEPS: &[&str] = &["solana-test-validator"];
 
-#[derive(Debug)]
+/// The combination of solana config file and our own config file
+#[derive(Debug, PartialEq)]
 pub struct CliConfig {
     pub json_rpc_url: String,
     pub websocket_url: String,
@@ -14,6 +33,8 @@ pub struct CliConfig {
     pub rpc_timeout: Duration,
     pub commitment: CommitmentConfig,
     pub confirm_transaction_initial_timeout: Duration,
+
+    pub active_version: String,
 }
 
 impl CliConfig {
@@ -23,11 +44,115 @@ impl CliConfig {
         CliConfig {
             json_rpc_url: solana_config.json_rpc_url,
             websocket_url: solana_config.websocket_url,
-            relayer_url: "127.0.0.1:8000".into(), // TODO Read this from the Clockwork config file
+            relayer_url: RELAYER_URL.to_owned(),
             keypair_path: solana_config.keypair_path,
             rpc_timeout: DEFAULT_RPC_TIMEOUT_SECONDS,
             commitment: CommitmentConfig::confirmed(),
             confirm_transaction_initial_timeout: DEFAULT_CONFIRM_TX_TIMEOUT_SECONDS,
+            active_version: crate_version!().to_owned().to_tag_version(),
         }
+    }
+
+    pub fn default_home() -> PathBuf {
+        dirs_next::home_dir()
+            .map(|mut path| {
+                path.extend([".config", "clockwork"]);
+                path
+            })
+            .unwrap()
+    }
+
+    pub fn default_runtime_dir() -> PathBuf {
+        let mut path = Self::default_home();
+        path.extend(["localnet", "runtime_deps"]);
+        path
+    }
+
+    pub fn active_runtime_dir(&self) -> PathBuf {
+        Self::default_runtime_dir().join(&self.active_version)
+    }
+
+    pub fn active_runtime(&self, filename: &str) -> String {
+        self.active_runtime_dir().join(filename).to_string()
+    }
+
+    /// This assumes the path for the signatory keypair created by solana-test-validator
+    /// is test-ledger/validator-keypair.json
+    pub fn signatory(&self) -> String {
+        env::current_dir()
+            .map(|mut path| {
+                path.extend(["test-ledger", "validator-keypair.json"]);
+                path
+            })
+            .expect(&format!(
+                "Unable to find location of validator-keypair.json"
+            ))
+            .to_string()
+    }
+
+    pub fn geyser_config(&self) -> String {
+        self.active_runtime("geyser-plugin-config.json")
+    }
+
+    pub fn geyser_lib(&self) -> String {
+        self.active_runtime("libclockwork_plugin.so")
+    }
+}
+
+pub trait PathToString {
+    fn to_string(&self) -> String;
+}
+
+impl PathToString for PathBuf {
+    fn to_string(&self) -> String {
+        self.clone().into_os_string().into_string().unwrap()
+    }
+}
+
+// Clockwork Deps Helpers
+impl CliConfig {
+    // #[tokio::main]
+    fn detect_target_triplet() -> String {
+        let output = std::process::Command::new("cargo")
+            .arg("-vV")
+            .output()
+            .expect("failed to execute process");
+
+        let host_prefix = "host:";
+        String::from_utf8(output.stdout)
+            .expect("Unable to get output from cargo -vV")
+            .split('\n')
+            .find(|line| line.trim_start().to_lowercase().starts_with(&host_prefix))
+            .map(|line| line.trim_start_matches(&host_prefix).trim())
+            .expect("Unable to detect target 'host' from cargo -vV")
+            .to_owned()
+    }
+
+    pub fn clockwork_release_url(tag: &str) -> String {
+        format!(
+            "{}/{}/{}",
+            CLOCKWORK_RELEASE_BASE_URL,
+            tag,
+            &Self::clockwork_release_archive()
+        )
+    }
+
+    pub fn clockwork_release_archive() -> String {
+        let target_triplet = Self::detect_target_triplet();
+        format!("clockwork-geyser-plugin-release-{}.tar.bz2", target_triplet)
+    }
+
+    pub fn solana_release_url(tag: &str) -> String {
+        format!(
+            "{}/{}/{}",
+            SOLANA_RELEASE_BASE_URL,
+            tag,
+            &Self::solana_release_archive()
+        )
+    }
+
+    pub fn solana_release_archive() -> String {
+        let target_triplet = Self::detect_target_triplet();
+        format!("solana-release-{}.tar.bz2", target_triplet)
     }
 }

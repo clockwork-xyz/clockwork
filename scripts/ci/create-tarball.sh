@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 set -e
 
-# cd "$(dirname "$0")/../.."
-
-case "$CI_OS_NAME" in
-osx)
-  _cputype="$(uname -m)"
-  if [[ $_cputype = arm64 ]]; then
-    _cputype=aarch64
-  fi
-  TARGET=${_cputype}-apple-darwin
-  ;;
-linux)
-  TARGET=x86_64-unknown-linux-gnu
-  ;;
-*)
-  echo CI_OS_NAME unsupported
+usage() {
+  echo "Usage: $0 [--target <target triple>]"
   exit 1
-  ;;
-esac
+}
+
+TARGET=$(cargo -vV | awk '/host:/ {print $2}')
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target)
+      TARGET=$2
+      shift 2
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
 
 RELEASE_BASENAME="${RELEASE_BASENAME:=clockwork-geyser-plugin-release}"
 TARBALL_BASENAME="${TARBALL_BASENAME:="$RELEASE_BASENAME"}"
@@ -26,33 +25,30 @@ TARBALL_BASENAME="${TARBALL_BASENAME:="$RELEASE_BASENAME"}"
 echo --- Creating release tarball
 (
   var=$(pwd)
-  echo "The current working directory $var."
+  echo "The current working directory $var"
 
   set -x
   rm -rf "${RELEASE_BASENAME:?}"/
   mkdir "${RELEASE_BASENAME}"/
 
-  # COMMIT="$(git rev-parse HEAD)"
-
+  COMMIT="$(git rev-parse HEAD)"
   (
     echo "channel: $CI_TAG"
-    # echo "commit: $COMMIT"
+    echo "commit: $COMMIT"
     echo "target: $TARGET"
   ) > "${RELEASE_BASENAME}"/version.yml
 
-  # Make CHANNEL available to include in the software version information
-  export CHANNEL
-
   var=$(pwd)
-  echo "The current working directory $var."
+  echo "The current working directory $var"
 
   source ./scripts/ci/rust-version.sh stable
-  # shellcheck disable=SC2154
-  ./scripts/build-all.sh --release "${RELEASE_BASENAME}"
+  ./scripts/build-all.sh +"${rust_stable:?}" --release --target "$TARGET" "${RELEASE_BASENAME}"
 
-  tar cvf "${TARBALL_BASENAME}"-$TARGET.tar "${RELEASE_BASENAME}"
-  bzip2 "${TARBALL_BASENAME}"-$TARGET.tar
-  cp "${RELEASE_BASENAME}"/version.yml "${TARBALL_BASENAME}"-$TARGET.yml
+  RELEASE_NAME="${TARBALL_BASENAME}-${TARGET}"
+
+  tar cvf "$RELEASE_NAME".tar "${RELEASE_BASENAME}"
+  bzip2 -f "$RELEASE_NAME".tar
+  cp -fv "${RELEASE_BASENAME}"/version.yml "$RELEASE_NAME".yml
 )
 
 echo --- ok

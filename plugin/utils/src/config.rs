@@ -1,5 +1,8 @@
 use {
-    serde::Deserialize,
+    serde::{
+        Serialize,
+        Deserialize
+    },
     solana_geyser_plugin_interface::geyser_plugin_interface::{
         GeyserPluginError, Result as PluginResult,
     },
@@ -10,10 +13,10 @@ static DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD: u64 = 150;
 static DEFAULT_THREAD_COUNT: usize = 10;
 
 /// Plugin config.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginConfig {
     pub keypath: Option<String>,
-    pub sentry_url: Option<String>,
+    pub libpath: Option<String>,
     pub thread_count: usize,
     pub transaction_timeout_threshold: u64,
     pub worker_id: u64,
@@ -23,7 +26,7 @@ impl Default for PluginConfig {
     fn default() -> Self {
         Self {
             keypath: None,
-            sentry_url: None,
+            libpath: None,
             transaction_timeout_threshold: DEFAULT_TRANSACTION_TIMEOUT_THRESHOLD,
             thread_count: DEFAULT_THREAD_COUNT,
             worker_id: 0,

@@ -1,20 +1,25 @@
-#[macro_use]
-extern crate version;
-
 mod cli;
 mod client;
 mod config;
+mod deps;
 mod errors;
 mod parser;
+mod print;
 mod processor;
 
-use cli::app;
-use errors::CliError;
-use processor::process;
+use {
+    crate::{
+        config::CliConfig,
+        print::print_style,
+    },
+    cli::app,
+    errors::CliError,
+    processor::process,
+};
 
-fn main() -> Result<(), CliError>{
-    process(&app().get_matches()).map_err(|e|{
-        println!("{}", e);
+fn main() -> Result<(), CliError> {
+    process(&app().get_matches()).map_err(|e| {
+        print_error!("{}", e);
         e
     })
 }
