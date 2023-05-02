@@ -1,6 +1,6 @@
 use anchor_lang::{
-    solana_program::{instruction::{AccountMeta, Instruction}, system_program},
-    InstructionData, AccountDeserialize
+    solana_program::{instruction::Instruction, system_program},
+    InstructionData, AccountDeserialize, ToAccountMetas
 };
 use clockwork_thread_program::state::{SerializableInstruction, Thread, ThreadSettings, Trigger, VersionedThread};
 use clockwork_utils::CrateInfo;
@@ -9,10 +9,11 @@ use solana_sdk::pubkey::Pubkey;
 use crate::{client::Client, errors::CliError};
 
 pub fn crate_info(client: &Client) -> Result<(), CliError> {
-    // let ix = clockwork_client::thread::instruction::get_crate_info();
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![AccountMeta::new_readonly(system_program::ID, false)],
+        accounts: clockwork_thread_program::accounts::GetCrateInfo {
+            system_program: system_program::ID,
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::GetCrateInfo {}.data(),
     };
     let crate_info: CrateInfo = client.get_return_data(ix).unwrap();
@@ -27,23 +28,14 @@ pub fn create(
     trigger: Trigger,
 ) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.clone().into_bytes());
-    // let ix = clockwork_client::thread::instruction::thread_create(
-    //     0,
-    //     client.payer_pubkey(),
-    //     id.into_bytes(),
-    //     instructions,
-    //     client.payer_pubkey(),
-    //     thread_pubkey,
-    //     trigger,
-    // );
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new(client.payer_pubkey(), true),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadCreate {
+            authority: client.payer_pubkey(),
+            payer: client.payer_pubkey(),
+            system_program: system_program::ID,
+            thread: thread_pubkey
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadCreate {
             amount: 0,
             id: id.into_bytes(),
@@ -59,18 +51,13 @@ pub fn create(
 
 pub fn delete(client: &Client, id: String) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
-    // let ix = clockwork_client::thread::instruction::thread_delete(
-    //     client.payer_pubkey(),
-    //     client.payer_pubkey(),
-    //     thread_pubkey,
-    // );
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new(client.payer_pubkey(), true),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadDelete {
+            authority: client.payer_pubkey(),
+            close_to: client.payer_pubkey(),
+            thread: thread_pubkey,
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadDelete {}.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
@@ -80,9 +67,6 @@ pub fn delete(client: &Client, id: String) -> Result<(), CliError> {
 pub fn get(client: &Client, address: Pubkey) -> Result<(), CliError> {
     let data = client.get_account_data(&address).unwrap();
     let thread = VersionedThread::try_deserialize(&mut data.as_slice()).unwrap();
-    // let thread = client
-    //     .get::<Thread>(&address)
-    //     .map_err(|_err| CliError::AccountDataNotParsable(address.to_string()))?;
     println!("Address: {}\n{:#?}", address, thread);
     Ok(())
 }
@@ -91,10 +75,10 @@ pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadPause {
+            authority: client.payer_pubkey(),
+            thread: thread_pubkey,
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadPause {}.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
@@ -104,14 +88,12 @@ pub fn pause(client: &Client, id: String) -> Result<(), CliError> {
 
 pub fn resume(client: &Client, id: String) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
-    // let ix =
-    //     clockwork_client::thread::instruction::thread_resume(client.payer_pubkey(), thread_pubkey);
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadResume {
+            authority: client.payer_pubkey(),
+            thread: thread_pubkey
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadResume {}.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
@@ -121,14 +103,12 @@ pub fn resume(client: &Client, id: String) -> Result<(), CliError> {
 
 pub fn reset(client: &Client, id: String) -> Result<(), CliError> {
     let thread_pubkey = Thread::pubkey(client.payer_pubkey(), id.into_bytes());
-    // let ix =
-    //     clockwork_client::thread::instruction::thread_reset(client.payer_pubkey(), thread_pubkey);
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadReset {
+            authority: client.payer_pubkey(),
+            thread: thread_pubkey
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadReset {}.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
@@ -158,18 +138,13 @@ pub fn update(
         rate_limit,
         trigger,
     };
-    // let ix = clockwork_client::thread::instruction::thread_update(
-    //     client.payer_pubkey(),
-    //     thread_pubkey,
-    //     settings,
-    // );
     let ix = Instruction {
         program_id: clockwork_thread_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(client.payer_pubkey(), true),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(thread_pubkey, false),
-        ],
+        accounts: clockwork_thread_program::accounts::ThreadUpdate {
+            authority: client.payer_pubkey(),
+            system_program: system_program::ID,
+            thread: thread_pubkey
+        }.to_account_metas(Some(false)),
         data: clockwork_thread_program::instruction::ThreadUpdate { settings }.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();

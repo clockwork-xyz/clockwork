@@ -1,9 +1,9 @@
 use anchor_lang::{
     solana_program::{
-        instruction::{AccountMeta, Instruction},
+        instruction::Instruction,
         system_program, sysvar,
     },
-    AccountDeserialize, InstructionData,
+    AccountDeserialize, InstructionData, ToAccountMetas
 };
 use anchor_spl::{associated_token, associated_token::get_associated_token_address, token};
 use clockwork_network_program::state::{
@@ -93,21 +93,21 @@ pub fn create(client: &Client, signatory: Keypair, silent: bool) -> Result<(), C
     let worker_pubkey = Worker::pubkey(worker_id);
     let ix = Instruction {
         program_id: clockwork_network_program::ID,
-        accounts: vec![
-            AccountMeta::new_readonly(associated_token::ID, false),
-            AccountMeta::new(client.payer_pubkey(), true),
-            AccountMeta::new_readonly(Config::pubkey(), false),
-            AccountMeta::new(Fee::pubkey(worker_pubkey), false),
-            AccountMeta::new(Penalty::pubkey(worker_pubkey), false),
-            AccountMeta::new_readonly(config.mint, false),
-            AccountMeta::new(Registry::pubkey(), false),
-            AccountMeta::new_readonly(sysvar::rent::ID, false),
-            AccountMeta::new_readonly(signatory.pubkey(), true),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new_readonly(token::ID, false),
-            AccountMeta::new(worker_pubkey, false),
-            AccountMeta::new(get_associated_token_address(&worker_pubkey, &config.mint), false),
-        ],
+        accounts: clockwork_network_program::accounts::WorkerCreate {
+            associated_token_program: associated_token::ID,
+            authority: client.payer_pubkey(),
+            config: Config::pubkey(),
+            fee: Fee::pubkey(worker_pubkey),
+            penalty: Penalty::pubkey(worker_pubkey),
+            mint: config.mint,
+            registry: Registry::pubkey(),
+            rent: sysvar::rent::ID,
+            signatory: signatory.pubkey(),
+            system_program: system_program::ID,
+            token_program: token::ID,
+            worker: worker_pubkey,
+            worker_tokens: get_associated_token_address(&worker_pubkey, &config.mint),
+        }.to_account_metas(Some(false)),
         data: clockwork_network_program::instruction::WorkerCreate {}.data(),
     };
     client
@@ -131,18 +131,13 @@ pub fn update(client: &Client, id: u64, signatory: Option<Keypair>) -> Result<()
         commission_rate: 0,
         signatory: signatory.map_or(worker.signatory, |v| v.pubkey()),
     };
-    // let ix = clockwork_client::network::instruction::worker_update(
-    //     client.payer_pubkey(),
-    //     settings,
-    //     worker_pubkey,
-    // );
     let ix = Instruction {
         program_id: clockwork_network_program::ID,
-        accounts: vec![
-            AccountMeta::new(client.payer_pubkey(), true),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new(worker_pubkey, false),
-        ],
+        accounts: clockwork_network_program::accounts::WorkerUpdate {
+            authority: client.payer_pubkey(),
+            system_program: system_program::ID,
+            worker: worker_pubkey,
+        }.to_account_metas(Some(false)),
         data: clockwork_network_program::instruction::WorkerUpdate { settings }.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();

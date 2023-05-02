@@ -77,15 +77,6 @@ pub async fn build_pool_rotation_tx<'a>(
             snapshot_frame: SnapshotFrame::pubkey(snapshot_pubkey, worker_id),
             worker: Worker::pubkey(worker_id),
         }.to_account_metas(Some(false)),
-        // accounts: vec![
-        //     AccountMeta::new_readonly(Config::pubkey(), false),
-        //     AccountMeta::new(Pool::pubkey(0), false),
-        //     AccountMeta::new_readonly(Registry::pubkey(), false),
-        //     AccountMeta::new(keypair.pubkey(), true),
-        //     AccountMeta::new_readonly(snapshot_pubkey, false),
-        //     AccountMeta::new_readonly(SnapshotFrame::pubkey(snapshot_pubkey, worker_id), false),
-        //     AccountMeta::new_readonly(Worker::pubkey(worker_id), false),
-        // ],
         data: clockwork_network_program::instruction::PoolRotate {}.data(),
     };
 

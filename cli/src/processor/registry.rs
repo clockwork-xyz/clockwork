@@ -1,6 +1,6 @@
 use anchor_lang::{
-    solana_program::instruction::{AccountMeta, Instruction},
-    InstructionData,
+    solana_program::instruction::Instruction,
+    InstructionData, ToAccountMetas
 };
 use clockwork_network_program::state::{Config, Registry, Snapshot};
 
@@ -23,15 +23,13 @@ pub fn get(client: &Client) -> Result<(), CliError> {
 }
 
 pub fn unlock(client: &Client) -> Result<(), CliError> {
-    // TODO
-    // let ix = clockwork_network_program::instruction::registry_unlock(client.payer_pubkey());
     let ix = Instruction {
         program_id: clockwork_network_program::ID,
-        accounts: vec![
-            AccountMeta::new(client.payer_pubkey(), true),
-            AccountMeta::new_readonly(Config::pubkey(), false),
-            AccountMeta::new(Registry::pubkey(), false),
-        ],
+        accounts: clockwork_network_program::accounts::RegistryUnlock {
+            admin: client.payer_pubkey(),
+            config: Config::pubkey(),
+            registry: Registry::pubkey()
+        }.to_account_metas(Some(false)),
         data: clockwork_network_program::instruction::RegistryUnlock {}.data(),
     };
     client.send_and_confirm(&[ix], &[client.payer()]).unwrap();
