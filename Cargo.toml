@@ -9,8 +9,6 @@ members = [
     "utils"
 ]
 
-exclude = [ "app" ]
-
 [patch.crates-io]
 anchor-lang = { git = "https://github.com/coral-xyz/anchor", branch = "master" }
 anchor-spl = { git = "https://github.com/coral-xyz/anchor", branch = "master", features = ["mint", "token"] }
