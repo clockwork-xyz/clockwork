@@ -34,7 +34,7 @@ use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_ne
 use super::AccountGet;
 
 /// Number of slots to wait before checking for a confirmed transaction.
-static TRANSACTION_CONFIRMATION_PERIOD: u64 = 10;
+static TRANSACTION_CONFIRMATION_PERIOD: u64 = 2;
 
 /// Number of slots to wait before trying to execute a thread while not in the pool.
 static THREAD_TIMEOUT_WINDOW: u64 = 8;
@@ -68,6 +68,7 @@ pub struct ExecutableThreadMetadata {
 pub struct TransactionMetadata {
     pub slot_sent: u64,
     pub signature: Signature,
+    pub transaction: Transaction,
 }
 
 impl TxExecutor {
@@ -169,7 +170,7 @@ impl TxExecutor {
         let r_transaction_history = self.transaction_history.read().await;
         let checkable_transactions = r_transaction_history
             .iter()
-            .filter(|(_, metadata)| slot > metadata.slot_sent + TRANSACTION_CONFIRMATION_PERIOD)
+            .filter(|(_, metadata)| slot >= metadata.slot_sent + TRANSACTION_CONFIRMATION_PERIOD)
             .map(|(pubkey, metadata)| CheckableTransaction {
                 thread_pubkey: *pubkey,
                 signature: metadata.signature,
@@ -216,25 +217,47 @@ impl TxExecutor {
 
         // Requeue retriable threads and drop transactions from history.
         let mut w_transaction_history = self.transaction_history.write().await;
-        let mut w_executable_threads = self.executable_threads.write().await;
+        // let mut w_executable_threads = self.executable_threads.write().await;
         for pubkey in successful_threads {
             w_transaction_history.remove(&pubkey);
         }
         for pubkey in failed_threads {
             w_transaction_history.remove(&pubkey);
         }
-        for pubkey in retriable_threads {
-            w_transaction_history.remove(&pubkey);
-            w_executable_threads.insert(
-                pubkey,
-                ExecutableThreadMetadata {
-                    due_slot: slot,
-                    simulation_failures: 0,
-                },
-            );
+
+        let wire_txs = retriable_threads
+            .iter()
+            .map(|pubkey| w_transaction_history.get(pubkey).unwrap())
+            .map(|tx_metadata| serialize(&tx_metadata.transaction).unwrap())
+            .collect::<Vec<Vec<u8>>>();
+        match TPU_CLIENT
+            .get()
+            .await
+            .try_send_wire_transaction_batch(wire_txs)
+            .await
+        {
+            Err(err) => {
+                info!("Failed to sent transaction batch: {:?}", err);
+            }
+            Ok(()) => {
+                for pubkey in retriable_threads {
+                    let metadata = w_transaction_history.get(&pubkey).unwrap();
+                    let signature = metadata.signature;
+                    let transaction = metadata.transaction.clone();
+                    w_transaction_history.insert(
+                        pubkey,
+                        TransactionMetadata {
+                            slot_sent: slot,
+                            signature, 
+                            transaction
+                        },
+                    );
+                }
+            }
         }
+
         info!("transaction_history: {:?}", *w_transaction_history);
-        drop(w_executable_threads);
+        // drop(w_executable_threads);
         drop(w_transaction_history);
         Ok(())
     }
@@ -299,6 +322,7 @@ impl TxExecutor {
                     *w_rotation_history = Some(TransactionMetadata {
                         slot_sent: slot,
                         signature: tx.signatures[0],
+                        transaction: tx,
                     });
                     drop(w_rotation_history);
                 }
@@ -339,13 +363,13 @@ impl TxExecutor {
     async fn execute_thread_exec_txs(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        observed_slot: u64,
+        slot: u64,
         pool_position: PoolPosition,
         runtime: Arc<Runtime>,
     ) -> PluginResult<()> {
         let executable_threads = self
             .clone()
-            .get_executable_threads(pool_position, observed_slot)
+            .get_executable_threads(pool_position, slot)
             .await?;
         if executable_threads.is_empty() {
             return Ok(());
@@ -358,13 +382,12 @@ impl TxExecutor {
             .map(|(thread_pubkey, due_slot)| {
                 runtime.spawn(self.clone().try_build_thread_exec_tx(
                     client.clone(),
-                    observed_slot,
                     *due_slot,
                     *thread_pubkey,
                 ))
             })
             .collect();
-        let mut executed_threads: HashMap<Pubkey, Signature> = HashMap::new();
+        let mut executed_threads: HashMap<Pubkey, Transaction> = HashMap::new();
 
         // Serialize to wire transactions.
         let wire_txs = futures::future::join_all(tasks)
@@ -375,7 +398,7 @@ impl TxExecutor {
                 Ok(res) => match res {
                     None => None,
                     Some((pubkey, tx)) => {
-                        executed_threads.insert(*pubkey, tx.signatures[0]);
+                        executed_threads.insert(*pubkey, tx.clone());
                         Some(tx)
                     }
                 },
@@ -399,13 +422,14 @@ impl TxExecutor {
             Ok(()) => {
                 let mut w_executable_threads = self.executable_threads.write().await;
                 let mut w_transaction_history = self.transaction_history.write().await;
-                for (pubkey, signature) in executed_threads {
+                for (pubkey, tx) in executed_threads {
                     w_executable_threads.remove(&pubkey);
                     w_transaction_history.insert(
                         pubkey,
                         TransactionMetadata {
-                            slot_sent: observed_slot,
-                            signature,
+                            slot_sent: slot,
+                            signature: tx.signatures[0],
+                            transaction: tx
                         },
                     );
                 }
@@ -420,7 +444,6 @@ impl TxExecutor {
     pub async fn try_build_thread_exec_tx(
         self: Arc<Self>,
         client: Arc<RpcClient>,
-        observed_slot: u64,
         due_slot: u64,
         thread_pubkey: Pubkey,
     ) -> Option<(Pubkey, Transaction)> {
@@ -443,16 +466,17 @@ impl TxExecutor {
         .await
         {
             if let Some(tx) = tx {
-                if self
-                    .clone()
-                    .dedupe_tx(observed_slot, thread_pubkey, &tx)
-                    .await
-                    .is_ok()
-                {
-                    Some((thread_pubkey, tx))
-                } else {
-                    None
-                }
+                // if self
+                //     .clone()
+                //     .dedupe_tx(observed_slot, thread_pubkey, &tx)
+                //     .await
+                //     .is_ok()
+                // {
+                //     Some((thread_pubkey, tx))
+                // } else {
+                //     None
+                // }
+                Some((thread_pubkey, tx))
             } else {
                 self.increment_simulation_failure(thread_pubkey).await;
                 None
@@ -470,7 +494,7 @@ impl TxExecutor {
         drop(w_executable_threads);
     }
 
-    pub async fn dedupe_tx(
+    pub async fn _dedupe_tx(
         self: Arc<Self>,
         slot: u64,
         thread_pubkey: Pubkey,
