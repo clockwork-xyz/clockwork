@@ -84,4 +84,4 @@ If you are a node operator looking to deploy the clockwork plugin, please talk t
 Please refer to the [FAQ](https://docs.clockwork.xyz/developers/faq).
 
 ## Questions
-Come build with us and ask us questions [Discord](https://discord.gg/epHsTsnUre)!
+Come build with us and ask questions on [Discord](https://discord.gg/epHsTsnUre)!
