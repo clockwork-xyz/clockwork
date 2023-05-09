@@ -216,30 +216,34 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                         .unwrap();
                     match equality {
                         Equality::GreaterThanOrEqual => {
-                            if current_price.price >= limit {
-                                thread.exec_context = Some(ExecContext {
-                                    exec_index: 0,
-                                    execs_since_reimbursement: 0,
-                                    execs_since_slot: 0,
-                                    last_exec_at: clock.slot,
-                                    trigger_context: TriggerContext::Pyth {
-                                        price: current_price.price,
-                                    },
-                                });
-                            }
+                            require!(
+                                current_price.price.ge(&limit),
+                                ClockworkError::TriggerConditionFailed
+                            );
+                            thread.exec_context = Some(ExecContext {
+                                exec_index: 0,
+                                execs_since_reimbursement: 0,
+                                execs_since_slot: 0,
+                                last_exec_at: clock.slot,
+                                trigger_context: TriggerContext::Pyth {
+                                    price: current_price.price,
+                                },
+                            });
                         }
                         Equality::LessThanOrEqual => {
-                            if current_price.price <= limit {
-                                thread.exec_context = Some(ExecContext {
-                                    exec_index: 0,
-                                    execs_since_reimbursement: 0,
-                                    execs_since_slot: 0,
-                                    last_exec_at: clock.slot,
-                                    trigger_context: TriggerContext::Pyth {
-                                        price: current_price.price,
-                                    },
-                                });
-                            }
+                            require!(
+                                current_price.price.le(&limit),
+                                ClockworkError::TriggerConditionFailed
+                            );
+                            thread.exec_context = Some(ExecContext {
+                                exec_index: 0,
+                                execs_since_reimbursement: 0,
+                                execs_since_slot: 0,
+                                last_exec_at: clock.slot,
+                                trigger_context: TriggerContext::Pyth {
+                                    price: current_price.price,
+                                },
+                            });
                         }
                     }
                 }
