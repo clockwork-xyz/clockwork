@@ -33,7 +33,7 @@ release-patch:
 cli *args:
     cargo run --bin clockwork {{args}}
 
-localnet *args:
+localnet *args: make
     cargo run --bin clockwork localnet --dev {{args}}
 
 logs:
