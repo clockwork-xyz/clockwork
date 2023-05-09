@@ -36,7 +36,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
         _ => {}
     }
 
-    let config = CliConfig::load();
+    let mut config = CliConfig::load();
 
     // Build the RPC client
     let payer = read_keypair_file(&config.keypair_path)
@@ -80,8 +80,9 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             force_init,
             solana_archive,
             clockwork_archive,
+            dev,
         } => localnet::start(
-            &config,
+            &mut config,
             &client,
             clone_addresses,
             network_url,
@@ -89,6 +90,7 @@ pub fn process(matches: &ArgMatches) -> Result<(), CliError> {
             force_init,
             solana_archive,
             clockwork_archive,
+            dev,
         ),
         CliCommand::PoolGet { id } => pool::get(&client, id),
         CliCommand::PoolList {} => pool::list(&client),

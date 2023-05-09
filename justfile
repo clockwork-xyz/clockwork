@@ -4,7 +4,7 @@ make:
     ./scripts/build-all.sh .
 
 tarball:
-    ./scripts/create-tarball.sh
+    ./scripts/ci/create-tarball.sh
 
 clean:
     cargo clean
@@ -15,7 +15,6 @@ re: clean
 
 
 # aliases
-
 version:
     cat VERSION
 
@@ -28,13 +27,29 @@ rust-version:
 kill:
     pkill solana-test-validator
 
-
 release-patch:
     gh workflow run bump-release.yaml -F bump=patch
 
-cli:
-    cargo run --bin clockwork
+cli *args:
+    cargo run --bin clockwork {{args}}
 
+localnet *args:
+    cargo run --bin clockwork localnet --dev {{args}}
+
+logs:
+    less test-ledger/validator.log
+
+tlg:
+    tail -f test-ledger/validator.log
+
+watch:
+    cargo watch -c -x "check"
+
+watch-cli:
+    cargo watch -c -x "check --bin clockwork"
+
+
+# links
 pr:
     open https://github.com/clockwork-xyz/clockwork/pulls
 
@@ -43,3 +58,4 @@ actions:
 
 releases:
     open https://github.com/clockwork-xyz/clockwork/releases
+

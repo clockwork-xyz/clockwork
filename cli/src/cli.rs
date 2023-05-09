@@ -56,6 +56,7 @@ pub enum CliCommand {
         program_infos: Vec<ProgramInfo>,
         solana_archive: Option<String>,
         clockwork_archive: Option<String>,
+        dev: bool,
     },
 
     // Pool commands
@@ -388,6 +389,11 @@ pub fn app() -> Command<'static> {
                      ")
                     .takes_value(true),
                 )
+                .arg(
+                    Arg::with_name("dev")
+                        .long("dev")
+                        .help("Use development versions of clockwork programs")
+                    )
         )
         .subcommand(
             Command::new("pool")

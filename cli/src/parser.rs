@@ -88,6 +88,7 @@ fn parse_bpf_command(matches: &ArgMatches) -> Result<CliCommand, CliError> {
         force_init: matches.is_present("force_init"),
         solana_archive: parse_string("solana_archive", matches).ok(),
         clockwork_archive: parse_string("clockwork_archive", matches).ok(),
+        dev: matches.is_present("dev"),
     })
 }
 

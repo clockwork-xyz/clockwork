@@ -35,6 +35,7 @@ pub fn download_deps(
     force_init: bool,
     solana_archive: Option<String>,
     clockwork_archive: Option<String>,
+    dev: bool,
 ) -> Result<()> {
     let solana_tag = env!("GEYSER_INTERFACE_VERSION").to_owned().to_tag_version();
     let clockwork_tag = crate_version!().to_owned().to_tag_version();
@@ -49,13 +50,16 @@ pub fn download_deps(
         config::SOLANA_DEPS,
         force_init,
     )?;
-    download_and_extract(
-        &active_runtime,
-        &clockwork_archive.unwrap_or(CliConfig::clockwork_release_url(&clockwork_tag)),
-        &active_runtime.join(CliConfig::clockwork_release_archive()),
-        config::CLOCKWORK_DEPS,
-        force_init,
-    )
+    if !dev {
+        download_and_extract(
+            &active_runtime,
+            &clockwork_archive.unwrap_or(CliConfig::clockwork_release_url(&clockwork_tag)),
+            &active_runtime.join(CliConfig::clockwork_release_archive()),
+            config::CLOCKWORK_DEPS,
+            force_init,
+        )?;
+    }
+    Ok(())
 }
 
 fn all_target_files_exist(directory: &Path, target_files: &[&str]) -> bool {
