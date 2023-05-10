@@ -4,6 +4,7 @@ use {
     solana_sdk::commitment_config::CommitmentConfig,
     std::{
         env,
+        fs,
         path::PathBuf,
         time::Duration,
     },
@@ -35,6 +36,7 @@ pub struct CliConfig {
     pub confirm_transaction_initial_timeout: Duration,
 
     pub active_version: String,
+    pub dev: bool,
 }
 
 impl CliConfig {
@@ -50,6 +52,7 @@ impl CliConfig {
             commitment: CommitmentConfig::confirmed(),
             confirm_transaction_initial_timeout: DEFAULT_CONFIRM_TX_TIMEOUT_SECONDS,
             active_version: crate_version!().to_owned().to_tag_version(),
+            dev: false,
         }
     }
 
@@ -72,8 +75,24 @@ impl CliConfig {
         Self::default_runtime_dir().join(&self.active_version)
     }
 
+    pub fn target_dir(&self) -> PathBuf {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.extend(["..", "target"]);
+        fs::canonicalize(path).unwrap()
+    }
+
     pub fn active_runtime(&self, filename: &str) -> String {
-        self.active_runtime_dir().join(filename).to_string()
+        if self.dev == true {
+            if filename.contains("solana") {
+                self.active_runtime_dir().join(filename).to_string()
+            } else if filename.contains("program") {
+                self.target_dir().join("deploy").join(filename).to_string()
+            } else {
+                self.target_dir().join("debug").join(filename).to_string()
+            }
+        } else {
+            self.active_runtime_dir().join(filename).to_string()
+        }
     }
 
     /// This assumes the path for the signatory keypair created by solana-test-validator
@@ -95,7 +114,12 @@ impl CliConfig {
     }
 
     pub fn geyser_lib(&self) -> String {
-        self.active_runtime("libclockwork_plugin.so")
+        if self.dev == true && env::consts::OS.to_lowercase().contains("mac") {
+            self.active_runtime("libclockwork_plugin.dylib")
+        } else {
+            // in the release process, we always rename dylib to so anyway
+            self.active_runtime("libclockwork_plugin.so")
+        }
     }
 }
 

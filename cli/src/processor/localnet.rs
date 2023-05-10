@@ -50,7 +50,7 @@ use {
 };
 
 pub fn start(
-    config: &CliConfig,
+    config: &mut CliConfig,
     client: &Client,
     clone_addresses: Vec<Pubkey>,
     network_url: Option<String>,
@@ -58,12 +58,15 @@ pub fn start(
     force_init: bool,
     solana_archive: Option<String>,
     clockwork_archive: Option<String>,
+    dev: bool,
 ) -> Result<(), CliError> {
+    config.dev = dev;
     deps::download_deps(
         &CliConfig::default_runtime_dir(),
         force_init,
         solana_archive,
         clockwork_archive,
+        dev,
     )
     .map_err(|err| CliError::FailedLocalnet(err.to_string()))?;
 
