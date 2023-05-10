@@ -68,75 +68,20 @@ clockwork localnet
 solana logs --url localhost
 ```
 
+# Guides & Examples
+- We have ready to run examples apps: https://github.com/clockwork-xyz/examples.
+- If you are looking for walkthough, take a look at the docs: https://docs.clockwork.xyz/developers/guides.
+- If you have a certain use case you would like to discuss, we are happy to [help](https://discord.com/channels/889725689543143425/1029516796304306247).
+
 ---
 
 # Deploying a worker
 > If you just want to test your smart contracts on localnet, check the previous section.
-#### 1. Either build from scratch or install the pre-built binary.
-```sh
-git checkout -b v2.0 origin/v2.0
-./scripts/ci/create-tarball.sh
-cd clockwork-geyser-plugin-release
-export PATH=$PWD/bin:$PATH
-```
 
-
-```sh
-curl -s https://api.github.com/repos/clockwork-xyz/clockwork/releases/latest | grep "clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar" | cut -d : -f 2,3 | tr -d \" | wget -qi -
-tar -xjvf clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
-rm clockwork-geyser-plugin-release-x86_64-unknown-linux-gnu.tar.bz2
-```
-
-#### 2. Next, create a new keypair for signing Clockwork txs.
-```sh
-solana-keygen new -o clockwork-worker-keypair.json
-```
-
-#### 3. Load this keypair with a small amount of SOL (~0.1 ◎). 
-
-#### 4. Register your worker and get a worker ID: 
-```sh
-clockwork worker create clockwork-worker-keypair.json
-```
-
-
-#### 5. Setup the plugin config file.
-
-Create a new file `~/clockwork-geyser-config.json`:
-```json
-{
-  "libpath": "/home/sol/clockwork-geyser-plugin-release/lib/libclockwork_plugin.so",
-  "keypath": "/home/sol/clockwork-worker-keypair.json",
-  "rpc_url": "http://127.0.0.1:8899",
-  "transaction_timeout_threshold": 150,
-  "thread_count": 10,
-  "worker_id": 0, 
-}
-```
-> Assuming `clockwork-geyser-plugin-release` is in your home directory.
-
-#### 6. Configure your validator to run with the Clockwork plugin.
-```sh
-#!/bin/bash
-exec solana-validator \
-  --identity ~/validator-keypair.json \
-  --rpc-port 8899 \
-  --entrypoint entrypoint.devnet.solana.com:8001 \
-  --no-voting \
-  --full-rpc-api \
-  --limit-ledger-size \
-  
-  # Add this line! 👇🏼
-  --geyser-plugin-config ~/clockwork-geyser-config.json
-```
-
-#### 7. Restart your validator however you normally would!
-```sh
-sudo systemctl restart sol
-```
+If you are a node operator looking to deploy the clockwork plugin, please talk to us for a smooth onboarding. Here's a one pager on how to be part of the automation network: https://docs.clockwork.xyz/workernet/deploying-a-worker.
 
 ## Common Errors
 Please refer to the [FAQ](https://docs.clockwork.xyz/developers/faq).
 
 ## Questions
-Come build with us and ask us questions [Discord](https://discord.gg/epHsTsnUre)!
+Come build with us and ask questions on [Discord](https://discord.gg/epHsTsnUre)!
