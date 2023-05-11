@@ -34,7 +34,7 @@ use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_ne
 use super::AccountGet;
 
 /// Number of slots to wait before checking for a confirmed transaction.
-static TRANSACTION_CONFIRMATION_PERIOD: u64 = 10;
+static TRANSACTION_CONFIRMATION_PERIOD: u64 = 24;
 
 /// Number of slots to wait before trying to execute a thread while not in the pool.
 static THREAD_TIMEOUT_WINDOW: u64 = 24;
@@ -46,7 +46,7 @@ static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
 static EXPONENTIAL_BACKOFF_CONSTANT: u32 = 2;
 
 /// The number of slots to wait since the last rotation attempt.
-static ROTATION_CONFIRMATION_PERIOD: u64 = 9;
+static ROTATION_CONFIRMATION_PERIOD: u64 = 16;
 
 /// TxExecutor
 pub struct TxExecutor {
