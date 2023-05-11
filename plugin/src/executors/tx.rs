@@ -37,7 +37,7 @@ use super::AccountGet;
 static TRANSACTION_CONFIRMATION_PERIOD: u64 = 10;
 
 /// Number of slots to wait before trying to execute a thread while not in the pool.
-static THREAD_TIMEOUT_WINDOW: u64 = 8;
+static THREAD_TIMEOUT_WINDOW: u64 = 24;
 
 /// Number of times to retry a thread simulation.
 static MAX_THREAD_SIMULATION_FAILURES: u32 = 5;
