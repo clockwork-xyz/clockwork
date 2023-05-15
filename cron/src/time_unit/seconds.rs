@@ -32,6 +32,9 @@ impl TimeUnitField for Seconds {
             None => Seconds::supported_ordinals(),
         }
     }
+    fn name_in_text() -> Cow<'static, str> {
+        Cow::from("second")
+    }
     fn to_human_text (&self) ->  Result<String, Error> {
         Self::human_text_from_field(self.field.clone(), false)
     }

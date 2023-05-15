@@ -33,6 +33,9 @@ impl TimeUnitField for DaysOfMonth {
             None => DaysOfMonth::supported_ordinals(),
         }
     }
+    fn name_in_text() -> Cow<'static, str> {
+        Cow::from("day-of-month")
+    }
     fn to_human_text (&self) ->  Result<String, Error> {
         match self.is_all() {
             true => Ok("".to_owned()),

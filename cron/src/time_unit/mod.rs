@@ -109,6 +109,7 @@ where
         field: Vec<RootSpecifier>,
     ) -> Self;
     fn name() -> Cow<'static, str>;
+    fn name_in_text() -> Cow<'static, str>;
     fn inclusive_min() -> Ordinal;
     fn inclusive_max() -> Ordinal;
     fn ordinals(&self) -> OrdinalSet;
@@ -234,7 +235,7 @@ where
         use self::Specifier::*;
         //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
         match *specifier {
-            All => Ok(format!("{}", &Self::name())),
+            All => Ok(format!("")),
             Point(ordinal) => Ok(format!("{}", &Self::name_from_ordinal(ordinal)?)),
             Range(start, end) => {
                 match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
@@ -277,7 +278,7 @@ where
         let ordinals = match root_specifier {
             RootSpecifier::Specifier(specifier) => match specifier {
                 Specifier::Point(_) => format!("{}", Self::human_text_from_specifier(specifier)?),
-                _ => format!("every {} {}", Self::name(), Self::human_text_from_specifier(specifier)?),
+                _ => format!("every {} {}", Self::name_in_text(), Self::human_text_from_specifier(specifier)?),
             },
             RootSpecifier::Period(specifier, step) => {
                 if *step == 0 {
@@ -290,17 +291,17 @@ where
                         let start = Self::validate_ordinal(*start)?;
                         format!(
                             "every {} {} from {} through {}",
-                            step,
-                            &Self::name(),
+                            &Self::suffix(*step),
+                            &Self::name_in_text(),
                             &Self::name_from_ordinal(start)?,
                             &Self::inclusive_max()
                         )
                     }
-                    specifier => format!("every {} {}", step, &Self::human_text_from_specifier(specifier)?),
+                    specifier => format!("every {} {}", &Self::suffix(*step), &Self::human_text_from_specifier(specifier)?),
                 }
             }
             RootSpecifier::NamedPoint(ref name) => {
-                // validate name
+                // validates name
                 let ordinal = Self::ordinal_from_name(name)?;
                 let name = Self::name_from_ordinal(ordinal)?;
                 format!("{name}")
@@ -332,14 +333,14 @@ where
         };
         let s = match named {
             true => "".to_owned(),
-            false => format!("{} ", &Self::name()),
+            false => format!("{} ", &Self::name_in_text()),
         };
 
         Ok(format!("{}{}", &s, &human_text_string)
             .replace("every 1st", "every")
-            .replace(&format!("{} every", &Self::name()), "every")
-            .replace(&format!(", {}", &Self::name()), ",")
-            .replace(&format!(", and {}", &Self::name()), ", and"))
+            .replace(&format!("{} every", &Self::name_in_text()), "every")
+            .replace(&format!(", {}", &Self::name_in_text()), ",")
+            .replace(&format!(", and {}", &Self::name_in_text()), ", and"))
     }
 
     fn suffix(num: Ordinal) -> String {

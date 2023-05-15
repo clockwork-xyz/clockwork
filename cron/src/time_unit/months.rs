@@ -79,6 +79,9 @@ impl TimeUnitField for Months {
             None => Months::supported_ordinals(),
         }
     }
+    fn name_in_text() -> Cow<'static, str> {
+        Cow::from("month")
+    }
     fn to_human_text (&self) ->  Result<String, Error> {
         match self.is_all() {
             true => Ok("".to_owned()),

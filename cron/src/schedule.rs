@@ -76,7 +76,7 @@ impl Schedule {
                     &years.to_human_text()?
                 )
                 .trim()
-                .replace("At every", "Every")
+                .to_owned()
                     + "."
             }
             None => {
@@ -92,7 +92,7 @@ impl Schedule {
                     &years.to_human_text()?
                 )
                 .trim()
-                .replace("At every", "Every")
+                .to_owned()
                     + "."
             }
         })
