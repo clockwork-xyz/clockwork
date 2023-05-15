@@ -1,6 +1,6 @@
 use crate::ordinal::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Specifier {
     All,
     Point(Ordinal),
@@ -15,7 +15,7 @@ pub enum Specifier {
 // - named range: 'Mon-Thurs/2'
 //
 // Without this separation we would end up with invalid combinations such as 'Mon/2'
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum RootSpecifier {
     Specifier(Specifier),
     Period(Specifier, u32),
@@ -27,3 +27,5 @@ impl From<Specifier> for RootSpecifier {
         Self::Specifier(specifier)
     }
 }
+
+impl Eq for RootSpecifier {}

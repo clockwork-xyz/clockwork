@@ -3,6 +3,7 @@ use chrono::{DateTime, Datelike, Timelike};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::ops::Bound::{Included, Unbounded};
 
+use crate::error::Error;
 use crate::ordinal::*;
 use crate::queries::*;
 use crate::time_unit::*;
@@ -22,6 +23,79 @@ pub struct Schedule {
 impl Schedule {
     pub(crate) fn new(source: String, fields: ScheduleFields) -> Schedule {
         Schedule { source, fields }
+    }
+
+    pub fn to_human_text(&self) -> Result<String, Error> {
+        let fields = self.fields.clone();
+
+        let seconds = fields.seconds;
+        let minutes = fields.minutes;
+        let hours = fields.hours;
+        let days_of_week = fields.days_of_week;
+        let months = fields.months;
+        let days_of_month = fields.days_of_month;
+        let years = fields.years;
+
+        let days_anded = days_of_month.is_all() || days_of_week.is_all();
+
+        let s = match !days_of_month.to_human_text()?.is_empty()
+            && !days_of_week.to_human_text()?.is_empty()
+        {
+            false => "".to_owned(),
+            true => match days_anded {
+                false => "and".to_owned(),
+                true => "if it's".to_owned(),
+            },
+        };
+
+        let time = match seconds.count() == 1 && minutes.count() == 1 && hours.count() == 1 {
+            true => {
+                let second = format!("0{}", &seconds.ordinals().iter().next().unwrap());
+                let minute = format!("0{}", &minutes.ordinals().iter().next().unwrap());
+                let hour = format!("0{}", &hours.ordinals().iter().next().unwrap());
+                Some([
+                    second[second.len() - 2..].to_owned(),
+                    minute[minute.len() - 2..].to_owned(),
+                    hour[hour.len() - 2..].to_owned(),
+                ])
+            }
+            false => None,
+        };
+
+        Ok(match time {
+            Some(t) => {
+                format!(
+                    "At {}:{}:{} {} {} {} {} {}",
+                    &t[2],
+                    &t[1],
+                    &t[0],
+                    &days_of_month.to_human_text()?,
+                    &s,
+                    &days_of_week.to_human_text()?,
+                    &months.to_human_text()?,
+                    &years.to_human_text()?
+                )
+                .trim()
+                .replace("At every", "Every")
+                    + "."
+            }
+            None => {
+                format!(
+                    "At {} {} {} {} {} {} {} {}",
+                    &seconds.to_human_text()?,
+                    &minutes.to_human_text()?,
+                    &hours.to_human_text()?,
+                    &days_of_month.to_human_text()?,
+                    &s,
+                    &days_of_week.to_human_text()?,
+                    &months.to_human_text()?,
+                    &years.to_human_text()?
+                )
+                .trim()
+                .replace("At every", "Every")
+                    + "."
+            }
+        })
     }
 
     pub fn next_after<Z>(&self, after: &DateTime<Z>) -> Option<DateTime<Z>>
