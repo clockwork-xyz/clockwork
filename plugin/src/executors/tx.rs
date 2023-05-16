@@ -547,18 +547,20 @@ fn exponential_backoff_threshold(metadata: &ExecutableThreadMetadata) -> u64 {
     metadata.due_slot + EXPONENTIAL_BACKOFF_CONSTANT.pow(metadata.simulation_failures) as u64 - 1
 }
 
-static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
-static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+// static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
+// static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
+static TRITON_RPC_URL: &str = "https://ams43.rpcpool.com/dc6270ca0882af0a0e84e68c5b68";
+static TRITON_WEBSOCKET_URL: &str = "wss://ams43.rpcpool.com/dc6270ca0882af0a0e84e68c5b68";
 
 lazy_static! {
     static ref TPU_CLIENT: AsyncOnce<TpuClient> = AsyncOnce::new(async {
         let rpc_client = Arc::new(RpcClient::new_with_commitment(
-            LOCAL_RPC_URL.into(),
+            TRITON_RPC_URL.into(),
             CommitmentConfig::processed(),
         ));
         let tpu_client = TpuClient::new(
             rpc_client,
-            LOCAL_WEBSOCKET_URL.into(),
+            TRITON_WEBSOCKET_URL.into(),
             TpuClientConfig { fanout_slots: 24 },
         )
         .await
