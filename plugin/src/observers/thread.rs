@@ -179,6 +179,7 @@ impl ThreadObserver {
     ) -> PluginResult<()> {
         let r_pyth_threads = self.pyth_threads.read().await;
         if let Some(pyth_threads) = r_pyth_threads.get(&account_pubkey) {
+            log::info!("There are {} threads observing price feed {}", pyth_threads.len(), account_pubkey);
             for pyth_thread in pyth_threads {
                 match pyth_thread.equality {
                     Equality::GreaterThanOrEqual => {
@@ -187,6 +188,7 @@ impl ThreadObserver {
                             .price
                             .ge(&pyth_thread.limit)
                         {
+                            log::info!("GTE condition matched for thread {} on feed {}", pyth_thread.thread_pubkey, account_pubkey);
                             let mut w_now_threads = self.now_threads.write().await;
                             w_now_threads.insert(pyth_thread.thread_pubkey);
                             drop(w_now_threads);
@@ -198,6 +200,7 @@ impl ThreadObserver {
                             .price
                             .le(&pyth_thread.limit)
                         {
+                            log::info!("LTE condition matched for thread {} on feed {}", pyth_thread.thread_pubkey, account_pubkey);
                             let mut w_now_threads = self.now_threads.write().await;
                             w_now_threads.insert(pyth_thread.thread_pubkey);
                             drop(w_now_threads);
