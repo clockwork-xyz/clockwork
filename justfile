@@ -1,5 +1,9 @@
 # build stuff
 
+build:
+    cargo build
+    anchor build
+
 make:
     ./scripts/build-all.sh .
 
@@ -33,8 +37,11 @@ release-patch:
 cli *args:
     cargo run --bin clockwork {{args}}
 
-localnet *args: make
+localnet *args: build
     cargo run --bin clockwork localnet --dev {{args}}
+
+net:
+    cargo run --bin clockwork localnet --dev
 
 logs:
     less test-ledger/validator.log
