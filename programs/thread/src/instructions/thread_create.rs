@@ -84,9 +84,5 @@ pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instruction
         amount
     )?;
 
-    let data_len = 8 + thread.try_to_vec()?.len();
-    let data_len_other = thread.to_account_info().try_data_len()?;
-    msg!("A: {:?} B: {:?}", data_len, data_len_other);
-
     Ok(())
 }
