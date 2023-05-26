@@ -256,9 +256,6 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
         thread.next_instruction = Some(kickoff_instruction.clone());
     }
 
-    // Realloc the thread account
-    thread.realloc()?;
-
     // Reimburse signatory for transaction fee.
     **thread.to_account_info().try_borrow_mut_lamports()? = thread
         .to_account_info()

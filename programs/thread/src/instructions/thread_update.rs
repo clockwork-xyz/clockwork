@@ -83,7 +83,7 @@ pub fn handler(ctx: Context<ThreadUpdate>, settings: ThreadSettings) -> Result<(
     thread.realloc()?;
 
     // If lamports are required to maintain rent-exemption, pay them
-    let data_len = 8 + thread.try_to_vec()?.len();
+    let data_len = thread.to_account_info().data_len();
     let minimum_rent = Rent::get().unwrap().minimum_balance(data_len);
     if minimum_rent > thread.to_account_info().lamports() {
         transfer(
