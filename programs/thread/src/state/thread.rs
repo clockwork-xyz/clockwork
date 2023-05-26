@@ -1,9 +1,14 @@
+use std::mem::size_of;
+
 use anchor_lang::{prelude::*, AnchorDeserialize, AnchorSerialize};
 use clockwork_utils::thread::{ClockData, SerializableInstruction, Trigger};
 
 pub use clockwork_utils::thread::Equality;
 
 pub const SEED_THREAD: &[u8] = b"thread";
+
+/// Static space for next_instruction field.
+pub const NEXT_INSTRUCTION_SIZE: usize = 1232;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]
@@ -70,7 +75,16 @@ impl ThreadAccount for Account<'_, Thread> {
 
     fn realloc(&mut self) -> Result<()> {
         // Realloc memory for the thread account
-        let data_len = 8 + self.try_to_vec()?.len();
+        let data_len = vec![
+            8,
+            size_of::<Thread>(),
+            self.id.len(),
+            self.instructions.try_to_vec()?.len(),
+            self.trigger.try_to_vec()?.len(),
+            NEXT_INSTRUCTION_SIZE,
+        ]
+        .iter()
+        .sum();
         self.to_account_info().realloc(data_len, false)?;
         Ok(())
     }

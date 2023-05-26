@@ -43,7 +43,8 @@ pub struct ThreadCreate<'info> {
             size_of::<Thread>(), 
             id.len(),
             instructions.try_to_vec()?.len(),  
-            trigger.try_to_vec()?.len()
+            trigger.try_to_vec()?.len(),
+            NEXT_INSTRUCTION_SIZE,
         ].iter().sum()
     )]
     pub thread: Account<'info, Thread>,
