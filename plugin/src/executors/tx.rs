@@ -440,6 +440,10 @@ impl TxExecutor {
         // Exit early if the thread has been executed after it became due.
         if let Some(exec_context) = thread.exec_context() {
             if exec_context.last_exec_at.gt(&due_slot) {
+                // Drop thread from the executable set to avoid bloat.
+                let mut w_executable_threads = self.executable_threads.write().await;
+                w_executable_threads.remove(&thread_pubkey);
+                drop(w_executable_threads);
                 return None;
             }
         }
