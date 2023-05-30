@@ -1,17 +1,3 @@
-#                                    __   __  __
-#                                    \ \ / / / /
-#                                     \ V / / /
-#                                      \_/  \/
-#
-#                                    V E C T O R
-#                                   Configuration
-#
-# ------------------------------------------------------------------------------
-# Website: https://vector.dev
-# Docs: https://vector.dev/docs
-# Chat: https://chat.vector.dev
-# ------------------------------------------------------------------------------
-
 # Solana log source
 [sources.solana_logs]
 type = "file"
@@ -26,25 +12,24 @@ drop_on_error = true
 inputs = ["solana_logs"]
 source = '''
   .grok_results = parse_groks!(
-    .message, 
-    patterns: [
+     .message,
+     patterns: [
       "\\[%{_timestamp} %{_loglevel} %{_source}\\] %{_message}"
     ],
     aliases: {
       "_timestamp": "%{TIMESTAMP_ISO8601:timestamp}",
       "_loglevel": "%{LOGLEVEL:level}",
       "_message": "%{GREEDYDATA:message}",
-      "_source": "%{DATA:source}"
+      "_source": "%{GREEDYDATA:source}"
     }
   )
-  .dt = .grok_results.timestamp
   .level = .grok_results.level
   .source = strip_whitespace!(.grok_results.source)
   .message = .grok_results.message
   del(.grok_results)
 '''
 
-# Filter Solana logs for Clockwork logs 
+# Filter Solana logs for Clockwork logs
 [transforms.filter_solana_logs]
 inputs = ["parse_solana_logs"]
 type = "filter"
@@ -52,7 +37,8 @@ condition = '''
   .source == "clockwork_plugin::builders::thread_exec" ||
   .source == "clockwork_plugin::executors::tx" ||
   .source == "solana_validator" ||
-  .source == "solana_core::validator"
+  .source == "solana_core::validator" ||
+  .source == "solana_metrics::metrics"
 '''
 
 # Parse program logs into JSON
@@ -62,19 +48,20 @@ inputs = ["filter_solana_logs"]
 source = '''
   if .source == "clockwork_plugin::builders::thread_exec" {
     .grok_results = parse_groks!(
-	    .message, 
-	    patterns: ["slot: {%_slot} thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
+	    .message,
+	    patterns: ["slot:%{SPACE}%{_slot} thread: %{_thread} simulation_error: %{_error} logs: %{_logs}"],
 	    aliases: {
-        "_slot": "%{DATA:slot}",
+	      "_slot": "%{NUMBER:slot}",
 	      "_thread": "%{DATA:thread}",
-        "_error": "%{QUOTEDSTRING:error}",
-        "_logs": "%{GREEDYDATA:logs}"
+              "_error": "%{QUOTEDSTRING:error}",
+              "_logs": "%{GREEDYDATA:logs}"
 	    }
     )
+    .slot = .grok_results.slot
     .thread = .grok_results.thread
-    .error_msg = .grok_results.error
-    .program_logs = parse_json!(.grok_results.logs)
+    .error_message = .grok_results.error
     del(.grok_results)
+    del(.message)
   }
 '''
 
@@ -84,7 +71,7 @@ type = "filter"
 inputs = ["parse_clockwork_logs"]
 condition = '''
   .source == "clockwork_plugin::builders::thread_exec" &&
-    !is_null(.error_msg)
+    !is_null(.error_message)
 '''
 
 # Throttle Clockwork simulation logs
@@ -95,14 +82,60 @@ key_field = "{{ thread }}"
 threshold = 1
 window_secs = 30
 
-# Pipe to Logtail
-[sinks.logtail]
-type = "http"
-uri = "https://in.logtail.com/"
-encoding.codec = "json"
-auth.strategy = "bearer"
-auth.token = "YOUR_AUTH_KEY"
+[transforms.parse_solana_metrics]
+type = "remap"
+inputs = ["filter_solana_logs"]
+source = '''
+  if .source == "solana_metrics::metrics" {
+    .grok_results = parse_groks!(
+      .message,
+      patterns: ["datapoint: %{_stats_type} %{_fields}"],
+      aliases: {
+        "_stats_type": "%{DATA:stats_type}",
+        "_fields": "%{GREEDYDATA:fields}"
+      }
+    )
+    .fields = parse_key_value!(.grok_results.fields, field_delimiter: " ", key_value_delimiter: "=")
+    .stats_type = .grok_results.stats_type
+    del(.grok_results)
+    del(.message)
+  }
+'''
+
+[transforms.filter_solana_metrics]
+type = "filter"
+inputs = ["parse_solana_metrics"]
+condition = '''
+  .stats_type == "cpu-stats" || .stats_type == "memory-stats" || .stats_type == "disk-stats"
+'''
+
+[transforms.rename_fields]
+type = "remap"
+inputs = ["filter_solana_metrics"]
+source = '''
+  . = merge!(., .fields)
+  del(.fields)
+'''
+
+# InfluxDB Sink
+[sinks.influxdb]
+type = "influxdb_logs"
 inputs = ["throttle_clockwork_simulation_logs"]
+endpoint = "" # InfluxDB 2.0 endpoint
+org = "" # InfluxDB organization name
+bucket = "" # InfluxDB bucket name
+measurement = "clockwork-logs" # InfluxDB table name
+token = "" # InfluxDB token
+
+# InfluxDB Sink
+[sinks.influxdb_machine]
+type = "influxdb_logs"
+inputs = ["rename_fields"]
+endpoint = "" # InfluxDB 2.0 endpoint
+org = "" # InfluxDB organization name
+bucket = "" # InfluxDB bucket name
+measurement = "machine-logs" # InfluxDB table name
+token = "" # InfluxDB token
 
 # Test Solana log parser
 [[tests]]
@@ -119,10 +152,30 @@ extract_from = "parse_solana_logs"
 [[tests.outputs.conditions]]
 type = "vrl"
 source = '''
-  assert_eq!(.dt, "2023-01-10T17:21:42.218012551Z")
   assert_eq!(.level, "INFO")
   assert_eq!(.source, "solana_metrics::metrics")
   assert_eq!(.message, "datapoint: pubsub_notifications created_to_queue_time_us=20i")
+'''
+
+# Test machine metrics
+[[tests]]
+name = "parse_mashine_metrics_test"
+
+[[tests.inputs]]
+insert_at = "parse_solana_metrics"
+type = "log"
+log_fields.source = "solana_metrics::metrics"
+log_fields.message = 'datapoint: cpu-stats cpu_num=32i cpu0_freq_mhz=3717i'
+
+[[tests.outputs]]
+extract_from = "parse_solana_metrics"
+
+[[tests.outputs.conditions]]
+type = "vrl"
+source = '''
+  assert_eq!(.stats_type, "cpu-stats")
+  assert_eq!(.fields.cpu_num, "32i")
+  assert_eq!(.fields.cpu0_freq_mhz, "3717i")
 '''
 
 # Test Clockwork log parser
@@ -132,7 +185,7 @@ name = "clockwork_simulation_test"
 [[tests.inputs]]
 insert_at = "parse_solana_logs"
 type = "raw"
-value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K simulation_error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
+value = '[2023-01-11T04:37:09.059509973Z INFO  clockwork_plugin::builders::thread_exec] slot: 215344020 thread: 9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K simulation_error: "Transaction results in an account (1) without insufficient funds for rent" logs: ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"]'
 
 [[tests.outputs]]
 extract_from = "parse_clockwork_logs"
@@ -140,10 +193,9 @@ extract_from = "parse_clockwork_logs"
 [[tests.outputs.conditions]]
 type = "vrl"
 source = '''
-  assert_eq!(.dt, "2023-01-11T04:37:09.059509973Z")
+  assert_eq!(.slot, "215344020")
   assert_eq!(.level, "INFO")
   assert_eq!(.source, "clockwork_plugin::builders::thread_exec")
   assert_eq!(.thread, "9K4g3LYdwKhTJVQv85EvsAn7uHo5pSyq7qNs2FqrsD1K")
-  assert_eq!(.error_msg, "\"Transaction results in an account (1) without insufficient funds for rent\"")
-  assert_eq!(.program_logs, ["Program ComputeBudget111111111111111111111111111111 invoke [1]", "Program ComputeBudget111111111111111111111111111111 success", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv invoke [1]", "Program log: Instruction: ThreadKickoff", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv consumed 83495 of 1400000 compute units", "Program 3XXuUFfweXBwFgFfYaejLvZE4cGZiHgKiGfMtdxNzYmv success"])
+  assert_eq!(.error_message, "\"Transaction results in an account (1) without insufficient funds for rent\"")
 '''
