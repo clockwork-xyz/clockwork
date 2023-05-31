@@ -7,7 +7,8 @@ use anchor_lang::{
 use clockwork_network_program::state::{Config, Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_program::message::{VersionedMessage, v0};
+use solana_sdk::{signature::Keypair, signer::Signer, transaction::VersionedTransaction};
 
 use crate::pool_position::PoolPosition;
 
@@ -19,7 +20,7 @@ pub async fn build_pool_rotation_tx<'a>(
     snapshot: Snapshot,
     snapshot_frame: SnapshotFrame,
     worker_id: u64,
-) -> Option<Transaction> {
+) -> Option<VersionedTransaction> {
     info!("nonce: {:?} total_stake: {:?} current_position: {:?} stake_offset: {:?} stake_amount: {:?}",
         registry.nonce.checked_rem(snapshot.total_stake),
         snapshot.total_stake,
@@ -81,7 +82,16 @@ pub async fn build_pool_rotation_tx<'a>(
     };
 
     // Build and sign tx.
-    let mut tx = Transaction::new_with_payer(&[ix.clone()], Some(&keypair.pubkey()));
-    tx.sign(&[keypair], client.get_latest_blockhash().await.unwrap());
+    let blockhash = client.get_latest_blockhash().await.unwrap();
+
+    let tx = VersionedTransaction::try_new(
+            VersionedMessage::V0(v0::Message::try_compile(
+                &keypair.pubkey(),
+                &[ix.clone()],
+                &[],
+                blockhash,
+            ).expect("error compiling to v0 message")),
+            &[keypair],
+        ).expect("error creating new versioned transaction");
     return Some(tx);
 }
