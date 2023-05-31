@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use anchor_lang::{InstructionData, ToAccountMetas};
-use clockwork_thread_program::state::{VersionedThread, Trigger};
 use clockwork_network_program::state::Worker;
+use clockwork_thread_program::state::{Trigger, VersionedThread};
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -73,7 +73,7 @@ pub async fn build_thread_exec_tx(
     let mut successful_ixs: Vec<Instruction> = vec![];
     let mut units_consumed: Option<u64> = None;
     loop {
-        let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
+        let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&thread_pubkey));
         sim_tx.sign(&[payer], blockhash);
 
         // Exit early if the transaction exceeds the size limit.
@@ -199,7 +199,7 @@ pub async fn build_thread_exec_tx(
     }
 
     // Build and return the signed transaction.
-    let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
+    let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&thread_pubkey));
     tx.sign(&[payer], blockhash);
     info!(
         "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",

@@ -178,7 +178,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     }
 
     // Update the exec context.
-    let should_reimburse_transaction = clock.slot > thread.exec_context.unwrap().last_exec_at;
     thread.exec_context = Some(ExecContext {
         exec_index,
         execs_since_slot: if clock.slot == thread.exec_context.unwrap().last_exec_at {
@@ -197,13 +196,7 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
 
     // Reimbursement signatory for lamports paid during inner ix.
     let signatory_lamports_post = signatory.lamports();
-    let mut signatory_reimbursement =
-        signatory_lamports_pre.saturating_sub(signatory_lamports_post);
-    if should_reimburse_transaction {
-        signatory_reimbursement = signatory_reimbursement
-            .checked_add(TRANSACTION_BASE_FEE_REIMBURSEMENT)
-            .unwrap();
-    }
+    let signatory_reimbursement = signatory_lamports_pre.saturating_sub(signatory_lamports_post);
     if signatory_reimbursement.gt(&0) {
         **thread.to_account_info().try_borrow_mut_lamports()? = thread
             .to_account_info()
