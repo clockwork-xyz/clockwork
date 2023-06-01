@@ -83,11 +83,16 @@ pub enum Trigger {
     Pyth {
         /// The address of the price feed to monitor.
         price_feed: Pubkey,
-        /// The equality operator (gte or lte) used to compare prices. 
+        /// The equality operator (gte or lte) used to compare prices.
         equality: Equality,
-        /// The limit price to compare the Pyth feed to. 
+        /// The limit price to compare the Pyth feed to.
         limit: i64,
     },
+
+    /// Allows for a custom instruction to be used as a trigger condition.
+    /// By convention the first instruction in the thread's instructions vector will be used as the gating condition.
+    /// If this instruction passes without error, the thread will be allowed to kickoff.
+    Custom {},
 }
 
 /// Operators for describing how to compare two values to one another.  

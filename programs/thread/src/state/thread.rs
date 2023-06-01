@@ -148,6 +148,9 @@ pub enum TriggerContext {
 
     /// The trigger context for threads with a "pyth" trigger.
     Pyth { price: i64 },
+
+    /// The trigger context for threads with a "custom" trigger.
+    Custom,
 }
 
 /// The properties of threads which are updatable.

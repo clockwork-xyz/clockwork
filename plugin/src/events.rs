@@ -10,7 +10,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 use static_pubkey::static_pubkey;
 
-static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey = 
+static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey =
     static_pubkey!("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH");
 static PYTH_ORACLE_PROGRAM_ID_DEVNET: Pubkey =
     static_pubkey!("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s");

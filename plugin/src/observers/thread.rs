@@ -7,7 +7,7 @@ use std::{
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::{Trigger, TriggerContext, Equality, VersionedThread};
+use clockwork_thread_program::state::{Equality, Trigger, TriggerContext, VersionedThread};
 use log::info;
 use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -43,6 +43,9 @@ pub struct ThreadObserver {
     // The set of threads with a pyth trigger.
     pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<PythThread>>>,
 
+    // The set of accounts that have a custom trigger.
+    pub custom_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
@@ -65,6 +68,7 @@ impl ThreadObserver {
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
             pyth_threads: RwLock::new(HashMap::new()),
+            custom_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -250,7 +254,7 @@ impl ThreadObserver {
                     drop(w_account_threads);
 
                     // Threads with account triggers might be immediately executable,
-                    // Thus, we should attempt to execute these threads right away without for an account update. 
+                    // Thus, we should attempt to execute these threads right away without for an account update.
                     let mut w_now_threads = self.now_threads.write().await;
                     w_now_threads.insert(thread_pubkey);
                     drop(w_now_threads);

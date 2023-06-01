@@ -4,7 +4,10 @@ use std::{
     str::FromStr,
 };
 
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, program::invoke},
+};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
 use clockwork_network_program::state::{Worker, WorkerAccount};
@@ -249,11 +252,29 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                 }
             }
         }
+        Trigger::Custom {} => {
+            // Invoke the conditional instruction. If it passes without error, the thread will be considered active.
+            let conditional_instruction = thread.instructions.first().unwrap();
+            invoke(
+                &Instruction::from(&*conditional_instruction),
+                ctx.remaining_accounts,
+            )?;
+            thread.exec_context = Some(ExecContext {
+                exec_index: 1,
+                execs_since_reimbursement: 0,
+                execs_since_slot: 0,
+                last_exec_at: clock.slot,
+                trigger_context: TriggerContext::Custom {},
+            });
+        }
     }
 
     // If we make it here, the trigger is active. Update the next instruction and be done.
-    if let Some(kickoff_instruction) = thread.instructions.first() {
-        thread.next_instruction = Some(kickoff_instruction.clone());
+    if let Some(exec_context) = thread.exec_context {
+        if let Some(kickoff_instruction) = thread.instructions.get(exec_context.exec_index as usize)
+        {
+            thread.next_instruction = Some(kickoff_instruction.clone());
+        }
     }
 
     // Realloc the thread account
