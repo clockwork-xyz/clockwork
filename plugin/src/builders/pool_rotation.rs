@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use anchor_lang::{
-    solana_program::instruction::Instruction,
-    InstructionData, ToAccountMetas
-};
+use anchor_lang::{solana_program::instruction::Instruction, InstructionData, ToAccountMetas};
 use clockwork_network_program::state::{Config, Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -90,8 +87,8 @@ pub async fn build_pool_rotation_tx<'a>(
                 &[ix.clone()],
                 &[],
                 blockhash,
-            ).expect("error compiling to v0 message")),
+            ).unwrap()),
             &[keypair],
-        ).expect("error creating new versioned transaction");
+        ).unwrap();
     return Some(tx);
 }

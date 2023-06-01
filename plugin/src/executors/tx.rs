@@ -25,7 +25,7 @@ use solana_program::pubkey::Pubkey;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
-    transaction::{VersionedTransaction},
+    transaction::VersionedTransaction,
 };
 use tokio::{runtime::Runtime, sync::RwLock};
 
@@ -548,14 +548,6 @@ impl TxExecutor {
         }
         Ok(tx.clone())
     }
-    // async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-    //     if !TPU_CLIENT.get().await.send_transaction(tx).await {
-    //         return Err(GeyserPluginError::Custom(
-    //             "Failed to send transaction".into(),
-    //         ));
-    //     }
-    //     Ok(tx.clone())
-    // }
 }
 
 impl Debug for TxExecutor {

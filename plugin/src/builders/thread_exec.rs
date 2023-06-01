@@ -26,7 +26,7 @@ use solana_sdk::{
     message::{v0, VersionedMessage},
     signature::Keypair,
     signer::Signer,
-    transaction::{VersionedTransaction},
+    transaction::VersionedTransaction,
 };
 
 /// Max byte size of a serialized transaction.
@@ -85,9 +85,9 @@ pub async fn build_thread_exec_tx(
                 &ixs,
                 &address_lookup_tables,
                 blockhash,
-            ).expect("error compiling to v0 message")),
+            ).unwrap()),
             &[payer],
-        ).expect("error creating new versioned transaction");
+        ).unwrap();
 
         // Exit early if the transaction exceeds the size limit.
         if serialize(&sim_tx).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
@@ -218,9 +218,9 @@ pub async fn build_thread_exec_tx(
                 &ixs,
                 &address_lookup_tables,
                 blockhash,
-            ).expect("error compiling to v0 message")),
+            ).unwrap()),
             &[payer],
-        ).expect("error creating new versioned transaction");
+        ).unwrap();
     info!(
         "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
         slot,
