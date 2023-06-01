@@ -252,6 +252,48 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
         }
         Trigger::Token {
             token_account: token_account_pubkey,
+        } => {
+            // Verify token balance has changed.
+            match ctx.remaining_accounts.first() {
+                None => {
+                    return Err(ClockworkError::TriggerConditionFailed.into());
+                }
+                Some(account_info) => {
+                    require!(
+                        token_account_pubkey.eq(account_info.key),
+                        ClockworkError::TriggerConditionFailed
+                    );
+                    let mut data: &[u8] = &account_info.try_borrow_data()?;
+                    let token_account = TokenAccount::try_deserialize_unchecked(&mut data)?;
+
+                    // Verify the current balance is different than the last observed balance.
+                    if let Some(exec_context) = thread.exec_context {
+                        match exec_context.trigger_context {
+                            TriggerContext::Token {
+                                amount: prior_amount,
+                            } => {
+                                require!(
+                                    token_account.amount.ne(&prior_amount),
+                                    ClockworkError::TriggerConditionFailed
+                                )
+                            }
+                            _ => return Err(ClockworkError::InvalidThreadState.into()),
+                        }
+                    }
+                    thread.exec_context = Some(ExecContext {
+                        exec_index: 0,
+                        execs_since_reimbursement: 0,
+                        execs_since_slot: 0,
+                        last_exec_at: clock.slot,
+                        trigger_context: TriggerContext::Token {
+                            amount: token_account.amount,
+                        },
+                    });
+                }
+            }
+        }
+        Trigger::TokenLimit {
+            token_account: token_account_pubkey,
             equality,
             limit,
         } => {
@@ -278,7 +320,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                                 execs_since_reimbursement: 0,
                                 execs_since_slot: 0,
                                 last_exec_at: clock.slot,
-                                trigger_context: TriggerContext::Token {
+                                trigger_context: TriggerContext::TokenLimit {
                                     amount: token_account.amount,
                                 },
                             });
@@ -293,7 +335,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                                 execs_since_reimbursement: 0,
                                 execs_since_slot: 0,
                                 last_exec_at: clock.slot,
-                                trigger_context: TriggerContext::Token {
+                                trigger_context: TriggerContext::TokenLimit {
                                     amount: token_account.amount,
                                 },
                             });

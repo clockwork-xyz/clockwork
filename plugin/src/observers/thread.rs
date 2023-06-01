@@ -21,6 +21,9 @@ pub struct ThreadObserver {
     // Map from slot numbers to the sysvar clock data for that slot.
     pub clocks: RwLock<HashMap<u64, Clock>>,
 
+    // The set of threads that have an active trigger condition this slot.
+    pub activated_threads: RwLock<HashSet<Pubkey>>,
+
     // Integer tracking the current epoch.
     pub current_epoch: AtomicU64,
 
@@ -32,9 +35,6 @@ pub struct ThreadObserver {
     // Map from unix timestamps to the list of threads scheduled for that moment.
     pub cron_threads: RwLock<HashMap<i64, HashSet<Pubkey>>>,
 
-    // The set of threads with a now trigger.
-    pub now_threads: RwLock<HashSet<Pubkey>>,
-
     // The set of threads with a slot trigger.
     pub slot_threads: RwLock<HashMap<u64, HashSet<Pubkey>>>,
 
@@ -45,7 +45,10 @@ pub struct ThreadObserver {
     pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<PythThread>>>,
 
     // The set of threads with a token trigger.
-    pub token_threads: RwLock<HashMap<Pubkey, HashSet<TokenThread>>>,
+    pub token_threads: RwLock<HashMap<Pubkey, HashSet<Pubkey>>>,
+
+    // The set of threads with a token limit trigger.
+    pub token_limit_threads: RwLock<HashMap<Pubkey, HashSet<TokenLimitThread>>>,
 
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
@@ -59,7 +62,7 @@ pub struct PythThread {
 }
 
 #[derive(Eq, Hash, PartialEq)]
-pub struct TokenThread {
+pub struct TokenLimitThread {
     pub thread_pubkey: Pubkey,
     pub equality: Equality,
     pub limit: u64,
@@ -72,11 +75,12 @@ impl ThreadObserver {
             current_epoch: AtomicU64::new(0),
             account_threads: RwLock::new(HashMap::new()),
             cron_threads: RwLock::new(HashMap::new()),
-            now_threads: RwLock::new(HashSet::new()),
+            activated_threads: RwLock::new(HashSet::new()),
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
             pyth_threads: RwLock::new(HashMap::new()),
             token_threads: RwLock::new(HashMap::new()),
+            token_limit_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -151,12 +155,12 @@ impl ThreadObserver {
         drop(w_epoch_threads);
 
         // Get the set of immediate threads.
-        let mut w_now_threads = self.now_threads.write().await;
-        w_now_threads.iter().for_each(|pubkey| {
+        let mut w_activated_threads = self.activated_threads.write().await;
+        w_activated_threads.iter().for_each(|pubkey| {
             executable_threads.insert(*pubkey);
         });
-        w_now_threads.clear();
-        drop(w_now_threads);
+        w_activated_threads.clear();
+        drop(w_activated_threads);
 
         Ok(executable_threads)
     }
@@ -199,9 +203,9 @@ impl ThreadObserver {
                             .price
                             .ge(&pyth_thread.limit)
                         {
-                            let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(pyth_thread.thread_pubkey);
-                            drop(w_now_threads);
+                            let mut w_activated_threads = self.activated_threads.write().await;
+                            w_activated_threads.insert(pyth_thread.thread_pubkey);
+                            drop(w_activated_threads);
                         }
                     }
                     Equality::LessThanOrEqual => {
@@ -210,9 +214,9 @@ impl ThreadObserver {
                             .price
                             .le(&pyth_thread.limit)
                         {
-                            let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(pyth_thread.thread_pubkey);
-                            drop(w_now_threads);
+                            let mut w_activated_threads = self.activated_threads.write().await;
+                            w_activated_threads.insert(pyth_thread.thread_pubkey);
+                            drop(w_activated_threads);
                         }
                     }
                 }
@@ -227,28 +231,40 @@ impl ThreadObserver {
         account_pubkey: Pubkey,
         token_account: TokenAccount,
     ) -> PluginResult<()> {
+        // Queue up the token threads.
         let r_token_threads = self.token_threads.read().await;
         if let Some(token_threads) = r_token_threads.get(&account_pubkey) {
+            let mut w_activated_threads = self.activated_threads.write().await;
             for token_thread in token_threads {
-                match token_thread.equality {
+                w_activated_threads.insert(*token_thread);
+            }
+            drop(w_activated_threads);
+        }
+        drop(r_token_threads);
+
+        // Queue up the token limit threads.
+        let r_token_limit_threads = self.token_limit_threads.read().await;
+        if let Some(token_limit_threads) = r_token_limit_threads.get(&account_pubkey) {
+            for token_limit_thread in token_limit_threads {
+                match token_limit_thread.equality {
                     Equality::GreaterThanOrEqual => {
-                        if token_account.amount.ge(&token_thread.limit) {
-                            let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(token_thread.thread_pubkey);
-                            drop(w_now_threads);
+                        if token_account.amount.ge(&token_limit_thread.limit) {
+                            let mut w_activated_threads = self.activated_threads.write().await;
+                            w_activated_threads.insert(token_limit_thread.thread_pubkey);
+                            drop(w_activated_threads);
                         }
                     }
                     Equality::LessThanOrEqual => {
-                        if token_account.amount.le(&token_thread.limit) {
-                            let mut w_now_threads = self.now_threads.write().await;
-                            w_now_threads.insert(token_thread.thread_pubkey);
-                            drop(w_now_threads);
+                        if token_account.amount.le(&token_limit_thread.limit) {
+                            let mut w_activated_threads = self.activated_threads.write().await;
+                            w_activated_threads.insert(token_limit_thread.thread_pubkey);
+                            drop(w_activated_threads);
                         }
                     }
                 }
             }
         }
-        drop(r_token_threads);
+        drop(r_token_limit_threads);
         Ok(())
     }
 
@@ -266,9 +282,9 @@ impl ThreadObserver {
         info!("Indexing thread: {:?} slot: {}", thread_pubkey, slot);
         if thread.next_instruction().is_some() {
             // If the thread has a next instruction, index it as executable.
-            let mut w_now_threads = self.now_threads.write().await;
-            w_now_threads.insert(thread_pubkey);
-            drop(w_now_threads);
+            let mut w_activated_threads = self.activated_threads.write().await;
+            w_activated_threads.insert(thread_pubkey);
+            drop(w_activated_threads);
         } else {
             // Otherwise, index the thread according to its trigger type.
             match thread.trigger() {
@@ -293,9 +309,9 @@ impl ThreadObserver {
 
                     // Threads with account triggers might be immediately executable,
                     // Thus, we should attempt to execute these threads right away without for an account update.
-                    let mut w_now_threads = self.now_threads.write().await;
-                    w_now_threads.insert(thread_pubkey);
-                    drop(w_now_threads);
+                    let mut w_activated_threads = self.activated_threads.write().await;
+                    w_activated_threads.insert(thread_pubkey);
+                    drop(w_activated_threads);
                 }
                 Trigger::Cron {
                     schedule,
@@ -348,9 +364,9 @@ impl ThreadObserver {
                     drop(w_cron_threads);
                 }
                 Trigger::Now => {
-                    let mut w_now_threads = self.now_threads.write().await;
-                    w_now_threads.insert(thread_pubkey);
-                    drop(w_now_threads);
+                    let mut w_activated_threads = self.activated_threads.write().await;
+                    w_activated_threads.insert(thread_pubkey);
+                    drop(w_activated_threads);
                 }
                 Trigger::Slot { slot } => {
                     let mut w_slot_threads = self.slot_threads.write().await;
@@ -406,16 +422,30 @@ impl ThreadObserver {
                         });
                     drop(w_pyth_threads);
                 }
-                Trigger::Token {
-                    token_account,
-                    equality,
-                    limit,
-                } => {
+                Trigger::Token { token_account } => {
                     let mut w_token_threads = self.token_threads.write().await;
                     w_token_threads
                         .entry(token_account)
                         .and_modify(|v| {
-                            v.insert(TokenThread {
+                            v.insert(thread_pubkey);
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(thread_pubkey);
+                            v
+                        });
+                    drop(w_token_threads);
+                }
+                Trigger::TokenLimit {
+                    token_account,
+                    equality,
+                    limit,
+                } => {
+                    let mut w_token_limit_threads = self.token_limit_threads.write().await;
+                    w_token_limit_threads
+                        .entry(token_account)
+                        .and_modify(|v| {
+                            v.insert(TokenLimitThread {
                                 thread_pubkey,
                                 equality: equality.clone(),
                                 limit,
@@ -423,14 +453,14 @@ impl ThreadObserver {
                         })
                         .or_insert_with(|| {
                             let mut v = HashSet::new();
-                            v.insert(TokenThread {
+                            v.insert(TokenLimitThread {
                                 thread_pubkey,
                                 equality,
                                 limit,
                             });
                             v
                         });
-                    drop(w_token_threads);
+                    drop(w_token_limit_threads);
                 }
             }
         }
