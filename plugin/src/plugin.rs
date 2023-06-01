@@ -133,6 +133,15 @@ impl GeyserPlugin for ClockworkPlugin {
                             .await
                             .ok();
                     }
+                    AccountUpdateEvent::TokenAccount { token_account } => {
+                        inner
+                            .observers
+                            .thread
+                            .clone()
+                            .observe_token_account(account_pubkey, token_account)
+                            .await
+                            .ok();
+                    }
                 }
             }
             Ok(())

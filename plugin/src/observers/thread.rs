@@ -5,9 +5,10 @@ use std::{
     sync::{atomic::AtomicU64, Arc},
 };
 
+use anchor_spl::token::TokenAccount;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::{Trigger, TriggerContext, Equality, VersionedThread};
+use clockwork_thread_program::state::{Equality, Trigger, TriggerContext, VersionedThread};
 use log::info;
 use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -43,6 +44,9 @@ pub struct ThreadObserver {
     // The set of threads with a pyth trigger.
     pub pyth_threads: RwLock<HashMap<Pubkey, HashSet<PythThread>>>,
 
+    // The set of threads with a token trigger.
+    pub token_threads: RwLock<HashMap<Pubkey, HashSet<TokenThread>>>,
+
     // The set of accounts that have updated.
     pub updated_accounts: RwLock<HashSet<Pubkey>>,
 }
@@ -52,6 +56,13 @@ pub struct PythThread {
     pub thread_pubkey: Pubkey,
     pub equality: Equality,
     pub limit: i64,
+}
+
+#[derive(Eq, Hash, PartialEq)]
+pub struct TokenThread {
+    pub thread_pubkey: Pubkey,
+    pub equality: Equality,
+    pub limit: u64,
 }
 
 impl ThreadObserver {
@@ -65,6 +76,7 @@ impl ThreadObserver {
             slot_threads: RwLock::new(HashMap::new()),
             epoch_threads: RwLock::new(HashMap::new()),
             pyth_threads: RwLock::new(HashMap::new()),
+            token_threads: RwLock::new(HashMap::new()),
             updated_accounts: RwLock::new(HashSet::new()),
         }
     }
@@ -210,6 +222,36 @@ impl ThreadObserver {
         Ok(())
     }
 
+    pub async fn observe_token_account(
+        self: Arc<Self>,
+        account_pubkey: Pubkey,
+        token_account: TokenAccount,
+    ) -> PluginResult<()> {
+        let r_token_threads = self.token_threads.read().await;
+        if let Some(token_threads) = r_token_threads.get(&account_pubkey) {
+            for token_thread in token_threads {
+                match token_thread.equality {
+                    Equality::GreaterThanOrEqual => {
+                        if token_account.amount.ge(&token_thread.limit) {
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(token_thread.thread_pubkey);
+                            drop(w_now_threads);
+                        }
+                    }
+                    Equality::LessThanOrEqual => {
+                        if token_account.amount.le(&token_thread.limit) {
+                            let mut w_now_threads = self.now_threads.write().await;
+                            w_now_threads.insert(token_thread.thread_pubkey);
+                            drop(w_now_threads);
+                        }
+                    }
+                }
+            }
+        }
+        drop(r_token_threads);
+        Ok(())
+    }
+
     pub async fn observe_thread(
         self: Arc<Self>,
         thread: VersionedThread,
@@ -250,7 +292,7 @@ impl ThreadObserver {
                     drop(w_account_threads);
 
                     // Threads with account triggers might be immediately executable,
-                    // Thus, we should attempt to execute these threads right away without for an account update. 
+                    // Thus, we should attempt to execute these threads right away without for an account update.
                     let mut w_now_threads = self.now_threads.write().await;
                     w_now_threads.insert(thread_pubkey);
                     drop(w_now_threads);
@@ -363,6 +405,32 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_pyth_threads);
+                }
+                Trigger::Token {
+                    token_account,
+                    equality,
+                    limit,
+                } => {
+                    let mut w_token_threads = self.token_threads.write().await;
+                    w_token_threads
+                        .entry(token_account)
+                        .and_modify(|v| {
+                            v.insert(TokenThread {
+                                thread_pubkey,
+                                equality: equality.clone(),
+                                limit,
+                            });
+                        })
+                        .or_insert_with(|| {
+                            let mut v = HashSet::new();
+                            v.insert(TokenThread {
+                                thread_pubkey,
+                                equality,
+                                limit,
+                            });
+                            v
+                        });
+                    drop(w_token_threads);
                 }
             }
         }

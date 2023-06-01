@@ -1,4 +1,5 @@
 use anchor_lang::{prelude::AccountInfo, AccountDeserialize, Discriminator};
+use anchor_spl::token::TokenAccount;
 use bincode::deserialize;
 use clockwork_thread_program::state::{Thread as ThreadV2, VersionedThread};
 use clockwork_thread_program_v1::state::Thread as ThreadV1;
@@ -10,7 +11,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 use solana_program::{clock::Clock, pubkey::Pubkey, sysvar};
 use static_pubkey::static_pubkey;
 
-static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey = 
+static PYTH_ORACLE_PROGRAM_ID_MAINNET: Pubkey =
     static_pubkey!("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH");
 static PYTH_ORACLE_PROGRAM_ID_DEVNET: Pubkey =
     static_pubkey!("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s");
@@ -20,6 +21,7 @@ pub enum AccountUpdateEvent {
     Clock { clock: Clock },
     Thread { thread: VersionedThread },
     PriceFeed { price_feed: PriceFeed },
+    TokenAccount { token_account: TokenAccount },
     Webhook { webhook: Webhook },
 }
 
@@ -94,6 +96,17 @@ impl TryFrom<&mut ReplicaAccountInfo<'_>> for AccountUpdateEvent {
                 }
             })?;
             return Ok(AccountUpdateEvent::PriceFeed { price_feed });
+        }
+
+        // If the account belongs to the token program, attempt to parse it.
+        if owner_pubkey.eq(&anchor_spl::token::ID) {
+            let token_account =
+                TokenAccount::try_deserialize(&mut account_info.data).map_err(|_| {
+                    GeyserPluginError::AccountsUpdateError {
+                        msg: "Failed to parse SPL token account".into(),
+                    }
+                })?;
+            return Ok(AccountUpdateEvent::TokenAccount { token_account });
         }
 
         // If the account belongs to the webhook program, parse in
