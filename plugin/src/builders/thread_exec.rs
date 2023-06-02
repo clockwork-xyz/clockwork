@@ -93,11 +93,10 @@ pub async fn build_thread_exec_tx(
                     Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
                     Ok(tx) => Ok(tx)
                 }
-
-            };
+            }?;
 
         // Exit early if the transaction exceeds the size limit.
-        if serialize(&sim_tx?).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
+        if serialize(&sim_tx).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
             break;
         }
 
@@ -234,7 +233,7 @@ pub async fn build_thread_exec_tx(
                     Ok(tx) => Ok(tx)
                 }
 
-            };
+            }?;
 
     info!(
         "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",

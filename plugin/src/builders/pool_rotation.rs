@@ -4,7 +4,7 @@ use anchor_lang::{solana_program::instruction::Instruction, InstructionData, ToA
 use clockwork_network_program::state::{Config, Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_geyser_plugin_interface::geyser_plugin_interface::{GeyserPlugin, GeyserPluginError};
+use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPluginError;
 use solana_program::message::{VersionedMessage, v0};
 use solana_sdk::{signature::Keypair, signer::Signer, transaction::VersionedTransaction};
 
