@@ -4,6 +4,7 @@ use anchor_lang::{solana_program::instruction::Instruction, InstructionData, ToA
 use clockwork_network_program::state::{Config, Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_geyser_plugin_interface::geyser_plugin_interface::{GeyserPlugin, GeyserPluginError};
 use solana_program::message::{VersionedMessage, v0};
 use solana_sdk::{signature::Keypair, signer::Signer, transaction::VersionedTransaction};
 
@@ -81,14 +82,21 @@ pub async fn build_pool_rotation_tx<'a>(
     // Build and sign tx.
     let blockhash = client.get_latest_blockhash().await.unwrap();
 
-    let tx = VersionedTransaction::try_new(
-            VersionedMessage::V0(v0::Message::try_compile(
+    let tx = match v0::Message::try_compile(
                 &keypair.pubkey(),
                 &[ix.clone()],
                 &[],
                 blockhash,
-            ).unwrap()),
-            &[keypair],
-        ).unwrap();
-    return Some(tx);
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[keypair]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+
+            };
+    return tx.ok();
 }

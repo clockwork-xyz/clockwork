@@ -79,18 +79,25 @@ pub async fn build_thread_exec_tx(
     let mut successful_ixs: Vec<Instruction> = vec![];
     let mut units_consumed: Option<u64> = None;
     loop {
-        let sim_tx = VersionedTransaction::try_new(
-            VersionedMessage::V0(v0::Message::try_compile(
+        let sim_tx = match v0::Message::try_compile(
                 &signatory_pubkey,
                 &ixs,
                 &address_lookup_tables,
                 blockhash,
-            ).unwrap()),
-            &[payer],
-        ).unwrap();
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[payer]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+
+            };
 
         // Exit early if the transaction exceeds the size limit.
-        if serialize(&sim_tx).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
+        if serialize(&sim_tx?).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
             break;
         }
 
@@ -212,15 +219,23 @@ pub async fn build_thread_exec_tx(
     }
 
     // Build and return the signed transaction.
-    let tx = VersionedTransaction::try_new(
-            VersionedMessage::V0(v0::Message::try_compile(
+    let tx = match v0::Message::try_compile(
                 &signatory_pubkey,
                 &ixs,
                 &address_lookup_tables,
                 blockhash,
-            ).unwrap()),
-            &[payer],
-        ).unwrap();
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[payer]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+
+            };
+
     info!(
         "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
         slot,
