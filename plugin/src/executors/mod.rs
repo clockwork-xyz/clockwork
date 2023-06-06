@@ -157,8 +157,7 @@ impl LookupTablesGet for RpcClient {
     ) -> ClientResult<Vec<AddressLookupTableAccount>> {
         let lookup_account = self
             .get_account_with_commitment(pubkey, self.commitment()) // returns Ok(None) if lookup account is not initialized
-            .await
-            .expect("error getting lookup account")
+            .await?
             .value;
         match lookup_account {
             // return empty vec if lookup account has not been initialized
@@ -175,20 +174,22 @@ impl LookupTablesGet for RpcClient {
                     .expect("Failed to deserialize lookup data")
                     .lookup_tables;
 
-                let lookup_tables = futures::future::join_all(lookup_keys.iter().map(|key| async move {
-                    let raw_account = self
-                        .get_account(key)
-                        .await
-                        .expect("Could not fetch Address Lookup Table account");
-                    let address_lookup_table = AddressLookupTable::deserialize(&raw_account.data)
-                        .expect("Could not deserialise Address Lookup Table");
-                    AddressLookupTableAccount {
-                        key: *key,
-                        addresses: address_lookup_table.addresses.to_vec(),
-                    }
-                })).await;
-
-                return Ok(lookup_tables);
+                let lookup_tables =
+                    futures::future::join_all(lookup_keys.iter().map(|key| async move {
+                        let raw_account = self.get_account(key).await?;
+                        let address_lookup_table =
+                            AddressLookupTable::deserialize(&raw_account.data).map_err(|_| {
+                                ClientError::from(ClientErrorKind::Custom(format!(
+                                    "Could not deserialise Address Lookup Table"
+                                )))
+                            })?;
+                        Ok(AddressLookupTableAccount {
+                            key: *key,
+                            addresses: address_lookup_table.addresses.to_vec(),
+                        })
+                    }))
+                    .await;
+                lookup_tables.into_iter().collect()
             }
         }
     }

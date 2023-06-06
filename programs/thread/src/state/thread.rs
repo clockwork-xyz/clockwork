@@ -8,7 +8,7 @@ pub use clockwork_utils::thread::Equality;
 pub const SEED_THREAD: &[u8] = b"thread";
 
 /// Static space for next_instruction field.
-pub const NEXT_INSTRUCTION_SIZE: usize = 1232;
+pub const NEXT_INSTRUCTION_SIZE: usize = 3200;
 
 /// Tracks the current state of a transaction thread on Solana.
 #[account]

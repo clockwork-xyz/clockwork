@@ -116,4 +116,23 @@ pub mod thread_program {
         thread_lookup_tables_delete::handler(ctx)
     }
 
+    /// Allows the user create big instruction
+    pub fn big_instruction_create(
+        ctx: Context<BigInstructionCreate>,
+        id: Vec<u8>,
+        instruction_data: Vec<u8>,
+        no_of_accounts: u8,
+    ) -> Result<()> {
+        big_instruction_create::handler(ctx, id, instruction_data, no_of_accounts)
+    }
+
+    /// Allows the user add big instrucion to the thread
+    pub fn thread_big_instruction_add(ctx: Context<ThreadBigInstructionAdd>) -> Result<()> {
+        thread_big_instruction_add::handler(ctx)
+    }
+    
+    /// Dummy instruction
+    pub fn thread_dummy_ix(ctx: Context<ThreadDummyIx>) -> Result<()> {
+        thread_dummy_ix::handler(ctx)
+    }
 }
