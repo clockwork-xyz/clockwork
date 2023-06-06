@@ -181,12 +181,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
     let should_reimburse_transaction = clock.slot > thread.exec_context.unwrap().last_exec_at;
     thread.exec_context = Some(ExecContext {
         exec_index,
-        // execs_since_reimbursement: thread
-        //     .exec_context
-        //     .unwrap()
-        //     .execs_since_reimbursement
-        //     .checked_add(1)
-        //     .unwrap(),
         execs_since_slot: if clock.slot == thread.exec_context.unwrap().last_exec_at {
             thread
                 .exec_context
@@ -200,9 +194,6 @@ pub fn handler(ctx: Context<ThreadExec>) -> Result<()> {
         last_exec_at: clock.slot,
         ..thread.exec_context.unwrap()
     });
-
-    // Realloc memory for the thread account.
-    thread.realloc()?;
 
     // Reimbursement signatory for lamports paid during inner ix.
     let signatory_lamports_post = signatory.lamports();

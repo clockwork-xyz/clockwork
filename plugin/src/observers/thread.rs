@@ -248,6 +248,12 @@ impl ThreadObserver {
                             v
                         });
                     drop(w_account_threads);
+
+                    // Threads with account triggers might be immediately executable,
+                    // Thus, we should attempt to execute these threads right away without for an account update. 
+                    let mut w_now_threads = self.now_threads.write().await;
+                    w_now_threads.insert(thread_pubkey);
+                    drop(w_now_threads);
                 }
                 Trigger::Cron {
                     schedule,
