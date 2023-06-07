@@ -32,28 +32,30 @@ pub struct ThreadBigInstructionAdd<'info> {
     )]
     pub thread: Account<'info, Thread>,
 
-    #[account(
-        has_one=authority
-    )]
-    pub big_instruction: Account<'info, BigInstruction>,
+    /// CHECK: program_id of the instruction to build
+    #[account(executable)]
+    pub instruction_program_id: UncheckedAccount<'info>,
 }
 
 pub fn handler(
     ctx: Context<ThreadBigInstructionAdd>,
+    instruction_data: Vec<u8>, 
 ) -> Result<()> {
     // Get accounts
     let authority = &ctx.accounts.authority;
     let thread = &mut ctx.accounts.thread;
     let system_program = &ctx.accounts.system_program;
 
-    let ix_data = &ctx.accounts.big_instruction.data;
-    let ix_program_id = &ctx.accounts.big_instruction.program_id;
-    let ix_accounts = &ctx.accounts.big_instruction.accounts;
+    let ix_accounts = ctx.remaining_accounts.into_iter().map(|acct_info| SerializableAccount {
+        is_signer: acct_info.is_signer, // false
+        is_writable: acct_info.is_writable, 
+        pubkey: acct_info.key()
+    }).collect::<Vec<SerializableAccount>>();
 
     let build_ix = SerializableInstruction {
-        accounts: ix_accounts.clone(),
-        data: ix_data.clone(),
-        program_id: ix_program_id.clone(),
+        accounts: ix_accounts,
+        data: instruction_data,
+        program_id: ctx.accounts.instruction_program_id.key(),
     };
 
     // Check if the instruction hit next instruction size limit

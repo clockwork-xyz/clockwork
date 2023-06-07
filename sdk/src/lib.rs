@@ -18,7 +18,7 @@ pub mod cpi {
     use anchor_lang::prelude::{CpiContext, Pubkey, Result};
 
     pub use clockwork_thread_program::cpi::accounts::{
-        BigInstructionCreate, LookupTablesAdd, LookupTablesCreate, LookupTablesDelete,
+        LookupTablesAdd, LookupTablesCreate, LookupTablesDelete,
         LookupTablesRemove, ThreadBigInstructionAdd, ThreadCreate, ThreadDelete, ThreadDummyIx,
         ThreadPause, ThreadReset, ThreadResume, ThreadUpdate, ThreadWithdraw,
     };
@@ -98,24 +98,11 @@ pub mod cpi {
         clockwork_thread_program::cpi::thread_lookup_tables_delete(ctx)
     }
 
-    pub fn big_instruction_create<'info>(
-        ctx: CpiContext<'_, '_, '_, 'info, BigInstructionCreate<'info>>,
-        id: Vec<u8>,
-        instruction_data: Vec<u8>,
-        no_of_accounts: u8,
-    ) -> Result<()> {
-        clockwork_thread_program::cpi::big_instruction_create(
-            ctx,
-            id,
-            instruction_data,
-            no_of_accounts,
-        )
-    }
-
     pub fn thread_big_instruction_add<'info>(
         ctx: CpiContext<'_, '_, '_, 'info, ThreadBigInstructionAdd<'info>>,
+        instruction_data: Vec<u8>
     ) -> Result<()> {
-        clockwork_thread_program::cpi::thread_big_instruction_add(ctx)
+        clockwork_thread_program::cpi::thread_big_instruction_add(ctx, instruction_data)
     }
 
     pub fn thread_dummy_ix<'info>(
