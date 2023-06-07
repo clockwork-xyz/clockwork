@@ -3,6 +3,7 @@ use std::sync::Arc;
 use anchor_lang::{InstructionData, ToAccountMetas};
 use clockwork_thread_program::state::{VersionedThread, Trigger};
 use clockwork_network_program::state::Worker;
+use bincode::serialize;
 use clockwork_utils::thread::PAYER_PUBKEY;
 use log::info;
 use solana_account_decoder::UiAccountEncoding;
@@ -16,12 +17,16 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
 };
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
+    pubkey::Pubkey, address_lookup_table_account::AddressLookupTableAccount,
 };
 use solana_sdk::{
-    account::Account, commitment_config::CommitmentConfig,
-    compute_budget::ComputeBudgetInstruction, signature::Keypair, signer::Signer,
-    transaction::Transaction,
+    account::Account,
+    commitment_config::CommitmentConfig,
+    compute_budget::ComputeBudgetInstruction,
+    message::{v0, VersionedMessage},
+    signature::Keypair,
+    signer::Signer,
+    transaction::{VersionedTransaction},
 };
 
 /// Max byte size of a serialized transaction.
@@ -40,7 +45,8 @@ pub async fn build_thread_exec_tx(
     thread: VersionedThread,
     thread_pubkey: Pubkey,
     worker_id: u64,
-) -> PluginResult<Option<Transaction>> {
+    address_lookup_tables: Vec<AddressLookupTableAccount>
+) -> PluginResult<Option<VersionedTransaction>> {
     // Grab the thread and relevant data.
     let now = std::time::Instant::now();
     let blockhash = client.get_latest_blockhash().await.unwrap();
@@ -73,11 +79,24 @@ pub async fn build_thread_exec_tx(
     let mut successful_ixs: Vec<Instruction> = vec![];
     let mut units_consumed: Option<u64> = None;
     loop {
-        let mut sim_tx = Transaction::new_with_payer(&ixs, Some(&signatory_pubkey));
-        sim_tx.sign(&[payer], blockhash);
+        let sim_tx = match v0::Message::try_compile(
+                &signatory_pubkey,
+                &ixs,
+                &address_lookup_tables,
+                blockhash,
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[payer]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+            }?;
 
         // Exit early if the transaction exceeds the size limit.
-        if sim_tx.message_data().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
+        if serialize(&sim_tx).unwrap().len() > TRANSACTION_MESSAGE_SIZE_LIMIT {
             break;
         }
 
@@ -198,9 +217,26 @@ pub async fn build_thread_exec_tx(
         );
     }
 
+    // let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
+    // tx.sign(&[payer], blockhash);
+    
     // Build and return the signed transaction.
-    let mut tx = Transaction::new_with_payer(&successful_ixs, Some(&signatory_pubkey));
-    tx.sign(&[payer], blockhash);
+    let tx = match v0::Message::try_compile(
+                &signatory_pubkey,
+                &ixs,
+                &address_lookup_tables,
+                blockhash,
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[payer]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+
+            }?;
     info!(
         "slot: {:?} thread: {:?} sim_duration: {:?} instruction_count: {:?} compute_units: {:?} tx_sig: {:?}",
         slot,

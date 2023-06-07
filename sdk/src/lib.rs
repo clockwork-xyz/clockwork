@@ -10,16 +10,17 @@ pub mod state {
 }
 
 pub mod utils {
-    pub use clockwork_thread_program::state::PAYER_PUBKEY;
     pub use clockwork_thread_program::state::Equality;
+    pub use clockwork_thread_program::state::PAYER_PUBKEY;
 }
 
 pub mod cpi {
-    use anchor_lang::prelude::{CpiContext, Result};
+    use anchor_lang::prelude::{CpiContext, Pubkey, Result};
 
     pub use clockwork_thread_program::cpi::accounts::{
-        ThreadCreate, ThreadDelete, ThreadPause, ThreadReset, ThreadResume, ThreadUpdate,
-        ThreadWithdraw,
+        LookupTablesAdd, LookupTablesCreate, LookupTablesDelete,
+        LookupTablesRemove, ThreadBigInstructionAdd, ThreadCreate, ThreadDelete, ThreadDummyIx,
+        ThreadPause, ThreadReset, ThreadResume, ThreadUpdate, ThreadWithdraw,
     };
 
     pub fn thread_create<'info>(
@@ -68,5 +69,45 @@ pub mod cpi {
         amount: u64,
     ) -> Result<()> {
         clockwork_thread_program::cpi::thread_withdraw(ctx, amount)
+    }
+
+    pub fn thread_lookup_tables_create<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesCreate<'info>>,
+        address_lookup_tables: Vec<Pubkey>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_create(ctx, address_lookup_tables)
+    }
+
+    pub fn thread_lookup_tables_add<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesAdd<'info>>,
+        address_lookup_tables: Vec<Pubkey>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_add(ctx, address_lookup_tables)
+    }
+
+    pub fn thread_lookup_tables_remove<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesRemove<'info>>,
+        index: u64,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_remove(ctx, index)
+    }
+
+    pub fn thread_lookup_tables_delete<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, LookupTablesDelete<'info>>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_lookup_tables_delete(ctx)
+    }
+
+    pub fn thread_big_instruction_add<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, ThreadBigInstructionAdd<'info>>,
+        instruction_data: Vec<u8>
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_big_instruction_add(ctx, instruction_data)
+    }
+
+    pub fn thread_dummy_ix<'info>(
+        ctx: CpiContext<'_, '_, '_, 'info, ThreadDummyIx<'info>>,
+    ) -> Result<()> {
+        clockwork_thread_program::cpi::thread_dummy_ix(ctx)
     }
 }

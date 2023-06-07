@@ -10,7 +10,7 @@ use std::{
 use async_once::AsyncOnce;
 use bincode::serialize;
 use clockwork_network_program::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
-use clockwork_thread_program::state::VersionedThread;
+use clockwork_thread_program::state::{LookupTables, VersionedThread};
 use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
@@ -25,13 +25,13 @@ use solana_program::pubkey::Pubkey;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
-    transaction::Transaction,
+    transaction::{VersionedTransaction},
 };
 use tokio::{runtime::Runtime, sync::RwLock};
 
 use crate::{config::PluginConfig, pool_position::PoolPosition, utils::read_or_new_keypair};
 
-use super::AccountGet;
+use super::{AccountGet, LookupTablesGet};
 
 /// Number of slots to wait before checking for a confirmed transaction.
 static TRANSACTION_CONFIRMATION_PERIOD: u64 = 24;
@@ -428,7 +428,7 @@ impl TxExecutor {
         observed_slot: u64,
         due_slot: u64,
         thread_pubkey: Pubkey,
-    ) -> Option<(Pubkey, Transaction, u64)> {
+    ) -> Option<(Pubkey, VersionedTransaction, u64)> {
         let thread = match client.clone().get::<VersionedThread>(&thread_pubkey).await {
             Err(_err) => {
                 self.increment_simulation_failure(thread_pubkey).await;
@@ -447,6 +447,15 @@ impl TxExecutor {
                 return None;
             }
         }
+        let lookup_tables_key = LookupTables::pubkey(thread.authority(), thread.pubkey());
+
+        let address_lookup_tables = match client.clone().get_lookup_tables(&lookup_tables_key).await
+        {
+            Err(_err) => {
+                return None;
+            }
+            Ok(address_lookup_tables) => address_lookup_tables,
+        };
 
         if let Ok(tx) = crate::builders::build_thread_exec_tx(
             client.clone(),
@@ -455,6 +464,7 @@ impl TxExecutor {
             thread,
             thread_pubkey,
             self.config.worker_id,
+            address_lookup_tables,
         )
         .await
         {
@@ -490,7 +500,7 @@ impl TxExecutor {
         self: Arc<Self>,
         slot: u64,
         thread_pubkey: Pubkey,
-        tx: &Transaction,
+        tx: &VersionedTransaction,
     ) -> PluginResult<()> {
         let r_transaction_history = self.transaction_history.read().await;
         if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
@@ -502,7 +512,10 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    async fn simulate_tx(
+        self: Arc<Self>,
+        tx: &VersionedTransaction,
+    ) -> PluginResult<VersionedTransaction> {
         TPU_CLIENT
             .get()
             .await
@@ -531,8 +544,13 @@ impl TxExecutor {
             })?
     }
 
-    async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        if !TPU_CLIENT.get().await.send_transaction(tx).await {
+    async fn submit_tx(
+        self: Arc<Self>,
+        tx: &VersionedTransaction,
+    ) -> PluginResult<VersionedTransaction> {
+        let serialized_tx = serialize(tx).unwrap();
+
+        if !TPU_CLIENT.get().await.send_wire_transaction(serialized_tx).await {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
