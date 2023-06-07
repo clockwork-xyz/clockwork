@@ -1206,6 +1206,7 @@ name = "clockwork-thread-program"
 version = "2.0.17"
 dependencies = [
  "anchor-lang",
+ "bincode",
  "chrono",
  "clockwork-cron",
  "clockwork-network-program",

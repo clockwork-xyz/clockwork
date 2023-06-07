@@ -1,10 +1,12 @@
+use bincode::serialize;
+
 use anchor_lang::{
     prelude::*,
     solana_program::system_program,
     system_program::{transfer, Transfer},
 };
 
-use crate::state::*;
+use crate::{errors::ClockworkError, state::*};
 
 /// Accounts required by the `thread_instruction_add` instruction.
 #[derive(Accounts)]
@@ -53,6 +55,10 @@ pub fn handler(
         data: ix_data.clone(),
         program_id: ix_program_id.clone(),
     };
+
+    // Check if the instruction hit next instruction size limit
+    let ix_size = serialize(&build_ix).unwrap().len();
+    require!(ix_size <= NEXT_INSTRUCTION_SIZE, ClockworkError::InstructionTooLarge);
 
     // Append the instruction.
     thread.instructions.push(build_ix);
