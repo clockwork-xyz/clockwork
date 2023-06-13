@@ -7,11 +7,9 @@ use std::{
     },
 };
 
-use async_once::AsyncOnce;
 use bincode::serialize;
 use clockwork_network_program::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use clockwork_thread_program::state::VersionedThread;
-use lazy_static::lazy_static;
 use log::info;
 use solana_client::{
     nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
@@ -388,11 +386,7 @@ impl TxExecutor {
             .collect::<Vec<Vec<u8>>>();
 
         // Batch submit transactions to the leader.
-        // TODO Explore rewriting the TPU client for optimized performance.
-        //      This currently is by far the most expensive part of processing threads.
-        //      Submitting transactions takes 8x longer (>200ms) than simulating and building transactions.
-        match TPU_CLIENT
-            .get()
+        match get_tpu_client()
             .await
             .try_send_wire_transaction_batch(wire_txs)
             .await
@@ -503,11 +497,10 @@ impl TxExecutor {
     }
 
     async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        TPU_CLIENT
-            .get()
-            .await
-            .rpc_client()
-            .simulate_transaction_with_config(
+            RpcClient::new_with_commitment(
+                LOCAL_RPC_URL.into(),
+                CommitmentConfig::processed(),
+            ).simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
@@ -532,7 +525,7 @@ impl TxExecutor {
     }
 
     async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        if !TPU_CLIENT.get().await.send_transaction(tx).await {
+        if !get_tpu_client().await.send_transaction(tx).await {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
@@ -554,19 +547,20 @@ fn exponential_backoff_threshold(metadata: &ExecutableThreadMetadata) -> u64 {
 static LOCAL_RPC_URL: &str = "http://127.0.0.1:8899";
 static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
-lazy_static! {
-    static ref TPU_CLIENT: AsyncOnce<TpuClient> = AsyncOnce::new(async {
-        let rpc_client = Arc::new(RpcClient::new_with_commitment(
+// Do not use a static ref here.
+// -> The quic connections are dropped only when TpuClient is dropped
+async fn get_tpu_client() -> TpuClient {
+    let rpc_client = Arc::new(RpcClient::new_with_commitment(
             LOCAL_RPC_URL.into(),
             CommitmentConfig::processed(),
-        ));
-        let tpu_client = TpuClient::new(
-            rpc_client,
-            LOCAL_WEBSOCKET_URL.into(),
-            TpuClientConfig { fanout_slots: 24 },
+            ));
+    let tpu_client = TpuClient::new(
+        rpc_client,
+        LOCAL_WEBSOCKET_URL.into(),
+        TpuClientConfig { fanout_slots: 24 },
         )
         .await
         .unwrap();
-        tpu_client
-    });
+    tpu_client
 }
+
