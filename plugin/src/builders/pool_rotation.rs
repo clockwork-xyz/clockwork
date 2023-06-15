@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
-use anchor_lang::{
-    solana_program::instruction::Instruction,
-    InstructionData, ToAccountMetas
-};
+use anchor_lang::{solana_program::instruction::Instruction, InstructionData, ToAccountMetas};
 use clockwork_network_program::state::{Config, Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use log::info;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPluginError;
+use solana_program::message::{VersionedMessage, v0};
+use solana_sdk::{signature::Keypair, signer::Signer, transaction::VersionedTransaction};
 
 use crate::pool_position::PoolPosition;
 
@@ -19,7 +18,7 @@ pub async fn build_pool_rotation_tx<'a>(
     snapshot: Snapshot,
     snapshot_frame: SnapshotFrame,
     worker_id: u64,
-) -> Option<Transaction> {
+) -> Option<VersionedTransaction> {
     info!("nonce: {:?} total_stake: {:?} current_position: {:?} stake_offset: {:?} stake_amount: {:?}",
         registry.nonce.checked_rem(snapshot.total_stake),
         snapshot.total_stake,
@@ -81,7 +80,23 @@ pub async fn build_pool_rotation_tx<'a>(
     };
 
     // Build and sign tx.
-    let mut tx = Transaction::new_with_payer(&[ix.clone()], Some(&keypair.pubkey()));
-    tx.sign(&[keypair], client.get_latest_blockhash().await.unwrap());
-    return Some(tx);
+    let blockhash = client.get_latest_blockhash().await.unwrap();
+
+    let tx = match v0::Message::try_compile(
+                &keypair.pubkey(),
+                &[ix.clone()],
+                &[],
+                blockhash,
+            ) {
+                Err(_) => Err(GeyserPluginError::Custom(format!("Failed to compile to v0 message ").into())),
+                Ok(message) => match VersionedTransaction::try_new(
+                    VersionedMessage::V0(message), 
+                    &[keypair]
+                ) {
+                    Err(_) => Err(GeyserPluginError::Custom(format!("Failed to create versioned transaction ").into())),
+                    Ok(tx) => Ok(tx)
+                }
+
+            };
+    return tx.ok();
 }

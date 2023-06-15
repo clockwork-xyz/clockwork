@@ -25,7 +25,7 @@ use solana_program::pubkey::Pubkey;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
-    transaction::Transaction,
+    transaction::VersionedTransaction,
 };
 use tokio::{runtime::Runtime, sync::RwLock};
 
@@ -428,7 +428,7 @@ impl TxExecutor {
         observed_slot: u64,
         due_slot: u64,
         thread_pubkey: Pubkey,
-    ) -> Option<(Pubkey, Transaction, u64)> {
+    ) -> Option<(Pubkey, VersionedTransaction, u64)> {
         let thread = match client.clone().get::<VersionedThread>(&thread_pubkey).await {
             Err(_err) => {
                 self.increment_simulation_failure(thread_pubkey).await;
@@ -455,6 +455,7 @@ impl TxExecutor {
             thread,
             thread_pubkey,
             self.config.worker_id,
+            vec![],
         )
         .await
         {
@@ -490,7 +491,7 @@ impl TxExecutor {
         self: Arc<Self>,
         slot: u64,
         thread_pubkey: Pubkey,
-        tx: &Transaction,
+        tx: &VersionedTransaction,
     ) -> PluginResult<()> {
         let r_transaction_history = self.transaction_history.read().await;
         if let Some(metadata) = r_transaction_history.get(&thread_pubkey) {
@@ -502,7 +503,10 @@ impl TxExecutor {
         Ok(())
     }
 
-    async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
+    async fn simulate_tx(
+        self: Arc<Self>,
+        tx: &VersionedTransaction,
+    ) -> PluginResult<VersionedTransaction> {
         TPU_CLIENT
             .get()
             .await
@@ -531,8 +535,13 @@ impl TxExecutor {
             })?
     }
 
-    async fn submit_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-        if !TPU_CLIENT.get().await.send_transaction(tx).await {
+    async fn submit_tx(
+        self: Arc<Self>,
+        tx: &VersionedTransaction,
+    ) -> PluginResult<VersionedTransaction> {
+        let serialized_tx = serialize(tx).unwrap();
+
+        if !TPU_CLIENT.get().await.send_wire_transaction(serialized_tx).await {
             return Err(GeyserPluginError::Custom(
                 "Failed to send transaction".into(),
             ));
