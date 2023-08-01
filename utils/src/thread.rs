@@ -83,10 +83,26 @@ pub enum Trigger {
     Pyth {
         /// The address of the price feed to monitor.
         price_feed: Pubkey,
-        /// The equality operator (gte or lte) used to compare prices. 
+        /// The equality operator (gte or lte) used to compare prices.
         equality: Equality,
-        /// The limit price to compare the Pyth feed to. 
+        /// The limit price to compare the Pyth feed to.
         limit: i64,
+    },
+
+    /// Allows a thread to be kicked off whenever a token balance changes.
+    Token {
+        /// The address of the token account.
+        token_account: Pubkey,
+    },
+
+    /// Allows a thread to be kicked off according to a token amount.
+    TokenLimit {
+        /// The address of the token account.
+        token_account: Pubkey,
+        /// The equality operator (gte or lte) used to compare balances.
+        equality: Equality,
+        /// The limit to compare the token balance to.
+        limit: u64,
     },
 }
 

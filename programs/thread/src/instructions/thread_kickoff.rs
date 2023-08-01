@@ -5,6 +5,7 @@ use std::{
 };
 
 use anchor_lang::prelude::*;
+use anchor_spl::token::TokenAccount;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
 use clockwork_network_program::state::{Worker, WorkerAccount};
@@ -242,6 +243,100 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
                                 last_exec_at: clock.slot,
                                 trigger_context: TriggerContext::Pyth {
                                     price: current_price.price,
+                                },
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        Trigger::Token {
+            token_account: token_account_pubkey,
+        } => {
+            // Verify token balance has changed.
+            match ctx.remaining_accounts.first() {
+                None => {
+                    return Err(ClockworkError::TriggerConditionFailed.into());
+                }
+                Some(account_info) => {
+                    require!(
+                        token_account_pubkey.eq(account_info.key),
+                        ClockworkError::TriggerConditionFailed
+                    );
+                    let mut data: &[u8] = &account_info.try_borrow_data()?;
+                    let token_account = TokenAccount::try_deserialize_unchecked(&mut data)?;
+
+                    // Verify the current balance is different than the last observed balance.
+                    if let Some(exec_context) = thread.exec_context {
+                        match exec_context.trigger_context {
+                            TriggerContext::Token {
+                                amount: prior_amount,
+                            } => {
+                                require!(
+                                    token_account.amount.ne(&prior_amount),
+                                    ClockworkError::TriggerConditionFailed
+                                )
+                            }
+                            _ => return Err(ClockworkError::InvalidThreadState.into()),
+                        }
+                    }
+                    thread.exec_context = Some(ExecContext {
+                        exec_index: 0,
+                        execs_since_reimbursement: 0,
+                        execs_since_slot: 0,
+                        last_exec_at: clock.slot,
+                        trigger_context: TriggerContext::Token {
+                            amount: token_account.amount,
+                        },
+                    });
+                }
+            }
+        }
+        Trigger::TokenLimit {
+            token_account: token_account_pubkey,
+            equality,
+            limit,
+        } => {
+            // Verify token balance limit has been reached.
+            match ctx.remaining_accounts.first() {
+                None => {
+                    return Err(ClockworkError::TriggerConditionFailed.into());
+                }
+                Some(account_info) => {
+                    require!(
+                        token_account_pubkey.eq(account_info.key),
+                        ClockworkError::TriggerConditionFailed
+                    );
+                    let mut data: &[u8] = &account_info.try_borrow_data()?;
+                    let token_account = TokenAccount::try_deserialize_unchecked(&mut data)?;
+                    match equality {
+                        Equality::GreaterThanOrEqual => {
+                            require!(
+                                token_account.amount.ge(&limit),
+                                ClockworkError::TriggerConditionFailed
+                            );
+                            thread.exec_context = Some(ExecContext {
+                                exec_index: 0,
+                                execs_since_reimbursement: 0,
+                                execs_since_slot: 0,
+                                last_exec_at: clock.slot,
+                                trigger_context: TriggerContext::TokenLimit {
+                                    amount: token_account.amount,
+                                },
+                            });
+                        }
+                        Equality::LessThanOrEqual => {
+                            require!(
+                                token_account.amount.le(&limit),
+                                ClockworkError::TriggerConditionFailed
+                            );
+                            thread.exec_context = Some(ExecContext {
+                                exec_index: 0,
+                                execs_since_reimbursement: 0,
+                                execs_since_slot: 0,
+                                last_exec_at: clock.slot,
+                                trigger_context: TriggerContext::TokenLimit {
+                                    amount: token_account.amount,
                                 },
                             });
                         }
