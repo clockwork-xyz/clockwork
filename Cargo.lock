@@ -1138,6 +1138,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "clockwork-gasless-program"
+version = "2.0.17"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "clockwork-network-program"
 version = "2.0.18"
 dependencies = [
