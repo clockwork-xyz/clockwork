@@ -97,7 +97,7 @@ done
 # Build programs
 (
   set -x
-  anchor build
+  anchor build --arch sbf
 )
 
 # Define lib extension
@@ -120,21 +120,31 @@ esac
       pluginFilename=libclockwork_plugin.dylib
       cp -fv "target/$targetTriple/$buildVariant/$pluginFilename" "$installDir"/lib
       mv "$installDir"/lib/libclockwork_plugin.dylib "$installDir"/lib/libclockwork_plugin.so
+      
+      cp -fv "$installDir"/lib/libclockwork_plugin.so "$installDir"
       ;;
     *)
       pluginFilename=libclockwork_plugin.so
       cp -fv "target/$targetTriple/$buildVariant/$pluginFilename" "$installDir"/lib
+      
+      cp -fv "target/$targetTriple/$buildVariant/$pluginFilename" "$installDir"
       ;;
   esac
 
   for bin in "${BINS[@]}"; do
     rm -fv "$installDir/bin/$bin"
     cp -fv "target/$targetTriple/$buildVariant/$bin" "$installDir/bin"
+
+    cp -fv "target/$targetTriple/$buildVariant/$bin" "$installDir"
   done
 
   cp -fv "target/deploy/clockwork_network_program.so" "$installDir/lib"
   cp -fv "target/deploy/clockwork_thread_program.so" "$installDir/lib"
   cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir/lib"
+
+  cp -fv "target/deploy/clockwork_network_program.so" "$installDir"
+  cp -fv "target/deploy/clockwork_thread_program.so" "$installDir"
+  cp -fv "target/deploy/clockwork_webhook_program.so" "$installDir"
 )
 
 # Success message

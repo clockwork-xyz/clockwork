@@ -15,6 +15,7 @@ pub const DEFAULT_CONFIRM_TX_TIMEOUT_SECONDS: Duration = Duration::from_secs(5);
 pub const RELAYER_URL: &str = "http://localhost:8000/";
 pub const CLOCKWORK_RELEASE_BASE_URL: &str =
     "https://github.com/clockwork-xyz/clockwork/releases/download";
+pub const CLOCKWORK_BIN_LOCAL: &str = "/bin/clockwork";
 pub const CLOCKWORK_DEPS: &[&str] = &[
     "clockwork_network_program.so",
     "clockwork_thread_program.so",
@@ -153,12 +154,14 @@ impl CliConfig {
     }
 
     pub fn clockwork_release_url(tag: &str) -> String {
-        format!(
-            "{}/{}/{}",
-            CLOCKWORK_RELEASE_BASE_URL,
-            tag,
-            &Self::clockwork_release_archive()
-        )
+        // format!(
+        //     "{}/{}/{}",
+        //     CLOCKWORK_RELEASE_BASE_URL,
+        //     tag,
+        //     &Self::clockwork_release_archive()
+        // )
+        let config: CliConfig = CliConfig::load();
+        format!("{}/{}", config.active_runtime_dir().to_string(), CLOCKWORK_BIN_LOCAL)
     }
 
     pub fn clockwork_release_archive() -> String {

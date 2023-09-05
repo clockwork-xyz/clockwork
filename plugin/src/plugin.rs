@@ -45,6 +45,7 @@ impl GeyserPlugin for ClockworkPlugin {
         );
         info!("Loading snapshot...");
         let config = PluginConfig::read_from(config_file)?;
+        println!("config_file: {:?}", config_file);
         *self = ClockworkPlugin::new_from_config(config);
         Ok(())
     }

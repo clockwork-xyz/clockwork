@@ -33,7 +33,7 @@ pub struct WorkerCreate<'info> {
         payer = authority,
         space = 8 + size_of::<Fee>(),
     )]
-    pub fee: Account<'info, Fee>,
+    pub fee: Box<Account<'info, Fee>>,
 
     #[account(
         init,
@@ -45,10 +45,10 @@ pub struct WorkerCreate<'info> {
         payer = authority,
         space = 8 + size_of::<Penalty>(),
     )]
-    pub penalty: Account<'info, Penalty>,
+    pub penalty: Box<Account<'info, Penalty>>,
 
     #[account(address = config.mint)]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
 
     #[account(
         mut, 
@@ -56,7 +56,7 @@ pub struct WorkerCreate<'info> {
         bump,
         constraint = !registry.locked @ ClockworkError::RegistryLocked
     )]
-    pub registry: Account<'info, Registry>,
+    pub registry: Box<Account<'info, Registry>>,
 
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
@@ -80,7 +80,7 @@ pub struct WorkerCreate<'info> {
         payer = authority,
         space = 8 + size_of::<Worker>(),
     )]
-    pub worker: Account<'info, Worker>,
+    pub worker: Box<Account<'info, Worker>>,
 
     #[account(
         init,
@@ -88,7 +88,7 @@ pub struct WorkerCreate<'info> {
         associated_token::authority = worker,
         associated_token::mint = mint,
     )]
-    pub worker_tokens: Account<'info, TokenAccount>,
+    pub worker_tokens: Box<Account<'info, TokenAccount>>,
 
 }
 
