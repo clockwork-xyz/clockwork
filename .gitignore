@@ -24,3 +24,5 @@ docker-target
 **/keypair.json
 **/*.log
 **/.coderrect
+
+/.idea

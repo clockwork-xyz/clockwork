@@ -239,7 +239,7 @@ fn decrypt(keypair: &ElGamalKeypair, ciphertext: Vec<u8>) -> String {
         .par_chunks(CIPHERTEXT_CHUNK_SIZE)
         .map(|i| {
             let cx = ElGamalCiphertext::from_bytes(&i).unwrap();
-            let dx = keypair.secret.decrypt_u32(&cx).unwrap();
+            let dx = keypair.secret().decrypt_u32(&cx).unwrap();
             dx.to_le_bytes()[0..PLAINTEXT_CHUNK_SIZE].to_vec()
         })
         .flatten()
@@ -268,7 +268,7 @@ fn encrypt(keypair: &ElGamalKeypair, plaintext: String) -> Vec<u8> {
         .map(|i| i.try_into().unwrap())
         .map(|s: [u8; PLAINTEXT_CHUNK_SIZE]| {
             keypair
-                .public
+                .pubkey()
                 .encrypt(unsafe { std::mem::transmute::<[u8; PLAINTEXT_CHUNK_SIZE], u32>(s) })
                 .to_bytes()
                 .to_vec()

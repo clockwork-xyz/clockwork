@@ -1,4 +1,5 @@
 use std::{
+    any::{self, Any},
     collections::{HashMap, HashSet},
     fmt::Debug,
     sync::{
@@ -11,11 +12,13 @@ use bincode::serialize;
 use clockwork_network_program::state::{Pool, Registry, Snapshot, SnapshotFrame, Worker};
 use clockwork_thread_program::state::VersionedThread;
 use log::info;
+use solana_quic_client::{QuicConfig, QuicConnectionManager, QuicPool};
 use solana_client::{
     nonblocking::{rpc_client::RpcClient, tpu_client::TpuClient},
     rpc_config::RpcSimulateTransactionConfig,
     tpu_client::TpuClientConfig,
 };
+
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
@@ -497,10 +500,8 @@ impl TxExecutor {
     }
 
     async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-            RpcClient::new_with_commitment(
-                LOCAL_RPC_URL.into(),
-                CommitmentConfig::processed(),
-            ).simulate_transaction_with_config(
+        RpcClient::new_with_commitment(LOCAL_RPC_URL.into(), CommitmentConfig::processed())
+            .simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
@@ -549,18 +550,21 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 // Do not use a static ref here.
 // -> The quic connections are dropped only when TpuClient is dropped
-async fn get_tpu_client() -> TpuClient {
+async fn get_tpu_client() -> TpuClient<QuicPool, QuicConnectionManager, QuicConfig> {
     let rpc_client = Arc::new(RpcClient::new_with_commitment(
-            LOCAL_RPC_URL.into(),
-            CommitmentConfig::processed(),
-            ));
+        LOCAL_RPC_URL.into(),
+        CommitmentConfig::processed(),
+    ));
     let tpu_client = TpuClient::new(
-        rpc_client,
+        "rpc_client",
+        Arc::new(RpcClient::new_with_commitment(
+            LOCAL_WEBSOCKET_URL.into(),
+            CommitmentConfig::confirmed(),
+        )),
         LOCAL_WEBSOCKET_URL.into(),
         TpuClientConfig { fanout_slots: 24 },
-        )
-        .await
-        .unwrap();
+    )
+    .await
+    .unwrap();
     tpu_client
 }
-

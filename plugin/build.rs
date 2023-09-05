@@ -4,7 +4,7 @@ fn main() {
     let rustc_v = rustc_version::version()
         .expect("Unable to get rustc version")
         .to_string();
-    let expected_v = "1.60.0".to_string();
+    let expected_v = "1.72.0".to_string();
 
     // Check for a minimum version
     if rustc_v != expected_v {
