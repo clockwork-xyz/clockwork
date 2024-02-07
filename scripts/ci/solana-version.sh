@@ -6,4 +6,4 @@ set -e
 
 cd "$(dirname "$0")/../../plugin"
 
-cargo read-manifest | jq -r '.dependencies[] | select(.name == "solana-geyser-plugin-interface") | .req'
+cargo tree -p solana-geyser-plugin-interface | grep solana-geyser-plugin-interface | awk '{print $2}'
