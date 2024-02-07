@@ -548,7 +548,6 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 // Do not use a static ref here.
 // -> The quic connections are dropped only when TpuClient is dropped
-// async fn get_tpu_client() -> TpuClient<QuicPool, QuicConnectionManager, QuicConnectionConfig> {
 async fn get_tpu_client() -> TpuClient<QuicPool, QuicConnectionManager, QuicConfig> {
     let rpc_client = Arc::new(RpcClient::new_with_commitment(
         LOCAL_RPC_URL.into(),
