@@ -14,7 +14,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: projectserum/build:v0.29.0
+    container: backpackapp/build:v0.29.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -28,7 +28,7 @@ jobs:
     needs: build
     name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
-    container: projectserum/build:v0.29.0
+    container: backpackapp/build:v0.29.0
     strategy:
       fail-fast: false
       matrix:
