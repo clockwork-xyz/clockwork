@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<StakeDelegationsProcessDelegation>) -> Result<Thread
 
     // Transfer tokens from delegation to worker account.
     let amount = delegation_stake.amount;
-    let bump = *ctx.bumps.get("delegation").unwrap();
+    let bump = ctx.bumps.delegation;
     transfer(
         CpiContext::new_with_signer(
             token_program.to_account_info(),

@@ -4,14 +4,10 @@ members = [
     "cron",
     "plugin",
     "programs/*",
-    "relayer",
+    # "relayer",
     "sdk",
     "utils"
 ]
 
 [profile.release]
 overflow-checks = true
-
-[patch.crates-io]
-anchor-lang = { git = "https://github.com/coral-xyz/anchor", rev = "fbd0688" }
-anchor-spl = { git = "https://github.com/coral-xyz/anchor", rev = "fbd0688", features = ["mint", "token"] }

@@ -7,7 +7,7 @@ use std::{
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use clockwork_cron::Schedule;
-use clockwork_thread_program::state::{Trigger, TriggerContext, Equality, VersionedThread};
+use clockwork_thread_program::state::{Equality, Trigger, TriggerContext, VersionedThread};
 use log::info;
 use pyth_sdk_solana::PriceFeed;
 use solana_geyser_plugin_interface::geyser_plugin_interface::{
@@ -250,7 +250,7 @@ impl ThreadObserver {
                     drop(w_account_threads);
 
                     // Threads with account triggers might be immediately executable,
-                    // Thus, we should attempt to execute these threads right away without for an account update. 
+                    // Thus, we should attempt to execute these threads right away without for an account update.
                     let mut w_now_threads = self.now_threads.write().await;
                     w_now_threads.insert(thread_pubkey);
                     drop(w_now_threads);
@@ -381,7 +381,7 @@ fn next_moment(after: i64, schedule: String) -> Option<i64> {
     match Schedule::from_str(&schedule) {
         Err(_) => None,
         Ok(schedule) => schedule
-            .next_after(&DateTime::<Utc>::from_utc(
+            .next_after(&DateTime::<Utc>::from_naive_utc_and_offset(
                 NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
                 Utc,
             ))

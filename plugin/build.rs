@@ -4,20 +4,18 @@ fn main() {
     let rustc_v = rustc_version::version()
         .expect("Unable to get rustc version")
         .to_string();
-    let expected_v = "1.60.0".to_string();
+    let expected_v = "1.73.0".to_string();
 
     // Check for a minimum version
+    // if !rustc_v.ends_with("-nightly") {
     if rustc_v != expected_v {
-        println!("cargo:warning=trying to compile with rustc {}, we should be using {}",
-                 rustc_v,
-                 expected_v,
+        println!(
+            "cargo:warning=trying to compile with rustc {}, we should be using {}",
+            rustc_v, "nightly",
         );
         std::process::exit(1);
     }
-    println!(
-        "cargo:rustc-env=RUSTC_VERSION={:#?}",
-        rustc_v,
-    );
+    println!("cargo:rustc-env=RUSTC_VERSION={:#?}", rustc_v,);
 
     let output = Command::new("git")
         .args(&["rev-parse", "HEAD"])

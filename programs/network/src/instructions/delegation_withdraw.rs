@@ -51,7 +51,7 @@ pub fn handler(ctx: Context<DelegationWithdraw>, amount: u64) -> Result<()> {
     let token_program = &ctx.accounts.token_program;
 
     // Transfer tokens from authority tokens to delegation
-    let bump = *ctx.bumps.get("delegation").unwrap();
+    let bump = ctx.bumps.delegation;
     transfer(
         CpiContext::new_with_signer(
             token_program.to_account_info(),
