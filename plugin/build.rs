@@ -7,11 +7,10 @@ fn main() {
     let expected_v = "1.73.0".to_string();
 
     // Check for a minimum version
-    // if !rustc_v.ends_with("-nightly") {
     if rustc_v != expected_v {
         println!(
             "cargo:warning=trying to compile with rustc {}, we should be using {}",
-            rustc_v, "nightly",
+            rustc_v, expected_v,
         );
         std::process::exit(1);
     }
