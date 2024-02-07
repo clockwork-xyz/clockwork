@@ -22,7 +22,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  ANCHOR_VERSION: v0.27.0
+  ANCHOR_VERSION: v0.29.0
   PUBLISH_PREFIX: clockwork
 
 jobs:
@@ -107,7 +107,7 @@ jobs:
       - name: Install Rust ${{ env.PLUGIN_RUST_VERSION }}
         uses: ./.github/actions/setup-rust/
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.7.0
         with:
           key: tarball-${{ runner.target }}-build-${{ hashFiles('**/Cargo.lock') }}
       - name: Build release tarball

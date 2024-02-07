@@ -14,13 +14,13 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: projectserum/build:v0.27.0
+    container: projectserum/build:v0.29.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install default toolchain
         run: rustup default stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.7.0
       - name: Build
         run: cargo build --locked
 
@@ -28,7 +28,7 @@ jobs:
     needs: build
     name: Audit ${{ matrix.node.path }}
     runs-on: ubuntu-latest
-    container: projectserum/build:v0.27.0
+    container: projectserum/build:v0.29.0
     strategy:
       fail-fast: false
       matrix:
