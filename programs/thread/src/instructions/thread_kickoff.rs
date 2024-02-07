@@ -277,7 +277,7 @@ pub fn handler(ctx: Context<ThreadKickoff>) -> Result<()> {
 fn next_timestamp(after: i64, schedule: String) -> Option<i64> {
     Schedule::from_str(&schedule)
         .unwrap()
-        .next_after(&DateTime::<Utc>::from_utc(
+        .next_after(&DateTime::<Utc>::from_naive_utc_and_offset(
             NaiveDateTime::from_timestamp_opt(after, 0).unwrap(),
             Utc,
         ))

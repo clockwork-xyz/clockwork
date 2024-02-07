@@ -18,4 +18,4 @@ clockwork_thread_program = "CLoCKyJ6DXBJqqu2VWx9RLbgnwwR6BMHHuyasVmfMzBh"
 clockwork_webhook_program = "E7p5KFo8kKCDm6BUnWtnVFkQSYh6ZA6xaGAuvpv8NXTa"
 
 [registry]
-url = "https://anchor.projectserum.com"
+url = "https://api.apr.dev"

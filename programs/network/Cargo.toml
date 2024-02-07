@@ -22,8 +22,8 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.27.0"
-anchor-spl = { features = ["mint", "token"], version = "0.27.0" }
+anchor-lang = "0.29.0"
+anchor-spl = { features = ["mint", "token"], version = "0.29.0" }
 clockwork-utils = { path = "../../utils", version = "=2.0.18" }
 winnow = "=0.4.1"
 toml_datetime = "=0.6.1"

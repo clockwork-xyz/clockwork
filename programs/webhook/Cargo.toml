@@ -22,7 +22,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { features = ["init-if-needed"], version = "0.27.0" }
+anchor-lang = { features = ["init-if-needed"], version = "0.29.0" }
 clockwork-network-program = { path = "../network", features = ["cpi"], version = "=2.0.18" }
 clockwork-utils = { path = "../../utils", version = "=2.0.18" }
 serde = "1.0.152"

@@ -58,9 +58,8 @@ pub fn handler(ctx: Context<ThreadCreate>, amount: u64, id: Vec<u8>, instruction
     let thread = &mut ctx.accounts.thread;
 
     // Initialize the thread
-    let bump = *ctx.bumps.get("thread").unwrap();
     thread.authority = authority.key();
-    thread.bump = bump;
+    thread.bump = ctx.bumps.thread;
     thread.created_at = Clock::get().unwrap().into();
     thread.exec_context = None;
     thread.fee = MINIMUM_FEE;

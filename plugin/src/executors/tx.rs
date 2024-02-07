@@ -20,6 +20,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::{
     GeyserPluginError, Result as PluginResult,
 };
 use solana_program::pubkey::Pubkey;
+use solana_quic_client::{QuicConfig, QuicConnectionManager, QuicPool};
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     signature::{Keypair, Signature},
@@ -497,10 +498,8 @@ impl TxExecutor {
     }
 
     async fn simulate_tx(self: Arc<Self>, tx: &Transaction) -> PluginResult<Transaction> {
-            RpcClient::new_with_commitment(
-                LOCAL_RPC_URL.into(),
-                CommitmentConfig::processed(),
-            ).simulate_transaction_with_config(
+        RpcClient::new_with_commitment(LOCAL_RPC_URL.into(), CommitmentConfig::processed())
+            .simulate_transaction_with_config(
                 tx,
                 RpcSimulateTransactionConfig {
                     replace_recent_blockhash: false,
@@ -549,18 +548,18 @@ static LOCAL_WEBSOCKET_URL: &str = "ws://127.0.0.1:8900";
 
 // Do not use a static ref here.
 // -> The quic connections are dropped only when TpuClient is dropped
-async fn get_tpu_client() -> TpuClient {
+async fn get_tpu_client() -> TpuClient<QuicPool, QuicConnectionManager, QuicConfig> {
     let rpc_client = Arc::new(RpcClient::new_with_commitment(
-            LOCAL_RPC_URL.into(),
-            CommitmentConfig::processed(),
-            ));
+        LOCAL_RPC_URL.into(),
+        CommitmentConfig::processed(),
+    ));
     let tpu_client = TpuClient::new(
+        "tpu_client",
         rpc_client,
         LOCAL_WEBSOCKET_URL.into(),
         TpuClientConfig { fanout_slots: 24 },
-        )
-        .await
-        .unwrap();
+    )
+    .await
+    .unwrap();
     tpu_client
 }
-

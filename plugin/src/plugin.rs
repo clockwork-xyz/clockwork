@@ -52,7 +52,7 @@ impl GeyserPlugin for ClockworkPlugin {
     fn on_unload(&mut self) {}
 
     fn update_account(
-        &mut self,
+        &self,
         account: ReplicaAccountInfoVersions,
         slot: u64,
         is_startup: bool,
@@ -69,6 +69,15 @@ impl GeyserPlugin for ClockworkPlugin {
                 write_version: account_info.write_version,
             },
             ReplicaAccountInfoVersions::V0_0_2(account_info) => ReplicaAccountInfo {
+                pubkey: account_info.pubkey,
+                lamports: account_info.lamports,
+                owner: account_info.owner,
+                executable: account_info.executable,
+                rent_epoch: account_info.rent_epoch,
+                data: account_info.data,
+                write_version: account_info.write_version,
+            },
+            ReplicaAccountInfoVersions::V0_0_3(account_info) => ReplicaAccountInfo {
                 pubkey: account_info.pubkey,
                 lamports: account_info.lamports,
                 owner: account_info.owner,
@@ -140,13 +149,13 @@ impl GeyserPlugin for ClockworkPlugin {
         Ok(())
     }
 
-    fn notify_end_of_startup(&mut self) -> PluginResult<()> {
+    fn notify_end_of_startup(&self) -> PluginResult<()> {
         info!("Snapshot loaded");
         Ok(())
     }
 
     fn update_slot_status(
-        &mut self,
+        &self,
         slot: u64,
         _parent: Option<u64>,
         status: SlotStatus,
@@ -168,7 +177,7 @@ impl GeyserPlugin for ClockworkPlugin {
     }
 
     fn notify_transaction(
-        &mut self,
+        &self,
         _transaction: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaTransactionInfoVersions,
         _slot: u64,
     ) -> PluginResult<()> {
@@ -176,7 +185,7 @@ impl GeyserPlugin for ClockworkPlugin {
     }
 
     fn notify_block_metadata(
-        &mut self,
+        &self,
         _blockinfo: solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaBlockInfoVersions,
     ) -> PluginResult<()> {
         Ok(())
