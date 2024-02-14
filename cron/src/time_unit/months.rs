@@ -1,17 +1,20 @@
-use crate::error::*;
+use crate::{error::*, TimeUnitSpec};
 use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::specifier::RootSpecifier;
 use crate::time_unit::TimeUnitField;
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, Eq)]
 pub struct Months {
     ordinals: Option<OrdinalSet>,
+    field: Vec<RootSpecifier>,
 }
 
 impl TimeUnitField for Months {
-    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self {
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>, field: Vec<RootSpecifier>) -> Self {
         Months {
             ordinals: ordinal_set,
+            field,
         }
     }
     fn name() -> Cow<'static, str> {
@@ -46,10 +49,46 @@ impl TimeUnitField for Months {
         };
         Ok(ordinal)
     }
+
+    fn name_from_ordinal(ordinal: Ordinal) -> Result<String, Error> {
+        //TODO: Use phf crate
+        let name = match ordinal {
+            1 => "January",
+            2 => "February",
+            3 => "March",
+            4 => "April",
+            5 => "May",
+            6 => "June",
+            7 => "July",
+            8 => "August",
+            9 => "September",
+            10 => "October",
+            11 => "November",
+            12 => "December",
+            _ => {
+                return Err(
+                    ErrorKind::Expression(format!("'{}' is not a valid month name.", &ordinal)).into(),
+                )
+            }
+        };
+        Ok(name.to_owned())
+    }
     fn ordinals(&self) -> OrdinalSet {
         match self.ordinals.clone() {
             Some(ordinal_set) => ordinal_set,
             None => Months::supported_ordinals(),
+        }
+    }
+    fn name_in_text() -> Cow<'static, str> {
+        Cow::from("month")
+    }
+    fn to_human_text (&self) ->  Result<String, Error> {
+        match self.is_all() {
+            true => Ok("".to_owned()),
+            false => match Self::human_text_from_field(self.field.clone(), true) {
+                Ok(s) => Ok(format!("in {s}")),
+                Err(e) => Err(e)
+            }
         }
     }
 }

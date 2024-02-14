@@ -104,14 +104,22 @@ pub trait TimeUnitField
 where
     Self: Sized,
 {
-    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self;
+    fn from_optional_ordinal_set(
+        ordinal_set: Option<OrdinalSet>,
+        field: Vec<RootSpecifier>,
+    ) -> Self;
     fn name() -> Cow<'static, str>;
+    fn name_in_text() -> Cow<'static, str>;
     fn inclusive_min() -> Ordinal;
     fn inclusive_max() -> Ordinal;
     fn ordinals(&self) -> OrdinalSet;
+    fn to_human_text(&self) -> Result<String, Error>;
 
     fn from_ordinal(ordinal: Ordinal) -> Self {
-        Self::from_ordinal_set(iter::once(ordinal).collect())
+        Self::from_ordinal_set(
+            iter::once(ordinal).collect(),
+            vec![RootSpecifier::from(Specifier::Point(ordinal))],
+        )
     }
 
     fn supported_ordinals() -> OrdinalSet {
@@ -119,11 +127,11 @@ where
     }
 
     fn all() -> Self {
-        Self::from_optional_ordinal_set(None)
+        Self::from_optional_ordinal_set(None, vec![RootSpecifier::from(Specifier::All)])
     }
 
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
-        Self::from_optional_ordinal_set(Some(ordinal_set))
+    fn from_ordinal_set(ordinal_set: OrdinalSet, field: Vec<RootSpecifier>) -> Self {
+        Self::from_optional_ordinal_set(Some(ordinal_set), field)
     }
 
     fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
@@ -134,6 +142,10 @@ where
             name
         ))
         .into())
+    }
+
+    fn name_from_ordinal(ordinal: Ordinal) -> Result<String, Error> {
+        Ok(ordinal.to_string())
     }
 
     fn validate_ordinal(ordinal: Ordinal) -> Result<Ordinal, Error> {
@@ -217,5 +229,135 @@ where
                 .collect::<OrdinalSet>(),
         };
         Ok(ordinals)
+    }
+
+    fn human_text_from_specifier(specifier: &Specifier) -> Result<String, Error> {
+        use self::Specifier::*;
+        //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
+        match *specifier {
+            All => Ok(format!("{}", &Self::name_in_text())),
+            Point(ordinal) => Ok(format!("{}", &Self::name_from_ordinal(ordinal)?)),
+            Range(start, end) => {
+                match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
+                    (Ok(start), Ok(end)) if start <= end => Ok(format!(
+                        "{} from {} through {}",
+                        &Self::name_in_text(),
+                        &Self::name_from_ordinal(start)?,
+                        &Self::name_from_ordinal(end)?
+                    )),
+                    _ => Err(ErrorKind::Expression(format!(
+                        "Invalid range for {}: {}-{}",
+                        Self::name(),
+                        start,
+                        end
+                    ))
+                    .into()),
+                }
+            }
+            NamedRange(ref start_name, ref end_name) => {
+                let start = Self::ordinal_from_name(start_name)?;
+                let end = Self::ordinal_from_name(end_name)?;
+                match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
+                    (Ok(start), Ok(end)) if start <= end => Ok(format!(
+                        "{} from {} through {}",
+                        &Self::name_in_text(),
+                        &Self::name_from_ordinal(start)?,
+                        &Self::name_from_ordinal(end)?
+                    )),
+                    _ => Err(ErrorKind::Expression(format!(
+                        "Invalid named range for {}: {}-{}",
+                        Self::name(),
+                        start_name,
+                        end_name
+                    ))
+                    .into()),
+                }
+            }
+        }
+    }
+
+    fn human_text_from_root_specifier(root_specifier: &RootSpecifier) -> Result<String, Error> {
+        let ordinals = match root_specifier {
+            RootSpecifier::Specifier(specifier) => match specifier {
+                Specifier::Point(_) => format!("{}", Self::human_text_from_specifier(specifier)?),
+                _ => format!(
+                    "every {}",
+                    Self::human_text_from_specifier(specifier)?
+                ),
+            },
+            RootSpecifier::Period(specifier, step) => {
+                if *step == 0 {
+                    return Err(ErrorKind::Expression(format!("step cannot be 0")).into());
+                }
+                match specifier {
+                    // A point prior to a period implies a range whose start is the specified
+                    // point and terminating inclusively with the inclusive max
+                    Specifier::Point(start) => {
+                        let start = Self::validate_ordinal(*start)?;
+                        format!(
+                            "every {} {} from {} through {}",
+                            &Self::suffix(*step),
+                            &Self::name_in_text(),
+                            &Self::name_from_ordinal(start)?,
+                            &Self::inclusive_max()
+                        )
+                    }
+                    specifier => format!(
+                        "every {} {}",
+                        &Self::suffix(*step),
+                        &Self::human_text_from_specifier(specifier)?
+                    ),
+                }
+            }
+            RootSpecifier::NamedPoint(ref name) => {
+                // validates name
+                let ordinal = Self::ordinal_from_name(name)?;
+                let name = Self::name_from_ordinal(ordinal)?;
+                format!("{name}")
+            }
+        };
+        Ok(ordinals)
+    }
+
+    fn human_text_from_field(field: Vec<RootSpecifier>, named: bool) -> Result<String, Error> {
+        let mut human_text_list_from_field: Vec<String> = vec![];
+        for root_specifier in field {
+            human_text_list_from_field.push(Self::human_text_from_root_specifier(&root_specifier)?)
+        }
+
+        let human_text_string = match human_text_list_from_field.len() {
+            0 => format!(""),
+            1 => format!("{}", human_text_list_from_field[0].to_string()),
+            2 => format!(
+                "{} and {}",
+                &human_text_list_from_field[0], &human_text_list_from_field[1]
+            ),
+            _ => {
+                format!(
+                    "{}, and {}",
+                    &human_text_list_from_field[0..human_text_list_from_field.len() - 1].join(", "),
+                    &human_text_list_from_field[human_text_list_from_field.len() - 1]
+                )
+            }
+        };
+        let s = match named {
+            true => "".to_owned(),
+            false => format!("{} ", &Self::name_in_text()),
+        };
+
+        Ok(format!("{}{}", &s, &human_text_string)
+            .replace("every 1st", "every")
+            .replace(&format!("{} every", &Self::name_in_text()), "every")
+            .replace(&format!(", {}", &Self::name_in_text()), ",")
+            .replace(&format!(", and {}", &Self::name_in_text()), ", and"))
+    }
+
+    fn suffix(num: Ordinal) -> String {
+        match num % 10 {
+            1 => num.to_string() + "st",
+            2 => num.to_string() + "nd",
+            3 => num.to_string() + "rd",
+            _ => num.to_string() + "th",
+        }
     }
 }
