@@ -1,4 +1,7 @@
-use anchor_lang::solana_program::entrypoint::ProgramResult;
+use anchor_lang::{
+        solana_program::entrypoint::ProgramResult,
+        AccountDeserialize
+};
 
 clockwork_anchor_gen::generate_cpi_interface!(idl_path = "idl.json");
 
