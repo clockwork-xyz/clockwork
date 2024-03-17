@@ -31,7 +31,7 @@ clockwork-network-program = { path = "../programs/network", version = "=2.0.19" 
 clockwork-plugin-utils = { path = "utils", version = "=2.0.19" }
 clockwork-relayer-api = { path = "../relayer/api", version = "=2.0.19" }
 clockwork-thread-program = { package = "clockwork-thread-program", path = "../programs/thread", version = "=2.0.19" }
-clockwork-thread-program-v1 = { package = "clockwork-thread-program-v1", path = "../programs/thread/v1", version = "=1.4.4" }
+clockwork-thread-program-v1 = { package = "clockwork-thread-program-v1", path = "../programs/thread/v1", version = "=1.4.5" }
 clockwork-webhook-program = { path = "../programs/webhook", version = "=2.0.19" }
 clockwork-utils = { path = "../utils", version = "=2.0.19" }
 lazy_static = "1.4.0"
