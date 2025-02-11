@@ -70,7 +70,7 @@ solana logs --url localhost
 
 # Guides & Examples
 - We have ready to run examples apps: https://github.com/clockwork-xyz/examples.
-- If you are looking for walkthough, take a look at the docs: https://docs.clockwork.xyz/developers/guides.
+- If you are looking for walkthrough, walk though, take a look at the docs: https://docs.clockwork.xyz/developers/guides.
 - If you have a certain use case you would like to discuss, we are happy to [help](https://discord.com/channels/889725689543143425/1029516796304306247).
 
 ---
