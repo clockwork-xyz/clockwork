@@ -7,7 +7,7 @@
 
   <p>
     <a href="https://github.com/clockwork-xyz/clockwork/actions/workflows/code-scan.yaml"><img alt="code scan" src="https://github.com/clockwork-xyz/clockwork/actions/workflows/code-scan.yaml/badge.svg?branch=main" /></a>
-    <a href="https://discord.com/channels/889725689543143425"><img alt="Discord Chat" src="https://img.shields.io/discord/889725689543143425?color=blueviolet" /></a>
+    <a href="https://discord.com/invite/epHsTsnUre"><img alt="Discord Chat" src="https://img.shields.io/discord/889725689543143425?color=blueviolet" /></a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.en.html"><img alt="License" src="https://img.shields.io/github/license/clockwork-xyz/clockwork?color=turquoise" /></a>
   </p>
 
@@ -16,7 +16,7 @@
     <span> | </span>
     <a href="https://docs.clockwork.xyz">Docs</a>
     <span> | </span>
-    <a href="https://twitter.com/clockwork_xyz">Twitter</a>
+    <a href="https://x.com/clockwork_xyz">X/Twitter</a>
   </h4>  
 </div>
 
