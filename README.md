@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> Clockwork is no longer active. For scheduled tasks on Solana, use [TukTuk](https://github.com/helium/tuktuk)
+
+The contents of this repo will soon be archived. The contents of the original README follow below.
+
+---
+
 <div align="center">
   <h1>Clockwork</h1>
 
