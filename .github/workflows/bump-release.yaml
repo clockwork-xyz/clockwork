@@ -66,8 +66,11 @@ jobs:
           version: "0.11.9"
 
       - name: Run version bump script
+        env:
+          BUMP: ${{ github.event.inputs.bump }}
+          EXTRA_ARGS: ${{ github.event.inputs.extra_args }}
         run: |
-          source ./scripts/ci/bump-version.sh ${{ github.event.inputs.bump }} ${{ github.event.inputs.extra_args }}
+          source ./scripts/ci/bump-version.sh "$BUMP" $EXTRA_ARGS
           echo "$old_version" > OLD_VERSION
 
       - name: Create artificats of changes from diff
